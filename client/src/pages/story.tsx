@@ -4756,10 +4756,9 @@ export default function StoryPage() {
 
   // ─── Drawing brush items for sub-panel ──────────────────────────────
   const DRAWING_BRUSH_ITEMS: { id: string; icon: typeof Pen; label: string; color?: string }[] = [
-    { id: "ballpoint", icon: Pen, label: "볼펜", color: "#3b82f6" },
+    { id: "ballpoint", icon: Pen, label: "펜", color: "#3b82f6" },
     { id: "marker", icon: PenLine, label: "마커", color: "#ef4444" },
     { id: "highlighter", icon: Highlighter, label: "형광펜", color: "#eab308" },
-    { id: "pencil", icon: Pencil, label: "연필", color: "#6b7280" },
   ];
 
   return (
