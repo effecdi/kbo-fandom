@@ -1,9 +1,9 @@
-/* Error: unmatched "}".
+/* Error: expected "}".
  *     ,
- * 295 | }
- *     | ^
+ * 528 |   }
+ *     |    ^
  *     '
- *   src/components/drawing-tools-panel.scss 295:1  root stylesheet */
+ *   src/components/drawing-tools-panel.scss 528:4  root stylesheet */
 
 body::before {
   font-family: "Source Code Pro", "SF Mono", Monaco, Inconsolata, "Fira Mono",
@@ -13,5 +13,5 @@ body::before {
   padding: 1em;
   margin-bottom: 1em;
   border-bottom: 2px solid black;
-  content: 'Error: unmatched "}".\a     \2577 \a 295 \2502  }\a     \2502  ^\a     \2575 \a   src/components/drawing-tools-panel.scss 295:1  root stylesheet';
+  content: 'Error: expected "}".\a     \2577 \a 528 \2502    }\a     \2502     ^\a     \2575 \a   src/components/drawing-tools-panel.scss 528:4  root stylesheet';
 }
