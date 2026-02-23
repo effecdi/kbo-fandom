@@ -851,6 +851,7 @@ function PanelCanvas({
       | { type: "bubble"; z: number; b: SpeechBubble }
       | { type: "text"; z: number; te: CanvasTextElement }
       | { type: "line"; z: number; le: CanvasLineElement }
+      | { type: "drawing"; z: number; dl: DrawingLayer }
     > = [
         ...p.characters.map((ch) => ({
           type: "char" as const,
@@ -871,6 +872,11 @@ function PanelCanvas({
           type: "line" as const,
           z: le.zIndex ?? 20,
           le,
+        })),
+        ...(p.drawingLayers || []).filter((dl) => dl.visible && dl.imageEl).map((dl) => ({
+          type: "drawing" as const,
+          z: dl.zIndex ?? 15,
+          dl,
         })),
       ];
     drawables.sort((a, b) => a.z - b.z);
@@ -1011,6 +1017,14 @@ function PanelCanvas({
 
         ctx.setLineDash([]);
         ctx.restore();
+      } else if (d.type === "drawing") {
+        const dl = d.dl;
+        if (dl.imageEl) {
+          ctx.save();
+          ctx.globalAlpha = dl.opacity ?? 1;
+          ctx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
+          ctx.restore();
+        }
       } else if (d.type === "char") {
         const ch = d.ch;
         if (ch.imageEl) {
