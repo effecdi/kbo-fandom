@@ -372,6 +372,8 @@ $transition-normal: 200ms ease;
   display: flex;
   height: auto;
   user-select: none;
+  align-items: end;
+  gap: 0.3rem;
 
   &__strip {
     display: flex;
@@ -387,9 +389,6 @@ $transition-normal: 200ms ease;
     }
 
     &--sub {
-      position: absolute;
-      left: 107%;
-      top: 0%;
       background: hsl(var(--card));
       border: 1px solid $border-color;
       border-radius: 0.8rem;
@@ -472,6 +471,8 @@ $transition-normal: 200ms ease;
   // ─── Settings panel ───────────────────────────────────────────────────
 
   &__settings {
+    z-index: 999;
+    height: 100%;
     display: flex;
     flex-direction: column;
     gap: 8px;

@@ -4765,18 +4765,19 @@ export default function StoryPage() {
     <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-muted/30 dark:bg-background relative">
       <EditorOnboarding editor="story" />
       <div
-        className="flex flex-col items-center py-3 px-1.5 gap-1 w-[100px] shrink-0 bg-card dark:bg-card border-r"
+        className="flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-card dark:bg-card border-r"
+        style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "50px" }}
         data-testid="left-icon-sidebar"
       >
         {LEFT_TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => toggleLeftTab(tab.id)}
-            className={`flex flex-col items-center justify-center rounded-lg text-[10px] gap-0.5 transition-colors py-[18px] px-0 w-[90px] h-auto ${activeLeftTab === tab.id ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover-elevate"}`}
+            className={`flex items-center justify-center rounded-full transition-colors w-[40px] h-[40px] pt-[10px] pb-[10px] ${activeLeftTab === tab.id ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover-elevate"}`}
             data-testid={`button-left-tab-${tab.id}`}
+            title={tab.label}
           >
             <tab.icon className="h-[18px] w-[18px]" />
-            <span>{tab.label}</span>
           </button>
         ))}
       </div>
