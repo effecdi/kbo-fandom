@@ -4319,7 +4319,7 @@ export default function StoryPage() {
   type LeftTab = "image" | "ai" | "elements" | "tools" | null;
   const [activeLeftTab, setActiveLeftTab] = useState<LeftTab>(null);
   type ElementsSubTab = "script" | "bubble" | "template";
-  const [elementsSubTab, setElementsSubTab] = useState<ElementsSubTab>("bubble");
+  const [elementsSubTab, setElementsSubTab] = useState<ElementsSubTab>("script");
   const [selectedToolItem, setSelectedToolItem] = useState<string>("select");
   const [showDrawingSettings, setShowDrawingSettings] = useState(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
