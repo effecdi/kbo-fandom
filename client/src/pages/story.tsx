@@ -4578,6 +4578,12 @@ export default function StoryPage() {
   const toggleLeftTab = (tab: LeftTab) => {
     setActiveLeftTab((prev) => {
       const next = prev === tab ? null : tab;
+      if (next === "elements" && elementsSubTab === "bubble") {
+        const p = panels[activePanelIndex];
+        if (p && p.bubbles.length > 0 && !p.bubbles.find((b) => b.id === selectedBubbleId)) {
+          setSelectedBubbleId(p.bubbles[0].id);
+        }
+      }
       return next;
     });
   };
@@ -5751,7 +5757,12 @@ export default function StoryPage() {
                       ]).map((sub) => (
                         <button
                           key={sub.id}
-                          onClick={() => setElementsSubTab(sub.id)}
+                          onClick={() => {
+                            setElementsSubTab(sub.id);
+                            if (sub.id === "bubble" && activePanel.bubbles.length > 0 && !activePanel.bubbles.find((b) => b.id === selectedBubbleId)) {
+                              setSelectedBubbleId(activePanel.bubbles[0].id);
+                            }
+                          }}
                           className={`px-2.5 py-1 text-[11px] rounded-md border transition-colors ${elementsSubTab === sub.id ? "border-foreground/40 bg-foreground/10 font-semibold" : "border-border hover-elevate"}`}
                         >
                           {sub.label}
