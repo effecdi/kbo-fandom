@@ -1434,7 +1434,7 @@ case "sticker":
         const jitterScale = jitter * 10;
 
         // tailRoundness: 0=sharp tip, >0=oval/ellipse tip
-        const tailRoundness = bubble.tailRoundness ?? 0;
+        const tailRoundness = bubble.tailRoundness ?? 4;
         const tailAngle = Math.atan2(geo.tipY - baseMidY, geo.tipX - baseMidX);
 
         const baseC1x = geo.baseAx + (baseMidX - geo.baseAx) * (0.5 + curvePull * 0.45);
