@@ -287,6 +287,8 @@ interface DrawingLayer {
   zIndex: number;
   label: string;           // "드로잉", "직선", "곡선", "꺾인선", "텍스트", "지우개"
   opacity: number;         // 0-1, per-layer opacity
+  x?: number;
+  y?: number;
 }
 
 interface PanelData {
@@ -1022,7 +1024,7 @@ function PanelCanvas({
           if (dl.type === "eraser") {
             ctx.globalCompositeOperation = "destination-out";
           }
-          ctx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
+          ctx.drawImage(dl.imageEl, dl.x ?? 0, dl.y ?? 0, CANVAS_W, CANVAS_H);
           ctx.restore();
         }
       } else if (d.type === "char") {
@@ -4404,7 +4406,10 @@ export default function StoryPage() {
       if (!layer.imageEl) continue;
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       ctx.drawImage(layer.imageEl, 0, 0);
-      const pixel = ctx.getImageData(Math.floor(canvasX), Math.floor(canvasY), 1, 1);
+      const testX = Math.floor(canvasX - (layer.x ?? 0));
+      const testY = Math.floor(canvasY - (layer.y ?? 0));
+      if (testX < 0 || testY < 0 || testX >= canvasWidth || testY >= canvasHeight) continue;
+      const pixel = ctx.getImageData(testX, testY, 1, 1);
       if (pixel.data[3] > 10) return layer;
     }
     return null;
@@ -4444,7 +4449,7 @@ export default function StoryPage() {
 
   // Drag state for text/line element movement
   const dragElementRef = useRef<{
-    type: "text" | "line";
+    type: "text" | "line" | "drawing";
     id: string;
     startMouseX: number;
     startMouseY: number;
@@ -4452,7 +4457,7 @@ export default function StoryPage() {
   } | null>(null);
 
   const handleElementDragStart = useCallback((
-    type: "text" | "line",
+    type: "text" | "line" | "drawing",
     id: string,
     mouseX: number,
     mouseY: number,
@@ -4478,6 +4483,17 @@ export default function StoryPage() {
           startMouseX: mouseX,
           startMouseY: mouseY,
           startPositions: le.points.map(p => ({ x: p.x, y: p.y })),
+        };
+      }
+    } else if (type === "drawing") {
+      const dl = (panel.drawingLayers || []).find(l => l.id === id);
+      if (dl) {
+        dragElementRef.current = {
+          type: "drawing",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: [{ x: dl.x ?? 0, y: dl.y ?? 0 }],
         };
       }
     }
@@ -4509,6 +4525,12 @@ export default function StoryPage() {
         };
       });
       updatePanel(panelIdx, { ...p, lineElements: newLines });
+    } else if (drag.type === "drawing") {
+      const newLayers = (p.drawingLayers || []).map(dl => {
+        if (dl.id !== drag.id) return dl;
+        return { ...dl, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
+      });
+      updatePanel(panelIdx, { ...p, drawingLayers: newLayers });
     }
   }, [panels, updatePanel]);
 
@@ -6497,6 +6519,7 @@ export default function StoryPage() {
                                 setSelectedLineId(null);
                                 setSelectedCharId(null);
                                 setSelectedBubbleId(null);
+                                handleElementDragStart("drawing", hit.id, canvasX, canvasY, panel);
                               } else {
                                 setSelectedDrawingLayerId(null);
                                 setSelectedTextId(null);
@@ -6615,11 +6638,13 @@ export default function StoryPage() {
                           }
                           if (maxX <= minX || maxY <= minY) return null;
                           const pad = 4;
+                          const offsetX = layer.x ?? 0;
+                          const offsetY = layer.y ?? 0;
                           return (
                             <div style={{
                               position: "absolute",
-                              left: `${((minX - pad) / 450) * 100}%`,
-                              top: `${((minY - pad) / 600) * 100}%`,
+                              left: `${((minX + offsetX - pad) / 450) * 100}%`,
+                              top: `${((minY + offsetY - pad) / 600) * 100}%`,
                               width: `${((maxX - minX + pad * 2) / 450) * 100}%`,
                               height: `${((maxY - minY + pad * 2) / 600) * 100}%`,
                               border: "2px dashed hsl(var(--primary))",

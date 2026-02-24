@@ -21,6 +21,8 @@ export interface DrawingLayer {
   zIndex: number;
   label: string;
   opacity: number; // 0-1, per-layer opacity
+  x?: number;
+  y?: number;
 }
 
 export interface DrawingToolState {
