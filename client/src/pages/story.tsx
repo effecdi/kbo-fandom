@@ -73,9 +73,6 @@ import {
   GitCommitHorizontal,
   Eye,
   EyeOff,
-  StickyNote,
-  Grid3X3,
-  Circle,
 } from "lucide-react";
 import DrawingCanvas, { type DrawingToolState, type DrawingCanvasHandle } from "@/components/drawing-canvas";
 import CanvasFloatingToolbar from "@/components/canvas-floating-toolbar";
@@ -851,6 +848,7 @@ function PanelCanvas({
       | { type: "bubble"; z: number; b: SpeechBubble }
       | { type: "text"; z: number; te: CanvasTextElement }
       | { type: "line"; z: number; le: CanvasLineElement }
+      | { type: "drawing"; z: number; dl: DrawingLayer }
     > = [
         ...p.characters.map((ch) => ({
           type: "char" as const,
@@ -871,6 +869,11 @@ function PanelCanvas({
           type: "line" as const,
           z: le.zIndex ?? 20,
           le,
+        })),
+        ...(p.drawingLayers || []).map((dl) => ({
+          type: "drawing" as const,
+          z: dl.zIndex ?? 15,
+          dl,
         })),
       ];
     drawables.sort((a, b) => a.z - b.z);
@@ -1056,6 +1059,17 @@ function PanelCanvas({
           ctx.font = "13px sans-serif";
           ctx.fillStyle = "hsl(220,40%,60%)";
           ctx.fillText("잠시만 기다려주세요", CANVAS_W / 2, CANVAS_H / 2 + 14);
+          ctx.restore();
+        }
+      } else if (d.type === "drawing") {
+        const dl = d.dl;
+        if (dl.visible && dl.imageEl) {
+          ctx.save();
+          ctx.globalAlpha = dl.opacity ?? 1;
+          if (dl.type === "eraser") {
+            ctx.globalCompositeOperation = "destination-out";
+          }
+          ctx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
           ctx.restore();
         }
       } else {
@@ -4340,6 +4354,8 @@ export default function StoryPage() {
     setSelectedLineId(null);
     setSelectedBubbleId(null);
     setSelectedCharId(null);
+    // Auto-open editing for the new text element
+    setTimeout(() => setEditingTextId(newText.id), 100);
   }, [panels, activePanelIndex, updatePanel]);
 
   const handleAddLine = useCallback((lineType: LineType) => {
@@ -4422,6 +4438,118 @@ export default function StoryPage() {
   // Text tool input state
   const [textInputPos, setTextInputPos] = useState<{ x: number; y: number } | null>(null);
   const [textInputValue, setTextInputValue] = useState("");
+
+  // Text element inline editing state
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
+
+  // Drag state for text/line element movement
+  const dragElementRef = useRef<{
+    type: "text" | "line";
+    id: string;
+    startMouseX: number;
+    startMouseY: number;
+    startPositions: { x: number; y: number }[];
+  } | null>(null);
+
+  const handleElementDragStart = useCallback((
+    type: "text" | "line",
+    id: string,
+    mouseX: number,
+    mouseY: number,
+    panel: PanelData,
+  ) => {
+    if (type === "text") {
+      const te = (panel.textElements || []).find(t => t.id === id);
+      if (te) {
+        dragElementRef.current = {
+          type: "text",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: [{ x: te.x, y: te.y }],
+        };
+      }
+    } else if (type === "line") {
+      const le = (panel.lineElements || []).find(l => l.id === id);
+      if (le) {
+        dragElementRef.current = {
+          type: "line",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: le.points.map(p => ({ x: p.x, y: p.y })),
+        };
+      }
+    }
+  }, []);
+
+  const handleElementDragMove = useCallback((mouseX: number, mouseY: number, panelIdx: number) => {
+    const drag = dragElementRef.current;
+    if (!drag) return;
+    const p = panels[panelIdx];
+    if (!p) return;
+    const dx = mouseX - drag.startMouseX;
+    const dy = mouseY - drag.startMouseY;
+
+    if (drag.type === "text") {
+      const newTexts = (p.textElements || []).map(te => {
+        if (te.id !== drag.id) return te;
+        return { ...te, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
+      });
+      updatePanel(panelIdx, { ...p, textElements: newTexts });
+    } else if (drag.type === "line") {
+      const newLines = (p.lineElements || []).map(le => {
+        if (le.id !== drag.id) return le;
+        return {
+          ...le,
+          points: le.points.map((pt, i) => ({
+            x: drag.startPositions[i].x + dx,
+            y: drag.startPositions[i].y + dy,
+          })),
+        };
+      });
+      updatePanel(panelIdx, { ...p, lineElements: newLines });
+    }
+  }, [panels, updatePanel]);
+
+  const handleElementDragEnd = useCallback(() => {
+    dragElementRef.current = null;
+  }, []);
+
+  // Delete selected text/line/drawing elements on Delete/Backspace
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+      if (e.key === "Delete" || e.key === "Backspace") {
+        const p = panels[activePanelIndex];
+        if (!p) return;
+        if (selectedTextId) {
+          e.preventDefault();
+          const newTexts = (p.textElements || []).filter(t => t.id !== selectedTextId);
+          updatePanel(activePanelIndex, { ...p, textElements: newTexts });
+          setSelectedTextId(null);
+          return;
+        }
+        if (selectedLineId) {
+          e.preventDefault();
+          const newLines = (p.lineElements || []).filter(l => l.id !== selectedLineId);
+          updatePanel(activePanelIndex, { ...p, lineElements: newLines });
+          setSelectedLineId(null);
+          return;
+        }
+        if (selectedDrawingLayerId) {
+          e.preventDefault();
+          const newLayers = (p.drawingLayers || []).filter(l => l.id !== selectedDrawingLayerId);
+          updatePanel(activePanelIndex, { ...p, drawingLayers: newLayers });
+          setSelectedDrawingLayerId(null);
+          return;
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedDrawingLayerId, updatePanel]);
 
   const toggleLeftTab = (tab: LeftTab) => {
     setActiveLeftTab((prev) => {
@@ -4747,11 +4875,8 @@ export default function StoryPage() {
   const TOOL_ITEMS: { id: string; icon: typeof Pen; label: string; color?: string }[] = [
     { id: "select", icon: MousePointer2, label: "선택" },
     { id: "drawing", icon: Pen, label: "드로잉", color: "#ef4444" },
-    { id: "shape", icon: Circle, label: "도형", color: "#6b7280" },
     { id: "line", icon: Minus, label: "선", color: "#3b82f6" },
-    { id: "sticky", icon: StickyNote, label: "메모", color: "#eab308" },
     { id: "text", icon: Type, label: "텍스트", color: "#8b5cf6" },
-    { id: "grid", icon: Grid3X3, label: "그리드", color: "#3b82f6" },
   ];
 
   // ─── Drawing brush items for sub-panel ──────────────────────────────
@@ -6308,49 +6433,47 @@ export default function StoryPage() {
                           </div>
                         )}
 
-                        {/* Select-mode: click to select drawing/text/line layers + visual feedback + floating toolbar */}
+                        {/* Select-mode: click/drag/dblclick to interact with drawing/text/line layers */}
                         {(selectedToolItem === "select" || selectedToolItem === "text" || selectedToolItem === "line") && activePanelIndex === i && (
                           (panel.drawingLayers || []).length > 0 ||
                           (panel.textElements || []).length > 0 ||
                           (panel.lineElements || []).length > 0
                         ) && (
                           <div
-                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto" }}
-                            onClick={(e) => {
+                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: dragElementRef.current ? "grabbing" : "default" }}
+                            onMouseDown={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
 
-                              // Hit test text elements (topmost first by zIndex)
+                              // Hit test text elements
                               const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
                               for (const te of textEls) {
-                                // Text elements use pixel coordinates directly
                                 if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
                                   setSelectedTextId(te.id);
                                   setSelectedLineId(null);
                                   setSelectedDrawingLayerId(null);
                                   setSelectedCharId(null);
                                   setSelectedBubbleId(null);
+                                  handleElementDragStart("text", te.id, canvasX, canvasY, panel);
                                   return;
                                 }
                               }
 
-                              // Hit test line elements (topmost first by zIndex)
+                              // Hit test line elements
                               const lineEls = [...(panel.lineElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
                               for (const le of lineEls) {
                                 if (le.points.length < 2) continue;
-                                const HIT_DIST = 12; // px threshold
+                                const HIT_DIST = 12;
                                 let hitLine = false;
                                 for (let pi = 0; pi < le.points.length - 1; pi++) {
-                                  // Line elements use pixel coordinates directly
                                   const ax = le.points[pi].x;
                                   const ay = le.points[pi].y;
                                   const bx = le.points[pi + 1].x;
                                   const by = le.points[pi + 1].y;
-                                  // Point-to-segment distance
                                   const dx = bx - ax, dy = by - ay;
                                   const lenSq = dx * dx + dy * dy;
-                                  let t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((canvasX - ax) * dx + (canvasY - ay) * dy) / lenSq));
+                                  const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((canvasX - ax) * dx + (canvasY - ay) * dy) / lenSq));
                                   const projX = ax + t * dx, projY = ay + t * dy;
                                   const dist = Math.sqrt((canvasX - projX) ** 2 + (canvasY - projY) ** 2);
                                   if (dist <= HIT_DIST) { hitLine = true; break; }
@@ -6361,6 +6484,7 @@ export default function StoryPage() {
                                   setSelectedDrawingLayerId(null);
                                   setSelectedCharId(null);
                                   setSelectedBubbleId(null);
+                                  handleElementDragStart("line", le.id, canvasX, canvasY, panel);
                                   return;
                                 }
                               }
@@ -6377,10 +6501,94 @@ export default function StoryPage() {
                                 setSelectedDrawingLayerId(null);
                                 setSelectedTextId(null);
                                 setSelectedLineId(null);
+                                setEditingTextId(null);
+                              }
+                            }}
+                            onMouseMove={(e) => {
+                              if (!dragElementRef.current) return;
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
+                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+                              handleElementDragMove(canvasX, canvasY, i);
+                            }}
+                            onMouseUp={() => {
+                              handleElementDragEnd();
+                            }}
+                            onMouseLeave={() => {
+                              handleElementDragEnd();
+                            }}
+                            onDoubleClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
+                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+
+                              // Double-click on text element to edit
+                              const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
+                              for (const te of textEls) {
+                                if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
+                                  setEditingTextId(te.id);
+                                  setSelectedTextId(te.id);
+                                  return;
+                                }
                               }
                             }}
                           />
                         )}
+
+                        {/* Inline text editing overlay */}
+                        {activePanelIndex === i && editingTextId && (() => {
+                          const te = (panel.textElements || []).find(t => t.id === editingTextId);
+                          if (!te) return null;
+                          return (
+                            <div
+                              style={{
+                                position: "absolute",
+                                left: `${(te.x / 450) * 100}%`,
+                                top: `${(te.y / 600) * 100}%`,
+                                width: `${(te.width / 450) * 100}%`,
+                                minHeight: `${(te.height / 600) * 100}%`,
+                                zIndex: 30,
+                              }}
+                            >
+                              <textarea
+                                autoFocus
+                                value={te.text}
+                                onChange={(e) => {
+                                  const newText = e.target.value;
+                                  // Auto-adjust height based on content lines
+                                  const lines = newText.split("\n").length;
+                                  const minHeight = Math.max(te.height, lines * te.fontSize * 1.3 + 16);
+                                  handleUpdateTextElement({ ...te, text: newText, height: minHeight });
+                                }}
+                                onBlur={() => setEditingTextId(null)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Escape") {
+                                    setEditingTextId(null);
+                                  }
+                                }}
+                                style={{
+                                  width: "100%",
+                                  minHeight: "100%",
+                                  resize: "both",
+                                  overflow: "auto",
+                                  background: "rgba(255,255,255,0.95)",
+                                  border: "2px solid hsl(173,80%,45%)",
+                                  borderRadius: "4px",
+                                  padding: "4px 6px",
+                                  fontSize: `${te.fontSize * 0.7}px`,
+                                  fontWeight: te.bold ? "bold" : "normal",
+                                  fontStyle: te.italic ? "italic" : "normal",
+                                  color: te.color,
+                                  textAlign: te.textAlign,
+                                  outline: "none",
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                  fontFamily: te.fontFamily === "default" ? "sans-serif" : te.fontFamily,
+                                  lineHeight: "1.3",
+                                }}
+                              />
+                            </div>
+                          );
+                        })()}
 
                         {/* Selected drawing layer bounding box */}
                         {selectedToolItem === "select" && activePanelIndex === i && selectedDrawingLayerId && (() => {
