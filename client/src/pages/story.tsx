@@ -2396,7 +2396,12 @@ function EditorPanel({
   const isBubbleMode = mode === "bubble";
 
   useEffect(() => {
-    if (isBubbleMode && panel.bubbles.length > 0 && !panel.bubbles.find((b) => b.id === selectedBubbleId)) {
+    if (!isBubbleMode) return;
+    if (panel.bubbles.length === 0) {
+      const newB = createBubble(CANVAS_W, CANVAS_H);
+      onUpdate({ ...panel, bubbles: [newB] });
+      setSelectedBubbleId(newB.id);
+    } else if (!panel.bubbles.find((b) => b.id === selectedBubbleId)) {
       setSelectedBubbleId(panel.bubbles[0].id);
     }
   }, [isBubbleMode, panel.bubbles, selectedBubbleId, setSelectedBubbleId]);
