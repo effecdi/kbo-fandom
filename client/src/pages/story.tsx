@@ -2177,7 +2177,9 @@ function EditorPanel({
 }) {
   const [showCharPicker, setShowCharPicker] = useState(false);
   const isTemplateMode = mode === "template";
-  const [showBubbleTemplatePicker, setShowBubbleTemplatePicker] = useState(isTemplateMode);
+  const [showBubbleTemplatePicker, setShowBubbleTemplatePicker] = useState(
+    isTemplateMode || (mode === "bubble" && panel.bubbles.length === 0)
+  );
   const [templateCatIdx, setTemplateCatIdx] = useState(0);
   const [removingBg, setRemovingBg] = useState(false);
   const { toast } = useToast();
