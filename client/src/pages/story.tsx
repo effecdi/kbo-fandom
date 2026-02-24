@@ -2541,6 +2541,36 @@ function EditorPanel({
         )
       }
 
+      {isBubbleMode && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-muted-foreground">
+              말풍선 ({panel.bubbles.length}개)
+            </span>
+            <Button size="sm" variant="outline" className="h-6 text-[11px] px-2" onClick={() => setShowBubbleTemplatePicker(true)}>
+              <Plus className="h-3 w-3 mr-1" /> 추가
+            </Button>
+          </div>
+          {panel.bubbles.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground text-center py-3">
+              아직 말풍선이 없습니다. 추가 버튼을 눌러주세요.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {panel.bubbles.map((b, i) => (
+                <button
+                  key={b.id}
+                  onClick={() => setSelectedBubbleId(b.id)}
+                  className={`w-full text-left px-2 py-1.5 text-[11px] rounded-md border transition-colors truncate ${b.id === selectedBubbleId ? "border-primary bg-primary/10 font-semibold" : "border-border hover-elevate"}`}
+                >
+                  {b.text || `말풍선 ${i + 1}`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {isImageMode && (
         <div className="rounded-md space-y-3">
           <div className="space-y-1.5">
@@ -4578,12 +4608,6 @@ export default function StoryPage() {
   const toggleLeftTab = (tab: LeftTab) => {
     setActiveLeftTab((prev) => {
       const next = prev === tab ? null : tab;
-      if (next === "elements" && elementsSubTab === "bubble") {
-        const p = panels[activePanelIndex];
-        if (p && p.bubbles.length > 0 && !p.bubbles.find((b) => b.id === selectedBubbleId)) {
-          setSelectedBubbleId(p.bubbles[0].id);
-        }
-      }
       return next;
     });
   };
@@ -5757,12 +5781,7 @@ export default function StoryPage() {
                       ]).map((sub) => (
                         <button
                           key={sub.id}
-                          onClick={() => {
-                            setElementsSubTab(sub.id);
-                            if (sub.id === "bubble" && activePanel.bubbles.length > 0 && !activePanel.bubbles.find((b) => b.id === selectedBubbleId)) {
-                              setSelectedBubbleId(activePanel.bubbles[0].id);
-                            }
-                          }}
+                          onClick={() => setElementsSubTab(sub.id)}
                           className={`px-2.5 py-1 text-[11px] rounded-md border transition-colors ${elementsSubTab === sub.id ? "border-foreground/40 bg-foreground/10 font-semibold" : "border-border hover-elevate"}`}
                         >
                           {sub.label}
@@ -5771,36 +5790,23 @@ export default function StoryPage() {
                     </div>
 
                     {elementsSubTab === "bubble" && (
-                      <>
-                        {!activePanel.bubbles.find((b) => b.id === selectedBubbleId) && (
-                          <div className="text-center py-6 space-y-3">
-                            <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground/40" />
-                            <p className="text-[11px] text-muted-foreground">
-                              캔버스에서 말풍선을 선택하거나<br />새 말풍선을 추가하세요
-                            </p>
-                            <Button size="sm" variant="outline" onClick={() => setElementsSubTab("template")}>
-                              말풍선 추가
-                            </Button>
-                          </div>
-                        )}
-                        <EditorPanel
-                          panel={activePanel}
-                          index={activePanelIndex}
-                          total={panels.length}
-                          onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
-                          onRemove={() => removePanel(activePanelIndex)}
-                          galleryImages={galleryData ?? []}
-                          galleryLoading={galleryLoading}
-                          selectedBubbleId={selectedBubbleId}
-                          setSelectedBubbleId={setSelectedBubbleId}
-                          selectedCharId={selectedCharId}
-                          setSelectedCharId={setSelectedCharId}
-                          creatorTier={usageData?.creatorTier ?? 0}
-                          isPro={isPro}
-                          mode="bubble"
-                          bubbleTextareaRef={bubbleTextareaRef}
-                        />
-                      </>
+                      <EditorPanel
+                        panel={activePanel}
+                        index={activePanelIndex}
+                        total={panels.length}
+                        onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
+                        onRemove={() => removePanel(activePanelIndex)}
+                        galleryImages={galleryData ?? []}
+                        galleryLoading={galleryLoading}
+                        selectedBubbleId={selectedBubbleId}
+                        setSelectedBubbleId={setSelectedBubbleId}
+                        selectedCharId={selectedCharId}
+                        setSelectedCharId={setSelectedCharId}
+                        creatorTier={usageData?.creatorTier ?? 0}
+                        isPro={isPro}
+                        mode="bubble"
+                        bubbleTextareaRef={bubbleTextareaRef}
+                      />
                     )}
 
                     {elementsSubTab === "template" && (
