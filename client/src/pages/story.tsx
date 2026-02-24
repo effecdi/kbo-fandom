@@ -4308,8 +4308,10 @@ export default function StoryPage() {
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
   const bubbleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  type LeftTab = "image" | "ai" | "script" | "bubble" | "template" | "tools" | null;
+  type LeftTab = "image" | "ai" | "elements" | "tools" | null;
   const [activeLeftTab, setActiveLeftTab] = useState<LeftTab>(null);
+  type ElementsSubTab = "script" | "bubble" | "template";
+  const [elementsSubTab, setElementsSubTab] = useState<ElementsSubTab>("bubble");
   const [selectedToolItem, setSelectedToolItem] = useState<string>("select");
   const [showDrawingSettings, setShowDrawingSettings] = useState(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
@@ -4888,9 +4890,7 @@ export default function StoryPage() {
     { id: "image", icon: ImageIcon as any, label: "이미지 선택" },
     { id: "ai", icon: Wand2, label: "AI 프롬프트" },
     { id: "tools", icon: Pen as any, label: "도구" },
-    { id: "script", icon: Type as any, label: "자막 설정" },
-    { id: "bubble", icon: MessageSquare as any, label: "말풍선" },
-    { id: "template", icon: Layers as any, label: "템플릿" },
+    { id: "elements", icon: Boxes as any, label: "요소" },
   ];
 
   // ─── Tool items for compact tools panel ─────────────────────────────
@@ -5724,7 +5724,7 @@ export default function StoryPage() {
                     </div>
                   )}
 
-                {activeLeftTab === "bubble" && activePanel && (
+                {activeLeftTab === "elements" && activePanel && (
                   <>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5">
@@ -5734,7 +5734,7 @@ export default function StoryPage() {
                         >
                           <ArrowLeft className="h-3.5 w-3.5" />
                         </button>
-                        <h3 className="text-sm font-semibold">말풍선</h3>
+                        <h3 className="text-sm font-semibold">요소</h3>
                       </div>
                       <button
                         onClick={() => setActiveLeftTab(null)}
@@ -5743,83 +5743,63 @@ export default function StoryPage() {
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <EditorPanel
-                      panel={activePanel}
-                      index={activePanelIndex}
-                      total={panels.length}
-                      onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
-                      onRemove={() => removePanel(activePanelIndex)}
-                      galleryImages={galleryData ?? []}
-                      galleryLoading={galleryLoading}
-                      selectedBubbleId={selectedBubbleId}
-                      setSelectedBubbleId={setSelectedBubbleId}
-                      selectedCharId={selectedCharId}
-                      setSelectedCharId={setSelectedCharId}
-                      creatorTier={usageData?.creatorTier ?? 0}
-                      isPro={isPro}
-                      mode="bubble"
-                      bubbleTextareaRef={bubbleTextareaRef}
-                    />
-                  </>
-                )}
-
-                {activeLeftTab === "template" && activePanel && (
-                  <>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex gap-1 mb-3">
+                      {([
+                        { id: "script" as const, label: "자막 설정" },
+                        { id: "bubble" as const, label: "말풍선" },
+                        { id: "template" as const, label: "템플릿 가져오기" },
+                      ]).map((sub) => (
                         <button
-                          onClick={() => setActiveLeftTab(null)}
-                          className="text-muted-foreground hover-elevate rounded-md p-1"
+                          key={sub.id}
+                          onClick={() => setElementsSubTab(sub.id)}
+                          className={`px-2.5 py-1 text-[11px] rounded-md border transition-colors ${elementsSubTab === sub.id ? "border-foreground/40 bg-foreground/10 font-semibold" : "border-border hover-elevate"}`}
                         >
-                          <ArrowLeft className="h-3.5 w-3.5" />
+                          {sub.label}
                         </button>
-                        <h3 className="text-sm font-semibold">템플릿 가져오기</h3>
-                      </div>
-                      <button
-                        onClick={() => setActiveLeftTab(null)}
-                        className="text-muted-foreground hover-elevate rounded-md p-1"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
+                      ))}
                     </div>
-                    <EditorPanel
-                      panel={activePanel}
-                      index={activePanelIndex}
-                      total={panels.length}
-                      onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
-                      onRemove={() => removePanel(activePanelIndex)}
-                      galleryImages={galleryData ?? []}
-                      galleryLoading={galleryLoading}
-                      selectedBubbleId={selectedBubbleId}
-                      setSelectedBubbleId={setSelectedBubbleId}
-                      selectedCharId={selectedCharId}
-                      setSelectedCharId={setSelectedCharId}
-                      creatorTier={usageData?.creatorTier ?? 0}
-                      isPro={isPro}
-                      mode="template"
-                    />
-                  </>
-                )}
 
-                  {activeLeftTab === "script" && activePanel && (
+                    {elementsSubTab === "bubble" && (
+                      <EditorPanel
+                        panel={activePanel}
+                        index={activePanelIndex}
+                        total={panels.length}
+                        onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
+                        onRemove={() => removePanel(activePanelIndex)}
+                        galleryImages={galleryData ?? []}
+                        galleryLoading={galleryLoading}
+                        selectedBubbleId={selectedBubbleId}
+                        setSelectedBubbleId={setSelectedBubbleId}
+                        selectedCharId={selectedCharId}
+                        setSelectedCharId={setSelectedCharId}
+                        creatorTier={usageData?.creatorTier ?? 0}
+                        isPro={isPro}
+                        mode="bubble"
+                        bubbleTextareaRef={bubbleTextareaRef}
+                      />
+                    )}
+
+                    {elementsSubTab === "template" && (
+                      <EditorPanel
+                        panel={activePanel}
+                        index={activePanelIndex}
+                        total={panels.length}
+                        onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
+                        onRemove={() => removePanel(activePanelIndex)}
+                        galleryImages={galleryData ?? []}
+                        galleryLoading={galleryLoading}
+                        selectedBubbleId={selectedBubbleId}
+                        setSelectedBubbleId={setSelectedBubbleId}
+                        selectedCharId={selectedCharId}
+                        setSelectedCharId={setSelectedCharId}
+                        creatorTier={usageData?.creatorTier ?? 0}
+                        isPro={isPro}
+                        mode="template"
+                      />
+                    )}
+
+                  {elementsSubTab === "script" && (
                     <>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => setActiveLeftTab(null)}
-                            className="text-muted-foreground hover-elevate rounded-md p-1"
-                          >
-                            <ArrowLeft className="h-3.5 w-3.5" />
-                          </button>
-                          <h3 className="text-sm font-semibold">자막 설정</h3>
-                        </div>
-                        <button
-                          onClick={() => setActiveLeftTab(null)}
-                          className="text-muted-foreground hover-elevate rounded-md p-1"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
                       <p className="text-[11px] text-muted-foreground">
                         패널 {activePanelIndex + 1}의 상단/하단 스크립트를
                         설정합니다.
@@ -6207,6 +6187,9 @@ export default function StoryPage() {
                     </>
                   )}
 
+                  </>
+                )}
+
                 </div>
               </div>
           )}
@@ -6407,7 +6390,8 @@ export default function StoryPage() {
                           }}
                           onDoubleClickBubble={() => {
                             // Switch to element > bubble sub-tab on double-click
-                            setActiveLeftTab("bubble");
+                            setActiveLeftTab("elements");
+                            setElementsSubTab("bubble");
                             setTimeout(() => bubbleTextareaRef.current?.focus(), 120);
                           }}
                           onDeletePanel={() => removePanel(i)}
