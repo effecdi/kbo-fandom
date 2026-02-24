@@ -5760,23 +5760,36 @@ export default function StoryPage() {
                     </div>
 
                     {elementsSubTab === "bubble" && (
-                      <EditorPanel
-                        panel={activePanel}
-                        index={activePanelIndex}
-                        total={panels.length}
-                        onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
-                        onRemove={() => removePanel(activePanelIndex)}
-                        galleryImages={galleryData ?? []}
-                        galleryLoading={galleryLoading}
-                        selectedBubbleId={selectedBubbleId}
-                        setSelectedBubbleId={setSelectedBubbleId}
-                        selectedCharId={selectedCharId}
-                        setSelectedCharId={setSelectedCharId}
-                        creatorTier={usageData?.creatorTier ?? 0}
-                        isPro={isPro}
-                        mode="bubble"
-                        bubbleTextareaRef={bubbleTextareaRef}
-                      />
+                      <>
+                        {!activePanel.bubbles.find((b) => b.id === selectedBubbleId) && (
+                          <div className="text-center py-6 space-y-3">
+                            <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground/40" />
+                            <p className="text-[11px] text-muted-foreground">
+                              캔버스에서 말풍선을 선택하거나<br />새 말풍선을 추가하세요
+                            </p>
+                            <Button size="sm" variant="outline" onClick={() => setElementsSubTab("template")}>
+                              말풍선 추가
+                            </Button>
+                          </div>
+                        )}
+                        <EditorPanel
+                          panel={activePanel}
+                          index={activePanelIndex}
+                          total={panels.length}
+                          onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
+                          onRemove={() => removePanel(activePanelIndex)}
+                          galleryImages={galleryData ?? []}
+                          galleryLoading={galleryLoading}
+                          selectedBubbleId={selectedBubbleId}
+                          setSelectedBubbleId={setSelectedBubbleId}
+                          selectedCharId={selectedCharId}
+                          setSelectedCharId={setSelectedCharId}
+                          creatorTier={usageData?.creatorTier ?? 0}
+                          isPro={isPro}
+                          mode="bubble"
+                          bubbleTextareaRef={bubbleTextareaRef}
+                        />
+                      </>
                     )}
 
                     {elementsSubTab === "template" && (
@@ -6366,6 +6379,10 @@ export default function StoryPage() {
                             setSelectedTextId(null);
                             setSelectedLineId(null);
                             setActivePanelIndex(i);
+                            if (id) {
+                              setActiveLeftTab("elements");
+                              setElementsSubTab("bubble");
+                            }
                           }}
                           selectedCharId={activePanelIndex === i ? selectedCharId : null}
                           onSelectChar={(id) => {
