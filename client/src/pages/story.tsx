@@ -2395,8 +2395,10 @@ function EditorPanel({
   const isImageMode = mode === "image";
   const isBubbleMode = mode === "bubble";
 
+  const didAutoSelect = useRef(false);
   useEffect(() => {
-    if (!isBubbleMode) return;
+    if (!isBubbleMode) { didAutoSelect.current = false; return; }
+    if (didAutoSelect.current) return;
     if (panel.bubbles.length === 0) {
       const newB = createBubble(CANVAS_W, CANVAS_H);
       onUpdate({ ...panel, bubbles: [newB] });
@@ -2404,6 +2406,7 @@ function EditorPanel({
     } else if (!panel.bubbles.find((b) => b.id === selectedBubbleId)) {
       setSelectedBubbleId(panel.bubbles[0].id);
     }
+    didAutoSelect.current = true;
   }, [isBubbleMode, panel.bubbles, selectedBubbleId, setSelectedBubbleId]);
 
   const handleRemoveBackground = async () => {
