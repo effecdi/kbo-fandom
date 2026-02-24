@@ -1016,9 +1016,12 @@ function PanelCanvas({
         ctx.restore();
       } else if (d.type === "drawing") {
         const dl = d.dl;
-        if (dl.imageEl) {
+        if (dl.visible && dl.imageEl) {
           ctx.save();
           ctx.globalAlpha = dl.opacity ?? 1;
+          if (dl.type === "eraser") {
+            ctx.globalCompositeOperation = "destination-out";
+          }
           ctx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
           ctx.restore();
         }
@@ -1067,17 +1070,6 @@ function PanelCanvas({
           ctx.font = "13px sans-serif";
           ctx.fillStyle = "hsl(220,40%,60%)";
           ctx.fillText("잠시만 기다려주세요", CANVAS_W / 2, CANVAS_H / 2 + 14);
-          ctx.restore();
-        }
-      } else if (d.type === "drawing") {
-        const dl = d.dl;
-        if (dl.visible && dl.imageEl) {
-          ctx.save();
-          ctx.globalAlpha = dl.opacity ?? 1;
-          if (dl.type === "eraser") {
-            ctx.globalCompositeOperation = "destination-out";
-          }
-          ctx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
           ctx.restore();
         }
       } else {
