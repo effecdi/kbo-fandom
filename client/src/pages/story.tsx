@@ -2552,6 +2552,23 @@ function EditorPanel({
         )
       }
 
+      {isBubbleMode && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full"
+          disabled={panel.bubbles.length >= 5}
+          onClick={() => {
+            const newB = createBubble(CANVAS_W, CANVAS_H);
+            onUpdate({ ...panel, bubbles: [...panel.bubbles, newB] });
+            setSelectedBubbleId(newB.id);
+          }}
+        >
+          <Plus className="h-3.5 w-3.5 mr-1" />
+          말풍선 추가 {panel.bubbles.length >= 5 && "(최대 5개)"}
+        </Button>
+      )}
+
       {isImageMode && (
         <div className="rounded-md space-y-3">
           <div className="space-y-1.5">
