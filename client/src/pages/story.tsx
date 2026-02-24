@@ -2395,13 +2395,6 @@ function EditorPanel({
   const isImageMode = mode === "image";
   const isBubbleMode = mode === "bubble";
 
-  // 말풍선 모드 진입 시 첫 번째 말풍선 자동 선택
-  useEffect(() => {
-    if (isBubbleMode && panel.bubbles.length > 0 && !panel.bubbles.find((b) => b.id === selectedBubbleId)) {
-      setSelectedBubbleId(panel.bubbles[0].id);
-    }
-  }, [isBubbleMode, panel.bubbles, selectedBubbleId, setSelectedBubbleId]);
-
   const handleRemoveBackground = async () => {
     if (!selectedChar) return;
     if (!isPro) {
@@ -2547,36 +2540,6 @@ function EditorPanel({
           </div>
         )
       }
-
-      {isBubbleMode && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-muted-foreground">
-              말풍선 ({panel.bubbles.length}개)
-            </span>
-            <Button size="sm" variant="outline" className="h-6 text-[11px] px-2" onClick={() => setShowBubbleTemplatePicker(true)}>
-              <Plus className="h-3 w-3 mr-1" /> 추가
-            </Button>
-          </div>
-          {panel.bubbles.length === 0 ? (
-            <p className="text-[11px] text-muted-foreground text-center py-3">
-              아직 말풍선이 없습니다. 추가 버튼을 눌러주세요.
-            </p>
-          ) : (
-            <div className="space-y-1">
-              {panel.bubbles.map((b, i) => (
-                <button
-                  key={b.id}
-                  onClick={() => setSelectedBubbleId(b.id)}
-                  className={`w-full text-left px-2 py-1.5 text-[11px] rounded-md border transition-colors truncate ${b.id === selectedBubbleId ? "border-primary bg-primary/10 font-semibold" : "border-border hover-elevate"}`}
-                >
-                  {b.text || `말풍선 ${i + 1}`}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {isImageMode && (
         <div className="rounded-md space-y-3">
@@ -6403,10 +6366,6 @@ export default function StoryPage() {
                             setSelectedTextId(null);
                             setSelectedLineId(null);
                             setActivePanelIndex(i);
-                            if (id) {
-                              setActiveLeftTab("elements");
-                              setElementsSubTab("bubble");
-                            }
                           }}
                           selectedCharId={activePanelIndex === i ? selectedCharId : null}
                           onSelectChar={(id) => {
