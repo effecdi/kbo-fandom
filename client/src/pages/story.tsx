@@ -2395,6 +2395,13 @@ function EditorPanel({
   const isImageMode = mode === "image";
   const isBubbleMode = mode === "bubble";
 
+  // 말풍선 모드 진입 시 첫 번째 말풍선 자동 선택
+  useEffect(() => {
+    if (isBubbleMode && panel.bubbles.length > 0 && !panel.bubbles.find((b) => b.id === selectedBubbleId)) {
+      setSelectedBubbleId(panel.bubbles[0].id);
+    }
+  }, [isBubbleMode, panel.bubbles, selectedBubbleId, setSelectedBubbleId]);
+
   const handleRemoveBackground = async () => {
     if (!selectedChar) return;
     if (!isPro) {
