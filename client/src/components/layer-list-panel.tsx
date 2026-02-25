@@ -101,7 +101,7 @@ export function LayerListPanel({
               key={`${item.type}:${item.id}`}
               className={`flex items-center justify-between gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors ${
                 isSelected
-                  ? "bg-[rgba(82,39,255,0.15)] border border-[rgba(82,39,255,0.3)]"
+                  ? "bg-primary/15 border border-primary/30"
                   : "hover:bg-muted/40"
               } ${item.type === "drawing" && item.visible === false ? "opacity-40" : ""}`}
               onClick={() => {

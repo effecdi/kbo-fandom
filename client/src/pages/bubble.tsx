@@ -676,7 +676,7 @@ export default function BubblePage() {
   }, []);
 
   return (
-    <div className="editor-page editor-dark-purple dark flex h-screen w-full flex-col bg-background">
+    <div className="editor-page flex h-screen w-full flex-col bg-background">
       {/* Top bar - Story 스타일과 통일 */}
       <header className="flex h-14 items-center border-b bg-background px-4" data-testid="bubble-toolbar">
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4">

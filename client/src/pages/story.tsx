@@ -4943,10 +4943,10 @@ export default function StoryPage() {
   ];
 
   return (
-    <div className="editor-page editor-dark-purple dark h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative">
+    <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative">
       <EditorOnboarding editor="story" />
       <div
-        className="flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-card dark:bg-card border-r"
+        className="flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-background/80 border-r"
         style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "50px" }}
         data-testid="left-icon-sidebar"
       >
@@ -4966,7 +4966,7 @@ export default function StoryPage() {
       <div className="flex flex-1 h-full">
         {activeLeftTab && (
           <div
-            className={`h-full bg-card overflow-y-auto border-r ${activeLeftTab === "tools" ? "w-auto" : "w-[320px]"}`}
+            className={`h-full bg-background/80 overflow-y-auto border-r ${activeLeftTab === "tools" ? "w-auto" : "w-[320px]"}`}
             data-testid="left-panel-content"
           >
             <div className={activeLeftTab === "tools" ? "" : "p-3 space-y-5"}>
@@ -6943,7 +6943,7 @@ export default function StoryPage() {
 
           return (
             <div
-              className="h-full w-[300px] shrink-0 bg-card border-l"
+              className="h-full w-[300px] shrink-0 bg-background/80 border-l"
               data-testid="right-layer-panel"
             >
               <ResizablePanelGroup direction="vertical">

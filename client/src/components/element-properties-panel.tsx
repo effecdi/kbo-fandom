@@ -108,7 +108,7 @@ export function ElementPropertiesPanel({
   if (selectedChar && !selectedBubble) {
     return (
       <div className="p-3 space-y-3 overflow-y-auto h-full">
-        <p className="sm-section-header">캐릭터</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">캐릭터</p>
 
         {/* Transform */}
         <div className="grid grid-cols-2 gap-1.5">
@@ -176,7 +176,7 @@ export function ElementPropertiesPanel({
   if (selectedText) {
     return (
       <div className="p-3 space-y-3 overflow-y-auto h-full">
-        <p className="sm-section-header">텍스트</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">텍스트</p>
         <div className="grid grid-cols-2 gap-1.5">
           {[
             { label: "X", value: Math.round(selectedText.x), key: "x" },
@@ -203,7 +203,7 @@ export function ElementPropertiesPanel({
   if (selectedLine) {
     return (
       <div className="p-3 space-y-3 overflow-y-auto h-full">
-        <p className="sm-section-header">선</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">선</p>
         <p className="text-xs text-muted-foreground">
           {selectedLine.lineType === "straight" ? "직선" : selectedLine.lineType === "curved" ? "곡선" : "꺾인선"}
         </p>
@@ -222,7 +222,7 @@ export function ElementPropertiesPanel({
     <div className="p-3 space-y-3 overflow-y-auto h-full">
       {/* Transform */}
       <div>
-        <p className="sm-section-header mb-1.5">변환</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">변환</p>
         <div className="grid grid-cols-2 gap-1.5">
           {[
             { label: "X", value: Math.round(selectedBubble.x), key: "x" },
@@ -245,7 +245,7 @@ export function ElementPropertiesPanel({
 
       {/* Text */}
       <div>
-        <p className="sm-section-header mb-1.5">텍스트</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">텍스트</p>
         <Textarea
           value={selectedBubble.text}
           onChange={(e) => updateBubble({ text: e.target.value })}
@@ -255,7 +255,7 @@ export function ElementPropertiesPanel({
 
       {/* Font */}
       <div>
-        <p className="sm-section-header mb-1.5">글씨체</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">글씨체</p>
         <Select
           value={selectedBubble.fontKey}
           onValueChange={(v) => updateBubble({ fontKey: v })}
@@ -278,7 +278,7 @@ export function ElementPropertiesPanel({
 
       {/* Style */}
       <div>
-        <p className="sm-section-header mb-1.5">말풍선 형태</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">말풍선 형태</p>
         <div className="flex flex-wrap gap-1 mb-1.5">
           {Object.entries(STYLE_LABELS).filter(([k]) => k !== "image").map(([k, l]) => (
             <button
@@ -286,7 +286,7 @@ export function ElementPropertiesPanel({
               onClick={() => updateBubble({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
               className={`px-1.5 py-0.5 text-[10px] rounded border transition-colors ${
                 selectedBubble.style === k
-                  ? "bg-[rgba(82,39,255,0.2)] border-[#5227FF] text-foreground font-semibold"
+                  ? "bg-primary/20 border-primary text-foreground font-semibold"
                   : "border-border hover:bg-muted/60"
               }`}
             >{l}</button>
@@ -300,7 +300,7 @@ export function ElementPropertiesPanel({
               onClick={() => updateBubble({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
               className={`px-1.5 py-0.5 text-[10px] rounded border transition-colors ${
                 selectedBubble.style === k
-                  ? "bg-[rgba(82,39,255,0.2)] border-[#5227FF] text-foreground font-semibold"
+                  ? "bg-primary/20 border-primary text-foreground font-semibold"
                   : "border-border hover:bg-muted/60"
               }`}
             >{l}</button>
@@ -394,7 +394,7 @@ export function ElementPropertiesPanel({
               onClick={() => updateBubble({ flashFilled: !(selectedBubble.flashFilled ?? true) })}
               className={`px-1.5 py-0.5 text-[10px] rounded border transition-colors ${
                 (selectedBubble.flashFilled ?? true)
-                  ? "bg-[rgba(82,39,255,0.2)] border-[#5227FF] font-semibold"
+                  ? "bg-primary/20 border-primary font-semibold"
                   : "border-border hover:bg-muted/60"
               }`}
             >
@@ -479,7 +479,7 @@ export function ElementPropertiesPanel({
 
       {/* Tail */}
       <div>
-        <p className="sm-section-header mb-1.5">말꼬리</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">말꼬리</p>
         <div className="flex flex-wrap gap-1">
           {Object.entries(TAIL_LABELS).map(([k, l]) => (
             <button
@@ -492,7 +492,7 @@ export function ElementPropertiesPanel({
               })}
               className={`px-1.5 py-0.5 text-[10px] rounded border transition-colors ${
                 selectedBubble.tailStyle === k
-                  ? "bg-[rgba(82,39,255,0.2)] border-[#5227FF] text-foreground font-semibold"
+                  ? "bg-primary/20 border-primary text-foreground font-semibold"
                   : "border-border hover:bg-muted/60"
               }`}
             >{l}</button>
@@ -583,7 +583,7 @@ export function ElementPropertiesPanel({
 
       {/* Colors */}
       <div>
-        <p className="sm-section-header mb-1.5">색상</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">색상</p>
         <div className="flex flex-wrap gap-1 mb-2">
           {BUBBLE_COLOR_PRESETS.map((preset) => (
             <button
@@ -626,7 +626,7 @@ export function ElementPropertiesPanel({
 
       {/* Draw mode */}
       <div>
-        <p className="sm-section-header mb-1.5">그리기 모드</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">그리기 모드</p>
         <div className="flex gap-1 flex-wrap">
           {(["both", "fill_only", "stroke_only"] as const).map((mode) => (
             <button
@@ -634,7 +634,7 @@ export function ElementPropertiesPanel({
               onClick={() => updateBubble({ drawMode: mode })}
               className={`px-1.5 py-0.5 text-[10px] rounded border transition-colors ${
                 (selectedBubble.drawMode ?? "both") === mode
-                  ? "bg-[rgba(82,39,255,0.2)] border-[#5227FF] font-semibold"
+                  ? "bg-primary/20 border-primary font-semibold"
                   : "border-border hover:bg-muted/60"
               }`}
             >
