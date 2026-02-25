@@ -32,6 +32,7 @@ export function BubbleCanvas({
     onEditBubble,
     showWatermark = false,
 }: BubbleCanvasProps) {
+    const wrapperRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const dragModeRef = useRef<DragMode>(null);
     const dragStartRef = useRef({ x: 0, y: 0 });
@@ -515,23 +516,134 @@ export function BubbleCanvas({
         }
     }, [isActive, getCanvasPos, page, onEditBubble]);
 
+    // Build SVG overlay handles
+    const svgOverlay = (() => {
+        if (!isActive) return null;
+        const canvas = canvasRef.current;
+        if (!canvas) return null;
+        const rect = canvas.getBoundingClientRect();
+        const wrapRect = wrapperRef.current?.getBoundingClientRect();
+        if (!wrapRect) return null;
+        const cW = page.canvasSize.width;
+        const cH = page.canvasSize.height;
+        const scaleX = rect.width / cW;
+        const scaleY = rect.height / cH;
+        const offsetX = rect.left - wrapRect.left;
+        const offsetY = rect.top - wrapRect.top;
+        const toSvgX = (cx: number) => offsetX + cx * scaleX;
+        const toSvgY = (cy: number) => offsetY + cy * scaleY;
+
+        const selBubble = selectedBubbleId ? page.bubbles.find(b => b.id === selectedBubbleId) : null;
+        const selChar = selectedCharId ? page.characters.find(c => c.id === selectedCharId) : null;
+
+        const HANDLE_R = 5;
+        const handles: { x: number; y: number; cursor: string; mode: string }[] = [];
+
+        if (selBubble) {
+            const b = selBubble;
+            handles.push(
+                { x: toSvgX(b.x - 4), y: toSvgY(b.y - 4), cursor: "nwse-resize", mode: "resize-tl" },
+                { x: toSvgX(b.x + b.width / 2), y: toSvgY(b.y - 4), cursor: "ns-resize", mode: "resize-t" },
+                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y - 4), cursor: "nesw-resize", mode: "resize-tr" },
+                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y + b.height / 2), cursor: "ew-resize", mode: "resize-r" },
+                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y + b.height + 4), cursor: "nwse-resize", mode: "resize-br" },
+                { x: toSvgX(b.x + b.width / 2), y: toSvgY(b.y + b.height + 4), cursor: "ns-resize", mode: "resize-b" },
+                { x: toSvgX(b.x - 4), y: toSvgY(b.y + b.height + 4), cursor: "nesw-resize", mode: "resize-bl" },
+                { x: toSvgX(b.x - 4), y: toSvgY(b.y + b.height / 2), cursor: "ew-resize", mode: "resize-l" },
+            );
+        }
+
+        if (selChar) {
+            handles.push(
+                { x: toSvgX(selChar.x), y: toSvgY(selChar.y), cursor: "nwse-resize", mode: "char-resize-tl" },
+                { x: toSvgX(selChar.x + selChar.width), y: toSvgY(selChar.y), cursor: "nesw-resize", mode: "char-resize-tr" },
+                { x: toSvgX(selChar.x), y: toSvgY(selChar.y + selChar.height), cursor: "nesw-resize", mode: "char-resize-bl" },
+                { x: toSvgX(selChar.x + selChar.width), y: toSvgY(selChar.y + selChar.height), cursor: "nwse-resize", mode: "char-resize-br" },
+            );
+        }
+
+        if (handles.length === 0) return null;
+
+        return (
+            <svg
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    overflow: "visible",
+                    pointerEvents: "none",
+                    zIndex: 10,
+                }}
+            >
+                {selBubble && (() => {
+                    const b = selBubble;
+                    const x1 = toSvgX(b.x - 4), y1 = toSvgY(b.y - 4);
+                    const x2 = toSvgX(b.x + b.width + 4), y2 = toSvgY(b.y + b.height + 4);
+                    return <rect x={x1} y={y1} width={x2 - x1} height={y2 - y1} fill="none" stroke={HANDLE_COLOR} strokeWidth="1.5" strokeDasharray="5,3" />;
+                })()}
+                {selChar && (() => {
+                    const x1 = toSvgX(selChar.x - 4), y1 = toSvgY(selChar.y - 4);
+                    const x2 = toSvgX(selChar.x + selChar.width + 4), y2 = toSvgY(selChar.y + selChar.height + 4);
+                    return <rect x={x1} y={y1} width={x2 - x1} height={y2 - y1} fill="none" stroke={HANDLE_COLOR} strokeWidth="1.5" strokeDasharray="5,3" />;
+                })()}
+                {handles.map((h, i) => (
+                    <circle
+                        key={i}
+                        cx={h.x}
+                        cy={h.y}
+                        r={HANDLE_R + 2}
+                        fill="white"
+                        stroke={HANDLE_COLOR}
+                        strokeWidth="1.8"
+                        style={{ pointerEvents: "all", cursor: h.cursor }}
+                        onPointerDown={(e) => {
+                            e.stopPropagation();
+                            const cvs = canvasRef.current;
+                            if (!cvs) return;
+                            cvs.setPointerCapture(e.pointerId);
+                            const pos = getCanvasPos(e.clientX, e.clientY);
+                            dragModeRef.current = h.mode as DragMode;
+                            dragStartRef.current = pos;
+                            const sB = selectedBubbleId ? page.bubbles.find(b2 => b2.id === selectedBubbleId) : null;
+                            const sC = selectedCharId ? page.characters.find(c2 => c2.id === selectedCharId) : null;
+                            if (sB) {
+                                dragBubbleStartRef.current = { x: sB.x, y: sB.y, w: sB.width, h: sB.height };
+                            } else if (sC) {
+                                dragBubbleStartRef.current = { x: sC.x, y: sC.y, w: sC.width, h: sC.height };
+                            }
+                        }}
+                    />
+                ))}
+            </svg>
+        );
+    })();
+
     return (
-        <canvas
-            ref={canvasRef}
-            width={page.canvasSize.width}
-            height={page.canvasSize.height}
-            className={`touch-none ${isActive ? "shadow-sm" : "opacity-80"}`}
-            style={{
-                width: page.canvasSize.width,
-                height: page.canvasSize.height,
-                maxWidth: "100%",
-                cursor: isActive ? "default" : "pointer",
-                border: isActive ? "1px solid rgba(0,0,0,0.1)" : "1px solid transparent"
-            }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onDoubleClick={handleDoubleClick}
-        />
+        <div
+            ref={wrapperRef}
+            className="relative inline-block"
+            style={{ overflow: "visible" }}
+        >
+            <canvas
+                ref={canvasRef}
+                width={page.canvasSize.width}
+                height={page.canvasSize.height}
+                className={`touch-none ${isActive ? "shadow-sm" : "opacity-80"}`}
+                style={{
+                    width: page.canvasSize.width,
+                    height: page.canvasSize.height,
+                    maxWidth: "100%",
+                    cursor: isActive ? "default" : "pointer",
+                    border: isActive ? "1px solid rgba(0,0,0,0.1)" : "1px solid transparent"
+                }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onDoubleClick={handleDoubleClick}
+            />
+            {svgOverlay}
+        </div>
     );
 }
