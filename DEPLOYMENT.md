@@ -230,21 +230,102 @@ Railway 대시보드 → **Deployments** → **Logs**에서 확인:
 - Railway Variables에 설정했는지 확인 (Secrets가 아님)
 - 빌드 후 재배포 필요
 
-## 10. 릴리즈 프로세스
+## 10. 개발서버 환경 구축
 
-### 개발 → 운영 배포
+프로덕션과 분리된 개발/테스트 환경을 Railway에 구성합니다.
 
-1. `main` 브랜치에 푸시
-2. Railway 자동 배포 트리거
-3. 배포 완료 후 핵심 플로우 수동 테스트
-4. 문제 발생 시 Railway에서 롤백
+### 10-1. 브랜치 전략
+
+| 브랜치 | 환경 | Railway 서비스 | 자동 배포 |
+|--------|------|---------------|----------|
+| `main` | 프로덕션 | olli-production | ✅ push 시 자동 |
+| `dev` | 개발 | olli-dev | ✅ push 시 자동 |
+
+### 10-2. 개발용 Supabase 프로젝트 생성
+
+프로덕션 데이터와 분리하기 위해 **별도의 Supabase 프로젝트**를 생성합니다.
+
+1. [Supabase](https://supabase.com) 대시보드 → **New Project**
+2. 프로젝트 이름: `olli-dev` (또는 원하는 이름)
+3. 리전: 프로덕션과 동일하게 설정
+4. 생성 완료 후 다음 정보를 메모:
+   - **Project URL** → `SUPABASE_URL`, `VITE_SUPABASE_URL`
+   - **Anon Key** → `VITE_SUPABASE_ANON_KEY`
+   - **Service Role Key** → `SUPABASE_KEY`
+   - **Connection String (URI)** → `DATABASE_URL`
+5. 개발 DB에 스키마 반영:
+   ```bash
+   # DATABASE_URL을 개발 Supabase로 설정한 후
+   npm run db:push
+   ```
+
+### 10-3. Railway 개발서버 생성
+
+1. [Railway](https://railway.app) 대시보드 → **New Project** → **Deploy from GitHub Repo**
+2. 저장소 선택 후 **브랜치를 `dev`로 변경**
+3. 서비스 이름: `olli-dev` (또는 원하는 이름)
+4. Build/Start 명령은 프로덕션과 동일:
+   - **Build Command**: `npm ci && npm run build`
+   - **Start Command**: `npm start`
+
+### 10-4. 개발서버 환경변수 설정
+
+Railway 개발 서비스에 다음 환경변수를 설정합니다.
+**반드시 개발 Supabase 프로젝트의 값을 사용하세요!**
+
+| 변수명 | 값 | 비고 |
+|--------|------|------|
+| `DATABASE_URL` | 개발 Supabase Connection String | 프로덕션과 다른 DB |
+| `SUPABASE_URL` | 개발 Supabase Project URL | |
+| `SUPABASE_KEY` | 개발 Supabase Service Role Key | |
+| `VITE_SUPABASE_URL` | 개발 Supabase Project URL | 공개값 |
+| `VITE_SUPABASE_ANON_KEY` | 개발 Supabase Anon Key | 공개값 |
+| `NODE_ENV` | `production` | Railway에서는 production으로 빌드 |
+| `PORTONE_API_KEY` | 테스트용 PortOne API 키 | 선택 |
+| `PORTONE_API_SECRET` | 테스트용 PortOne API 시크릿 | 선택 |
+| `VITE_PORTONE_MERCHANT_ID` | 테스트용 가맹점 ID | 선택 |
+
+### 10-5. 개발서버 확인
+
+배포 완료 후:
+
+```bash
+# 개발서버 헬스체크
+curl https://olli-dev.up.railway.app/api/health
+```
+
+### 10-6. 비용 관리
+
+개발서버도 별도로 **Hard Limit**을 설정하세요:
+- Railway 대시보드 → Workspace → Usage Limits
+- 개발서버는 프로덕션보다 낮은 한도 권장 (예: 월 $5~10)
+
+## 11. 릴리즈 프로세스
+
+### 개발 → 프로덕션 워크플로우
+
+```
+[로컬 개발] → git push origin dev → [개발서버 자동 배포] → 테스트
+                                                              ↓
+                                                         문제 없으면
+                                                              ↓
+                    git checkout main && git merge dev → git push origin main → [프로덕션 자동 배포]
+```
+
+1. `dev` 브랜치에서 개발 및 커밋
+2. `dev` push → 개발 Railway 서비스 자동 배포
+3. 개발서버에서 테스트 완료
+4. `main` 브랜치로 머지: `git checkout main && git merge dev`
+5. `main` push → 프로덕션 Railway 서비스 자동 배포
+6. 프로덕션에서 핵심 플로우 수동 테스트
+7. 문제 발생 시 Railway에서 롤백
 
 ### DB 스키마 변경 시
 
 1. 로컬에서 스키마 수정
-2. `npm run db:push` 실행하여 변경사항 확인
-3. Railway 쉘에서 `npm run db:push` 실행
-4. 또는 Railway에서 직접 SQL 실행
+2. 개발 DB에 먼저 반영: `DATABASE_URL=<개발DB> npm run db:push`
+3. 개발서버에서 테스트
+4. 프로덕션 DB에 반영: Railway 프로덕션 쉘에서 `npm run db:push`
 
 ## 참고 자료
 
