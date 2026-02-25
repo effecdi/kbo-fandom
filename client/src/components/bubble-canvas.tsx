@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { SpeechBubble, CharacterOverlay, DragMode, PageData } from "@/lib/bubble-types.ts";
 import { drawBubble, drawBubbleGroup, getTailGeometry, FONT_CSS } from "@/lib/bubble-utils";
+import { HANDLE_COLOR } from "@/lib/editor-constants";
 
 interface BubbleCanvasProps {
     page: PageData;
@@ -141,7 +142,7 @@ export function BubbleCanvas({
         const by = -c.height / 2 - 4;
         const bw = c.width + 8;
         const bh = c.height + 8;
-        ctx.strokeStyle = "hsl(173, 80%, 45%)";
+        ctx.strokeStyle = HANDLE_COLOR;
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 3]);
         ctx.strokeRect(bx, by, bw, bh);
@@ -158,7 +159,7 @@ export function BubbleCanvas({
             ctx.arc(pt.x, pt.y, hs / 2, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(255,255,255,0.96)";
             ctx.fill();
-            ctx.strokeStyle = "hsl(173, 80%, 45%)";
+            ctx.strokeStyle = HANDLE_COLOR;
             ctx.lineWidth = 1.8;
             ctx.stroke();
         });
@@ -166,7 +167,7 @@ export function BubbleCanvas({
         ctx.arc(0, by - 20, 7, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(255,255,255,0.96)";
         ctx.fill();
-        ctx.strokeStyle = "hsl(173, 80%, 45%)";
+        ctx.strokeStyle = HANDLE_COLOR;
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();

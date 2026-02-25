@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ElementPropertiesPanel } from "@/components/element-properties-panel";
+import { LayerListPanel, type LayerItem } from "@/components/layer-list-panel";
 import {
   Select,
   SelectContent,
@@ -92,6 +95,7 @@ import {
 } from "@/components/ui/context-menu";
 import { KOREAN_FONTS, FONT_CSS, getFontFamily, getDefaultTailTip, getTailGeometry, drawBubble, STYLE_LABELS, FLASH_STYLE_LABELS, TAIL_LABELS } from "@/lib/bubble-utils";
 import { SpeechBubble, BubbleStyle, TailStyle, TailDrawMode } from "@/lib/bubble-types";
+import { HANDLE_COLOR } from "@/lib/editor-constants";
 import {
   TextContextToolbar,
   LineContextToolbar,
@@ -724,7 +728,7 @@ function drawScriptOverlay(
   ctx.arc(hx, hy, handleSize / 2, 0, Math.PI * 2);
   ctx.fillStyle = "rgba(255,255,255,0.96)";
   ctx.fill();
-  ctx.strokeStyle = "hsl(173, 80%, 45%)";
+  ctx.strokeStyle = HANDLE_COLOR;
   ctx.stroke();
   ctx.restore();
 }
@@ -950,7 +954,7 @@ function PanelCanvas({
 
         // Selection box
         ctx.globalAlpha = 1;
-        ctx.strokeStyle = "hsl(173,80%,45%)";
+        ctx.strokeStyle = HANDLE_COLOR;
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 3]);
         ctx.strokeRect(te.x - 2, te.y - 2, te.width + 4, te.height + 4);
@@ -1048,7 +1052,7 @@ function PanelCanvas({
           ctx.roundRect(-ph/2, -ph/2, ph, ph, 8);
           ctx.fillStyle = "rgba(200,220,240,0.6)";
           ctx.fill();
-          ctx.strokeStyle = "hsl(173,80%,45%)";
+          ctx.strokeStyle = HANDLE_COLOR;
           ctx.lineWidth = 1.5;
           ctx.setLineDash([4, 3]);
           ctx.stroke();
@@ -2022,7 +2026,6 @@ function PanelCanvas({
             const selChar = selectedCharId ? panel.characters.find(c => c.id === selectedCharId) : null;
 
             const HANDLE_R = 5;
-            const HANDLE_COLOR = "hsl(173,80%,45%)";
 
             const handles: { x: number; y: number; cursor: string; mode: string }[] = [];
 
@@ -4940,7 +4943,7 @@ export default function StoryPage() {
   ];
 
   return (
-    <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-muted/30 dark:bg-background relative">
+    <div className="editor-page editor-dark-purple dark h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative">
       <EditorOnboarding editor="story" />
       <div
         className="flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-card dark:bg-card border-r"
@@ -6237,7 +6240,7 @@ export default function StoryPage() {
               >
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5 mr-1">
-                    <div className="w-6 h-6 rounded-md bg-[hsl(173_100%_35%)] flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
                       <BookOpen className="h-3.5 w-3.5 text-white" />
                     </div>
                     <span className="text-sm font-bold tracking-tight" data-testid="text-story-title">스토리</span>
@@ -6272,7 +6275,7 @@ export default function StoryPage() {
                     전체 다운로드
                   </Button>
 
-                  <Button size="sm" onClick={() => setShowSaveModal(true)} className="gap-1 h-7 text-xs px-2.5 bg-[hsl(173_100%_35%)] text-white border-[hsl(173_100%_35%)]" data-testid="button-save-story-project">
+                  <Button size="sm" onClick={() => setShowSaveModal(true)} className="gap-1 h-7 text-xs px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
                     <Save className="h-3 w-3" />
                     저장
                     {isPro && <Crown className="h-2.5 w-2.5 ml-0.5" />}
@@ -6282,7 +6285,7 @@ export default function StoryPage() {
                   </Button>
                 </div>
               </div>
-              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[hsl(173_100%_35%)] to-transparent opacity-60" />
+              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
             </div>
 
             {/* Main Canvas Area - List View */}
@@ -6610,7 +6613,7 @@ export default function StoryPage() {
                                   resize: "both",
                                   overflow: "auto",
                                   background: "rgba(255,255,255,0.95)",
-                                  border: "2px solid hsl(173,80%,45%)",
+                                  border: `2px solid ${HANDLE_COLOR}`,
                                   borderRadius: "4px",
                                   padding: "4px 6px",
                                   fontSize: `${te.fontSize * 0.7}px`,
@@ -6853,25 +6856,9 @@ export default function StoryPage() {
           </div>
         </div>
 
-        {/* Right Layer Panel — always visible */}
+        {/* Right Panel — Properties (top) + Layers (bottom) */}
         {activePanel && (() => {
-          const DRAWING_TYPE_ICONS: Record<string, typeof Pen> = {
-            drawing: Pen,
-            straight: Minus,
-            curve: Spline,
-            polyline: GitCommitHorizontal,
-            text: Type,
-            eraser: Eraser,
-          };
-          const rightLayerItems: Array<{
-            type: "char" | "bubble" | "drawing" | "text" | "line";
-            id: string;
-            z: number;
-            label: string;
-            thumb?: string;
-            drawingType?: string;
-            visible?: boolean;
-          }> = [
+          const rightLayerItems: LayerItem[] = [
             ...activePanel.characters.map((c: CharacterPlacement) => ({
               type: "char" as const,
               id: c.id,
@@ -6949,193 +6936,109 @@ export default function StoryPage() {
             applyRightLayerOrder(newOrder);
           };
 
+          const selBubble = selectedBubbleId ? activePanel.bubbles.find(b => b.id === selectedBubbleId) : null;
+          const selChar = selectedCharId ? activePanel.characters.find(c => c.id === selectedCharId) : null;
+          const selText = selectedTextId ? (activePanel.textElements || []).find((te: CanvasTextElement) => te.id === selectedTextId) : null;
+          const selLine = selectedLineId ? (activePanel.lineElements || []).find((le: CanvasLineElement) => le.id === selectedLineId) : null;
+
           return (
             <div
-              className="h-full w-[280px] shrink-0 bg-card border-l overflow-y-auto"
+              className="h-full w-[300px] shrink-0 bg-card border-l"
               data-testid="right-layer-panel"
             >
-              <div className="p-3 space-y-4">
-                <div className="flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-[13px] font-semibold">레이어 ({rightLayerItems.length})</span>
-                </div>
-
-                {rightLayerItems.length === 0 && (
-                  <p className="text-[11px] text-muted-foreground text-center py-4">레이어가 없습니다</p>
-                )}
-
-                <div className="space-y-1">
-                  {rightLayerItems.map((item, i) => {
-                    const isSelected =
-                      item.type === "char" ? selectedCharId === item.id
-                      : item.type === "bubble" ? selectedBubbleId === item.id
-                      : item.type === "drawing" ? selectedDrawingLayerId === item.id
-                      : item.type === "text" ? selectedTextId === item.id
-                      : item.type === "line" ? selectedLineId === item.id
-                      : false;
-                    const typeBg = item.type === "bubble"
-                      ? isSelected ? "bg-sky-500/15 border border-sky-500/30" : "hover:bg-sky-500/5"
-                      : item.type === "drawing"
-                      ? isSelected ? "bg-amber-500/15 border border-amber-500/30" : "hover:bg-amber-500/5"
-                      : item.type === "text"
-                      ? isSelected ? "bg-violet-500/15 border border-violet-500/30" : "hover:bg-violet-500/5"
-                      : item.type === "line"
-                      ? isSelected ? "bg-rose-500/15 border border-rose-500/30" : "hover:bg-rose-500/5"
-                      : isSelected ? "bg-emerald-500/15 border border-emerald-500/30" : "hover:bg-muted/50";
-                    const DrawingIcon = item.drawingType ? (DRAWING_TYPE_ICONS[item.drawingType] || Pen) : Pen;
-                    return (
-                    <div
-                      key={`${item.type}:${item.id}`}
-                      className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${typeBg} ${item.type === "drawing" && item.visible === false ? "opacity-40" : ""}`}
-                      onClick={() => {
-                        // Clear all selections first
-                        setSelectedCharId(null);
-                        setSelectedBubbleId(null);
-                        setSelectedDrawingLayerId(null);
-                        setSelectedTextId(null);
-                        setSelectedLineId(null);
-
-                        if (item.type === "char") {
-                          setSelectedCharId(item.id);
-                        } else if (item.type === "bubble") {
-                          setSelectedBubbleId(item.id);
-                        } else if (item.type === "drawing") {
-                          setSelectedDrawingLayerId(item.id);
-                          setSelectedToolItem("select");
-                        } else if (item.type === "text") {
-                          setSelectedTextId(item.id);
-                          setSelectedToolItem("select");
-                        } else if (item.type === "line") {
-                          setSelectedLineId(item.id);
-                          setSelectedToolItem("select");
-                        }
-                      }}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className={`w-7 h-7 rounded overflow-hidden shrink-0 border ${
-                          item.type === "bubble" ? "border-sky-400/50 bg-sky-50 dark:bg-sky-950/30"
-                          : item.type === "drawing" ? "border-amber-400/50 bg-amber-50 dark:bg-amber-950/30"
-                          : item.type === "text" ? "border-violet-400/50 bg-violet-50 dark:bg-violet-950/30"
-                          : item.type === "line" ? "border-rose-400/50 bg-rose-50 dark:bg-rose-950/30"
-                          : "border-emerald-400/50 bg-emerald-50 dark:bg-emerald-950/30"
-                        }`}>
-                          {item.type === "drawing" ? (
-                            <div className="w-full h-full flex items-center justify-center text-amber-500">
-                              <DrawingIcon className="h-3.5 w-3.5" />
-                            </div>
-                          ) : item.type === "text" ? (
-                            <div className="w-full h-full flex items-center justify-center text-violet-500 text-[10px] font-semibold">T</div>
-                          ) : item.type === "line" ? (
-                            <div className="w-full h-full flex items-center justify-center text-rose-500 text-[10px] font-semibold">L</div>
-                          ) : item.thumb ? (
-                            <img src={item.thumb} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className={`w-full h-full flex items-center justify-center text-[10px] font-semibold ${
-                              item.type === "bubble" ? "text-sky-500"
-                              : "text-emerald-500"
-                            }`}>
-                              {item.type === "bubble" ? "B" : "C"}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-xs truncate">{item.label}</span>
-                      </div>
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        {item.type === "drawing" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updatePanel(activePanelIndex, {
-                                ...activePanel,
-                                drawingLayers: (activePanel.drawingLayers || []).map(dl =>
-                                  dl.id === item.id ? { ...dl, visible: !dl.visible } : dl
-                                ),
-                              });
-                            }}
-                            title={item.visible !== false ? "숨기기" : "보이기"}
-                          >
-                            {item.visible !== false ? (
-                              <Eye className="h-3.5 w-3.5" />
-                            ) : (
-                              <EyeOff className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-                        )}
-                        {item.type === "char" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const ch = activePanel.characters.find(c => c.id === item.id);
-                              if (!ch) return;
-                              updatePanel(activePanelIndex, {
-                                ...activePanel,
-                                characters: activePanel.characters.map(c =>
-                                  c.id === item.id ? { ...c, flipX: !c.flipX } : c
-                                ),
-                              });
-                            }}
-                            title="좌우 반전"
-                          >
-                            <FlipHorizontal2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={i === 0}
-                          onClick={(e) => { e.stopPropagation(); moveRightLayer(i, "up"); }}
-                          title="앞으로"
-                        >
-                          <ChevronUp className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={i === rightLayerItems.length - 1}
-                          onClick={(e) => { e.stopPropagation(); moveRightLayer(i, "down"); }}
-                          title="뒤로"
-                        >
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (item.type === "char") {
-                              const newChars = activePanel.characters.filter(c => c.id !== item.id);
-                              updatePanel(activePanelIndex, { ...activePanel, characters: newChars });
-                              if (selectedCharId === item.id) setSelectedCharId(null);
-                            } else if (item.type === "bubble") {
-                              const newBubbles = activePanel.bubbles.filter(b => b.id !== item.id);
-                              updatePanel(activePanelIndex, { ...activePanel, bubbles: newBubbles });
-                              if (selectedBubbleId === item.id) setSelectedBubbleId(null);
-                            } else if (item.type === "drawing") {
-                              updatePanel(activePanelIndex, {
-                                ...activePanel,
-                                drawingLayers: (activePanel.drawingLayers || []).filter(dl => dl.id !== item.id),
-                              });
-                              if (selectedDrawingLayerId === item.id) setSelectedDrawingLayerId(null);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  ); })}
-                </div>
-
-              </div>
+              <ResizablePanelGroup direction="vertical">
+                <ResizablePanel defaultSize={50} minSize={20}>
+                  <ElementPropertiesPanel
+                    selectedBubble={selBubble ?? null}
+                    selectedChar={selChar ?? null}
+                    selectedText={selText ?? null}
+                    selectedLine={selLine ?? null}
+                    onUpdateBubble={(id, updates) => {
+                      updatePanel(activePanelIndex, {
+                        ...activePanel,
+                        bubbles: activePanel.bubbles.map(b => b.id === id ? { ...b, ...updates } : b),
+                      });
+                    }}
+                    onUpdateChar={(id, updates) => {
+                      updatePanel(activePanelIndex, {
+                        ...activePanel,
+                        characters: activePanel.characters.map(c => c.id === id ? { ...c, ...updates } : c),
+                      });
+                    }}
+                    onDeleteBubble={(id) => {
+                      updatePanel(activePanelIndex, { ...activePanel, bubbles: activePanel.bubbles.filter(b => b.id !== id) });
+                      if (selectedBubbleId === id) setSelectedBubbleId(null);
+                    }}
+                    onDeleteChar={(id) => {
+                      updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== id) });
+                      if (selectedCharId === id) setSelectedCharId(null);
+                    }}
+                  />
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={50} minSize={20}>
+                  <LayerListPanel
+                    items={rightLayerItems}
+                    selectedCharId={selectedCharId}
+                    selectedBubbleId={selectedBubbleId}
+                    selectedDrawingLayerId={selectedDrawingLayerId}
+                    selectedTextId={selectedTextId}
+                    selectedLineId={selectedLineId}
+                    onSelectChar={setSelectedCharId}
+                    onSelectBubble={setSelectedBubbleId}
+                    onSelectDrawingLayer={setSelectedDrawingLayerId}
+                    onSelectText={setSelectedTextId}
+                    onSelectLine={setSelectedLineId}
+                    onSetToolItem={setSelectedToolItem}
+                    onMoveLayer={moveRightLayer}
+                    onDeleteLayer={(item) => {
+                      if (item.type === "char") {
+                        updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== item.id) });
+                        if (selectedCharId === item.id) setSelectedCharId(null);
+                      } else if (item.type === "bubble") {
+                        updatePanel(activePanelIndex, { ...activePanel, bubbles: activePanel.bubbles.filter(b => b.id !== item.id) });
+                        if (selectedBubbleId === item.id) setSelectedBubbleId(null);
+                      } else if (item.type === "drawing") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          drawingLayers: (activePanel.drawingLayers || []).filter(dl => dl.id !== item.id),
+                        });
+                        if (selectedDrawingLayerId === item.id) setSelectedDrawingLayerId(null);
+                      } else if (item.type === "text") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          textElements: (activePanel.textElements || []).filter((te: CanvasTextElement) => te.id !== item.id),
+                        });
+                        if (selectedTextId === item.id) setSelectedTextId(null);
+                      } else if (item.type === "line") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          lineElements: (activePanel.lineElements || []).filter((le: CanvasLineElement) => le.id !== item.id),
+                        });
+                        if (selectedLineId === item.id) setSelectedLineId(null);
+                      }
+                    }}
+                    onToggleVisibility={(item) => {
+                      if (item.type === "drawing") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          drawingLayers: (activePanel.drawingLayers || []).map(dl =>
+                            dl.id === item.id ? { ...dl, visible: !dl.visible } : dl
+                          ),
+                        });
+                      }
+                    }}
+                    onFlipChar={(id) => {
+                      updatePanel(activePanelIndex, {
+                        ...activePanel,
+                        characters: activePanel.characters.map(c =>
+                          c.id === id ? { ...c, flipX: !c.flipX } : c
+                        ),
+                      });
+                    }}
+                  />
+                </ResizablePanel>
+              </ResizablePanelGroup>
             </div>
           );
         })()}

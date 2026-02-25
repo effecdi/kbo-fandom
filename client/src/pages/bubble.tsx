@@ -25,6 +25,9 @@ import { useLocation } from "wouter";
 import { BubbleCanvas } from "@/components/bubble-canvas";
 import { SpeechBubble, CharacterOverlay, PageData, DragMode, BubbleStyle, TailStyle } from "@/lib/bubble-types";
 import { generateId, KOREAN_FONTS, STYLE_LABELS, FLASH_STYLE_LABELS, TAIL_LABELS, drawBubble, getTailGeometry, getDefaultTailTip } from "@/lib/bubble-utils";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ElementPropertiesPanel } from "@/components/element-properties-panel";
+import { LayerListPanel, type LayerItem } from "@/components/layer-list-panel";
 
 function bubblePath(n: number) {
   return `/assets/bubbles/bubble_${String(n).padStart(3, "0")}.png`;
@@ -673,7 +676,7 @@ export default function BubblePage() {
   }, []);
 
   return (
-    <div className="flex h-screen w-full flex-col bg-background">
+    <div className="editor-page editor-dark-purple dark flex h-screen w-full flex-col bg-background">
       {/* Top bar - Story 스타일과 통일 */}
       <header className="flex h-14 items-center border-b bg-background px-4" data-testid="bubble-toolbar">
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4">
@@ -751,7 +754,7 @@ export default function BubblePage() {
                 }
                 setShowSaveModal(true);
               }}
-              className="gap-1.5 h-8 text-xs px-2.5 bg-[hsl(173_100%_35%)] text-white border-[hsl(173_100%_35%)]"
+              className="gap-1.5 h-8 text-xs px-2.5 bg-primary text-primary-foreground border-primary"
               data-testid="button-save-bubble-project"
             >
               <Save className="h-3.5 w-3.5" />
@@ -783,630 +786,6 @@ export default function BubblePage() {
       </header>
 
       <div className="flex flex-1 overflow-hidden" data-testid="bubble-canvas-area">
-
-        <div className="w-[320px] overflow-y-auto border-r bg-background p-4" data-testid="bubble-right-panel">
-          <div className="mb-3">
-            <div className="flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 justify-center gap-1.5"
-                onClick={addBubble}
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                <span className="text-xs">말풍선</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 justify-center gap-1.5"
-                onClick={() => setShowGalleryPicker(true)}
-              >
-                <ImagePlus className="h-3.5 w-3.5" />
-                <span className="text-xs">캐릭터</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 justify-center gap-1.5"
-                onClick={() => setShowTemplatePicker(true)}
-              >
-                <Type className="h-3.5 w-3.5" />
-                <span className="text-xs">템플릿</span>
-              </Button>
-            </div>
-          </div>
-          {(activePage.characters.length > 0 || activePage.bubbles.length > 0) && (
-            <div className="space-y-1.5 mb-4">
-              <div className="flex items-center gap-2">
-                <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[13px] font-medium text-muted-foreground">
-                  레이어 목록 ({layerItems.length})
-                </span>
-              </div>
-              {layerItems.map((item, i) => (
-                <div
-                  key={`${item.type}:${item.id}`}
-                  className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md transition-colors ${
-                    dragLayerIdx !== null && dragLayerIdx !== i
-                      ? "border border-dashed border-primary/40 cursor-grab"
-                      : dragLayerIdx === i
-                      ? "opacity-40 scale-95 cursor-grabbing"
-                      : item.type === "char"
-                      ? selectedCharId === item.id
-                        ? "bg-primary/10 cursor-pointer"
-                        : "hover-elevate cursor-pointer"
-                      : selectedBubbleId === item.id
-                      ? "bg-primary/10 cursor-pointer"
-                      : "hover-elevate cursor-pointer"
-                  }`}
-                  onClick={() => {
-                    if (item.type === "char") {
-                      setSelectedCharId(item.id);
-                      setSelectedBubbleId(null);
-                    } else {
-                      setSelectedBubbleId(item.id);
-                      setSelectedCharId(null);
-                    }
-                  }}
-                  draggable
-                  onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragLayerIdx(i); }}
-                  onDragEnd={() => setDragLayerIdx(null)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (dragLayerIdx === null || dragLayerIdx === i) { setDragLayerIdx(null); return; }
-                    const base = layerItems.map((li) => ({ type: li.type, id: li.id }));
-                    const moved = base[dragLayerIdx];
-                    const rest = base.filter((_, idx) => idx !== dragLayerIdx);
-                    const insertAt = dragLayerIdx < i ? Math.max(0, i - 1) : i;
-                    const newOrder = [...rest.slice(0, insertAt), moved, ...rest.slice(insertAt)];
-                    applyLayerOrder(newOrder);
-                    setDragLayerIdx(null);
-                  }}
-                  data-testid={`row-layer-${i}`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded overflow-hidden shrink-0 border border-border bg-muted">
-                      {item.thumb ? (
-                        <img src={item.thumb} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px]">
-                          {item.type === "bubble" ? "B" : "C"}
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-xs truncate">{item.label}</span>
-                  </div>
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      disabled={i === 0}
-                      onClick={(e) => { e.stopPropagation(); moveLayer(i, "up"); }}
-                      title="앞으로"
-                    >
-                      <ChevronUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      disabled={i === layerItems.length - 1}
-                      onClick={(e) => { e.stopPropagation(); moveLayer(i, "down"); }}
-                      title="뒤로"
-                    >
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (item.type === "char") {
-                          updateActivePage({ characters: activePage.characters.filter((c) => c.id !== item.id) });
-                          if (selectedCharId === item.id) setSelectedCharId(null);
-                        } else {
-                          updateActivePage({ bubbles: activePage.bubbles.filter((b) => b.id !== item.id) });
-                          if (selectedBubbleId === item.id) setSelectedBubbleId(null);
-                        }
-                      }}
-                      data-testid={`button-delete-layer-${i}`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {selectedBubble && (
-            <div className="space-y-3 py-1">
-
-              {/* 텍스트 */}
-              <div>
-                <Label className="text-[13px] mb-1 block">텍스트</Label>
-                <Textarea
-                  value={selectedBubble.text}
-                  onChange={(e) => updateBubble(selectedBubble.id, { text: e.target.value })}
-                  className="text-sm min-h-[60px]"
-                />
-              </div>
-              <div>
-                <Label className="text-[13px] mb-1 block">글씨체</Label>
-                <Select
-                  value={selectedBubble.fontKey}
-                  onValueChange={(v) => updateBubble(selectedBubble.id, { fontKey: v })}
-                >
-                  <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent className="max-h-[280px]">
-                    {availableFonts.map(f => (
-                      <SelectItem key={f.value} value={f.value}>
-                        <span style={{ fontFamily: f.family }}>{f.label}</span>
-                      </SelectItem>
-                    ))}
-                    {!canAllFonts && (
-                      <div className="px-3 py-2 text-[11px] text-muted-foreground border-t">
-                        Pro 멤버십 또는 프로 연재러(30회+) 등급에서 전체 폰트 해금
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-[13px] mb-1.5 block">말풍선 형태</Label>
-                <div className="flex flex-wrap gap-1 mb-1.5">
-                  {Object.entries(STYLE_LABELS).filter(([k]) => k !== "image").map(([k, l]) => (
-                    <button
-                      key={k}
-                      onClick={() => updateBubble(selectedBubble.id, { style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-                      className={`px-2 py-1 text-[11px] rounded-md border transition-colors ${selectedBubble.style === k ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                    >{l}</button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-muted-foreground mb-1">✨ 특수 효과</p>
-                <div className="flex flex-wrap gap-1">
-                  {Object.entries(FLASH_STYLE_LABELS).map(([k, l]) => (
-                    <button
-                      key={k}
-                      onClick={() => updateBubble(selectedBubble.id, { style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-                      className={`px-2 py-1 text-[11px] rounded-md border transition-colors ${selectedBubble.style === k ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                    >{l}</button>
-                  ))}
-                </div>
-              </div>
-
-              {(["handwritten", "wobbly", "wavy"] as BubbleStyle[]).includes(selectedBubble.style) && (
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground w-14 shrink-0">흔들림 {selectedBubble.wobble ?? 5}</span>
-                  <Slider value={[selectedBubble.wobble ?? 5]} onValueChange={([v]) => updateBubble(selectedBubble.id, { wobble: v })} min={0} max={20} step={0.5} className="flex-1" />
-                </div>
-              )}
-
-              {selectedBubble.style === "polygon" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">다각형 설정</p>
-                  {([
-                    { label: "변 수", key: "shapeSides", min: 3, max: 12, step: 1, def: 6 },
-                    { label: "모서리", key: "shapeCornerRadius", min: 0, max: 40, step: 1, def: 8 },
-                    { label: "흔들림", key: "shapeWobble", min: 0, max: 20, step: 0.5, def: 0 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(1) : val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {selectedBubble.style === "spiky" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">뾰족한 설정</p>
-                  {([
-                    { label: "가시 수", key: "shapeSpikeCount", min: 4, max: 30, step: 1, def: 12 },
-                    { label: "가시 길이", key: "shapeSpikeHeight", min: 5, max: 60, step: 1, def: 20 },
-                    { label: "날카로움", key: "shapeSpikeSharpness", min: 0.1, max: 1, step: 0.05, def: 0.7 },
-                    { label: "흔들림", key: "shapeWobble", min: 0, max: 20, step: 0.5, def: 0 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {selectedBubble.style === "cloud" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">구름 설정</p>
-                  {([
-                    { label: "구름 수", key: "shapeBumpCount", min: 4, max: 16, step: 1, def: 8 },
-                    { label: "크기", key: "shapeBumpSize", min: 5, max: 40, step: 1, def: 15 },
-                    { label: "둥글기", key: "shapeBumpRoundness", min: 0.1, max: 1.5, step: 0.05, def: 0.8 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {selectedBubble.style === "shout" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">외침 설정</p>
-                  {([
-                    { label: "가시 수", key: "shapeSpikeCount", min: 4, max: 32, step: 1, def: 12 },
-                    { label: "가시 높이", key: "shapeWobble", min: 0.02, max: 0.8, step: 0.01, def: 0.25 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {(selectedBubble.style.startsWith("flash_")) && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">효과 설정</p>
-                  {(selectedBubble.style === "flash_eyelash" ? [
-                    { label: "바늘 수", key: "flashLineCount" as string, min: 20, max: 180, step: 1, def: 90 },
-                    { label: "바늘 길이", key: "flashLineLength" as string, min: 5, max: 80, step: 1, def: 28 },
-                    { label: "바늘 굵기", key: "flashLineThickness" as string, min: 0.5, max: 8, step: 0.5, def: 2.5 },
-                    { label: "내부크기", key: "flashInnerRadius" as string, min: 0.5, max: 0.98, step: 0.01, def: 0.88 },
-                  ] : [
-                    { label: "선 간격", key: "flashLineSpacing" as string, min: 0.05, max: 1, step: 0.05, def: 0.3 },
-                    { label: "선 두께", key: "flashLineThickness" as string, min: 0.1, max: 4, step: 0.1, def: 0.8 },
-                    { label: "선 길이", key: "flashLineLength" as string, min: 5, max: 100, step: 1, def: 30 },
-                    { label: "선 개수", key: "flashLineCount" as string, min: 8, max: 60, step: 1, def: 24 },
-                    { label: "내부크기", key: "flashInnerRadius" as string, min: 0.2, max: 0.9, step: 0.05, def: 0.65 },
-                    ...(selectedBubble.style === "flash_black"
-                      ? [
-                          { label: "돌기 수", key: "flashBumpCount" as string, min: 6, max: 60, step: 1, def: 24 },
-                          { label: "돌기 높이", key: "flashBumpHeight" as string, min: 1, max: 30, step: 1, def: 10 },
-                        ]
-                      : []),
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">
-                          {label} {step < 1 ? (val as number).toFixed(2) : val}
-                        </span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                  {selectedBubble.style !== "flash_eyelash" && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] text-muted-foreground flex-1">내부 채우기</span>
-                      <button
-                        onClick={() => updateBubble(selectedBubble.id, { flashFilled: !(selectedBubble.flashFilled ?? true) })}
-                        className={`px-2 py-0.5 text-[11px] rounded-md border transition-colors ${(selectedBubble.flashFilled ?? true) ? "border-primary/40 bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                      >
-                        {(selectedBubble.flashFilled ?? true) ? "채움 ✓" : "비움"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedBubble.style === "dashed" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">귓속말 설정</p>
-                  {([
-                    { label: "점선 길이", key: "flashLineLength", min: 2, max: 30, step: 1, def: 12 },
-                    { label: "점선 간격", key: "flashLineSpacing", min: 0.1, max: 3, step: 0.1, def: 1.0 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(1) : val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {selectedBubble.style === "brush" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">위엄 먹선 설정</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">굵기 배율 {(selectedBubble.flashLineThickness ?? 2.5).toFixed(1)}</span>
-                    <Slider value={[selectedBubble.flashLineThickness ?? 2.5]} onValueChange={([v]) => updateBubble(selectedBubble.id, { flashLineThickness: v })} min={0.5} max={6} step={0.1} className="flex-1" />
-                  </div>
-                </div>
-              )}
-
-              {selectedBubble.style === "drip" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">흐물 설정</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">흐물 길이 {selectedBubble.wobble ?? 5}</span>
-                    <Slider value={[selectedBubble.wobble ?? 5]} onValueChange={([v]) => updateBubble(selectedBubble.id, { wobble: v })} min={0} max={20} step={0.5} className="flex-1" />
-                  </div>
-                  <p className="text-[9px] text-muted-foreground">0=없음 → 20=길게 흐물</p>
-                </div>
-              )}
-
-              {selectedBubble.style === "sparkle_ring" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">신비 설정</p>
-                  {([
-                    { label: "바늘 수", key: "flashLineCount", min: 12, max: 120, step: 1, def: 48 },
-                    { label: "바늘 길이", key: "flashLineLength", min: 2, max: 40, step: 1, def: 12 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {selectedBubble.style === "embarrassed" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">난처 설정</p>
-                  {([
-                    { label: "흔들림", key: "wobble", min: 0, max: 12, step: 0.5, def: 4 },
-                    { label: "선 갯수", key: "flashLineCount", min: 1, max: 12, step: 1, def: 5 },
-                    { label: "선 길이", key: "flashLineLength", min: 5, max: 50, step: 1, def: 18 },
-                    { label: "선 굵기", key: "flashLineThickness", min: 0.5, max: 6, step: 0.5, def: 2 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(1) : val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-
-
-              <div className="space-y-2">
-                <Label className="text-[13px] mb-1 block">말꼬리 스타일</Label>
-                <div className="flex flex-wrap gap-1">
-                  {Object.entries(TAIL_LABELS).map(([k, l]) => (
-                    <button
-                      key={k}
-                      onClick={() => updateBubble(selectedBubble.id, {
-                        tailStyle: k as TailStyle,
-                        tailTipX: undefined, tailTipY: undefined,
-                        tailCtrl1X: undefined, tailCtrl1Y: undefined,
-                        tailCtrl2X: undefined, tailCtrl2Y: undefined,
-                      })}
-                      className={`px-2 py-1 text-[11px] rounded-md border transition-colors ${selectedBubble.tailStyle === k ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                    >{l}</button>
-                  ))}
-                </div>
-              </div>
-
-              {selectedBubble.tailStyle !== "none" && (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-[13px] mb-1 block">방향</Label>
-                      <Select
-                        value={selectedBubble.tailDirection}
-                        onValueChange={(v: any) => updateBubble(selectedBubble.id, {
-                          tailDirection: v,
-                          tailTipX: undefined, tailTipY: undefined,
-                          tailCtrl1X: undefined, tailCtrl1Y: undefined,
-                          tailCtrl2X: undefined, tailCtrl2Y: undefined,
-                        })}
-                      >
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="bottom">아래</SelectItem>
-                          <SelectItem value="top">위</SelectItem>
-                          <SelectItem value="left">왼쪽</SelectItem>
-                          <SelectItem value="right">오른쪽</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-end">
-                      <Button type="button" variant="outline" size="sm" onClick={handleFlipTailHorizontally} className="w-full">
-                        좌우 반전
-                      </Button>
-                    </div>
-                  </div>
-
-                  {(selectedBubble.tailStyle === "long" || selectedBubble.tailStyle === "short") && (
-                    <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                      <p className="text-[11px] font-semibold text-muted-foreground">꼬리 세부 조정</p>
-                      {([
-                        { label: "밑넓이", key: "tailBaseSpread", min: 1, max: 60, step: 1, def: 8 },
-                        { label: "곡선", key: "tailCurve", min: 0, max: 1, step: 0.05, def: 0.5 },
-                        { label: "흔들림", key: "tailJitter", min: 0, max: 5, step: 0.1, def: 1 },
-                        { label: "끝 타원", key: "tailRoundness", min: 0, max: 25, step: 1, def: 0 },
-                      ]).map(({ label, key, min, max, step, def }) => {
-                        const val = (selectedBubble as any)[key] ?? def;
-                        return (
-                          <div key={key} className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                            <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {selectedBubble.tailStyle.startsWith("dots_") && (
-                    <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                      <p className="text-[11px] font-semibold text-muted-foreground">점점점 꼬리 조정</p>
-                      {([
-                        { label: "점 크기", key: "dotsScale", min: 0.3, max: 2.5, step: 0.1, def: 1 },
-                        { label: "점 간격", key: "dotsSpacing", min: 0.5, max: 3.0, step: 0.1, def: 1 },
-                        { label: "흔들림", key: "tailJitter", min: 0, max: 5, step: 0.1, def: 1 },
-                      ]).map(({ label, key, min, max, step, def }) => {
-                        const val = (selectedBubble as any)[key] ?? def;
-                        return (
-                          <div key={key} className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                            <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedBubble.style === "tall_rough" && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">거친 직사각형 뾰족 조정</p>
-                  {([
-                    { label: "뾰족 수", key: "shapeSpikeCount", min: 0, max: 16, step: 1, def: 0 },
-                    { label: "뾰족 높이", key: "shapeSpikeHeight", min: 0, max: 60, step: 2, def: 0 },
-                    { label: "흔들림", key: "shapeWobble", min: 0.1, max: 5, step: 0.1, def: 1 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-16 shrink-0">{label} {step < 1 ? val.toFixed(1) : val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                  <p className="text-[10px] text-muted-foreground/70 mt-1">뾰족 수 0 = 오목한 직사각형, 1+ = 가시 추가</p>
-                </div>
-              )}
-
-                            <div>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <Label className="text-[13px]">글자 크기</Label>
-                  <span className="text-[12px] text-muted-foreground tabular-nums">{selectedBubble.fontSize}px</span>
-                </div>
-                <Slider value={[selectedBubble.fontSize]} onValueChange={([v]) => updateBubble(selectedBubble.id, { fontSize: v })} min={8} max={40} step={1} />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <Label className="text-[13px]">테두리 두께</Label>
-                  <span className="text-[12px] text-muted-foreground tabular-nums">{selectedBubble.strokeWidth}px</span>
-                </div>
-                <Slider value={[selectedBubble.strokeWidth]} onValueChange={([v]) => updateBubble(selectedBubble.id, { strokeWidth: v })} min={1} max={8} step={0.5} />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[13px] block">채우기 / 테두리 색</Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {BUBBLE_COLOR_PRESETS.map((preset) => (
-                    <button
-                      key={preset.label}
-                      title={preset.label}
-                      onClick={() => updateBubble(selectedBubble.id, { fillColor: preset.fill, strokeColor: preset.stroke })}
-                      className={`w-7 h-7 rounded-md border-2 transition-transform hover:scale-110 ${selectedBubble.fillColor === preset.fill ? "border-foreground scale-110" : "border-border"}`}
-                      style={{
-                        background: preset.fill === "transparent"
-                          ? "linear-gradient(135deg, #ccc 25%, transparent 25%, transparent 50%, #ccc 50%, #ccc 75%, transparent 75%)"
-                          : preset.fill,
-                        backgroundSize: preset.fill === "transparent" ? "6px 6px" : undefined,
-                      }}
-                    />
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-[11px] mb-1 block text-muted-foreground">채우기 색</Label>
-                    <input type="color" value={selectedBubble.fillColor && selectedBubble.fillColor !== "transparent" ? selectedBubble.fillColor : "#ffffff"} onChange={(e) => updateBubble(selectedBubble.id, { fillColor: e.target.value })} className="w-full h-8 rounded cursor-pointer border border-border" />
-                  </div>
-                  <div>
-                    <Label className="text-[11px] mb-1 block text-muted-foreground">테두리 색</Label>
-                    <input type="color" value={selectedBubble.strokeColor || "#222222"} onChange={(e) => updateBubble(selectedBubble.id, { strokeColor: e.target.value })} className="w-full h-8 rounded cursor-pointer border border-border" />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-[13px] mb-1.5 block">그리기 모드</Label>
-                <div className="flex gap-1 flex-wrap">
-                  {(["both", "fill_only", "stroke_only"] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => updateBubble(selectedBubble.id, { drawMode: mode })}
-                      className={`px-2 py-1 text-[11px] rounded-md border transition-colors ${(selectedBubble.drawMode ?? "both") === mode ? "border-primary/40 bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                    >
-                      {mode === "both" ? "채움+테두리" : mode === "fill_only" ? "채움만" : "테두리만"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <Label className="text-[13px]">채우기 투명도</Label>
-                  <span className="text-[12px] text-muted-foreground tabular-nums">
-                    {Math.round((selectedBubble.fillOpacity ?? 1) * 100)}%
-                  </span>
-                </div>
-                <Slider
-                  value={[(selectedBubble.fillOpacity ?? 1) * 100]}
-                  onValueChange={([v]) => updateBubble(selectedBubble.id, { fillOpacity: v / 100 })}
-                  min={0} max={100} step={5}
-                />
-              </div>
-            </div>
-          )}
-          {!selectedBubble && selectedChar && (
-            <div className="space-y-4">
-              <h3 className="font-medium">캐릭터 편집</h3>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-red-500"
-                onClick={() =>
-                  updateActivePage({
-                    characters: activePage.characters.filter(
-                      (c) => c.id !== selectedCharId,
-                    ),
-                  })
-                }
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> 삭제
-              </Button>
-              <Button
-                variant={isPro ? "default" : "outline"}
-                size="sm"
-                className="w-full justify-center gap-1.5"
-                onClick={handleRemoveBackground}
-                disabled={removingBg || !isPro}
-                data-testid="button-remove-bg-bubble"
-              >
-                {removingBg ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Wand2 className="h-3.5 w-3.5" />
-                )}
-                <span className="text-xs">AI 배경제거 (Pro)</span>
-                {!isPro && <Crown className="h-3 w-3 text-yellow-500" />}
-              </Button>
-            </div>
-          )}
-        </div>
-
         {/* Main Canvas Area - Scrollable List */}
         <div className="flex-1 overflow-y-auto bg-muted/20 dark:bg-muted/10 p-8">
           <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-8 pb-32">
@@ -1501,10 +880,97 @@ export default function BubblePage() {
             </Button>
           </div>
         </div>
+
+        {/* Right Panel — Properties (top) + Layers (bottom) */}
+        <div className="h-full w-[300px] shrink-0 bg-card border-l" data-testid="bubble-right-panel">
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={55} minSize={20}>
+              <ElementPropertiesPanel
+                selectedBubble={selectedBubble ?? null}
+                selectedChar={selectedChar ?? null}
+                selectedText={null}
+                selectedLine={null}
+                onUpdateBubble={(id, updates) => updateBubble(id, updates)}
+                onUpdateChar={(id, updates) => {
+                  updateActivePage({
+                    characters: activePage.characters.map(c => c.id === id ? { ...c, ...updates } : c),
+                  });
+                }}
+                onDeleteBubble={(id) => {
+                  updateActivePage({ bubbles: activePage.bubbles.filter(b => b.id !== id) });
+                  if (selectedBubbleId === id) setSelectedBubbleId(null);
+                }}
+                onDeleteChar={(id) => {
+                  updateActivePage({ characters: activePage.characters.filter(c => c.id !== id) });
+                  if (selectedCharId === id) setSelectedCharId(null);
+                }}
+                onFlipTailHorizontally={handleFlipTailHorizontally}
+                onRemoveBackground={handleRemoveBackground}
+                removingBg={removingBg}
+                isPro={isPro}
+                availableFonts={availableFonts}
+                canAllFonts={canAllFonts}
+              />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel defaultSize={45} minSize={20}>
+              <div className="h-full flex flex-col">
+                {/* Add buttons */}
+                <div className="p-2 border-b border-border">
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 justify-center gap-1 h-7 text-[11px]"
+                      onClick={addBubble}
+                    >
+                      <MessageCircle className="h-3 w-3" />
+                      말풍선
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 justify-center gap-1 h-7 text-[11px]"
+                      onClick={() => setShowGalleryPicker(true)}
+                    >
+                      <ImagePlus className="h-3 w-3" />
+                      캐릭터
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 justify-center gap-1 h-7 text-[11px]"
+                      onClick={() => setShowTemplatePicker(true)}
+                    >
+                      <Type className="h-3 w-3" />
+                      템플릿
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <LayerListPanel
+                    items={layerItems as LayerItem[]}
+                    selectedCharId={selectedCharId}
+                    selectedBubbleId={selectedBubbleId}
+                    onSelectChar={setSelectedCharId}
+                    onSelectBubble={setSelectedBubbleId}
+                    onMoveLayer={moveLayer}
+                    onDeleteLayer={(item) => {
+                      if (item.type === "char") {
+                        updateActivePage({ characters: activePage.characters.filter(c => c.id !== item.id) });
+                        if (selectedCharId === item.id) setSelectedCharId(null);
+                      } else {
+                        updateActivePage({ bubbles: activePage.bubbles.filter(b => b.id !== item.id) });
+                        if (selectedBubbleId === item.id) setSelectedBubbleId(null);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
       </div>
-
-
-
 
       {/* Gallery Picker Dialog */}
       <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
