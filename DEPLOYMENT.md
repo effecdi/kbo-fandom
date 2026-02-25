@@ -241,23 +241,13 @@ Railway 대시보드 → **Deployments** → **Logs**에서 확인:
 | `main` | 프로덕션 | olli-production | ✅ push 시 자동 |
 | `dev` | 개발 | olli-dev | ✅ push 시 자동 |
 
-### 10-2. 개발용 Supabase 프로젝트 생성
+### 10-2. Supabase (프로덕션과 동일)
 
-프로덕션 데이터와 분리하기 위해 **별도의 Supabase 프로젝트**를 생성합니다.
+개발서버와 프로덕션은 **동일한 Supabase 프로젝트**를 공유합니다.
+별도의 Supabase 설정은 필요하지 않으며, 프로덕션과 같은 URL/키를 사용합니다.
 
-1. [Supabase](https://supabase.com) 대시보드 → **New Project**
-2. 프로젝트 이름: `olli-dev` (또는 원하는 이름)
-3. 리전: 프로덕션과 동일하게 설정
-4. 생성 완료 후 다음 정보를 메모:
-   - **Project URL** → `SUPABASE_URL`, `VITE_SUPABASE_URL`
-   - **Anon Key** → `VITE_SUPABASE_ANON_KEY`
-   - **Service Role Key** → `SUPABASE_KEY`
-   - **Connection String (URI)** → `DATABASE_URL`
-5. 개발 DB에 스키마 반영:
-   ```bash
-   # DATABASE_URL을 개발 Supabase로 설정한 후
-   npm run db:push
-   ```
+> ⚠️ **주의**: 개발서버에서의 DB 변경이 프로덕션 데이터에 직접 영향을 줍니다.
+> 테스트 시 실제 사용자 데이터에 영향을 주지 않도록 주의하세요.
 
 ### 10-3. Railway 개발서버 생성
 
@@ -271,19 +261,19 @@ Railway 대시보드 → **Deployments** → **Logs**에서 확인:
 ### 10-4. 개발서버 환경변수 설정
 
 Railway 개발 서비스에 다음 환경변수를 설정합니다.
-**반드시 개발 Supabase 프로젝트의 값을 사용하세요!**
+프로덕션과 동일한 Supabase 값을 사용합니다.
 
 | 변수명 | 값 | 비고 |
 |--------|------|------|
-| `DATABASE_URL` | 개발 Supabase Connection String | 프로덕션과 다른 DB |
-| `SUPABASE_URL` | 개발 Supabase Project URL | |
-| `SUPABASE_KEY` | 개발 Supabase Service Role Key | |
-| `VITE_SUPABASE_URL` | 개발 Supabase Project URL | 공개값 |
-| `VITE_SUPABASE_ANON_KEY` | 개발 Supabase Anon Key | 공개값 |
+| `DATABASE_URL` | 프로덕션과 동일 | Supabase 공유 |
+| `SUPABASE_URL` | 프로덕션과 동일 | |
+| `SUPABASE_KEY` | 프로덕션과 동일 | |
+| `VITE_SUPABASE_URL` | 프로덕션과 동일 | 공개값 |
+| `VITE_SUPABASE_ANON_KEY` | 프로덕션과 동일 | 공개값 |
 | `NODE_ENV` | `production` | Railway에서는 production으로 빌드 |
-| `PORTONE_API_KEY` | 테스트용 PortOne API 키 | 선택 |
-| `PORTONE_API_SECRET` | 테스트용 PortOne API 시크릿 | 선택 |
-| `VITE_PORTONE_MERCHANT_ID` | 테스트용 가맹점 ID | 선택 |
+| `PORTONE_API_KEY` | 프로덕션과 동일 또는 테스트용 | 선택 |
+| `PORTONE_API_SECRET` | 프로덕션과 동일 또는 테스트용 | 선택 |
+| `VITE_PORTONE_MERCHANT_ID` | 프로덕션과 동일 또는 테스트용 | 선택 |
 
 ### 10-5. 개발서버 확인
 
@@ -322,10 +312,11 @@ curl https://olli-dev.up.railway.app/api/health
 
 ### DB 스키마 변경 시
 
+동일한 Supabase를 사용하므로 스키마 변경은 한 번만 반영하면 됩니다.
+
 1. 로컬에서 스키마 수정
-2. 개발 DB에 먼저 반영: `DATABASE_URL=<개발DB> npm run db:push`
-3. 개발서버에서 테스트
-4. 프로덕션 DB에 반영: Railway 프로덕션 쉘에서 `npm run db:push`
+2. `npm run db:push` 실행하여 변경사항 반영
+3. 개발서버에서 테스트 후 프로덕션에 코드 머지
 
 ## 참고 자료
 
