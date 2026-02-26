@@ -6632,8 +6632,6 @@ export default function StoryPage() {
                           onRemoveBackground={handleRemoveBackground}
                           removingBg={removingBg}
                           isPro={isPro}
-                          availableFonts={availableFonts}
-                          canAllFonts={canAllFontsStory}
                         />
                       </div>
                     </div>
@@ -6667,8 +6665,6 @@ export default function StoryPage() {
                       onRemoveBackground={handleRemoveBackground}
                       removingBg={removingBg}
                       isPro={isPro}
-                      availableFonts={availableFonts}
-                      canAllFonts={canAllFontsStory}
                     />
                   )}
                 </ResizablePanel>

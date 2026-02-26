@@ -1006,8 +1006,6 @@ export default function BubblePage() {
                 onRemoveBackground={handleRemoveBackground}
                 removingBg={removingBg}
                 isPro={isPro}
-                availableFonts={availableFonts}
-                canAllFonts={canAllFonts}
               />
             </ResizablePanel>
             <ResizableHandle />
