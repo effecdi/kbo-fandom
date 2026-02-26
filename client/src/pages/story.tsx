@@ -2578,7 +2578,7 @@ function EditorPanel({
       {isImageMode && (
         <div className="rounded-md space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-[12px] text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
+            <Label className="text-xs text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
             <button
               type="button"
               className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover-elevate"
@@ -2646,7 +2646,7 @@ function EditorPanel({
       {isImageMode && selectedChar && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2 mt-3">
-            <span className="text-[13px] font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               이미지 도구
             </span>
             {!isPro && (
