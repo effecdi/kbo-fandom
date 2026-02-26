@@ -833,6 +833,7 @@ export default function BubblePage() {
                               }}
                               showSettings={showBubbleSettings}
                               onShowSettings={() => setShowBubbleSettings(s => !s)}
+                              canAllFonts={canAllFonts}
                             />
                           </div>
                           {showBubbleSettings && (

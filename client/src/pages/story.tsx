@@ -5622,6 +5622,7 @@ export default function StoryPage() {
                                   }}
                                   showSettings={showBubbleSettings}
                                   onShowSettings={() => setShowBubbleSettings(s => !s)}
+                                  canAllFonts={canAllFontsStory}
                                 />
                               </div>
                               {showBubbleSettings && (

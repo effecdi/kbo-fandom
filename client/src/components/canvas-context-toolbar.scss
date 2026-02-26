@@ -180,6 +180,27 @@ $transition-fast: 150ms ease;
       color: $primary;
       font-weight: 600;
     }
+
+    &--locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
+
+  &__lock-badge {
+    display: inline-block;
+    margin-left: auto;
+    padding: 0 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: hsl(45, 90%, 45%);
+    background: hsl(45, 90%, 90%);
+    border-radius: 3px;
+    line-height: 16px;
   }
 
   // ─── Color grid ──────────────────────────────────────────────────────────

@@ -20,9 +20,6 @@ import {
 import type { SpeechBubble, BubbleStyle, TailStyle } from "@/lib/bubble-types";
 import type { CanvasTextElement, CanvasLineElement, LineType } from "@/components/canvas-context-toolbar";
 import {
-  KOREAN_FONTS,
-  STYLE_LABELS,
-  FLASH_STYLE_LABELS,
   TAIL_LABELS,
   BUBBLE_CATEGORIES,
   ALL_STYLE_LABELS,
@@ -71,8 +68,6 @@ interface ElementPropertiesPanelProps {
   onRemoveBackground?: () => void;
   removingBg?: boolean;
   isPro?: boolean;
-  availableFonts?: Array<{ value: string; label: string; family: string }>;
-  canAllFonts?: boolean;
 }
 
 export function ElementPropertiesPanel({
@@ -90,8 +85,6 @@ export function ElementPropertiesPanel({
   onRemoveBackground,
   removingBg = false,
   isPro = false,
-  availableFonts = KOREAN_FONTS,
-  canAllFonts = true,
 }: ElementPropertiesPanelProps) {
   // No selection
   if (!selectedBubble && !selectedChar && !selectedText && !selectedLine) {
@@ -252,52 +245,18 @@ export function ElementPropertiesPanel({
         </p>
       </div>
 
-      {/* Font + Font size on same row */}
-      <div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">글씨체</p>
-        <div className="flex items-center gap-1.5">
-          <Select
-            value={selectedBubble.fontKey}
-            onValueChange={(v) => updateBubble({ fontKey: v })}
-          >
-            <SelectTrigger className="h-7 text-[11px] bg-card border-border flex-1"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-[280px]">
-              {availableFonts.map((f) => (
-                <SelectItem key={f.value} value={f.value}>
-                  <span style={{ fontFamily: f.family }}>{f.label}</span>
-                </SelectItem>
-              ))}
-              {!canAllFonts && (
-                <div className="px-3 py-2 text-[11px] text-muted-foreground border-t">
-                  Pro 멤버십에서 전체 폰트 해금
-                </div>
-              )}
-            </SelectContent>
-          </Select>
-          <Input
-            type="number"
-            role="combobox"
-            value={selectedBubble.fontSize}
-            onChange={(e) => updateBubble({ fontSize: Number(e.target.value) })}
-            min={8}
-            max={80}
-            className="h-7 w-16 text-[11px] bg-card border-border text-center shrink-0"
-          />
-        </div>
-      </div>
-
       {/* Style */}
       <div>
         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">말풍선 형태</p>
         {BUBBLE_CATEGORIES.map((cat) => (
           <div key={cat.label} className="mb-1.5">
             <span className="text-[10px] text-muted-foreground/70 font-medium">{cat.label}</span>
-            <div className="flex flex-wrap gap-1 mt-0.5">
+            <div className="flex gap-1 mt-0.5 overflow-x-auto scrollbar-hide pb-0.5">
               {cat.styles.map((k) => (
                 <button
                   key={k}
                   onClick={() => updateBubble({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-                  className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors whitespace-nowrap ${
+                  className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                     selectedBubble.style === k
                       ? "bg-primary/12 text-primary font-medium"
                       : "bg-muted/40 text-muted-foreground hover:bg-muted/60"

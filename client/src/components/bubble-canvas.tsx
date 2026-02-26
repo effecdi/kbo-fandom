@@ -272,7 +272,6 @@ export function BubbleCanvas({
     }, [redraw]);
 
     const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
-        if (!isActive) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         canvas.setPointerCapture(e.pointerId);
@@ -283,7 +282,8 @@ export function BubbleCanvas({
         const currentChars = page.characters;
         const currentCharSel = selectedCharIdRef.current;
 
-        if (currentSelected) {
+        // Handle/drag operations only on active panel
+        if (isActive && currentSelected) {
             const selBubble = currentBubbles.find((b) => b.id === currentSelected);
             if (selBubble && !selBubble.locked) {
                 const handle = getHandleAtPos(pos.x, pos.y, selBubble);
@@ -296,7 +296,7 @@ export function BubbleCanvas({
             }
         }
 
-        if (currentCharSel) {
+        if (isActive && currentCharSel) {
             const selChar = currentChars.find((c) => c.id === currentCharSel);
             if (selChar && !selChar.locked) {
                 const charHandle = getCharHandleAtPos(pos.x, pos.y, selChar);
@@ -325,9 +325,11 @@ export function BubbleCanvas({
                 if (pos.x >= b.x && pos.x <= b.x + b.width && pos.y >= b.y && pos.y <= b.y + b.height) {
                     onSelectBubble(b.id);
                     onSelectChar(null);
-                    dragModeRef.current = "move";
-                    dragStartRef.current = pos;
-                    dragBubbleStartRef.current = { x: b.x, y: b.y, w: b.width, h: b.height };
+                    if (isActive) {
+                        dragModeRef.current = "move";
+                        dragStartRef.current = pos;
+                        dragBubbleStartRef.current = { x: b.x, y: b.y, w: b.width, h: b.height };
+                    }
                     return;
                 }
             } else {
@@ -335,9 +337,11 @@ export function BubbleCanvas({
                 if (pos.x >= c.x && pos.x <= c.x + c.width && pos.y >= c.y && pos.y <= c.y + c.height) {
                     onSelectChar(c.id);
                     onSelectBubble(null);
-                    dragModeRef.current = "char-move";
-                    dragStartRef.current = pos;
-                    dragBubbleStartRef.current = { x: c.x, y: c.y, w: c.width, h: c.height };
+                    if (isActive) {
+                        dragModeRef.current = "char-move";
+                        dragStartRef.current = pos;
+                        dragBubbleStartRef.current = { x: c.x, y: c.y, w: c.width, h: c.height };
+                    }
                     return;
                 }
             }

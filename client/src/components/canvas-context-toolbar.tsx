@@ -724,9 +724,10 @@ interface BubbleToolbarProps {
   onChange: (updates: Partial<SpeechBubble>) => void;
   onShowSettings: () => void;
   showSettings: boolean;
+  canAllFonts?: boolean;
 }
 
-export function BubbleContextToolbar({ bubble, onChange, onShowSettings, showSettings }: BubbleToolbarProps) {
+export function BubbleContextToolbar({ bubble, onChange, onShowSettings, showSettings, canAllFonts = true }: BubbleToolbarProps) {
   const [showFontDropdown, setShowFontDropdown] = useState(false);
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
   const [showFillColorPicker, setShowFillColorPicker] = useState(false);
@@ -749,18 +750,24 @@ export function BubbleContextToolbar({ bubble, onChange, onShowSettings, showSet
         </button>
         {showFontDropdown && (
           <div className="context-toolbar__dropdown">
-            {KOREAN_FONTS.map((f) => (
-              <button
-                key={f.value}
-                className={`context-toolbar__dropdown-item ${bubble.fontKey === f.value ? "context-toolbar__dropdown-item--active" : ""}`}
-                onClick={() => {
-                  onChange({ fontKey: f.value });
-                  setShowFontDropdown(false);
-                }}
-              >
-                <span style={{ fontFamily: f.family }}>{f.label}</span>
-              </button>
-            ))}
+            {KOREAN_FONTS.map((f, idx) => {
+              const locked = !canAllFonts && idx >= 3;
+              return (
+                <button
+                  key={f.value}
+                  className={`context-toolbar__dropdown-item ${bubble.fontKey === f.value ? "context-toolbar__dropdown-item--active" : ""} ${locked ? "context-toolbar__dropdown-item--locked" : ""}`}
+                  onClick={() => {
+                    if (locked) return;
+                    onChange({ fontKey: f.value });
+                    setShowFontDropdown(false);
+                  }}
+                  disabled={locked}
+                >
+                  <span style={{ fontFamily: f.family }}>{f.label}</span>
+                  {locked && <span className="context-toolbar__lock-badge">Pro</span>}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -940,72 +947,6 @@ export function BubbleFloatingSettings({ bubble, onChange, onClose }: BubbleSett
           onValueChange={([v]) => onChange({ fillOpacity: v / 100 })}
           className="w-full"
         />
-      </div>
-
-      {/* Draw mode */}
-      <div className="floating-settings-modal__section">
-        <span className="floating-settings-modal__label">그리기 모드</span>
-        <div className="bubble-floating-settings__btn-row">
-          {(["both", "fill_only", "stroke_only"] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => onChange({ drawMode: mode })}
-              className={`bubble-floating-settings__mode-btn ${
-                (bubble.drawMode ?? "both") === mode ? "bubble-floating-settings__mode-btn--active" : ""
-              }`}
-            >
-              {mode === "both" ? "채움+테두리" : mode === "fill_only" ? "채움만" : "테두리만"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tail style */}
-      <div className="floating-settings-modal__section">
-        <span className="floating-settings-modal__label">꼬리 스타일</span>
-        <div className="bubble-floating-settings__btn-row">
-          {(Object.entries(TAIL_LABELS) as [TailStyle, string][]).map(([k, l]) => (
-            <button
-              key={k}
-              onClick={() => onChange({
-                tailStyle: k,
-                tailTipX: undefined, tailTipY: undefined,
-                tailCtrl1X: undefined, tailCtrl1Y: undefined,
-                tailCtrl2X: undefined, tailCtrl2Y: undefined,
-              })}
-              className={`bubble-floating-settings__mode-btn ${
-                bubble.tailStyle === k ? "bubble-floating-settings__mode-btn--active" : ""
-              }`}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Bubble style */}
-      <div className="floating-settings-modal__section">
-        <span className="floating-settings-modal__label">말풍선 스타일</span>
-        <div className="bubble-floating-settings__style-grid">
-          {BUBBLE_CATEGORIES.map((cat) => (
-            <div key={cat.label} className="bubble-floating-settings__cat">
-              <span className="bubble-floating-settings__cat-label">{cat.label}</span>
-              <div className="bubble-floating-settings__btn-row">
-                {cat.styles.map((k) => (
-                  <button
-                    key={k}
-                    onClick={() => onChange({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-                    className={`bubble-floating-settings__mode-btn ${
-                      bubble.style === k ? "bubble-floating-settings__mode-btn--active" : ""
-                    }`}
-                  >
-                    {ALL_STYLE_LABELS[k] || k}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
