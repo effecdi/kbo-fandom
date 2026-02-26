@@ -750,6 +750,7 @@ function PanelCanvas({
   onEditBubble,
   onDoubleClickBubble,
   onDeletePanel,
+  hideDrawingLayers,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -764,6 +765,7 @@ function PanelCanvas({
   onEditBubble?: () => void;
   onDoubleClickBubble?: () => void;
   onDeletePanel?: () => void;
+  hideDrawingLayers?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -876,11 +878,11 @@ function PanelCanvas({
           z: le.zIndex ?? 20,
           le,
         })),
-        ...(p.drawingLayers || []).map((dl) => ({
+        ...(!hideDrawingLayers ? (p.drawingLayers || []).map((dl) => ({
           type: "drawing" as const,
           z: dl.zIndex ?? 15,
           dl,
-        })),
+        })) : []),
       ];
     drawables.sort((a, b) => a.z - b.z);
     drawables.forEach((d) => {
@@ -1105,7 +1107,7 @@ function PanelCanvas({
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, redraw, fontsReady]);
+  }, [panel, selectedBubbleId, selectedCharId, redraw, fontsReady, hideDrawingLayers]);
 
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -6017,6 +6019,7 @@ export default function StoryPage() {
                             setTimeout(() => bubbleTextareaRef.current?.focus(), 120);
                           }}
                           onDeletePanel={() => removePanel(i)}
+                          hideDrawingLayers={isDrawingMode && activePanelIndex === i}
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}

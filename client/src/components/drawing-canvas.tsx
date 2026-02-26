@@ -230,11 +230,22 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         }
       }
 
-      // 4. Draw composite onto main canvas
+      // 4. If eraser is active, apply activeStroke as destination-out on composite
+      const ts = toolStateRef.current;
+      if (ts.tool === "eraser") {
+        compCtx.save();
+        compCtx.globalCompositeOperation = "destination-out";
+        compCtx.drawImage(activeStroke, 0, 0);
+        compCtx.restore();
+      }
+
+      // 5. Draw composite onto main canvas
       ctx.drawImage(compositeCanvas, 0, 0);
 
-      // 5. Draw active stroke on top
-      ctx.drawImage(activeStroke, 0, 0);
+      // 6. Draw active stroke on top (non-eraser only; eraser already applied above)
+      if (ts.tool !== "eraser") {
+        ctx.drawImage(activeStroke, 0, 0);
+      }
     }, [width, height, backgroundImage]);
 
     // Re-composite when background or layers change
@@ -461,8 +472,12 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         }
 
         if (ts.tool === "eraser") {
-          ctx.globalCompositeOperation = "destination-out";
+          // Draw solid white stroke on activeStroke canvas;
+          // composite() will apply it as destination-out for live preview,
+          // and the saved layer type "eraser" triggers destination-out during compositing.
+          ctx.globalCompositeOperation = "source-over";
           ctx.globalAlpha = 1;
+          ctx.fillStyle = "#ffffff";
           ctx.beginPath();
           ctx.arc(point.x, point.y, ts.size / 2, 0, Math.PI * 2);
           ctx.fill();
@@ -577,8 +592,10 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         const pts = pointsRef.current;
 
         if (ts.tool === "eraser") {
-          ctx.globalCompositeOperation = "destination-out";
+          // Draw solid white stroke; composite handles destination-out
+          ctx.globalCompositeOperation = "source-over";
           ctx.globalAlpha = 1;
+          ctx.strokeStyle = "#ffffff";
           ctx.lineWidth = ts.size;
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
