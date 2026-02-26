@@ -744,7 +744,6 @@ function PanelCanvas({
   onEditBubble,
   onDoubleClickBubble,
   onDeletePanel,
-  hideDrawingLayers,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -759,9 +758,9 @@ function PanelCanvas({
   onEditBubble?: () => void;
   onDoubleClickBubble?: () => void;
   onDeletePanel?: () => void;
-  hideDrawingLayers?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingCompositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const { toast } = useToast();
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const dragModeRef = useRef<DragMode>(null);
@@ -850,7 +849,6 @@ function PanelCanvas({
       | { type: "bubble"; z: number; b: SpeechBubble }
       | { type: "text"; z: number; te: CanvasTextElement }
       | { type: "line"; z: number; le: CanvasLineElement }
-      | { type: "drawing"; z: number; dl: DrawingLayer }
     > = [
         ...p.characters.map((ch) => ({
           type: "char" as const,
@@ -872,11 +870,6 @@ function PanelCanvas({
           z: le.zIndex ?? 20,
           le,
         })),
-        ...(hideDrawingLayers ? [] : (p.drawingLayers || []).map((dl) => ({
-          type: "drawing" as const,
-          z: dl.zIndex ?? 15,
-          dl,
-        }))),
       ];
     drawables.sort((a, b) => a.z - b.z);
     drawables.forEach((d) => {
@@ -1063,22 +1056,42 @@ function PanelCanvas({
           ctx.fillText("잠시만 기다려주세요", CANVAS_W / 2, CANVAS_H / 2 + 14);
           ctx.restore();
         }
-      } else if (d.type === "drawing") {
-        const dl = d.dl;
-        if (dl.visible && dl.imageEl) {
-          ctx.save();
-          ctx.globalAlpha = dl.opacity ?? 1;
-          if (dl.type === "eraser") {
-            ctx.globalCompositeOperation = "destination-out";
-          }
-          ctx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
-          ctx.restore();
-        }
       } else {
         const b = d.b;
         drawBubble(ctx, b, b.id === selectedBubbleIdRef.current);
       }
     });
+
+    // Render drawing layers on a separate composite canvas
+    // so eraser (destination-out) only affects other drawing layers, not background/characters
+    const dlayers = p.drawingLayers || [];
+    if (dlayers.length > 0) {
+      if (!drawingCompositeCanvasRef.current) {
+        const c = document.createElement("canvas");
+        c.width = CANVAS_W;
+        c.height = CANVAS_H;
+        drawingCompositeCanvasRef.current = c;
+      }
+      const comp = drawingCompositeCanvasRef.current;
+      const compCtx = comp.getContext("2d");
+      if (compCtx) {
+        compCtx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        const sorted = [...dlayers].sort((a, b) => a.zIndex - b.zIndex);
+        for (const dl of sorted) {
+          if (!dl.visible || !dl.imageEl) continue;
+          compCtx.save();
+          compCtx.globalAlpha = dl.opacity ?? 1;
+          if (dl.type === "eraser") {
+            compCtx.globalCompositeOperation = "destination-out";
+          } else {
+            compCtx.globalCompositeOperation = "source-over";
+          }
+          compCtx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
+          compCtx.restore();
+        }
+        ctx.drawImage(comp, 0, 0);
+      }
+    }
 
     if (p.topScript)
       drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
@@ -1095,13 +1108,13 @@ function PanelCanvas({
       ctx.fillText("OLLI Free", 0, 0);
       ctx.restore();
     }
-  }, [isPro, hideDrawingLayers]);
+  }, [isPro]);
 
   redrawRef.current = redraw;
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, redraw, fontsReady, hideDrawingLayers]);
+  }, [panel, selectedBubbleId, selectedCharId, redraw, fontsReady]);
 
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -6391,7 +6404,6 @@ export default function StoryPage() {
                             setTimeout(() => bubbleTextareaRef.current?.focus(), 120);
                           }}
                           onDeletePanel={() => removePanel(i)}
-                          hideDrawingLayers={isDrawingMode && activePanelIndex === i}
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}
