@@ -25,6 +25,8 @@ import {
   STYLE_LABELS,
   FLASH_STYLE_LABELS,
   TAIL_LABELS,
+  BUBBLE_CATEGORIES,
+  ALL_STYLE_LABELS,
 } from "@/lib/bubble-utils";
 
 interface CharacterPlacement {
@@ -290,33 +292,24 @@ export function ElementPropertiesPanel({
       {/* Style */}
       <div>
         <p className="text-[.9rem] uppercase tracking-wide text-muted-foreground mb-1.5">말풍선 형태</p>
-        <div className="flex gap-1 mb-1.5 overflow-x-auto scrollbar-hide">
-          {Object.entries(STYLE_LABELS).filter(([k]) => k !== "image").map(([k, l]) => (
-            <button
-              key={k}
-              onClick={() => updateBubble({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-              className={`px-1.5 py-0.5 text-[15px] rounded border transition-colors whitespace-nowrap shrink-0 ${
-                selectedBubble.style === k
-                  ? "bg-primary/20 border-primary text-foreground font-semibold"
-                  : "border-border hover:bg-muted/60"
-              }`}
-            >{l}</button>
-          ))}
-        </div>
-        <p className="text-[9px] text-muted-foreground mb-1">특수 효과</p>
-        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-          {Object.entries(FLASH_STYLE_LABELS).map(([k, l]) => (
-            <button
-              key={k}
-              onClick={() => updateBubble({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-              className={`px-1.5 py-0.5 text-[15px] rounded border transition-colors whitespace-nowrap shrink-0 ${
-                selectedBubble.style === k
-                  ? "bg-primary/20 border-primary text-foreground font-semibold"
-                  : "border-border hover:bg-muted/60"
-              }`}
-            >{l}</button>
-          ))}
-        </div>
+        {BUBBLE_CATEGORIES.map((cat) => (
+          <div key={cat.label} className="mb-1.5">
+            <span className="text-[10px] text-muted-foreground/70 font-medium">{cat.label}</span>
+            <div className="flex flex-wrap gap-1 mt-0.5">
+              {cat.styles.map((k) => (
+                <button
+                  key={k}
+                  onClick={() => updateBubble({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
+                  className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors whitespace-nowrap ${
+                    selectedBubble.style === k
+                      ? "bg-primary/12 text-primary font-medium"
+                      : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
+                  }`}
+                >{ALL_STYLE_LABELS[k] || k}</button>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Wobble slider for applicable styles */}
@@ -403,10 +396,10 @@ export function ElementPropertiesPanel({
             <span className="text-[15px] text-muted-foreground flex-1">내부 채우기</span>
             <button
               onClick={() => updateBubble({ flashFilled: !(selectedBubble.flashFilled ?? true) })}
-              className={`px-1.5 py-0.5 text-[15px] rounded border transition-colors ${
+              className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${
                 (selectedBubble.flashFilled ?? true)
-                  ? "bg-primary/20 border-primary font-semibold"
-                  : "border-border hover:bg-muted/60"
+                  ? "bg-primary/12 text-primary font-medium"
+                  : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
               }`}
             >
               {(selectedBubble.flashFilled ?? true) ? "채움" : "비움"}
@@ -492,7 +485,7 @@ export function ElementPropertiesPanel({
       <div>
         <p className="text-[.9rem] uppercase tracking-wide text-muted-foreground mb-1.5">말꼬리</p>
         <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-          {Object.entries(TAIL_LABELS).map(([k, l]) => (
+          {(Object.entries(TAIL_LABELS) as [string, string][]).map(([k, l]) => (
             <button
               key={k}
               onClick={() => updateBubble({
@@ -501,10 +494,10 @@ export function ElementPropertiesPanel({
                 tailCtrl1X: undefined, tailCtrl1Y: undefined,
                 tailCtrl2X: undefined, tailCtrl2Y: undefined,
               })}
-              className={`px-1.5 py-0.5 text-[15px] rounded border transition-colors whitespace-nowrap shrink-0 ${
+              className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                 selectedBubble.tailStyle === k
-                  ? "bg-primary/20 border-primary text-foreground font-semibold"
-                  : "border-border hover:bg-muted/60"
+                  ? "bg-primary/12 text-primary font-medium"
+                  : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
               }`}
             >{l}</button>
           ))}
@@ -635,10 +628,10 @@ export function ElementPropertiesPanel({
             <button
               key={mode}
               onClick={() => updateBubble({ drawMode: mode })}
-              className={`px-1.5 py-0.5 text-[15px] rounded border transition-colors ${
+              className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${
                 (selectedBubble.drawMode ?? "both") === mode
-                  ? "bg-primary/20 border-primary font-semibold"
-                  : "border-border hover:bg-muted/60"
+                  ? "bg-primary/12 text-primary font-medium"
+                  : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
               }`}
             >
               {mode === "both" ? "채움+테두리" : mode === "fill_only" ? "채움만" : "테두리만"}

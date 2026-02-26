@@ -706,8 +706,8 @@ export default function BubblePage() {
             </Button>
             <Button
               size="sm"
-              variant="outline"
-              className="gap-1.5 h-8 text-xs px-2.5"
+              variant="ghost"
+              className="gap-1.5 h-8 text-xs px-2.5 bg-muted/40 hover:bg-muted/60"
               onClick={handleDownloadAll}
               data-testid="button-download-bubble-all"
             >
@@ -716,8 +716,8 @@ export default function BubblePage() {
             </Button>
             <Button
               size="sm"
-              variant="outline"
-              className="gap-1.5 h-8 text-xs px-2.5"
+              variant="ghost"
+              className="gap-1.5 h-8 text-xs px-2.5 bg-muted/40 hover:bg-muted/60"
               onClick={() => document.getElementById("bg-upload")?.click()}
               data-testid="button-upload-bubble-bg"
             >
@@ -919,27 +919,27 @@ export default function BubblePage() {
                 <div className="p-2 border-b border-border">
                   <div className="flex items-center gap-1.5">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="flex-1 justify-center gap-1 h-7 text-[11px]"
+                      className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
                       onClick={addBubble}
                     >
                       <MessageCircle className="h-3 w-3" />
                       말풍선
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="flex-1 justify-center gap-1 h-7 text-[11px]"
+                      className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
                       onClick={() => setShowGalleryPicker(true)}
                     >
                       <ImagePlus className="h-3 w-3" />
                       캐릭터
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="flex-1 justify-center gap-1 h-7 text-[11px]"
+                      className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
                       onClick={() => setShowTemplatePicker(true)}
                     >
                       <Type className="h-3 w-3" />

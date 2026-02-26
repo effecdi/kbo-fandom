@@ -65,6 +65,8 @@ export const STYLE_LABELS: Record<string, string> = {
     cloud: "구름",
     sticker: "스티커",
     tall_rough: "거친 직사각형",
+    flash_eyelash: "속눈썹",
+    monologue: "독백",
     image: "이미지",
 };
 
@@ -76,6 +78,18 @@ export const FLASH_STYLE_LABELS: Record<string, string> = {
     drip: "흐물",
     sparkle_ring: "신비",
     embarrassed: "난처",
+};
+
+export const BUBBLE_CATEGORIES = [
+    { label: "기본", styles: ["linedrawing", "handwritten", "rounded", "rectangle"] },
+    { label: "감정", styles: ["thought", "shout", "wobbly", "dashed", "embarrassed"] },
+    { label: "효과", styles: ["flash_black", "flash_dense", "flash_eyelash", "sparkle_ring", "brush", "drip"] },
+    { label: "장식", styles: ["doubleline", "wavy", "polygon", "spiky", "cloud", "sticker", "tall_rough", "monologue"] },
+];
+
+export const ALL_STYLE_LABELS: Record<string, string> = {
+    ...STYLE_LABELS,
+    ...FLASH_STYLE_LABELS,
 };
 
 export const TAIL_LABELS: Record<TailStyle, string> = {
