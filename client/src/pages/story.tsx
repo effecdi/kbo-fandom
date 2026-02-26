@@ -6041,9 +6041,15 @@ export default function StoryPage() {
                               drawingLayers={panel.drawingLayers || []}
                               onLayerCreated={(newLayer) => {
                                 drawingUndoStackRef.current = [];
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: [...(panel.drawingLayers || []), newLayer],
+                                setPanels(prev => {
+                                  const cur = prev[i];
+                                  if (!cur) return prev;
+                                  const existing = (cur.drawingLayers || []);
+                                  // 중복 방지: 동일 ID 레이어가 이미 있으면 무시
+                                  if (existing.some(dl => dl.id === newLayer.id)) return prev;
+                                  const next = [...prev];
+                                  next[i] = { ...cur, drawingLayers: [...existing, newLayer] };
+                                  return next;
                                 });
                                 setSelectedDrawingLayerId(newLayer.id);
                                 setSelectedToolItem("select");
