@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
@@ -245,14 +244,12 @@ export function ElementPropertiesPanel({
         </div>
       </div>
 
-      {/* Text */}
+      {/* Text hint */}
       <div>
         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">텍스트</p>
-        <Textarea
-          value={selectedBubble.text}
-          onChange={(e) => updateBubble({ text: e.target.value })}
-          className="text-[11px] min-h-[50px] bg-card border-border"
-        />
+        <p className="text-[11px] text-muted-foreground/70 italic">
+          캔버스에서 더블클릭하여 텍스트 편집
+        </p>
       </div>
 
       {/* Font + Font size on same row */}

@@ -85,6 +85,22 @@ export const TAIL_LABELS: Record<TailStyle, string> = {
     dots_linedrawing: "점점점 (라인)",
 };
 
+export const ALL_STYLE_LABELS: Record<string, string> = {
+    ...STYLE_LABELS,
+    ...FLASH_STYLE_LABELS,
+};
+
+export const BUBBLE_CATEGORIES: { label: string; styles: string[] }[] = [
+    {
+        label: "기본",
+        styles: Object.keys(STYLE_LABELS),
+    },
+    {
+        label: "효과/특수",
+        styles: Object.keys(FLASH_STYLE_LABELS),
+    },
+];
+
 export function generateId() {
     return Math.random().toString(36).slice(2, 10);
 }

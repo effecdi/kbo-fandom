@@ -100,6 +100,8 @@ import {
   TextContextToolbar,
   LineContextToolbar,
   DrawingContextToolbar,
+  BubbleContextToolbar,
+  BubbleFloatingSettings,
   FloatingSettingsModal,
   createTextElement,
   createLineElement,
@@ -780,10 +782,14 @@ function PanelCanvas({
   const selectedCharIdRef = useRef(selectedCharId);
   const panelRef = useRef(panel);
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
+  const editingBubbleIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     selectedBubbleIdRef.current = selectedBubbleId;
   }, [selectedBubbleId]);
+  useEffect(() => {
+    editingBubbleIdRef.current = editingBubbleId;
+  }, [editingBubbleId]);
   useEffect(() => {
     selectedCharIdRef.current = selectedCharId;
   }, [selectedCharId]);
@@ -1082,7 +1088,8 @@ function PanelCanvas({
         }
       } else {
         const b = d.b;
-        drawBubble(ctx, b, b.id === selectedBubbleIdRef.current);
+        const renderB = b.id === editingBubbleIdRef.current ? { ...b, text: "" } : b;
+        drawBubble(ctx, renderB, b.id === selectedBubbleIdRef.current);
       }
     });
 
@@ -1296,6 +1303,9 @@ function PanelCanvas({
               onSelectChar(null);
               selectedBubbleIdRef.current = b.id;
               selectedCharIdRef.current = null;
+              if (editingBubbleIdRef.current && editingBubbleIdRef.current !== b.id) {
+                setEditingBubbleId(null);
+              }
               dragModeRef.current = "move";
               dragStartRef.current = pos;
               dragBubbleStartRef.current = { x: b.x, y: b.y, w: b.width, h: b.height };
@@ -1318,6 +1328,7 @@ function PanelCanvas({
               onSelectBubble(null);
               selectedBubbleIdRef.current = null;
               selectedCharIdRef.current = ch.id;
+              setEditingBubbleId(null);
               dragStartRef.current = pos;
               dragCharStartRef.current = { x: ch.x, y: ch.y, scale: ch.scale };
               // For full-canvas images, check corners near canvas edges
@@ -1402,6 +1413,7 @@ function PanelCanvas({
       onSelectChar(null);
       selectedBubbleIdRef.current = null;
       selectedCharIdRef.current = null;
+      setEditingBubbleId(null);
     },
     [getCanvasPos, getHandleAtPos, onSelectBubble, onSelectChar],
   );
@@ -1665,20 +1677,12 @@ function PanelCanvas({
           pos.y <= b.y + b.height
         ) {
           onSelectBubble(b.id);
-          // Switch to bubble tab + focus textarea
-          if (onDoubleClickBubble) {
-            onDoubleClickBubble();
-          }
-          if (onEditBubble) {
-            setTimeout(() => onEditBubble(), 80);
-          } else {
-            setEditingBubbleId(b.id);
-          }
+          setEditingBubbleId(b.id);
           return;
         }
       }
     },
-    [getCanvasPos, onSelectBubble, onEditBubble, onDoubleClickBubble],
+    [getCanvasPos, onSelectBubble],
   );
 
   const hasZoom = zoom !== undefined;
@@ -2119,6 +2123,54 @@ function PanelCanvas({
                   />
                 ))}
               </svg>
+            );
+          })()}
+
+          {/* Inline text editing overlay for bubbles */}
+          {editingBubbleId && (() => {
+            const b = panel.bubbles.find(bb => bb.id === editingBubbleId);
+            if (!b) return null;
+            const canvas = canvasRef.current;
+            if (!canvas) return null;
+            const rect = canvas.getBoundingClientRect();
+            const sx = rect.width / CANVAS_W;
+            const sy = rect.height / CANVAS_H;
+            return (
+              <textarea
+                autoFocus
+                value={b.text}
+                onChange={(e) => {
+                  updateBubbleInPanel(b.id, { text: e.target.value });
+                }}
+                onBlur={() => setEditingBubbleId(null)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Escape") {
+                    setEditingBubbleId(null);
+                  }
+                }}
+                style={{
+                  position: "absolute",
+                  left: b.x * sx,
+                  top: b.y * sy,
+                  width: b.width * sx,
+                  height: b.height * sy,
+                  fontSize: b.fontSize * sx,
+                  fontFamily: getFontFamily(b.fontKey),
+                  textAlign: "center",
+                  color: b.strokeColor || "#222222",
+                  background: "rgba(255,255,255,0.85)",
+                  border: "2px solid hsl(var(--primary))",
+                  borderRadius: 6,
+                  padding: "4px",
+                  resize: "none",
+                  outline: "none",
+                  zIndex: 30,
+                  overflow: "hidden",
+                  lineHeight: 1.3,
+                  boxSizing: "border-box",
+                }}
+              />
             );
           })()}
         </div>
@@ -3904,6 +3956,7 @@ export default function StoryPage() {
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
   const [showLineSettings, setShowLineSettings] = useState(false);
   const [showDrawingContextSettings, setShowDrawingContextSettings] = useState(false);
+  const [showBubbleSettings, setShowBubbleSettings] = useState(false);
   const [drawingLayerSelected, setDrawingLayerSelected] = useState(false);
   const [selectedLineSubType, setSelectedLineSubType] = useState<LineType>("straight");
 
@@ -5552,6 +5605,42 @@ export default function StoryPage() {
                             )}
                           </>
                         )}
+                        {/* Bubble context toolbar */}
+                        {activePanelIndex === i && selectedBubbleId && !selectedTextElement && !selectedLineElement && !selectedDrawingLayerId && (() => {
+                          const selBubble = panel.bubbles.find(b => b.id === selectedBubbleId);
+                          if (!selBubble) return null;
+                          return (
+                            <>
+                              <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                                <BubbleContextToolbar
+                                  bubble={selBubble}
+                                  onChange={(updates) => {
+                                    updatePanel(i, {
+                                      ...panel,
+                                      bubbles: panel.bubbles.map(b => b.id === selectedBubbleId ? { ...b, ...updates } : b),
+                                    });
+                                  }}
+                                  showSettings={showBubbleSettings}
+                                  onShowSettings={() => setShowBubbleSettings(s => !s)}
+                                />
+                              </div>
+                              {showBubbleSettings && (
+                                <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                                  <BubbleFloatingSettings
+                                    bubble={selBubble}
+                                    onChange={(updates) => {
+                                      updatePanel(i, {
+                                        ...panel,
+                                        bubbles: panel.bubbles.map(b => b.id === selectedBubbleId ? { ...b, ...updates } : b),
+                                      });
+                                    }}
+                                    onClose={() => setShowBubbleSettings(false)}
+                                  />
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         <PanelCanvas
                           key={panel.id + "-main"}
@@ -5564,6 +5653,7 @@ export default function StoryPage() {
                             setSelectedTextId(null);
                             setSelectedLineId(null);
                             setActivePanelIndex(i);
+                            if (!id) setShowBubbleSettings(false);
                           }}
                           selectedCharId={activePanelIndex === i ? selectedCharId : null}
                           onSelectChar={(id) => {
@@ -5572,6 +5662,7 @@ export default function StoryPage() {
                             setSelectedTextId(null);
                             setSelectedLineId(null);
                             setActivePanelIndex(i);
+                            setShowBubbleSettings(false);
                             // Auto-switch to image tab when character is clicked on canvas
                             if (id) setActiveLeftTab("image");
                           }}
@@ -5582,16 +5673,8 @@ export default function StoryPage() {
                           zoom={zoom}
                           fontsReady={fontsReady}
                           isPro={isPro}
-                          onEditBubble={() => {
-                            // Focus sidebar bubble textarea
-                            setTimeout(() => bubbleTextareaRef.current?.focus(), 80);
-                          }}
-                          onDoubleClickBubble={() => {
-                            // Switch to element > bubble sub-tab on double-click
-                            setActiveLeftTab("elements");
-                            setElementsSubTab("bubble");
-                            setTimeout(() => bubbleTextareaRef.current?.focus(), 120);
-                          }}
+                          onEditBubble={undefined}
+                          onDoubleClickBubble={undefined}
                           onDeletePanel={() => removePanel(i)}
                           hideDrawingLayers={isDrawingMode && activePanelIndex === i}
                         />

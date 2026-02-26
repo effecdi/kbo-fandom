@@ -1,5 +1,14 @@
 import { useState, useRef, useCallback } from "react";
 import { Slider } from "@/components/ui/slider";
+import type { SpeechBubble, BubbleStyle, TailStyle } from "@/lib/bubble-types";
+import {
+  KOREAN_FONTS,
+  STYLE_LABELS,
+  FLASH_STYLE_LABELS,
+  TAIL_LABELS,
+  BUBBLE_CATEGORIES,
+  ALL_STYLE_LABELS,
+} from "@/lib/bubble-utils";
 import {
   Bold,
   Italic,
@@ -701,6 +710,302 @@ export function FloatingSettingsModal({
           onValueChange={([v]) => onOpacityChange(v / 100)}
           className="w-full"
         />
+      </div>
+    </div>
+  );
+}
+
+// ─── Bubble Context Toolbar ─────────────────────────────────────────────────
+
+const BUBBLE_FONT_SIZE_OPTIONS = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48];
+
+interface BubbleToolbarProps {
+  bubble: SpeechBubble;
+  onChange: (updates: Partial<SpeechBubble>) => void;
+  onShowSettings: () => void;
+  showSettings: boolean;
+}
+
+export function BubbleContextToolbar({ bubble, onChange, onShowSettings, showSettings }: BubbleToolbarProps) {
+  const [showFontDropdown, setShowFontDropdown] = useState(false);
+  const [showSizeDropdown, setShowSizeDropdown] = useState(false);
+  const [showFillColorPicker, setShowFillColorPicker] = useState(false);
+  const [showStrokeColorPicker, setShowStrokeColorPicker] = useState(false);
+  const fillColorInputRef = useRef<HTMLInputElement>(null);
+  const strokeColorInputRef = useRef<HTMLInputElement>(null);
+
+  const fontLabel = KOREAN_FONTS.find((f) => f.value === bubble.fontKey)?.label || "기본 고딕";
+
+  return (
+    <div className="context-toolbar context-toolbar--bubble">
+      {/* Font family */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn context-toolbar__btn--wide"
+          onClick={() => { setShowFontDropdown((v) => !v); setShowSizeDropdown(false); setShowFillColorPicker(false); setShowStrokeColorPicker(false); }}
+        >
+          <span className="context-toolbar__btn-label">{fontLabel}</span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+        {showFontDropdown && (
+          <div className="context-toolbar__dropdown">
+            {KOREAN_FONTS.map((f) => (
+              <button
+                key={f.value}
+                className={`context-toolbar__dropdown-item ${bubble.fontKey === f.value ? "context-toolbar__dropdown-item--active" : ""}`}
+                onClick={() => {
+                  onChange({ fontKey: f.value });
+                  setShowFontDropdown(false);
+                }}
+              >
+                <span style={{ fontFamily: f.family }}>{f.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Font size */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn context-toolbar__btn--narrow"
+          onClick={() => { setShowSizeDropdown((v) => !v); setShowFontDropdown(false); setShowFillColorPicker(false); setShowStrokeColorPicker(false); }}
+        >
+          <span className="context-toolbar__btn-label">{bubble.fontSize}</span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+        {showSizeDropdown && (
+          <div className="context-toolbar__dropdown">
+            {BUBBLE_FONT_SIZE_OPTIONS.map((s) => (
+              <button
+                key={s}
+                className={`context-toolbar__dropdown-item ${bubble.fontSize === s ? "context-toolbar__dropdown-item--active" : ""}`}
+                onClick={() => {
+                  onChange({ fontSize: s });
+                  setShowSizeDropdown(false);
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Fill color */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn"
+          onClick={() => { setShowFillColorPicker((v) => !v); setShowStrokeColorPicker(false); setShowFontDropdown(false); setShowSizeDropdown(false); }}
+          title="채움색"
+        >
+          <span
+            className="context-toolbar__color-dot"
+            style={{ backgroundColor: bubble.fillColor || "#ffffff" }}
+          />
+        </button>
+        {showFillColorPicker && (
+          <div className="context-toolbar__dropdown context-toolbar__dropdown--colors">
+            <div className="context-toolbar__color-grid">
+              {COLOR_PRESETS.map((c) => (
+                <button
+                  key={c}
+                  className={`context-toolbar__color-swatch ${(bubble.fillColor || "#ffffff") === c ? "context-toolbar__color-swatch--active" : ""}`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    onChange({ fillColor: c });
+                    setShowFillColorPicker(false);
+                  }}
+                />
+              ))}
+            </div>
+            <div className="context-toolbar__custom-color-row">
+              <input
+                ref={fillColorInputRef}
+                type="color"
+                value={bubble.fillColor && bubble.fillColor !== "transparent" ? bubble.fillColor : "#ffffff"}
+                onChange={(e) => onChange({ fillColor: e.target.value })}
+                className="context-toolbar__color-input"
+              />
+              <span className="context-toolbar__color-hex">{bubble.fillColor || "#ffffff"}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Stroke color */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn"
+          onClick={() => { setShowStrokeColorPicker((v) => !v); setShowFillColorPicker(false); setShowFontDropdown(false); setShowSizeDropdown(false); }}
+          title="테두리색"
+        >
+          <span
+            className="context-toolbar__color-dot context-toolbar__color-dot--stroke"
+            style={{ backgroundColor: bubble.strokeColor || "#222222" }}
+          />
+        </button>
+        {showStrokeColorPicker && (
+          <div className="context-toolbar__dropdown context-toolbar__dropdown--colors">
+            <div className="context-toolbar__color-grid">
+              {COLOR_PRESETS.map((c) => (
+                <button
+                  key={c}
+                  className={`context-toolbar__color-swatch ${(bubble.strokeColor || "#222222") === c ? "context-toolbar__color-swatch--active" : ""}`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    onChange({ strokeColor: c });
+                    setShowStrokeColorPicker(false);
+                  }}
+                />
+              ))}
+            </div>
+            <div className="context-toolbar__custom-color-row">
+              <input
+                ref={strokeColorInputRef}
+                type="color"
+                value={bubble.strokeColor || "#222222"}
+                onChange={(e) => onChange({ strokeColor: e.target.value })}
+                className="context-toolbar__color-input"
+              />
+              <span className="context-toolbar__color-hex">{bubble.strokeColor || "#222222"}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Settings menu (hamburger) */}
+      <button
+        className={`context-toolbar__btn ${showSettings ? "context-toolbar__btn--active" : ""}`}
+        onClick={onShowSettings}
+        title="설정"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// ─── Bubble Floating Settings ───────────────────────────────────────────────
+
+interface BubbleSettingsProps {
+  bubble: SpeechBubble;
+  onChange: (updates: Partial<SpeechBubble>) => void;
+  onClose: () => void;
+}
+
+export function BubbleFloatingSettings({ bubble, onChange, onClose }: BubbleSettingsProps) {
+  return (
+    <div className="floating-settings-modal bubble-floating-settings">
+      <div className="floating-settings-modal__header">
+        <span className="floating-settings-modal__title">말풍선 설정</span>
+        <button className="floating-settings-modal__close" onClick={onClose}>
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Stroke width */}
+      <div className="floating-settings-modal__section">
+        <div className="floating-settings-modal__row">
+          <span className="floating-settings-modal__label">테두리 두께</span>
+          <span className="floating-settings-modal__value">{bubble.strokeWidth}px</span>
+        </div>
+        <Slider
+          min={1}
+          max={8}
+          step={0.5}
+          value={[bubble.strokeWidth]}
+          onValueChange={([v]) => onChange({ strokeWidth: v })}
+          className="w-full"
+        />
+      </div>
+
+      {/* Fill opacity */}
+      <div className="floating-settings-modal__section">
+        <div className="floating-settings-modal__row">
+          <span className="floating-settings-modal__label">채움 투명도</span>
+          <span className="floating-settings-modal__value">{Math.round((bubble.fillOpacity ?? 1) * 100)}%</span>
+        </div>
+        <Slider
+          min={0}
+          max={100}
+          step={5}
+          value={[Math.round((bubble.fillOpacity ?? 1) * 100)]}
+          onValueChange={([v]) => onChange({ fillOpacity: v / 100 })}
+          className="w-full"
+        />
+      </div>
+
+      {/* Draw mode */}
+      <div className="floating-settings-modal__section">
+        <span className="floating-settings-modal__label">그리기 모드</span>
+        <div className="bubble-floating-settings__btn-row">
+          {(["both", "fill_only", "stroke_only"] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => onChange({ drawMode: mode })}
+              className={`bubble-floating-settings__mode-btn ${
+                (bubble.drawMode ?? "both") === mode ? "bubble-floating-settings__mode-btn--active" : ""
+              }`}
+            >
+              {mode === "both" ? "채움+테두리" : mode === "fill_only" ? "채움만" : "테두리만"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tail style */}
+      <div className="floating-settings-modal__section">
+        <span className="floating-settings-modal__label">꼬리 스타일</span>
+        <div className="bubble-floating-settings__btn-row">
+          {(Object.entries(TAIL_LABELS) as [TailStyle, string][]).map(([k, l]) => (
+            <button
+              key={k}
+              onClick={() => onChange({
+                tailStyle: k,
+                tailTipX: undefined, tailTipY: undefined,
+                tailCtrl1X: undefined, tailCtrl1Y: undefined,
+                tailCtrl2X: undefined, tailCtrl2Y: undefined,
+              })}
+              className={`bubble-floating-settings__mode-btn ${
+                bubble.tailStyle === k ? "bubble-floating-settings__mode-btn--active" : ""
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bubble style */}
+      <div className="floating-settings-modal__section">
+        <span className="floating-settings-modal__label">말풍선 스타일</span>
+        <div className="bubble-floating-settings__style-grid">
+          {BUBBLE_CATEGORIES.map((cat) => (
+            <div key={cat.label} className="bubble-floating-settings__cat">
+              <span className="bubble-floating-settings__cat-label">{cat.label}</span>
+              <div className="bubble-floating-settings__btn-row">
+                {cat.styles.map((k) => (
+                  <button
+                    key={k}
+                    onClick={() => onChange({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
+                    className={`bubble-floating-settings__mode-btn ${
+                      bubble.style === k ? "bubble-floating-settings__mode-btn--active" : ""
+                    }`}
+                  >
+                    {ALL_STYLE_LABELS[k] || k}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

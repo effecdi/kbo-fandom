@@ -15,6 +15,7 @@ interface BubbleCanvasProps {
     selectedCharId: string | null;
     onCanvasRef?: (el: HTMLCanvasElement | null) => void;
     onEditBubble?: (id: string) => void;
+    editingBubbleId?: string | null;
     showWatermark?: boolean;
 }
 
@@ -30,6 +31,7 @@ export function BubbleCanvas({
     selectedCharId,
     onCanvasRef,
     onEditBubble,
+    editingBubbleId,
     showWatermark = false,
 }: BubbleCanvasProps) {
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -242,8 +244,8 @@ export function BubbleCanvas({
                     drawCharOverlaySelection(ctx, c);
                 }
             } else if (d.type === "bubble") {
-                const b = d.b;
-                drawBubble(ctx, b, isActive && b.id === selectedBubbleId);
+                const renderB = d.b.id === editingBubbleId ? { ...d.b, text: "" } : d.b;
+                drawBubble(ctx, renderB, isActive && d.b.id === selectedBubbleId);
             } else if (d.type === "group") {
                 const isGroupSelected =
                     isActive && d.bubbles.some((b) => b.id === selectedBubbleId);
@@ -263,7 +265,7 @@ export function BubbleCanvas({
             ctx.restore();
         }
 
-    }, [page, isActive, selectedBubbleId, selectedCharId, drawCharOverlaySelection, showWatermark]);
+    }, [page, isActive, selectedBubbleId, selectedCharId, drawCharOverlaySelection, showWatermark, editingBubbleId]);
 
     useEffect(() => {
         redraw();

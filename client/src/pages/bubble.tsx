@@ -24,7 +24,9 @@ import { Upload, Download, Plus, Trash2, MessageCircle, ArrowRight, Type, Move, 
 import { useLocation } from "wouter";
 import { BubbleCanvas } from "@/components/bubble-canvas";
 import { SpeechBubble, CharacterOverlay, PageData, DragMode, BubbleStyle, TailStyle } from "@/lib/bubble-types";
-import { generateId, KOREAN_FONTS, STYLE_LABELS, FLASH_STYLE_LABELS, TAIL_LABELS, drawBubble, getTailGeometry, getDefaultTailTip } from "@/lib/bubble-utils";
+import { generateId, KOREAN_FONTS, STYLE_LABELS, FLASH_STYLE_LABELS, TAIL_LABELS, drawBubble, getTailGeometry, getDefaultTailTip, getFontFamily } from "@/lib/bubble-utils";
+import { BubbleContextToolbar, BubbleFloatingSettings } from "@/components/canvas-context-toolbar";
+import "@/components/canvas-context-toolbar.scss";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ElementPropertiesPanel } from "@/components/element-properties-panel";
 import { LayerListPanel, type LayerItem } from "@/components/layer-list-panel";
@@ -75,7 +77,8 @@ export default function BubblePage() {
 
   const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null);
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
-
+  const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
+  const [showBubbleSettings, setShowBubbleSettings] = useState(false);
 
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
@@ -814,20 +817,114 @@ export default function BubblePage() {
                       </button>
                     )}
 
+                    {/* Bubble context toolbar */}
+                    {activePageIndex === i && selectedBubbleId && (() => {
+                      const selBubble = page.bubbles.find(b => b.id === selectedBubbleId);
+                      if (!selBubble) return null;
+                      return (
+                        <>
+                          <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                            <BubbleContextToolbar
+                              bubble={selBubble}
+                              onChange={(updates) => {
+                                updatePage(i, {
+                                  bubbles: page.bubbles.map(b => b.id === selectedBubbleId ? { ...b, ...updates } : b),
+                                });
+                              }}
+                              showSettings={showBubbleSettings}
+                              onShowSettings={() => setShowBubbleSettings(s => !s)}
+                            />
+                          </div>
+                          {showBubbleSettings && (
+                            <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                              <BubbleFloatingSettings
+                                bubble={selBubble}
+                                onChange={(updates) => {
+                                  updatePage(i, {
+                                    bubbles: page.bubbles.map(b => b.id === selectedBubbleId ? { ...b, ...updates } : b),
+                                  });
+                                }}
+                                onClose={() => setShowBubbleSettings(false)}
+                              />
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+
                     <BubbleCanvas
                       page={page}
                       isActive={activePageIndex === i}
                       zoom={zoom}
                       onUpdateBubble={(id, u) => updatePage(i, { bubbles: page.bubbles.map(b => b.id === id ? { ...b, ...u } : b) })}
                       onUpdateChar={(id, u) => updatePage(i, { characters: page.characters.map(c => c.id === id ? { ...c, ...u } : c) })}
-                      onSelectBubble={(id) => { setSelectedBubbleId(id); if (id) { setSelectedCharId(null); setActivePageIndex(i); } }}
-                      onSelectChar={(id) => { setSelectedCharId(id); if (id) { setSelectedBubbleId(null); setActivePageIndex(i); } }}
+                      onSelectBubble={(id) => {
+                        setSelectedBubbleId(id);
+                        if (id) { setSelectedCharId(null); setActivePageIndex(i); }
+                        if (!id) { setShowBubbleSettings(false); setEditingBubbleId(null); }
+                        if (id && editingBubbleId && editingBubbleId !== id) setEditingBubbleId(null);
+                      }}
+                      onSelectChar={(id) => {
+                        setSelectedCharId(id);
+                        if (id) { setSelectedBubbleId(null); setActivePageIndex(i); }
+                        setShowBubbleSettings(false);
+                        setEditingBubbleId(null);
+                      }}
                       selectedBubbleId={activePageIndex === i ? selectedBubbleId : null}
                       selectedCharId={activePageIndex === i ? selectedCharId : null}
                       onCanvasRef={(el) => { if (el) canvasRefs.current.set(page.id, el); else canvasRefs.current.delete(page.id); }}
-                      onEditBubble={(id) => { }}
+                      onEditBubble={(id) => setEditingBubbleId(id)}
+                      editingBubbleId={activePageIndex === i ? editingBubbleId : null}
                       showWatermark={!isPro}
                     />
+
+                    {/* Inline text editing overlay */}
+                    {activePageIndex === i && editingBubbleId && (() => {
+                      const b = page.bubbles.find(bb => bb.id === editingBubbleId);
+                      if (!b) return null;
+                      const cW = page.canvasSize.width;
+                      const cH = page.canvasSize.height;
+                      const canvasEl = canvasRefs.current.get(page.id);
+                      if (!canvasEl) return null;
+                      const rect = canvasEl.getBoundingClientRect();
+                      const sx = rect.width / cW;
+                      const sy = rect.height / cH;
+                      return (
+                        <textarea
+                          autoFocus
+                          value={b.text}
+                          onChange={(e) => {
+                            updatePage(i, { bubbles: page.bubbles.map(bb => bb.id === editingBubbleId ? { ...bb, text: e.target.value } : bb) });
+                          }}
+                          onBlur={() => setEditingBubbleId(null)}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === "Escape") setEditingBubbleId(null);
+                          }}
+                          style={{
+                            position: "absolute",
+                            left: b.x * sx,
+                            top: b.y * sy,
+                            width: b.width * sx,
+                            height: b.height * sy,
+                            fontSize: b.fontSize * sx,
+                            fontFamily: getFontFamily(b.fontKey),
+                            textAlign: "center",
+                            color: b.strokeColor || "#222222",
+                            background: "rgba(255,255,255,0.85)",
+                            border: "2px solid hsl(var(--primary))",
+                            borderRadius: 6,
+                            padding: "4px",
+                            resize: "none",
+                            outline: "none",
+                            zIndex: 30,
+                            overflow: "hidden",
+                            lineHeight: 1.3,
+                            boxSizing: "border-box" as const,
+                          }}
+                        />
+                      );
+                    })()}
                   </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
