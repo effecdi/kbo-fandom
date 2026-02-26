@@ -1101,7 +1101,7 @@ function PanelCanvas({
       ctx.fillText("OLLI Free", 0, 0);
       ctx.restore();
     }
-  }, [isPro]);
+  }, [isPro, hideDrawingLayers]);
 
   redrawRef.current = redraw;
 
