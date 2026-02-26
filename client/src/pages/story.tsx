@@ -762,6 +762,7 @@ function PanelCanvas({
   onDeletePanel?: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingCompositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const { toast } = useToast();
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const dragModeRef = useRef<DragMode>(null);
@@ -850,7 +851,6 @@ function PanelCanvas({
       | { type: "bubble"; z: number; b: SpeechBubble }
       | { type: "text"; z: number; te: CanvasTextElement }
       | { type: "line"; z: number; le: CanvasLineElement }
-      | { type: "drawing"; z: number; dl: DrawingLayer }
     > = [
         ...p.characters.map((ch) => ({
           type: "char" as const,
@@ -871,11 +871,6 @@ function PanelCanvas({
           type: "line" as const,
           z: le.zIndex ?? 20,
           le,
-        })),
-        ...(p.drawingLayers || []).map((dl) => ({
-          type: "drawing" as const,
-          z: dl.zIndex ?? 15,
-          dl,
         })),
       ];
     drawables.sort((a, b) => a.z - b.z);
@@ -1079,6 +1074,37 @@ function PanelCanvas({
         drawBubble(ctx, b, b.id === selectedBubbleIdRef.current);
       }
     });
+
+    // Render drawing layers on a separate composite canvas
+    // so eraser (destination-out) only affects other drawing layers, not background/characters
+    const dlayers = p.drawingLayers || [];
+    if (dlayers.length > 0) {
+      if (!drawingCompositeCanvasRef.current) {
+        const c = document.createElement("canvas");
+        c.width = CANVAS_W;
+        c.height = CANVAS_H;
+        drawingCompositeCanvasRef.current = c;
+      }
+      const comp = drawingCompositeCanvasRef.current;
+      const compCtx = comp.getContext("2d");
+      if (compCtx) {
+        compCtx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        const sorted = [...dlayers].sort((a, b) => a.zIndex - b.zIndex);
+        for (const dl of sorted) {
+          if (!dl.visible || !dl.imageEl) continue;
+          compCtx.save();
+          compCtx.globalAlpha = dl.opacity ?? 1;
+          if (dl.type === "eraser") {
+            compCtx.globalCompositeOperation = "destination-out";
+          } else {
+            compCtx.globalCompositeOperation = "source-over";
+          }
+          compCtx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
+          compCtx.restore();
+        }
+        ctx.drawImage(comp, 0, 0);
+      }
+    }
 
     if (p.topScript)
       drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
