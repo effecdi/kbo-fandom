@@ -3883,6 +3883,8 @@ export default function StoryPage() {
   const [selectedToolItem, setSelectedToolItem] = useState<string>("select");
   const [showDrawingSettings, setShowDrawingSettings] = useState(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
+  const [showStoryTemplatePicker, setShowStoryTemplatePicker] = useState(false);
+  const [storyTemplateCatIdx, setStoryTemplateCatIdx] = useState(0);
 
   // ─── Drawing tool state ─────────────────────────────────────────────
   const [drawingToolState, setDrawingToolState] = useState<DrawingToolState>({
@@ -3970,7 +3972,7 @@ export default function StoryPage() {
     const testCanvas = document.createElement("canvas");
     testCanvas.width = canvasWidth;
     testCanvas.height = canvasHeight;
-    const ctx = testCanvas.getContext("2d");
+    const ctx = testCanvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
     for (const layer of sorted) {
       if (!layer.imageEl) continue;
@@ -4525,6 +4527,13 @@ export default function StoryPage() {
     { id: "text", icon: Type, label: "텍스트", color: "#8b5cf6" },
   ];
 
+  // ─── Element items for compact elements panel ─────────────────────────
+  const ELEMENT_ITEMS: { id: string; icon: typeof Pen; label: string; color?: string }[] = [
+    { id: "script", icon: AlignVerticalJustifyStart, label: "자막 설정", color: "#eab308" },
+    { id: "bubble", icon: MessageSquare, label: "말풍선", color: "#3b82f6" },
+    { id: "template", icon: LayoutGrid, label: "템플릿 가져오기", color: "#8b5cf6" },
+  ];
+
   // ─── Drawing brush items for sub-panel ──────────────────────────────
   const DRAWING_BRUSH_ITEMS: { id: string; icon: typeof Pen; label: string; color?: string }[] = [
     { id: "ballpoint", icon: Pen, label: "펜", color: "#3b82f6" },
@@ -4556,10 +4565,10 @@ export default function StoryPage() {
       <div className="flex flex-1 h-full">
         {activeLeftTab && (
           <div
-            className={`h-full bg-background/80 overflow-y-auto border-r ${activeLeftTab === "tools" ? "w-auto" : "w-[320px]"}`}
+            className={`h-full bg-background/80 overflow-y-auto border-r ${(activeLeftTab === "tools" || activeLeftTab === "elements") ? "w-auto" : "w-[320px]"}`}
             data-testid="left-panel-content"
           >
-            <div className={activeLeftTab === "tools" ? "" : "p-3 space-y-5"}>
+            <div className={(activeLeftTab === "tools" || activeLeftTab === "elements") ? "" : "p-3 space-y-5"}>
                   {activeLeftTab === "ai" && (
                     <>
                       <div className="flex items-center justify-between gap-2">
@@ -5349,469 +5358,34 @@ export default function StoryPage() {
                   )}
 
                 {activeLeftTab === "elements" && activePanel && (
-                  <>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => setActiveLeftTab(null)}
-                          className="text-muted-foreground hover-elevate rounded-md p-1"
-                        >
-                          <ArrowLeft className="h-3.5 w-3.5" />
-                        </button>
-                        <h3 className="text-sm font-semibold">요소</h3>
-                      </div>
-                      <button
-                        onClick={() => setActiveLeftTab(null)}
-                        className="text-muted-foreground hover-elevate rounded-md p-1"
-                      >
-                        <X className="h-3.5 w-3.5" />
+                  <div className="tools-compact-panel">
+                    <div className="tools-compact-panel__strip">
+                      <button onClick={() => setActiveLeftTab(null)} className="tools-compact-panel__close-btn" title="닫기">
+                        <X className="h-4 w-4" />
                       </button>
-                    </div>
-                    <div className="flex gap-1 mb-3">
-                      {([
-                        { id: "script" as const, label: "자막 설정" },
-                        { id: "bubble" as const, label: "말풍선" },
-                        { id: "template" as const, label: "템플릿 가져오기" },
-                      ]).map((sub) => (
+                      {ELEMENT_ITEMS.map((item) => (
                         <button
-                          key={sub.id}
-                          onClick={() => setElementsSubTab(sub.id)}
-                          className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${elementsSubTab === sub.id ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                          key={item.id}
+                          onClick={() => {
+                            if (item.id === "template") {
+                              setShowStoryTemplatePicker(true);
+                            } else {
+                              setElementsSubTab(item.id as any);
+                            }
+                          }}
+                          className={`tools-compact-panel__tool-btn ${
+                            item.id !== "template" && elementsSubTab === item.id
+                              ? "tools-compact-panel__tool-btn--active" : ""
+                          }`}
+                          title={item.label}
                         >
-                          {sub.label}
+                          <item.icon className="h-5 w-5"
+                            style={item.color && elementsSubTab !== item.id ? { color: item.color } : undefined}
+                          />
                         </button>
                       ))}
                     </div>
-
-                    {elementsSubTab === "bubble" && (
-                      <EditorPanel
-                        panel={activePanel}
-                        index={activePanelIndex}
-                        total={panels.length}
-                        onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
-                        onRemove={() => removePanel(activePanelIndex)}
-                        galleryImages={galleryData ?? []}
-                        galleryLoading={galleryLoading}
-                        selectedBubbleId={selectedBubbleId}
-                        setSelectedBubbleId={setSelectedBubbleId}
-                        selectedCharId={selectedCharId}
-                        setSelectedCharId={setSelectedCharId}
-                        creatorTier={usageData?.creatorTier ?? 0}
-                        isPro={isPro}
-                        mode="bubble"
-                        bubbleTextareaRef={bubbleTextareaRef}
-                      />
-                    )}
-
-                    {elementsSubTab === "template" && (
-                      <EditorPanel
-                        panel={activePanel}
-                        index={activePanelIndex}
-                        total={panels.length}
-                        onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
-                        onRemove={() => removePanel(activePanelIndex)}
-                        galleryImages={galleryData ?? []}
-                        galleryLoading={galleryLoading}
-                        selectedBubbleId={selectedBubbleId}
-                        setSelectedBubbleId={setSelectedBubbleId}
-                        selectedCharId={selectedCharId}
-                        setSelectedCharId={setSelectedCharId}
-                        creatorTier={usageData?.creatorTier ?? 0}
-                        isPro={isPro}
-                        mode="template"
-                      />
-                    )}
-
-                  {elementsSubTab === "script" && (
-                    <>
-                      <p className="text-[11px] text-muted-foreground">
-                        패널 {activePanelIndex + 1}의 상단/하단 스크립트를
-                        설정합니다.
-                      </p>
-
-                      <div className="flex gap-1 flex-wrap">
-                        <Button
-                          size="sm"
-                          variant={activeScriptSection === "top" ? "secondary" : "outline"}
-                          onClick={() => {
-                            const p = activePanel;
-                            updatePanel(activePanelIndex, {
-                              ...p,
-                              topScript:
-                                p.topScript ?? { text: "", style: "no-bg", color: "yellow" },
-                            });
-                            setActiveScriptSection("top");
-                          }}
-                          data-testid={`button-toggle-top-script-${activePanelIndex}`}
-                        >
-                          <AlignVerticalJustifyStart className="h-3.5 w-3.5 mr-1" />
-                          상단
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={activeScriptSection === "bottom" ? "secondary" : "outline"}
-                          onClick={() => {
-                            const p = activePanel;
-                            updatePanel(activePanelIndex, {
-                              ...p,
-                              bottomScript:
-                                p.bottomScript ?? { text: "", style: "no-bg", color: "sky" },
-                            });
-                            setActiveScriptSection("bottom");
-                          }}
-                          data-testid={`button-toggle-bottom-script-${activePanelIndex}`}
-                        >
-                          <AlignVerticalJustifyEnd className="h-3.5 w-3.5 mr-1" />
-                          하단
-                        </Button>
-                      </div>
-
-                      {activeScriptSection === "top" && activePanel.topScript && (
-                        <div className="space-y-2 rounded-md bg-muted/30 p-2">
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant="secondary"
-                              className="text-[11px] shrink-0 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400"
-                            >
-                              상단
-                            </Badge>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6"
-                              title="상단 스크립트 삭제"
-                              onClick={() => {
-                                const p = activePanel;
-                                updatePanel(activePanelIndex, { ...p, topScript: null });
-                              }}
-                              data-testid={`button-delete-top-script-${activePanelIndex}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                          <Textarea
-                            value={activePanel.topScript.text}
-                            onChange={(e) => {
-                              const p = activePanel;
-                              updatePanel(activePanelIndex, {
-                                ...p,
-                                topScript: {
-                                  ...p.topScript!,
-                                  text: e.target.value,
-                                },
-                              });
-                            }}
-                            placeholder="상단 스크립트..."
-                            className="text-sm min-h-[150px] resize-none"
-                            data-testid={`input-panel-${activePanelIndex}-top`}
-                          />
-                          <div className="flex gap-1 flex-wrap">
-                            {SCRIPT_STYLE_OPTIONS.map((opt) => (
-                              <button
-                                key={opt.value}
-                                onClick={() => {
-                                  const p = activePanel;
-                                  updatePanel(activePanelIndex, {
-                                    ...p,
-                                    topScript: {
-                                      ...p.topScript!,
-                                      style: opt.value,
-                                    },
-                                  });
-                                }}
-                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.topScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
-                                data-testid={`button-top-script-style-${opt.value}-${activePanelIndex}`}
-                              >
-                                {opt.label}
-                              </button>
-                            ))}
-                          </div>
-                          <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
-                              색상
-                            </span>
-                            {SCRIPT_COLOR_OPTIONS.map((c) => (
-                              <button
-                                key={c.value}
-                                onClick={() => {
-                                  const p = activePanel;
-                                  updatePanel(activePanelIndex, {
-                                    ...p,
-                                    topScript: { ...p.topScript!, color: c.value },
-                                  });
-                                }}
-                                className={`w-5 h-5 rounded-full border-2 transition-transform ${activePanel.topScript!.color === c.value ? "border-foreground scale-110" : "border-transparent"}`}
-                                style={{ backgroundColor: c.bg }}
-                                title={c.label}
-                                data-testid={`button-top-script-color-${c.value}-${activePanelIndex}`}
-                              />
-                            ))}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
-                              글씨 크기
-                            </span>
-                            <Slider
-                              min={8}
-                              max={36}
-                              step={1}
-                              value={[activePanel.topScript.fontSize || 20]}
-                              onValueChange={([v]) => {
-                                const p = activePanel;
-                                updatePanel(activePanelIndex, {
-                                  ...p,
-                                  topScript: { ...p.topScript!, fontSize: v },
-                                });
-                              }}
-                              className="flex-1"
-                              data-testid={`slider-top-script-fontsize-${activePanelIndex}`}
-                            />
-                            <span className="text-[11px] text-muted-foreground w-6 text-right">
-                              {activePanel.topScript.fontSize || 20}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
-                              글꼴
-                            </span>
-                            <Select
-                              value={activePanel.topScript.fontKey || "default"}
-                              onValueChange={(v) => {
-                                const p = activePanel;
-                                updatePanel(activePanelIndex, {
-                                  ...p,
-                                  topScript: { ...p.topScript!, fontKey: v },
-                                });
-                              }}
-                            >
-                              <SelectTrigger className="h-7 text-[11px] flex-1" data-testid={`select-top-script-font-${activePanelIndex}`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableFonts.map((f) => (
-                                  <SelectItem key={f.value} value={f.value} className="text-[11px]">
-                                    <span style={{ fontFamily: f.family }}>{f.label}</span>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
-                              글자색
-                            </span>
-                            {SCRIPT_TEXT_COLORS.map((c) => (
-                              <button
-                                key={c.value || "auto"}
-                                onClick={() => {
-                                  const p = activePanel;
-                                  updatePanel(activePanelIndex, {
-                                    ...p,
-                                    topScript: { ...p.topScript!, textColor: c.value },
-                                  });
-                                }}
-                                className={`w-5 h-5 rounded-full border-2 transition-transform ${(activePanel.topScript!.textColor || "") === c.value ? "border-foreground scale-110" : "border-transparent"}`}
-                                style={{ backgroundColor: c.hex || "transparent", backgroundImage: c.hex ? undefined : "linear-gradient(135deg, #ccc 25%, transparent 25%, transparent 50%, #ccc 50%, #ccc 75%, transparent 75%)", backgroundSize: c.hex ? undefined : "6px 6px" }}
-                                title={c.label}
-                                data-testid={`button-top-script-textcolor-${c.value || "auto"}-${activePanelIndex}`}
-                              />
-                            ))}
-                            <button
-                              onClick={() => {
-                                const p = activePanel;
-                                updatePanel(activePanelIndex, {
-                                  ...p,
-                                  topScript: { ...p.topScript!, bold: !(p.topScript!.bold !== false) },
-                                });
-                              }}
-                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.topScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
-                              data-testid={`button-top-script-bold-${activePanelIndex}`}
-                            >
-                              B
-                            </button>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground">
-                            캔버스에서 드래그하여 위치를 이동할 수 있습니다
-                          </p>
-                        </div>
-                      )}
-
-                      {activeScriptSection === "bottom" && activePanel.bottomScript && (
-                        <div className="space-y-2 rounded-md bg-muted/30 p-2">
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant="secondary"
-                              className="text-[11px] shrink-0 bg-sky-400/20 text-sky-700 dark:text-sky-400"
-                            >
-                              하단
-                            </Badge>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6"
-                              title="하단 스크립트 삭제"
-                              onClick={() => {
-                                const p = activePanel;
-                                updatePanel(activePanelIndex, { ...p, bottomScript: null });
-                              }}
-                              data-testid={`button-delete-bottom-script-${activePanelIndex}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                          <Textarea
-                            value={activePanel.bottomScript.text}
-                            onChange={(e) => {
-                              const p = activePanel;
-                              updatePanel(activePanelIndex, {
-                                ...p,
-                                bottomScript: {
-                                  ...p.bottomScript!,
-                                  text: e.target.value,
-                                },
-                              });
-                            }}
-                            placeholder="하단 스크립트..."
-                            className="text-sm min-h-[150px] resize-none"
-                            data-testid={`input-panel-${activePanelIndex}-bottom`}
-                          />
-                          <div className="flex gap-1 flex-wrap">
-                            {SCRIPT_STYLE_OPTIONS.map((opt) => (
-                              <button
-                                key={opt.value}
-                                onClick={() => {
-                                  const p = activePanel;
-                                  updatePanel(activePanelIndex, {
-                                    ...p,
-                                    bottomScript: {
-                                      ...p.bottomScript!,
-                                      style: opt.value,
-                                    },
-                                  });
-                                }}
-                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.bottomScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
-                                data-testid={`button-bottom-script-style-${opt.value}-${activePanelIndex}`}
-                              >
-                                {opt.label}
-                              </button>
-                            ))}
-                          </div>
-                          <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
-                              색상
-                            </span>
-                            {SCRIPT_COLOR_OPTIONS.map((c) => (
-                              <button
-                                key={c.value}
-                                onClick={() => {
-                                  const p = activePanel;
-                                  updatePanel(activePanelIndex, {
-                                    ...p,
-                                    bottomScript: {
-                                      ...p.bottomScript!,
-                                      color: c.value,
-                                    },
-                                  });
-                                }}
-                                className={`w-5 h-5 rounded-full border-2 transition-transform ${activePanel.bottomScript!.color === c.value ? "border-foreground scale-110" : "border-transparent"}`}
-                                style={{ backgroundColor: c.bg }}
-                                title={c.label}
-                                data-testid={`button-bottom-script-color-${c.value}-${activePanelIndex}`}
-                              />
-                            ))}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
-                              글씨 크기
-                            </span>
-                            <Slider
-                              min={8}
-                              max={36}
-                              step={1}
-                              value={[activePanel.bottomScript.fontSize || 20]}
-                              onValueChange={([v]) => {
-                                const p = activePanel;
-                                updatePanel(activePanelIndex, {
-                                  ...p,
-                                  bottomScript: { ...p.bottomScript!, fontSize: v },
-                                });
-                              }}
-                              className="flex-1"
-                              data-testid={`slider-bottom-script-fontsize-${activePanelIndex}`}
-                            />
-                            <span className="text-[11px] text-muted-foreground w-6 text-right">
-                              {activePanel.bottomScript.fontSize || 20}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
-                              글꼴
-                            </span>
-                            <Select
-                              value={activePanel.bottomScript.fontKey || "default"}
-                              onValueChange={(v) => {
-                                const p = activePanel;
-                                updatePanel(activePanelIndex, {
-                                  ...p,
-                                  bottomScript: { ...p.bottomScript!, fontKey: v },
-                                });
-                              }}
-                            >
-                              <SelectTrigger className="h-7 text-[11px] flex-1" data-testid={`select-bottom-script-font-${activePanelIndex}`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableFonts.map((f) => (
-                                  <SelectItem key={f.value} value={f.value} className="text-[11px]">
-                                    <span style={{ fontFamily: f.family }}>{f.label}</span>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
-                              글자색
-                            </span>
-                            {SCRIPT_TEXT_COLORS.map((c) => (
-                              <button
-                                key={c.value || "auto"}
-                                onClick={() => {
-                                  const p = activePanel;
-                                  updatePanel(activePanelIndex, {
-                                    ...p,
-                                    bottomScript: { ...p.bottomScript!, textColor: c.value },
-                                  });
-                                }}
-                                className={`w-5 h-5 rounded-full border-2 transition-transform ${(activePanel.bottomScript!.textColor || "") === c.value ? "border-foreground scale-110" : "border-transparent"}`}
-                                style={{ backgroundColor: c.hex || "transparent", backgroundImage: c.hex ? undefined : "linear-gradient(135deg, #ccc 25%, transparent 25%, transparent 50%, #ccc 50%, #ccc 75%, transparent 75%)", backgroundSize: c.hex ? undefined : "6px 6px" }}
-                                title={c.label}
-                                data-testid={`button-bottom-script-textcolor-${c.value || "auto"}-${activePanelIndex}`}
-                              />
-                            ))}
-                            <button
-                              onClick={() => {
-                                const p = activePanel;
-                                updatePanel(activePanelIndex, {
-                                  ...p,
-                                  bottomScript: { ...p.bottomScript!, bold: !(p.bottomScript!.bold !== false) },
-                                });
-                              }}
-                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.bottomScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
-                              data-testid={`button-bottom-script-bold-${activePanelIndex}`}
-                            >
-                              B
-                            </button>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground">
-                            캔버스에서 드래그하여 위치를 이동할 수 있습니다
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  </>
+                  </div>
                 )}
 
                 </div>
@@ -6236,7 +5810,7 @@ export default function StoryPage() {
                           const testCanvas = document.createElement("canvas");
                           testCanvas.width = 450;
                           testCanvas.height = 600;
-                          const tCtx = testCanvas.getContext("2d");
+                          const tCtx = testCanvas.getContext("2d", { willReadFrequently: true });
                           if (!tCtx) return null;
                           tCtx.drawImage(layer.imageEl, 0, 0);
                           const imgData = tCtx.getImageData(0, 0, 450, 600);
@@ -6545,38 +6119,474 @@ export default function StoryPage() {
             >
               <ResizablePanelGroup direction="vertical">
                 <ResizablePanel defaultSize={50} minSize={20}>
-                  <ElementPropertiesPanel
-                    selectedBubble={selBubble ?? null}
-                    selectedChar={selChar ?? null}
-                    selectedText={selText ?? null}
-                    selectedLine={selLine ?? null}
-                    onUpdateBubble={(id, updates) => {
-                      updatePanel(activePanelIndex, {
-                        ...activePanel,
-                        bubbles: activePanel.bubbles.map(b => b.id === id ? { ...b, ...updates } : b),
-                      });
-                    }}
-                    onUpdateChar={(id, updates) => {
-                      updatePanel(activePanelIndex, {
-                        ...activePanel,
-                        characters: activePanel.characters.map(c => c.id === id ? { ...c, ...updates } : c),
-                      });
-                    }}
-                    onDeleteBubble={(id) => {
-                      updatePanel(activePanelIndex, { ...activePanel, bubbles: activePanel.bubbles.filter(b => b.id !== id) });
-                      if (selectedBubbleId === id) setSelectedBubbleId(null);
-                    }}
-                    onDeleteChar={(id) => {
-                      updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== id) });
-                      if (selectedCharId === id) setSelectedCharId(null);
-                    }}
-                    onFlipTailHorizontally={handleFlipTailHorizontally}
-                    onRemoveBackground={handleRemoveBackground}
-                    removingBg={removingBg}
-                    isPro={isPro}
-                    availableFonts={availableFonts}
-                    canAllFonts={canAllFontsStory}
-                  />
+                  {activeLeftTab === "elements" && elementsSubTab === "script" ? (
+                    <div className="h-full overflow-y-auto p-3 space-y-3">
+                      <h4 className="text-xs font-semibold">자막 설정</h4>
+                      <p className="text-[10px] text-muted-foreground">패널 {activePanelIndex + 1}</p>
+
+                      <div className="flex gap-1 flex-wrap">
+                        <Button
+                          size="sm"
+                          variant={activeScriptSection === "top" ? "secondary" : "outline"}
+                          onClick={() => {
+                            const p = activePanel;
+                            updatePanel(activePanelIndex, {
+                              ...p,
+                              topScript:
+                                p.topScript ?? { text: "", style: "no-bg", color: "yellow" },
+                            });
+                            setActiveScriptSection("top");
+                          }}
+                          data-testid={`button-toggle-top-script-${activePanelIndex}`}
+                        >
+                          <AlignVerticalJustifyStart className="h-3.5 w-3.5 mr-1" />
+                          상단
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={activeScriptSection === "bottom" ? "secondary" : "outline"}
+                          onClick={() => {
+                            const p = activePanel;
+                            updatePanel(activePanelIndex, {
+                              ...p,
+                              bottomScript:
+                                p.bottomScript ?? { text: "", style: "no-bg", color: "sky" },
+                            });
+                            setActiveScriptSection("bottom");
+                          }}
+                          data-testid={`button-toggle-bottom-script-${activePanelIndex}`}
+                        >
+                          <AlignVerticalJustifyEnd className="h-3.5 w-3.5 mr-1" />
+                          하단
+                        </Button>
+                      </div>
+
+                      {activeScriptSection === "top" && activePanel.topScript && (
+                        <div className="space-y-2 rounded-md bg-muted/30 p-2">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="secondary"
+                              className="text-[11px] shrink-0 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400"
+                            >
+                              상단
+                            </Badge>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              title="상단 스크립트 삭제"
+                              onClick={() => {
+                                const p = activePanel;
+                                updatePanel(activePanelIndex, { ...p, topScript: null });
+                              }}
+                              data-testid={`button-delete-top-script-${activePanelIndex}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          <Textarea
+                            value={activePanel.topScript.text}
+                            onChange={(e) => {
+                              const p = activePanel;
+                              updatePanel(activePanelIndex, {
+                                ...p,
+                                topScript: {
+                                  ...p.topScript!,
+                                  text: e.target.value,
+                                },
+                              });
+                            }}
+                            placeholder="상단 스크립트..."
+                            className="text-sm min-h-[150px] resize-none"
+                            data-testid={`input-panel-${activePanelIndex}-top`}
+                          />
+                          <div className="flex gap-1 flex-wrap">
+                            {SCRIPT_STYLE_OPTIONS.map((opt) => (
+                              <button
+                                key={opt.value}
+                                onClick={() => {
+                                  const p = activePanel;
+                                  updatePanel(activePanelIndex, {
+                                    ...p,
+                                    topScript: {
+                                      ...p.topScript!,
+                                      style: opt.value,
+                                    },
+                                  });
+                                }}
+                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.topScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                                data-testid={`button-top-script-style-${opt.value}-${activePanelIndex}`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex gap-1 flex-wrap items-center">
+                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                              색상
+                            </span>
+                            {SCRIPT_COLOR_OPTIONS.map((c) => (
+                              <button
+                                key={c.value}
+                                onClick={() => {
+                                  const p = activePanel;
+                                  updatePanel(activePanelIndex, {
+                                    ...p,
+                                    topScript: { ...p.topScript!, color: c.value },
+                                  });
+                                }}
+                                className={`w-5 h-5 rounded-full border-2 transition-transform ${activePanel.topScript!.color === c.value ? "border-foreground scale-110" : "border-transparent"}`}
+                                style={{ backgroundColor: c.bg }}
+                                title={c.label}
+                                data-testid={`button-top-script-color-${c.value}-${activePanelIndex}`}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-muted-foreground shrink-0">
+                              글씨 크기
+                            </span>
+                            <Slider
+                              min={8}
+                              max={36}
+                              step={1}
+                              value={[activePanel.topScript.fontSize || 20]}
+                              onValueChange={([v]) => {
+                                const p = activePanel;
+                                updatePanel(activePanelIndex, {
+                                  ...p,
+                                  topScript: { ...p.topScript!, fontSize: v },
+                                });
+                              }}
+                              className="flex-1"
+                              data-testid={`slider-top-script-fontsize-${activePanelIndex}`}
+                            />
+                            <span className="text-[11px] text-muted-foreground w-6 text-right">
+                              {activePanel.topScript.fontSize || 20}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-muted-foreground shrink-0">
+                              글꼴
+                            </span>
+                            <Select
+                              value={activePanel.topScript.fontKey || "default"}
+                              onValueChange={(v) => {
+                                const p = activePanel;
+                                updatePanel(activePanelIndex, {
+                                  ...p,
+                                  topScript: { ...p.topScript!, fontKey: v },
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="h-7 text-[11px] flex-1" data-testid={`select-top-script-font-${activePanelIndex}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableFonts.map((f) => (
+                                  <SelectItem key={f.value} value={f.value} className="text-[11px]">
+                                    <span style={{ fontFamily: f.family }}>{f.label}</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-1 flex-wrap items-center">
+                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                              글자색
+                            </span>
+                            {SCRIPT_TEXT_COLORS.map((c) => (
+                              <button
+                                key={c.value || "auto"}
+                                onClick={() => {
+                                  const p = activePanel;
+                                  updatePanel(activePanelIndex, {
+                                    ...p,
+                                    topScript: { ...p.topScript!, textColor: c.value },
+                                  });
+                                }}
+                                className={`w-5 h-5 rounded-full border-2 transition-transform ${(activePanel.topScript!.textColor || "") === c.value ? "border-foreground scale-110" : "border-transparent"}`}
+                                style={{ backgroundColor: c.hex || "transparent", backgroundImage: c.hex ? undefined : "linear-gradient(135deg, #ccc 25%, transparent 25%, transparent 50%, #ccc 50%, #ccc 75%, transparent 75%)", backgroundSize: c.hex ? undefined : "6px 6px" }}
+                                title={c.label}
+                                data-testid={`button-top-script-textcolor-${c.value || "auto"}-${activePanelIndex}`}
+                              />
+                            ))}
+                            <button
+                              onClick={() => {
+                                const p = activePanel;
+                                updatePanel(activePanelIndex, {
+                                  ...p,
+                                  topScript: { ...p.topScript!, bold: !(p.topScript!.bold !== false) },
+                                });
+                              }}
+                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.topScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              data-testid={`button-top-script-bold-${activePanelIndex}`}
+                            >
+                              B
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            캔버스에서 드래그하여 위치를 이동할 수 있습니다
+                          </p>
+                        </div>
+                      )}
+
+                      {activeScriptSection === "bottom" && activePanel.bottomScript && (
+                        <div className="space-y-2 rounded-md bg-muted/30 p-2">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="secondary"
+                              className="text-[11px] shrink-0 bg-sky-400/20 text-sky-700 dark:text-sky-400"
+                            >
+                              하단
+                            </Badge>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              title="하단 스크립트 삭제"
+                              onClick={() => {
+                                const p = activePanel;
+                                updatePanel(activePanelIndex, { ...p, bottomScript: null });
+                              }}
+                              data-testid={`button-delete-bottom-script-${activePanelIndex}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          <Textarea
+                            value={activePanel.bottomScript.text}
+                            onChange={(e) => {
+                              const p = activePanel;
+                              updatePanel(activePanelIndex, {
+                                ...p,
+                                bottomScript: {
+                                  ...p.bottomScript!,
+                                  text: e.target.value,
+                                },
+                              });
+                            }}
+                            placeholder="하단 스크립트..."
+                            className="text-sm min-h-[150px] resize-none"
+                            data-testid={`input-panel-${activePanelIndex}-bottom`}
+                          />
+                          <div className="flex gap-1 flex-wrap">
+                            {SCRIPT_STYLE_OPTIONS.map((opt) => (
+                              <button
+                                key={opt.value}
+                                onClick={() => {
+                                  const p = activePanel;
+                                  updatePanel(activePanelIndex, {
+                                    ...p,
+                                    bottomScript: {
+                                      ...p.bottomScript!,
+                                      style: opt.value,
+                                    },
+                                  });
+                                }}
+                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.bottomScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                                data-testid={`button-bottom-script-style-${opt.value}-${activePanelIndex}`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex gap-1 flex-wrap items-center">
+                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                              색상
+                            </span>
+                            {SCRIPT_COLOR_OPTIONS.map((c) => (
+                              <button
+                                key={c.value}
+                                onClick={() => {
+                                  const p = activePanel;
+                                  updatePanel(activePanelIndex, {
+                                    ...p,
+                                    bottomScript: {
+                                      ...p.bottomScript!,
+                                      color: c.value,
+                                    },
+                                  });
+                                }}
+                                className={`w-5 h-5 rounded-full border-2 transition-transform ${activePanel.bottomScript!.color === c.value ? "border-foreground scale-110" : "border-transparent"}`}
+                                style={{ backgroundColor: c.bg }}
+                                title={c.label}
+                                data-testid={`button-bottom-script-color-${c.value}-${activePanelIndex}`}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-muted-foreground shrink-0">
+                              글씨 크기
+                            </span>
+                            <Slider
+                              min={8}
+                              max={36}
+                              step={1}
+                              value={[activePanel.bottomScript.fontSize || 20]}
+                              onValueChange={([v]) => {
+                                const p = activePanel;
+                                updatePanel(activePanelIndex, {
+                                  ...p,
+                                  bottomScript: { ...p.bottomScript!, fontSize: v },
+                                });
+                              }}
+                              className="flex-1"
+                              data-testid={`slider-bottom-script-fontsize-${activePanelIndex}`}
+                            />
+                            <span className="text-[11px] text-muted-foreground w-6 text-right">
+                              {activePanel.bottomScript.fontSize || 20}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-muted-foreground shrink-0">
+                              글꼴
+                            </span>
+                            <Select
+                              value={activePanel.bottomScript.fontKey || "default"}
+                              onValueChange={(v) => {
+                                const p = activePanel;
+                                updatePanel(activePanelIndex, {
+                                  ...p,
+                                  bottomScript: { ...p.bottomScript!, fontKey: v },
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="h-7 text-[11px] flex-1" data-testid={`select-bottom-script-font-${activePanelIndex}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableFonts.map((f) => (
+                                  <SelectItem key={f.value} value={f.value} className="text-[11px]">
+                                    <span style={{ fontFamily: f.family }}>{f.label}</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-1 flex-wrap items-center">
+                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                              글자색
+                            </span>
+                            {SCRIPT_TEXT_COLORS.map((c) => (
+                              <button
+                                key={c.value || "auto"}
+                                onClick={() => {
+                                  const p = activePanel;
+                                  updatePanel(activePanelIndex, {
+                                    ...p,
+                                    bottomScript: { ...p.bottomScript!, textColor: c.value },
+                                  });
+                                }}
+                                className={`w-5 h-5 rounded-full border-2 transition-transform ${(activePanel.bottomScript!.textColor || "") === c.value ? "border-foreground scale-110" : "border-transparent"}`}
+                                style={{ backgroundColor: c.hex || "transparent", backgroundImage: c.hex ? undefined : "linear-gradient(135deg, #ccc 25%, transparent 25%, transparent 50%, #ccc 50%, #ccc 75%, transparent 75%)", backgroundSize: c.hex ? undefined : "6px 6px" }}
+                                title={c.label}
+                                data-testid={`button-bottom-script-textcolor-${c.value || "auto"}-${activePanelIndex}`}
+                              />
+                            ))}
+                            <button
+                              onClick={() => {
+                                const p = activePanel;
+                                updatePanel(activePanelIndex, {
+                                  ...p,
+                                  bottomScript: { ...p.bottomScript!, bold: !(p.bottomScript!.bold !== false) },
+                                });
+                              }}
+                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.bottomScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              data-testid={`button-bottom-script-bold-${activePanelIndex}`}
+                            >
+                              B
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            캔버스에서 드래그하여 위치를 이동할 수 있습니다
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : activeLeftTab === "elements" && elementsSubTab === "bubble" ? (
+                    <div className="h-full overflow-y-auto flex flex-col">
+                      <div className="p-3 border-b border-border space-y-2">
+                        <h4 className="text-xs font-semibold">말풍선</h4>
+                        <Button size="sm" variant="ghost" className="w-full bg-muted/40 hover:bg-muted/60"
+                          onClick={() => {
+                            if (activePanel.bubbles.length >= 5) return;
+                            const newB = createBubble(CANVAS_W, CANVAS_H);
+                            updatePanel(activePanelIndex, { ...activePanel, bubbles: [...activePanel.bubbles, newB] });
+                            setSelectedBubbleId(newB.id);
+                          }}>
+                          <Plus className="h-3.5 w-3.5 mr-1" /> 말풍선 추가
+                        </Button>
+                      </div>
+                      <div className="flex-1 overflow-y-auto">
+                        <ElementPropertiesPanel
+                          selectedBubble={selBubble ?? null}
+                          selectedChar={selChar ?? null}
+                          selectedText={selText ?? null}
+                          selectedLine={selLine ?? null}
+                          onUpdateBubble={(id, updates) => {
+                            updatePanel(activePanelIndex, {
+                              ...activePanel,
+                              bubbles: activePanel.bubbles.map(b => b.id === id ? { ...b, ...updates } : b),
+                            });
+                          }}
+                          onUpdateChar={(id, updates) => {
+                            updatePanel(activePanelIndex, {
+                              ...activePanel,
+                              characters: activePanel.characters.map(c => c.id === id ? { ...c, ...updates } : c),
+                            });
+                          }}
+                          onDeleteBubble={(id) => {
+                            updatePanel(activePanelIndex, { ...activePanel, bubbles: activePanel.bubbles.filter(b => b.id !== id) });
+                            if (selectedBubbleId === id) setSelectedBubbleId(null);
+                          }}
+                          onDeleteChar={(id) => {
+                            updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== id) });
+                            if (selectedCharId === id) setSelectedCharId(null);
+                          }}
+                          onFlipTailHorizontally={handleFlipTailHorizontally}
+                          onRemoveBackground={handleRemoveBackground}
+                          removingBg={removingBg}
+                          isPro={isPro}
+                          availableFonts={availableFonts}
+                          canAllFonts={canAllFontsStory}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <ElementPropertiesPanel
+                      selectedBubble={selBubble ?? null}
+                      selectedChar={selChar ?? null}
+                      selectedText={selText ?? null}
+                      selectedLine={selLine ?? null}
+                      onUpdateBubble={(id, updates) => {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          bubbles: activePanel.bubbles.map(b => b.id === id ? { ...b, ...updates } : b),
+                        });
+                      }}
+                      onUpdateChar={(id, updates) => {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          characters: activePanel.characters.map(c => c.id === id ? { ...c, ...updates } : c),
+                        });
+                      }}
+                      onDeleteBubble={(id) => {
+                        updatePanel(activePanelIndex, { ...activePanel, bubbles: activePanel.bubbles.filter(b => b.id !== id) });
+                        if (selectedBubbleId === id) setSelectedBubbleId(null);
+                      }}
+                      onDeleteChar={(id) => {
+                        updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== id) });
+                        if (selectedCharId === id) setSelectedCharId(null);
+                      }}
+                      onFlipTailHorizontally={handleFlipTailHorizontally}
+                      onRemoveBackground={handleRemoveBackground}
+                      removingBg={removingBg}
+                      isPro={isPro}
+                      availableFonts={availableFonts}
+                      canAllFonts={canAllFontsStory}
+                    />
+                  )}
                 </ResizablePanel>
                 <ResizableHandle />
                 <ResizablePanel defaultSize={50} minSize={20}>
@@ -6766,6 +6776,80 @@ export default function StoryPage() {
                 )}
               </DialogContent>
             </Dialog>
+          {/* ── Story-level Template Picker Popup ── */}
+          {showStoryTemplatePicker && activePanel && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStoryTemplatePicker(false)} data-testid="modal-story-template-picker-elements">
+              <Card className="w-full max-w-lg max-h-[70vh] flex flex-col m-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border flex-wrap">
+                  <h3 className="text-sm font-semibold">말풍선 템플릿</h3>
+                  <Button variant="ghost" size="icon" onClick={() => setShowStoryTemplatePicker(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-1.5 px-4 pt-3 pb-1 overflow-x-auto flex-wrap">
+                  {BUBBLE_TEMPLATE_CATEGORIES.map((cat, ci) => (
+                    <Badge
+                      key={ci}
+                      className={`cursor-pointer shrink-0 toggle-elevate ${ci === storyTemplateCatIdx ? "toggle-elevated" : ""}`}
+                      variant={ci === storyTemplateCatIdx ? "default" : "outline"}
+                      onClick={() => setStoryTemplateCatIdx(ci)}
+                    >
+                      {cat.label}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="overflow-y-auto p-4 flex-1">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                    {BUBBLE_TEMPLATE_CATEGORIES[storyTemplateCatIdx]?.ids.map((id) => {
+                      const path = bubblePath(id);
+                      return (
+                        <div
+                          key={id}
+                          className="aspect-square rounded-md border border-border overflow-hidden cursor-pointer hover-elevate bg-muted/30 p-1.5"
+                          onClick={() => {
+                            if (activePanel.bubbles.length >= 5) return;
+                            const img = new Image();
+                            img.crossOrigin = "anonymous";
+                            img.onload = () => {
+                              const maxDim = Math.min(CANVAS_W, CANVAS_H) * 0.4;
+                              const aspect = img.width / img.height;
+                              let w: number, h: number;
+                              if (aspect > 1) { w = maxDim; h = maxDim / aspect; }
+                              else { h = maxDim; w = maxDim * aspect; }
+                              const newB: SpeechBubble = {
+                                id: generateId(),
+                                seed: Math.floor(Math.random() * 100000),
+                                x: CANVAS_W / 2 - w / 2,
+                                y: CANVAS_H / 2 - h / 2,
+                                width: w,
+                                height: h,
+                                text: "",
+                                style: "image",
+                                tailStyle: "none",
+                                tailDirection: "bottom",
+                                strokeWidth: 2,
+                                wobble: 5,
+                                fontSize: 15,
+                                fontKey: "default",
+                                templateSrc: path,
+                                templateImg: img,
+                              };
+                              updatePanel(activePanelIndex, { ...activePanel, bubbles: [...activePanel.bubbles, newB] });
+                              setSelectedBubbleId(newB.id);
+                            };
+                            img.src = path;
+                            setShowStoryTemplatePicker(false);
+                          }}
+                        >
+                          <img src={path} alt={`말풍선 ${id}`} className="w-full h-full object-contain" loading="lazy" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
           </div >
           );
 }

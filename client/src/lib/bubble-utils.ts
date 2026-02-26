@@ -1,5 +1,4 @@
 import { SpeechBubble, BubbleStyle, TailStyle } from "./bubble-types";
-import { HANDLE_COLOR } from "./editor-constants";
 
 export const KOREAN_FONTS = [
     { value: "default", label: "기본 고딕", family: "'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" },
@@ -65,8 +64,6 @@ export const STYLE_LABELS: Record<string, string> = {
     cloud: "구름",
     sticker: "스티커",
     tall_rough: "거친 직사각형",
-    flash_eyelash: "속눈썹",
-    monologue: "독백",
     image: "이미지",
 };
 
@@ -78,18 +75,6 @@ export const FLASH_STYLE_LABELS: Record<string, string> = {
     drip: "흐물",
     sparkle_ring: "신비",
     embarrassed: "난처",
-};
-
-export const BUBBLE_CATEGORIES = [
-    { label: "기본", styles: ["linedrawing", "handwritten", "rounded", "rectangle"] },
-    { label: "감정", styles: ["thought", "shout", "wobbly", "dashed", "embarrassed"] },
-    { label: "효과", styles: ["flash_black", "flash_dense", "flash_eyelash", "sparkle_ring", "brush", "drip"] },
-    { label: "장식", styles: ["doubleline", "wavy", "polygon", "spiky", "cloud", "sticker", "tall_rough", "monologue"] },
-];
-
-export const ALL_STYLE_LABELS: Record<string, string> = {
-    ...STYLE_LABELS,
-    ...FLASH_STYLE_LABELS,
 };
 
 export const TAIL_LABELS: Record<TailStyle, string> = {
@@ -1278,7 +1263,7 @@ export function drawBubbleGroup(ctx: CanvasRenderingContext2D, bubbles: SpeechBu
         const maxX = Math.max(...ws);
         const maxY = Math.max(...hs);
         ctx.save();
-        ctx.strokeStyle = HANDLE_COLOR;
+        ctx.strokeStyle = "hsl(173, 80%, 45%)";
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 3]);
         ctx.strokeRect(minX - 4, minY - 4, (maxX - minX) + 8, (maxY - minY) + 8);
@@ -1449,7 +1434,7 @@ case "sticker":
         const jitterScale = jitter * 10;
 
         // tailRoundness: 0=sharp tip, >0=oval/ellipse tip
-        const tailRoundness = bubble.tailRoundness ?? 4;
+        const tailRoundness = bubble.tailRoundness ?? 0;
         const tailAngle = Math.atan2(geo.tipY - baseMidY, geo.tipX - baseMidX);
 
         const baseC1x = geo.baseAx + (baseMidX - geo.baseAx) * (0.5 + curvePull * 0.45);
@@ -1612,7 +1597,7 @@ case "sticker":
     }
 
     if (isSelected) {
-        ctx.strokeStyle = HANDLE_COLOR;
+        ctx.strokeStyle = "hsl(173, 80%, 45%)";
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 3]);
         ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
@@ -1635,7 +1620,7 @@ case "sticker":
             ctx.arc(handle.x, handle.y, handleSize / 2, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(255,255,255,0.96)";
             ctx.fill();
-            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.strokeStyle = "hsl(173, 80%, 45%)";
             ctx.lineWidth = 1.8;
             ctx.stroke();
         });
@@ -1652,7 +1637,7 @@ case "sticker":
             ctx.arc(geo.tipX, geo.tipY, 7, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(255,255,255,0.96)";
             ctx.fill();
-            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.strokeStyle = "hsl(173, 80%, 45%)";
             ctx.lineWidth = 2;
             ctx.stroke();
 
@@ -1684,7 +1669,7 @@ case "sticker":
                     ctx.closePath();
                     ctx.fillStyle = "rgba(255,220,0,0.95)";
                     ctx.fill();
-                    ctx.strokeStyle = HANDLE_COLOR;
+                    ctx.strokeStyle = "hsl(173, 80%, 45%)";
                     ctx.lineWidth = 1.8;
                     ctx.stroke();
                 });

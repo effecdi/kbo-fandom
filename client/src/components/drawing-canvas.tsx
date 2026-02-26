@@ -262,7 +262,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = width;
       exportCanvas.height = height;
-      const exportCtx = exportCanvas.getContext("2d");
+      const exportCtx = exportCanvas.getContext("2d", { willReadFrequently: true });
       if (!exportCtx) return;
       exportCtx.drawImage(activeStroke, 0, 0);
 
@@ -834,13 +834,13 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
           const maskCanvas = document.createElement("canvas");
           maskCanvas.width = width;
           maskCanvas.height = height;
-          const ctx = maskCanvas.getContext("2d");
+          const ctx = maskCanvas.getContext("2d", { willReadFrequently: true });
           if (!ctx) return null;
 
           ctx.fillStyle = "#000000";
           ctx.fillRect(0, 0, width, height);
 
-          const compCtx = compositeCanvas.getContext("2d");
+          const compCtx = compositeCanvas.getContext("2d", { willReadFrequently: true });
           if (!compCtx) return null;
 
           const imgData = compCtx.getImageData(0, 0, width, height);
