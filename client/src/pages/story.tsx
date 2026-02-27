@@ -5732,6 +5732,7 @@ export default function StoryPage() {
                             setSelectedCharId(null);
                             setSelectedTextId(null);
                             setSelectedLineId(null);
+                            setSelectedDrawingLayerId(null);
                             setActivePanelIndex(i);
                             if (!id) setShowBubbleSettings(false);
                           }}
@@ -5741,6 +5742,7 @@ export default function StoryPage() {
                             setSelectedBubbleId(null);
                             setSelectedTextId(null);
                             setSelectedLineId(null);
+                            setSelectedDrawingLayerId(null);
                             setActivePanelIndex(i);
                             setShowBubbleSettings(false);
                             // Auto-switch to image tab when character is clicked on canvas
@@ -5876,6 +5878,8 @@ export default function StoryPage() {
                                 setSelectedDrawingLayerId(null);
                                 setSelectedTextId(null);
                                 setSelectedLineId(null);
+                                setSelectedBubbleId(null);
+                                setSelectedCharId(null);
                                 setEditingTextId(null);
                               }
                             }}
