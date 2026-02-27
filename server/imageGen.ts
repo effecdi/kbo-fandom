@@ -1,4 +1,5 @@
 import { GoogleGenAI, Modality } from "@google/genai";
+import sharp from "sharp";
 import type { Character } from "@shared/schema";
 
 // 한국어 프롬프트를 영어로 번역하는 함수
@@ -159,6 +160,40 @@ function getStyleConfig(style: string) {
 
 const noTextRule = `CRITICAL TEXT PROHIBITION: Do NOT include ANY text, letters, words, labels, captions, watermarks, or writing of ANY kind in the image - this includes Korean (한글/Hangul), English, Japanese, Chinese, or any other language. NO characters, NO letters, NO words, NO numbers, NO symbols that look like text. The image must contain ONLY the visual illustration with absolutely ZERO text or text-like elements. Any attempt to render non-Latin scripts like Korean will result in garbled, broken characters - so do NOT attempt it under any circumstances.`;
 
+/**
+ * 흰색/밝은 배경을 투명으로 변환하여 PNG data URL 반환
+ */
+async function removeWhiteBackground(dataUrl: string): Promise<string> {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return dataUrl;
+
+  const buf = Buffer.from(match[2], "base64");
+  const { data: raw, info } = await sharp(buf)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const pixels = Buffer.from(raw);
+  const threshold = 240; // R,G,B 모두 이 값 이상이면 배경으로 판단
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const r = pixels[i];
+    const g = pixels[i + 1];
+    const b = pixels[i + 2];
+    if (r >= threshold && g >= threshold && b >= threshold) {
+      pixels[i + 3] = 0; // alpha → 투명
+    }
+  }
+
+  const pngBuf = await sharp(pixels, {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+
+  return `data:image/png;base64,${pngBuf.toString("base64")}`;
+}
+
 export async function generateCharacterImage(prompt: string, style: string, sourceImageData?: string): Promise<string> {
   const config = getStyleConfig(style);
   const parts: any[] = [];
@@ -257,7 +292,8 @@ Single character only, full body view, pure solid white background, no shadows o
   }
 
   const mimeType = imagePart.inlineData.mimeType || "image/png";
-  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  const rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  return removeWhiteBackground(rawDataUrl);
 }
 
 export async function generatePoseImage(
@@ -348,7 +384,8 @@ Keep the character identical to the reference. Only change the pose. Single char
   }
 
   const mimeType = imagePart.inlineData.mimeType || "image/png";
-  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  const rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  return removeWhiteBackground(rawDataUrl);
 }
 
 export async function generateWithBackground(
