@@ -161,7 +161,8 @@ function getStyleConfig(style: string) {
 const noTextRule = `CRITICAL TEXT PROHIBITION: Do NOT include ANY text, letters, words, labels, captions, watermarks, or writing of ANY kind in the image - this includes Korean (한글/Hangul), English, Japanese, Chinese, or any other language. NO characters, NO letters, NO words, NO numbers, NO symbols that look like text. The image must contain ONLY the visual illustration with absolutely ZERO text or text-like elements. Any attempt to render non-Latin scripts like Korean will result in garbled, broken characters - so do NOT attempt it under any circumstances.`;
 
 /**
- * 흰색/밝은 배경을 투명으로 변환하여 PNG data URL 반환
+ * 이미지 가장자리에서 flood-fill하여 배경 흰색만 투명으로 변환.
+ * 캐릭터 내부의 흰색(눈, 옷 등)은 보존됨.
  */
 async function removeWhiteBackground(dataUrl: string): Promise<string> {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -174,19 +175,60 @@ async function removeWhiteBackground(dataUrl: string): Promise<string> {
     .toBuffer({ resolveWithObject: true });
 
   const pixels = Buffer.from(raw);
-  const threshold = 240; // R,G,B 모두 이 값 이상이면 배경으로 판단
+  const { width, height } = info;
+  const threshold = 235;
 
-  for (let i = 0; i < pixels.length; i += 4) {
-    const r = pixels[i];
-    const g = pixels[i + 1];
-    const b = pixels[i + 2];
-    if (r >= threshold && g >= threshold && b >= threshold) {
-      pixels[i + 3] = 0; // alpha → 투명
+  const isWhite = (idx: number) => {
+    return pixels[idx] >= threshold && pixels[idx + 1] >= threshold && pixels[idx + 2] >= threshold;
+  };
+
+  // BFS flood-fill from image edges
+  const visited = new Uint8Array(width * height);
+  const queue: number[] = [];
+
+  // Seed: all edge pixels that are white
+  for (let x = 0; x < width; x++) {
+    const topIdx = x;
+    const botIdx = (height - 1) * width + x;
+    if (isWhite(topIdx * 4) && !visited[topIdx]) { visited[topIdx] = 1; queue.push(topIdx); }
+    if (isWhite(botIdx * 4) && !visited[botIdx]) { visited[botIdx] = 1; queue.push(botIdx); }
+  }
+  for (let y = 0; y < height; y++) {
+    const leftIdx = y * width;
+    const rightIdx = y * width + (width - 1);
+    if (isWhite(leftIdx * 4) && !visited[leftIdx]) { visited[leftIdx] = 1; queue.push(leftIdx); }
+    if (isWhite(rightIdx * 4) && !visited[rightIdx]) { visited[rightIdx] = 1; queue.push(rightIdx); }
+  }
+
+  // BFS
+  let head = 0;
+  while (head < queue.length) {
+    const pos = queue[head++];
+    const x = pos % width;
+    const y = (pos - x) / width;
+    const neighbors = [
+      y > 0 ? pos - width : -1,
+      y < height - 1 ? pos + width : -1,
+      x > 0 ? pos - 1 : -1,
+      x < width - 1 ? pos + 1 : -1,
+    ];
+    for (const n of neighbors) {
+      if (n >= 0 && !visited[n] && isWhite(n * 4)) {
+        visited[n] = 1;
+        queue.push(n);
+      }
+    }
+  }
+
+  // Mark background pixels transparent
+  for (let i = 0; i < visited.length; i++) {
+    if (visited[i]) {
+      pixels[i * 4 + 3] = 0;
     }
   }
 
   const pngBuf = await sharp(pixels, {
-    raw: { width: info.width, height: info.height, channels: 4 },
+    raw: { width, height, channels: 4 },
   })
     .png()
     .toBuffer();
