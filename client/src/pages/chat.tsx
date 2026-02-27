@@ -201,7 +201,7 @@ export default function ChatPage() {
                     placeholder="메시지를 입력하세요..."
                     data-testid="input-other-message"
                   />
-                  <Button type="button" size="icon" onClick={handleOtherSend} disabled={!otherInput.trim()} data-testid="button-send-other">
+                  <Button type="button" size="icon" onClick={() => guard(() => handleOtherSend())} disabled={!otherInput.trim()} data-testid="button-send-other">
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -216,7 +216,7 @@ export default function ChatPage() {
                     placeholder="메시지를 입력하세요..."
                     data-testid="input-me-message"
                   />
-                  <Button type="button" size="icon" onClick={handleMeSend} disabled={!meInput.trim()} data-testid="button-send-me">
+                  <Button type="button" size="icon" onClick={() => guard(() => handleMeSend())} disabled={!meInput.trim()} data-testid="button-send-me">
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
