@@ -76,8 +76,7 @@ export function Navbar() {
           </div>
         </Link>
 
-        {isAuthenticated && (
-          <nav className="flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
+        <nav className="flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
             <Link href="/home">
               <Button
                 variant="ghost"
@@ -132,7 +131,6 @@ export function Navbar() {
               </Button>
             </Link>
           </nav>
-        )}
 
         <div className="flex-1" />
 

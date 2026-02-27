@@ -21,8 +21,10 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { isUnauthorizedError, redirectToLogin } from "@/lib/auth-utils";
+import { isUnauthorizedError } from "@/lib/auth-utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { useLocation } from "wouter";
 import {
   Plus,
@@ -2772,6 +2774,7 @@ interface UsageData {
 export default function StoryPage() {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const [, setLocation] = useLocation();
   const [topic, setTopic] = useState("");
   const [aiMode, setAiMode] = useState<"subtitle" | "instatoonFull" | "instatoonPrompt" | null>(null);
@@ -3197,13 +3200,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       if (/^403: /.test(error.message) && error.message.includes("크레딧을 전부 사용했어요")) {
@@ -3345,13 +3342,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       if (/^403/.test(error.message)) {
@@ -3422,13 +3413,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       toast({
@@ -3501,13 +3486,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       if (/^403/.test(error.message)) {
@@ -3584,13 +3563,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       if (/^403/.test(error.message)) {
@@ -5478,21 +5451,21 @@ export default function StoryPage() {
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={startStoryTour} title="도움말" data-testid="button-story-help">
                     <Lightbulb className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => downloadPanel(activePanelIndex)} title="다운로드" data-testid="button-download-panel">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => guard(() => downloadPanel(activePanelIndex))} title="다운로드" data-testid="button-download-panel">
                     <Download className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     className="gap-1 h-7 text-xs px-2"
-                    onClick={downloadAll}
+                    onClick={() => guard(() => downloadAll())}
                     data-testid="button-download-all-panels"
                   >
                     <Download className="h-3 w-3" />
                     전체 다운로드
                   </Button>
 
-                  <Button size="sm" onClick={() => setShowSaveModal(true)} className="gap-1 h-7 text-xs px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
+                  <Button size="sm" onClick={() => guard(() => setShowSaveModal(true))} className="gap-1 h-7 text-xs px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
                     <Save className="h-3 w-3" />
                     저장
                     {isPro && <Crown className="h-2.5 w-2.5 ml-0.5" />}
@@ -6930,6 +6903,7 @@ export default function StoryPage() {
               </Card>
             </div>
           )}
+          <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
           </div >
           );
 }

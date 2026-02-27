@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Send, Trash2, RotateCcw, Lock, ArrowRight, User } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import html2canvas from "html2canvas";
 import type { Character } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -21,6 +23,7 @@ interface ChatMessage {
 
 export default function ChatPage() {
   const { isAuthenticated } = useAuth();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const characterIdParam = params.get("characterId");
@@ -250,7 +253,7 @@ export default function ChatPage() {
             <Button
               size="lg"
               className="flex-1 gap-2"
-              onClick={downloadImage}
+              onClick={() => guard(() => downloadImage())}
               disabled={messages.length === 0 || isDownloading}
               data-testid="button-download-chat"
             >
@@ -350,6 +353,7 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

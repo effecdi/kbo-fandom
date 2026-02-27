@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Download, RotateCcw, Upload, X, ArrowLeft, ArrowRight, Bot, Sparkles } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { FlowStepper } from "@/components/flow-stepper";
 import { setFlowState } from "@/lib/flow";
 import type { Generation } from "@shared/schema";
@@ -42,6 +44,7 @@ export default function PosePage() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
 
   const { data: usageData } = useQuery<{ creatorTier: number; totalGenerations: number; tier: string; credits: number }>({
     queryKey: ["/api/usage"],
@@ -316,7 +319,7 @@ export default function PosePage() {
           <Button
             size="lg"
             className="w-full gap-2"
-            onClick={() => generateMutation.mutate()}
+            onClick={() => guard(() => generateMutation.mutate())}
             disabled={!canGenerate}
             data-testid="button-generate-pose"
           >
@@ -424,6 +427,7 @@ export default function PosePage() {
           </Button>
         </div>
       )}
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

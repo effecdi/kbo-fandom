@@ -21,6 +21,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Upload, Download, Plus, Trash2, MessageCircle, ArrowRight, Type, Move, Maximize2, ImagePlus, X, Loader2, Layers, ChevronUp, ChevronDown, Save, Minimize2, ZoomIn, ZoomOut, FolderOpen, Share2, Crown, Lightbulb, Copy, FilePlus, Wand2 } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { useLocation } from "wouter";
 import { BubbleCanvas } from "@/components/bubble-canvas";
 import { SpeechBubble, CharacterOverlay, PageData, DragMode, BubbleStyle, TailStyle } from "@/lib/bubble-types";
@@ -63,6 +65,7 @@ const BUBBLE_COLOR_PRESETS = [
 export default function BubblePage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const loadProjectId = searchParams.get("id");
@@ -701,7 +704,7 @@ export default function BubblePage() {
               size="icon"
               variant="ghost"
               className="h-8 w-8"
-              onClick={handleDownload}
+              onClick={() => guard(() => handleDownload())}
               title="다운로드"
               data-testid="button-download-bubble"
             >
@@ -711,7 +714,7 @@ export default function BubblePage() {
               size="sm"
               variant="ghost"
               className="gap-1.5 h-8 text-xs px-2.5 bg-muted/40 hover:bg-muted/60"
-              onClick={handleDownloadAll}
+              onClick={() => guard(() => handleDownloadAll())}
               data-testid="button-download-bubble-all"
             >
               <Download className="h-3.5 w-3.5" />
@@ -737,25 +740,18 @@ export default function BubblePage() {
             <Button
               size="sm"
               onClick={() => {
-                if (!isAuthenticated) {
-                  toast({
-                    title: "로그인 필요",
-                    description: "로그인 후 프로젝트를 저장할 수 있습니다.",
-                    variant: "destructive",
-                  });
-                  setLocation("/login");
-                  return;
-                }
-                if (!isPro) {
-                  toast({
-                    title: "Pro 전용 기능",
-                    description: "말풍선 프로젝트 저장은 Pro 업그레이드 후 이용할 수 있습니다.",
-                    variant: "destructive",
-                  });
-                  setLocation("/pricing");
-                  return;
-                }
-                setShowSaveModal(true);
+                guard(() => {
+                  if (!isPro) {
+                    toast({
+                      title: "Pro 전용 기능",
+                      description: "말풍선 프로젝트 저장은 Pro 업그레이드 후 이용할 수 있습니다.",
+                      variant: "destructive",
+                    });
+                    setLocation("/pricing");
+                    return;
+                  }
+                  setShowSaveModal(true);
+                });
               }}
               className="gap-1.5 h-8 text-xs px-2.5 bg-primary text-primary-foreground border-primary"
               data-testid="button-save-bubble-project"
@@ -1163,6 +1159,7 @@ export default function BubblePage() {
           </div>
         </DialogContent>
       </Dialog>
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

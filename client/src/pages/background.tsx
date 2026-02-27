@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Download, RotateCcw, Upload, X, Trees, Package, ArrowLeft, ArrowRight, Bot } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { FlowStepper } from "@/components/flow-stepper";
 import { setFlowState, getFlowState } from "@/lib/flow";
 import type { Generation } from "@shared/schema";
@@ -39,6 +41,7 @@ export default function BackgroundPage() {
   const [bgResultImage, setBgResultImage] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
 
   const { data: usageData } = useQuery<{creatorTier: number; totalGenerations: number; tier: string; credits: number}>({ queryKey: ["/api/usage"] });
   const isPro = usageData?.tier === "pro";
@@ -305,7 +308,7 @@ export default function BackgroundPage() {
           <Button
             size="lg"
             className="w-full gap-2"
-            onClick={() => bgMutation.mutate()}
+            onClick={() => guard(() => bgMutation.mutate())}
                 disabled={!bgPrompt.trim() || bgMutation.isPending || isOutOfCredits}
             data-testid="button-generate-bg"
           >
@@ -397,6 +400,7 @@ export default function BackgroundPage() {
           </Button>
         </div>
       )}
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

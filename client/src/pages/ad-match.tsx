@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Target, TrendingUp, Loader2, Lock, ArrowRight, CheckCircle2, Minus, Plus } from "lucide-react";
+import { Sparkles, Target, TrendingUp, Loader2, CheckCircle2, Minus, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 
 function NumberStepper({
   value,
@@ -110,6 +112,7 @@ interface AdMatchResult {
 export default function AdMatchPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const { data: credits } = useQuery<{ credits: number; tier: string }>({
     queryKey: ["/api/usage"],
     enabled: isAuthenticated,
@@ -176,20 +179,6 @@ export default function AdMatchPage() {
     mutation.mutate(formData);
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] gap-4 px-4">
-        <Lock className="h-12 w-12 text-muted-foreground" />
-        <h2 className="text-xl font-semibold" data-testid="text-login-required">로그인이 필요합니다</h2>
-        <Button asChild data-testid="button-login-admatch">
-          <a href="/login">로그인</a>
-        </Button>
-      </div>
-    );
-  }
-
-  // Pro 가드 제거: 모든 사용자 사용 가능
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <Dialog open={limitOpen} onOpenChange={setLimitOpen}>
@@ -224,7 +213,7 @@ export default function AdMatchPage() {
             내 인스타툰 프로필
           </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => { e.preventDefault(); guard(() => handleSubmit(e)); }} className="space-y-4">
             <div>
               <Label>장르</Label>
               <Select value={formData.genre} onValueChange={(v) => setFormData({ ...formData, genre: v })}>
@@ -393,6 +382,7 @@ export default function AdMatchPage() {
           )}
         </div>
       </div>
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }
