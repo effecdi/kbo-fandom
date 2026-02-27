@@ -166,6 +166,18 @@ const COLOR_PRESETS = [
   "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#6b7280",
 ];
 
+export const CANVAS_BG_COLORS = [
+  { label: "흰색", value: "#ffffff" },
+  { label: "검정", value: "#1a1a1a" },
+  { label: "노랑", value: "#fef08a" },
+  { label: "하늘", value: "#bae6fd" },
+  { label: "분홍", value: "#fecdd3" },
+  { label: "연두", value: "#bbf7d0" },
+  { label: "보라", value: "#e9d5ff" },
+  { label: "주황", value: "#fed7aa" },
+  { label: "회색", value: "#e5e7eb" },
+];
+
 // ─── Text Context Toolbar ──────────────────────────────────────────────────
 
 interface TextToolbarProps {
@@ -948,6 +960,53 @@ export function BubbleFloatingSettings({ bubble, onChange, onClose }: BubbleSett
           className="w-full"
         />
       </div>
+    </div>
+  );
+}
+
+// ─── Canvas Background Toolbar ────────────────────────────────────────────
+
+interface CanvasBgToolbarProps {
+  backgroundColor: string;
+  onColorChange: (color: string) => void;
+}
+
+export function CanvasBgToolbar({ backgroundColor, onColorChange }: CanvasBgToolbarProps) {
+  const colorInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="context-toolbar context-toolbar--canvas-bg">
+      <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", padding: "0 4px", whiteSpace: "nowrap" }}>배경색</span>
+      <span className="context-toolbar__divider" />
+      {CANVAS_BG_COLORS.map((c) => (
+        <button
+          key={c.value}
+          className="context-toolbar__btn"
+          style={{ minWidth: 28, padding: 0 }}
+          onClick={() => onColorChange(c.value)}
+          title={c.label}
+        >
+          <span
+            className={`context-toolbar__color-dot ${backgroundColor === c.value ? "context-toolbar__color-dot--selected" : ""}`}
+            style={{ backgroundColor: c.value, width: 20, height: 20 }}
+          />
+        </button>
+      ))}
+      <span className="context-toolbar__divider" />
+      <button
+        className="context-toolbar__btn"
+        onClick={() => colorInputRef.current?.click()}
+        title="직접 선택"
+      >
+        <Palette className="h-4 w-4" />
+      </button>
+      <input
+        ref={colorInputRef}
+        type="color"
+        value={backgroundColor}
+        onChange={(e) => onColorChange(e.target.value)}
+        style={{ position: "absolute", width: 0, height: 0, opacity: 0, pointerEvents: "none" }}
+      />
     </div>
   );
 }

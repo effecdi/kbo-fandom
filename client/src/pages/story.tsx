@@ -105,6 +105,8 @@ import {
   BubbleContextToolbar,
   BubbleFloatingSettings,
   FloatingSettingsModal,
+  CanvasBgToolbar,
+  CANVAS_BG_COLORS,
   createTextElement,
   createLineElement,
   type CanvasTextElement,
@@ -256,7 +258,8 @@ const BUBBLE_COLOR_PRESETS = [
   { label: "투명", fill: "transparent", stroke: "#222222" },
 ];
 
- 
+
+
 interface CharacterPlacement {
   id: string;
   imageUrl: string;
@@ -307,6 +310,7 @@ interface PanelData {
   characters: CharacterPlacement[];
   textElements: CanvasTextElement[];
   lineElements: CanvasLineElement[];
+  backgroundColor?: string;
   backgroundImageUrl?: string;
   backgroundImageEl?: HTMLImageElement | null;
   drawingLayers: DrawingLayer[];
@@ -366,6 +370,7 @@ function createPanel(): PanelData {
     characters: [],
     textElements: [],
     lineElements: [],
+    backgroundColor: "#ffffff",
     backgroundImageUrl: undefined,
     backgroundImageEl: null,
     drawingLayers: [],
@@ -833,10 +838,9 @@ function PanelCanvas({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
     const p = panelRef.current;
+    ctx.fillStyle = p.backgroundColor || "#ffffff";
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     // Draw background image if present
     const bgImg = p.backgroundImageEl;
@@ -2633,6 +2637,90 @@ function EditorPanel({
 
       {isImageMode && (
         <div className="rounded-md space-y-3">
+          {/* 캔버스 배경 섹션 */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">캔버스 배경</Label>
+
+            <div className="flex gap-1 flex-wrap items-center">
+              <span className="text-[11px] text-muted-foreground mr-0.5">배경색</span>
+              {CANVAS_BG_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => onUpdate({ ...panel, backgroundColor: c.value })}
+                  className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                    (panel.backgroundColor || "#ffffff") === c.value
+                      ? "border-foreground scale-110"
+                      : "border-muted-foreground/30"
+                  }`}
+                  style={{ backgroundColor: c.value }}
+                  title={c.label}
+                />
+              ))}
+            </div>
+
+            {panel.backgroundImageUrl && (
+              <div className="relative inline-block">
+                <img
+                  src={panel.backgroundImageUrl}
+                  alt="배경 미리보기"
+                  className="rounded border border-border max-h-[80px] object-cover"
+                />
+                <button
+                  type="button"
+                  className="absolute -top-1.5 -right-1.5 rounded-full bg-destructive text-destructive-foreground p-0.5"
+                  onClick={() => onUpdate({ ...panel, backgroundImageUrl: undefined, backgroundImageEl: null })}
+                  data-testid={`button-remove-bg-${index}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover-elevate"
+              onClick={() =>
+                document.getElementById(`story-bg-upload-${index}`)?.click()
+              }
+              data-testid={`button-upload-bg-${index}`}
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              <span>배경 이미지 업로드</span>
+            </button>
+            <input
+              id={`story-bg-upload-${index}`}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleBackgroundImageUpload}
+            />
+
+            {charImages.length > 0 && (
+              <>
+                <p className="text-[11px] text-muted-foreground pt-1">내 갤러리에서 선택:</p>
+                <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
+                  {charImages.map((gen) => (
+                    <button
+                      key={gen.id}
+                      className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
+                      onClick={() => handleBackgroundFromGallery(gen)}
+                      data-testid={`button-pick-bg-${gen.id}`}
+                    >
+                      <img
+                        src={gen.resultImageUrl}
+                        alt={gen.prompt}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <hr className="border-border" />
+
+          {/* 이미지 업로드 섹션 (기존) */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
             <button
@@ -2849,6 +2937,7 @@ export default function StoryPage() {
       characters: p.characters.map((c) => ({ ...c })),
       topScript: p.topScript ? { ...p.topScript } : null,
       bottomScript: p.bottomScript ? { ...p.bottomScript } : null,
+      backgroundColor: p.backgroundColor,
       backgroundImageUrl: p.backgroundImageUrl,
       backgroundImageEl: p.backgroundImageEl,
       drawingLayers: (p.drawingLayers || []).map((dl) => ({ ...dl })),
@@ -3870,6 +3959,7 @@ export default function StoryPage() {
       id: generateId(),
       topScript: source.topScript ? { ...source.topScript } : null,
       bottomScript: source.bottomScript ? { ...source.bottomScript } : null,
+      backgroundColor: source.backgroundColor,
       backgroundImageUrl: source.backgroundImageUrl,
       backgroundImageEl: source.backgroundImageEl,
       bubbles: source.bubbles.map((b) => ({ ...b, id: generateId() })),
@@ -4282,6 +4372,7 @@ export default function StoryPage() {
         id: p.id,
         topScript: p.topScript,
         bottomScript: p.bottomScript,
+        backgroundColor: p.backgroundColor,
         backgroundImageUrl: p.backgroundImageUrl,
         bubbles: p.bubbles.map((b) => ({
           ...b,
@@ -4389,6 +4480,7 @@ export default function StoryPage() {
             id: p.id || generateId(),
             topScript: p.topScript || null,
             bottomScript: p.bottomScript || null,
+            backgroundColor: p.backgroundColor || "#ffffff",
             backgroundImageUrl: p.backgroundImageUrl || undefined,
             backgroundImageEl: null,
             bubbles: (p.bubbles || []).map((b: any) => ({
@@ -5619,6 +5711,16 @@ export default function StoryPage() {
                             </>
                           );
                         })()}
+
+                        {/* Canvas background toolbar — shown when nothing is selected */}
+                        {activePanelIndex === i && !selectedTextElement && !selectedLineElement && !selectedBubbleId && !selectedCharId && !selectedDrawingLayerId && (
+                          <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                            <CanvasBgToolbar
+                              backgroundColor={panel.backgroundColor || "#ffffff"}
+                              onColorChange={(color) => updatePanel(i, { ...panel, backgroundColor: color })}
+                            />
+                          </div>
+                        )}
 
                         <PanelCanvas
                           key={panel.id + "-main"}

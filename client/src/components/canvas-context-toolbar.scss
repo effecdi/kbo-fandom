@@ -118,6 +118,12 @@ $transition-fast: 150ms ease;
     transform: scale(1.1);
   }
 
+  &__color-dot--selected {
+    border-color: $primary;
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.4);
+    transform: scale(1.1);
+  }
+
   // ─── Dropdown ────────────────────────────────────────────────────────────
 
   &__dropdown-wrapper {
