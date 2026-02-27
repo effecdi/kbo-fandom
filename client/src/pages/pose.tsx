@@ -357,7 +357,14 @@ export default function PosePage() {
               </div>
             ) : poseResultImage ? (
               <div className="flex flex-col gap-3 w-full">
-                <div className="overflow-hidden rounded-md border">
+                <div
+                  className="overflow-hidden rounded-md border"
+                  style={{
+                    backgroundImage: "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
+                    backgroundSize: "16px 16px",
+                    backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                  }}
+                >
                   <img
                     src={poseResultImage}
                     alt="Pose result"
