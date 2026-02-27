@@ -213,7 +213,7 @@ ${noTextRule}
 
 IMPORTANT: The character must be on a completely plain solid white background with NOTHING else - no shadows, no ground, no decorations, no patterns. Just the character floating on pure white. This is critical because the image will be used as a sticker/cutout.
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio (width:height = 3:4). The image must be taller than it is wide.
+IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3).
 
 Look at this reference image carefully. Analyze the character, person, or subject in it. Now create a NEW character illustration based on this image, but with the following modifications: ${translatedPrompt}
 
@@ -239,7 +239,7 @@ ${noTextRule}
 
 IMPORTANT: The character must be on a completely plain solid white background with NOTHING else - no shadows, no ground, no decorations, no patterns. Just the character floating on pure white. This is critical because the image will be used as a sticker/cutout.
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio (width:height = 3:4). The image must be taller than it is wide.
+IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3).
 
 Look at this reference image carefully. Analyze the character, person, or subject in it - their appearance, clothing, pose, expression, and key features. Now recreate this as a character illustration in the following style: ${config.keywords}.
 
@@ -263,7 +263,7 @@ ${noTextRule}
 
 IMPORTANT: The character must be on a completely plain solid white background with NOTHING else - no shadows, no ground, no decorations, no patterns. Just the character floating on pure white. This is critical because the image will be used as a sticker/cutout.
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio (width:height = 3:4). The image must be taller than it is wide.
+IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3).
 
 Create a character: ${translatedPrompt}.
 Style: ${config.keywords}.
@@ -276,10 +276,7 @@ Single character only, full body view, pure solid white background, no shadows o
     contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      imageGenerationConfig: {
-        aspectRatio: "3:4",
-      },
-    } as any,
+    },
   });
 
   const candidate = response.candidates?.[0];
@@ -316,7 +313,7 @@ ${noTextRule}
 
 Generate a new pose of the same character described below. Keep the character looking EXACTLY the same - same style, same features, same colors. Only change the pose and expression.
 
-IMPORTANT: Generate the image in 3:4 aspect ratio (width:height = 3:4). The image should be taller than it is wide, like a portrait or phone screen.
+IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3).
 
 Original character description: ${translatedCharPrompt}
 Style: ${config.keywords}
@@ -341,7 +338,7 @@ ${noTextRule}
 
 Look at this reference character image. Generate the EXACT SAME character in a different pose. Keep it in the same style - same line thickness, same level of detail, same colors.
 
-IMPORTANT: Generate the image in 3:4 aspect ratio (width:height = 3:4). The image should be taller than it is wide, like a portrait or phone screen.
+IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3).
 
 New pose/expression: ${translatedPosePrompt}
 Style: ${config.keywords}
@@ -368,10 +365,7 @@ Keep the character identical to the reference. Only change the pose. Single char
     contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      imageGenerationConfig: {
-        aspectRatio: "3:4",
-      },
-    } as any,
+    },
   });
 
   const candidate = response.candidates?.[0];
@@ -418,7 +412,7 @@ IMPORTANT RULES:
 Background scene: ${translatedBgPrompt}
 ${itemsInstruction}
 
-IMPORTANT: Generate the image in 3:4 aspect ratio (width:height = 3:4). The scene should be taller than it is wide, like a portrait or phone screen.
+IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3).
 
 Make the background and items in the same simple, cute drawing style as the character. Keep thick outlines and flat colors. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
   });
@@ -438,10 +432,7 @@ Make the background and items in the same simple, cute drawing style as the char
     contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      imageGenerationConfig: {
-        aspectRatio: "3:4",
-      },
-    } as any,
+    },
   });
 
   const candidate = response.candidates?.[0];
