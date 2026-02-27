@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Download, RotateCcw, Upload, X, ArrowLeft, ArrowRight, Bot, Sparkles } from "lucide-react";
+import { Loader2, Download, RotateCcw, Upload, X, ArrowLeft, ArrowRight, Bot, Sparkles, Trees } from "lucide-react";
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { FlowStepper } from "@/components/flow-stepper";
@@ -365,6 +365,18 @@ export default function PosePage() {
                     data-testid="img-pose-result"
                   />
                 </div>
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    setFlowState({ lastPoseImageUrl: poseResultImage });
+                    navigate("/background?flow=1");
+                  }}
+                  data-testid="button-go-background"
+                >
+                  <Trees className="h-4 w-4" />
+                  배경/아이템 만들기
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
