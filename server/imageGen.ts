@@ -241,7 +241,10 @@ Single character only, full body view, pure solid white background, no shadows o
     contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-    },
+      imageGenerationConfig: {
+        aspectRatio: "3:4",
+      },
+    } as any,
   });
 
   const candidate = response.candidates?.[0];
@@ -329,7 +332,10 @@ Keep the character identical to the reference. Only change the pose. Single char
     contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-    },
+      imageGenerationConfig: {
+        aspectRatio: "3:4",
+      },
+    } as any,
   });
 
   const candidate = response.candidates?.[0];
@@ -395,7 +401,10 @@ Make the background and items in the same simple, cute drawing style as the char
     contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-    },
+      imageGenerationConfig: {
+        aspectRatio: "3:4",
+      },
+    } as any,
   });
 
   const candidate = response.candidates?.[0];
