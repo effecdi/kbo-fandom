@@ -724,7 +724,7 @@ export default function BubblePage() {
               size="sm"
               variant="ghost"
               className="gap-1.5 h-8 text-xs px-2.5 bg-muted/40 hover:bg-muted/60"
-              onClick={() => document.getElementById("bg-upload")?.click()}
+              onClick={() => guard(() => document.getElementById("bg-upload")?.click())}
               data-testid="button-upload-bubble-bg"
             >
               <Upload className="h-3.5 w-3.5" />
@@ -1014,7 +1014,7 @@ export default function BubblePage() {
                       variant="ghost"
                       size="sm"
                       className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                      onClick={addBubble}
+                      onClick={() => guard(() => addBubble())}
                     >
                       <MessageCircle className="h-3 w-3" />
                       말풍선
@@ -1023,7 +1023,7 @@ export default function BubblePage() {
                       variant="ghost"
                       size="sm"
                       className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                      onClick={() => setShowGalleryPicker(true)}
+                      onClick={() => guard(() => setShowGalleryPicker(true))}
                     >
                       <ImagePlus className="h-3 w-3" />
                       캐릭터
@@ -1032,7 +1032,7 @@ export default function BubblePage() {
                       variant="ghost"
                       size="sm"
                       className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                      onClick={() => setShowTemplatePicker(true)}
+                      onClick={() => guard(() => setShowTemplatePicker(true))}
                     >
                       <Type className="h-3 w-3" />
                       템플릿

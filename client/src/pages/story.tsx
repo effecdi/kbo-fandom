@@ -4172,7 +4172,7 @@ export default function StoryPage() {
   }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedDrawingLayerId, updatePanel]);
 
   const toggleLeftTab = (tab: LeftTab) => {
-    if ((tab === "tools" || tab === "elements") && !isAuthenticated) {
+    if (!isAuthenticated) {
       setShowLoginDialog(true);
       return;
     }
