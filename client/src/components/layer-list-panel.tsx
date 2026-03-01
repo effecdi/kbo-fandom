@@ -13,6 +13,8 @@ import {
   Eraser,
   Square,
   Scan,
+  Link,
+  Unlink,
 } from "lucide-react";
 import { Spline, GitCommitHorizontal } from "lucide-react";
 import { STYLE_LABELS } from "@/lib/bubble-utils";
@@ -26,6 +28,7 @@ export interface LayerItem {
   drawingType?: string;
   visible?: boolean;
   maskEnabled?: boolean;
+  clipMaskId?: string; // ID of mask shape this layer is clipped by
 }
 
 const DRAWING_TYPE_ICONS: Record<string, typeof Pen> = {
@@ -56,6 +59,7 @@ interface LayerListPanelProps {
   onToggleVisibility?: (item: LayerItem) => void;
   onFlipChar?: (id: string) => void;
   onSetToolItem?: (tool: string) => void;
+  onToggleMaskLink?: (layerId: string, layerType: string, maskId: string) => void;
 }
 
 export function LayerListPanel({
@@ -77,7 +81,11 @@ export function LayerListPanel({
   onToggleVisibility,
   onFlipChar,
   onSetToolItem,
+  onToggleMaskLink,
 }: LayerListPanelProps) {
+  // Collect available mask shapes
+  const maskShapes = items.filter(it => it.type === "shape" && it.maskEnabled);
+
   return (
     <div className="h-full overflow-y-auto p-3 space-y-2">
       <div className="flex items-center gap-1.5">
@@ -104,10 +112,15 @@ export function LayerListPanel({
 
           const DrawingIcon = item.drawingType ? (DRAWING_TYPE_ICONS[item.drawingType] || Pen) : Pen;
 
+          const isMask = item.type === "shape" && item.maskEnabled;
+          const isLinkedToMask = !!item.clipMaskId;
+
           return (
             <div
               key={`${item.type}:${item.id}`}
-              className={`flex items-center justify-between gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors ${
+              className={`flex items-center justify-between gap-1.5 rounded-md cursor-pointer transition-colors ${
+                isLinkedToMask ? "pl-5 pr-2" : "px-2"
+              } py-1 ${
                 isSelected
                   ? "bg-primary/15 border border-primary/30"
                   : "hover:bg-muted/40"
@@ -140,6 +153,9 @@ export function LayerListPanel({
               }}
             >
               <div className="flex items-center gap-1.5 min-w-0">
+                {isLinkedToMask && (
+                  <div className="w-0.5 h-4 bg-primary/40 rounded-full shrink-0 -ml-2" />
+                )}
                 <div className={`w-6 h-6 rounded overflow-hidden shrink-0 border border-border/50 bg-card flex items-center justify-center`}>
                   {item.type === "drawing" ? (
                     <DrawingIcon className="h-3 w-3 text-muted-foreground" />
@@ -157,10 +173,29 @@ export function LayerListPanel({
                     </span>
                   )}
                 </div>
-                {item.maskEnabled && <Scan className="h-3 w-3 text-primary shrink-0" />}
-                <span className="text-[11px] truncate">{item.maskEnabled ? `[마스크] ${item.label}` : item.label}</span>
+                {isMask && <Scan className="h-3 w-3 text-primary shrink-0" />}
+                <span className="text-[11px] truncate">
+                  {isMask ? `[마스크] ${item.label}` : item.label}
+                </span>
               </div>
               <div className="flex items-center gap-0 shrink-0">
+                {/* Mask link button for non-mask layers when masks exist */}
+                {!isMask && maskShapes.length > 0 && onToggleMaskLink && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-5 w-5 ${isLinkedToMask ? "text-primary" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // If already linked, unlink; if not, link to first available mask
+                      const targetMaskId = item.clipMaskId || maskShapes[0].id;
+                      onToggleMaskLink(item.id, item.type, targetMaskId);
+                    }}
+                    title={isLinkedToMask ? "마스크 연결 해제" : "마스크에 연결"}
+                  >
+                    {isLinkedToMask ? <Link className="h-3 w-3" /> : <Unlink className="h-3 w-3" />}
+                  </Button>
+                )}
                 {item.type === "drawing" && onToggleVisibility && (
                   <Button
                     variant="ghost"

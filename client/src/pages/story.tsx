@@ -986,13 +986,35 @@ function PanelCanvas({
         })) : []),
       ];
     drawables.sort((a, b) => a.z - b.z);
-    let maskClipActive = false;
-    drawables.forEach((d) => {
-      // If we encounter a new mask shape while a previous mask clip is active, restore first
-      if (d.type === "shape" && d.se.maskEnabled && maskClipActive) {
-        ctx.restore();
-        maskClipActive = false;
+
+    // Build mask lookup: layer ID → mask shape element
+    const maskLookup = new Map<string, { shapeType: string; x: number; y: number; width: number; height: number }>();
+    for (const se of (p.shapeElements || [])) {
+      if (se.maskEnabled && se.maskedLayerIds) {
+        for (const lid of se.maskedLayerIds) {
+          maskLookup.set(lid, se);
+        }
       }
+    }
+
+    drawables.forEach((d) => {
+      // Get the element ID for mask lookup
+      const elementId = d.type === "char" ? d.ch.id
+        : d.type === "bubble" ? d.b.id
+        : d.type === "text" ? d.te.id
+        : d.type === "line" ? d.le.id
+        : d.type === "drawing" ? d.dl.id
+        : d.type === "shape" ? d.se.id
+        : null;
+      const maskShape = elementId ? maskLookup.get(elementId) : null;
+
+      // If this layer is linked to a mask, apply clipping
+      if (maskShape && !(d.type === "shape" && d.se.maskEnabled)) {
+        ctx.save();
+        buildShapePath(ctx, maskShape.shapeType as any, maskShape.x, maskShape.y, maskShape.width, maskShape.height);
+        ctx.clip();
+      }
+
       if (d.type === "text") {
         const te = d.te;
         ctx.save();
@@ -1133,8 +1155,7 @@ function PanelCanvas({
         const se = d.se;
 
         if (se.maskEnabled) {
-          // Mask shape: draw visual indicators first (before clipping)
-          // Dashed outline to show mask boundary
+          // Mask shape: draw dashed outline to show mask boundary
           ctx.save();
           ctx.globalAlpha = 0.5;
           ctx.strokeStyle = HANDLE_COLOR;
@@ -1171,12 +1192,6 @@ function PanelCanvas({
             });
             ctx.restore();
           }
-
-          // Now apply clip for subsequent layers
-          ctx.save();
-          buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
-          ctx.clip();
-          maskClipActive = true;
         } else {
           // Normal shape rendering
           ctx.save();
@@ -1319,16 +1334,11 @@ function PanelCanvas({
         drawBubble(ctx, renderB, b.id === selectedBubbleIdRef.current);
       }
 
-      // After rendering a non-mask drawable, restore clip so mask only affects ONE layer
-      if (maskClipActive && !(d.type === "shape" && d.se.maskEnabled)) {
+      // Restore clip if this layer was masked
+      if (maskShape && !(d.type === "shape" && d.se.maskEnabled)) {
         ctx.restore();
-        maskClipActive = false;
       }
     });
-    // Restore any remaining active mask clip (safety net)
-    if (maskClipActive) {
-      ctx.restore();
-    }
 
     if (p.topScript)
       drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
@@ -6863,6 +6873,16 @@ export default function StoryPage() {
 
         {/* Right Panel — Properties (top) + Layers (bottom) */}
         {activePanel && (() => {
+          // Build reverse lookup: layerId → maskShapeId
+          const layerToMaskId = new Map<string, string>();
+          for (const se of (activePanel.shapeElements || [])) {
+            if (se.maskEnabled && se.maskedLayerIds) {
+              for (const lid of se.maskedLayerIds) {
+                layerToMaskId.set(lid, se.id);
+              }
+            }
+          }
+
           const rightLayerItems: LayerItem[] = [
             ...activePanel.characters.map((c: CharacterPlacement) => ({
               type: "char" as const,
@@ -6870,6 +6890,7 @@ export default function StoryPage() {
               z: c.zIndex ?? 0,
               label: "캐릭터",
               thumb: c.imageUrl,
+              clipMaskId: layerToMaskId.get(c.id),
             })),
             ...activePanel.bubbles.map((b: SpeechBubble, i: number) => ({
               type: "bubble" as const,
@@ -6877,6 +6898,7 @@ export default function StoryPage() {
               z: b.zIndex ?? 10,
               label: b.text || STYLE_LABELS[b.style] || `말풍선 ${i + 1}`,
               thumb: b.style === "image" && (b as any).templateSrc ? (b as any).templateSrc : undefined,
+              clipMaskId: layerToMaskId.get(b.id),
             })),
             ...(activePanel.drawingLayers || []).map((dl) => ({
               type: "drawing" as const,
@@ -6886,6 +6908,7 @@ export default function StoryPage() {
               thumb: dl.imageData,
               drawingType: dl.type,
               visible: dl.visible,
+              clipMaskId: layerToMaskId.get(dl.id),
             })),
             ...(activePanel.textElements || []).map((te: CanvasTextElement, i: number) => ({
               type: "text" as const,
@@ -6893,6 +6916,7 @@ export default function StoryPage() {
               z: te.zIndex ?? 20,
               label: te.text || `텍스트 ${i + 1}`,
               thumb: undefined as string | undefined,
+              clipMaskId: layerToMaskId.get(te.id),
             })),
             ...(activePanel.lineElements || []).map((le: CanvasLineElement, i: number) => ({
               type: "line" as const,
@@ -6900,6 +6924,7 @@ export default function StoryPage() {
               z: le.zIndex ?? 20,
               label: le.lineType === "straight" ? "직선" : le.lineType === "curved" ? "곡선" : "꺾인선",
               thumb: undefined as string | undefined,
+              clipMaskId: layerToMaskId.get(le.id),
             })),
             ...(activePanel.shapeElements || []).map((se: CanvasShapeElement, i: number) => ({
               type: "shape" as const,
@@ -7540,6 +7565,24 @@ export default function StoryPage() {
                         characters: activePanel.characters.map(c =>
                           c.id === id ? { ...c, flipX: !c.flipX } : c
                         ),
+                      });
+                    }}
+                    onToggleMaskLink={(layerId, _layerType, maskId) => {
+                      // Toggle: if already linked to this mask, unlink; otherwise link
+                      const newShapes = (activePanel.shapeElements || []).map((se: CanvasShapeElement) => {
+                        if (se.id !== maskId) return se;
+                        const existing = se.maskedLayerIds || [];
+                        const isLinked = existing.includes(layerId);
+                        return {
+                          ...se,
+                          maskedLayerIds: isLinked
+                            ? existing.filter(id => id !== layerId)
+                            : [...existing, layerId],
+                        };
+                      });
+                      updatePanel(activePanelIndex, {
+                        ...activePanel,
+                        shapeElements: newShapes,
                       });
                     }}
                   />

@@ -98,6 +98,7 @@ export interface CanvasShapeElement {
   opacity: number;
   zIndex: number;
   maskEnabled?: boolean;
+  maskedLayerIds?: string[];
 }
 
 export function createTextElement(canvasW: number, canvasH: number): CanvasTextElement {
