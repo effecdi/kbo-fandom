@@ -36,6 +36,10 @@ import {
   Palette,
   X,
   ChevronDown,
+  Square,
+  Triangle,
+  Diamond,
+  Star,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -75,6 +79,22 @@ export interface CanvasLineElement {
   startArrow: boolean;
   endArrow: boolean;
   dashPattern: DashPattern;
+  zIndex: number;
+}
+
+export type ShapeType = "rectangle" | "circle" | "triangle" | "diamond" | "star" | "arrow";
+
+export interface CanvasShapeElement {
+  id: string;
+  shapeType: ShapeType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fillColor: string;
+  strokeColor: string;
+  strokeWidth: number;
+  opacity: number;
   zIndex: number;
 }
 
@@ -142,6 +162,26 @@ export function createLineElement(
     startArrow: false,
     endArrow: false,
     dashPattern: "solid",
+    zIndex: 20,
+  };
+}
+
+export function createShapeElement(
+  canvasW: number,
+  canvasH: number,
+  shapeType: ShapeType = "rectangle",
+): CanvasShapeElement {
+  return {
+    id: Math.random().toString(36).slice(2, 10),
+    shapeType,
+    x: canvasW / 2 - 50,
+    y: canvasH / 2 - 40,
+    width: 100,
+    height: 80,
+    fillColor: "transparent",
+    strokeColor: "#000000",
+    strokeWidth: 2,
+    opacity: 1,
     zIndex: 20,
   };
 }
@@ -960,6 +1000,169 @@ export function BubbleFloatingSettings({ bubble, onChange, onClose }: BubbleSett
           className="w-full"
         />
       </div>
+    </div>
+  );
+}
+
+// ─── Shape Context Toolbar ─────────────────────────────────────────────────
+
+const SHAPE_TYPES: { type: ShapeType; icon: typeof Square; label: string }[] = [
+  { type: "rectangle", icon: Square, label: "사각형" },
+  { type: "circle", icon: Circle, label: "원" },
+  { type: "triangle", icon: Triangle, label: "삼각형" },
+  { type: "diamond", icon: Diamond, label: "다이아몬드" },
+  { type: "star", icon: Star, label: "별" },
+  { type: "arrow", icon: ArrowRight, label: "화살표" },
+];
+
+interface ShapeToolbarProps {
+  element: CanvasShapeElement;
+  onChange: (updated: CanvasShapeElement) => void;
+  onShowSettings: () => void;
+  showSettings: boolean;
+}
+
+export function ShapeContextToolbar({ element, onChange, onShowSettings, showSettings }: ShapeToolbarProps) {
+  const [showFillColorPicker, setShowFillColorPicker] = useState(false);
+  const [showStrokeColorPicker, setShowStrokeColorPicker] = useState(false);
+  const fillColorInputRef = useRef<HTMLInputElement>(null);
+  const strokeColorInputRef = useRef<HTMLInputElement>(null);
+
+  const update = useCallback(
+    (partial: Partial<CanvasShapeElement>) => {
+      onChange({ ...element, ...partial });
+    },
+    [element, onChange],
+  );
+
+  return (
+    <div className="context-toolbar context-toolbar--line">
+      {/* Fill color */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn"
+          onClick={() => { setShowFillColorPicker((v) => !v); setShowStrokeColorPicker(false); }}
+          title="채움색"
+        >
+          <span
+            className="context-toolbar__color-dot"
+            style={{
+              backgroundColor: element.fillColor === "transparent" ? "#ffffff" : element.fillColor,
+              backgroundImage: element.fillColor === "transparent"
+                ? "linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%)"
+                : undefined,
+              backgroundSize: element.fillColor === "transparent" ? "6px 6px" : undefined,
+              backgroundPosition: element.fillColor === "transparent" ? "0 0, 3px 3px" : undefined,
+            }}
+          />
+        </button>
+        {showFillColorPicker && (
+          <div className="context-toolbar__dropdown context-toolbar__dropdown--colors">
+            <div className="context-toolbar__color-grid">
+              <button
+                className={`context-toolbar__color-swatch ${element.fillColor === "transparent" ? "context-toolbar__color-swatch--active" : ""}`}
+                style={{
+                  backgroundImage: "linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%)",
+                  backgroundSize: "6px 6px",
+                  backgroundPosition: "0 0, 3px 3px",
+                }}
+                onClick={() => {
+                  update({ fillColor: "transparent" });
+                  setShowFillColorPicker(false);
+                }}
+                title="투명"
+              />
+              {COLOR_PRESETS.map((c) => (
+                <button
+                  key={c}
+                  className={`context-toolbar__color-swatch ${element.fillColor === c ? "context-toolbar__color-swatch--active" : ""}`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    update({ fillColor: c });
+                    setShowFillColorPicker(false);
+                  }}
+                />
+              ))}
+            </div>
+            <div className="context-toolbar__custom-color-row">
+              <input
+                ref={fillColorInputRef}
+                type="color"
+                value={element.fillColor !== "transparent" ? element.fillColor : "#ffffff"}
+                onChange={(e) => update({ fillColor: e.target.value })}
+                className="context-toolbar__color-input"
+              />
+              <span className="context-toolbar__color-hex">{element.fillColor}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Stroke color */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn"
+          onClick={() => { setShowStrokeColorPicker((v) => !v); setShowFillColorPicker(false); }}
+          title="선색"
+        >
+          <span
+            className="context-toolbar__color-dot context-toolbar__color-dot--stroke"
+            style={{ backgroundColor: element.strokeColor }}
+          />
+        </button>
+        {showStrokeColorPicker && (
+          <div className="context-toolbar__dropdown context-toolbar__dropdown--colors">
+            <div className="context-toolbar__color-grid">
+              {COLOR_PRESETS.map((c) => (
+                <button
+                  key={c}
+                  className={`context-toolbar__color-swatch ${element.strokeColor === c ? "context-toolbar__color-swatch--active" : ""}`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    update({ strokeColor: c });
+                    setShowStrokeColorPicker(false);
+                  }}
+                />
+              ))}
+            </div>
+            <div className="context-toolbar__custom-color-row">
+              <input
+                ref={strokeColorInputRef}
+                type="color"
+                value={element.strokeColor}
+                onChange={(e) => update({ strokeColor: e.target.value })}
+                className="context-toolbar__color-input"
+              />
+              <span className="context-toolbar__color-hex">{element.strokeColor}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Shape type buttons */}
+      {SHAPE_TYPES.map((st) => (
+        <button
+          key={st.type}
+          className={`context-toolbar__btn ${element.shapeType === st.type ? "context-toolbar__btn--active" : ""}`}
+          onClick={() => update({ shapeType: st.type })}
+          title={st.label}
+        >
+          <st.icon className="h-4 w-4" />
+        </button>
+      ))}
+
+      <div className="context-toolbar__divider" />
+
+      {/* Settings menu (hamburger) */}
+      <button
+        className={`context-toolbar__btn ${showSettings ? "context-toolbar__btn--active" : ""}`}
+        onClick={onShowSettings}
+        title="설정"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
     </div>
   );
 }

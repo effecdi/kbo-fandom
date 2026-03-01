@@ -78,6 +78,11 @@ import {
   GitCommitHorizontal,
   Eye,
   EyeOff,
+  Square,
+  Circle,
+  Triangle,
+  Diamond,
+  ArrowRight as ArrowRightIcon,
 } from "lucide-react";
 import DrawingCanvas, { type DrawingToolState, type DrawingCanvasHandle } from "@/components/drawing-canvas";
 import CanvasFloatingToolbar from "@/components/canvas-floating-toolbar";
@@ -105,13 +110,17 @@ import {
   BubbleContextToolbar,
   BubbleFloatingSettings,
   FloatingSettingsModal,
+  ShapeContextToolbar,
   CanvasBgToolbar,
   CANVAS_BG_COLORS,
   createTextElement,
   createLineElement,
+  createShapeElement,
   type CanvasTextElement,
   type CanvasLineElement,
+  type CanvasShapeElement,
   type LineType,
+  type ShapeType,
 } from "@/components/canvas-context-toolbar";
 import "@/components/canvas-context-toolbar.scss";
 
@@ -310,6 +319,7 @@ interface PanelData {
   characters: CharacterPlacement[];
   textElements: CanvasTextElement[];
   lineElements: CanvasLineElement[];
+  shapeElements: CanvasShapeElement[];
   backgroundColor?: string;
   backgroundImageUrl?: string;
   backgroundImageEl?: HTMLImageElement | null;
@@ -370,6 +380,7 @@ function createPanel(): PanelData {
     characters: [],
     textElements: [],
     lineElements: [],
+    shapeElements: [],
     backgroundColor: "#ffffff",
     backgroundImageUrl: undefined,
     backgroundImageEl: null,
@@ -752,6 +763,7 @@ function PanelCanvas({
   onSelectBubble,
   selectedCharId,
   onSelectChar,
+  selectedShapeId,
   canvasRef: externalCanvasRef,
   zoom,
   fontsReady,
@@ -767,6 +779,7 @@ function PanelCanvas({
   onSelectBubble: (id: string | null) => void;
   selectedCharId: string | null;
   onSelectChar: (id: string | null) => void;
+  selectedShapeId?: string | null;
   canvasRef?: (el: HTMLCanvasElement | null) => void;
   zoom?: number;
   fontsReady?: boolean;
@@ -868,6 +881,7 @@ function PanelCanvas({
       | { type: "bubble"; z: number; b: SpeechBubble }
       | { type: "text"; z: number; te: CanvasTextElement }
       | { type: "line"; z: number; le: CanvasLineElement }
+      | { type: "shape"; z: number; se: CanvasShapeElement }
       | { type: "drawing"; z: number; dl: DrawingLayer }
     > = [
         ...p.characters.map((ch) => ({
@@ -889,6 +903,11 @@ function PanelCanvas({
           type: "line" as const,
           z: le.zIndex ?? 20,
           le,
+        })),
+        ...(p.shapeElements || []).map((se) => ({
+          type: "shape" as const,
+          z: se.zIndex ?? 20,
+          se,
         })),
         ...(!hideDrawingLayers ? (p.drawingLayers || []).map((dl) => ({
           type: "drawing" as const,
@@ -1034,6 +1053,116 @@ function PanelCanvas({
 
         ctx.setLineDash([]);
         ctx.restore();
+      } else if (d.type === "shape") {
+        const se = d.se;
+        ctx.save();
+        ctx.globalAlpha = se.opacity;
+        ctx.beginPath();
+
+        switch (se.shapeType) {
+          case "rectangle":
+            ctx.rect(se.x, se.y, se.width, se.height);
+            break;
+          case "circle":
+            ctx.ellipse(
+              se.x + se.width / 2, se.y + se.height / 2,
+              se.width / 2, se.height / 2,
+              0, 0, Math.PI * 2,
+            );
+            break;
+          case "triangle": {
+            const tx = se.x, ty = se.y, tw = se.width, th = se.height;
+            ctx.moveTo(tx + tw / 2, ty);
+            ctx.lineTo(tx, ty + th);
+            ctx.lineTo(tx + tw, ty + th);
+            ctx.closePath();
+            break;
+          }
+          case "diamond": {
+            const dx = se.x, dy = se.y, dw = se.width, dh = se.height;
+            ctx.moveTo(dx + dw / 2, dy);
+            ctx.lineTo(dx + dw, dy + dh / 2);
+            ctx.lineTo(dx + dw / 2, dy + dh);
+            ctx.lineTo(dx, dy + dh / 2);
+            ctx.closePath();
+            break;
+          }
+          case "star": {
+            const cx = se.x + se.width / 2;
+            const cy = se.y + se.height / 2;
+            const outerRx = se.width / 2;
+            const outerRy = se.height / 2;
+            const innerRx = outerRx * 0.4;
+            const innerRy = outerRy * 0.4;
+            const spikes = 5;
+            const step = Math.PI / spikes;
+            const rot = -Math.PI / 2;
+            for (let si = 0; si < spikes * 2; si++) {
+              const r = si % 2 === 0 ? 1 : 0.4;
+              const rx = si % 2 === 0 ? outerRx : innerRx;
+              const ry = si % 2 === 0 ? outerRy : innerRy;
+              const angle = rot + si * step;
+              const px = cx + Math.cos(angle) * rx;
+              const py = cy + Math.sin(angle) * ry;
+              if (si === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            break;
+          }
+          case "arrow": {
+            const ax = se.x, ay = se.y, aw = se.width, ah = se.height;
+            const shaftH = ah * 0.4;
+            const headStart = aw * 0.6;
+            ctx.moveTo(ax, ay + ah / 2 - shaftH / 2);
+            ctx.lineTo(ax + headStart, ay + ah / 2 - shaftH / 2);
+            ctx.lineTo(ax + headStart, ay);
+            ctx.lineTo(ax + aw, ay + ah / 2);
+            ctx.lineTo(ax + headStart, ay + ah);
+            ctx.lineTo(ax + headStart, ay + ah / 2 + shaftH / 2);
+            ctx.lineTo(ax, ay + ah / 2 + shaftH / 2);
+            ctx.closePath();
+            break;
+          }
+        }
+
+        if (se.fillColor !== "transparent") {
+          ctx.fillStyle = se.fillColor;
+          ctx.fill();
+        }
+        if (se.strokeWidth > 0) {
+          ctx.strokeStyle = se.strokeColor;
+          ctx.lineWidth = se.strokeWidth;
+          ctx.stroke();
+        }
+
+        // Selection indicator
+        if (se.id === selectedShapeId) {
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = HANDLE_COLOR;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]);
+          ctx.strokeRect(se.x - 2, se.y - 2, se.width + 4, se.height + 4);
+          ctx.setLineDash([]);
+
+          // Resize handles at 4 corners
+          const handleSize = 7;
+          const corners = [
+            { x: se.x - handleSize / 2, y: se.y - handleSize / 2 },
+            { x: se.x + se.width - handleSize / 2, y: se.y - handleSize / 2 },
+            { x: se.x - handleSize / 2, y: se.y + se.height - handleSize / 2 },
+            { x: se.x + se.width - handleSize / 2, y: se.y + se.height - handleSize / 2 },
+          ];
+          corners.forEach((c) => {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(c.x, c.y, handleSize, handleSize);
+            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(c.x, c.y, handleSize, handleSize);
+          });
+        }
+
+        ctx.restore();
       } else if (d.type === "drawing") {
         const dl = d.dl;
         if (dl.visible && dl.imageEl) {
@@ -1120,7 +1249,7 @@ function PanelCanvas({
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, redraw, fontsReady, hideDrawingLayers]);
+  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, redraw, fontsReady, hideDrawingLayers]);
 
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -2941,6 +3070,7 @@ export default function StoryPage() {
       backgroundImageUrl: p.backgroundImageUrl,
       backgroundImageEl: p.backgroundImageEl,
       drawingLayers: (p.drawingLayers || []).map((dl) => ({ ...dl })),
+      shapeElements: (p.shapeElements || []).map((s) => ({ ...s })),
     }));
   }, []);
 
@@ -3935,6 +4065,7 @@ export default function StoryPage() {
         drawingLayers: [],
         textElements: [],
         lineElements: [],
+        shapeElements: [],
       };
       setPanels([fresh]);
       setActivePanelIndex(0);
@@ -3967,6 +4098,7 @@ export default function StoryPage() {
       drawingLayers: (source.drawingLayers || []).map((dl) => ({ ...dl, id: generateId() })),
       textElements: (source.textElements || []).map((t) => ({ ...t, id: generateId() })),
       lineElements: (source.lineElements || []).map((l) => ({ ...l, id: generateId(), points: l.points.map(p => ({ ...p })) })),
+      shapeElements: (source.shapeElements || []).map((s) => ({ ...s, id: generateId() })),
     };
     const newPanels = [...panels];
     newPanels.splice(idx + 1, 0, cloned);
@@ -4013,6 +4145,7 @@ export default function StoryPage() {
   const isDrawingMode = activeLeftTab === "tools" && selectedToolItem === "drawing";
   const isTextMode = activeLeftTab === "tools" && selectedToolItem === "text";
   const isLineMode = activeLeftTab === "tools" && selectedToolItem === "line";
+  const isShapeMode = activeLeftTab === "tools" && selectedToolItem === "shapes";
 
   // ─── Context toolbar state ────────────────────────────────────────────
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
@@ -4022,6 +4155,9 @@ export default function StoryPage() {
   const [showBubbleSettings, setShowBubbleSettings] = useState(false);
   const [drawingLayerSelected, setDrawingLayerSelected] = useState(false);
   const [selectedLineSubType, setSelectedLineSubType] = useState<LineType>("straight");
+  const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
+  const [showShapeSettings, setShowShapeSettings] = useState(false);
+  const [selectedShapeType, setSelectedShapeType] = useState<ShapeType>("rectangle");
 
   // Helper: get selected text element
   const selectedTextElement = selectedTextId && panels[activePanelIndex]
@@ -4031,6 +4167,11 @@ export default function StoryPage() {
   // Helper: get selected line element
   const selectedLineElement = selectedLineId && panels[activePanelIndex]
     ? panels[activePanelIndex].lineElements?.find((l) => l.id === selectedLineId) ?? null
+    : null;
+
+  // Helper: get selected shape element
+  const selectedShapeElement = selectedShapeId && panels[activePanelIndex]
+    ? (panels[activePanelIndex].shapeElements || []).find((s) => s.id === selectedShapeId) ?? null
     : null;
 
   // ─── Text/Line creation handlers ──────────────────────────────────────
@@ -4072,6 +4213,27 @@ export default function StoryPage() {
     if (!p) return;
     const newLines = (p.lineElements || []).map((l) => l.id === updated.id ? updated : l);
     updatePanel(activePanelIndex, { ...p, lineElements: newLines });
+  }, [panels, activePanelIndex, updatePanel]);
+
+  const handleAddShape = useCallback((shapeType: ShapeType) => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const newShape = createShapeElement(CANVAS_W, CANVAS_H, shapeType);
+    const updated = { ...p, shapeElements: [...(p.shapeElements || []), newShape] };
+    updatePanel(activePanelIndex, updated);
+    setSelectedShapeId(newShape.id);
+    setSelectedTextId(null);
+    setSelectedLineId(null);
+    setSelectedBubbleId(null);
+    setSelectedCharId(null);
+    setSelectedDrawingLayerId(null);
+  }, [panels, activePanelIndex, updatePanel]);
+
+  const handleUpdateShapeElement = useCallback((updated: CanvasShapeElement) => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const newShapes = (p.shapeElements || []).map((s) => s.id === updated.id ? updated : s);
+    updatePanel(activePanelIndex, { ...p, shapeElements: newShapes });
   }, [panels, activePanelIndex, updatePanel]);
 
   // Clear drawing layer selection on panel switch
@@ -4135,21 +4297,25 @@ export default function StoryPage() {
   // Text element inline editing state
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
 
-  // Drag state for text/line element movement
+  // Drag state for text/line/shape element movement
   const dragElementRef = useRef<{
-    type: "text" | "line" | "drawing";
+    type: "text" | "line" | "drawing" | "shape";
     id: string;
     startMouseX: number;
     startMouseY: number;
     startPositions: { x: number; y: number }[];
+    resizeMode?: "tl" | "tr" | "bl" | "br";
+    startW?: number;
+    startH?: number;
   } | null>(null);
 
   const handleElementDragStart = useCallback((
-    type: "text" | "line" | "drawing",
+    type: "text" | "line" | "drawing" | "shape",
     id: string,
     mouseX: number,
     mouseY: number,
     panel: PanelData,
+    resizeMode?: "tl" | "tr" | "bl" | "br",
   ) => {
     if (type === "text") {
       const te = (panel.textElements || []).find(t => t.id === id);
@@ -4182,6 +4348,20 @@ export default function StoryPage() {
           startMouseX: mouseX,
           startMouseY: mouseY,
           startPositions: [{ x: dl.x ?? 0, y: dl.y ?? 0 }],
+        };
+      }
+    } else if (type === "shape") {
+      const se = (panel.shapeElements || []).find(s => s.id === id);
+      if (se) {
+        dragElementRef.current = {
+          type: "shape",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: [{ x: se.x, y: se.y }],
+          resizeMode,
+          startW: se.width,
+          startH: se.height,
         };
       }
     }
@@ -4219,6 +4399,42 @@ export default function StoryPage() {
         return { ...dl, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
       updatePanel(panelIdx, { ...p, drawingLayers: newLayers });
+    } else if (drag.type === "shape") {
+      const newShapes = (p.shapeElements || []).map(se => {
+        if (se.id !== drag.id) return se;
+        if (drag.resizeMode) {
+          const startX = drag.startPositions[0].x;
+          const startY = drag.startPositions[0].y;
+          const startW = drag.startW ?? se.width;
+          const startH = drag.startH ?? se.height;
+          let newX = startX, newY = startY, newW = startW, newH = startH;
+          switch (drag.resizeMode) {
+            case "br":
+              newW = Math.max(20, startW + dx);
+              newH = Math.max(20, startH + dy);
+              break;
+            case "bl":
+              newX = startX + dx;
+              newW = Math.max(20, startW - dx);
+              newH = Math.max(20, startH + dy);
+              break;
+            case "tr":
+              newY = startY + dy;
+              newW = Math.max(20, startW + dx);
+              newH = Math.max(20, startH - dy);
+              break;
+            case "tl":
+              newX = startX + dx;
+              newY = startY + dy;
+              newW = Math.max(20, startW - dx);
+              newH = Math.max(20, startH - dy);
+              break;
+          }
+          return { ...se, x: newX, y: newY, width: newW, height: newH };
+        }
+        return { ...se, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
+      });
+      updatePanel(panelIdx, { ...p, shapeElements: newShapes });
     }
   }, [panels, updatePanel]);
 
@@ -4234,6 +4450,13 @@ export default function StoryPage() {
       if (e.key === "Delete" || e.key === "Backspace") {
         const p = panels[activePanelIndex];
         if (!p) return;
+        if (selectedShapeId) {
+          e.preventDefault();
+          const newShapes = (p.shapeElements || []).filter(s => s.id !== selectedShapeId);
+          updatePanel(activePanelIndex, { ...p, shapeElements: newShapes });
+          setSelectedShapeId(null);
+          return;
+        }
         if (selectedTextId) {
           e.preventDefault();
           const newTexts = (p.textElements || []).filter(t => t.id !== selectedTextId);
@@ -4259,7 +4482,7 @@ export default function StoryPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedDrawingLayerId, updatePanel]);
+  }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedShapeId, selectedDrawingLayerId, updatePanel]);
 
   const toggleLeftTab = (tab: LeftTab) => {
     if (!isAuthenticated) {
@@ -4396,6 +4619,7 @@ export default function StoryPage() {
         })),
         textElements: p.textElements || [],
         lineElements: p.lineElements || [],
+        shapeElements: p.shapeElements || [],
       })),
       topic,
     });
@@ -4497,6 +4721,7 @@ export default function StoryPage() {
             })),
             textElements: p.textElements || [],
             lineElements: p.lineElements || [],
+            shapeElements: p.shapeElements || [],
           }));
           rehydrateImages(restoredPanels);
           setPanelsRaw(restoredPanels);
@@ -4647,6 +4872,7 @@ export default function StoryPage() {
     { id: "drawing", icon: Pen, label: "드로잉", color: "#ef4444" },
     { id: "line", icon: Minus, label: "선", color: "#3b82f6" },
     { id: "text", icon: Type, label: "텍스트", color: "#8b5cf6" },
+    { id: "shapes", icon: Square, label: "도형", color: "#10b981" },
   ];
 
   // ─── Element items for compact elements panel ─────────────────────────
@@ -5476,6 +5702,54 @@ export default function StoryPage() {
                           </button>
                         </div>
                       )}
+
+                      {/* Shape sub-tools strip */}
+                      {selectedToolItem === "shapes" && (
+                        <div className="tools-compact-panel__strip tools-compact-panel__strip--sub">
+                          <button
+                            onClick={() => { setSelectedShapeType("rectangle"); handleAddShape("rectangle"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="사각형"
+                          >
+                            <Square className="h-5 w-5" style={selectedShapeType !== "rectangle" ? { color: "#10b981" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("circle"); handleAddShape("circle"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "circle" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="원"
+                          >
+                            <Circle className="h-5 w-5" style={selectedShapeType !== "circle" ? { color: "#3b82f6" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("triangle"); handleAddShape("triangle"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "triangle" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="삼각형"
+                          >
+                            <Triangle className="h-5 w-5" style={selectedShapeType !== "triangle" ? { color: "#8b5cf6" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("diamond"); handleAddShape("diamond"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "diamond" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="다이아몬드"
+                          >
+                            <Diamond className="h-5 w-5" style={selectedShapeType !== "diamond" ? { color: "#f97316" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("star"); handleAddShape("star"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "star" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="별"
+                          >
+                            <Star className="h-5 w-5" style={selectedShapeType !== "star" ? { color: "#eab308" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("arrow"); handleAddShape("arrow"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "arrow" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="화살표"
+                          >
+                            <ArrowRightIcon className="h-5 w-5" style={selectedShapeType !== "arrow" ? { color: "#ef4444" } : undefined} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -5583,6 +5857,7 @@ export default function StoryPage() {
                 if (e.target === e.currentTarget) {
                   setSelectedBubbleId(null);
                   setSelectedCharId(null);
+                  setSelectedShapeId(null);
                   setSelectedDrawingLayerId(null);
                 }
               }}
@@ -5651,6 +5926,29 @@ export default function StoryPage() {
                             )}
                           </>
                         )}
+                        {activePanelIndex === i && selectedShapeElement && (
+                          <>
+                            <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                              <ShapeContextToolbar
+                                element={selectedShapeElement}
+                                onChange={handleUpdateShapeElement}
+                                showSettings={showShapeSettings}
+                                onShowSettings={() => setShowShapeSettings(s => !s)}
+                              />
+                            </div>
+                            {showShapeSettings && (
+                              <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                                <FloatingSettingsModal
+                                  strokeWidth={selectedShapeElement.strokeWidth}
+                                  opacity={selectedShapeElement.opacity}
+                                  onStrokeWidthChange={(v) => handleUpdateShapeElement({ ...selectedShapeElement, strokeWidth: v })}
+                                  onOpacityChange={(v) => handleUpdateShapeElement({ ...selectedShapeElement, opacity: v })}
+                                  onClose={() => setShowShapeSettings(false)}
+                                />
+                              </div>
+                            )}
+                          </>
+                        )}
                         {activePanelIndex === i && selectedToolItem === "select" && selectedDrawingLayerId && (
                           <>
                             <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
@@ -5675,7 +5973,7 @@ export default function StoryPage() {
                           </>
                         )}
                         {/* Bubble context toolbar */}
-                        {activePanelIndex === i && selectedBubbleId && !selectedTextElement && !selectedLineElement && !selectedDrawingLayerId && (() => {
+                        {activePanelIndex === i && selectedBubbleId && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedDrawingLayerId && (() => {
                           const selBubble = panel.bubbles.find(b => b.id === selectedBubbleId);
                           if (!selBubble) return null;
                           return (
@@ -5713,7 +6011,7 @@ export default function StoryPage() {
                         })()}
 
                         {/* Canvas background toolbar — shown when nothing is selected */}
-                        {activePanelIndex === i && !selectedTextElement && !selectedLineElement && !selectedBubbleId && !selectedCharId && !selectedDrawingLayerId && (
+                        {activePanelIndex === i && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedBubbleId && !selectedCharId && !selectedDrawingLayerId && (
                           <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
                             <CanvasBgToolbar
                               backgroundColor={panel.backgroundColor || "#ffffff"}
@@ -5727,11 +6025,13 @@ export default function StoryPage() {
                           panel={panel}
                           onUpdate={(updated) => updatePanel(i, updated)}
                           selectedBubbleId={activePanelIndex === i ? selectedBubbleId : null}
+                          selectedShapeId={activePanelIndex === i ? selectedShapeId : null}
                           onSelectBubble={(id) => {
                             setSelectedBubbleId(id);
                             setSelectedCharId(null);
                             setSelectedTextId(null);
                             setSelectedLineId(null);
+                            setSelectedShapeId(null);
                             setSelectedDrawingLayerId(null);
                             setActivePanelIndex(i);
                             if (!id) setShowBubbleSettings(false);
@@ -5742,6 +6042,7 @@ export default function StoryPage() {
                             setSelectedBubbleId(null);
                             setSelectedTextId(null);
                             setSelectedLineId(null);
+                            setSelectedShapeId(null);
                             setSelectedDrawingLayerId(null);
                             setActivePanelIndex(i);
                             setShowBubbleSettings(false);
@@ -5810,10 +6111,11 @@ export default function StoryPage() {
                         )}
 
                         {/* Select-mode: click/drag/dblclick to interact with drawing/text/line layers */}
-                        {(selectedToolItem === "select" || selectedToolItem === "text" || selectedToolItem === "line") && activePanelIndex === i && (
+                        {(selectedToolItem === "select" || selectedToolItem === "text" || selectedToolItem === "line" || selectedToolItem === "shapes") && activePanelIndex === i && (
                           (panel.drawingLayers || []).length > 0 ||
                           (panel.textElements || []).length > 0 ||
-                          (panel.lineElements || []).length > 0
+                          (panel.lineElements || []).length > 0 ||
+                          (panel.shapeElements || []).length > 0
                         ) && (
                           <div
                             style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: dragElementRef.current ? "grabbing" : "default" }}
@@ -5821,6 +6123,41 @@ export default function StoryPage() {
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+
+                              // Hit test shape elements (resize handles first, then bounding box)
+                              const shapeEls = [...(panel.shapeElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
+                              const HANDLE_HIT = 10;
+                              // Check resize handles of selected shape first
+                              if (selectedShapeId) {
+                                const selShape = shapeEls.find(s => s.id === selectedShapeId);
+                                if (selShape) {
+                                  const corners: { mode: "tl" | "tr" | "bl" | "br"; cx: number; cy: number }[] = [
+                                    { mode: "tl", cx: selShape.x, cy: selShape.y },
+                                    { mode: "tr", cx: selShape.x + selShape.width, cy: selShape.y },
+                                    { mode: "bl", cx: selShape.x, cy: selShape.y + selShape.height },
+                                    { mode: "br", cx: selShape.x + selShape.width, cy: selShape.y + selShape.height },
+                                  ];
+                                  for (const corner of corners) {
+                                    if (Math.abs(canvasX - corner.cx) <= HANDLE_HIT && Math.abs(canvasY - corner.cy) <= HANDLE_HIT) {
+                                      handleElementDragStart("shape", selShape.id, canvasX, canvasY, panel, corner.mode);
+                                      return;
+                                    }
+                                  }
+                                }
+                              }
+                              // Check shape bounding boxes
+                              for (const se of shapeEls) {
+                                if (canvasX >= se.x && canvasX <= se.x + se.width && canvasY >= se.y && canvasY <= se.y + se.height) {
+                                  setSelectedShapeId(se.id);
+                                  setSelectedTextId(null);
+                                  setSelectedLineId(null);
+                                  setSelectedDrawingLayerId(null);
+                                  setSelectedCharId(null);
+                                  setSelectedBubbleId(null);
+                                  handleElementDragStart("shape", se.id, canvasX, canvasY, panel);
+                                  return;
+                                }
+                              }
 
                               // Hit test text elements
                               const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
@@ -5878,6 +6215,7 @@ export default function StoryPage() {
                                 setSelectedDrawingLayerId(null);
                                 setSelectedTextId(null);
                                 setSelectedLineId(null);
+                                setSelectedShapeId(null);
                                 setSelectedBubbleId(null);
                                 setSelectedCharId(null);
                                 setEditingTextId(null);
