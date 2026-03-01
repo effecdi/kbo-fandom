@@ -1247,6 +1247,36 @@ function PanelCanvas({
           if (ch.flipX) ctx.scale(-1, 1);
           ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
           ctx.restore();
+
+          // Selection indicator for selected character
+          if (ch.id === selectedCharIdRef.current) {
+            const cx = ch.x - w / 2;
+            const cy = ch.y - h / 2;
+            ctx.save();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.strokeRect(cx - 3, cy - 3, w + 6, h + 6);
+            ctx.setLineDash([]);
+
+            const handleSize = 8;
+            const corners = [
+              { x: cx - handleSize / 2, y: cy - handleSize / 2 },
+              { x: cx + w - handleSize / 2, y: cy - handleSize / 2 },
+              { x: cx - handleSize / 2, y: cy + h - handleSize / 2 },
+              { x: cx + w - handleSize / 2, y: cy + h - handleSize / 2 },
+            ];
+            corners.forEach((c) => {
+              ctx.beginPath();
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(c.x, c.y, handleSize, handleSize);
+              ctx.strokeStyle = HANDLE_COLOR;
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(c.x, c.y, handleSize, handleSize);
+            });
+            ctx.restore();
+          }
         } else if (ch.imageUrl) {
           // Show loading placeholder while imageEl is loading
           const ph = 80;
@@ -4363,9 +4393,9 @@ export default function StoryPage() {
   // Text element inline editing state
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
 
-  // Drag state for text/line/shape element movement
+  // Drag state for text/line/shape/char element movement
   const dragElementRef = useRef<{
-    type: "text" | "line" | "drawing" | "shape";
+    type: "text" | "line" | "drawing" | "shape" | "char";
     id: string;
     startMouseX: number;
     startMouseY: number;
@@ -4373,17 +4403,35 @@ export default function StoryPage() {
     resizeMode?: "tl" | "tr" | "bl" | "br";
     startW?: number;
     startH?: number;
+    startScale?: number;
   } | null>(null);
 
   const handleElementDragStart = useCallback((
-    type: "text" | "line" | "drawing" | "shape",
+    type: "text" | "line" | "drawing" | "shape" | "char",
     id: string,
     mouseX: number,
     mouseY: number,
     panel: PanelData,
     resizeMode?: "tl" | "tr" | "bl" | "br",
   ) => {
-    if (type === "text") {
+    if (type === "char") {
+      const ch = panel.characters.find(c => c.id === id);
+      if (ch) {
+        const cw = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
+        const chH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
+        dragElementRef.current = {
+          type: "char",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: [{ x: ch.x, y: ch.y }],
+          resizeMode,
+          startScale: ch.scale,
+          startW: cw,
+          startH: chH,
+        };
+      }
+    } else if (type === "text") {
       const te = (panel.textElements || []).find(t => t.id === id);
       if (te) {
         dragElementRef.current = {
@@ -4444,7 +4492,28 @@ export default function StoryPage() {
     const dx = mouseX - drag.startMouseX;
     const dy = mouseY - drag.startMouseY;
 
-    if (drag.type === "text") {
+    if (drag.type === "char") {
+      const newChars = p.characters.map(ch => {
+        if (ch.id !== drag.id) return ch;
+        if (drag.resizeMode) {
+          const origW = drag.startW ?? 80;
+          const origH = drag.startH ?? 80;
+          let newW = origW;
+          let newH = origH;
+          switch (drag.resizeMode) {
+            case "br": newW = origW + dx; newH = origH + dy; break;
+            case "bl": newW = origW - dx; newH = origH + dy; break;
+            case "tr": newW = origW + dx; newH = origH - dy; break;
+            case "tl": newW = origW - dx; newH = origH - dy; break;
+          }
+          const avgRatio = (newW / origW + newH / origH) / 2;
+          const newScale = Math.max(0.05, Math.min(5, (drag.startScale ?? ch.scale) * avgRatio));
+          return { ...ch, scale: newScale };
+        }
+        return { ...ch, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
+      });
+      updatePanel(panelIdx, { ...p, characters: newChars });
+    } else if (drag.type === "text") {
       const newTexts = (p.textElements || []).map(te => {
         if (te.id !== drag.id) return te;
         return { ...te, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
@@ -6335,7 +6404,48 @@ export default function StoryPage() {
                                 return;
                               }
 
-                              // Hit test bubbles and characters (so they're selectable through the overlay)
+                              // Helper: register window-level listeners for character drag
+                              const startCharWindowDrag = (charId: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br") => {
+                                handleElementDragStart("char", charId, cx, cy, panel, resizeMode);
+                                const overlayRect = e.currentTarget.getBoundingClientRect();
+                                const onMove = (me: MouseEvent) => {
+                                  const mx = ((me.clientX - overlayRect.left) / overlayRect.width) * 450;
+                                  const my = ((me.clientY - overlayRect.top) / overlayRect.height) * 600;
+                                  handleElementDragMove(mx, my, i);
+                                };
+                                const onUp = () => {
+                                  handleElementDragEnd();
+                                  window.removeEventListener("mousemove", onMove);
+                                  window.removeEventListener("mouseup", onUp);
+                                };
+                                window.addEventListener("mousemove", onMove);
+                                window.addEventListener("mouseup", onUp);
+                              };
+
+                              // Check resize handles of selected character first
+                              if (selectedCharId) {
+                                const selCh = panel.characters.find(c => c.id === selectedCharId);
+                                if (selCh && selCh.imageEl) {
+                                  const cw = selCh.imageEl.naturalWidth * selCh.scale;
+                                  const chH = selCh.imageEl.naturalHeight * selCh.scale;
+                                  const cx = selCh.x - cw / 2;
+                                  const cy = selCh.y - chH / 2;
+                                  const charCorners: { mode: "tl" | "tr" | "bl" | "br"; hx: number; hy: number }[] = [
+                                    { mode: "tl", hx: cx, hy: cy },
+                                    { mode: "tr", hx: cx + cw, hy: cy },
+                                    { mode: "bl", hx: cx, hy: chH + cy },
+                                    { mode: "br", hx: cx + cw, hy: chH + cy },
+                                  ];
+                                  for (const corner of charCorners) {
+                                    if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
+                                      startCharWindowDrag(selCh.id, canvasX, canvasY, corner.mode);
+                                      return;
+                                    }
+                                  }
+                                }
+                              }
+
+                              // Hit test bubbles and characters (so they're selectable and draggable through the overlay)
                               const charBubbles: Array<
                                 | { type: "bubble"; z: number; b: typeof panel.bubbles[0] }
                                 | { type: "char"; z: number; ch: (typeof panel.characters)[0] }
@@ -6368,6 +6478,8 @@ export default function StoryPage() {
                                     setSelectedLineId(null);
                                     setSelectedShapeId(null);
                                     setSelectedDrawingLayerId(null);
+                                    // Start character move drag
+                                    startCharWindowDrag(ch.id, canvasX, canvasY);
                                     return;
                                   }
                                 }
@@ -6386,21 +6498,21 @@ export default function StoryPage() {
                             }}
                             onMouseMove={(e) => {
                               if (!dragElementRef.current) return;
-                              // Shape drags are handled by window-level listeners
-                              if (dragElementRef.current.type === "shape") return;
+                              // Shape and char drags are handled by window-level listeners
+                              if (dragElementRef.current.type === "shape" || dragElementRef.current.type === "char") return;
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
                               handleElementDragMove(canvasX, canvasY, i);
                             }}
                             onMouseUp={() => {
-                              // Shape drags are handled by window-level listeners
-                              if (dragElementRef.current?.type === "shape") return;
+                              // Shape and char drags are handled by window-level listeners
+                              if (dragElementRef.current?.type === "shape" || dragElementRef.current?.type === "char") return;
                               handleElementDragEnd();
                             }}
                             onMouseLeave={() => {
-                              // Shape drags are handled by window-level listeners
-                              if (dragElementRef.current?.type === "shape") return;
+                              // Shape and char drags are handled by window-level listeners
+                              if (dragElementRef.current?.type === "shape" || dragElementRef.current?.type === "char") return;
                               handleElementDragEnd();
                             }}
                             onDoubleClick={(e) => {

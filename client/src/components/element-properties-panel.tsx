@@ -100,17 +100,22 @@ export function ElementPropertiesPanel({
 
   // ─── Character selected ────────────────────────────────
   if (selectedChar && !selectedBubble) {
+    const charScale = selectedChar.scale ?? 1;
+    const naturalW = selectedChar.imageEl?.naturalWidth ?? selectedChar.imgElement?.naturalWidth ?? 200;
+    const naturalH = selectedChar.imageEl?.naturalHeight ?? selectedChar.imgElement?.naturalHeight ?? 200;
+    const currentW = Math.round(naturalW * charScale);
+    const currentH = Math.round(naturalH * charScale);
+    const scalePercent = Math.round(charScale * 100);
+
     return (
       <div className="p-3 space-y-3 overflow-y-auto h-full">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">캐릭터</p>
 
-        {/* Transform */}
+        {/* Position */}
         <div className="grid grid-cols-2 gap-1.5">
           {[
             { label: "X", value: Math.round(selectedChar.x), key: "x" },
             { label: "Y", value: Math.round(selectedChar.y), key: "y" },
-            { label: "W", value: Math.round(selectedChar.width ?? 200), key: "width" },
-            { label: "H", value: Math.round(selectedChar.height ?? 200), key: "height" },
           ].map(({ label, value, key }) => (
             <div key={key} className="flex items-center gap-1.5">
               <span className="text-[11px] text-muted-foreground w-4 shrink-0">{label}</span>
@@ -121,6 +126,66 @@ export function ElementPropertiesPanel({
                 className="h-7 text-[11px] bg-card border-border"
               />
             </div>
+          ))}
+        </div>
+
+        {/* Size via scale */}
+        <div className="grid grid-cols-2 gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground w-4 shrink-0">W</span>
+            <Input
+              type="number"
+              value={currentW}
+              onChange={(e) => {
+                const newW = Number(e.target.value);
+                if (newW > 0 && naturalW > 0) {
+                  onUpdateChar?.(selectedChar.id, { scale: newW / naturalW });
+                }
+              }}
+              className="h-7 text-[11px] bg-card border-border"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground w-4 shrink-0">H</span>
+            <Input
+              type="number"
+              value={currentH}
+              onChange={(e) => {
+                const newH = Number(e.target.value);
+                if (newH > 0 && naturalH > 0) {
+                  onUpdateChar?.(selectedChar.id, { scale: newH / naturalH });
+                }
+              }}
+              className="h-7 text-[11px] bg-card border-border"
+            />
+          </div>
+        </div>
+
+        {/* Scale slider */}
+        <div>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <span className="text-[11px] text-muted-foreground">크기</span>
+            <span className="text-[11px] text-muted-foreground tabular-nums">{scalePercent}%</span>
+          </div>
+          <Slider
+            value={[charScale * 100]}
+            onValueChange={([v]) => onUpdateChar?.(selectedChar.id, { scale: v / 100 })}
+            min={5} max={500} step={5}
+          />
+        </div>
+
+        {/* Fixed-size buttons */}
+        <div className="flex gap-1">
+          {[50, 75, 100, 150, 200].map(pct => (
+            <Button
+              key={pct}
+              variant={scalePercent === pct ? "default" : "outline"}
+              size="sm"
+              className="flex-1 h-7 text-[11px] px-0"
+              onClick={() => onUpdateChar?.(selectedChar.id, { scale: pct / 100 })}
+            >
+              {pct}%
+            </Button>
           ))}
         </div>
 
