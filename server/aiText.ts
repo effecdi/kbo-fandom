@@ -59,7 +59,20 @@ ${context ? `캐릭터 정보: ${context}\n` : ""}
 
 프롬프트만 작성해주세요 (따옴표나 추가 설명 없이 순수 텍스트만):`,
 
-    background: `당신은 인스타툰(인스타그램 웹툰) 배경/아이템 전문가입니다.
+    background: (() => {
+      // 장소 카테고리를 매번 랜덤 순서로 섞어 LLM 편향 방지
+      const places = [
+        "공원", "방/침실", "거리/골목", "계절 풍경", "학교/교실",
+        "편의점", "지하철/버스", "옥상", "놀이공원", "도서관",
+        "해변", "숲/산", "야시장", "카페", "운동장", "영화관",
+        "미술관", "꽃밭", "비 오는 거리", "눈 오는 마을",
+      ];
+      for (let j = places.length - 1; j > 0; j--) {
+        const k = Math.floor(Math.random() * (j + 1));
+        [places[j], places[k]] = [places[k], places[j]];
+      }
+      const placeHint = places.slice(0, 6).join(", ");
+      return `당신은 인스타툰(인스타그램 웹툰) 배경/아이템 전문가입니다.
 인스타툰 캐릭터에 어울리는 배경과 소품을 묘사하는 프롬프트를 한국어로 생성해주세요.
 
 다음 JSON 형식으로만 응답해주세요 (다른 설명 없이 순수 JSON만):
@@ -71,13 +84,18 @@ ${context ? `캐릭터 정보: ${context}\n` : ""}
 가이드:
 - 인스타툰에 적합한 귀엽고 아기자기한 배경
 - 배경과 어울리는 소품을 함께 추천
-- 카페, 공원, 방, 거리, 계절 풍경 등 다양하게
-- MZ세대 감성의 트렌디한 장소`,
+- 매번 완전히 다른 장소를 추천 (이전과 절대 중복하지 마세요)
+- MZ세대 감성의 트렌디한 장소
+- 이번에 참고할 장소 힌트 (이 중에서 창의적으로 선택): ${placeHint}`;
+    })(),
   };
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: [{ role: "user", parts: [{ text: prompts[type] }] }],
+    config: {
+      temperature: type === "background" ? 1.5 : 1.0,
+    },
   });
 
   const candidate = response.candidates?.[0];

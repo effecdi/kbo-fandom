@@ -755,6 +755,70 @@ function drawScriptOverlay(
   ctx.restore();
 }
 
+function buildShapePath(
+  ctx: CanvasRenderingContext2D,
+  shapeType: string,
+  x: number, y: number, w: number, h: number,
+) {
+  ctx.beginPath();
+  switch (shapeType) {
+    case "rectangle":
+      ctx.rect(x, y, w, h);
+      break;
+    case "circle":
+      ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+      break;
+    case "triangle":
+      ctx.moveTo(x + w / 2, y);
+      ctx.lineTo(x, y + h);
+      ctx.lineTo(x + w, y + h);
+      ctx.closePath();
+      break;
+    case "diamond":
+      ctx.moveTo(x + w / 2, y);
+      ctx.lineTo(x + w, y + h / 2);
+      ctx.lineTo(x + w / 2, y + h);
+      ctx.lineTo(x, y + h / 2);
+      ctx.closePath();
+      break;
+    case "star": {
+      const cx = x + w / 2;
+      const cy = y + h / 2;
+      const outerRx = w / 2;
+      const outerRy = h / 2;
+      const innerRx = outerRx * 0.4;
+      const innerRy = outerRy * 0.4;
+      const spikes = 5;
+      const step = Math.PI / spikes;
+      const rot = -Math.PI / 2;
+      for (let si = 0; si < spikes * 2; si++) {
+        const rx = si % 2 === 0 ? outerRx : innerRx;
+        const ry = si % 2 === 0 ? outerRy : innerRy;
+        const angle = rot + si * step;
+        const px = cx + Math.cos(angle) * rx;
+        const py = cy + Math.sin(angle) * ry;
+        if (si === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      break;
+    }
+    case "arrow": {
+      const shaftH = h * 0.4;
+      const headStart = w * 0.6;
+      ctx.moveTo(x, y + h / 2 - shaftH / 2);
+      ctx.lineTo(x + headStart, y + h / 2 - shaftH / 2);
+      ctx.lineTo(x + headStart, y);
+      ctx.lineTo(x + w, y + h / 2);
+      ctx.lineTo(x + headStart, y + h);
+      ctx.lineTo(x + headStart, y + h / 2 + shaftH / 2);
+      ctx.lineTo(x, y + h / 2 + shaftH / 2);
+      ctx.closePath();
+      break;
+    }
+  }
+}
+
 const CANVAS_W = 450;
 const CANVAS_H = 600;
 
@@ -922,7 +986,13 @@ function PanelCanvas({
         })) : []),
       ];
     drawables.sort((a, b) => a.z - b.z);
+    let maskClipActive = false;
     drawables.forEach((d) => {
+      // If we encounter a new mask shape while a previous mask clip is active, restore first
+      if (d.type === "shape" && d.se.maskEnabled && maskClipActive) {
+        ctx.restore();
+        maskClipActive = false;
+      }
       if (d.type === "text") {
         const te = d.te;
         ctx.save();
@@ -1061,116 +1131,98 @@ function PanelCanvas({
         ctx.restore();
       } else if (d.type === "shape") {
         const se = d.se;
-        ctx.save();
-        ctx.globalAlpha = se.opacity;
-        ctx.beginPath();
 
-        switch (se.shapeType) {
-          case "rectangle":
-            ctx.rect(se.x, se.y, se.width, se.height);
-            break;
-          case "circle":
-            ctx.ellipse(
-              se.x + se.width / 2, se.y + se.height / 2,
-              se.width / 2, se.height / 2,
-              0, 0, Math.PI * 2,
-            );
-            break;
-          case "triangle": {
-            const tx = se.x, ty = se.y, tw = se.width, th = se.height;
-            ctx.moveTo(tx + tw / 2, ty);
-            ctx.lineTo(tx, ty + th);
-            ctx.lineTo(tx + tw, ty + th);
-            ctx.closePath();
-            break;
-          }
-          case "diamond": {
-            const dx = se.x, dy = se.y, dw = se.width, dh = se.height;
-            ctx.moveTo(dx + dw / 2, dy);
-            ctx.lineTo(dx + dw, dy + dh / 2);
-            ctx.lineTo(dx + dw / 2, dy + dh);
-            ctx.lineTo(dx, dy + dh / 2);
-            ctx.closePath();
-            break;
-          }
-          case "star": {
-            const cx = se.x + se.width / 2;
-            const cy = se.y + se.height / 2;
-            const outerRx = se.width / 2;
-            const outerRy = se.height / 2;
-            const innerRx = outerRx * 0.4;
-            const innerRy = outerRy * 0.4;
-            const spikes = 5;
-            const step = Math.PI / spikes;
-            const rot = -Math.PI / 2;
-            for (let si = 0; si < spikes * 2; si++) {
-              const r = si % 2 === 0 ? 1 : 0.4;
-              const rx = si % 2 === 0 ? outerRx : innerRx;
-              const ry = si % 2 === 0 ? outerRy : innerRy;
-              const angle = rot + si * step;
-              const px = cx + Math.cos(angle) * rx;
-              const py = cy + Math.sin(angle) * ry;
-              if (si === 0) ctx.moveTo(px, py);
-              else ctx.lineTo(px, py);
-            }
-            ctx.closePath();
-            break;
-          }
-          case "arrow": {
-            const ax = se.x, ay = se.y, aw = se.width, ah = se.height;
-            const shaftH = ah * 0.4;
-            const headStart = aw * 0.6;
-            ctx.moveTo(ax, ay + ah / 2 - shaftH / 2);
-            ctx.lineTo(ax + headStart, ay + ah / 2 - shaftH / 2);
-            ctx.lineTo(ax + headStart, ay);
-            ctx.lineTo(ax + aw, ay + ah / 2);
-            ctx.lineTo(ax + headStart, ay + ah);
-            ctx.lineTo(ax + headStart, ay + ah / 2 + shaftH / 2);
-            ctx.lineTo(ax, ay + ah / 2 + shaftH / 2);
-            ctx.closePath();
-            break;
-          }
-        }
-
-        if (se.fillColor !== "transparent") {
-          ctx.fillStyle = se.fillColor;
-          ctx.fill();
-        }
-        if (se.strokeWidth > 0) {
-          ctx.strokeStyle = se.strokeColor;
-          ctx.lineWidth = se.strokeWidth;
-          ctx.stroke();
-        }
-
-        // Selection indicator — always drawn for selected shape
-        if (se.id === selectedShapeIdRef.current) {
-          ctx.beginPath();
-          ctx.globalAlpha = 1;
+        if (se.maskEnabled) {
+          // Mask shape: draw visual indicators first (before clipping)
+          // Dashed outline to show mask boundary
+          ctx.save();
+          ctx.globalAlpha = 0.5;
           ctx.strokeStyle = HANDLE_COLOR;
           ctx.lineWidth = 1.5;
-          ctx.setLineDash([5, 4]);
-          ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
+          ctx.setLineDash([4, 4]);
+          buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
+          ctx.stroke();
           ctx.setLineDash([]);
+          ctx.restore();
 
-          // Resize handles at 4 corners
-          const handleSize = 8;
-          const corners = [
-            { x: se.x - handleSize / 2, y: se.y - handleSize / 2 },
-            { x: se.x + se.width - handleSize / 2, y: se.y - handleSize / 2 },
-            { x: se.x - handleSize / 2, y: se.y + se.height - handleSize / 2 },
-            { x: se.x + se.width - handleSize / 2, y: se.y + se.height - handleSize / 2 },
-          ];
-          corners.forEach((c) => {
-            ctx.beginPath();
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(c.x, c.y, handleSize, handleSize);
+          // Selection indicator for mask shape
+          if (se.id === selectedShapeIdRef.current) {
+            ctx.save();
+            ctx.globalAlpha = 1;
             ctx.strokeStyle = HANDLE_COLOR;
             ctx.lineWidth = 1.5;
-            ctx.strokeRect(c.x, c.y, handleSize, handleSize);
-          });
-        }
+            ctx.setLineDash([5, 4]);
+            ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
+            ctx.setLineDash([]);
+            const handleSize = 8;
+            const corners = [
+              { x: se.x - handleSize / 2, y: se.y - handleSize / 2 },
+              { x: se.x + se.width - handleSize / 2, y: se.y - handleSize / 2 },
+              { x: se.x - handleSize / 2, y: se.y + se.height - handleSize / 2 },
+              { x: se.x + se.width - handleSize / 2, y: se.y + se.height - handleSize / 2 },
+            ];
+            corners.forEach((c) => {
+              ctx.beginPath();
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(c.x, c.y, handleSize, handleSize);
+              ctx.strokeStyle = HANDLE_COLOR;
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(c.x, c.y, handleSize, handleSize);
+            });
+            ctx.restore();
+          }
 
-        ctx.restore();
+          // Now apply clip for subsequent layers
+          ctx.save();
+          buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
+          ctx.clip();
+          maskClipActive = true;
+        } else {
+          // Normal shape rendering
+          ctx.save();
+          ctx.globalAlpha = se.opacity;
+          buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
+
+          if (se.fillColor !== "transparent") {
+            ctx.fillStyle = se.fillColor;
+            ctx.fill();
+          }
+          if (se.strokeWidth > 0) {
+            ctx.strokeStyle = se.strokeColor;
+            ctx.lineWidth = se.strokeWidth;
+            ctx.stroke();
+          }
+
+          // Selection indicator — always drawn for selected shape
+          if (se.id === selectedShapeIdRef.current) {
+            ctx.beginPath();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
+            ctx.setLineDash([]);
+
+            // Resize handles at 4 corners
+            const handleSize = 8;
+            const corners = [
+              { x: se.x - handleSize / 2, y: se.y - handleSize / 2 },
+              { x: se.x + se.width - handleSize / 2, y: se.y - handleSize / 2 },
+              { x: se.x - handleSize / 2, y: se.y + se.height - handleSize / 2 },
+              { x: se.x + se.width - handleSize / 2, y: se.y + se.height - handleSize / 2 },
+            ];
+            corners.forEach((c) => {
+              ctx.beginPath();
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(c.x, c.y, handleSize, handleSize);
+              ctx.strokeStyle = HANDLE_COLOR;
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(c.x, c.y, handleSize, handleSize);
+            });
+          }
+
+          ctx.restore();
+        }
       } else if (d.type === "drawing") {
         const dl = d.dl;
         if (dl.visible && dl.imageEl) {
@@ -1237,6 +1289,10 @@ function PanelCanvas({
         drawBubble(ctx, renderB, b.id === selectedBubbleIdRef.current);
       }
     });
+    // Restore any remaining active mask clip
+    if (maskClipActive) {
+      ctx.restore();
+    }
 
     if (p.topScript)
       drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
@@ -5987,6 +6043,7 @@ export default function StoryPage() {
                                   onStrokeWidthChange={(v) => handleUpdateShapeElement({ ...selectedShapeElement, strokeWidth: v })}
                                   onOpacityChange={(v) => handleUpdateShapeElement({ ...selectedShapeElement, opacity: v })}
                                   onClose={() => setShowShapeSettings(false)}
+                                  minStrokeWidth={0}
                                 />
                               </div>
                             )}
@@ -6170,6 +6227,24 @@ export default function StoryPage() {
                               // Hit test shape elements (resize handles first, then bounding box)
                               const shapeEls = [...(panel.shapeElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
                               const HANDLE_HIT = 10;
+                              // Helper: register window-level listeners for shape drag
+                              const startShapeWindowDrag = (shapeId: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br") => {
+                                handleElementDragStart("shape", shapeId, cx, cy, panel, resizeMode);
+                                const overlayRect = e.currentTarget.getBoundingClientRect();
+                                const onMove = (me: MouseEvent) => {
+                                  const mx = ((me.clientX - overlayRect.left) / overlayRect.width) * 450;
+                                  const my = ((me.clientY - overlayRect.top) / overlayRect.height) * 600;
+                                  handleElementDragMove(mx, my, i);
+                                };
+                                const onUp = () => {
+                                  handleElementDragEnd();
+                                  window.removeEventListener("mousemove", onMove);
+                                  window.removeEventListener("mouseup", onUp);
+                                };
+                                window.addEventListener("mousemove", onMove);
+                                window.addEventListener("mouseup", onUp);
+                              };
+
                               // Check resize handles of selected shape first
                               if (selectedShapeId) {
                                 const selShape = shapeEls.find(s => s.id === selectedShapeId);
@@ -6182,7 +6257,7 @@ export default function StoryPage() {
                                   ];
                                   for (const corner of corners) {
                                     if (Math.abs(canvasX - corner.cx) <= HANDLE_HIT && Math.abs(canvasY - corner.cy) <= HANDLE_HIT) {
-                                      handleElementDragStart("shape", selShape.id, canvasX, canvasY, panel, corner.mode);
+                                      startShapeWindowDrag(selShape.id, canvasX, canvasY, corner.mode);
                                       return;
                                     }
                                   }
@@ -6197,7 +6272,7 @@ export default function StoryPage() {
                                   setSelectedDrawingLayerId(null);
                                   setSelectedCharId(null);
                                   setSelectedBubbleId(null);
-                                  handleElementDragStart("shape", se.id, canvasX, canvasY, panel);
+                                  startShapeWindowDrag(se.id, canvasX, canvasY);
                                   return;
                                 }
                               }
@@ -6257,7 +6332,49 @@ export default function StoryPage() {
                                 setSelectedCharId(null);
                                 setSelectedBubbleId(null);
                                 handleElementDragStart("drawing", hit.id, canvasX, canvasY, panel);
-                              } else {
+                                return;
+                              }
+
+                              // Hit test bubbles and characters (so they're selectable through the overlay)
+                              const charBubbles: Array<
+                                | { type: "bubble"; z: number; b: typeof panel.bubbles[0] }
+                                | { type: "char"; z: number; ch: (typeof panel.characters)[0] }
+                              > = [
+                                ...panel.bubbles.map(b => ({ type: "bubble" as const, z: b.zIndex ?? 10, b })),
+                                ...panel.characters.map(ch => ({ type: "char" as const, z: ch.zIndex ?? 0, ch })),
+                              ];
+                              charBubbles.sort((a, b) => b.z - a.z);
+                              for (const cb of charBubbles) {
+                                if (cb.type === "bubble") {
+                                  const b = cb.b;
+                                  if (canvasX >= b.x && canvasX <= b.x + b.width && canvasY >= b.y && canvasY <= b.y + b.height) {
+                                    setSelectedBubbleId(b.id);
+                                    setSelectedCharId(null);
+                                    setSelectedTextId(null);
+                                    setSelectedLineId(null);
+                                    setSelectedShapeId(null);
+                                    setSelectedDrawingLayerId(null);
+                                    return;
+                                  }
+                                } else {
+                                  const ch = cb.ch;
+                                  const cw = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
+                                  const chH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
+                                  if (canvasX >= ch.x - cw / 2 && canvasX <= ch.x + cw / 2 &&
+                                      canvasY >= ch.y - chH / 2 && canvasY <= ch.y + chH / 2) {
+                                    setSelectedCharId(ch.id);
+                                    setSelectedBubbleId(null);
+                                    setSelectedTextId(null);
+                                    setSelectedLineId(null);
+                                    setSelectedShapeId(null);
+                                    setSelectedDrawingLayerId(null);
+                                    return;
+                                  }
+                                }
+                              }
+
+                              // Nothing hit — clear all selections
+                              {
                                 setSelectedDrawingLayerId(null);
                                 setSelectedTextId(null);
                                 setSelectedLineId(null);
@@ -6269,15 +6386,21 @@ export default function StoryPage() {
                             }}
                             onMouseMove={(e) => {
                               if (!dragElementRef.current) return;
+                              // Shape drags are handled by window-level listeners
+                              if (dragElementRef.current.type === "shape") return;
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
                               handleElementDragMove(canvasX, canvasY, i);
                             }}
                             onMouseUp={() => {
+                              // Shape drags are handled by window-level listeners
+                              if (dragElementRef.current?.type === "shape") return;
                               handleElementDragEnd();
                             }}
                             onMouseLeave={() => {
+                              // Shape drags are handled by window-level listeners
+                              if (dragElementRef.current?.type === "shape") return;
                               handleElementDragEnd();
                             }}
                             onDoubleClick={(e) => {
@@ -6666,6 +6789,7 @@ export default function StoryPage() {
               z: se.zIndex ?? 20,
               label: se.shapeType === "rectangle" ? "사각형" : se.shapeType === "circle" ? "원" : se.shapeType === "triangle" ? "삼각형" : se.shapeType === "diamond" ? "다이아몬드" : se.shapeType === "star" ? "별" : "화살표",
               thumb: undefined as string | undefined,
+              maskEnabled: se.maskEnabled,
             })),
           ].sort((a, b) => b.z - a.z);
 

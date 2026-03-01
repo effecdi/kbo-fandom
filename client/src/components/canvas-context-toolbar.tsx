@@ -40,6 +40,7 @@ import {
   Triangle,
   Diamond,
   Star,
+  Scan,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -96,6 +97,7 @@ export interface CanvasShapeElement {
   strokeWidth: number;
   opacity: number;
   zIndex: number;
+  maskEnabled?: boolean;
 }
 
 export function createTextElement(canvasW: number, canvasH: number): CanvasTextElement {
@@ -716,6 +718,7 @@ interface SettingsModalProps {
   onStrokeWidthChange: (v: number) => void;
   onOpacityChange: (v: number) => void;
   onClose: () => void;
+  minStrokeWidth?: number;
 }
 
 export function FloatingSettingsModal({
@@ -724,7 +727,9 @@ export function FloatingSettingsModal({
   onStrokeWidthChange,
   onOpacityChange,
   onClose,
+  minStrokeWidth,
 }: SettingsModalProps) {
+  const effectiveMin = minStrokeWidth ?? 1;
   return (
     <div className="floating-settings-modal">
       <div className="floating-settings-modal__header">
@@ -737,10 +742,10 @@ export function FloatingSettingsModal({
       <div className="floating-settings-modal__section">
         <div className="floating-settings-modal__row">
           <span className="floating-settings-modal__label">두께</span>
-          <span className="floating-settings-modal__value">{strokeWidth}px</span>
+          <span className="floating-settings-modal__value">{strokeWidth === 0 ? "없음" : `${strokeWidth}px`}</span>
         </div>
         <Slider
-          min={1}
+          min={effectiveMin}
           max={50}
           step={1}
           value={[strokeWidth]}
@@ -1162,6 +1167,17 @@ export function ShapeContextToolbar({ element, onChange, onShowSettings, showSet
         title="설정"
       >
         <Menu className="h-4 w-4" />
+      </button>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Mask toggle */}
+      <button
+        className={`context-toolbar__btn ${element.maskEnabled ? "context-toolbar__btn--active" : ""}`}
+        onClick={() => update({ maskEnabled: !element.maskEnabled })}
+        title="클리핑 마스크"
+      >
+        <Scan className="h-4 w-4" />
       </button>
     </div>
   );

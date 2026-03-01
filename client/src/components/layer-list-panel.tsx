@@ -12,6 +12,7 @@ import {
   Type,
   Eraser,
   Square,
+  Scan,
 } from "lucide-react";
 import { Spline, GitCommitHorizontal } from "lucide-react";
 import { STYLE_LABELS } from "@/lib/bubble-utils";
@@ -24,6 +25,7 @@ export interface LayerItem {
   thumb?: string;
   drawingType?: string;
   visible?: boolean;
+  maskEnabled?: boolean;
 }
 
 const DRAWING_TYPE_ICONS: Record<string, typeof Pen> = {
@@ -155,7 +157,8 @@ export function LayerListPanel({
                     </span>
                   )}
                 </div>
-                <span className="text-[11px] truncate">{item.label}</span>
+                {item.maskEnabled && <Scan className="h-3 w-3 text-primary shrink-0" />}
+                <span className="text-[11px] truncate">{item.maskEnabled ? `[마스크] ${item.label}` : item.label}</span>
               </div>
               <div className="flex items-center gap-0 shrink-0">
                 {item.type === "drawing" && onToggleVisibility && (
