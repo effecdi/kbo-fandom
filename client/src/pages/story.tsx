@@ -802,6 +802,7 @@ function PanelCanvas({
   const dragScriptFontStartRef = useRef(20);
   const selectedBubbleIdRef = useRef(selectedBubbleId);
   const selectedCharIdRef = useRef(selectedCharId);
+  const selectedShapeIdRef = useRef(selectedShapeId);
   const panelRef = useRef(panel);
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
   const editingBubbleIdRef = useRef<string | null>(null);
@@ -815,6 +816,9 @@ function PanelCanvas({
   useEffect(() => {
     selectedCharIdRef.current = selectedCharId;
   }, [selectedCharId]);
+  useEffect(() => {
+    selectedShapeIdRef.current = selectedShapeId;
+  }, [selectedShapeId]);
   useEffect(() => {
     panelRef.current = panel;
   }, [panel]);
@@ -1139,7 +1143,7 @@ function PanelCanvas({
         }
 
         // Selection indicator — always drawn for selected shape
-        if (se.id === selectedShapeId) {
+        if (se.id === selectedShapeIdRef.current) {
           ctx.beginPath();
           ctx.globalAlpha = 1;
           ctx.strokeStyle = HANDLE_COLOR;
