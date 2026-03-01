@@ -309,6 +309,8 @@ interface DrawingLayer {
   opacity: number;         // 0-1, per-layer opacity
   x?: number;
   y?: number;
+  width?: number;
+  height?: number;
 }
 
 interface PanelData {
@@ -1136,17 +1138,18 @@ function PanelCanvas({
           ctx.stroke();
         }
 
-        // Selection indicator
+        // Selection indicator — always drawn for selected shape
         if (se.id === selectedShapeId) {
+          ctx.beginPath();
           ctx.globalAlpha = 1;
           ctx.strokeStyle = HANDLE_COLOR;
-          ctx.lineWidth = 1;
-          ctx.setLineDash([4, 3]);
-          ctx.strokeRect(se.x - 2, se.y - 2, se.width + 4, se.height + 4);
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 4]);
+          ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
           ctx.setLineDash([]);
 
           // Resize handles at 4 corners
-          const handleSize = 7;
+          const handleSize = 8;
           const corners = [
             { x: se.x - handleSize / 2, y: se.y - handleSize / 2 },
             { x: se.x + se.width - handleSize / 2, y: se.y - handleSize / 2 },
@@ -1154,6 +1157,7 @@ function PanelCanvas({
             { x: se.x + se.width - handleSize / 2, y: se.y + se.height - handleSize / 2 },
           ];
           corners.forEach((c) => {
+            ctx.beginPath();
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(c.x, c.y, handleSize, handleSize);
             ctx.strokeStyle = HANDLE_COLOR;
@@ -1171,7 +1175,9 @@ function PanelCanvas({
           if (dl.type === "eraser") {
             ctx.globalCompositeOperation = "destination-out";
           }
-          ctx.drawImage(dl.imageEl, dl.x ?? 0, dl.y ?? 0, CANVAS_W, CANVAS_H);
+          const dlW = dl.width ?? CANVAS_W;
+          const dlH = dl.height ?? CANVAS_H;
+          ctx.drawImage(dl.imageEl, dl.x ?? 0, dl.y ?? 0, dlW, dlH);
           ctx.restore();
         }
       } else if (d.type === "char") {
@@ -4348,6 +4354,9 @@ export default function StoryPage() {
           startMouseX: mouseX,
           startMouseY: mouseY,
           startPositions: [{ x: dl.x ?? 0, y: dl.y ?? 0 }],
+          resizeMode,
+          startW: dl.width ?? CANVAS_W,
+          startH: dl.height ?? CANVAS_H,
         };
       }
     } else if (type === "shape") {
@@ -4396,6 +4405,36 @@ export default function StoryPage() {
     } else if (drag.type === "drawing") {
       const newLayers = (p.drawingLayers || []).map(dl => {
         if (dl.id !== drag.id) return dl;
+        if (drag.resizeMode) {
+          const startX = drag.startPositions[0].x;
+          const startY = drag.startPositions[0].y;
+          const startW = drag.startW ?? CANVAS_W;
+          const startH = drag.startH ?? CANVAS_H;
+          let newX = startX, newY = startY, newW = startW, newH = startH;
+          switch (drag.resizeMode) {
+            case "br":
+              newW = Math.max(20, startW + dx);
+              newH = Math.max(20, startH + dy);
+              break;
+            case "bl":
+              newX = startX + dx;
+              newW = Math.max(20, startW - dx);
+              newH = Math.max(20, startH + dy);
+              break;
+            case "tr":
+              newY = startY + dy;
+              newW = Math.max(20, startW + dx);
+              newH = Math.max(20, startH - dy);
+              break;
+            case "tl":
+              newX = startX + dx;
+              newY = startY + dy;
+              newW = Math.max(20, startW - dx);
+              newH = Math.max(20, startH - dy);
+              break;
+          }
+          return { ...dl, x: newX, y: newY, width: newW, height: newH };
+        }
         return { ...dl, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
       updatePanel(panelIdx, { ...p, drawingLayers: newLayers });
@@ -6165,6 +6204,7 @@ export default function StoryPage() {
                                 if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
                                   setSelectedTextId(te.id);
                                   setSelectedLineId(null);
+                                  setSelectedShapeId(null);
                                   setSelectedDrawingLayerId(null);
                                   setSelectedCharId(null);
                                   setSelectedBubbleId(null);
@@ -6194,6 +6234,7 @@ export default function StoryPage() {
                                 if (hitLine) {
                                   setSelectedLineId(le.id);
                                   setSelectedTextId(null);
+                                  setSelectedShapeId(null);
                                   setSelectedDrawingLayerId(null);
                                   setSelectedCharId(null);
                                   setSelectedBubbleId(null);
@@ -6208,6 +6249,7 @@ export default function StoryPage() {
                                 setSelectedDrawingLayerId(hit.id);
                                 setSelectedTextId(null);
                                 setSelectedLineId(null);
+                                setSelectedShapeId(null);
                                 setSelectedCharId(null);
                                 setSelectedBubbleId(null);
                                 handleElementDragStart("drawing", hit.id, canvasX, canvasY, panel);
@@ -6307,17 +6349,21 @@ export default function StoryPage() {
                           );
                         })()}
 
-                        {/* Selected drawing layer bounding box */}
+                        {/* Selected drawing layer bounding box with resize handles */}
                         {selectedToolItem === "select" && activePanelIndex === i && selectedDrawingLayerId && (() => {
                           const layer = (panel.drawingLayers || []).find(l => l.id === selectedDrawingLayerId);
                           if (!layer || !layer.visible || !layer.imageEl) return null;
+                          const dlX = layer.x ?? 0;
+                          const dlY = layer.y ?? 0;
+                          const dlW = layer.width ?? CANVAS_W;
+                          const dlH = layer.height ?? CANVAS_H;
                           // Compute bounding box from image data
                           const testCanvas = document.createElement("canvas");
                           testCanvas.width = 450;
                           testCanvas.height = 600;
                           const tCtx = testCanvas.getContext("2d", { willReadFrequently: true });
                           if (!tCtx) return null;
-                          tCtx.drawImage(layer.imageEl, 0, 0);
+                          tCtx.drawImage(layer.imageEl, dlX, dlY, dlW, dlH);
                           const imgData = tCtx.getImageData(0, 0, 450, 600);
                           let minX = 450, minY = 600, maxX = 0, maxY = 0;
                           for (let py = 0; py < 600; py++) {
@@ -6332,20 +6378,58 @@ export default function StoryPage() {
                           }
                           if (maxX <= minX || maxY <= minY) return null;
                           const pad = 4;
-                          const offsetX = layer.x ?? 0;
-                          const offsetY = layer.y ?? 0;
+                          const bLeft = ((minX - pad) / 450) * 100;
+                          const bTop = ((minY - pad) / 600) * 100;
+                          const bW = ((maxX - minX + pad * 2) / 450) * 100;
+                          const bH = ((maxY - minY + pad * 2) / 600) * 100;
                           return (
-                            <div style={{
-                              position: "absolute",
-                              left: `${((minX + offsetX - pad) / 450) * 100}%`,
-                              top: `${((minY + offsetY - pad) / 600) * 100}%`,
-                              width: `${((maxX - minX + pad * 2) / 450) * 100}%`,
-                              height: `${((maxY - minY + pad * 2) / 600) * 100}%`,
-                              border: "2px dashed hsl(var(--primary))",
-                              pointerEvents: "none",
-                              zIndex: 25,
-                              borderRadius: "2px",
-                            }} />
+                            <>
+                              <div style={{
+                                position: "absolute",
+                                left: `${bLeft}%`, top: `${bTop}%`,
+                                width: `${bW}%`, height: `${bH}%`,
+                                border: "2px dashed hsl(var(--primary))",
+                                pointerEvents: "none",
+                                zIndex: 25,
+                                borderRadius: "2px",
+                              }} />
+                              {/* Corner resize handles */}
+                              {(["tl","tr","bl","br"] as const).map(mode => (
+                                <div key={mode} style={{
+                                  position: "absolute",
+                                  left: mode.includes("l") ? `calc(${bLeft}% - 4px)` : `calc(${bLeft + bW}% - 4px)`,
+                                  top: mode.includes("t") ? `calc(${bTop}% - 4px)` : `calc(${bTop + bH}% - 4px)`,
+                                  width: 8, height: 8,
+                                  background: "#fff",
+                                  border: "1.5px solid hsl(var(--primary))",
+                                  borderRadius: 1,
+                                  zIndex: 26,
+                                  cursor: mode === "tl" || mode === "br" ? "nwse-resize" : "nesw-resize",
+                                  pointerEvents: "auto",
+                                }} onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  const parentEl = (e.currentTarget.parentElement?.parentElement as HTMLElement);
+                                  const canvasEl = parentEl?.querySelector("canvas");
+                                  if (!canvasEl) return;
+                                  const rect = canvasEl.getBoundingClientRect();
+                                  const cx = ((e.clientX - rect.left) / rect.width) * 450;
+                                  const cy = ((e.clientY - rect.top) / rect.height) * 600;
+                                  handleElementDragStart("drawing", layer.id, cx, cy, panel, mode);
+                                  const onMove = (me: MouseEvent) => {
+                                    const mx = ((me.clientX - rect.left) / rect.width) * 450;
+                                    const my = ((me.clientY - rect.top) / rect.height) * 600;
+                                    handleElementDragMove(mx, my, i);
+                                  };
+                                  const onUp = () => {
+                                    handleElementDragEnd();
+                                    window.removeEventListener("mousemove", onMove);
+                                    window.removeEventListener("mouseup", onUp);
+                                  };
+                                  window.addEventListener("mousemove", onMove);
+                                  window.addEventListener("mouseup", onUp);
+                                }} />
+                              ))}
+                            </>
                           );
                         })()}
 
@@ -6572,9 +6656,16 @@ export default function StoryPage() {
               label: le.lineType === "straight" ? "직선" : le.lineType === "curved" ? "곡선" : "꺾인선",
               thumb: undefined as string | undefined,
             })),
+            ...(activePanel.shapeElements || []).map((se: CanvasShapeElement, i: number) => ({
+              type: "shape" as const,
+              id: se.id,
+              z: se.zIndex ?? 20,
+              label: se.shapeType === "rectangle" ? "사각형" : se.shapeType === "circle" ? "원" : se.shapeType === "triangle" ? "삼각형" : se.shapeType === "diamond" ? "다이아몬드" : se.shapeType === "star" ? "별" : "화살표",
+              thumb: undefined as string | undefined,
+            })),
           ].sort((a, b) => b.z - a.z);
 
-          const applyRightLayerOrder = (ordered: Array<{ type: "char" | "bubble" | "drawing" | "text" | "line"; id: string }>) => {
+          const applyRightLayerOrder = (ordered: Array<{ type: "char" | "bubble" | "drawing" | "text" | "line" | "shape"; id: string }>) => {
             const n = ordered.length;
             updatePanel(activePanelIndex, {
               ...activePanel,
@@ -6598,6 +6689,10 @@ export default function StoryPage() {
                 const idx = ordered.findIndex((it) => it.type === "line" && it.id === le.id);
                 return idx >= 0 ? { ...le, zIndex: n - 1 - idx } : le;
               }),
+              shapeElements: (activePanel.shapeElements || []).map((se) => {
+                const idx = ordered.findIndex((it) => it.type === "shape" && it.id === se.id);
+                return idx >= 0 ? { ...se, zIndex: n - 1 - idx } : se;
+              }),
             });
           };
 
@@ -6605,7 +6700,7 @@ export default function StoryPage() {
             if (direction === "up" && index <= 0) return;
             if (direction === "down" && index >= rightLayerItems.length - 1) return;
             const swapIdx = direction === "up" ? index - 1 : index + 1;
-            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line", id: li.id }));
+            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line" | "shape", id: li.id }));
             const tmp = newOrder[index];
             newOrder[index] = newOrder[swapIdx];
             newOrder[swapIdx] = tmp;
@@ -6616,6 +6711,7 @@ export default function StoryPage() {
           const selChar = selectedCharId ? activePanel.characters.find(c => c.id === selectedCharId) : null;
           const selText = selectedTextId ? (activePanel.textElements || []).find((te: CanvasTextElement) => te.id === selectedTextId) : null;
           const selLine = selectedLineId ? (activePanel.lineElements || []).find((le: CanvasLineElement) => le.id === selectedLineId) : null;
+          const selShape = selectedShapeId ? (activePanel.shapeElements || []).find((se: CanvasShapeElement) => se.id === selectedShapeId) : null;
 
           return (
             <div
@@ -7140,11 +7236,13 @@ export default function StoryPage() {
                     selectedDrawingLayerId={selectedDrawingLayerId}
                     selectedTextId={selectedTextId}
                     selectedLineId={selectedLineId}
+                    selectedShapeId={selectedShapeId}
                     onSelectChar={setSelectedCharId}
                     onSelectBubble={setSelectedBubbleId}
                     onSelectDrawingLayer={setSelectedDrawingLayerId}
                     onSelectText={setSelectedTextId}
                     onSelectLine={setSelectedLineId}
+                    onSelectShape={setSelectedShapeId}
                     onSetToolItem={setSelectedToolItem}
                     onMoveLayer={moveRightLayer}
                     onDeleteLayer={(item) => {
@@ -7172,6 +7270,12 @@ export default function StoryPage() {
                           lineElements: (activePanel.lineElements || []).filter((le: CanvasLineElement) => le.id !== item.id),
                         });
                         if (selectedLineId === item.id) setSelectedLineId(null);
+                      } else if (item.type === "shape") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          shapeElements: (activePanel.shapeElements || []).filter((se: CanvasShapeElement) => se.id !== item.id),
+                        });
+                        if (selectedShapeId === item.id) setSelectedShapeId(null);
                       }
                     }}
                     onToggleVisibility={(item) => {

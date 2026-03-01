@@ -11,12 +11,13 @@ import {
   Minus,
   Type,
   Eraser,
+  Square,
 } from "lucide-react";
 import { Spline, GitCommitHorizontal } from "lucide-react";
 import { STYLE_LABELS } from "@/lib/bubble-utils";
 
 export interface LayerItem {
-  type: "char" | "bubble" | "drawing" | "text" | "line";
+  type: "char" | "bubble" | "drawing" | "text" | "line" | "shape";
   id: string;
   z: number;
   label: string;
@@ -41,11 +42,13 @@ interface LayerListPanelProps {
   selectedDrawingLayerId?: string | null;
   selectedTextId?: string | null;
   selectedLineId?: string | null;
+  selectedShapeId?: string | null;
   onSelectChar: (id: string | null) => void;
   onSelectBubble: (id: string | null) => void;
   onSelectDrawingLayer?: (id: string | null) => void;
   onSelectText?: (id: string | null) => void;
   onSelectLine?: (id: string | null) => void;
+  onSelectShape?: (id: string | null) => void;
   onMoveLayer: (index: number, direction: "up" | "down") => void;
   onDeleteLayer: (item: LayerItem) => void;
   onToggleVisibility?: (item: LayerItem) => void;
@@ -60,11 +63,13 @@ export function LayerListPanel({
   selectedDrawingLayerId,
   selectedTextId,
   selectedLineId,
+  selectedShapeId,
   onSelectChar,
   onSelectBubble,
   onSelectDrawingLayer,
   onSelectText,
   onSelectLine,
+  onSelectShape,
   onMoveLayer,
   onDeleteLayer,
   onToggleVisibility,
@@ -92,6 +97,7 @@ export function LayerListPanel({
             : item.type === "drawing" ? selectedDrawingLayerId === item.id
             : item.type === "text" ? selectedTextId === item.id
             : item.type === "line" ? selectedLineId === item.id
+            : item.type === "shape" ? selectedShapeId === item.id
             : false;
 
           const DrawingIcon = item.drawingType ? (DRAWING_TYPE_ICONS[item.drawingType] || Pen) : Pen;
@@ -110,6 +116,7 @@ export function LayerListPanel({
                 onSelectDrawingLayer?.(null);
                 onSelectText?.(null);
                 onSelectLine?.(null);
+                onSelectShape?.(null);
 
                 if (item.type === "char") {
                   onSelectChar(item.id);
@@ -124,6 +131,9 @@ export function LayerListPanel({
                 } else if (item.type === "line") {
                   onSelectLine?.(item.id);
                   onSetToolItem?.("select");
+                } else if (item.type === "shape") {
+                  onSelectShape?.(item.id);
+                  onSetToolItem?.("select");
                 }
               }}
             >
@@ -135,6 +145,8 @@ export function LayerListPanel({
                     <span className="text-[9px] font-semibold text-muted-foreground">T</span>
                   ) : item.type === "line" ? (
                     <span className="text-[9px] font-semibold text-muted-foreground">L</span>
+                  ) : item.type === "shape" ? (
+                    <Square className="h-3 w-3 text-muted-foreground" />
                   ) : item.thumb ? (
                     <img src={item.thumb} alt="" className="w-full h-full object-cover" />
                   ) : (
