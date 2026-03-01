@@ -6405,13 +6405,12 @@ export default function StoryPage() {
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
 
-                              // Hit test shape elements (resize handles first, then bounding box)
-                              const shapeEls = [...(panel.shapeElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
                               const HANDLE_HIT = 10;
-                              // Helper: register window-level listeners for shape drag
-                              const startShapeWindowDrag = (shapeId: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br") => {
-                                handleElementDragStart("shape", shapeId, cx, cy, panel, resizeMode);
-                                const overlayRect = e.currentTarget.getBoundingClientRect();
+                              const overlayRect = e.currentTarget.getBoundingClientRect();
+
+                              // Helper: register window-level listeners for element drag
+                              const startWindowDrag = (type: "shape" | "char" | "bubble", id: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br") => {
+                                handleElementDragStart(type, id, cx, cy, panel, resizeMode);
                                 const onMove = (me: MouseEvent) => {
                                   const mx = ((me.clientX - overlayRect.left) / overlayRect.width) * 450;
                                   const my = ((me.clientY - overlayRect.top) / overlayRect.height) * 600;
@@ -6426,9 +6425,9 @@ export default function StoryPage() {
                                 window.addEventListener("mouseup", onUp);
                               };
 
-                              // Check resize handles of selected shape first
+                              // --- 1) Check resize handles of currently selected element first ---
                               if (selectedShapeId) {
-                                const selShape = shapeEls.find(s => s.id === selectedShapeId);
+                                const selShape = (panel.shapeElements || []).find(s => s.id === selectedShapeId);
                                 if (selShape) {
                                   const corners: { mode: "tl" | "tr" | "bl" | "br"; cx: number; cy: number }[] = [
                                     { mode: "tl", cx: selShape.x, cy: selShape.y },
@@ -6438,107 +6437,12 @@ export default function StoryPage() {
                                   ];
                                   for (const corner of corners) {
                                     if (Math.abs(canvasX - corner.cx) <= HANDLE_HIT && Math.abs(canvasY - corner.cy) <= HANDLE_HIT) {
-                                      startShapeWindowDrag(selShape.id, canvasX, canvasY, corner.mode);
+                                      startWindowDrag("shape", selShape.id, canvasX, canvasY, corner.mode);
                                       return;
                                     }
                                   }
                                 }
                               }
-                              // Check shape bounding boxes
-                              for (const se of shapeEls) {
-                                if (se.locked || se.visible === false) continue;
-                                if (canvasX >= se.x && canvasX <= se.x + se.width && canvasY >= se.y && canvasY <= se.y + se.height) {
-                                  setSelectedShapeId(se.id);
-                                  setSelectedTextId(null);
-                                  setSelectedLineId(null);
-                                  setSelectedDrawingLayerId(null);
-                                  setSelectedCharId(null);
-                                  setSelectedBubbleId(null);
-                                  startShapeWindowDrag(se.id, canvasX, canvasY);
-                                  return;
-                                }
-                              }
-
-                              // Hit test text elements
-                              const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
-                              for (const te of textEls) {
-                                if (te.locked || te.visible === false) continue;
-                                if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
-                                  setSelectedTextId(te.id);
-                                  setSelectedLineId(null);
-                                  setSelectedShapeId(null);
-                                  setSelectedDrawingLayerId(null);
-                                  setSelectedCharId(null);
-                                  setSelectedBubbleId(null);
-                                  handleElementDragStart("text", te.id, canvasX, canvasY, panel);
-                                  return;
-                                }
-                              }
-
-                              // Hit test line elements
-                              const lineEls = [...(panel.lineElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
-                              for (const le of lineEls) {
-                                if (le.locked || le.visible === false) continue;
-                                if (le.points.length < 2) continue;
-                                const HIT_DIST = 12;
-                                let hitLine = false;
-                                for (let pi = 0; pi < le.points.length - 1; pi++) {
-                                  const ax = le.points[pi].x;
-                                  const ay = le.points[pi].y;
-                                  const bx = le.points[pi + 1].x;
-                                  const by = le.points[pi + 1].y;
-                                  const dx = bx - ax, dy = by - ay;
-                                  const lenSq = dx * dx + dy * dy;
-                                  const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((canvasX - ax) * dx + (canvasY - ay) * dy) / lenSq));
-                                  const projX = ax + t * dx, projY = ay + t * dy;
-                                  const dist = Math.sqrt((canvasX - projX) ** 2 + (canvasY - projY) ** 2);
-                                  if (dist <= HIT_DIST) { hitLine = true; break; }
-                                }
-                                if (hitLine) {
-                                  setSelectedLineId(le.id);
-                                  setSelectedTextId(null);
-                                  setSelectedShapeId(null);
-                                  setSelectedDrawingLayerId(null);
-                                  setSelectedCharId(null);
-                                  setSelectedBubbleId(null);
-                                  handleElementDragStart("line", le.id, canvasX, canvasY, panel);
-                                  return;
-                                }
-                              }
-
-                              // Hit test drawing layers
-                              const visibleDrawingLayers = (panel.drawingLayers || []).filter(dl => dl.visible && !dl.locked);
-                              const hit = hitTestDrawingLayers(visibleDrawingLayers, canvasX, canvasY, 450, 600);
-                              if (hit) {
-                                setSelectedDrawingLayerId(hit.id);
-                                setSelectedTextId(null);
-                                setSelectedLineId(null);
-                                setSelectedShapeId(null);
-                                setSelectedCharId(null);
-                                setSelectedBubbleId(null);
-                                handleElementDragStart("drawing", hit.id, canvasX, canvasY, panel);
-                                return;
-                              }
-
-                              // Helper: register window-level listeners for character drag
-                              const startCharWindowDrag = (charId: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br") => {
-                                handleElementDragStart("char", charId, cx, cy, panel, resizeMode);
-                                const overlayRect = e.currentTarget.getBoundingClientRect();
-                                const onMove = (me: MouseEvent) => {
-                                  const mx = ((me.clientX - overlayRect.left) / overlayRect.width) * 450;
-                                  const my = ((me.clientY - overlayRect.top) / overlayRect.height) * 600;
-                                  handleElementDragMove(mx, my, i);
-                                };
-                                const onUp = () => {
-                                  handleElementDragEnd();
-                                  window.removeEventListener("mousemove", onMove);
-                                  window.removeEventListener("mouseup", onUp);
-                                };
-                                window.addEventListener("mousemove", onMove);
-                                window.addEventListener("mouseup", onUp);
-                              };
-
-                              // Check resize handles of selected character first
                               if (selectedCharId) {
                                 const selCh = panel.characters.find(c => c.id === selectedCharId);
                                 if (selCh && selCh.imageEl) {
@@ -6554,32 +6458,12 @@ export default function StoryPage() {
                                   ];
                                   for (const corner of charCorners) {
                                     if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
-                                      startCharWindowDrag(selCh.id, canvasX, canvasY, corner.mode);
+                                      startWindowDrag("char", selCh.id, canvasX, canvasY, corner.mode);
                                       return;
                                     }
                                   }
                                 }
                               }
-
-                              // Helper: register window-level listeners for bubble drag
-                              const startBubbleWindowDrag = (bubbleId: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br") => {
-                                handleElementDragStart("bubble", bubbleId, cx, cy, panel, resizeMode);
-                                const overlayRect = e.currentTarget.getBoundingClientRect();
-                                const onMove = (me: MouseEvent) => {
-                                  const mx = ((me.clientX - overlayRect.left) / overlayRect.width) * 450;
-                                  const my = ((me.clientY - overlayRect.top) / overlayRect.height) * 600;
-                                  handleElementDragMove(mx, my, i);
-                                };
-                                const onUp = () => {
-                                  handleElementDragEnd();
-                                  window.removeEventListener("mousemove", onMove);
-                                  window.removeEventListener("mouseup", onUp);
-                                };
-                                window.addEventListener("mousemove", onMove);
-                                window.addEventListener("mouseup", onUp);
-                              };
-
-                              // Check resize handles of selected bubble
                               if (selectedBubbleId) {
                                 const selB = panel.bubbles.find(b => b.id === selectedBubbleId);
                                 if (selB && !selB.locked) {
@@ -6591,50 +6475,100 @@ export default function StoryPage() {
                                   ];
                                   for (const corner of bCorners) {
                                     if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
-                                      startBubbleWindowDrag(selB.id, canvasX, canvasY, corner.mode);
+                                      startWindowDrag("bubble", selB.id, canvasX, canvasY, corner.mode);
                                       return;
                                     }
                                   }
                                 }
                               }
 
-                              // Hit test bubbles and characters (so they're selectable and draggable through the overlay)
-                              const charBubbles: Array<
+                              // --- 2) Unified hit-test: ALL elements sorted by z-index (highest first) ---
+                              type HitItem =
+                                | { type: "shape"; z: number; se: (typeof panel.shapeElements extends (infer U)[] | undefined ? U : never) }
+                                | { type: "text"; z: number; te: (typeof panel.textElements extends (infer U)[] | undefined ? U : never) }
+                                | { type: "line"; z: number; le: (typeof panel.lineElements extends (infer U)[] | undefined ? U : never) }
+                                | { type: "drawing"; z: number; dl: (typeof panel.drawingLayers extends (infer U)[] | undefined ? U : never) }
                                 | { type: "bubble"; z: number; b: typeof panel.bubbles[0] }
-                                | { type: "char"; z: number; ch: (typeof panel.characters)[0] }
-                              > = [
+                                | { type: "char"; z: number; ch: (typeof panel.characters)[0] };
+
+                              const allItems: HitItem[] = [
+                                ...(panel.shapeElements || []).map(se => ({ type: "shape" as const, z: se.zIndex ?? 20, se })),
+                                ...(panel.textElements || []).map(te => ({ type: "text" as const, z: te.zIndex ?? 20, te })),
+                                ...(panel.lineElements || []).map(le => ({ type: "line" as const, z: le.zIndex ?? 20, le })),
+                                ...(panel.drawingLayers || []).filter(dl => dl.visible && !dl.locked).map(dl => ({ type: "drawing" as const, z: dl.zIndex ?? 0, dl })),
                                 ...panel.bubbles.map(b => ({ type: "bubble" as const, z: b.zIndex ?? 10, b })),
                                 ...panel.characters.map(ch => ({ type: "char" as const, z: ch.zIndex ?? 0, ch })),
                               ];
-                              charBubbles.sort((a, b) => b.z - a.z);
-                              for (const cb of charBubbles) {
-                                if (cb.type === "bubble") {
-                                  const b = cb.b;
-                                  if (b.locked || b.visible === false) continue;
-                                  if (canvasX >= b.x && canvasX <= b.x + b.width && canvasY >= b.y && canvasY <= b.y + b.height) {
-                                    setSelectedBubbleId(b.id);
-                                    setSelectedCharId(null);
-                                    setSelectedTextId(null);
-                                    setSelectedLineId(null);
-                                    setSelectedShapeId(null);
-                                    setSelectedDrawingLayerId(null);
-                                    startBubbleWindowDrag(b.id, canvasX, canvasY);
+                              allItems.sort((a, b) => b.z - a.z);
+
+                              const clearSelections = () => {
+                                setSelectedShapeId(null); setSelectedTextId(null); setSelectedLineId(null);
+                                setSelectedDrawingLayerId(null); setSelectedCharId(null); setSelectedBubbleId(null);
+                              };
+
+                              for (const item of allItems) {
+                                if (item.type === "shape") {
+                                  const se = item.se;
+                                  if (se.locked || se.visible === false) continue;
+                                  if (canvasX >= se.x && canvasX <= se.x + se.width && canvasY >= se.y && canvasY <= se.y + se.height) {
+                                    clearSelections(); setSelectedShapeId(se.id);
+                                    startWindowDrag("shape", se.id, canvasX, canvasY);
                                     return;
                                   }
-                                } else {
-                                  const ch = cb.ch;
+                                } else if (item.type === "text") {
+                                  const te = item.te;
+                                  if (te.locked || te.visible === false) continue;
+                                  if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
+                                    clearSelections(); setSelectedTextId(te.id);
+                                    handleElementDragStart("text", te.id, canvasX, canvasY, panel);
+                                    return;
+                                  }
+                                } else if (item.type === "line") {
+                                  const le = item.le;
+                                  if (le.locked || le.visible === false) continue;
+                                  if (le.points.length < 2) continue;
+                                  const HIT_DIST = 12;
+                                  let hitLine = false;
+                                  for (let pi = 0; pi < le.points.length - 1; pi++) {
+                                    const ax = le.points[pi].x, ay = le.points[pi].y;
+                                    const bx = le.points[pi + 1].x, by = le.points[pi + 1].y;
+                                    const ldx = bx - ax, ldy = by - ay;
+                                    const lenSq = ldx * ldx + ldy * ldy;
+                                    const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((canvasX - ax) * ldx + (canvasY - ay) * ldy) / lenSq));
+                                    const projX = ax + t * ldx, projY = ay + t * ldy;
+                                    const dist = Math.sqrt((canvasX - projX) ** 2 + (canvasY - projY) ** 2);
+                                    if (dist <= HIT_DIST) { hitLine = true; break; }
+                                  }
+                                  if (hitLine) {
+                                    clearSelections(); setSelectedLineId(le.id);
+                                    handleElementDragStart("line", le.id, canvasX, canvasY, panel);
+                                    return;
+                                  }
+                                } else if (item.type === "drawing") {
+                                  const dl = item.dl;
+                                  const dlHit = hitTestDrawingLayers([dl], canvasX, canvasY, 450, 600);
+                                  if (dlHit) {
+                                    clearSelections(); setSelectedDrawingLayerId(dl.id);
+                                    handleElementDragStart("drawing", dl.id, canvasX, canvasY, panel);
+                                    return;
+                                  }
+                                } else if (item.type === "bubble") {
+                                  const b = item.b;
+                                  if (b.locked || b.visible === false) continue;
+                                  if (canvasX >= b.x && canvasX <= b.x + b.width && canvasY >= b.y && canvasY <= b.y + b.height) {
+                                    clearSelections(); setSelectedBubbleId(b.id);
+                                    startWindowDrag("bubble", b.id, canvasX, canvasY);
+                                    return;
+                                  }
+                                } else if (item.type === "char") {
+                                  const ch = item.ch;
                                   if (ch.locked || ch.visible === false) continue;
                                   const cw = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
                                   const chH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
                                   if (canvasX >= ch.x - cw / 2 && canvasX <= ch.x + cw / 2 &&
                                       canvasY >= ch.y - chH / 2 && canvasY <= ch.y + chH / 2) {
-                                    setSelectedCharId(ch.id);
-                                    setSelectedBubbleId(null);
-                                    setSelectedTextId(null);
-                                    setSelectedLineId(null);
-                                    setSelectedShapeId(null);
-                                    setSelectedDrawingLayerId(null);
-                                    startCharWindowDrag(ch.id, canvasX, canvasY);
+                                    clearSelections(); setSelectedCharId(ch.id);
+                                    startWindowDrag("char", ch.id, canvasX, canvasY);
                                     return;
                                   }
                                 }
@@ -6642,12 +6576,7 @@ export default function StoryPage() {
 
                               // Nothing hit — clear all selections
                               {
-                                setSelectedDrawingLayerId(null);
-                                setSelectedTextId(null);
-                                setSelectedLineId(null);
-                                setSelectedShapeId(null);
-                                setSelectedBubbleId(null);
-                                setSelectedCharId(null);
+                                clearSelections();
                                 setEditingTextId(null);
                               }
                             }}
