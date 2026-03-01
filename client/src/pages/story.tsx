@@ -282,6 +282,7 @@ interface CharacterPlacement {
   imageEl: HTMLImageElement | null;
   zIndex?: number;
   locked?: boolean;
+  visible?: boolean;
 }
 
 interface ScriptData {
@@ -998,6 +999,16 @@ function PanelCanvas({
     }
 
     drawables.forEach((d) => {
+      // Skip invisible elements
+      const isHidden =
+        (d.type === "char" && d.ch.visible === false) ||
+        (d.type === "bubble" && d.b.visible === false) ||
+        (d.type === "text" && d.te.visible === false) ||
+        (d.type === "line" && d.le.visible === false) ||
+        (d.type === "shape" && d.se.visible === false) ||
+        (d.type === "drawing" && !d.dl.visible);
+      if (isHidden) return;
+
       // Get the element ID for mask lookup
       const elementId = d.type === "char" ? d.ch.id
         : d.type === "bubble" ? d.b.id
@@ -4409,9 +4420,9 @@ export default function StoryPage() {
   // Text element inline editing state
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
 
-  // Drag state for text/line/shape/char element movement
+  // Drag state for text/line/shape/char/bubble element movement
   const dragElementRef = useRef<{
-    type: "text" | "line" | "drawing" | "shape" | "char";
+    type: "text" | "line" | "drawing" | "shape" | "char" | "bubble";
     id: string;
     startMouseX: number;
     startMouseY: number;
@@ -4420,17 +4431,33 @@ export default function StoryPage() {
     startW?: number;
     startH?: number;
     startScale?: number;
+    // For mask group movement: linked layer start positions
+    linkedStarts?: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>;
   } | null>(null);
 
   const handleElementDragStart = useCallback((
-    type: "text" | "line" | "drawing" | "shape" | "char",
+    type: "text" | "line" | "drawing" | "shape" | "char" | "bubble",
     id: string,
     mouseX: number,
     mouseY: number,
     panel: PanelData,
     resizeMode?: "tl" | "tr" | "bl" | "br",
   ) => {
-    if (type === "char") {
+    if (type === "bubble") {
+      const b = panel.bubbles.find(bb => bb.id === id);
+      if (b) {
+        dragElementRef.current = {
+          type: "bubble",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: [{ x: b.x, y: b.y }],
+          resizeMode,
+          startW: b.width,
+          startH: b.height,
+        };
+      }
+    } else if (type === "char") {
       const ch = panel.characters.find(c => c.id === id);
       if (ch) {
         const cw = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
@@ -4486,6 +4513,27 @@ export default function StoryPage() {
     } else if (type === "shape") {
       const se = (panel.shapeElements || []).find(s => s.id === id);
       if (se) {
+        // Capture linked layer start positions for mask group movement
+        let linkedStarts: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }> | undefined;
+        if (se.maskEnabled && se.maskedLayerIds && se.maskedLayerIds.length > 0 && !resizeMode) {
+          linkedStarts = new Map();
+          const maskedSet = new Set(se.maskedLayerIds);
+          for (const c of panel.characters) {
+            if (maskedSet.has(c.id)) linkedStarts.set(c.id, { x: c.x, y: c.y });
+          }
+          for (const b of panel.bubbles) {
+            if (maskedSet.has(b.id)) linkedStarts.set(b.id, { x: b.x, y: b.y });
+          }
+          for (const dl of (panel.drawingLayers || [])) {
+            if (maskedSet.has(dl.id)) linkedStarts.set(dl.id, { x: dl.x ?? 0, y: dl.y ?? 0 });
+          }
+          for (const te of (panel.textElements || [])) {
+            if (maskedSet.has(te.id)) linkedStarts.set(te.id, { x: te.x, y: te.y });
+          }
+          for (const le of (panel.lineElements || [])) {
+            if (maskedSet.has(le.id)) linkedStarts.set(le.id, { points: le.points.map(pt => ({ x: pt.x, y: pt.y })) });
+          }
+        }
         dragElementRef.current = {
           type: "shape",
           id,
@@ -4495,6 +4543,7 @@ export default function StoryPage() {
           resizeMode,
           startW: se.width,
           startH: se.height,
+          linkedStarts,
         };
       }
     }
@@ -4508,7 +4557,27 @@ export default function StoryPage() {
     const dx = mouseX - drag.startMouseX;
     const dy = mouseY - drag.startMouseY;
 
-    if (drag.type === "char") {
+    if (drag.type === "bubble") {
+      const newBubbles = p.bubbles.map(b => {
+        if (b.id !== drag.id) return b;
+        if (drag.resizeMode) {
+          const startX = drag.startPositions[0].x;
+          const startY = drag.startPositions[0].y;
+          const startW = drag.startW ?? b.width;
+          const startH = drag.startH ?? b.height;
+          let newX = startX, newY = startY, newW = startW, newH = startH;
+          switch (drag.resizeMode) {
+            case "br": newW = Math.max(20, startW + dx); newH = Math.max(20, startH + dy); break;
+            case "bl": newX = startX + dx; newW = Math.max(20, startW - dx); newH = Math.max(20, startH + dy); break;
+            case "tr": newY = startY + dy; newW = Math.max(20, startW + dx); newH = Math.max(20, startH - dy); break;
+            case "tl": newX = startX + dx; newY = startY + dy; newW = Math.max(20, startW - dx); newH = Math.max(20, startH - dy); break;
+          }
+          return { ...b, x: newX, y: newY, width: newW, height: newH };
+        }
+        return { ...b, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
+      });
+      updatePanel(panelIdx, { ...p, bubbles: newBubbles });
+    } else if (drag.type === "char") {
       const newChars = p.characters.map(ch => {
         if (ch.id !== drag.id) return ch;
         if (drag.resizeMode) {
@@ -4584,6 +4653,7 @@ export default function StoryPage() {
       });
       updatePanel(panelIdx, { ...p, drawingLayers: newLayers });
     } else if (drag.type === "shape") {
+      const draggedShape = (p.shapeElements || []).find(se => se.id === drag.id);
       const newShapes = (p.shapeElements || []).map(se => {
         if (se.id !== drag.id) return se;
         if (drag.resizeMode) {
@@ -4618,7 +4688,33 @@ export default function StoryPage() {
         }
         return { ...se, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, shapeElements: newShapes });
+
+      // If dragged mask shape, move linked layers together
+      const linked = drag.linkedStarts;
+      const updated: Record<string, any> = { shapeElements: newShapes };
+      if (linked && linked.size > 0 && !drag.resizeMode) {
+        updated.characters = p.characters.map(c => {
+          const s = linked.get(c.id);
+          return s && "x" in s ? { ...c, x: s.x + dx, y: s.y + dy } : c;
+        });
+        updated.bubbles = p.bubbles.map(b => {
+          const s = linked.get(b.id);
+          return s && "x" in s ? { ...b, x: s.x + dx, y: s.y + dy } : b;
+        });
+        updated.drawingLayers = (p.drawingLayers || []).map(dl => {
+          const s = linked.get(dl.id);
+          return s && "x" in s ? { ...dl, x: s.x + dx, y: s.y + dy } : dl;
+        });
+        updated.textElements = (p.textElements || []).map((te: any) => {
+          const s = linked.get(te.id);
+          return s && "x" in s ? { ...te, x: s.x + dx, y: s.y + dy } : te;
+        });
+        updated.lineElements = (p.lineElements || []).map((le: any) => {
+          const s = linked.get(le.id);
+          return s && "points" in s ? { ...le, points: s.points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy })) } : le;
+        });
+      }
+      updatePanel(panelIdx, { ...p, ...updated });
     }
   }, [panels, updatePanel]);
 
@@ -6350,6 +6446,7 @@ export default function StoryPage() {
                               }
                               // Check shape bounding boxes
                               for (const se of shapeEls) {
+                                if (se.locked || se.visible === false) continue;
                                 if (canvasX >= se.x && canvasX <= se.x + se.width && canvasY >= se.y && canvasY <= se.y + se.height) {
                                   setSelectedShapeId(se.id);
                                   setSelectedTextId(null);
@@ -6365,6 +6462,7 @@ export default function StoryPage() {
                               // Hit test text elements
                               const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
                               for (const te of textEls) {
+                                if (te.locked || te.visible === false) continue;
                                 if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
                                   setSelectedTextId(te.id);
                                   setSelectedLineId(null);
@@ -6380,6 +6478,7 @@ export default function StoryPage() {
                               // Hit test line elements
                               const lineEls = [...(panel.lineElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
                               for (const le of lineEls) {
+                                if (le.locked || le.visible === false) continue;
                                 if (le.points.length < 2) continue;
                                 const HIT_DIST = 12;
                                 let hitLine = false;
@@ -6408,7 +6507,8 @@ export default function StoryPage() {
                               }
 
                               // Hit test drawing layers
-                              const hit = hitTestDrawingLayers(panel.drawingLayers || [], canvasX, canvasY, 450, 600);
+                              const visibleDrawingLayers = (panel.drawingLayers || []).filter(dl => dl.visible && !dl.locked);
+                              const hit = hitTestDrawingLayers(visibleDrawingLayers, canvasX, canvasY, 450, 600);
                               if (hit) {
                                 setSelectedDrawingLayerId(hit.id);
                                 setSelectedTextId(null);
@@ -6461,6 +6561,43 @@ export default function StoryPage() {
                                 }
                               }
 
+                              // Helper: register window-level listeners for bubble drag
+                              const startBubbleWindowDrag = (bubbleId: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br") => {
+                                handleElementDragStart("bubble", bubbleId, cx, cy, panel, resizeMode);
+                                const overlayRect = e.currentTarget.getBoundingClientRect();
+                                const onMove = (me: MouseEvent) => {
+                                  const mx = ((me.clientX - overlayRect.left) / overlayRect.width) * 450;
+                                  const my = ((me.clientY - overlayRect.top) / overlayRect.height) * 600;
+                                  handleElementDragMove(mx, my, i);
+                                };
+                                const onUp = () => {
+                                  handleElementDragEnd();
+                                  window.removeEventListener("mousemove", onMove);
+                                  window.removeEventListener("mouseup", onUp);
+                                };
+                                window.addEventListener("mousemove", onMove);
+                                window.addEventListener("mouseup", onUp);
+                              };
+
+                              // Check resize handles of selected bubble
+                              if (selectedBubbleId) {
+                                const selB = panel.bubbles.find(b => b.id === selectedBubbleId);
+                                if (selB && !selB.locked) {
+                                  const bCorners: { mode: "tl" | "tr" | "bl" | "br"; hx: number; hy: number }[] = [
+                                    { mode: "tl", hx: selB.x, hy: selB.y },
+                                    { mode: "tr", hx: selB.x + selB.width, hy: selB.y },
+                                    { mode: "bl", hx: selB.x, hy: selB.y + selB.height },
+                                    { mode: "br", hx: selB.x + selB.width, hy: selB.y + selB.height },
+                                  ];
+                                  for (const corner of bCorners) {
+                                    if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
+                                      startBubbleWindowDrag(selB.id, canvasX, canvasY, corner.mode);
+                                      return;
+                                    }
+                                  }
+                                }
+                              }
+
                               // Hit test bubbles and characters (so they're selectable and draggable through the overlay)
                               const charBubbles: Array<
                                 | { type: "bubble"; z: number; b: typeof panel.bubbles[0] }
@@ -6473,6 +6610,7 @@ export default function StoryPage() {
                               for (const cb of charBubbles) {
                                 if (cb.type === "bubble") {
                                   const b = cb.b;
+                                  if (b.locked || b.visible === false) continue;
                                   if (canvasX >= b.x && canvasX <= b.x + b.width && canvasY >= b.y && canvasY <= b.y + b.height) {
                                     setSelectedBubbleId(b.id);
                                     setSelectedCharId(null);
@@ -6480,10 +6618,12 @@ export default function StoryPage() {
                                     setSelectedLineId(null);
                                     setSelectedShapeId(null);
                                     setSelectedDrawingLayerId(null);
+                                    startBubbleWindowDrag(b.id, canvasX, canvasY);
                                     return;
                                   }
                                 } else {
                                   const ch = cb.ch;
+                                  if (ch.locked || ch.visible === false) continue;
                                   const cw = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
                                   const chH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
                                   if (canvasX >= ch.x - cw / 2 && canvasX <= ch.x + cw / 2 &&
@@ -6494,7 +6634,6 @@ export default function StoryPage() {
                                     setSelectedLineId(null);
                                     setSelectedShapeId(null);
                                     setSelectedDrawingLayerId(null);
-                                    // Start character move drag
                                     startCharWindowDrag(ch.id, canvasX, canvasY);
                                     return;
                                   }
@@ -6514,21 +6653,21 @@ export default function StoryPage() {
                             }}
                             onMouseMove={(e) => {
                               if (!dragElementRef.current) return;
-                              // Shape and char drags are handled by window-level listeners
-                              if (dragElementRef.current.type === "shape" || dragElementRef.current.type === "char") return;
+                              // Shape/char/bubble drags are handled by window-level listeners
+                              if (dragElementRef.current.type === "shape" || dragElementRef.current.type === "char" || dragElementRef.current.type === "bubble") return;
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
                               handleElementDragMove(canvasX, canvasY, i);
                             }}
                             onMouseUp={() => {
-                              // Shape and char drags are handled by window-level listeners
-                              if (dragElementRef.current?.type === "shape" || dragElementRef.current?.type === "char") return;
+                              // Shape/char/bubble drags are handled by window-level listeners
+                              if (dragElementRef.current?.type === "shape" || dragElementRef.current?.type === "char" || dragElementRef.current?.type === "bubble") return;
                               handleElementDragEnd();
                             }}
                             onMouseLeave={() => {
-                              // Shape and char drags are handled by window-level listeners
-                              if (dragElementRef.current?.type === "shape" || dragElementRef.current?.type === "char") return;
+                              // Shape/char/bubble drags are handled by window-level listeners
+                              if (dragElementRef.current?.type === "shape" || dragElementRef.current?.type === "char" || dragElementRef.current?.type === "bubble") return;
                               handleElementDragEnd();
                             }}
                             onDoubleClick={(e) => {
@@ -6890,6 +7029,8 @@ export default function StoryPage() {
               z: c.zIndex ?? 0,
               label: "캐릭터",
               thumb: c.imageUrl,
+              visible: c.visible,
+              locked: c.locked,
               clipMaskId: layerToMaskId.get(c.id),
             })),
             ...activePanel.bubbles.map((b: SpeechBubble, i: number) => ({
@@ -6898,6 +7039,8 @@ export default function StoryPage() {
               z: b.zIndex ?? 10,
               label: b.text || STYLE_LABELS[b.style] || `말풍선 ${i + 1}`,
               thumb: b.style === "image" && (b as any).templateSrc ? (b as any).templateSrc : undefined,
+              visible: b.visible,
+              locked: b.locked,
               clipMaskId: layerToMaskId.get(b.id),
             })),
             ...(activePanel.drawingLayers || []).map((dl) => ({
@@ -6908,6 +7051,7 @@ export default function StoryPage() {
               thumb: dl.imageData,
               drawingType: dl.type,
               visible: dl.visible,
+              locked: dl.locked,
               clipMaskId: layerToMaskId.get(dl.id),
             })),
             ...(activePanel.textElements || []).map((te: CanvasTextElement, i: number) => ({
@@ -6916,6 +7060,8 @@ export default function StoryPage() {
               z: te.zIndex ?? 20,
               label: te.text || `텍스트 ${i + 1}`,
               thumb: undefined as string | undefined,
+              visible: te.visible,
+              locked: te.locked,
               clipMaskId: layerToMaskId.get(te.id),
             })),
             ...(activePanel.lineElements || []).map((le: CanvasLineElement, i: number) => ({
@@ -6924,6 +7070,8 @@ export default function StoryPage() {
               z: le.zIndex ?? 20,
               label: le.lineType === "straight" ? "직선" : le.lineType === "curved" ? "곡선" : "꺾인선",
               thumb: undefined as string | undefined,
+              visible: le.visible,
+              locked: le.locked,
               clipMaskId: layerToMaskId.get(le.id),
             })),
             ...(activePanel.shapeElements || []).map((se: CanvasShapeElement, i: number) => ({
@@ -6932,6 +7080,8 @@ export default function StoryPage() {
               z: se.zIndex ?? 20,
               label: se.shapeType === "rectangle" ? "사각형" : se.shapeType === "circle" ? "원" : se.shapeType === "triangle" ? "삼각형" : se.shapeType === "diamond" ? "다이아몬드" : se.shapeType === "star" ? "별" : "화살표",
               thumb: undefined as string | undefined,
+              visible: se.visible,
+              locked: se.locked,
               maskEnabled: se.maskEnabled,
             })),
           ].sort((a, b) => b.z - a.z);
@@ -7555,6 +7705,86 @@ export default function StoryPage() {
                           ...activePanel,
                           drawingLayers: (activePanel.drawingLayers || []).map(dl =>
                             dl.id === item.id ? { ...dl, visible: !dl.visible } : dl
+                          ),
+                        });
+                      } else if (item.type === "char") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          characters: activePanel.characters.map(c =>
+                            c.id === item.id ? { ...c, visible: c.visible === false ? undefined : false } : c
+                          ),
+                        });
+                      } else if (item.type === "bubble") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          bubbles: activePanel.bubbles.map(b =>
+                            b.id === item.id ? { ...b, visible: b.visible === false ? undefined : false } : b
+                          ),
+                        });
+                      } else if (item.type === "text") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          textElements: (activePanel.textElements || []).map((te: CanvasTextElement) =>
+                            te.id === item.id ? { ...te, visible: te.visible === false ? undefined : false } : te
+                          ),
+                        });
+                      } else if (item.type === "line") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          lineElements: (activePanel.lineElements || []).map((le: CanvasLineElement) =>
+                            le.id === item.id ? { ...le, visible: le.visible === false ? undefined : false } : le
+                          ),
+                        });
+                      } else if (item.type === "shape") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          shapeElements: (activePanel.shapeElements || []).map((se: CanvasShapeElement) =>
+                            se.id === item.id ? { ...se, visible: se.visible === false ? undefined : false } : se
+                          ),
+                        });
+                      }
+                    }}
+                    onToggleLock={(item) => {
+                      if (item.type === "char") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          characters: activePanel.characters.map(c =>
+                            c.id === item.id ? { ...c, locked: !c.locked } : c
+                          ),
+                        });
+                      } else if (item.type === "bubble") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          bubbles: activePanel.bubbles.map(b =>
+                            b.id === item.id ? { ...b, locked: !b.locked } : b
+                          ),
+                        });
+                      } else if (item.type === "drawing") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          drawingLayers: (activePanel.drawingLayers || []).map(dl =>
+                            dl.id === item.id ? { ...dl, locked: !dl.locked } : dl
+                          ),
+                        });
+                      } else if (item.type === "text") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          textElements: (activePanel.textElements || []).map((te: CanvasTextElement) =>
+                            te.id === item.id ? { ...te, locked: !te.locked } : te
+                          ),
+                        });
+                      } else if (item.type === "line") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          lineElements: (activePanel.lineElements || []).map((le: CanvasLineElement) =>
+                            le.id === item.id ? { ...le, locked: !le.locked } : le
+                          ),
+                        });
+                      } else if (item.type === "shape") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          shapeElements: (activePanel.shapeElements || []).map((se: CanvasShapeElement) =>
+                            se.id === item.id ? { ...se, locked: !se.locked } : se
                           ),
                         });
                       }

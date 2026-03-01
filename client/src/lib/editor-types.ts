@@ -43,6 +43,7 @@ export interface DrawingLayer {
   opacity: number;
   x?: number;
   y?: number;
+  locked?: boolean;
 }
 
 export interface PanelData {

@@ -83,6 +83,7 @@ export interface SpeechBubble {
     zIndex?: number;
     groupId?: string;
     locked?: boolean;
+    visible?: boolean;
 }
 
 export interface CharacterOverlay {

@@ -16,6 +16,8 @@ import {
   Scan,
   Link,
   Unlink,
+  Lock,
+  LockOpen,
 } from "lucide-react";
 import { Spline, GitCommitHorizontal } from "lucide-react";
 import { STYLE_LABELS } from "@/lib/bubble-utils";
@@ -28,6 +30,7 @@ export interface LayerItem {
   thumb?: string;
   drawingType?: string;
   visible?: boolean;
+  locked?: boolean;
   maskEnabled?: boolean;
   clipMaskId?: string;
 }
@@ -62,6 +65,7 @@ interface LayerListPanelProps {
   onMoveLayer: (index: number, direction: "up" | "down") => void;
   onDeleteLayer: (item: LayerItem) => void;
   onToggleVisibility?: (item: LayerItem) => void;
+  onToggleLock?: (item: LayerItem) => void;
   onFlipChar?: (id: string) => void;
   onSetToolItem?: (tool: string) => void;
   onToggleMaskLink?: (layerId: string, layerType: string, maskId: string) => void;
@@ -84,6 +88,7 @@ export function LayerListPanel({
   onMoveLayer,
   onDeleteLayer,
   onToggleVisibility,
+  onToggleLock,
   onFlipChar,
   onSetToolItem,
   onToggleMaskLink,
@@ -236,7 +241,7 @@ export function LayerListPanel({
                     ? "bg-primary/10 border border-primary/20"
                     : "bg-primary/15 border border-primary/30"
                   : "hover:bg-muted/40"
-              } ${item.type === "drawing" && item.visible === false ? "opacity-40" : ""}`}
+              } ${item.visible === false ? "opacity-40" : ""} ${item.locked ? "opacity-70" : ""}`}
               onClick={(e) => handleClick(item, i, e)}
             >
               <div className="flex items-center gap-1.5 min-w-0">
@@ -281,15 +286,26 @@ export function LayerListPanel({
                     {isLinkedToMask ? <Link className="h-3 w-3" /> : <Unlink className="h-3 w-3" />}
                   </Button>
                 )}
-                {item.type === "drawing" && onToggleVisibility && (
+                {onToggleVisibility && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5"
+                    className={`h-5 w-5 ${item.visible === false ? "text-muted-foreground/50" : ""}`}
                     onClick={(e) => { e.stopPropagation(); onToggleVisibility(item); }}
                     title={item.visible !== false ? "숨기기" : "보이기"}
                   >
                     {item.visible !== false ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </Button>
+                )}
+                {onToggleLock && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-5 w-5 ${item.locked ? "text-yellow-600" : ""}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleLock(item); }}
+                    title={item.locked ? "잠금 해제" : "잠금"}
+                  >
+                    {item.locked ? <Lock className="h-3 w-3" /> : <LockOpen className="h-3 w-3" />}
                   </Button>
                 )}
                 {item.type === "char" && onFlipChar && !hasMulti && (

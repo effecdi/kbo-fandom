@@ -68,6 +68,8 @@ export interface CanvasTextElement {
   textTransform: TextTransform;
   opacity: number;
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
 }
 
 export interface CanvasLineElement {
@@ -81,6 +83,8 @@ export interface CanvasLineElement {
   endArrow: boolean;
   dashPattern: DashPattern;
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
 }
 
 export type ShapeType = "rectangle" | "circle" | "triangle" | "diamond" | "star" | "arrow";
@@ -99,6 +103,8 @@ export interface CanvasShapeElement {
   zIndex: number;
   maskEnabled?: boolean;
   maskedLayerIds?: string[];
+  visible?: boolean;
+  locked?: boolean;
 }
 
 export function createTextElement(canvasW: number, canvasH: number): CanvasTextElement {
