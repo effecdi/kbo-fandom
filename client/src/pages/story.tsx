@@ -1186,20 +1186,24 @@ function PanelCanvas({
             ctx.setLineDash([5, 4]);
             ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
             ctx.setLineDash([]);
-            const handleSize = 8;
-            const corners = [
-              { x: se.x - handleSize / 2, y: se.y - handleSize / 2 },
-              { x: se.x + se.width - handleSize / 2, y: se.y - handleSize / 2 },
-              { x: se.x - handleSize / 2, y: se.y + se.height - handleSize / 2 },
-              { x: se.x + se.width - handleSize / 2, y: se.y + se.height - handleSize / 2 },
+            const hs = 8;
+            const handles = [
+              { x: se.x - hs / 2, y: se.y - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y - hs / 2 },
+              { x: se.x - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x + se.width / 2 - hs / 2, y: se.y - hs / 2 },
+              { x: se.x + se.width / 2 - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x - hs / 2, y: se.y + se.height / 2 - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y + se.height / 2 - hs / 2 },
             ];
-            corners.forEach((c) => {
+            handles.forEach((c) => {
               ctx.beginPath();
               ctx.fillStyle = "#ffffff";
-              ctx.fillRect(c.x, c.y, handleSize, handleSize);
+              ctx.fillRect(c.x, c.y, hs, hs);
               ctx.strokeStyle = HANDLE_COLOR;
               ctx.lineWidth = 1.5;
-              ctx.strokeRect(c.x, c.y, handleSize, handleSize);
+              ctx.strokeRect(c.x, c.y, hs, hs);
             });
             ctx.restore();
           }
@@ -1229,21 +1233,27 @@ function PanelCanvas({
             ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
             ctx.setLineDash([]);
 
-            // Resize handles at 4 corners
-            const handleSize = 8;
-            const corners = [
-              { x: se.x - handleSize / 2, y: se.y - handleSize / 2 },
-              { x: se.x + se.width - handleSize / 2, y: se.y - handleSize / 2 },
-              { x: se.x - handleSize / 2, y: se.y + se.height - handleSize / 2 },
-              { x: se.x + se.width - handleSize / 2, y: se.y + se.height - handleSize / 2 },
+            // Resize handles: 4 corners + 4 edges = 8 handles
+            const hs = 8;
+            const handles = [
+              // corners
+              { x: se.x - hs / 2, y: se.y - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y - hs / 2 },
+              { x: se.x - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y + se.height - hs / 2 },
+              // edges
+              { x: se.x + se.width / 2 - hs / 2, y: se.y - hs / 2 },
+              { x: se.x + se.width / 2 - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x - hs / 2, y: se.y + se.height / 2 - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y + se.height / 2 - hs / 2 },
             ];
-            corners.forEach((c) => {
+            handles.forEach((c) => {
               ctx.beginPath();
               ctx.fillStyle = "#ffffff";
-              ctx.fillRect(c.x, c.y, handleSize, handleSize);
+              ctx.fillRect(c.x, c.y, hs, hs);
               ctx.strokeStyle = HANDLE_COLOR;
               ctx.lineWidth = 1.5;
-              ctx.strokeRect(c.x, c.y, handleSize, handleSize);
+              ctx.strokeRect(c.x, c.y, hs, hs);
             });
           }
 
@@ -4427,7 +4437,7 @@ export default function StoryPage() {
     startMouseX: number;
     startMouseY: number;
     startPositions: { x: number; y: number }[];
-    resizeMode?: "tl" | "tr" | "bl" | "br";
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r";
     startW?: number;
     startH?: number;
     startScale?: number;
@@ -4441,7 +4451,7 @@ export default function StoryPage() {
     mouseX: number,
     mouseY: number,
     panel: PanelData,
-    resizeMode?: "tl" | "tr" | "bl" | "br",
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r",
   ) => {
     if (type === "bubble") {
       const b = panel.bubbles.find(bb => bb.id === id);
@@ -4571,6 +4581,10 @@ export default function StoryPage() {
             case "bl": newX = startX + dx; newW = Math.max(20, startW - dx); newH = Math.max(20, startH + dy); break;
             case "tr": newY = startY + dy; newW = Math.max(20, startW + dx); newH = Math.max(20, startH - dy); break;
             case "tl": newX = startX + dx; newY = startY + dy; newW = Math.max(20, startW - dx); newH = Math.max(20, startH - dy); break;
+            case "r": newW = Math.max(20, startW + dx); break;
+            case "l": newX = startX + dx; newW = Math.max(20, startW - dx); break;
+            case "b": newH = Math.max(20, startH + dy); break;
+            case "t": newY = startY + dy; newH = Math.max(20, startH - dy); break;
           }
           return { ...b, x: newX, y: newY, width: newW, height: newH };
         }
@@ -4683,6 +4697,10 @@ export default function StoryPage() {
               newW = Math.max(20, startW - dx);
               newH = Math.max(20, startH - dy);
               break;
+            case "r": newW = Math.max(20, startW + dx); break;
+            case "l": newX = startX + dx; newW = Math.max(20, startW - dx); break;
+            case "b": newH = Math.max(20, startH + dy); break;
+            case "t": newY = startY + dy; newH = Math.max(20, startH - dy); break;
           }
           return { ...se, x: newX, y: newY, width: newW, height: newH };
         }
@@ -6409,7 +6427,7 @@ export default function StoryPage() {
                               const overlayRect = e.currentTarget.getBoundingClientRect();
 
                               // Helper: register window-level listeners for element drag
-                              const startWindowDrag = (type: "shape" | "char" | "bubble", id: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br") => {
+                              const startWindowDrag = (type: "shape" | "char" | "bubble", id: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r") => {
                                 handleElementDragStart(type, id, cx, cy, panel, resizeMode);
                                 const onMove = (me: MouseEvent) => {
                                   const mx = ((me.clientX - overlayRect.left) / overlayRect.width) * 450;
@@ -6429,15 +6447,19 @@ export default function StoryPage() {
                               if (selectedShapeId) {
                                 const selShape = (panel.shapeElements || []).find(s => s.id === selectedShapeId);
                                 if (selShape) {
-                                  const corners: { mode: "tl" | "tr" | "bl" | "br"; cx: number; cy: number }[] = [
+                                  const shapeHandles: { mode: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r"; cx: number; cy: number }[] = [
                                     { mode: "tl", cx: selShape.x, cy: selShape.y },
                                     { mode: "tr", cx: selShape.x + selShape.width, cy: selShape.y },
                                     { mode: "bl", cx: selShape.x, cy: selShape.y + selShape.height },
                                     { mode: "br", cx: selShape.x + selShape.width, cy: selShape.y + selShape.height },
+                                    { mode: "t", cx: selShape.x + selShape.width / 2, cy: selShape.y },
+                                    { mode: "b", cx: selShape.x + selShape.width / 2, cy: selShape.y + selShape.height },
+                                    { mode: "l", cx: selShape.x, cy: selShape.y + selShape.height / 2 },
+                                    { mode: "r", cx: selShape.x + selShape.width, cy: selShape.y + selShape.height / 2 },
                                   ];
-                                  for (const corner of corners) {
-                                    if (Math.abs(canvasX - corner.cx) <= HANDLE_HIT && Math.abs(canvasY - corner.cy) <= HANDLE_HIT) {
-                                      startWindowDrag("shape", selShape.id, canvasX, canvasY, corner.mode);
+                                  for (const h of shapeHandles) {
+                                    if (Math.abs(canvasX - h.cx) <= HANDLE_HIT && Math.abs(canvasY - h.cy) <= HANDLE_HIT) {
+                                      startWindowDrag("shape", selShape.id, canvasX, canvasY, h.mode);
                                       return;
                                     }
                                   }
@@ -6467,11 +6489,15 @@ export default function StoryPage() {
                               if (selectedBubbleId) {
                                 const selB = panel.bubbles.find(b => b.id === selectedBubbleId);
                                 if (selB && !selB.locked) {
-                                  const bCorners: { mode: "tl" | "tr" | "bl" | "br"; hx: number; hy: number }[] = [
+                                  const bCorners: { mode: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r"; hx: number; hy: number }[] = [
                                     { mode: "tl", hx: selB.x, hy: selB.y },
                                     { mode: "tr", hx: selB.x + selB.width, hy: selB.y },
                                     { mode: "bl", hx: selB.x, hy: selB.y + selB.height },
                                     { mode: "br", hx: selB.x + selB.width, hy: selB.y + selB.height },
+                                    { mode: "t", hx: selB.x + selB.width / 2, hy: selB.y },
+                                    { mode: "b", hx: selB.x + selB.width / 2, hy: selB.y + selB.height },
+                                    { mode: "l", hx: selB.x, hy: selB.y + selB.height / 2 },
+                                    { mode: "r", hx: selB.x + selB.width, hy: selB.y + selB.height / 2 },
                                   ];
                                   for (const corner of bCorners) {
                                     if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
