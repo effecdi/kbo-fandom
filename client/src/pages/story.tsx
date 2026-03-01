@@ -1318,8 +1318,14 @@ function PanelCanvas({
         const renderB = b.id === editingBubbleIdRef.current ? { ...b, text: "" } : b;
         drawBubble(ctx, renderB, b.id === selectedBubbleIdRef.current);
       }
+
+      // After rendering a non-mask drawable, restore clip so mask only affects ONE layer
+      if (maskClipActive && !(d.type === "shape" && d.se.maskEnabled)) {
+        ctx.restore();
+        maskClipActive = false;
+      }
     });
-    // Restore any remaining active mask clip
+    // Restore any remaining active mask clip (safety net)
     if (maskClipActive) {
       ctx.restore();
     }
