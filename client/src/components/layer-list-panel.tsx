@@ -1,3 +1,4 @@
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Layers,
@@ -28,7 +29,7 @@ export interface LayerItem {
   drawingType?: string;
   visible?: boolean;
   maskEnabled?: boolean;
-  clipMaskId?: string; // ID of mask shape this layer is clipped by
+  clipMaskId?: string;
 }
 
 const DRAWING_TYPE_ICONS: Record<string, typeof Pen> = {
@@ -39,6 +40,10 @@ const DRAWING_TYPE_ICONS: Record<string, typeof Pen> = {
   text: Type,
   eraser: Eraser,
 };
+
+function layerKey(item: LayerItem) {
+  return `${item.type}:${item.id}`;
+}
 
 interface LayerListPanelProps {
   items: LayerItem[];
@@ -83,8 +88,80 @@ export function LayerListPanel({
   onSetToolItem,
   onToggleMaskLink,
 }: LayerListPanelProps) {
-  // Collect available mask shapes
   const maskShapes = items.filter(it => it.type === "shape" && it.maskEnabled);
+
+  // Multi-selection state
+  const [multiSelected, setMultiSelected] = useState<Set<string>>(new Set());
+  const lastClickIndexRef = useRef<number>(-1);
+
+  const selectSingle = useCallback((item: LayerItem, index: number) => {
+    setMultiSelected(new Set());
+    lastClickIndexRef.current = index;
+
+    onSelectChar(null);
+    onSelectBubble(null);
+    onSelectDrawingLayer?.(null);
+    onSelectText?.(null);
+    onSelectLine?.(null);
+    onSelectShape?.(null);
+
+    if (item.type === "char") {
+      onSelectChar(item.id);
+    } else if (item.type === "bubble") {
+      onSelectBubble(item.id);
+    } else if (item.type === "drawing") {
+      onSelectDrawingLayer?.(item.id);
+      onSetToolItem?.("select");
+    } else if (item.type === "text") {
+      onSelectText?.(item.id);
+      onSetToolItem?.("select");
+    } else if (item.type === "line") {
+      onSelectLine?.(item.id);
+      onSetToolItem?.("select");
+    } else if (item.type === "shape") {
+      onSelectShape?.(item.id);
+      onSetToolItem?.("select");
+    }
+  }, [onSelectChar, onSelectBubble, onSelectDrawingLayer, onSelectText, onSelectLine, onSelectShape, onSetToolItem]);
+
+  const selectRange = useCallback((toIndex: number) => {
+    const fromIndex = lastClickIndexRef.current;
+    if (fromIndex < 0) return;
+    const lo = Math.min(fromIndex, toIndex);
+    const hi = Math.max(fromIndex, toIndex);
+    const newSet = new Set<string>();
+    for (let j = lo; j <= hi; j++) {
+      if (items[j]) newSet.add(layerKey(items[j]));
+    }
+    setMultiSelected(newSet);
+  }, [items]);
+
+  const handleClick = useCallback((item: LayerItem, index: number, e: React.MouseEvent) => {
+    if (e.shiftKey && lastClickIndexRef.current >= 0) {
+      e.preventDefault();
+      selectRange(index);
+    } else {
+      selectSingle(item, index);
+    }
+  }, [selectSingle, selectRange]);
+
+  const multiSelectedItems = items.filter(it => multiSelected.has(layerKey(it)));
+  const hasMulti = multiSelectedItems.length > 1;
+
+  const deleteMultiSelected = useCallback(() => {
+    for (const it of multiSelectedItems) {
+      onDeleteLayer(it);
+    }
+    setMultiSelected(new Set());
+  }, [multiSelectedItems, onDeleteLayer]);
+
+  const linkMultiToMask = useCallback((maskId: string) => {
+    if (!onToggleMaskLink) return;
+    for (const it of multiSelectedItems) {
+      if (it.type === "shape" && it.maskEnabled) continue; // skip mask shapes
+      onToggleMaskLink(it.id, it.type, maskId);
+    }
+  }, [multiSelectedItems, onToggleMaskLink]);
 
   return (
     <div className="h-full overflow-y-auto p-3 space-y-2">
@@ -99,9 +176,39 @@ export function LayerListPanel({
         <p className="text-[11px] text-muted-foreground text-center py-4">레이어가 없습니다</p>
       )}
 
+      {/* Bulk action bar */}
+      {hasMulti && (
+        <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-md">
+          <span className="text-[11px] text-primary font-medium flex-1">
+            {multiSelectedItems.length}개 선택
+          </span>
+          {maskShapes.length > 0 && onToggleMaskLink && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-primary"
+              onClick={() => linkMultiToMask(maskShapes[0].id)}
+              title="선택 항목 마스크 연결/해제"
+            >
+              <Link className="h-3 w-3" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 text-red-500"
+            onClick={deleteMultiSelected}
+            title="선택 항목 삭제"
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
       <div className="space-y-0.5">
         {items.map((item, i) => {
-          const isSelected =
+          const key = layerKey(item);
+          const isSingleSelected =
             item.type === "char" ? selectedCharId === item.id
             : item.type === "bubble" ? selectedBubbleId === item.id
             : item.type === "drawing" ? selectedDrawingLayerId === item.id
@@ -110,6 +217,9 @@ export function LayerListPanel({
             : item.type === "shape" ? selectedShapeId === item.id
             : false;
 
+          const isMultiSelected = multiSelected.has(key);
+          const isSelected = hasMulti ? isMultiSelected : isSingleSelected;
+
           const DrawingIcon = item.drawingType ? (DRAWING_TYPE_ICONS[item.drawingType] || Pen) : Pen;
 
           const isMask = item.type === "shape" && item.maskEnabled;
@@ -117,40 +227,17 @@ export function LayerListPanel({
 
           return (
             <div
-              key={`${item.type}:${item.id}`}
+              key={key}
               className={`flex items-center justify-between gap-1.5 rounded-md cursor-pointer transition-colors ${
                 isLinkedToMask ? "pl-5 pr-2" : "px-2"
               } py-1 ${
                 isSelected
-                  ? "bg-primary/15 border border-primary/30"
+                  ? isMultiSelected
+                    ? "bg-primary/10 border border-primary/20"
+                    : "bg-primary/15 border border-primary/30"
                   : "hover:bg-muted/40"
               } ${item.type === "drawing" && item.visible === false ? "opacity-40" : ""}`}
-              onClick={() => {
-                onSelectChar(null);
-                onSelectBubble(null);
-                onSelectDrawingLayer?.(null);
-                onSelectText?.(null);
-                onSelectLine?.(null);
-                onSelectShape?.(null);
-
-                if (item.type === "char") {
-                  onSelectChar(item.id);
-                } else if (item.type === "bubble") {
-                  onSelectBubble(item.id);
-                } else if (item.type === "drawing") {
-                  onSelectDrawingLayer?.(item.id);
-                  onSetToolItem?.("select");
-                } else if (item.type === "text") {
-                  onSelectText?.(item.id);
-                  onSetToolItem?.("select");
-                } else if (item.type === "line") {
-                  onSelectLine?.(item.id);
-                  onSetToolItem?.("select");
-                } else if (item.type === "shape") {
-                  onSelectShape?.(item.id);
-                  onSetToolItem?.("select");
-                }
-              }}
+              onClick={(e) => handleClick(item, i, e)}
             >
               <div className="flex items-center gap-1.5 min-w-0">
                 {isLinkedToMask && (
@@ -179,15 +266,13 @@ export function LayerListPanel({
                 </span>
               </div>
               <div className="flex items-center gap-0 shrink-0">
-                {/* Mask link button for non-mask layers when masks exist */}
-                {!isMask && maskShapes.length > 0 && onToggleMaskLink && (
+                {!isMask && maskShapes.length > 0 && onToggleMaskLink && !hasMulti && (
                   <Button
                     variant="ghost"
                     size="icon"
                     className={`h-5 w-5 ${isLinkedToMask ? "text-primary" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      // If already linked, unlink; if not, link to first available mask
                       const targetMaskId = item.clipMaskId || maskShapes[0].id;
                       onToggleMaskLink(item.id, item.type, targetMaskId);
                     }}
@@ -207,7 +292,7 @@ export function LayerListPanel({
                     {item.visible !== false ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                   </Button>
                 )}
-                {item.type === "char" && onFlipChar && (
+                {item.type === "char" && onFlipChar && !hasMulti && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -218,34 +303,38 @@ export function LayerListPanel({
                     <FlipHorizontal2 className="h-3 w-3" />
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5"
-                  disabled={i === 0}
-                  onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "up"); }}
-                  title="앞으로"
-                >
-                  <ChevronUp className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5"
-                  disabled={i === items.length - 1}
-                  onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "down"); }}
-                  title="뒤로"
-                >
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5"
-                  onClick={(e) => { e.stopPropagation(); onDeleteLayer(item); }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                {!hasMulti && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      disabled={i === 0}
+                      onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "up"); }}
+                      title="앞으로"
+                    >
+                      <ChevronUp className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      disabled={i === items.length - 1}
+                      onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "down"); }}
+                      title="뒤로"
+                    >
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={(e) => { e.stopPropagation(); onDeleteLayer(item); }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           );
