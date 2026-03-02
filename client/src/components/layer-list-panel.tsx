@@ -279,7 +279,7 @@ export function LayerListPanel({
                     onClick={(e) => { e.stopPropagation(); onToggleVisibility(item); }}
                     title={item.visible !== false ? "숨기기" : "보이기"}
                   >
-                    {item.visible !== false ? <Eye className="h-4.5 w-4.5" /> : <EyeOff className="h-4.5 w-4.5" />}
+                    {item.visible !== false ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                   </button>
                 )}
                 {/* 잠금 — 항상 표시, 크고 명확하게 */}
@@ -290,7 +290,7 @@ export function LayerListPanel({
                     onClick={(e) => { e.stopPropagation(); onToggleLock(item); }}
                     title={item.locked ? "잠금 해제" : "잠금"}
                   >
-                    {item.locked ? <Lock className="h-4.5 w-4.5" /> : <LockOpen className="h-4.5 w-4.5" />}
+                    {item.locked ? <Lock className="h-5 w-5" /> : <LockOpen className="h-5 w-5" />}
                   </button>
                 )}
                 {/* 마스크 연결 */}
