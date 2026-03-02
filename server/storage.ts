@@ -41,6 +41,8 @@ export interface IStorage {
   updatePaymentStatus(id: number, status: string): Promise<Payment | undefined>;
   getPaymentsByUser(userId: string): Promise<Payment[]>;
 
+  deleteGeneration(id: number, userId: string): Promise<boolean>;
+
   createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject>;
   getBubbleProjectsByUser(userId: string): Promise<BubbleProject[]>;
   getBubbleProject(id: number, userId: string): Promise<BubbleProject | undefined>;
@@ -258,6 +260,13 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(payments)
       .where(eq(payments.userId, userId))
       .orderBy(desc(payments.createdAt));
+  }
+
+  async deleteGeneration(id: number, userId: string): Promise<boolean> {
+    const db = this.getDb();
+    const result = await db.delete(generations)
+      .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject> {

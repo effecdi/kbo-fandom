@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Download, Image as ImageIcon, Wand2, LayoutGrid, Paintbrush, Trees } from "lucide-react";
+import { Download, Image as ImageIcon, Wand2, LayoutGrid, Paintbrush, Trees, Trash2 } from "lucide-react";
 import type { Generation } from "@shared/schema";
 
 export default function GalleryPage() {
@@ -20,6 +20,19 @@ export default function GalleryPage() {
     if (filter === "all") return true;
     return g.type === filter;
   }) || [];
+
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/gallery/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("삭제에 실패했습니다.");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/gallery"] });
+    },
+  });
 
   const downloadImage = (url: string) => {
     const a = document.createElement("a");
@@ -82,7 +95,21 @@ export default function GalleryPage() {
                   alt={gen.prompt}
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-end justify-end p-3">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-end justify-end p-3 gap-2">
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ visibility: "visible" }}
+                    onClick={() => {
+                      if (confirm("정말 삭제하시겠습니까?")) {
+                        deleteMutation.mutate(gen.id);
+                      }
+                    }}
+                    data-testid={`button-delete-${gen.id}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                   <Button
                     size="icon"
                     variant="secondary"

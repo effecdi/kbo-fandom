@@ -2,9 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
-import { generateCharacterImage, generatePoseImage, generateWithBackground } from "./imageGen";
+import { generateCharacterImage, generatePoseImage, generateWithBackground, removeWhiteBackground } from "./imageGen";
 import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics } from "./aiText";
-import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema } from "@shared/schema";
+import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
 
@@ -196,6 +196,29 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Background generation error:", error);
       res.status(500).json({ message: error.message || "Failed to generate background" });
+    }
+  });
+
+  app.post("/api/remove-background", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const parsed = removeBackgroundSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+      }
+      const { sourceImageData } = parsed.data;
+
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        return res.status(403).json({ message: "배경 제거는 Pro 멤버십 전용 기능입니다." });
+      }
+
+      const imageDataUrl = await removeWhiteBackground(sourceImageData);
+
+      res.json({ imageUrl: imageDataUrl });
+    } catch (error: any) {
+      console.error("Remove background error:", error);
+      res.status(500).json({ message: error.message || "Failed to remove background" });
     }
   });
 
@@ -551,6 +574,20 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Update bubble project error:", error);
       res.status(500).json({ message: error.message || "프로젝트 업데이트에 실패했습니다." });
+    }
+  });
+
+  app.delete("/api/gallery/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const deleted = await storage.deleteGeneration(id, userId);
+      if (!deleted) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Delete gallery item error:", error);
+      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
     }
   });
 
