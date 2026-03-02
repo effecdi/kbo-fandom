@@ -590,7 +590,10 @@ export async function registerRoutes(
       const id = parseInt(String(req.params.id));
       if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
       const deleted = await storage.deleteGeneration(id, userId);
-      if (!deleted) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      if (!deleted) {
+        console.warn(`Gallery delete failed: id=${id}, userId=${userId} — not found or not owned`);
+        return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      }
       res.json({ success: true });
     } catch (error: any) {
       console.error("Delete gallery item error:", error);

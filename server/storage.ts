@@ -264,9 +264,16 @@ export class DatabaseStorage implements IStorage {
 
   async deleteGeneration(id: number, userId: string): Promise<boolean> {
     const db = this.getDb();
-    const result = await db.delete(generations)
-      .where(and(eq(generations.id, id), eq(generations.userId, userId)));
-    return (result.rowCount ?? 0) > 0;
+    // First check if the generation exists at all, then delete with ownership check
+    const [existing] = await db.select({ id: generations.id, userId: generations.userId })
+      .from(generations).where(eq(generations.id, id));
+    if (!existing) return false;
+    // Allow deletion if the user owns it OR if userId is empty/null (legacy data)
+    if (existing.userId !== userId && existing.userId) {
+      return false;
+    }
+    await db.delete(generations).where(eq(generations.id, id));
+    return true;
   }
 
   async createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject> {
