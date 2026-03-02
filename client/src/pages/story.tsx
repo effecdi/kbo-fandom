@@ -4170,10 +4170,9 @@ export default function StoryPage() {
 
       try {
         const res = await apiRequest("POST", "/api/generate-background", {
-          sourceImageData: sourceImageUrl,
+          sourceImageDataList: [sourceImageUrl],
           backgroundPrompt: scenePrompt,
           itemsPrompt: sceneItems,
-          characterId: null,
         });
         const data = await res.json() as { imageUrl: string };
         const imageUrl = data.imageUrl;
