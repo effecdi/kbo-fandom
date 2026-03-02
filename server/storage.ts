@@ -97,7 +97,25 @@ export class DatabaseStorage implements IStorage {
 
   async getGenerationsByUser(userId: string): Promise<Generation[]> {
     const db = this.getDb();
-    return db.select().from(generations).where(eq(generations.userId, userId)).orderBy(desc(generations.createdAt));
+    try {
+      return await db.select().from(generations).where(eq(generations.userId, userId)).orderBy(desc(generations.createdAt));
+    } catch {
+      // Fallback: thumbnailUrl column might not exist yet
+      const rows = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        resultImageUrl: generations.resultImageUrl,
+        referenceImageUrl: generations.referenceImageUrl,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .where(eq(generations.userId, userId))
+        .orderBy(desc(generations.createdAt));
+      return rows.map((r: any) => ({ ...r, thumbnailUrl: null })) as Generation[];
+    }
   }
 
   async getGenerationsLight(userId: string, limit: number, offset: number, type?: string): Promise<any[]> {
@@ -158,9 +176,26 @@ export class DatabaseStorage implements IStorage {
 
   async getGenerationById(id: number, userId: string): Promise<Generation | undefined> {
     const db = this.getDb();
-    const [row] = await db.select().from(generations)
-      .where(and(eq(generations.id, id), eq(generations.userId, userId)));
-    return row || undefined;
+    try {
+      const [row] = await db.select().from(generations)
+        .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+      return row || undefined;
+    } catch {
+      // Fallback: thumbnailUrl column might not exist yet
+      const [row] = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        resultImageUrl: generations.resultImageUrl,
+        referenceImageUrl: generations.referenceImageUrl,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+      return row ? { ...row, thumbnailUrl: null } as Generation : undefined;
+    }
   }
 
   async createGeneration(data: InsertGeneration): Promise<Generation> {
