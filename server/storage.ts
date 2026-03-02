@@ -204,10 +204,21 @@ export class DatabaseStorage implements IStorage {
       const [generation] = await db.insert(generations).values(data).returning();
       return generation;
     } catch {
-      // Fallback: thumbnailUrl column might not exist yet, strip it
+      // Fallback: thumbnailUrl column might not exist yet
+      // .returning() 도 thumbnail_url을 포함하므로 컬럼을 명시적으로 지정
       const { thumbnailUrl, ...rest } = data as any;
-      const [generation] = await db.insert(generations).values(rest).returning();
-      return generation;
+      const [generation] = await db.insert(generations).values(rest).returning({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        referenceImageUrl: generations.referenceImageUrl,
+        resultImageUrl: generations.resultImageUrl,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      });
+      return { ...generation, thumbnailUrl: null } as Generation;
     }
   }
 

@@ -80,7 +80,6 @@ export async function registerRoutes(
       }
 
       const imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
-      const thumbnailUrl = await generateThumbnail(imageDataUrl);
 
       const character = await storage.createCharacter({
         userId,
@@ -89,17 +88,21 @@ export async function registerRoutes(
         imageUrl: imageDataUrl,
       });
 
-      await storage.createGeneration({
-        userId,
-        characterId: character.id,
-        type: "character",
-        prompt,
-        resultImageUrl: imageDataUrl,
-        thumbnailUrl: thumbnailUrl || null,
-        creditsUsed: 1,
-      });
-
-      await storage.incrementTotalGenerations(userId);
+      try {
+        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        await storage.createGeneration({
+          userId,
+          characterId: character.id,
+          type: "character",
+          prompt,
+          resultImageUrl: imageDataUrl,
+          thumbnailUrl: thumbnailUrl || null,
+          creditsUsed: 1,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        console.error("Character generation DB save failed (image still returned):", dbError?.message);
+      }
 
       res.json({ characterId: character.id, imageUrl: imageDataUrl });
     } catch (error: any) {
@@ -136,20 +139,23 @@ export async function registerRoutes(
       }
 
       const imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
-      const thumbnailUrl = await generateThumbnail(imageDataUrl);
 
-      await storage.createGeneration({
-        userId,
-        characterId: characterIds[0],
-        type: "pose",
-        prompt,
-        referenceImageUrl: referenceImageData || null,
-        resultImageUrl: imageDataUrl,
-        thumbnailUrl: thumbnailUrl || null,
-        creditsUsed: 1,
-      });
-
-      await storage.incrementTotalGenerations(userId);
+      try {
+        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        await storage.createGeneration({
+          userId,
+          characterId: characterIds[0],
+          type: "pose",
+          prompt,
+          referenceImageUrl: referenceImageData || null,
+          resultImageUrl: imageDataUrl,
+          thumbnailUrl: thumbnailUrl || null,
+          creditsUsed: 1,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        console.error("Pose generation DB save failed (image still returned):", dbError?.message);
+      }
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
@@ -186,24 +192,28 @@ export async function registerRoutes(
       }
 
       const imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);
-      const thumbnailUrl = await generateThumbnail(imageDataUrl);
 
+      // 이미지 생성 성공 — DB 저장은 비차단으로 처리 (thumbnail_url 컬럼 미존재 등에 대비)
       const fullPrompt = itemsPrompt
         ? `Background: ${backgroundPrompt}, Items: ${itemsPrompt}`
         : `Background: ${backgroundPrompt}`;
 
-      await storage.createGeneration({
-        userId,
-        characterId: characterIds?.[0] || null,
-        type: "background",
-        prompt: fullPrompt,
-        referenceImageUrl: null,
-        resultImageUrl: imageDataUrl,
-        thumbnailUrl: thumbnailUrl || null,
-        creditsUsed: 1,
-      });
-
-      await storage.incrementTotalGenerations(userId);
+      try {
+        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        await storage.createGeneration({
+          userId,
+          characterId: characterIds?.[0] || null,
+          type: "background",
+          prompt: fullPrompt,
+          referenceImageUrl: null,
+          resultImageUrl: imageDataUrl,
+          thumbnailUrl: thumbnailUrl || null,
+          creditsUsed: 1,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        console.error("Background generation DB save failed (image still returned):", dbError?.message);
+      }
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
