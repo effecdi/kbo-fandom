@@ -164,7 +164,7 @@ const noTextRule = `CRITICAL TEXT PROHIBITION: Do NOT include ANY text, letters,
  * 이미지 가장자리에서 flood-fill하여 배경 흰색만 투명으로 변환.
  * 캐릭터 내부의 흰색(눈, 옷 등)은 보존됨.
  */
-async function removeWhiteBackground(dataUrl: string): Promise<string> {
+export async function removeWhiteBackground(dataUrl: string): Promise<string> {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (!match) return dataUrl;
 
@@ -339,20 +339,60 @@ Single character only, full body view, pure solid white background, no shadows o
 }
 
 export async function generatePoseImage(
-  character: Character,
+  characters: Character[],
   posePrompt: string,
   referenceImageData?: string
 ): Promise<string> {
-  const config = getStyleConfig(character.style);
+  const config = getStyleConfig(characters[0].style);
 
   // 한국어 프롬프트를 영어로 번역
   const translatedPosePrompt = await translateToEnglish(posePrompt, ai);
-  const translatedCharPrompt = await translateToEnglish(character.prompt, ai);
 
   const parts: any[] = [];
+  const isMulti = characters.length > 1;
 
-  parts.push({
-    text: `${config.instruction}
+  if (isMulti) {
+    // 다중 캐릭터: 모든 캐릭터 이미지를 parts에 추가
+    const charDescriptions = await Promise.all(
+      characters.map((c, i) => translateToEnglish(c.prompt, ai).then(t => `Character ${i + 1}: ${t}`))
+    );
+
+    parts.push({
+      text: `${config.instruction}
+
+${noTextRule}
+
+Look at these ${characters.length} reference character images. Generate ALL ${characters.length} characters together in a SINGLE scene. Keep each character looking EXACTLY the same as their reference - same style, same features, same colors, same proportions.
+
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+
+${charDescriptions.join("\n")}
+Style: ${config.keywords}
+Scene/pose: ${translatedPosePrompt}
+
+Place all ${characters.length} characters together in the scene, interacting naturally. Keep each character's unique appearance. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
+    });
+
+    for (const character of characters) {
+      if (character.imageUrl.startsWith("data:")) {
+        const match = character.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          parts.push({
+            inlineData: {
+              mimeType: match[1],
+              data: match[2],
+            }
+          });
+        }
+      }
+    }
+  } else {
+    // 단일 캐릭터: 기존 로직 유지
+    const character = characters[0];
+    const translatedCharPrompt = await translateToEnglish(character.prompt, ai);
+
+    parts.push({
+      text: `${config.instruction}
 
 ${noTextRule}
 
@@ -365,19 +405,19 @@ Style: ${config.keywords}
 New pose/expression: ${translatedPosePrompt}
 
 Keep the SAME style. Single character. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
-  });
+    });
 
-  if (character.imageUrl.startsWith("data:")) {
-    const match = character.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (match) {
-      parts.push({
-        inlineData: {
-          mimeType: match[1],
-          data: match[2],
-        }
-      });
-      parts[0] = {
-        text: `${config.instruction}
+    if (character.imageUrl.startsWith("data:")) {
+      const match = character.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        parts.push({
+          inlineData: {
+            mimeType: match[1],
+            data: match[2],
+          }
+        });
+        parts[0] = {
+          text: `${config.instruction}
 
 ${noTextRule}
 
@@ -389,7 +429,8 @@ New pose/expression: ${translatedPosePrompt}
 Style: ${config.keywords}
 
 Keep the character identical to the reference. Only change the pose. Single character. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
-      };
+        };
+      }
     }
   }
 
@@ -431,7 +472,7 @@ Keep the character identical to the reference. Only change the pose. Single char
 }
 
 export async function generateWithBackground(
-  sourceImageData: string,
+  sourceImageDataList: string[],
   backgroundPrompt: string,
   itemsPrompt?: string
 ): Promise<string> {
@@ -440,13 +481,36 @@ export async function generateWithBackground(
   const translatedItemsPrompt = itemsPrompt ? await translateToEnglish(itemsPrompt, ai) : undefined;
 
   const parts: any[] = [];
+  const isMulti = sourceImageDataList.length > 1;
 
   const itemsInstruction = translatedItemsPrompt
-    ? `Also add these items/props around or with the character: ${translatedItemsPrompt}.`
+    ? `Also add these items/props around or with the characters: ${translatedItemsPrompt}.`
     : "";
 
-  parts.push({
-    text: `Take this character image and place the character into a new scene with a background and optional items.
+  if (isMulti) {
+    parts.push({
+      text: `Take these ${sourceImageDataList.length} character images and place ALL characters together into a new scene with a background and optional items.
+
+${noTextRule}
+
+IMPORTANT RULES:
+- Keep each character looking EXACTLY the same as their reference - same style, same features, same colors, same proportions
+- All ${sourceImageDataList.length} characters should appear together in the scene
+- The characters should be the main focus of the image
+- Draw the background in a style that matches the characters (simple, cute, instatoon style)
+- The background should complement the characters, not overwhelm them
+- Keep the overall style simple and cute, matching Korean Instagram webtoon (instatoon) aesthetics
+
+Background scene: ${translatedBgPrompt}
+${itemsInstruction}
+
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+
+Make the background and items in the same simple, cute drawing style as the characters. Keep thick outlines and flat colors. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
+    });
+  } else {
+    parts.push({
+      text: `Take this character image and place the character into a new scene with a background and optional items.
 
 ${noTextRule}
 
@@ -463,16 +527,19 @@ ${itemsInstruction}
 IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
 
 Make the background and items in the same simple, cute drawing style as the character. Keep thick outlines and flat colors. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
-  });
-
-  const match = sourceImageData.match(/^data:([^;]+);base64,(.+)$/);
-  if (match) {
-    parts.push({
-      inlineData: {
-        mimeType: match[1],
-        data: match[2],
-      }
     });
+  }
+
+  for (const sourceImageData of sourceImageDataList) {
+    const match = sourceImageData.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      parts.push({
+        inlineData: {
+          mimeType: match[1],
+          data: match[2],
+        }
+      });
+    }
   }
 
   const response = await ai.models.generateContent({

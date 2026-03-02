@@ -6536,11 +6536,21 @@ export default function StoryPage() {
                                 if (item.type === "shape") {
                                   const se = item.se;
                                   if (se.locked || se.visible === false) continue;
-                                  if (canvasX >= se.x && canvasX <= se.x + se.width && canvasY >= se.y && canvasY <= se.y + se.height) {
-                                    clearSelections(); setSelectedShapeId(se.id);
-                                    startWindowDrag("shape", se.id, canvasX, canvasY);
-                                    return;
+                                  // 마스크 도형은 히트테스트에서 제외 — 레이어 패널에서 선택
+                                  if (se.maskEnabled) continue;
+                                  const insideBBox = canvasX >= se.x && canvasX <= se.x + se.width && canvasY >= se.y && canvasY <= se.y + se.height;
+                                  if (!insideBBox) continue;
+                                  // 투명 채우기 도형은 테두리(stroke) 영역만 히트테스트
+                                  const isFilled = se.fillColor && se.fillColor !== "transparent" && se.fillColor !== "rgba(0,0,0,0)";
+                                  if (!isFilled) {
+                                    const hitMargin = Math.max(se.strokeWidth || 2, 8);
+                                    const insideInner = canvasX >= se.x + hitMargin && canvasX <= se.x + se.width - hitMargin &&
+                                                        canvasY >= se.y + hitMargin && canvasY <= se.y + se.height - hitMargin;
+                                    if (insideInner) continue; // 투명 내부 클릭은 아래 요소로 통과
                                   }
+                                  clearSelections(); setSelectedShapeId(se.id);
+                                  startWindowDrag("shape", se.id, canvasX, canvasY);
+                                  return;
                                 } else if (item.type === "text") {
                                   const te = item.te;
                                   if (te.locked || te.visible === false) continue;

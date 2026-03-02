@@ -113,15 +113,19 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
-      const { characterId, prompt, referenceImageData } = parsed.data;
+      const { characterIds, prompt, referenceImageData } = parsed.data;
 
-      const character = await storage.getCharacter(characterId);
-      if (!character) {
-        return res.status(404).json({ message: "Character not found" });
-      }
-
-      if (character.userId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      // 모든 캐릭터 조회 및 소유권 검증
+      const characters = [];
+      for (const cid of characterIds) {
+        const character = await storage.getCharacter(cid);
+        if (!character) {
+          return res.status(404).json({ message: `Character ${cid} not found` });
+        }
+        if (character.userId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+        characters.push(character);
       }
 
       const canGenerate = await storage.deductCredit(userId);
@@ -129,11 +133,11 @@ export async function registerRoutes(
         return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
       }
 
-      const imageDataUrl = await generatePoseImage(character, prompt, referenceImageData);
+      const imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
 
       await storage.createGeneration({
         userId,
-        characterId,
+        characterId: characterIds[0],
         type: "pose",
         prompt,
         referenceImageUrl: referenceImageData || null,
@@ -157,15 +161,18 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
-      const { sourceImageData, backgroundPrompt, itemsPrompt, characterId } = parsed.data;
+      const { sourceImageDataList, backgroundPrompt, itemsPrompt, characterIds } = parsed.data;
 
-      if (characterId) {
-        const character = await storage.getCharacter(characterId);
-        if (!character) {
-          return res.status(404).json({ message: "Character not found" });
-        }
-        if (character.userId !== userId) {
-          return res.status(403).json({ message: "Access denied" });
+      // 모든 캐릭터 소유권 검증
+      if (characterIds && characterIds.length > 0) {
+        for (const cid of characterIds) {
+          const character = await storage.getCharacter(cid);
+          if (!character) {
+            return res.status(404).json({ message: `Character ${cid} not found` });
+          }
+          if (character.userId !== userId) {
+            return res.status(403).json({ message: "Access denied" });
+          }
         }
       }
 
@@ -174,7 +181,7 @@ export async function registerRoutes(
         return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
       }
 
-      const imageDataUrl = await generateWithBackground(sourceImageData, backgroundPrompt, itemsPrompt);
+      const imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);
 
       const fullPrompt = itemsPrompt
         ? `Background: ${backgroundPrompt}, Items: ${itemsPrompt}`
@@ -182,7 +189,7 @@ export async function registerRoutes(
 
       await storage.createGeneration({
         userId,
-        characterId: characterId || null,
+        characterId: characterIds?.[0] || null,
         type: "background",
         prompt: fullPrompt,
         referenceImageUrl: null,

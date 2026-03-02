@@ -91,26 +91,16 @@ export const generateCharacterSchema = z.object({
 });
 
 export const generatePoseSchema = z.object({
-  characterId: z.number(),
+  characterIds: z.array(z.number()).min(1).max(4),
   prompt: z.string().min(3, "Pose description must be at least 3 characters"),
   referenceImageData: z.string().optional(),
 });
 
 export const generateBackgroundSchema = z.object({
-  sourceImageData: z.string().min(1, "Source image is required"),
+  sourceImageDataList: z.array(z.string().min(1)).min(1).max(4),
   backgroundPrompt: z.string().min(3, "Background description must be at least 3 characters"),
   itemsPrompt: z.string().optional(),
-  characterId: z.preprocess(
-    (val) => {
-      if (val === null || val === undefined || val === "") return undefined;
-      if (typeof val === "string") {
-        const n = Number(val);
-        if (!Number.isNaN(n)) return n;
-      }
-      return val;
-    },
-    z.number().optional(),
-  ),
+  characterIds: z.array(z.number()).optional(),
 });
 
 export const removeBackgroundSchema = z.object({
