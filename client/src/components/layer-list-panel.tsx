@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Layers,
@@ -71,6 +71,7 @@ interface LayerListPanelProps {
   onFlipChar?: (id: string) => void;
   onSetToolItem?: (tool: string) => void;
   onToggleMaskLink?: (layerId: string, layerType: string, maskId: string) => void;
+  externalMultiSelected?: Set<string>;
 }
 
 export function LayerListPanel({
@@ -95,6 +96,7 @@ export function LayerListPanel({
   onFlipChar,
   onSetToolItem,
   onToggleMaskLink,
+  externalMultiSelected,
 }: LayerListPanelProps) {
   const maskShapes = items.filter(it => it.type === "shape" && it.maskEnabled);
 
@@ -103,6 +105,15 @@ export function LayerListPanel({
 
   // Multi-selection state
   const [multiSelected, setMultiSelected] = useState<Set<string>>(new Set());
+
+  // Sync external multi-selection (from canvas rubber band) into internal state
+  useEffect(() => {
+    if (externalMultiSelected && externalMultiSelected.size > 0) {
+      setMultiSelected(externalMultiSelected);
+    } else if (externalMultiSelected && externalMultiSelected.size === 0) {
+      // Only clear if we were syncing from external — don't clear user's own multi-selection
+    }
+  }, [externalMultiSelected]);
   const lastClickIndexRef = useRef<number>(-1);
 
   const selectSingle = useCallback((item: LayerItem, index: number) => {

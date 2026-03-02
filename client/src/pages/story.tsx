@@ -4402,6 +4402,9 @@ export default function StoryPage() {
     startPositions: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>;
   } | null>(null);
 
+  // Canvas overlay context menu state
+  const [overlayContextMenu, setOverlayContextMenu] = useState<{ x: number; y: number } | null>(null);
+
   // Helper: get selected text element
   const selectedTextElement = selectedTextId && panels[activePanelIndex]
     ? panels[activePanelIndex].textElements?.find((t) => t.id === selectedTextId) ?? null
@@ -4863,6 +4866,137 @@ export default function StoryPage() {
   const handleElementDragEnd = useCallback(() => {
     dragElementRef.current = null;
   }, []);
+
+  // ─── Canvas-level copy / paste for all element types ─────────────────
+  const handleOverlayCopy = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    // Multi-select copy
+    if (canvasMultiSelectedRef.current.size > 0) {
+      const items: any[] = [];
+      Array.from(canvasMultiSelectedRef.current).forEach(k => {
+        const [etype, eid] = k.split(":");
+        let el: any = null;
+        if (etype === "bubble") el = p.bubbles.find(b => b.id === eid);
+        else if (etype === "char") el = p.characters.find(c => c.id === eid);
+        else if (etype === "text") el = (p.textElements || []).find(t => t.id === eid);
+        else if (etype === "line") el = (p.lineElements || []).find(l => l.id === eid);
+        else if (etype === "drawing") el = (p.drawingLayers || []).find(d => d.id === eid);
+        else if (etype === "shape") el = (p.shapeElements || []).find(s => s.id === eid);
+        if (el) items.push({ type: etype, data: el });
+      });
+      if (items.length > 0) {
+        localStorage.setItem("olli_clipboard", JSON.stringify({ multi: true, items }));
+      }
+      return;
+    }
+    // Single selection copy
+    if (selectedBubbleId) {
+      const b = p.bubbles.find(bb => bb.id === selectedBubbleId);
+      if (b) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "bubble", data: b }));
+    } else if (selectedCharId) {
+      const c = p.characters.find(cc => cc.id === selectedCharId);
+      if (c) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "char", data: c }));
+    } else if (selectedTextId) {
+      const t = (p.textElements || []).find(tt => tt.id === selectedTextId);
+      if (t) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "text", data: t }));
+    } else if (selectedLineId) {
+      const l = (p.lineElements || []).find(ll => ll.id === selectedLineId);
+      if (l) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "line", data: l }));
+    } else if (selectedDrawingLayerId) {
+      const d = (p.drawingLayers || []).find(dd => dd.id === selectedDrawingLayerId);
+      if (d) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "drawing", data: d }));
+    } else if (selectedShapeId) {
+      const s = (p.shapeElements || []).find(ss => ss.id === selectedShapeId);
+      if (s) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "shape", data: s }));
+    }
+  }, [panels, activePanelIndex, selectedBubbleId, selectedCharId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId]);
+
+  const handleOverlayPaste = useCallback(() => {
+    try {
+      const clip = localStorage.getItem("olli_clipboard");
+      if (!clip) return;
+      const parsed = JSON.parse(clip);
+      const p = panels[activePanelIndex];
+      if (!p) return;
+
+      const pasteOne = (type: string, data: any) => {
+        const id = generateId();
+        const offset = 20;
+        if (type === "bubble") {
+          const maxZ = p.bubbles.reduce((m: number, b: any) => Math.max(m, b.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, bubbles: [...p.bubbles, { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
+        } else if (type === "char") {
+          const maxZ = p.characters.reduce((m: number, c: any) => Math.max(m, c.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, characters: [...p.characters, { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
+        } else if (type === "text") {
+          const maxZ = (p.textElements || []).reduce((m: number, t: any) => Math.max(m, t.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, textElements: [...(p.textElements || []), { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
+        } else if (type === "line") {
+          const maxZ = (p.lineElements || []).reduce((m: number, l: any) => Math.max(m, l.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, lineElements: [...(p.lineElements || []), { ...data, id, points: data.points.map((pt: any) => ({ ...pt, x: pt.x + offset, y: pt.y + offset })), zIndex: maxZ + 1 }] });
+        } else if (type === "drawing") {
+          const maxZ = (p.drawingLayers || []).reduce((m: number, d: any) => Math.max(m, d.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, drawingLayers: [...(p.drawingLayers || []), { ...data, id, x: (data.x ?? 0) + offset, y: (data.y ?? 0) + offset, zIndex: maxZ + 1 }] });
+        } else if (type === "shape") {
+          const maxZ = (p.shapeElements || []).reduce((m: number, s: any) => Math.max(m, s.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, shapeElements: [...(p.shapeElements || []), { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
+        }
+      };
+
+      if (parsed.multi && Array.isArray(parsed.items)) {
+        for (const item of parsed.items) {
+          pasteOne(item.type, item.data);
+        }
+      } else if (parsed.type && parsed.data) {
+        pasteOne(parsed.type, parsed.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [panels, activePanelIndex, updatePanel]);
+
+  const handleOverlayDelete = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    if (canvasMultiSelectedRef.current.size > 0) {
+      const ids = canvasMultiSelectedRef.current;
+      const delIds = (type: string) => {
+        const out = new Set<string>();
+        Array.from(ids).forEach(k => { const [t, id] = k.split(":"); if (t === type) out.add(id); });
+        return out;
+      };
+      const bIds = delIds("bubble"), cIds = delIds("char"), tIds = delIds("text"), lIds = delIds("line"), dIds = delIds("drawing"), sIds = delIds("shape");
+      updatePanel(activePanelIndex, {
+        ...p,
+        bubbles: p.bubbles.filter(b => !bIds.has(b.id)),
+        characters: p.characters.filter(c => !cIds.has(c.id)),
+        textElements: (p.textElements || []).filter(t => !tIds.has(t.id)),
+        lineElements: (p.lineElements || []).filter(l => !lIds.has(l.id)),
+        drawingLayers: (p.drawingLayers || []).filter(d => !dIds.has(d.id)),
+        shapeElements: (p.shapeElements || []).filter(s => !sIds.has(s.id)),
+      });
+      setCanvasMultiSelected(new Set());
+    } else if (selectedBubbleId) {
+      updatePanel(activePanelIndex, { ...p, bubbles: p.bubbles.filter(b => b.id !== selectedBubbleId) });
+      setSelectedBubbleId(null);
+    } else if (selectedCharId) {
+      updatePanel(activePanelIndex, { ...p, characters: p.characters.filter(c => c.id !== selectedCharId) });
+      setSelectedCharId(null);
+    } else if (selectedTextId) {
+      updatePanel(activePanelIndex, { ...p, textElements: (p.textElements || []).filter(t => t.id !== selectedTextId) });
+      setSelectedTextId(null);
+    } else if (selectedLineId) {
+      updatePanel(activePanelIndex, { ...p, lineElements: (p.lineElements || []).filter(l => l.id !== selectedLineId) });
+      setSelectedLineId(null);
+    } else if (selectedDrawingLayerId) {
+      updatePanel(activePanelIndex, { ...p, drawingLayers: (p.drawingLayers || []).filter(d => d.id !== selectedDrawingLayerId) });
+      setSelectedDrawingLayerId(null);
+    } else if (selectedShapeId) {
+      updatePanel(activePanelIndex, { ...p, shapeElements: (p.shapeElements || []).filter(s => s.id !== selectedShapeId) });
+      setSelectedShapeId(null);
+    }
+  }, [panels, activePanelIndex, selectedBubbleId, selectedCharId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId, updatePanel]);
 
   // Delete selected text/line/drawing elements on Delete/Backspace
   useEffect(() => {
@@ -6588,7 +6722,17 @@ export default function StoryPage() {
                         ) && (
                           <div
                             style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: rubberBandRef.current?.active ? "crosshair" : multiDragRef.current ? "grabbing" : dragElementRef.current ? "grabbing" : "default" }}
+                            onContextMenu={(e) => {
+                              // Show context menu only if something is selected
+                              const hasSelection = canvasMultiSelectedRef.current.size > 0 || selectedBubbleId || selectedCharId || selectedTextId || selectedLineId || selectedDrawingLayerId || selectedShapeId;
+                              if (hasSelection) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setOverlayContextMenu({ x: e.clientX, y: e.clientY });
+                              }
+                            }}
                             onMouseDown={(e) => {
+                              if (overlayContextMenu) setOverlayContextMenu(null);
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
@@ -6996,6 +7140,45 @@ export default function StoryPage() {
                               }
                             }}
                           />
+                        )}
+
+                        {/* Canvas overlay context menu */}
+                        {activePanelIndex === i && overlayContextMenu && (
+                          <>
+                            <div
+                              className="fixed inset-0"
+                              style={{ zIndex: 49 }}
+                              onClick={() => setOverlayContextMenu(null)}
+                              onContextMenu={(e) => { e.preventDefault(); setOverlayContextMenu(null); }}
+                            />
+                            <div
+                              className="fixed min-w-[150px] rounded-md border bg-popover p-1 shadow-md"
+                              style={{ left: overlayContextMenu.x, top: overlayContextMenu.y, zIndex: 50 }}
+                            >
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors"
+                                onClick={() => { handleOverlayCopy(); setOverlayContextMenu(null); }}
+                              >
+                                복사
+                              </button>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors"
+                                onClick={() => { handleOverlayPaste(); setOverlayContextMenu(null); }}
+                              >
+                                붙여넣기
+                              </button>
+                              <div className="my-1 h-px bg-border" />
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+                                onClick={() => { handleOverlayDelete(); setOverlayContextMenu(null); }}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </>
                         )}
 
                         {/* Rubber band selection visual */}
@@ -8046,6 +8229,7 @@ export default function StoryPage() {
                     <div className="flex-1 overflow-hidden">
                   <LayerListPanel
                     items={rightLayerItems}
+                    externalMultiSelected={canvasMultiSelected}
                     selectedCharId={selectedCharId}
                     selectedBubbleId={selectedBubbleId}
                     selectedDrawingLayerId={selectedDrawingLayerId}
