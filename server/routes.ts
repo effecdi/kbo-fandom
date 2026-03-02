@@ -316,20 +316,29 @@ export async function registerRoutes(
   app.get("/api/gallery", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 24, 1), 100);
-      const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
-      const type = (req.query.type as string) || "all";
+      const isPaginated = req.query.limit !== undefined;
 
-      const [items, total] = await Promise.all([
-        storage.getGenerationsLight(userId, limit, offset, type),
-        storage.getGalleryCount(userId, type),
-      ]);
+      if (isPaginated) {
+        // New paginated format: { items, total, hasMore }
+        const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 24, 1), 100);
+        const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
+        const type = (req.query.type as string) || "all";
 
-      res.json({
-        items,
-        total,
-        hasMore: offset + items.length < total,
-      });
+        const [items, total] = await Promise.all([
+          storage.getGenerationsLight(userId, limit, offset, type),
+          storage.getGalleryCount(userId, type),
+        ]);
+
+        res.json({
+          items,
+          total,
+          hasMore: offset + items.length < total,
+        });
+      } else {
+        // Legacy format: plain array (used by pose, background, bubble, etc.)
+        const items = await storage.getGenerationsByUser(userId);
+        res.json(items);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch gallery" });
     }
