@@ -5311,7 +5311,7 @@ export default function StoryPage() {
 
     const newMaskedIds = allLinked
       ? existingMasked.filter((id: string) => !layerIds.includes(id))
-      : [...new Set([...existingMasked, ...layerIds])];
+      : Array.from(new Set([...existingMasked, ...layerIds]));
 
     updatePanel(activePanelIndex, {
       ...p,
