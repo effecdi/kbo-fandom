@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
-import { generateCharacterImage, generatePoseImage, generateWithBackground, removeWhiteBackground } from "./imageGen";
+import { generateCharacterImage, generatePoseImage, generateWithBackground, removeWhiteBackground, generateThumbnail } from "./imageGen";
 import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics } from "./aiText";
 import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema } from "@shared/schema";
 import axios from "axios";
@@ -80,6 +80,7 @@ export async function registerRoutes(
       }
 
       const imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
+      const thumbnailUrl = await generateThumbnail(imageDataUrl);
 
       const character = await storage.createCharacter({
         userId,
@@ -94,6 +95,7 @@ export async function registerRoutes(
         type: "character",
         prompt,
         resultImageUrl: imageDataUrl,
+        thumbnailUrl: thumbnailUrl || null,
         creditsUsed: 1,
       });
 
@@ -134,6 +136,7 @@ export async function registerRoutes(
       }
 
       const imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
+      const thumbnailUrl = await generateThumbnail(imageDataUrl);
 
       await storage.createGeneration({
         userId,
@@ -142,6 +145,7 @@ export async function registerRoutes(
         prompt,
         referenceImageUrl: referenceImageData || null,
         resultImageUrl: imageDataUrl,
+        thumbnailUrl: thumbnailUrl || null,
         creditsUsed: 1,
       });
 
@@ -182,6 +186,7 @@ export async function registerRoutes(
       }
 
       const imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);
+      const thumbnailUrl = await generateThumbnail(imageDataUrl);
 
       const fullPrompt = itemsPrompt
         ? `Background: ${backgroundPrompt}, Items: ${itemsPrompt}`
@@ -194,6 +199,7 @@ export async function registerRoutes(
         prompt: fullPrompt,
         referenceImageUrl: null,
         resultImageUrl: imageDataUrl,
+        thumbnailUrl: thumbnailUrl || null,
         creditsUsed: 1,
       });
 
@@ -310,10 +316,35 @@ export async function registerRoutes(
   app.get("/api/gallery", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const gens = await storage.getGenerationsByUser(userId);
-      res.json(gens);
+      const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 24, 1), 100);
+      const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
+      const type = (req.query.type as string) || "all";
+
+      const [items, total] = await Promise.all([
+        storage.getGenerationsLight(userId, limit, offset, type),
+        storage.getGalleryCount(userId, type),
+      ]);
+
+      res.json({
+        items,
+        total,
+        hasMore: offset + items.length < total,
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch gallery" });
+    }
+  });
+
+  app.get("/api/gallery/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const gen = await storage.getGenerationById(id, userId);
+      if (!gen) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      res.json(gen);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch gallery item" });
     }
   });
 
@@ -487,9 +518,9 @@ export async function registerRoutes(
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
 
-      const canUseStory = await storage.deductStoryUse(userId);
+      const canUseStory = await storage.deductCredit(userId);
       if (!canUseStory) {
-        return res.status(403).json({ message: "이번 달의 스토리 에디터 무료 사용 횟수(3회)를 모두 사용했습니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       const result = await generateStoryScripts(parsed.data);

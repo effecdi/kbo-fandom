@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import type { SpeechBubble, BubbleStyle, TailStyle } from "@/lib/bubble-types";
+import type { DrawingLayer } from "./drawing-canvas";
 import {
   KOREAN_FONTS,
   STYLE_LABELS,
@@ -41,6 +42,15 @@ import {
   Diamond,
   Star,
   Scan,
+  SlidersHorizontal,
+  Eye,
+  EyeOff,
+  Copy,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  ChevronsUp,
+  ChevronsDown,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -627,19 +637,84 @@ interface DrawingToolbarProps {
   onColorChange: (color: string) => void;
   onShowSettings: () => void;
   showSettings: boolean;
+  /** Selected layer for layer management (optional — enables layer controls) */
+  layer?: DrawingLayer | null;
+  onDelete?: () => void;
+  onDuplicate?: () => void;
+  onToggleVisibility?: () => void;
+  onOpacityChange?: (opacity: number) => void;
+  onBringForward?: () => void;
+  onSendBackward?: () => void;
+  onBringToFront?: () => void;
+  onSendToBack?: () => void;
 }
+
+const LAYER_TYPE_LABELS: Record<string, string> = {
+  drawing: "드로잉",
+  straight: "직선",
+  curve: "곡선",
+  polyline: "꺾인선",
+  text: "텍스트",
+  eraser: "지우개",
+};
 
 export function DrawingContextToolbar({
   color,
   onColorChange,
   onShowSettings,
   showSettings,
+  layer,
+  onDelete,
+  onDuplicate,
+  onToggleVisibility,
+  onOpacityChange,
+  onBringForward,
+  onSendBackward,
+  onBringToFront,
+  onSendToBack,
 }: DrawingToolbarProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showOpacity, setShowOpacity] = useState(false);
+  const [showZOrder, setShowZOrder] = useState(false);
   const colorInputRef = useRef<HTMLInputElement>(null);
+  const opacityRef = useRef<HTMLDivElement>(null);
+  const zOrderRef = useRef<HTMLDivElement>(null);
+
+  const isEraser = layer?.type === "eraser";
+  const opacityPercent = Math.round((layer?.opacity ?? 1) * 100);
+
+  // Close popups on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (opacityRef.current && !opacityRef.current.contains(e.target as Node)) {
+        setShowOpacity(false);
+      }
+      if (zOrderRef.current && !zOrderRef.current.contains(e.target as Node)) {
+        setShowZOrder(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Close popups when layer changes
+  useEffect(() => {
+    setShowOpacity(false);
+    setShowZOrder(false);
+  }, [layer?.id]);
 
   return (
     <div className="context-toolbar context-toolbar--drawing">
+      {/* Layer type label */}
+      {layer && (
+        <>
+          <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", padding: "0 4px", whiteSpace: "nowrap" }}>
+            {LAYER_TYPE_LABELS[layer.type] || layer.type}
+          </span>
+          <div className="context-toolbar__divider" />
+        </>
+      )}
+
       {/* Color */}
       <div className="context-toolbar__dropdown-wrapper">
         <button
@@ -692,27 +767,124 @@ export function DrawingContextToolbar({
         <Menu className="h-4 w-4" />
       </button>
 
-      <div className="context-toolbar__divider" />
+      {/* Layer management controls — shown when layer is provided */}
+      {layer && (
+        <>
+          <div className="context-toolbar__divider" />
 
-      {/* Pattern */}
-      <button className="context-toolbar__btn" title="패턴">
-        <MoreHorizontal className="h-4 w-4" />
-      </button>
+          {/* Opacity (not for eraser) */}
+          {!isEraser && onOpacityChange && (
+            <div ref={opacityRef} className="context-toolbar__dropdown-wrapper">
+              <button
+                className={`context-toolbar__btn ${showOpacity ? "context-toolbar__btn--active" : ""}`}
+                onClick={() => {
+                  setShowOpacity(!showOpacity);
+                  setShowZOrder(false);
+                }}
+                title="불투명도"
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+              </button>
+              {showOpacity && (
+                <div className="context-toolbar__dropdown" style={{ padding: "8px 12px", minWidth: 160 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 6, color: "hsl(var(--muted-foreground))" }}>
+                    <span>불투명도</span>
+                    <span>{opacityPercent}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={5}
+                    max={100}
+                    value={opacityPercent}
+                    onChange={(e) => onOpacityChange(Number(e.target.value) / 100)}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
-      {/* Animation */}
-      <button className="context-toolbar__btn" title="애니메이션">
-        <Play className="h-4 w-4" />
-      </button>
+          {/* Visibility */}
+          {onToggleVisibility && (
+            <button
+              className={`context-toolbar__btn ${!layer.visible ? "context-toolbar__btn--active" : ""}`}
+              onClick={onToggleVisibility}
+              title={layer.visible ? "숨기기" : "보이기"}
+            >
+              {layer.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+            </button>
+          )}
 
-      {/* Position */}
-      <button className="context-toolbar__btn" title="위치">
-        <Move className="h-4 w-4" />
-      </button>
+          {/* Duplicate (not for eraser) */}
+          {!isEraser && onDuplicate && (
+            <button
+              className="context-toolbar__btn"
+              onClick={onDuplicate}
+              title="복제"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          )}
 
-      {/* Paint */}
-      <button className="context-toolbar__btn" title="채우기">
-        <Paintbrush className="h-4 w-4" />
-      </button>
+          {/* Delete */}
+          {onDelete && (
+            <button
+              className="context-toolbar__btn"
+              onClick={onDelete}
+              title="삭제"
+              style={{ color: "hsl(var(--destructive))" }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          {/* Z-order */}
+          <div ref={zOrderRef} className="context-toolbar__dropdown-wrapper">
+            <button
+              className={`context-toolbar__btn ${showZOrder ? "context-toolbar__btn--active" : ""}`}
+              onClick={() => {
+                setShowZOrder(!showZOrder);
+                setShowOpacity(false);
+              }}
+              title="정렬 순서"
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </button>
+            {showZOrder && (
+              <div className="context-toolbar__dropdown" style={{ minWidth: 120, padding: 4 }}>
+                <button
+                  className="context-toolbar__dropdown-item"
+                  onClick={() => { onBringToFront?.(); setShowZOrder(false); }}
+                >
+                  <ChevronsUp className="h-4 w-4" style={{ marginRight: 6 }} />
+                  맨 앞으로
+                </button>
+                <button
+                  className="context-toolbar__dropdown-item"
+                  onClick={() => { onBringForward?.(); setShowZOrder(false); }}
+                >
+                  <ArrowUp className="h-4 w-4" style={{ marginRight: 6 }} />
+                  앞으로
+                </button>
+                <button
+                  className="context-toolbar__dropdown-item"
+                  onClick={() => { onSendBackward?.(); setShowZOrder(false); }}
+                >
+                  <ArrowDown className="h-4 w-4" style={{ marginRight: 6 }} />
+                  뒤로
+                </button>
+                <button
+                  className="context-toolbar__dropdown-item"
+                  onClick={() => { onSendToBack?.(); setShowZOrder(false); }}
+                >
+                  <ChevronsDown className="h-4 w-4" style={{ marginRight: 6 }} />
+                  맨 뒤로
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

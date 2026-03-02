@@ -20,7 +20,7 @@ import {
   LockOpen,
   Copy,
 } from "lucide-react";
-import { Spline, GitCommitHorizontal } from "lucide-react";
+import { Spline, GitCommitHorizontal, GripVertical } from "lucide-react";
 import { STYLE_LABELS } from "@/lib/bubble-utils";
 
 export interface LayerItem {
@@ -64,6 +64,7 @@ interface LayerListPanelProps {
   onSelectLine?: (id: string | null) => void;
   onSelectShape?: (id: string | null) => void;
   onMoveLayer: (index: number, direction: "up" | "down") => void;
+  onReorderLayer?: (fromIndex: number, toIndex: number) => void;
   onDeleteLayer: (item: LayerItem) => void;
   onDuplicateLayer?: (item: LayerItem) => void;
   onToggleVisibility?: (item: LayerItem) => void;
@@ -89,6 +90,7 @@ export function LayerListPanel({
   onSelectLine,
   onSelectShape,
   onMoveLayer,
+  onReorderLayer,
   onDeleteLayer,
   onDuplicateLayer,
   onToggleVisibility,
@@ -115,6 +117,10 @@ export function LayerListPanel({
     }
   }, [externalMultiSelected]);
   const lastClickIndexRef = useRef<number>(-1);
+
+  // Drag-and-drop reorder state
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
 
   const selectSingle = useCallback((item: LayerItem, index: number) => {
     setMultiSelected(new Set());
@@ -250,6 +256,34 @@ export function LayerListPanel({
           return (
             <div
               key={key}
+              draggable
+              onDragStart={(e) => {
+                setDragIdx(i);
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", String(i));
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                if (dragIdx !== null && i !== dragIdx) {
+                  setDropIdx(i);
+                }
+              }}
+              onDragLeave={() => {
+                setDropIdx((prev) => (prev === i ? null : prev));
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragIdx !== null && dragIdx !== i && onReorderLayer) {
+                  onReorderLayer(dragIdx, i);
+                }
+                setDragIdx(null);
+                setDropIdx(null);
+              }}
+              onDragEnd={() => {
+                setDragIdx(null);
+                setDropIdx(null);
+              }}
               className={`flex items-center justify-between gap-1.5 rounded-md cursor-pointer transition-colors ${
                 isLinkedToMask ? "pl-5 pr-2" : "px-2"
               } py-1 ${
@@ -258,7 +292,15 @@ export function LayerListPanel({
                     ? "bg-primary/10 border border-primary/20"
                     : "bg-primary/15 border border-primary/30"
                   : "hover:bg-muted/40"
-              } ${item.visible === false ? "opacity-40" : ""} ${item.locked ? "opacity-70" : ""}`}
+              } ${item.visible === false ? "opacity-40" : ""} ${item.locked ? "opacity-70" : ""} ${
+                dragIdx === i ? "opacity-30" : ""
+              } ${
+                dropIdx === i && dragIdx !== null && dragIdx !== i
+                  ? dropIdx < dragIdx
+                    ? "border-t-2 !border-t-primary"
+                    : "border-b-2 !border-b-primary"
+                  : ""
+              }`}
               onClick={(e) => handleClick(item, i, e)}
               onContextMenu={(e) => {
                 e.preventDefault();
@@ -267,6 +309,8 @@ export function LayerListPanel({
               }}
             >
               <div className="flex items-center gap-1 min-w-0">
+                {/* 드래그 핸들 */}
+                <GripVertical className="h-3 w-3 text-muted-foreground/50 shrink-0 cursor-grab active:cursor-grabbing" />
                 {/* 눈/잠금 — 맨 앞 */}
                 {onToggleVisibility && (
                   <button
@@ -377,7 +421,14 @@ export function LayerListPanel({
       </div>
 
       {/* Right-click context menu */}
-      {contextMenu && (
+      {contextMenu && (() => {
+        const ci = contextMenu.item;
+        const ciIdx = items.findIndex(it => layerKey(it) === layerKey(ci));
+        const isMask = ci.type === "shape" && ci.maskEnabled;
+        const isLinked = !!ci.clipMaskId;
+        const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
+        const ctxShortcut = "text-[10px] text-muted-foreground ml-4";
+        return (
         <>
           <div
             className="fixed inset-0 z-50"
@@ -385,30 +436,72 @@ export function LayerListPanel({
             onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }}
           />
           <div
-            className="fixed z-50 min-w-[140px] rounded-md border bg-popover p-1 shadow-md"
+            className="fixed z-50 min-w-[170px] rounded-md border bg-popover p-1 shadow-md"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
+            {/* Duplicate */}
             {onDuplicateLayer && (
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors"
-                onClick={() => { onDuplicateLayer(contextMenu.item); setContextMenu(null); }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                레이어 복제
+              <button type="button" className={ctxBtnClass}
+                onClick={() => { onDuplicateLayer(ci); setContextMenu(null); }}>
+                <span>레이어 복제</span><span className={ctxShortcut}>⌘D</span>
               </button>
             )}
-            <button
-              type="button"
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
-              onClick={() => { onDeleteLayer(contextMenu.item); setContextMenu(null); }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              레이어 삭제
+
+            <div className="my-1 h-px bg-border" />
+
+            {/* Layer ordering */}
+            <button type="button" className={ctxBtnClass} disabled={ciIdx <= 0}
+              onClick={() => { onMoveLayer(ciIdx, "up"); setContextMenu(null); }}>
+              <span>앞으로</span><span className={ctxShortcut}>⌘]</span>
+            </button>
+            <button type="button" className={ctxBtnClass} disabled={ciIdx >= items.length - 1}
+              onClick={() => { onMoveLayer(ciIdx, "down"); setContextMenu(null); }}>
+              <span>뒤로</span><span className={ctxShortcut}>⌘[</span>
+            </button>
+
+            <div className="my-1 h-px bg-border" />
+
+            {/* Lock / Visibility */}
+            {onToggleLock && (
+              <button type="button" className={ctxBtnClass}
+                onClick={() => { onToggleLock(ci); setContextMenu(null); }}>
+                <span>{ci.locked ? "잠금 해제" : "잠금"}</span><span className={ctxShortcut}>⌘L</span>
+              </button>
+            )}
+            {onToggleVisibility && (
+              <button type="button" className={ctxBtnClass}
+                onClick={() => { onToggleVisibility(ci); setContextMenu(null); }}>
+                <span>{ci.visible === false ? "보이기" : "숨기기"}</span>
+              </button>
+            )}
+
+            {/* Mask link */}
+            {!isMask && maskShapes.length > 0 && onToggleMaskLink && (
+              <>
+                <div className="my-1 h-px bg-border" />
+                <button type="button" className={ctxBtnClass}
+                  onClick={() => {
+                    const targetMaskId = ci.clipMaskId || maskShapes[0].id;
+                    onToggleMaskLink(ci.id, ci.type, targetMaskId);
+                    setContextMenu(null);
+                  }}>
+                  <span>{isLinked ? "마스크 해제" : "마스크 연결"}</span>
+                </button>
+              </>
+            )}
+
+            <div className="my-1 h-px bg-border" />
+
+            {/* Delete */}
+            <button type="button"
+              className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+              onClick={() => { onDeleteLayer(ci); setContextMenu(null); }}>
+              <span>레이어 삭제</span><span className={ctxShortcut}>Del</span>
             </button>
           </div>
         </>
-      )}
+        );
+      })()}
     </div>
   );
 }

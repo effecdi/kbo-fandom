@@ -161,6 +161,27 @@ function getStyleConfig(style: string) {
 const noTextRule = `CRITICAL TEXT PROHIBITION: Do NOT include ANY text, letters, words, labels, captions, watermarks, or writing of ANY kind in the image - this includes Korean (한글/Hangul), English, Japanese, Chinese, or any other language. NO characters, NO letters, NO words, NO numbers, NO symbols that look like text. The image must contain ONLY the visual illustration with absolutely ZERO text or text-like elements. Any attempt to render non-Latin scripts like Korean will result in garbled, broken characters - so do NOT attempt it under any circumstances.`;
 
 /**
+ * base64 data URL 이미지를 200×200 JPEG 썸네일로 변환.
+ * 갤러리 목록 등에서 원본 대신 경량 이미지 표시용.
+ */
+export async function generateThumbnail(dataUrl: string, maxSize = 200): Promise<string> {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return dataUrl;
+
+  try {
+    const buf = Buffer.from(match[2], "base64");
+    const thumbBuf = await sharp(buf)
+      .resize(maxSize, maxSize, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 60 })
+      .toBuffer();
+    return `data:image/jpeg;base64,${thumbBuf.toString("base64")}`;
+  } catch (error) {
+    console.warn("Thumbnail generation failed, skipping:", error);
+    return "";
+  }
+}
+
+/**
  * 이미지 가장자리에서 flood-fill하여 배경 흰색만 투명으로 변환.
  * 캐릭터 내부의 흰색(눈, 옷 등)은 보존됨.
  */

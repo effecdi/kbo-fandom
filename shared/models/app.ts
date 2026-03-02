@@ -21,6 +21,7 @@ export const generations = pgTable("generations", {
   prompt: text("prompt").notNull(),
   referenceImageUrl: text("reference_image_url"),
   resultImageUrl: text("result_image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
   creditsUsed: integer("credits_used").notNull().default(1),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -185,6 +186,10 @@ export type InsertBubbleProject = z.infer<typeof insertBubbleProjectSchema>;
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = z.infer<typeof insertCharacterSchema>;
 export type Generation = typeof generations.$inferSelect;
+export type GenerationLight = Omit<Generation, "referenceImageUrl"> & {
+  resultImageUrl: string | null;
+  referenceImageUrl?: undefined;
+};
 export type InsertGeneration = z.infer<typeof insertGenerationSchema>;
 export type UserCredits = typeof userCredits.$inferSelect;
 export type TrendingAccount = typeof trendingAccounts.$inferSelect;

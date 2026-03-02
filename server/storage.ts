@@ -18,6 +18,9 @@ export interface IStorage {
   createCharacter(data: InsertCharacter): Promise<Character>;
 
   getGenerationsByUser(userId: string): Promise<Generation[]>;
+  getGenerationsLight(userId: string, limit: number, offset: number, type?: string): Promise<any[]>;
+  getGalleryCount(userId: string, type?: string): Promise<number>;
+  getGenerationById(id: number, userId: string): Promise<Generation | undefined>;
   createGeneration(data: InsertGeneration): Promise<Generation>;
 
   getUserCredits(userId: string): Promise<UserCredits>;
@@ -95,6 +98,51 @@ export class DatabaseStorage implements IStorage {
   async getGenerationsByUser(userId: string): Promise<Generation[]> {
     const db = this.getDb();
     return db.select().from(generations).where(eq(generations.userId, userId)).orderBy(desc(generations.createdAt));
+  }
+
+  async getGenerationsLight(userId: string, limit: number, offset: number, type?: string): Promise<any[]> {
+    const db = this.getDb();
+    const conditions = type && type !== "all"
+      ? and(eq(generations.userId, userId), eq(generations.type, type))
+      : eq(generations.userId, userId);
+
+    const rows = await db.select({
+      id: generations.id,
+      userId: generations.userId,
+      characterId: generations.characterId,
+      type: generations.type,
+      prompt: generations.prompt,
+      thumbnailUrl: generations.thumbnailUrl,
+      // Fallback: include resultImageUrl only when thumbnailUrl is null (legacy data)
+      resultImageUrl: sql<string>`CASE WHEN ${generations.thumbnailUrl} IS NOT NULL THEN NULL ELSE ${generations.resultImageUrl} END`,
+      creditsUsed: generations.creditsUsed,
+      createdAt: generations.createdAt,
+    }).from(generations)
+      .where(conditions)
+      .orderBy(desc(generations.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return rows;
+  }
+
+  async getGalleryCount(userId: string, type?: string): Promise<number> {
+    const db = this.getDb();
+    const conditions = type && type !== "all"
+      ? and(eq(generations.userId, userId), eq(generations.type, type))
+      : eq(generations.userId, userId);
+
+    const [result] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(generations)
+      .where(conditions);
+    return result?.count ?? 0;
+  }
+
+  async getGenerationById(id: number, userId: string): Promise<Generation | undefined> {
+    const db = this.getDb();
+    const [row] = await db.select().from(generations)
+      .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+    return row || undefined;
   }
 
   async createGeneration(data: InsertGeneration): Promise<Generation> {

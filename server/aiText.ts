@@ -217,42 +217,49 @@ export async function generateStoryScripts(data: {
 }): Promise<{
   panels: Array<{ top: string; bottom: string; bubbles: Array<{ text: string; style?: string }> }>;
 }> {
-  const prompt = `당신은 인스타툰(인스타그램 웹툰) 스크립트 작가입니다. 주어진 주제로 ${data.panelCount}개 패널(컷)에 들어갈 스크립트와 말풍선 대사를 작성해주세요.
+  const prompt = `당신은 한국 인기 인스타툰 작가입니다. 주제를 기반으로 ${data.panelCount}컷 인스타툰 스크립트를 작성하세요.
 
 주제: "${data.topic}"
-패널 수: ${data.panelCount}
+컷 수: ${data.panelCount}
 
-각 패널에는 다음 텍스트가 들어갑니다:
-- top: 상단 스크립트 (나레이션이나 상황 설명, 짧게 1문장)
-- bottom: 하단 스크립트 (캐릭터의 독백이나 부연 설명, 짧게 1문장)
-- bubbles: 말풍선 대사 배열 (캐릭터 대사, 감정 표현 등 - 패널당 1~3개)
-  - 각 bubble의 style은 "handwritten"(손글씨), "linedrawing"(라인), "wobbly"(물결) 중 하나
-  - 대사의 분위기에 맞게 style을 선택하세요 (감정적→handwritten, 일반→linedrawing, 놀람/강조→wobbly)
+■ 구조 규칙 (반드시 지켜주세요):
+- top: 상황/나레이션 (5~15자). 없으면 빈 문자열 "".
+- bottom: 독백/부연 (5~15자). 없으면 빈 문자열 "".
+- bubbles: 말풍선 배열.
+  ★ 핵심: 대부분의 패널은 말풍선 0~1개. 대화 장면만 최대 2개. 절대 3개 이상 금지.
+  ★ ${data.panelCount}컷 전체에서 말풍선 총 개수는 ${Math.max(data.panelCount, Math.ceil(data.panelCount * 0.8))}개 이하.
+  ★ 나레이션만으로 충분한 컷은 bubbles를 빈 배열 []로.
+- bubble style: "handwritten"(감성/독백), "linedrawing"(일반 대화), "wobbly"(놀람/강조)
 
-작성 가이드:
-1. 인스타툰 특유의 짧고 임팩트 있는 문장을 사용하세요
-2. 한국 MZ세대가 공감할 수 있는 자연스러운 한국어 구어체를 사용하세요
-3. 각 패널이 순서대로 이야기가 자연스럽게 이어지도록 작성하세요
-4. 마지막 패널은 반전이나 펀치라인으로 마무리해주세요
-5. ㅋㅋ, ㅠㅠ, ~, ... 등 인스타툰에서 자주 쓰이는 표현을 적절히 사용하세요
-6. 패널마다 말풍선 개수를 다르게 해서 자연스러운 대화 흐름을 만드세요
+■ 인스타툰 작법:
+1. 한 문장은 최대 15자. 짧을수록 좋음. 여백의 미학.
+2. 기승전결: 도입(상황)→전개(갈등/기대)→절정(사건)→결말(반전/펀치라인).
+3. 마지막 컷은 반드시 웃기거나 공감되는 반전으로 끝내세요.
+4. MZ세대 구어체: "아 진짜...", "헐", "뭐지", "왜 이러는 건데" 등 자연스럽게.
+5. 감정 부호 절제: ㅋㅋ, ㅠㅠ는 정말 필요한 곳에만 1~2회.
+6. top과 bottom은 상호보완: 둘 다 쓸 필요 없으면 하나만 쓰고 다른 건 "".
+7. 시각적으로 상상되게 쓰세요: 표정, 동작, 상황이 그림으로 보이듯.
 
-다음 JSON 형식으로만 응답해주세요 (다른 설명 없이 순수 JSON만):
-{
-  "panels": [
-    {
-      "top": "상단 스크립트",
-      "bottom": "하단 스크립트",
-      "bubbles": [
-        { "text": "말풍선 대사", "style": "handwritten" }
-      ]
-    }
-  ]
-}`;
+■ 나쁜 예 (금지):
+- 매 컷마다 말풍선 2~3개씩 넣는 것
+- top과 bottom 모두 긴 문장으로 채우는 것
+- 의미 없는 감탄사 말풍선: "헉!", "와!", "어?" 만 반복
+
+■ 좋은 예:
+- 컷1: top:"월요일 아침" bottom:"" bubbles:[]
+- 컷2: top:"" bottom:"" bubbles:[{"text":"5분만...","style":"handwritten"}]
+- 컷3: top:"알람이 또 울린다" bottom:"이미 7번째" bubbles:[]
+- 컷4: top:"" bottom:"" bubbles:[{"text":"...출근 포기","style":"wobbly"}]
+
+다음 JSON만 출력 (설명 없이):
+{"panels":[{"top":"","bottom":"","bubbles":[{"text":"","style":"handwritten"}]}]}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: [{ role: "user", parts: [{ text: prompt }] }],
+    config: {
+      temperature: 1.0,
+    },
   });
 
   const candidate = response.candidates?.[0];
@@ -263,7 +270,18 @@ export async function generateStoryScripts(data: {
   }
 
   const cleanedText = textPart.text.replace(/```json|```/g, '').trim();
-  return JSON.parse(cleanedText);
+  const result = JSON.parse(cleanedText);
+
+  // Post-process: enforce max 2 bubbles per panel
+  if (result.panels) {
+    for (const panel of result.panels) {
+      if (panel.bubbles && panel.bubbles.length > 2) {
+        panel.bubbles = panel.bubbles.slice(0, 2);
+      }
+    }
+  }
+
+  return result;
 }
 
 export async function suggestStoryTopics(genre?: string): Promise<string[]> {

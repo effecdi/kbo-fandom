@@ -85,12 +85,11 @@ import {
   ArrowRight as ArrowRightIcon,
 } from "lucide-react";
 import DrawingCanvas, { type DrawingToolState, type DrawingCanvasHandle } from "@/components/drawing-canvas";
-import CanvasFloatingToolbar from "@/components/canvas-floating-toolbar";
 import "@/components/drawing-tools-panel.scss";
 import { FlowStepper } from "@/components/flow-stepper";
 import { EditorOnboarding } from "@/components/editor-onboarding";
 import { getFlowState, clearFlowState } from "@/lib/flow";
-import type { StoryPanelScript, Generation } from "@shared/schema";
+import type { StoryPanelScript, Generation, GenerationLight } from "@shared/schema";
 import ReactFlow, { Background, Controls, type Node, type NodeChange, applyNodeChanges } from "reactflow";
 import {
   ContextMenu,
@@ -884,6 +883,8 @@ function PanelCanvas({
   onDoubleClickBubble,
   onDeletePanel,
   hideDrawingLayers,
+  externalEditBubbleId,
+  onEditBubbleIdChange,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -900,6 +901,8 @@ function PanelCanvas({
   onDoubleClickBubble?: () => void;
   onDeletePanel?: () => void;
   hideDrawingLayers?: boolean;
+  externalEditBubbleId?: string | null;
+  onEditBubbleIdChange?: (id: string | null) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -923,6 +926,14 @@ function PanelCanvas({
   useEffect(() => {
     editingBubbleIdRef.current = editingBubbleId;
   }, [editingBubbleId]);
+  // Sync external editing trigger from overlay double-click
+  useEffect(() => {
+    if (externalEditBubbleId) {
+      onSelectBubble(externalEditBubbleId);
+      setEditingBubbleId(externalEditBubbleId);
+      onEditBubbleIdChange?.(null);
+    }
+  }, [externalEditBubbleId, onEditBubbleIdChange, onSelectBubble]);
   useEffect(() => {
     selectedCharIdRef.current = selectedCharId;
   }, [selectedCharId]);
@@ -1306,7 +1317,7 @@ function PanelCanvas({
         }
       } else if (d.type === "drawing") {
         const dl = d.dl;
-        if (dl.visible && dl.imageEl) {
+        if (dl.visible && dl.imageEl instanceof HTMLImageElement) {
           ctx.save();
           ctx.globalAlpha = dl.opacity ?? 1;
           if (dl.type === "eraser") {
@@ -1319,7 +1330,7 @@ function PanelCanvas({
         }
       } else if (d.type === "char") {
         const ch = d.ch;
-        if (ch.imageEl) {
+        if (ch.imageEl instanceof HTMLImageElement) {
           const w = ch.imageEl.naturalWidth * ch.scale;
           const h = ch.imageEl.naturalHeight * ch.scale;
           ctx.save();
@@ -2560,6 +2571,9 @@ function EditorPanel({
   onRemove,
   galleryImages,
   galleryLoading,
+  galleryHasMore,
+  onLoadMoreGallery,
+  fetchFullGeneration,
   selectedBubbleId,
   setSelectedBubbleId,
   selectedCharId,
@@ -2574,8 +2588,11 @@ function EditorPanel({
   total: number;
   onUpdate: (updated: PanelData) => void;
   onRemove: () => void;
-  galleryImages: Generation[];
+  galleryImages: GenerationLight[];
   galleryLoading: boolean;
+  galleryHasMore: boolean;
+  onLoadMoreGallery: () => void;
+  fetchFullGeneration: (id: number) => Promise<Generation | null>;
   selectedBubbleId: string | null;
   setSelectedBubbleId: (id: string | null) => void;
   selectedCharId: string | null;
@@ -2717,7 +2734,9 @@ function EditorPanel({
     img.src = templatePath;
   };
 
-  const addCharacter = (gen: Generation) => {
+  const addCharacter = async (gen: GenerationLight) => {
+    const full = await fetchFullGeneration(gen.id);
+    if (!full) return;
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
@@ -2729,7 +2748,7 @@ function EditorPanel({
       );
       const newChar: CharacterPlacement = {
         id: generateId(),
-        imageUrl: gen.resultImageUrl,
+        imageUrl: full.resultImageUrl,
         x: CANVAS_W / 2,
         y: CANVAS_H / 2,
         scale: s,
@@ -2740,7 +2759,7 @@ function EditorPanel({
       setSelectedCharId(newChar.id);
       setSelectedBubbleId(null);
     };
-    img.src = gen.resultImageUrl;
+    img.src = full.resultImageUrl;
   };
 
   const removeCharacter = (id: string) => {
@@ -2917,13 +2936,15 @@ function EditorPanel({
     reader.readAsDataURL(file);
   };
 
-  const handleBackgroundFromGallery = (gen: Generation) => {
+  const handleBackgroundFromGallery = async (gen: GenerationLight) => {
+    const full = await fetchFullGeneration(gen.id);
+    if (!full) return;
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      onUpdate({ ...panel, backgroundImageUrl: gen.resultImageUrl, backgroundImageEl: img });
+      onUpdate({ ...panel, backgroundImageUrl: full.resultImageUrl, backgroundImageEl: img });
     };
-    img.src = gen.resultImageUrl;
+    img.src = full.resultImageUrl;
   };
 
   return (
@@ -3062,7 +3083,7 @@ function EditorPanel({
                       data-testid={`button-pick-bg-${gen.id}`}
                     >
                       <img
-                        src={gen.resultImageUrl}
+                        src={gen.thumbnailUrl || gen.resultImageUrl}
                         alt={gen.prompt}
                         loading="lazy"
                         className="w-full h-full object-cover"
@@ -3112,26 +3133,36 @@ function EditorPanel({
               생성된 이미지가 없습니다. 먼저 캐릭터나 배경을 만들어주세요.
             </p>
           ) : (
-            <div
-              className="grid grid-cols-3 gap-1.5 overflow-y-auto"
-              data-testid="character-picker-grid"
-            >
-              {charImages.map((gen) => (
+            <>
+              <div
+                className="grid grid-cols-3 gap-1.5 overflow-y-auto"
+                data-testid="character-picker-grid"
+              >
+                {charImages.map((gen) => (
+                  <button
+                    key={gen.id}
+                    className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
+                    onClick={() => addCharacter(gen)}
+                    data-testid={`button-pick-character-${gen.id}`}
+                  >
+                    <img
+                      src={gen.thumbnailUrl || gen.resultImageUrl}
+                      alt={gen.prompt}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+              {galleryHasMore && (
                 <button
-                  key={gen.id}
-                  className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
-                  onClick={() => addCharacter(gen)}
-                  data-testid={`button-pick-character-${gen.id}`}
+                  className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={onLoadMoreGallery}
                 >
-                  <img
-                    src={gen.resultImageUrl}
-                    alt={gen.prompt}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
+                  더 보기
                 </button>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -3545,11 +3576,35 @@ export default function StoryPage() {
     });
   }, []);
 
-  const { data: galleryData, isLoading: galleryLoading } = useQuery<
-    Generation[]
+  const [galleryLimit, setGalleryLimit] = useState(30);
+  const { data: galleryRaw, isLoading: galleryLoading } = useQuery<
+    { items: GenerationLight[]; total: number; hasMore: boolean }
   >({
-    queryKey: ["/api/gallery"],
+    queryKey: ["/api/gallery", galleryLimit],
+    queryFn: async () => {
+      const authHeaders: Record<string, string> = {};
+      const { supabase: sb } = await import("@/lib/supabase");
+      const { data: sess } = await sb.auth.getSession();
+      if (sess.session?.access_token) authHeaders["Authorization"] = `Bearer ${sess.session.access_token}`;
+      const res = await fetch(`/api/gallery?limit=${galleryLimit}&offset=0`, { headers: authHeaders });
+      if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+      return res.json();
+    },
   });
+  const galleryData = galleryRaw?.items ?? [];
+  const galleryHasMore = galleryRaw?.hasMore ?? false;
+
+  const fetchFullGeneration = useCallback(async (id: number): Promise<Generation | null> => {
+    try {
+      const authHeaders: Record<string, string> = {};
+      const { supabase: sb } = await import("@/lib/supabase");
+      const { data: sess } = await sb.auth.getSession();
+      if (sess.session?.access_token) authHeaders["Authorization"] = `Bearer ${sess.session.access_token}`;
+      const res = await fetch(`/api/gallery/${id}`, { headers: authHeaders });
+      if (!res.ok) return null;
+      return res.json();
+    } catch { return null; }
+  }, []);
 
   const getDailyKey = (feature: string) => {
     const d = new Date();
@@ -3709,10 +3764,9 @@ export default function StoryPage() {
         }
 
         const res = await apiRequest("POST", "/api/generate-background", {
-          sourceImageData: currentRefImage,
+          sourceImageDataList: [currentRefImage],
           backgroundPrompt: scenePrompt,
           itemsPrompt: finalItems,
-          characterId: null,
         });
         const data = await res.json() as { imageUrl: string };
         if (!data.imageUrl) throw new Error("이미지 생성 결과가 없습니다.");
@@ -4346,6 +4400,7 @@ export default function StoryPage() {
 
   const activePanel = panels[activePanelIndex];
   const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null);
+  const [editingBubbleIdForOverlay, setEditingBubbleIdForOverlay] = useState<string | null>(null);
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
   const [selectedDrawingLayerId, setSelectedDrawingLayerId] = useState<string | null>(null);
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
@@ -4499,7 +4554,7 @@ export default function StoryPage() {
     const ctx = testCanvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
     for (const layer of sorted) {
-      if (!layer.imageEl) continue;
+      if (!(layer.imageEl instanceof HTMLImageElement)) continue;
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       ctx.drawImage(layer.imageEl, 0, 0);
       const testX = Math.floor(canvasX - (layer.x ?? 0));
@@ -4927,8 +4982,9 @@ export default function StoryPage() {
           const maxZ = p.bubbles.reduce((m: number, b: any) => Math.max(m, b.zIndex ?? 0), 0);
           updatePanel(activePanelIndex, { ...p, bubbles: [...p.bubbles, { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
         } else if (type === "char") {
+          // Strip imageEl — DOM elements don't survive JSON serialization; the image reload effect will restore it from imageUrl
           const maxZ = p.characters.reduce((m: number, c: any) => Math.max(m, c.zIndex ?? 0), 0);
-          updatePanel(activePanelIndex, { ...p, characters: [...p.characters, { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
+          updatePanel(activePanelIndex, { ...p, characters: [...p.characters, { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1, imageEl: null }] });
         } else if (type === "text") {
           const maxZ = (p.textElements || []).reduce((m: number, t: any) => Math.max(m, t.zIndex ?? 0), 0);
           updatePanel(activePanelIndex, { ...p, textElements: [...(p.textElements || []), { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
@@ -4936,8 +4992,9 @@ export default function StoryPage() {
           const maxZ = (p.lineElements || []).reduce((m: number, l: any) => Math.max(m, l.zIndex ?? 0), 0);
           updatePanel(activePanelIndex, { ...p, lineElements: [...(p.lineElements || []), { ...data, id, points: data.points.map((pt: any) => ({ ...pt, x: pt.x + offset, y: pt.y + offset })), zIndex: maxZ + 1 }] });
         } else if (type === "drawing") {
+          // Strip imageEl — will be rebuilt from imageData by the reload effect
           const maxZ = (p.drawingLayers || []).reduce((m: number, d: any) => Math.max(m, d.zIndex ?? 0), 0);
-          updatePanel(activePanelIndex, { ...p, drawingLayers: [...(p.drawingLayers || []), { ...data, id, x: (data.x ?? 0) + offset, y: (data.y ?? 0) + offset, zIndex: maxZ + 1 }] });
+          updatePanel(activePanelIndex, { ...p, drawingLayers: [...(p.drawingLayers || []), { ...data, id, x: (data.x ?? 0) + offset, y: (data.y ?? 0) + offset, zIndex: maxZ + 1, imageEl: null }] });
         } else if (type === "shape") {
           const maxZ = (p.shapeElements || []).reduce((m: number, s: any) => Math.max(m, s.zIndex ?? 0), 0);
           updatePanel(activePanelIndex, { ...p, shapeElements: [...(p.shapeElements || []), { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
@@ -4997,6 +5054,359 @@ export default function StoryPage() {
       setSelectedShapeId(null);
     }
   }, [panels, activePanelIndex, selectedBubbleId, selectedCharId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId, updatePanel]);
+
+  // ─── Cut (copy + delete) ───────────────────────────────────────────
+  const handleOverlayCut = useCallback(() => {
+    handleOverlayCopy();
+    handleOverlayDelete();
+  }, [handleOverlayCopy, handleOverlayDelete]);
+
+  // ─── Duplicate selected elements ───────────────────────────────────
+  const handleOverlayDuplicate = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const offset = 20;
+
+    const dupOne = (type: string, id: string) => {
+      const newId = generateId();
+      if (type === "char") {
+        const ch = p.characters.find(c => c.id === id);
+        if (!ch) return;
+        const maxZ = p.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, characters: [...p.characters, { ...ch, id: newId, x: ch.x + offset, y: ch.y + offset, zIndex: maxZ + 1 }] });
+        setSelectedCharId(newId);
+      } else if (type === "bubble") {
+        const b = p.bubbles.find(bb => bb.id === id);
+        if (!b) return;
+        const maxZ = p.bubbles.reduce((m, bb) => Math.max(m, bb.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, bubbles: [...p.bubbles, { ...b, id: newId, x: b.x + offset, y: b.y + offset, zIndex: maxZ + 1 }] });
+        setSelectedBubbleId(newId);
+      } else if (type === "text") {
+        const te = (p.textElements || []).find(t => t.id === id) as any;
+        if (!te) return;
+        const maxZ = (p.textElements || []).reduce((m: number, t: any) => Math.max(m, t.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, textElements: [...(p.textElements || []), { ...te, id: newId, x: te.x + offset, y: te.y + offset, zIndex: maxZ + 1 }] });
+        setSelectedTextId(newId);
+      } else if (type === "line") {
+        const le = (p.lineElements || []).find(l => l.id === id) as any;
+        if (!le) return;
+        const maxZ = (p.lineElements || []).reduce((m: number, l: any) => Math.max(m, l.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, lineElements: [...(p.lineElements || []), { ...le, id: newId, points: le.points.map((pt: any) => ({ ...pt, x: pt.x + offset, y: pt.y + offset })), zIndex: maxZ + 1 }] });
+        setSelectedLineId(newId);
+      } else if (type === "drawing") {
+        const dl = (p.drawingLayers || []).find(d => d.id === id);
+        if (!dl) return;
+        const maxZ = (p.drawingLayers || []).reduce((m, d) => Math.max(m, d.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, drawingLayers: [...(p.drawingLayers || []), { ...dl, id: newId, x: (dl.x ?? 0) + offset, y: (dl.y ?? 0) + offset, zIndex: maxZ + 1 }] });
+        setSelectedDrawingLayerId(newId);
+      } else if (type === "shape") {
+        const se = (p.shapeElements || []).find(s => s.id === id) as any;
+        if (!se) return;
+        const maxZ = (p.shapeElements || []).reduce((m: number, s: any) => Math.max(m, s.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, shapeElements: [...(p.shapeElements || []), { ...se, id: newId, x: se.x + offset, y: se.y + offset, zIndex: maxZ + 1 }] });
+        setSelectedShapeId(newId);
+      }
+    };
+
+    if (canvasMultiSelectedRef.current.size > 0) {
+      Array.from(canvasMultiSelectedRef.current).forEach(k => {
+        const [etype, eid] = k.split(":");
+        dupOne(etype, eid);
+      });
+    } else if (selectedCharId) dupOne("char", selectedCharId);
+    else if (selectedBubbleId) dupOne("bubble", selectedBubbleId);
+    else if (selectedTextId) dupOne("text", selectedTextId);
+    else if (selectedLineId) dupOne("line", selectedLineId);
+    else if (selectedDrawingLayerId) dupOne("drawing", selectedDrawingLayerId);
+    else if (selectedShapeId) dupOne("shape", selectedShapeId);
+  }, [panels, activePanelIndex, selectedBubbleId, selectedCharId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId, updatePanel]);
+
+  // ─── Helper: get selected element info for context menu ────────────
+  const getSelectedElementInfo = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return null;
+    if (canvasMultiSelectedRef.current.size > 0) {
+      const items: Array<{ type: string; id: string; locked?: boolean; visible?: boolean }> = [];
+      Array.from(canvasMultiSelectedRef.current).forEach(k => {
+        const [t, id] = k.split(":");
+        let el: any = null;
+        if (t === "char") el = p.characters.find(c => c.id === id);
+        else if (t === "bubble") el = p.bubbles.find(b => b.id === id);
+        else if (t === "text") el = (p.textElements || []).find(x => x.id === id);
+        else if (t === "line") el = (p.lineElements || []).find(x => x.id === id);
+        else if (t === "drawing") el = (p.drawingLayers || []).find(x => x.id === id);
+        else if (t === "shape") el = (p.shapeElements || []).find(x => x.id === id);
+        if (el) items.push({ type: t, id, locked: el.locked, visible: el.visible });
+      });
+      return { multi: true, items, anyLocked: items.some(i => i.locked), anyHidden: items.some(i => i.visible === false) };
+    }
+    let type = "", id = "", el: any = null;
+    if (selectedCharId) { type = "char"; id = selectedCharId; el = p.characters.find(c => c.id === id); }
+    else if (selectedBubbleId) { type = "bubble"; id = selectedBubbleId; el = p.bubbles.find(b => b.id === id); }
+    else if (selectedTextId) { type = "text"; id = selectedTextId; el = (p.textElements || []).find(x => x.id === id); }
+    else if (selectedLineId) { type = "line"; id = selectedLineId; el = (p.lineElements || []).find(x => x.id === id); }
+    else if (selectedDrawingLayerId) { type = "drawing"; id = selectedDrawingLayerId; el = (p.drawingLayers || []).find(x => x.id === id); }
+    else if (selectedShapeId) { type = "shape"; id = selectedShapeId; el = (p.shapeElements || []).find(x => x.id === id); }
+    if (!el) return null;
+    return { multi: false, type, id, locked: el.locked, visible: el.visible, items: [{ type, id, locked: el.locked, visible: el.visible }] };
+  }, [panels, activePanelIndex, selectedCharId, selectedBubbleId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId]);
+
+  // ─── Toggle lock for selected element(s) ───────────────────────────
+  const handleOverlayToggleLock = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const info = getSelectedElementInfo();
+    if (!info) return;
+    const shouldLock = info.multi ? !info.anyLocked : !info.locked;
+    const ids = new Set(info.items.map(i => i.id));
+
+    updatePanel(activePanelIndex, {
+      ...p,
+      characters: p.characters.map(c => ids.has(c.id) ? { ...c, locked: shouldLock } : c),
+      bubbles: p.bubbles.map(b => ids.has(b.id) ? { ...b, locked: shouldLock } : b),
+      drawingLayers: (p.drawingLayers || []).map(d => ids.has(d.id) ? { ...d, locked: shouldLock } : d),
+      textElements: (p.textElements || []).map((t: any) => ids.has(t.id) ? { ...t, locked: shouldLock } : t),
+      lineElements: (p.lineElements || []).map((l: any) => ids.has(l.id) ? { ...l, locked: shouldLock } : l),
+      shapeElements: (p.shapeElements || []).map((s: any) => ids.has(s.id) ? { ...s, locked: shouldLock } : s),
+    });
+  }, [panels, activePanelIndex, getSelectedElementInfo, updatePanel]);
+
+  // ─── Toggle visibility for selected element(s) ─────────────────────
+  const handleOverlayToggleVisibility = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const info = getSelectedElementInfo();
+    if (!info) return;
+    const shouldHide = info.multi ? !info.anyHidden : info.visible !== false;
+    const newVis = shouldHide ? false : undefined;
+    const ids = new Set(info.items.map(i => i.id));
+
+    updatePanel(activePanelIndex, {
+      ...p,
+      characters: p.characters.map(c => ids.has(c.id) ? { ...c, visible: newVis } : c),
+      bubbles: p.bubbles.map(b => ids.has(b.id) ? { ...b, visible: newVis } : b),
+      drawingLayers: (p.drawingLayers || []).map(d => ids.has(d.id) ? { ...d, visible: newVis as any } : d),
+      textElements: (p.textElements || []).map((t: any) => ids.has(t.id) ? { ...t, visible: newVis } : t),
+      lineElements: (p.lineElements || []).map((l: any) => ids.has(l.id) ? { ...l, visible: newVis } : l),
+      shapeElements: (p.shapeElements || []).map((s: any) => ids.has(s.id) ? { ...s, visible: newVis } : s),
+    });
+  }, [panels, activePanelIndex, getSelectedElementInfo, updatePanel]);
+
+  // ─── Layer ordering helpers (all element types) ─────────────────────
+  const buildSortedLayerList = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return [];
+    type LI = { type: string; id: string; z: number };
+    const list: LI[] = [
+      ...p.characters.map(c => ({ type: "char", id: c.id, z: c.zIndex ?? 0 })),
+      ...p.bubbles.map(b => ({ type: "bubble", id: b.id, z: b.zIndex ?? 10 })),
+      ...(p.drawingLayers || []).map(d => ({ type: "drawing", id: d.id, z: d.zIndex ?? 15 })),
+      ...(p.textElements || []).map((t: any) => ({ type: "text", id: t.id, z: t.zIndex ?? 20 })),
+      ...(p.lineElements || []).map((l: any) => ({ type: "line", id: l.id, z: l.zIndex ?? 20 })),
+      ...(p.shapeElements || []).map((s: any) => ({ type: "shape", id: s.id, z: s.zIndex ?? 20 })),
+    ].sort((a, b) => a.z - b.z);
+    return list;
+  }, [panels, activePanelIndex]);
+
+  const applyLayerOrder = useCallback((ordered: Array<{ type: string; id: string }>) => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const n = ordered.length;
+    updatePanel(activePanelIndex, {
+      ...p,
+      characters: p.characters.map(c => { const idx = ordered.findIndex(it => it.type === "char" && it.id === c.id); return idx >= 0 ? { ...c, zIndex: n - 1 - idx } : c; }),
+      bubbles: p.bubbles.map(b => { const idx = ordered.findIndex(it => it.type === "bubble" && it.id === b.id); return idx >= 0 ? { ...b, zIndex: n - 1 - idx } : b; }),
+      drawingLayers: (p.drawingLayers || []).map(d => { const idx = ordered.findIndex(it => it.type === "drawing" && it.id === d.id); return idx >= 0 ? { ...d, zIndex: n - 1 - idx } : d; }),
+      textElements: (p.textElements || []).map((t: any) => { const idx = ordered.findIndex(it => it.type === "text" && it.id === t.id); return idx >= 0 ? { ...t, zIndex: n - 1 - idx } : t; }),
+      lineElements: (p.lineElements || []).map((l: any) => { const idx = ordered.findIndex(it => it.type === "line" && it.id === l.id); return idx >= 0 ? { ...l, zIndex: n - 1 - idx } : l; }),
+      shapeElements: (p.shapeElements || []).map((s: any) => { const idx = ordered.findIndex(it => it.type === "shape" && it.id === s.id); return idx >= 0 ? { ...s, zIndex: n - 1 - idx } : s; }),
+    });
+  }, [panels, activePanelIndex, updatePanel]);
+
+  const getSelectedId = useCallback(() => {
+    if (selectedCharId) return { type: "char", id: selectedCharId };
+    if (selectedBubbleId) return { type: "bubble", id: selectedBubbleId };
+    if (selectedTextId) return { type: "text", id: selectedTextId };
+    if (selectedLineId) return { type: "line", id: selectedLineId };
+    if (selectedDrawingLayerId) return { type: "drawing", id: selectedDrawingLayerId };
+    if (selectedShapeId) return { type: "shape", id: selectedShapeId };
+    return null;
+  }, [selectedCharId, selectedBubbleId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId]);
+
+  // Bring Forward (Ctrl+])
+  const handleOverlayBringForward = useCallback(() => {
+    const sel = getSelectedId();
+    if (!sel) return;
+    const list = buildSortedLayerList();
+    const idx = list.findIndex(x => x.type === sel.type && x.id === sel.id);
+    if (idx < 0 || idx >= list.length - 1) return;
+    const ordered = list.map(l => ({ type: l.type, id: l.id }));
+    const tmp = ordered[idx]; ordered[idx] = ordered[idx + 1]; ordered[idx + 1] = tmp;
+    applyLayerOrder(ordered);
+  }, [getSelectedId, buildSortedLayerList, applyLayerOrder]);
+
+  // Send Backward (Ctrl+[)
+  const handleOverlaySendBackward = useCallback(() => {
+    const sel = getSelectedId();
+    if (!sel) return;
+    const list = buildSortedLayerList();
+    const idx = list.findIndex(x => x.type === sel.type && x.id === sel.id);
+    if (idx <= 0) return;
+    const ordered = list.map(l => ({ type: l.type, id: l.id }));
+    const tmp = ordered[idx]; ordered[idx] = ordered[idx - 1]; ordered[idx - 1] = tmp;
+    applyLayerOrder(ordered);
+  }, [getSelectedId, buildSortedLayerList, applyLayerOrder]);
+
+  // Bring to Front (Ctrl+Shift+])
+  const handleOverlayBringToFront = useCallback(() => {
+    const sel = getSelectedId();
+    if (!sel) return;
+    const list = buildSortedLayerList();
+    const idx = list.findIndex(x => x.type === sel.type && x.id === sel.id);
+    if (idx < 0 || idx >= list.length - 1) return;
+    const ordered = list.map(l => ({ type: l.type, id: l.id }));
+    const [moved] = ordered.splice(idx, 1);
+    ordered.push(moved);
+    applyLayerOrder(ordered);
+  }, [getSelectedId, buildSortedLayerList, applyLayerOrder]);
+
+  // Send to Back (Ctrl+Shift+[)
+  const handleOverlaySendToBack = useCallback(() => {
+    const sel = getSelectedId();
+    if (!sel) return;
+    const list = buildSortedLayerList();
+    const idx = list.findIndex(x => x.type === sel.type && x.id === sel.id);
+    if (idx <= 0) return;
+    const ordered = list.map(l => ({ type: l.type, id: l.id }));
+    const [moved] = ordered.splice(idx, 1);
+    ordered.unshift(moved);
+    applyLayerOrder(ordered);
+  }, [getSelectedId, buildSortedLayerList, applyLayerOrder]);
+
+  // ─── Select All layers (Ctrl+A) ───────────────────────────────────
+  const handleOverlaySelectAll = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const all = new Set<string>();
+    p.characters.forEach(c => all.add(`char:${c.id}`));
+    p.bubbles.forEach(b => all.add(`bubble:${b.id}`));
+    (p.drawingLayers || []).forEach(d => all.add(`drawing:${d.id}`));
+    (p.textElements || []).forEach((t: any) => all.add(`text:${t.id}`));
+    (p.lineElements || []).forEach((l: any) => all.add(`line:${l.id}`));
+    (p.shapeElements || []).forEach((s: any) => { if (!s.maskEnabled) all.add(`shape:${s.id}`); });
+    setCanvasMultiSelected(all);
+  }, [panels, activePanelIndex]);
+
+  // ─── Toggle mask link for selected element(s) ──────────────────────
+  const handleOverlayToggleMask = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const maskShape = (p.shapeElements || []).find((se: any) => se.maskEnabled);
+    if (!maskShape) return;
+    const info = getSelectedElementInfo();
+    if (!info) return;
+    const layerIds = info.items.map(i => i.id).filter(id => id !== maskShape.id);
+    if (layerIds.length === 0) return;
+    const existingMasked = (maskShape as any).maskedLayerIds || [];
+    const allLinked = layerIds.every(id => existingMasked.includes(id));
+
+    const newMaskedIds = allLinked
+      ? existingMasked.filter((id: string) => !layerIds.includes(id))
+      : [...new Set([...existingMasked, ...layerIds])];
+
+    updatePanel(activePanelIndex, {
+      ...p,
+      shapeElements: (p.shapeElements || []).map((se: any) =>
+        se.id === maskShape.id ? { ...se, maskedLayerIds: newMaskedIds } : se
+      ),
+    });
+  }, [panels, activePanelIndex, getSelectedElementInfo, updatePanel]);
+
+  // ─── Comprehensive keyboard shortcuts (Photoshop-style) ────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      // Ctrl+C: Copy
+      if (ctrl && e.key === "c" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayCopy();
+        return;
+      }
+      // Ctrl+V: Paste
+      if (ctrl && e.key === "v" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayPaste();
+        return;
+      }
+      // Ctrl+X: Cut
+      if (ctrl && e.key === "x" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayCut();
+        return;
+      }
+      // Ctrl+D: Duplicate
+      if (ctrl && e.key === "d" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayDuplicate();
+        return;
+      }
+      // Ctrl+A: Select All
+      if (ctrl && e.key === "a" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlaySelectAll();
+        return;
+      }
+      // Escape: Deselect All
+      if (e.key === "Escape") {
+        setSelectedCharId(null); setSelectedBubbleId(null);
+        setSelectedTextId(null); setSelectedLineId(null);
+        setSelectedDrawingLayerId(null); setSelectedShapeId(null);
+        setCanvasMultiSelected(new Set());
+        setOverlayContextMenu(null);
+        return;
+      }
+      // Ctrl+Shift+]: Bring to Front
+      if (ctrl && e.shiftKey && e.key === "]") {
+        e.preventDefault();
+        handleOverlayBringToFront();
+        return;
+      }
+      // Ctrl+Shift+[: Send to Back
+      if (ctrl && e.shiftKey && e.key === "[") {
+        e.preventDefault();
+        handleOverlaySendToBack();
+        return;
+      }
+      // Ctrl+]: Bring Forward
+      if (ctrl && !e.shiftKey && e.key === "]") {
+        e.preventDefault();
+        handleOverlayBringForward();
+        return;
+      }
+      // Ctrl+[: Send Backward
+      if (ctrl && !e.shiftKey && e.key === "[") {
+        e.preventDefault();
+        handleOverlaySendBackward();
+        return;
+      }
+      // Ctrl+L: Toggle Lock
+      if (ctrl && e.key === "l" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayToggleLock();
+        return;
+      }
+      // Ctrl+H: Toggle Visibility (Photoshop: Ctrl+, but we use Ctrl+H to avoid conflict)
+      // Actually Ctrl+; or Ctrl+H, let's use H alone (without ctrl) for visibility toggle like many editors
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handleOverlayCopy, handleOverlayPaste, handleOverlayCut, handleOverlayDuplicate, handleOverlaySelectAll,
+    handleOverlayBringToFront, handleOverlaySendToBack, handleOverlayBringForward, handleOverlaySendBackward,
+    handleOverlayToggleLock]);
 
   // Delete selected text/line/drawing elements on Delete/Backspace
   useEffect(() => {
@@ -5723,21 +6133,33 @@ export default function StoryPage() {
                                     생성된 이미지가 없어요.<br />먼저 캐릭터를 만들어주세요.
                                   </p>
                                 ) : (
-                                  <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
-                                    {galleryData.map((gen) => (
+                                  <>
+                                    <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
+                                      {galleryData.map((gen) => (
+                                        <button
+                                          key={gen.id}
+                                          className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
+                                          onClick={async () => {
+                                            const full = await fetchFullGeneration(gen.id);
+                                            if (!full) return;
+                                            setAutoRefImageUrl(full.resultImageUrl);
+                                            setAutoRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
+                                            setShowAutoGalleryPicker(false);
+                                          }}
+                                        >
+                                          <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
+                                        </button>
+                                      ))}
+                                    </div>
+                                    {galleryHasMore && (
                                       <button
-                                        key={gen.id}
-                                        className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
-                                        onClick={() => {
-                                          setAutoRefImageUrl(gen.resultImageUrl);
-                                          setAutoRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
-                                          setShowAutoGalleryPicker(false);
-                                        }}
+                                        className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                        onClick={() => setGalleryLimit((prev) => prev + 30)}
                                       >
-                                        <img src={gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
+                                        더 보기
                                       </button>
-                                    ))}
-                                  </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}
@@ -5970,21 +6392,33 @@ export default function StoryPage() {
                                 ) : !galleryData?.length ? (
                                   <p className="text-[11px] text-muted-foreground text-center py-2">생성된 이미지가 없어요.</p>
                                 ) : (
-                                  <div className="grid grid-cols-3 gap-1.5 max-h-[150px] overflow-y-auto">
-                                    {galleryData.map((gen) => (
+                                  <>
+                                    <div className="grid grid-cols-3 gap-1.5 max-h-[150px] overflow-y-auto">
+                                      {galleryData.map((gen) => (
+                                        <button
+                                          key={gen.id}
+                                          className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
+                                          onClick={async () => {
+                                            const full = await fetchFullGeneration(gen.id);
+                                            if (!full) return;
+                                            setPromptRefImageUrl(full.resultImageUrl);
+                                            setPromptRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
+                                            setShowPromptGalleryPicker(false);
+                                          }}
+                                        >
+                                          <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
+                                        </button>
+                                      ))}
+                                    </div>
+                                    {galleryHasMore && (
                                       <button
-                                        key={gen.id}
-                                        className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
-                                        onClick={() => {
-                                          setPromptRefImageUrl(gen.resultImageUrl);
-                                          setPromptRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
-                                          setShowPromptGalleryPicker(false);
-                                        }}
+                                        className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                        onClick={() => setGalleryLimit((prev) => prev + 30)}
                                       >
-                                        <img src={gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
+                                        더 보기
                                       </button>
-                                    ))}
-                                  </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}
@@ -6117,6 +6551,9 @@ export default function StoryPage() {
                         onRemove={() => removePanel(activePanelIndex)}
                         galleryImages={galleryData ?? []}
                         galleryLoading={galleryLoading}
+                        galleryHasMore={galleryHasMore}
+                        onLoadMoreGallery={() => setGalleryLimit((prev) => prev + 30)}
+                        fetchFullGeneration={fetchFullGeneration}
                         selectedBubbleId={selectedBubbleId}
                         setSelectedBubbleId={setSelectedBubbleId}
                         selectedCharId={selectedCharId}
@@ -6550,7 +6987,9 @@ export default function StoryPage() {
                             )}
                           </>
                         )}
-                        {activePanelIndex === i && selectedToolItem === "select" && selectedDrawingLayerId && (
+                        {activePanelIndex === i && selectedToolItem === "select" && selectedDrawingLayerId && (() => {
+                          const selLayer = (panel.drawingLayers || []).find(l => l.id === selectedDrawingLayerId) || null;
+                          return (
                           <>
                             <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
                               <DrawingContextToolbar
@@ -6558,6 +6997,85 @@ export default function StoryPage() {
                                 onColorChange={(c) => setDrawingToolState(s => ({ ...s, color: c }))}
                                 showSettings={showDrawingContextSettings}
                                 onShowSettings={() => setShowDrawingContextSettings(s => !s)}
+                                layer={selLayer}
+                                onDelete={() => {
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).filter(l => l.id !== selectedDrawingLayerId),
+                                  });
+                                  setSelectedDrawingLayerId(null);
+                                }}
+                                onDuplicate={() => {
+                                  if (!selLayer) return;
+                                  const maxZ = (panel.drawingLayers || []).reduce((max, l) => Math.max(max, l.zIndex), 0);
+                                  const newLayer: DrawingLayer = {
+                                    ...selLayer,
+                                    id: generateId(),
+                                    zIndex: maxZ + 1,
+                                  };
+                                  const img = new Image();
+                                  img.onload = () => {
+                                    newLayer.imageEl = img;
+                                    updatePanel(i, {
+                                      ...panel,
+                                      drawingLayers: [...(panel.drawingLayers || []), newLayer],
+                                    });
+                                    setSelectedDrawingLayerId(newLayer.id);
+                                  };
+                                  img.src = selLayer.imageData;
+                                }}
+                                onToggleVisibility={() => {
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).map(l =>
+                                      l.id === selectedDrawingLayerId ? { ...l, visible: !l.visible } : l
+                                    ),
+                                  });
+                                }}
+                                onOpacityChange={(opacity) => {
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).map(l =>
+                                      l.id === selectedDrawingLayerId ? { ...l, opacity } : l
+                                    ),
+                                  });
+                                }}
+                                onBringForward={() => {
+                                  const layers = [...(panel.drawingLayers || [])].sort((a, b) => a.zIndex - b.zIndex);
+                                  const idx = layers.findIndex(l => l.id === selectedDrawingLayerId);
+                                  if (idx < 0 || idx >= layers.length - 1) return;
+                                  const cur = layers[idx].zIndex;
+                                  layers[idx] = { ...layers[idx], zIndex: layers[idx + 1].zIndex };
+                                  layers[idx + 1] = { ...layers[idx + 1], zIndex: cur };
+                                  updatePanel(i, { ...panel, drawingLayers: layers });
+                                }}
+                                onSendBackward={() => {
+                                  const layers = [...(panel.drawingLayers || [])].sort((a, b) => a.zIndex - b.zIndex);
+                                  const idx = layers.findIndex(l => l.id === selectedDrawingLayerId);
+                                  if (idx <= 0) return;
+                                  const cur = layers[idx].zIndex;
+                                  layers[idx] = { ...layers[idx], zIndex: layers[idx - 1].zIndex };
+                                  layers[idx - 1] = { ...layers[idx - 1], zIndex: cur };
+                                  updatePanel(i, { ...panel, drawingLayers: layers });
+                                }}
+                                onBringToFront={() => {
+                                  const maxZ = (panel.drawingLayers || []).reduce((max, l) => Math.max(max, l.zIndex), 0);
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).map(l =>
+                                      l.id === selectedDrawingLayerId ? { ...l, zIndex: maxZ + 1 } : l
+                                    ),
+                                  });
+                                }}
+                                onSendToBack={() => {
+                                  const minZ = (panel.drawingLayers || []).reduce((min, l) => Math.min(min, l.zIndex), Infinity);
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).map(l =>
+                                      l.id === selectedDrawingLayerId ? { ...l, zIndex: minZ - 1 } : l
+                                    ),
+                                  });
+                                }}
                               />
                             </div>
                             {showDrawingContextSettings && (
@@ -6572,7 +7090,8 @@ export default function StoryPage() {
                               </div>
                             )}
                           </>
-                        )}
+                          );
+                        })()}
                         {/* Bubble context toolbar */}
                         {activePanelIndex === i && selectedBubbleId && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedDrawingLayerId && (() => {
                           const selBubble = panel.bubbles.find(b => b.id === selectedBubbleId);
@@ -6661,6 +7180,8 @@ export default function StoryPage() {
                           onDoubleClickBubble={undefined}
                           onDeletePanel={() => removePanel(i)}
                           hideDrawingLayers={isDrawingMode && activePanelIndex === i}
+                          externalEditBubbleId={activePanelIndex === i ? editingBubbleIdForOverlay : null}
+                          onEditBubbleIdChange={setEditingBubbleIdForOverlay}
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}
@@ -6763,7 +7284,7 @@ export default function StoryPage() {
                               }
                               if (selectedCharId) {
                                 const selCh = panel.characters.find(c => c.id === selectedCharId);
-                                if (selCh && selCh.imageEl) {
+                                if (selCh && selCh.imageEl instanceof HTMLImageElement) {
                                   const cw = selCh.imageEl.naturalWidth * selCh.scale;
                                   const chH = selCh.imageEl.naturalHeight * selCh.scale;
                                   const cx = selCh.x - cw / 2;
@@ -7138,12 +7659,38 @@ export default function StoryPage() {
                                   return;
                                 }
                               }
+
+                              // Double-click on bubble to edit text
+                              for (let bi = panel.bubbles.length - 1; bi >= 0; bi--) {
+                                const b = panel.bubbles[bi];
+                                if (canvasX >= b.x && canvasX <= b.x + b.width && canvasY >= b.y && canvasY <= b.y + b.height) {
+                                  setSelectedBubbleId(b.id);
+                                  setSelectedCharId(null);
+                                  setSelectedTextId(null);
+                                  setSelectedLineId(null);
+                                  setSelectedShapeId(null);
+                                  setSelectedDrawingLayerId(null);
+                                  setEditingBubbleIdForOverlay(b.id);
+                                  return;
+                                }
+                              }
                             }}
                           />
                         )}
 
                         {/* Canvas overlay context menu */}
-                        {activePanelIndex === i && overlayContextMenu && (
+                        {activePanelIndex === i && overlayContextMenu && (() => {
+                          const ctxInfo = getSelectedElementInfo();
+                          const hasSelection = !!ctxInfo;
+                          const hasMaskShape = (panel.shapeElements || []).some((se: any) => se.maskEnabled);
+                          const isMaskLinked = hasSelection && !ctxInfo!.multi && (() => {
+                            const maskShape = (panel.shapeElements || []).find((se: any) => se.maskEnabled);
+                            if (!maskShape) return false;
+                            return ((maskShape as any).maskedLayerIds || []).includes(ctxInfo!.id);
+                          })();
+                          const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
+                          const ctxShortcut = "text-[10px] text-muted-foreground ml-4";
+                          return (
                           <>
                             <div
                               className="fixed inset-0"
@@ -7152,34 +7699,88 @@ export default function StoryPage() {
                               onContextMenu={(e) => { e.preventDefault(); setOverlayContextMenu(null); }}
                             />
                             <div
-                              className="fixed min-w-[150px] rounded-md border bg-popover p-1 shadow-md"
+                              className="fixed min-w-[180px] rounded-md border bg-popover p-1 shadow-md"
                               style={{ left: overlayContextMenu.x, top: overlayContextMenu.y, zIndex: 50 }}
                             >
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors"
-                                onClick={() => { handleOverlayCopy(); setOverlayContextMenu(null); }}
-                              >
-                                복사
+                              {/* Copy / Cut / Paste / Duplicate */}
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayCopy(); setOverlayContextMenu(null); }}>
+                                <span>복사</span><span className={ctxShortcut}>⌘C</span>
                               </button>
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors"
-                                onClick={() => { handleOverlayPaste(); setOverlayContextMenu(null); }}
-                              >
-                                붙여넣기
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayCut(); setOverlayContextMenu(null); }}>
+                                <span>잘라내기</span><span className={ctxShortcut}>⌘X</span>
                               </button>
+                              <button type="button" className={ctxBtnClass}
+                                onClick={() => { handleOverlayPaste(); setOverlayContextMenu(null); }}>
+                                <span>붙여넣기</span><span className={ctxShortcut}>⌘V</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayDuplicate(); setOverlayContextMenu(null); }}>
+                                <span>복제</span><span className={ctxShortcut}>⌘D</span>
+                              </button>
+
                               <div className="my-1 h-px bg-border" />
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
-                                onClick={() => { handleOverlayDelete(); setOverlayContextMenu(null); }}
-                              >
-                                삭제
+
+                              {/* Layer ordering */}
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection || ctxInfo?.multi}
+                                onClick={() => { handleOverlayBringToFront(); setOverlayContextMenu(null); }}>
+                                <span>맨 앞으로</span><span className={ctxShortcut}>⌘⇧]</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection || ctxInfo?.multi}
+                                onClick={() => { handleOverlayBringForward(); setOverlayContextMenu(null); }}>
+                                <span>앞으로</span><span className={ctxShortcut}>⌘]</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection || ctxInfo?.multi}
+                                onClick={() => { handleOverlaySendBackward(); setOverlayContextMenu(null); }}>
+                                <span>뒤로</span><span className={ctxShortcut}>⌘[</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection || ctxInfo?.multi}
+                                onClick={() => { handleOverlaySendToBack(); setOverlayContextMenu(null); }}>
+                                <span>맨 뒤로</span><span className={ctxShortcut}>⌘⇧[</span>
+                              </button>
+
+                              <div className="my-1 h-px bg-border" />
+
+                              {/* Lock / Visibility */}
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayToggleLock(); setOverlayContextMenu(null); }}>
+                                <span>{ctxInfo?.anyLocked || ctxInfo?.locked ? "잠금 해제" : "잠금"}</span><span className={ctxShortcut}>⌘L</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayToggleVisibility(); setOverlayContextMenu(null); }}>
+                                <span>{ctxInfo?.anyHidden || ctxInfo?.visible === false ? "보이기" : "숨기기"}</span>
+                              </button>
+
+                              {/* Mask link */}
+                              {hasMaskShape && hasSelection && (
+                                <button type="button" className={ctxBtnClass}
+                                  onClick={() => { handleOverlayToggleMask(); setOverlayContextMenu(null); }}>
+                                  <span>{isMaskLinked ? "마스크 해제" : "마스크 연결"}</span>
+                                </button>
+                              )}
+
+                              <div className="my-1 h-px bg-border" />
+
+                              {/* Select All */}
+                              <button type="button" className={ctxBtnClass}
+                                onClick={() => { handleOverlaySelectAll(); setOverlayContextMenu(null); }}>
+                                <span>전체 선택</span><span className={ctxShortcut}>⌘A</span>
+                              </button>
+
+                              <div className="my-1 h-px bg-border" />
+
+                              {/* Delete */}
+                              <button type="button"
+                                className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+                                disabled={!hasSelection}
+                                onClick={() => { handleOverlayDelete(); setOverlayContextMenu(null); }}>
+                                <span>삭제</span><span className={ctxShortcut}>Del</span>
                               </button>
                             </div>
                           </>
-                        )}
+                          );
+                        })()}
 
                         {/* Rubber band selection visual */}
                         {activePanelIndex === i && rubberBandRect && (
@@ -7323,7 +7924,7 @@ export default function StoryPage() {
                         {/* Selected drawing layer bounding box with resize handles */}
                         {selectedToolItem === "select" && activePanelIndex === i && selectedDrawingLayerId && (() => {
                           const layer = (panel.drawingLayers || []).find(l => l.id === selectedDrawingLayerId);
-                          if (!layer || !layer.visible || !layer.imageEl) return null;
+                          if (!layer || !layer.visible || !(layer.imageEl instanceof HTMLImageElement)) return null;
                           const dlX = layer.x ?? 0;
                           const dlY = layer.y ?? 0;
                           const dlW = layer.width ?? CANVAS_W;
@@ -7404,95 +8005,6 @@ export default function StoryPage() {
                           );
                         })()}
 
-                        {/* Floating toolbar for selected drawing layer */}
-                        {selectedToolItem === "select" && activePanelIndex === i && selectedDrawingLayerId && (() => {
-                          const layer = (panel.drawingLayers || []).find(l => l.id === selectedDrawingLayerId);
-                          if (!layer) return null;
-                          return (
-                            <CanvasFloatingToolbar
-                              layer={layer}
-                              onDelete={() => {
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).filter(l => l.id !== selectedDrawingLayerId),
-                                });
-                                setSelectedDrawingLayerId(null);
-                              }}
-                              onDuplicate={() => {
-                                const maxZ = (panel.drawingLayers || []).reduce((max, l) => Math.max(max, l.zIndex), 0);
-                                const newLayer: DrawingLayer = {
-                                  ...layer,
-                                  id: generateId(),
-                                  zIndex: maxZ + 1,
-                                };
-                                // Load imageEl for the clone
-                                const img = new Image();
-                                img.onload = () => {
-                                  newLayer.imageEl = img;
-                                  updatePanel(i, {
-                                    ...panel,
-                                    drawingLayers: [...(panel.drawingLayers || []), newLayer],
-                                  });
-                                  setSelectedDrawingLayerId(newLayer.id);
-                                };
-                                img.src = layer.imageData;
-                              }}
-                              onToggleVisibility={() => {
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).map(l =>
-                                    l.id === selectedDrawingLayerId ? { ...l, visible: !l.visible } : l
-                                  ),
-                                });
-                              }}
-                              onOpacityChange={(opacity) => {
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).map(l =>
-                                    l.id === selectedDrawingLayerId ? { ...l, opacity } : l
-                                  ),
-                                });
-                              }}
-                              onBringForward={() => {
-                                const layers = [...(panel.drawingLayers || [])].sort((a, b) => a.zIndex - b.zIndex);
-                                const idx = layers.findIndex(l => l.id === selectedDrawingLayerId);
-                                if (idx < 0 || idx >= layers.length - 1) return;
-                                const cur = layers[idx].zIndex;
-                                layers[idx] = { ...layers[idx], zIndex: layers[idx + 1].zIndex };
-                                layers[idx + 1] = { ...layers[idx + 1], zIndex: cur };
-                                updatePanel(i, { ...panel, drawingLayers: layers });
-                              }}
-                              onSendBackward={() => {
-                                const layers = [...(panel.drawingLayers || [])].sort((a, b) => a.zIndex - b.zIndex);
-                                const idx = layers.findIndex(l => l.id === selectedDrawingLayerId);
-                                if (idx <= 0) return;
-                                const cur = layers[idx].zIndex;
-                                layers[idx] = { ...layers[idx], zIndex: layers[idx - 1].zIndex };
-                                layers[idx - 1] = { ...layers[idx - 1], zIndex: cur };
-                                updatePanel(i, { ...panel, drawingLayers: layers });
-                              }}
-                              onBringToFront={() => {
-                                const maxZ = (panel.drawingLayers || []).reduce((max, l) => Math.max(max, l.zIndex), 0);
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).map(l =>
-                                    l.id === selectedDrawingLayerId ? { ...l, zIndex: maxZ + 1 } : l
-                                  ),
-                                });
-                              }}
-                              onSendToBack={() => {
-                                const minZ = (panel.drawingLayers || []).reduce((min, l) => Math.min(min, l.zIndex), Infinity);
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).map(l =>
-                                    l.id === selectedDrawingLayerId ? { ...l, zIndex: minZ - 1 } : l
-                                  ),
-                                });
-                              }}
-                              onClose={() => setSelectedDrawingLayerId(null)}
-                            />
-                          );
-                        })()}
                       </div>
                     </ContextMenuTrigger>
                     <ContextMenuContent>
@@ -7702,6 +8214,16 @@ export default function StoryPage() {
             const tmp = newOrder[index];
             newOrder[index] = newOrder[swapIdx];
             newOrder[swapIdx] = tmp;
+            applyRightLayerOrder(newOrder);
+          };
+
+          const reorderRightLayer = (fromIndex: number, toIndex: number) => {
+            if (fromIndex === toIndex) return;
+            if (fromIndex < 0 || fromIndex >= rightLayerItems.length) return;
+            if (toIndex < 0 || toIndex >= rightLayerItems.length) return;
+            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line" | "shape", id: li.id }));
+            const [moved] = newOrder.splice(fromIndex, 1);
+            newOrder.splice(toIndex, 0, moved);
             applyRightLayerOrder(newOrder);
           };
 
@@ -8244,6 +8766,7 @@ export default function StoryPage() {
                     onSelectShape={setSelectedShapeId}
                     onSetToolItem={setSelectedToolItem}
                     onMoveLayer={moveRightLayer}
+                    onReorderLayer={reorderRightLayer}
                     onDeleteLayer={(item) => {
                       if (item.type === "char") {
                         updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== item.id) });
