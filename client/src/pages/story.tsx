@@ -4878,7 +4878,7 @@ export default function StoryPage() {
           const ids = canvasMultiSelectedRef.current;
           const delIds = (type: string) => {
             const out = new Set<string>();
-            for (const k of ids) { const [t, id] = k.split(":"); if (t === type) out.add(id); }
+            Array.from(ids).forEach(k => { const [t, id] = k.split(":"); if (t === type) out.add(id); });
             return out;
           };
           const bIds = delIds("bubble"), cIds = delIds("char"), tIds = delIds("text"), lIds = delIds("line"), dIds = delIds("drawing"), sIds = delIds("shape");
@@ -6702,8 +6702,9 @@ export default function StoryPage() {
                               if (canvasMultiSelectedRef.current.size > 1) {
                                 const p = panels[i];
                                 if (p) {
+                                  const multiKeys = Array.from(canvasMultiSelectedRef.current);
                                   let clickedOnSelected = false;
-                                  for (const key of canvasMultiSelectedRef.current) {
+                                  for (const key of multiKeys) {
                                     const [etype, eid] = key.split(":");
                                     let el: any = null;
                                     if (etype === "bubble") el = p.bubbles.find(b => b.id === eid);
@@ -6722,7 +6723,7 @@ export default function StoryPage() {
                                   if (clickedOnSelected) {
                                     // Start group drag
                                     const starts = new Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>();
-                                    for (const key of canvasMultiSelectedRef.current) {
+                                    for (const key of multiKeys) {
                                       const [etype, eid] = key.split(":");
                                       if (etype === "bubble") { const b = p.bubbles.find(bb => bb.id === eid); if (b) starts.set(key, { x: b.x, y: b.y }); }
                                       else if (etype === "char") { const c = p.characters.find(cc => cc.id === eid); if (c) starts.set(key, { x: c.x, y: c.y }); }
@@ -7020,7 +7021,7 @@ export default function StoryPage() {
                           const p = panels[i];
                           if (!p) return null;
                           const boxes: { key: string; bb: BBox }[] = [];
-                          for (const k of canvasMultiSelected) {
+                          for (const k of Array.from(canvasMultiSelected)) {
                             const [etype, eid] = k.split(":");
                             let el: any = null;
                             if (etype === "bubble") el = p.bubbles.find(b => b.id === eid);
