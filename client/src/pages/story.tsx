@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, startTransition } from "react";
 import { useSearch } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -2972,6 +2972,7 @@ function EditorPanel({
                       <img
                         src={gen.resultImageUrl}
                         alt={gen.prompt}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </button>
@@ -3033,6 +3034,7 @@ function EditorPanel({
                   <img
                     src={gen.resultImageUrl}
                     alt={gen.prompt}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -4788,9 +4790,11 @@ export default function StoryPage() {
       setShowLoginDialog(true);
       return;
     }
-    setActiveLeftTab((prev) => {
-      const next = prev === tab ? null : tab;
-      return next;
+    startTransition(() => {
+      setActiveLeftTab((prev) => {
+        const next = prev === tab ? null : tab;
+        return next;
+      });
     });
   };
 
@@ -5433,7 +5437,7 @@ export default function StoryPage() {
                                           setShowAutoGalleryPicker(false);
                                         }}
                                       >
-                                        <img src={gen.resultImageUrl} alt={gen.prompt} className="w-full h-full object-cover" />
+                                        <img src={gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
                                       </button>
                                     ))}
                                   </div>
@@ -5680,7 +5684,7 @@ export default function StoryPage() {
                                           setShowPromptGalleryPicker(false);
                                         }}
                                       >
-                                        <img src={gen.resultImageUrl} alt={gen.prompt} className="w-full h-full object-cover" />
+                                        <img src={gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
                                       </button>
                                     ))}
                                   </div>
