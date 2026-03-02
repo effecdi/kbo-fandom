@@ -7,11 +7,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Download, Image as ImageIcon, Wand2, LayoutGrid, Paintbrush, Trees, Trash2 } from "lucide-react";
+import { Download, Image as ImageIcon, Wand2, LayoutGrid, Paintbrush, Trees, Trash2, CheckSquare, Square, X } from "lucide-react";
 import type { Generation } from "@shared/schema";
 
 export default function GalleryPage() {
   const [filter, setFilter] = useState<"all" | "character" | "pose" | "background">("all");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
 
   const { data: generations, isLoading } = useQuery<Generation[]>({
     queryKey: ["/api/gallery"],
@@ -34,12 +36,51 @@ export default function GalleryPage() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: number[]) => {
+      const res = await apiRequest("POST", "/api/gallery/bulk-delete", { ids });
+      return res.json();
+    },
+    onSuccess: () => {
+      setSelected(new Set());
+      setSelectMode(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/gallery"] });
+    },
+  });
+
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("DELETE", "/api/gallery");
+      return res.json();
+    },
+    onSuccess: () => {
+      setSelected(new Set());
+      setSelectMode(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/gallery"] });
+    },
+  });
+
   const downloadImage = (url: string) => {
     const a = document.createElement("a");
     a.href = url;
     a.download = `charagen-${Date.now()}.png`;
     a.click();
   };
+
+  const toggleSelect = (id: number) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelected(new Set(filtered.map(g => g.id)));
+  };
+
+  const isDeleting = bulkDeleteMutation.isPending || deleteAllMutation.isPending;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -48,15 +89,73 @@ export default function GalleryPage() {
           <h1 className="text-2xl font-bold tracking-tight" data-testid="text-gallery-title">갤러리</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">생성한 모든 캐릭터와 포즈를 확인하세요</p>
         </div>
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
-          <TabsList data-testid="tabs-gallery-filter">
-            <TabsTrigger value="all" data-testid="tab-all">전체</TabsTrigger>
-            <TabsTrigger value="character" data-testid="tab-characters">캐릭터</TabsTrigger>
-            <TabsTrigger value="pose" data-testid="tab-poses">포즈</TabsTrigger>
-            <TabsTrigger value="background" data-testid="tab-backgrounds">배경</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2">
+          {!selectMode && filtered.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectMode(true)}
+            >
+              <CheckSquare className="h-4 w-4 mr-1.5" />
+              선택
+            </Button>
+          )}
+          <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
+            <TabsList data-testid="tabs-gallery-filter">
+              <TabsTrigger value="all" data-testid="tab-all">전체</TabsTrigger>
+              <TabsTrigger value="character" data-testid="tab-characters">캐릭터</TabsTrigger>
+              <TabsTrigger value="pose" data-testid="tab-poses">포즈</TabsTrigger>
+              <TabsTrigger value="background" data-testid="tab-backgrounds">배경</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
+
+      {/* Selection action bar */}
+      {selectMode && (
+        <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+          <span className="text-sm font-medium flex-1">
+            {selected.size > 0 ? `${selected.size}개 선택됨` : "항목을 선택하세요"}
+          </span>
+          <Button variant="outline" size="sm" onClick={selectAll}>
+            전체 선택
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={selected.size === 0 || isDeleting}
+            onClick={() => {
+              if (confirm(`${selected.size}개 항목을 삭제하시겠습니까?`)) {
+                bulkDeleteMutation.mutate(Array.from(selected));
+              }
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+            선택 삭제
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={filtered.length === 0 || isDeleting}
+            onClick={() => {
+              if (confirm("모든 항목을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+                deleteAllMutation.mutate();
+              }
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+            전체 삭제
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => { setSelectMode(false); setSelected(new Set()); }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -87,70 +186,88 @@ export default function GalleryPage() {
         </div>
       ) : (
         <div className="grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((gen) => (
-            <Card key={gen.id} className="overflow-hidden group hover-elevate" data-testid={`card-generation-${gen.id}`}>
-              <div className="relative aspect-square overflow-hidden">
-                <img
-                  src={gen.resultImageUrl}
-                  alt={gen.prompt}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-end justify-end p-3 gap-2">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ visibility: "visible" }}
-                    onClick={() => {
-                      if (confirm("정말 삭제하시겠습니까?")) {
-                        deleteMutation.mutate(gen.id);
-                      }
-                    }}
-                    data-testid={`button-delete-${gen.id}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ visibility: "visible" }}
-                    onClick={() => downloadImage(gen.resultImageUrl)}
-                    data-testid={`button-download-${gen.id}`}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
+          {filtered.map((gen) => {
+            const isSelected = selected.has(gen.id);
+            return (
+              <Card
+                key={gen.id}
+                className={`overflow-hidden group hover-elevate ${selectMode ? "cursor-pointer" : ""} ${isSelected ? "ring-2 ring-primary" : ""}`}
+                data-testid={`card-generation-${gen.id}`}
+                onClick={selectMode ? () => toggleSelect(gen.id) : undefined}
+              >
+                <div className="relative aspect-square overflow-hidden">
+                  <img
+                    src={gen.resultImageUrl}
+                    alt={gen.prompt}
+                    className="h-full w-full object-cover"
+                  />
+                  {selectMode ? (
+                    <div className="absolute top-2 left-2">
+                      {isSelected ? (
+                        <CheckSquare className="h-6 w-6 text-primary drop-shadow-md" />
+                      ) : (
+                        <Square className="h-6 w-6 text-white/70 drop-shadow-md" />
+                      )}
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-end justify-end p-3 gap-2">
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ visibility: "visible" }}
+                        onClick={() => {
+                          if (confirm("정말 삭제하시겠습니까?")) {
+                            deleteMutation.mutate(gen.id);
+                          }
+                        }}
+                        data-testid={`button-delete-${gen.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ visibility: "visible" }}
+                        onClick={() => downloadImage(gen.resultImageUrl)}
+                        data-testid={`button-download-${gen.id}`}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div className="p-3.5">
-                <p className="text-sm font-medium truncate">{gen.prompt}</p>
-                <div className="flex items-center justify-between flex-wrap gap-1.5 mt-2">
-                  <Badge variant="secondary" className="capitalize text-xs">
-                    {gen.type === "character" ? (
-                      <><Wand2 className="h-3 w-3 mr-1" />{gen.type}</>
-                    ) : gen.type === "background" ? (
-                      <><Trees className="h-3 w-3 mr-1" />{gen.type}</>
-                    ) : (
-                      <><ImageIcon className="h-3 w-3 mr-1" />{gen.type}</>
-                    )}
-                  </Badge>
-                  <div className="flex items-center gap-1.5">
-                    {gen.characterId && (
-                      <Link href={`/pose?characterId=${gen.characterId}`}>
-                        <Button variant="outline" size="sm" className="gap-1 text-xs" data-testid={`button-pose-${gen.id}`}>
-                          <Paintbrush className="h-3 w-3" />
-                          포즈
-                        </Button>
-                      </Link>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(gen.createdAt).toLocaleDateString()}
-                    </span>
+                <div className="p-3.5">
+                  <p className="text-sm font-medium truncate">{gen.prompt}</p>
+                  <div className="flex items-center justify-between flex-wrap gap-1.5 mt-2">
+                    <Badge variant="secondary" className="capitalize text-xs">
+                      {gen.type === "character" ? (
+                        <><Wand2 className="h-3 w-3 mr-1" />{gen.type}</>
+                      ) : gen.type === "background" ? (
+                        <><Trees className="h-3 w-3 mr-1" />{gen.type}</>
+                      ) : (
+                        <><ImageIcon className="h-3 w-3 mr-1" />{gen.type}</>
+                      )}
+                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      {gen.characterId && (
+                        <Link href={`/pose?characterId=${gen.characterId}`}>
+                          <Button variant="outline" size="sm" className="gap-1 text-xs" data-testid={`button-pose-${gen.id}`}>
+                            <Paintbrush className="h-3 w-3" />
+                            포즈
+                          </Button>
+                        </Link>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(gen.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

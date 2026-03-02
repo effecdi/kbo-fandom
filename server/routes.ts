@@ -584,6 +584,35 @@ export async function registerRoutes(
     }
   });
 
+  // Bulk delete selected gallery items
+  app.post("/api/gallery/bulk-delete", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "삭제할 항목을 선택해주세요." });
+      }
+      const numIds = ids.map((id: any) => parseInt(String(id))).filter((id: number) => !isNaN(id));
+      const count = await storage.deleteGenerationsBulk(numIds, userId);
+      res.json({ success: true, deleted: count });
+    } catch (error: any) {
+      console.error("Bulk delete gallery error:", error);
+      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+    }
+  });
+
+  // Delete all gallery items for user
+  app.delete("/api/gallery", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const count = await storage.deleteAllGenerations(userId);
+      res.json({ success: true, deleted: count });
+    } catch (error: any) {
+      console.error("Delete all gallery error:", error);
+      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+    }
+  });
+
   app.delete("/api/gallery/:id", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;

@@ -8,7 +8,7 @@ import {
   type Payment, type InsertPayment,
 } from "@shared/schema";
 import { requireDb } from "./db";
-import { eq, desc, sql, and, asc } from "drizzle-orm";
+import { eq, desc, sql, and, asc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   ensureUser(data: UpsertUser): Promise<void>;
@@ -42,6 +42,8 @@ export interface IStorage {
   getPaymentsByUser(userId: string): Promise<Payment[]>;
 
   deleteGeneration(id: number, userId: string): Promise<boolean>;
+  deleteGenerationsBulk(ids: number[], userId: string): Promise<number>;
+  deleteAllGenerations(userId: string): Promise<number>;
 
   createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject>;
   getBubbleProjectsByUser(userId: string): Promise<BubbleProject[]>;
@@ -274,6 +276,21 @@ export class DatabaseStorage implements IStorage {
     }
     await db.delete(generations).where(eq(generations.id, id));
     return true;
+  }
+
+  async deleteGenerationsBulk(ids: number[], userId: string): Promise<number> {
+    if (ids.length === 0) return 0;
+    const db = this.getDb();
+    const result = await db.delete(generations)
+      .where(and(inArray(generations.id, ids), eq(generations.userId, userId)));
+    return result.rowCount ?? 0;
+  }
+
+  async deleteAllGenerations(userId: string): Promise<number> {
+    const db = this.getDb();
+    const result = await db.delete(generations)
+      .where(eq(generations.userId, userId));
+    return result.rowCount ?? 0;
   }
 
   async createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject> {
