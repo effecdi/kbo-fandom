@@ -270,12 +270,34 @@ export function LayerListPanel({
                   {isMask ? `[마스크] ${item.label}` : item.label}
                 </span>
               </div>
-              <div className="flex items-center gap-0 shrink-0">
+              <div className="flex items-center gap-0.5 shrink-0">
+                {onToggleVisibility && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-6 w-6 ${item.visible === false ? "text-red-400" : "text-foreground/70"}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleVisibility(item); }}
+                    title={item.visible !== false ? "숨기기" : "보이기"}
+                  >
+                    {item.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                  </Button>
+                )}
+                {onToggleLock && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-6 w-6 ${item.locked ? "text-yellow-500" : "text-foreground/70"}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleLock(item); }}
+                    title={item.locked ? "잠금 해제" : "잠금"}
+                  >
+                    {item.locked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+                  </Button>
+                )}
                 {!isMask && maskShapes.length > 0 && onToggleMaskLink && !hasMulti && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-5 w-5 ${isLinkedToMask ? "text-primary" : ""}`}
+                    className={`h-6 w-6 ${isLinkedToMask ? "text-primary" : "text-foreground/50"}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       const targetMaskId = item.clipMaskId || maskShapes[0].id;
@@ -283,40 +305,18 @@ export function LayerListPanel({
                     }}
                     title={isLinkedToMask ? "마스크 연결 해제" : "마스크에 연결"}
                   >
-                    {isLinkedToMask ? <Link className="h-3 w-3" /> : <Unlink className="h-3 w-3" />}
-                  </Button>
-                )}
-                {onToggleVisibility && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-5 w-5 ${item.visible === false ? "text-muted-foreground/50" : ""}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleVisibility(item); }}
-                    title={item.visible !== false ? "숨기기" : "보이기"}
-                  >
-                    {item.visible !== false ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                  </Button>
-                )}
-                {onToggleLock && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-5 w-5 ${item.locked ? "text-yellow-600" : ""}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleLock(item); }}
-                    title={item.locked ? "잠금 해제" : "잠금"}
-                  >
-                    {item.locked ? <Lock className="h-3 w-3" /> : <LockOpen className="h-3 w-3" />}
+                    {isLinkedToMask ? <Link className="h-3.5 w-3.5" /> : <Unlink className="h-3.5 w-3.5" />}
                   </Button>
                 )}
                 {item.type === "char" && onFlipChar && !hasMulti && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5"
+                    className="h-6 w-6 text-foreground/50"
                     onClick={(e) => { e.stopPropagation(); onFlipChar(item.id); }}
                     title="좌우 반전"
                   >
-                    <FlipHorizontal2 className="h-3 w-3" />
+                    <FlipHorizontal2 className="h-3.5 w-3.5" />
                   </Button>
                 )}
                 {!hasMulti && (
@@ -324,30 +324,30 @@ export function LayerListPanel({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5"
+                      className="h-6 w-6 text-foreground/50"
                       disabled={i === 0}
                       onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "up"); }}
                       title="앞으로"
                     >
-                      <ChevronUp className="h-3 w-3" />
+                      <ChevronUp className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5"
+                      className="h-6 w-6 text-foreground/50"
                       disabled={i === items.length - 1}
                       onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "down"); }}
                       title="뒤로"
                     >
-                      <ChevronDown className="h-3 w-3" />
+                      <ChevronDown className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5"
+                      className="h-6 w-6 text-foreground/50"
                       onClick={(e) => { e.stopPropagation(); onDeleteLayer(item); }}
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </>
                 )}
