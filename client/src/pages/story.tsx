@@ -3731,10 +3731,11 @@ export default function StoryPage() {
       }
 
       const results: { panelId: string; imageUrl: string }[] = [];
+      const errors: string[] = [];
       for (let i = 0; i < currentPanels.length; i++) {
         // Use scene-first prompt: pose/action described FIRST forces the AI to
         // re-compose the full scene with the new character action, not just add a background
-        let scenePrompt: string | undefined;
+        let scenePrompt: string;
         let finalItems: string | undefined;
 
         if (instatoonScenePrompt.trim()) {
@@ -3763,14 +3764,24 @@ export default function StoryPage() {
           finalItems = built.itemsPrompt;
         }
 
-        const res = await apiRequest("POST", "/api/generate-background", {
-          sourceImageDataList: [currentRefImage],
-          backgroundPrompt: scenePrompt,
-          itemsPrompt: finalItems,
-        });
-        const data = await res.json() as { imageUrl: string };
-        if (!data.imageUrl) throw new Error("이미지 생성 결과가 없습니다.");
-        results.push({ panelId: currentPanels[i].id, imageUrl: data.imageUrl });
+        try {
+          const res = await apiRequest("POST", "/api/generate-background", {
+            sourceImageDataList: [currentRefImage],
+            backgroundPrompt: scenePrompt,
+            itemsPrompt: finalItems,
+          });
+          const data = await res.json() as { imageUrl: string };
+          if (!data.imageUrl) throw new Error("이미지 생성 결과가 없습니다.");
+          results.push({ panelId: currentPanels[i].id, imageUrl: data.imageUrl });
+        } catch (err: any) {
+          console.error(`Panel ${i + 1} image generation failed:`, err?.message || err);
+          errors.push(`패널 ${i + 1}: ${err?.message || "실패"}`);
+          // 크레딧 부족 등 치명적 에러는 루프 중단
+          if (/^403/.test(err?.message)) break;
+        }
+      }
+      if (results.length === 0) {
+        throw new Error(errors[0] || "모든 패널의 이미지 생성에 실패했습니다.");
       }
       return results;
     },
@@ -4115,8 +4126,16 @@ export default function StoryPage() {
     // Items kept separate
     const itemsPrompt = items?.trim() || undefined;
 
+    // backgroundPrompt는 최소 3자 이상이어야 함 (서버 스키마 요구사항)
+    let backgroundPrompt = parts.join(", ");
+    if (!backgroundPrompt || backgroundPrompt.length < 3) {
+      backgroundPrompt = backgroundPrompt
+        ? `${backgroundPrompt}, cute instatoon scene`
+        : "cute instatoon scene with character";
+    }
+
     return {
-      backgroundPrompt: parts.join(", ") || undefined as any,
+      backgroundPrompt,
       itemsPrompt,
     };
   };

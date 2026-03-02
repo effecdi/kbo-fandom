@@ -336,7 +336,7 @@ Single character only, full body view, pure solid white background, no shadows o
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-image",
-    contents: [{ role: "user", parts }],
+    contents: parts,
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
       imageConfig: {
@@ -345,13 +345,23 @@ Single character only, full body view, pure solid white background, no shadows o
     },
   });
 
+  const promptFeedback = (response as any).promptFeedback;
+  if (promptFeedback?.blockReason) {
+    throw new Error(`Prompt blocked: ${promptFeedback.blockReason}`);
+  }
+
   const candidate = response.candidates?.[0];
+  if (!candidate) {
+    throw new Error("No candidates in response — model may have rejected the request");
+  }
+
   const imagePart = candidate?.content?.parts?.find(
     (part: any) => part.inlineData
   );
 
   if (!imagePart?.inlineData?.data) {
-    throw new Error("Failed to generate image - no image data in response");
+    const reason = candidate.finishReason ? ` (finishReason: ${candidate.finishReason})` : "";
+    throw new Error(`Failed to generate image - no image data in response${reason}`);
   }
 
   const mimeType = imagePart.inlineData.mimeType || "image/png";
@@ -469,7 +479,7 @@ Keep the character identical to the reference. Only change the pose. Single char
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-image",
-    contents: [{ role: "user", parts }],
+    contents: parts,
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
       imageConfig: {
@@ -478,13 +488,23 @@ Keep the character identical to the reference. Only change the pose. Single char
     },
   });
 
+  const promptFeedback = (response as any).promptFeedback;
+  if (promptFeedback?.blockReason) {
+    throw new Error(`Prompt blocked: ${promptFeedback.blockReason}`);
+  }
+
   const candidate = response.candidates?.[0];
+  if (!candidate) {
+    throw new Error("No candidates in response — model may have rejected the request");
+  }
+
   const imagePart = candidate?.content?.parts?.find(
     (part: any) => part.inlineData
   );
 
   if (!imagePart?.inlineData?.data) {
-    throw new Error("Failed to generate pose - no image data in response");
+    const reason = candidate.finishReason ? ` (finishReason: ${candidate.finishReason})` : "";
+    throw new Error(`Failed to generate pose - no image data in response${reason}`);
   }
 
   const mimeType = imagePart.inlineData.mimeType || "image/png";
@@ -563,26 +583,57 @@ Make the background and items in the same simple, cute drawing style as the char
     }
   }
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
-    contents: [{ role: "user", parts }],
-    config: {
-      responseModalities: [Modality.TEXT, Modality.IMAGE],
-      imageConfig: {
-        aspectRatio: "3:4",
-      },
-    },
-  });
+  // 최대 2회 시도 (첫 시도 실패 시 1회 재시도)
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: parts,
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+          imageConfig: {
+            aspectRatio: "3:4",
+          },
+        },
+      });
 
-  const candidate = response.candidates?.[0];
-  const bgImagePart = candidate?.content?.parts?.find(
-    (part: any) => part.inlineData
-  );
+      // 안전 필터 / 프롬프트 차단 확인
+      const promptFeedback = (response as any).promptFeedback;
+      if (promptFeedback?.blockReason) {
+        throw new Error(`Prompt blocked: ${promptFeedback.blockReason}`);
+      }
 
-  if (!bgImagePart?.inlineData?.data) {
-    throw new Error("Failed to generate background - no image data in response");
+      const candidate = response.candidates?.[0];
+      if (!candidate) {
+        throw new Error("No candidates in response — model may have rejected the request");
+      }
+
+      // finishReason 확인 (IMAGE_SAFETY, SAFETY 등)
+      const finishReason = candidate.finishReason;
+      if (finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
+        console.warn("Background generation finishReason:", finishReason);
+      }
+
+      const bgImagePart = candidate?.content?.parts?.find(
+        (part: any) => part.inlineData
+      );
+
+      if (!bgImagePart?.inlineData?.data) {
+        const reason = finishReason ? ` (finishReason: ${finishReason})` : "";
+        throw new Error(`Failed to generate background - no image data in response${reason}`);
+      }
+
+      const bgMimeType = bgImagePart.inlineData.mimeType || "image/png";
+      return `data:${bgMimeType};base64,${bgImagePart.inlineData.data}`;
+    } catch (err: any) {
+      lastError = err;
+      console.error(`Background generation attempt ${attempt + 1} failed:`, err?.message || err);
+      if (attempt === 0) {
+        // 첫 시도 실패 시 짧은 대기 후 재시도
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
   }
-
-  const bgMimeType = bgImagePart.inlineData.mimeType || "image/png";
-  return `data:${bgMimeType};base64,${bgImagePart.inlineData.data}`;
+  throw lastError || new Error("Failed to generate background after retries");
 }
