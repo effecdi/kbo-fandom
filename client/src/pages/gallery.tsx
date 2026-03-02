@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,8 +26,7 @@ export default function GalleryPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`/api/gallery/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("삭제에 실패했습니다.");
+      const res = await apiRequest("DELETE", `/api/gallery/${id}`);
       return res.json();
     },
     onSuccess: () => {
