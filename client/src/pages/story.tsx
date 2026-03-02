@@ -6424,24 +6424,6 @@ export default function StoryPage() {
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
 
                               const HANDLE_HIT = 10;
-                              const overlayRect = e.currentTarget.getBoundingClientRect();
-
-                              // Helper: register window-level listeners for element drag
-                              const startWindowDrag = (type: "shape" | "char" | "bubble", id: string, cx: number, cy: number, resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r") => {
-                                handleElementDragStart(type, id, cx, cy, panel, resizeMode);
-                                const onMove = (me: MouseEvent) => {
-                                  const mx = ((me.clientX - overlayRect.left) / overlayRect.width) * 450;
-                                  const my = ((me.clientY - overlayRect.top) / overlayRect.height) * 600;
-                                  handleElementDragMove(mx, my, i);
-                                };
-                                const onUp = () => {
-                                  handleElementDragEnd();
-                                  window.removeEventListener("mousemove", onMove);
-                                  window.removeEventListener("mouseup", onUp);
-                                };
-                                window.addEventListener("mousemove", onMove);
-                                window.addEventListener("mouseup", onUp);
-                              };
 
                               // --- 1) Check resize handles of currently selected element first ---
                               if (selectedShapeId) {
@@ -6459,7 +6441,7 @@ export default function StoryPage() {
                                   ];
                                   for (const h of shapeHandles) {
                                     if (Math.abs(canvasX - h.cx) <= HANDLE_HIT && Math.abs(canvasY - h.cy) <= HANDLE_HIT) {
-                                      startWindowDrag("shape", selShape.id, canvasX, canvasY, h.mode);
+                                      handleElementDragStart("shape", selShape.id, canvasX, canvasY, panel, h.mode);
                                       return;
                                     }
                                   }
@@ -6480,7 +6462,7 @@ export default function StoryPage() {
                                   ];
                                   for (const corner of charCorners) {
                                     if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
-                                      startWindowDrag("char", selCh.id, canvasX, canvasY, corner.mode);
+                                      handleElementDragStart("char", selCh.id, canvasX, canvasY, panel, corner.mode);
                                       return;
                                     }
                                   }
@@ -6501,7 +6483,7 @@ export default function StoryPage() {
                                   ];
                                   for (const corner of bCorners) {
                                     if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
-                                      startWindowDrag("bubble", selB.id, canvasX, canvasY, corner.mode);
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, corner.mode);
                                       return;
                                     }
                                   }
@@ -6549,7 +6531,7 @@ export default function StoryPage() {
                                     if (insideInner) continue; // 투명 내부 클릭은 아래 요소로 통과
                                   }
                                   clearSelections(); setSelectedShapeId(se.id);
-                                  startWindowDrag("shape", se.id, canvasX, canvasY);
+                                  handleElementDragStart("shape", se.id, canvasX, canvasY, panel);
                                   return;
                                 } else if (item.type === "text") {
                                   const te = item.te;
@@ -6593,7 +6575,7 @@ export default function StoryPage() {
                                   if (b.locked || b.visible === false) continue;
                                   if (canvasX >= b.x && canvasX <= b.x + b.width && canvasY >= b.y && canvasY <= b.y + b.height) {
                                     clearSelections(); setSelectedBubbleId(b.id);
-                                    startWindowDrag("bubble", b.id, canvasX, canvasY);
+                                    handleElementDragStart("bubble", b.id, canvasX, canvasY, panel);
                                     return;
                                   }
                                 } else if (item.type === "char") {
@@ -6604,7 +6586,7 @@ export default function StoryPage() {
                                   if (canvasX >= ch.x - cw / 2 && canvasX <= ch.x + cw / 2 &&
                                       canvasY >= ch.y - chH / 2 && canvasY <= ch.y + chH / 2) {
                                     clearSelections(); setSelectedCharId(ch.id);
-                                    startWindowDrag("char", ch.id, canvasX, canvasY);
+                                    handleElementDragStart("char", ch.id, canvasX, canvasY, panel);
                                     return;
                                   }
                                 }
@@ -6618,22 +6600,16 @@ export default function StoryPage() {
                             }}
                             onMouseMove={(e) => {
                               if (!dragElementRef.current) return;
-                              // Shape/char/bubble drags are handled by window-level listeners
-                              if (dragElementRef.current.type === "shape" || dragElementRef.current.type === "char" || dragElementRef.current.type === "bubble") return;
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
                               handleElementDragMove(canvasX, canvasY, i);
                             }}
                             onMouseUp={() => {
-                              // Shape/char/bubble drags are handled by window-level listeners
-                              if (dragElementRef.current?.type === "shape" || dragElementRef.current?.type === "char" || dragElementRef.current?.type === "bubble") return;
                               handleElementDragEnd();
                             }}
                             onMouseLeave={() => {
-                              // Shape/char/bubble drags are handled by window-level listeners
-                              if (dragElementRef.current?.type === "shape" || dragElementRef.current?.type === "char" || dragElementRef.current?.type === "bubble") return;
-                              handleElementDragEnd();
+                              if (dragElementRef.current) handleElementDragEnd();
                             }}
                             onDoubleClick={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();

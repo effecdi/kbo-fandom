@@ -270,34 +270,34 @@ export function LayerListPanel({
                   {isMask ? `[마스크] ${item.label}` : item.label}
                 </span>
               </div>
-              <div className="flex items-center gap-0.5 shrink-0">
+              <div className="flex items-center gap-1 shrink-0">
+                {/* 눈(가시성) — 항상 표시, 크고 명확하게 */}
                 {onToggleVisibility && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-6 w-6 ${item.visible === false ? "text-red-400" : "text-foreground/70"}`}
+                  <button
+                    type="button"
+                    className={`p-1 rounded hover:bg-muted/60 transition-colors ${item.visible === false ? "text-red-500" : "text-foreground"}`}
                     onClick={(e) => { e.stopPropagation(); onToggleVisibility(item); }}
                     title={item.visible !== false ? "숨기기" : "보이기"}
                   >
-                    {item.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                  </Button>
+                    {item.visible !== false ? <Eye className="h-4.5 w-4.5" /> : <EyeOff className="h-4.5 w-4.5" />}
+                  </button>
                 )}
+                {/* 잠금 — 항상 표시, 크고 명확하게 */}
                 {onToggleLock && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-6 w-6 ${item.locked ? "text-yellow-500" : "text-foreground/70"}`}
+                  <button
+                    type="button"
+                    className={`p-1 rounded hover:bg-muted/60 transition-colors ${item.locked ? "text-yellow-500" : "text-foreground"}`}
                     onClick={(e) => { e.stopPropagation(); onToggleLock(item); }}
                     title={item.locked ? "잠금 해제" : "잠금"}
                   >
-                    {item.locked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
-                  </Button>
+                    {item.locked ? <Lock className="h-4.5 w-4.5" /> : <LockOpen className="h-4.5 w-4.5" />}
+                  </button>
                 )}
+                {/* 마스크 연결 */}
                 {!isMask && maskShapes.length > 0 && onToggleMaskLink && !hasMulti && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-6 w-6 ${isLinkedToMask ? "text-primary" : "text-foreground/50"}`}
+                  <button
+                    type="button"
+                    className={`p-1 rounded hover:bg-muted/60 transition-colors ${isLinkedToMask ? "text-primary" : "text-foreground/50"}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       const targetMaskId = item.clipMaskId || maskShapes[0].id;
@@ -306,49 +306,47 @@ export function LayerListPanel({
                     title={isLinkedToMask ? "마스크 연결 해제" : "마스크에 연결"}
                   >
                     {isLinkedToMask ? <Link className="h-3.5 w-3.5" /> : <Unlink className="h-3.5 w-3.5" />}
-                  </Button>
+                  </button>
                 )}
-                {item.type === "char" && onFlipChar && !hasMulti && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-foreground/50"
-                    onClick={(e) => { e.stopPropagation(); onFlipChar(item.id); }}
-                    title="좌우 반전"
-                  >
-                    <FlipHorizontal2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-                {!hasMulti && (
+                {/* 선택된 항목만: 반전/이동/삭제 */}
+                {isSelected && !hasMulti && (
                   <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-foreground/50"
+                    {item.type === "char" && onFlipChar && (
+                      <button
+                        type="button"
+                        className="p-1 rounded hover:bg-muted/60 text-foreground/60 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); onFlipChar(item.id); }}
+                        title="좌우 반전"
+                      >
+                        <FlipHorizontal2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="p-1 rounded hover:bg-muted/60 text-foreground/60 disabled:opacity-30 transition-colors"
                       disabled={i === 0}
                       onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "up"); }}
                       title="앞으로"
                     >
                       <ChevronUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-foreground/50"
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1 rounded hover:bg-muted/60 text-foreground/60 disabled:opacity-30 transition-colors"
                       disabled={i === items.length - 1}
                       onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "down"); }}
                       title="뒤로"
                     >
                       <ChevronDown className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-foreground/50"
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1 rounded hover:bg-red-500/10 text-foreground/60 hover:text-red-500 transition-colors"
                       onClick={(e) => { e.stopPropagation(); onDeleteLayer(item); }}
+                      title="삭제"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    </button>
                   </>
                 )}
               </div>
