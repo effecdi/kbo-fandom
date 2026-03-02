@@ -823,6 +823,48 @@ function buildShapePath(
   }
 }
 
+// ─── Multi-select utility helpers ──────────────────────────────────────────
+type BBox = { x: number; y: number; w: number; h: number };
+
+function getElementBoundingBox(
+  type: string,
+  el: any,
+): BBox | null {
+  if (type === "bubble") {
+    return { x: el.x, y: el.y, w: el.width, h: el.height };
+  }
+  if (type === "char") {
+    const cw = el.imageEl ? el.imageEl.naturalWidth * el.scale : 80;
+    const ch = el.imageEl ? el.imageEl.naturalHeight * el.scale : 80;
+    return { x: el.x - cw / 2, y: el.y - ch / 2, w: cw, h: ch };
+  }
+  if (type === "text") {
+    return { x: el.x, y: el.y, w: el.width, h: el.height };
+  }
+  if (type === "line") {
+    if (!el.points || el.points.length === 0) return null;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const pt of el.points) {
+      if (pt.x < minX) minX = pt.x;
+      if (pt.y < minY) minY = pt.y;
+      if (pt.x > maxX) maxX = pt.x;
+      if (pt.y > maxY) maxY = pt.y;
+    }
+    return { x: minX, y: minY, w: maxX - minX || 4, h: maxY - minY || 4 };
+  }
+  if (type === "drawing") {
+    return { x: el.x ?? 0, y: el.y ?? 0, w: el.width ?? 450, h: el.height ?? 600 };
+  }
+  if (type === "shape") {
+    return { x: el.x, y: el.y, w: el.width, h: el.height };
+  }
+  return null;
+}
+
+function rectsIntersect(a: BBox, b: BBox): boolean {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
 const CANVAS_W = 450;
 const CANVAS_H = 600;
 
@@ -2247,6 +2289,25 @@ function PanelCanvas({
     return () => window.removeEventListener("keydown", handler);
   }, [handleDeleteSelection, handleBringForward, handleSendBackward]);
 
+  // Auto-enter bubble edit mode on printable key press
+  const pendingCharRef = useRef<string | null>(null);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+      if (editingBubbleIdRef.current) return;
+      if (!selectedBubbleIdRef.current) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key.length === 1) {
+        e.preventDefault();
+        pendingCharRef.current = e.key;
+        setEditingBubbleId(selectedBubbleIdRef.current);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -2419,6 +2480,17 @@ function PanelCanvas({
             return (
               <textarea
                 autoFocus
+                ref={(el) => {
+                  if (el && pendingCharRef.current !== null) {
+                    const ch = pendingCharRef.current;
+                    pendingCharRef.current = null;
+                    const newText = b.text + ch;
+                    updateBubbleInPanel(b.id, { text: newText });
+                    requestAnimationFrame(() => {
+                      el.selectionStart = el.selectionEnd = newText.length;
+                    });
+                  }
+                }}
                 value={b.text}
                 onChange={(e) => {
                   updateBubbleInPanel(b.id, { text: e.target.value });
@@ -4315,6 +4387,21 @@ export default function StoryPage() {
   const [showShapeSettings, setShowShapeSettings] = useState(false);
   const [selectedShapeType, setSelectedShapeType] = useState<ShapeType>("rectangle");
 
+  // ─── Multi-select state ────────────────────────────────────────────
+  const [canvasMultiSelected, setCanvasMultiSelected] = useState<Set<string>>(new Set());
+  const canvasMultiSelectedRef = useRef<Set<string>>(canvasMultiSelected);
+  useEffect(() => { canvasMultiSelectedRef.current = canvasMultiSelected; }, [canvasMultiSelected]);
+
+  const rubberBandRef = useRef<{ active: boolean; startX: number; startY: number; curX: number; curY: number; panelIdx: number } | null>(null);
+  const [rubberBandRect, setRubberBandRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+
+  const multiDragRef = useRef<{
+    startMouseX: number;
+    startMouseY: number;
+    panelIdx: number;
+    startPositions: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>;
+  } | null>(null);
+
   // Helper: get selected text element
   const selectedTextElement = selectedTextId && panels[activePanelIndex]
     ? panels[activePanelIndex].textElements?.find((t) => t.id === selectedTextId) ?? null
@@ -4785,6 +4872,28 @@ export default function StoryPage() {
       if (e.key === "Delete" || e.key === "Backspace") {
         const p = panels[activePanelIndex];
         if (!p) return;
+        // Multi-select bulk delete
+        if (canvasMultiSelectedRef.current.size > 0) {
+          e.preventDefault();
+          const ids = canvasMultiSelectedRef.current;
+          const delIds = (type: string) => {
+            const out = new Set<string>();
+            for (const k of ids) { const [t, id] = k.split(":"); if (t === type) out.add(id); }
+            return out;
+          };
+          const bIds = delIds("bubble"), cIds = delIds("char"), tIds = delIds("text"), lIds = delIds("line"), dIds = delIds("drawing"), sIds = delIds("shape");
+          updatePanel(activePanelIndex, {
+            ...p,
+            bubbles: p.bubbles.filter(b => !bIds.has(b.id)),
+            characters: p.characters.filter(c => !cIds.has(c.id)),
+            textElements: (p.textElements || []).filter(t => !tIds.has(t.id)),
+            lineElements: (p.lineElements || []).filter(l => !lIds.has(l.id)),
+            drawingLayers: (p.drawingLayers || []).filter(d => !dIds.has(d.id)),
+            shapeElements: (p.shapeElements || []).filter(s => !sIds.has(s.id)),
+          });
+          setCanvasMultiSelected(new Set());
+          return;
+        }
         if (selectedShapeId) {
           e.preventDefault();
           const newShapes = (p.shapeElements || []).filter(s => s.id !== selectedShapeId);
@@ -4813,11 +4922,23 @@ export default function StoryPage() {
           setSelectedDrawingLayerId(null);
           return;
         }
+        if (selectedBubbleId) {
+          e.preventDefault();
+          updatePanel(activePanelIndex, { ...p, bubbles: p.bubbles.filter(b => b.id !== selectedBubbleId) });
+          setSelectedBubbleId(null);
+          return;
+        }
+        if (selectedCharId) {
+          e.preventDefault();
+          updatePanel(activePanelIndex, { ...p, characters: p.characters.filter(c => c.id !== selectedCharId) });
+          setSelectedCharId(null);
+          return;
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedShapeId, selectedDrawingLayerId, updatePanel]);
+  }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedShapeId, selectedDrawingLayerId, selectedBubbleId, selectedCharId, canvasMultiSelected, updatePanel]);
 
   const toggleLeftTab = (tab: LeftTab) => {
     if (!isAuthenticated) {
@@ -6461,10 +6582,12 @@ export default function StoryPage() {
                           (panel.drawingLayers || []).length > 0 ||
                           (panel.textElements || []).length > 0 ||
                           (panel.lineElements || []).length > 0 ||
-                          (panel.shapeElements || []).length > 0
+                          (panel.shapeElements || []).length > 0 ||
+                          panel.bubbles.length > 0 ||
+                          panel.characters.length > 0
                         ) && (
                           <div
-                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: dragElementRef.current ? "grabbing" : "default" }}
+                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: rubberBandRef.current?.active ? "crosshair" : multiDragRef.current ? "grabbing" : dragElementRef.current ? "grabbing" : "default" }}
                             onMouseDown={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
@@ -6575,6 +6698,45 @@ export default function StoryPage() {
                                 }
                               }
 
+                              // --- 1.5) Multi-select group drag detection ---
+                              if (canvasMultiSelectedRef.current.size > 1) {
+                                const p = panels[i];
+                                if (p) {
+                                  let clickedOnSelected = false;
+                                  for (const key of canvasMultiSelectedRef.current) {
+                                    const [etype, eid] = key.split(":");
+                                    let el: any = null;
+                                    if (etype === "bubble") el = p.bubbles.find(b => b.id === eid);
+                                    else if (etype === "char") el = p.characters.find(c => c.id === eid);
+                                    else if (etype === "text") el = (p.textElements || []).find(t => t.id === eid);
+                                    else if (etype === "line") el = (p.lineElements || []).find(l => l.id === eid);
+                                    else if (etype === "drawing") el = (p.drawingLayers || []).find(d => d.id === eid);
+                                    else if (etype === "shape") el = (p.shapeElements || []).find(s => s.id === eid);
+                                    if (!el) continue;
+                                    const bb = getElementBoundingBox(etype, el);
+                                    if (bb && canvasX >= bb.x && canvasX <= bb.x + bb.w && canvasY >= bb.y && canvasY <= bb.y + bb.h) {
+                                      clickedOnSelected = true;
+                                      break;
+                                    }
+                                  }
+                                  if (clickedOnSelected) {
+                                    // Start group drag
+                                    const starts = new Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>();
+                                    for (const key of canvasMultiSelectedRef.current) {
+                                      const [etype, eid] = key.split(":");
+                                      if (etype === "bubble") { const b = p.bubbles.find(bb => bb.id === eid); if (b) starts.set(key, { x: b.x, y: b.y }); }
+                                      else if (etype === "char") { const c = p.characters.find(cc => cc.id === eid); if (c) starts.set(key, { x: c.x, y: c.y }); }
+                                      else if (etype === "text") { const t = (p.textElements || []).find(tt => tt.id === eid); if (t) starts.set(key, { x: t.x, y: t.y }); }
+                                      else if (etype === "line") { const l = (p.lineElements || []).find(ll => ll.id === eid); if (l) starts.set(key, { points: l.points.map(pt => ({ x: pt.x, y: pt.y })) }); }
+                                      else if (etype === "drawing") { const d = (p.drawingLayers || []).find(dd => dd.id === eid); if (d) starts.set(key, { x: d.x ?? 0, y: d.y ?? 0 }); }
+                                      else if (etype === "shape") { const s = (p.shapeElements || []).find(ss => ss.id === eid); if (s) starts.set(key, { x: s.x, y: s.y }); }
+                                    }
+                                    multiDragRef.current = { startMouseX: canvasX, startMouseY: canvasY, panelIdx: i, startPositions: starts };
+                                    return;
+                                  }
+                                }
+                              }
+
                               // --- 2) Unified hit-test: ALL elements sorted by z-index (highest first) ---
                               type HitItem =
                                 | { type: "shape"; z: number; se: (typeof panel.shapeElements extends (infer U)[] | undefined ? U : never) }
@@ -6597,6 +6759,7 @@ export default function StoryPage() {
                               const clearSelections = () => {
                                 setSelectedShapeId(null); setSelectedTextId(null); setSelectedLineId(null);
                                 setSelectedDrawingLayerId(null); setSelectedCharId(null); setSelectedBubbleId(null);
+                                setCanvasMultiSelected(new Set());
                               };
 
                               for (const item of allItems) {
@@ -6677,23 +6840,143 @@ export default function StoryPage() {
                                 }
                               }
 
-                              // Nothing hit — clear all selections
+                              // Nothing hit — clear all selections & start rubber band
                               {
                                 clearSelections();
                                 setEditingTextId(null);
+                                rubberBandRef.current = { active: true, startX: canvasX, startY: canvasY, curX: canvasX, curY: canvasY, panelIdx: i };
                               }
                             }}
                             onMouseMove={(e) => {
-                              if (!dragElementRef.current) return;
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+
+                              // 1) Rubber band drag
+                              if (rubberBandRef.current?.active) {
+                                rubberBandRef.current.curX = canvasX;
+                                rubberBandRef.current.curY = canvasY;
+                                const rb = rubberBandRef.current;
+                                const rx = Math.min(rb.startX, rb.curX);
+                                const ry = Math.min(rb.startY, rb.curY);
+                                const rw = Math.abs(rb.curX - rb.startX);
+                                const rh = Math.abs(rb.curY - rb.startY);
+                                setRubberBandRect({ x: rx, y: ry, w: rw, h: rh });
+                                return;
+                              }
+
+                              // 2) Multi-select group drag
+                              if (multiDragRef.current) {
+                                const md = multiDragRef.current;
+                                const dx = canvasX - md.startMouseX;
+                                const dy = canvasY - md.startMouseY;
+                                const p = panels[md.panelIdx];
+                                if (!p) return;
+                                const updated: Record<string, any> = {};
+                                updated.characters = p.characters.map(c => {
+                                  const s = md.startPositions.get(`char:${c.id}`);
+                                  return s && "x" in s ? { ...c, x: s.x + dx, y: s.y + dy } : c;
+                                });
+                                updated.bubbles = p.bubbles.map(b => {
+                                  const s = md.startPositions.get(`bubble:${b.id}`);
+                                  return s && "x" in s ? { ...b, x: s.x + dx, y: s.y + dy } : b;
+                                });
+                                updated.textElements = (p.textElements || []).map((te: any) => {
+                                  const s = md.startPositions.get(`text:${te.id}`);
+                                  return s && "x" in s ? { ...te, x: s.x + dx, y: s.y + dy } : te;
+                                });
+                                updated.lineElements = (p.lineElements || []).map((le: any) => {
+                                  const s = md.startPositions.get(`line:${le.id}`);
+                                  return s && "points" in s ? { ...le, points: s.points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy })) } : le;
+                                });
+                                updated.drawingLayers = (p.drawingLayers || []).map((dl: any) => {
+                                  const s = md.startPositions.get(`drawing:${dl.id}`);
+                                  return s && "x" in s ? { ...dl, x: s.x + dx, y: s.y + dy } : dl;
+                                });
+                                updated.shapeElements = (p.shapeElements || []).map((se: any) => {
+                                  const s = md.startPositions.get(`shape:${se.id}`);
+                                  return s && "x" in s ? { ...se, x: s.x + dx, y: s.y + dy } : se;
+                                });
+                                updatePanel(md.panelIdx, { ...p, ...updated });
+                                return;
+                              }
+
+                              // 3) Single element drag (existing)
+                              if (!dragElementRef.current) return;
                               handleElementDragMove(canvasX, canvasY, i);
                             }}
-                            onMouseUp={() => {
+                            onMouseUp={(e) => {
+                              // 1) Rubber band end — select intersecting elements
+                              if (rubberBandRef.current?.active) {
+                                const rb = rubberBandRef.current;
+                                const rx = Math.min(rb.startX, rb.curX);
+                                const ry = Math.min(rb.startY, rb.curY);
+                                const rw = Math.abs(rb.curX - rb.startX);
+                                const rh = Math.abs(rb.curY - rb.startY);
+                                rubberBandRef.current = null;
+                                setRubberBandRect(null);
+
+                                // Only select if rubber band is large enough (avoid accidental clicks)
+                                if (rw < 4 && rh < 4) return;
+
+                                const selRect: BBox = { x: rx, y: ry, w: rw, h: rh };
+                                const p = panels[rb.panelIdx];
+                                if (!p) return;
+                                const newSel = new Set<string>();
+
+                                for (const b of p.bubbles) {
+                                  if (b.locked || b.visible === false) continue;
+                                  const bb = getElementBoundingBox("bubble", b);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`bubble:${b.id}`);
+                                }
+                                for (const c of p.characters) {
+                                  if (c.locked || c.visible === false) continue;
+                                  const bb = getElementBoundingBox("char", c);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`char:${c.id}`);
+                                }
+                                for (const te of (p.textElements || [])) {
+                                  if (te.locked || te.visible === false) continue;
+                                  const bb = getElementBoundingBox("text", te);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`text:${te.id}`);
+                                }
+                                for (const le of (p.lineElements || [])) {
+                                  if (le.locked || le.visible === false) continue;
+                                  const bb = getElementBoundingBox("line", le);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`line:${le.id}`);
+                                }
+                                for (const dl of (p.drawingLayers || [])) {
+                                  if (!dl.visible || dl.locked) continue;
+                                  const bb = getElementBoundingBox("drawing", dl);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`drawing:${dl.id}`);
+                                }
+                                for (const se of (p.shapeElements || [])) {
+                                  if (se.locked || se.visible === false) continue;
+                                  if (se.maskEnabled) continue; // exclude mask shapes
+                                  const bb = getElementBoundingBox("shape", se);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`shape:${se.id}`);
+                                }
+
+                                setCanvasMultiSelected(newSel);
+                                return;
+                              }
+
+                              // 2) Multi-select group drag end
+                              if (multiDragRef.current) {
+                                multiDragRef.current = null;
+                                return;
+                              }
+
+                              // 3) Single element drag end (existing)
                               handleElementDragEnd();
                             }}
                             onMouseLeave={() => {
+                              if (rubberBandRef.current?.active) {
+                                rubberBandRef.current = null;
+                                setRubberBandRect(null);
+                              }
+                              if (multiDragRef.current) {
+                                multiDragRef.current = null;
+                              }
                               if (dragElementRef.current) handleElementDragEnd();
                             }}
                             onDoubleClick={(e) => {
@@ -6713,6 +6996,90 @@ export default function StoryPage() {
                             }}
                           />
                         )}
+
+                        {/* Rubber band selection visual */}
+                        {activePanelIndex === i && rubberBandRect && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              left: `${(rubberBandRect.x / 450) * 100}%`,
+                              top: `${(rubberBandRect.y / 600) * 100}%`,
+                              width: `${(rubberBandRect.w / 450) * 100}%`,
+                              height: `${(rubberBandRect.h / 600) * 100}%`,
+                              border: `1.5px dashed ${HANDLE_COLOR}`,
+                              background: "rgba(59,130,246,0.08)",
+                              pointerEvents: "none",
+                              zIndex: 24,
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        )}
+
+                        {/* Multi-select element highlights */}
+                        {activePanelIndex === i && canvasMultiSelected.size > 0 && (() => {
+                          const p = panels[i];
+                          if (!p) return null;
+                          const boxes: { key: string; bb: BBox }[] = [];
+                          for (const k of canvasMultiSelected) {
+                            const [etype, eid] = k.split(":");
+                            let el: any = null;
+                            if (etype === "bubble") el = p.bubbles.find(b => b.id === eid);
+                            else if (etype === "char") el = p.characters.find(c => c.id === eid);
+                            else if (etype === "text") el = (p.textElements || []).find(t => t.id === eid);
+                            else if (etype === "line") el = (p.lineElements || []).find(l => l.id === eid);
+                            else if (etype === "drawing") el = (p.drawingLayers || []).find(d => d.id === eid);
+                            else if (etype === "shape") el = (p.shapeElements || []).find(s => s.id === eid);
+                            if (!el) continue;
+                            const bb = getElementBoundingBox(etype, el);
+                            if (bb) boxes.push({ key: k, bb });
+                          }
+                          if (boxes.length === 0) return null;
+                          // Compute group bounding box
+                          let gMinX = Infinity, gMinY = Infinity, gMaxX = -Infinity, gMaxY = -Infinity;
+                          for (const { bb } of boxes) {
+                            if (bb.x < gMinX) gMinX = bb.x;
+                            if (bb.y < gMinY) gMinY = bb.y;
+                            if (bb.x + bb.w > gMaxX) gMaxX = bb.x + bb.w;
+                            if (bb.y + bb.h > gMaxY) gMaxY = bb.y + bb.h;
+                          }
+                          return (
+                            <>
+                              {/* Individual element borders */}
+                              {boxes.map(({ key, bb }) => (
+                                <div
+                                  key={`multi-sel-${key}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: `${(bb.x / 450) * 100}%`,
+                                    top: `${(bb.y / 600) * 100}%`,
+                                    width: `${(bb.w / 450) * 100}%`,
+                                    height: `${(bb.h / 600) * 100}%`,
+                                    border: `1.5px solid ${HANDLE_COLOR}`,
+                                    pointerEvents: "none",
+                                    zIndex: 24,
+                                    boxSizing: "border-box",
+                                  }}
+                                />
+                              ))}
+                              {/* Group bounding box */}
+                              {boxes.length > 1 && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    left: `${((gMinX - 3) / 450) * 100}%`,
+                                    top: `${((gMinY - 3) / 600) * 100}%`,
+                                    width: `${((gMaxX - gMinX + 6) / 450) * 100}%`,
+                                    height: `${((gMaxY - gMinY + 6) / 600) * 100}%`,
+                                    border: `1.5px dashed ${HANDLE_COLOR}`,
+                                    pointerEvents: "none",
+                                    zIndex: 24,
+                                    boxSizing: "border-box",
+                                  }}
+                                />
+                              )}
+                            </>
+                          );
+                        })()}
 
                         {/* Inline text editing overlay */}
                         {activePanelIndex === i && editingTextId && (() => {
@@ -7723,6 +8090,52 @@ export default function StoryPage() {
                           shapeElements: (activePanel.shapeElements || []).filter((se: CanvasShapeElement) => se.id !== item.id),
                         });
                         if (selectedShapeId === item.id) setSelectedShapeId(null);
+                      }
+                    }}
+                    onDuplicateLayer={(item) => {
+                      const id = generateId();
+                      if (item.type === "char") {
+                        const ch = activePanel.characters.find(c => c.id === item.id);
+                        if (!ch) return;
+                        const maxZ = activePanel.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0);
+                        const dup = { ...ch, id, x: ch.x + 24, y: ch.y + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, characters: [...activePanel.characters, dup] });
+                        setSelectedCharId(id);
+                      } else if (item.type === "bubble") {
+                        const b = activePanel.bubbles.find(bb => bb.id === item.id);
+                        if (!b) return;
+                        const maxZ = activePanel.bubbles.reduce((m, bb) => Math.max(m, bb.zIndex ?? 0), 0);
+                        const dup = { ...b, id, x: b.x + 24, y: b.y + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, bubbles: [...activePanel.bubbles, dup] });
+                        setSelectedBubbleId(id);
+                      } else if (item.type === "drawing") {
+                        const dl = (activePanel.drawingLayers || []).find(d => d.id === item.id);
+                        if (!dl) return;
+                        const maxZ = (activePanel.drawingLayers || []).reduce((m, d) => Math.max(m, d.zIndex ?? 0), 0);
+                        const dup = { ...dl, id, x: (dl.x ?? 0) + 24, y: (dl.y ?? 0) + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, drawingLayers: [...(activePanel.drawingLayers || []), dup] });
+                        setSelectedDrawingLayerId(id);
+                      } else if (item.type === "text") {
+                        const te = (activePanel.textElements || []).find((t: any) => t.id === item.id);
+                        if (!te) return;
+                        const maxZ = (activePanel.textElements || []).reduce((m: number, t: any) => Math.max(m, t.zIndex ?? 0), 0);
+                        const dup = { ...te, id, x: te.x + 24, y: te.y + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, textElements: [...(activePanel.textElements || []), dup] });
+                        setSelectedTextId(id);
+                      } else if (item.type === "line") {
+                        const le = (activePanel.lineElements || []).find((l: any) => l.id === item.id);
+                        if (!le) return;
+                        const maxZ = (activePanel.lineElements || []).reduce((m: number, l: any) => Math.max(m, l.zIndex ?? 0), 0);
+                        const dup = { ...le, id, points: le.points.map((pt: any) => ({ ...pt, x: pt.x + 24, y: pt.y + 24 })), zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, lineElements: [...(activePanel.lineElements || []), dup] });
+                        setSelectedLineId(id);
+                      } else if (item.type === "shape") {
+                        const se = (activePanel.shapeElements || []).find((s: any) => s.id === item.id);
+                        if (!se) return;
+                        const maxZ = (activePanel.shapeElements || []).reduce((m: number, s: any) => Math.max(m, s.zIndex ?? 0), 0);
+                        const dup = { ...se, id, x: se.x + 24, y: se.y + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, shapeElements: [...(activePanel.shapeElements || []), dup] });
+                        setSelectedShapeId(id);
                       }
                     }}
                     onToggleVisibility={(item) => {

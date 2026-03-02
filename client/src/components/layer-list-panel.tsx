@@ -18,6 +18,7 @@ import {
   Unlink,
   Lock,
   LockOpen,
+  Copy,
 } from "lucide-react";
 import { Spline, GitCommitHorizontal } from "lucide-react";
 import { STYLE_LABELS } from "@/lib/bubble-utils";
@@ -64,6 +65,7 @@ interface LayerListPanelProps {
   onSelectShape?: (id: string | null) => void;
   onMoveLayer: (index: number, direction: "up" | "down") => void;
   onDeleteLayer: (item: LayerItem) => void;
+  onDuplicateLayer?: (item: LayerItem) => void;
   onToggleVisibility?: (item: LayerItem) => void;
   onToggleLock?: (item: LayerItem) => void;
   onFlipChar?: (id: string) => void;
@@ -87,6 +89,7 @@ export function LayerListPanel({
   onSelectShape,
   onMoveLayer,
   onDeleteLayer,
+  onDuplicateLayer,
   onToggleVisibility,
   onToggleLock,
   onFlipChar,
@@ -94,6 +97,9 @@ export function LayerListPanel({
   onToggleMaskLink,
 }: LayerListPanelProps) {
   const maskShapes = items.filter(it => it.type === "shape" && it.maskEnabled);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: LayerItem } | null>(null);
 
   // Multi-selection state
   const [multiSelected, setMultiSelected] = useState<Set<string>>(new Set());
@@ -243,6 +249,11 @@ export function LayerListPanel({
                   : "hover:bg-muted/40"
               } ${item.visible === false ? "opacity-40" : ""} ${item.locked ? "opacity-70" : ""}`}
               onClick={(e) => handleClick(item, i, e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                selectSingle(item, i);
+                setContextMenu({ x: e.clientX, y: e.clientY, item });
+              }}
             >
               <div className="flex items-center gap-1 min-w-0">
                 {/* 눈/잠금 — 맨 앞 */}
@@ -353,6 +364,40 @@ export function LayerListPanel({
           );
         })}
       </div>
+
+      {/* Right-click context menu */}
+      {contextMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-50"
+            onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }}
+          />
+          <div
+            className="fixed z-50 min-w-[140px] rounded-md border bg-popover p-1 shadow-md"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            {onDuplicateLayer && (
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors"
+                onClick={() => { onDuplicateLayer(contextMenu.item); setContextMenu(null); }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                레이어 복제
+              </button>
+            )}
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+              onClick={() => { onDeleteLayer(contextMenu.item); setContextMenu(null); }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              레이어 삭제
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
