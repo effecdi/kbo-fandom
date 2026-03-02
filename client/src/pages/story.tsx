@@ -158,7 +158,9 @@ type DragMode =
   | "resize-script-bottom"
   | "move-tail"
   | "tail-ctrl1"
-  | "tail-ctrl2";
+  | "tail-ctrl2"
+  | "tail-ctrl3"
+  | "tail-ctrl4";
 
 const SCRIPT_STYLE_OPTIONS: { value: ScriptStyle; label: string }[] = [
   { value: "filled", label: "채움" },
@@ -1413,10 +1415,16 @@ function PanelCanvas({
         const cp1y = b.tailCtrl1Y ?? (geo.baseAy + (baseMidY - geo.baseAy) * pull);
         const cp2x = b.tailCtrl2X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
         const cp2y = b.tailCtrl2Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+        const cp3x = b.tailCtrl3X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
+        const cp3y = b.tailCtrl3Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+        const cp4x = b.tailCtrl4X ?? (geo.baseBx + (baseMidX - geo.baseBx) * pull);
+        const cp4y = b.tailCtrl4Y ?? (geo.baseBy + (baseMidY - geo.baseBy) * pull);
 
         const hitRadius = 12;
         if (Math.hypot(x - cp1x, y - cp1y) < hitRadius) return "tail-ctrl1";
         if (Math.hypot(x - cp2x, y - cp2y) < hitRadius) return "tail-ctrl2";
+        if (Math.hypot(x - cp3x, y - cp3y) < hitRadius) return "tail-ctrl3";
+        if (Math.hypot(x - cp4x, y - cp4y) < hitRadius) return "tail-ctrl4";
       }
 
       const handles: { mode: DragMode; hx: number; hy: number }[] = [
@@ -1882,6 +1890,10 @@ function PanelCanvas({
         updateBubbleInPanel(sid, { tailCtrl1X: pos.x, tailCtrl1Y: pos.y });
       } else if (mode === "tail-ctrl2") {
         updateBubbleInPanel(sid, { tailCtrl2X: pos.x, tailCtrl2Y: pos.y });
+      } else if (mode === "tail-ctrl3") {
+        updateBubbleInPanel(sid, { tailCtrl3X: pos.x, tailCtrl3Y: pos.y });
+      } else if (mode === "tail-ctrl4") {
+        updateBubbleInPanel(sid, { tailCtrl4X: pos.x, tailCtrl4Y: pos.y });
       } else if (mode === "move-tail") {
         updateBubbleInPanel(sid, { tailTipX: pos.x, tailTipY: pos.y });
       } else if (mode === "move") {
@@ -2567,6 +2579,14 @@ function EditorPanel({
     if (typeof b.tailCtrl2X === "number" && typeof b.tailCtrl2Y === "number") {
       updates.tailCtrl2X = 2 * cx - b.tailCtrl2X;
       updates.tailCtrl2Y = b.tailCtrl2Y;
+    }
+    if (typeof b.tailCtrl3X === "number" && typeof b.tailCtrl3Y === "number") {
+      updates.tailCtrl3X = 2 * cx - b.tailCtrl3X;
+      updates.tailCtrl3Y = b.tailCtrl3Y;
+    }
+    if (typeof b.tailCtrl4X === "number" && typeof b.tailCtrl4Y === "number") {
+      updates.tailCtrl4X = 2 * cx - b.tailCtrl4X;
+      updates.tailCtrl4Y = b.tailCtrl4Y;
     }
 
     updateBubble(b.id, updates);
@@ -4440,7 +4460,7 @@ export default function StoryPage() {
     startMouseX: number;
     startMouseY: number;
     startPositions: { x: number; y: number }[];
-    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2";
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4";
     startW?: number;
     startH?: number;
     startScale?: number;
@@ -4454,7 +4474,7 @@ export default function StoryPage() {
     mouseX: number,
     mouseY: number,
     panel: PanelData,
-    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2",
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4",
   ) => {
     if (type === "bubble") {
       const b = panel.bubbles.find(bb => bb.id === id);
@@ -4572,12 +4592,14 @@ export default function StoryPage() {
 
     if (drag.type === "bubble") {
       // Tail handle modes — directly set tail position to mouse coords
-      if (drag.resizeMode === "move-tail" || drag.resizeMode === "tail-ctrl1" || drag.resizeMode === "tail-ctrl2") {
+      if (drag.resizeMode === "move-tail" || drag.resizeMode === "tail-ctrl1" || drag.resizeMode === "tail-ctrl2" || drag.resizeMode === "tail-ctrl3" || drag.resizeMode === "tail-ctrl4") {
         const newBubbles = p.bubbles.map(b => {
           if (b.id !== drag.id) return b;
           if (drag.resizeMode === "move-tail") return { ...b, tailTipX: mouseX, tailTipY: mouseY };
           if (drag.resizeMode === "tail-ctrl1") return { ...b, tailCtrl1X: mouseX, tailCtrl1Y: mouseY };
           if (drag.resizeMode === "tail-ctrl2") return { ...b, tailCtrl2X: mouseX, tailCtrl2Y: mouseY };
+          if (drag.resizeMode === "tail-ctrl3") return { ...b, tailCtrl3X: mouseX, tailCtrl3Y: mouseY };
+          if (drag.resizeMode === "tail-ctrl4") return { ...b, tailCtrl4X: mouseX, tailCtrl4Y: mouseY };
           return b;
         });
         updatePanel(panelIdx, { ...p, bubbles: newBubbles });
@@ -5073,6 +5095,14 @@ export default function StoryPage() {
     if (typeof selBubble.tailCtrl2X === "number" && typeof selBubble.tailCtrl2Y === "number") {
       updates.tailCtrl2X = 2 * cx - selBubble.tailCtrl2X;
       updates.tailCtrl2Y = selBubble.tailCtrl2Y;
+    }
+    if (typeof selBubble.tailCtrl3X === "number" && typeof selBubble.tailCtrl3Y === "number") {
+      updates.tailCtrl3X = 2 * cx - selBubble.tailCtrl3X;
+      updates.tailCtrl3Y = selBubble.tailCtrl3Y;
+    }
+    if (typeof selBubble.tailCtrl4X === "number" && typeof selBubble.tailCtrl4Y === "number") {
+      updates.tailCtrl4X = 2 * cx - selBubble.tailCtrl4X;
+      updates.tailCtrl4Y = selBubble.tailCtrl4Y;
     }
     updatePanel(activePanelIndex, {
       ...activePanel,
@@ -6488,7 +6518,7 @@ export default function StoryPage() {
                               if (selectedBubbleId) {
                                 const selB = panel.bubbles.find(b => b.id === selectedBubbleId);
                                 if (selB && !selB.locked) {
-                                  // Tail handles first (tip, ctrl1, ctrl2)
+                                  // Tail handles first (tip, ctrl1~4)
                                   if (selB.tailStyle !== "none") {
                                     const geo = getTailGeometry(selB);
                                     const tailHitR = 12;
@@ -6504,12 +6534,24 @@ export default function StoryPage() {
                                     const cp1y = selB.tailCtrl1Y ?? (geo.baseAy + (baseMidY - geo.baseAy) * pull);
                                     const cp2x = selB.tailCtrl2X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
                                     const cp2y = selB.tailCtrl2Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+                                    const cp3x = selB.tailCtrl3X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
+                                    const cp3y = selB.tailCtrl3Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+                                    const cp4x = selB.tailCtrl4X ?? (geo.baseBx + (baseMidX - geo.baseBx) * pull);
+                                    const cp4y = selB.tailCtrl4Y ?? (geo.baseBy + (baseMidY - geo.baseBy) * pull);
                                     if (Math.hypot(canvasX - cp1x, canvasY - cp1y) < tailHitR) {
                                       handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl1");
                                       return;
                                     }
                                     if (Math.hypot(canvasX - cp2x, canvasY - cp2y) < tailHitR) {
                                       handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl2");
+                                      return;
+                                    }
+                                    if (Math.hypot(canvasX - cp3x, canvasY - cp3y) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl3");
+                                      return;
+                                    }
+                                    if (Math.hypot(canvasX - cp4x, canvasY - cp4y) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl4");
                                       return;
                                     }
                                   }
