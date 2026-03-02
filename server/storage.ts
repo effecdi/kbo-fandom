@@ -106,24 +106,42 @@ export class DatabaseStorage implements IStorage {
       ? and(eq(generations.userId, userId), eq(generations.type, type))
       : eq(generations.userId, userId);
 
-    const rows = await db.select({
-      id: generations.id,
-      userId: generations.userId,
-      characterId: generations.characterId,
-      type: generations.type,
-      prompt: generations.prompt,
-      thumbnailUrl: generations.thumbnailUrl,
-      // Fallback: include resultImageUrl only when thumbnailUrl is null (legacy data)
-      resultImageUrl: sql<string>`CASE WHEN ${generations.thumbnailUrl} IS NOT NULL THEN NULL ELSE ${generations.resultImageUrl} END`,
-      creditsUsed: generations.creditsUsed,
-      createdAt: generations.createdAt,
-    }).from(generations)
-      .where(conditions)
-      .orderBy(desc(generations.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    return rows;
+    try {
+      // Try with thumbnailUrl column (after migration)
+      const rows = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        thumbnailUrl: generations.thumbnailUrl,
+        resultImageUrl: sql<string>`CASE WHEN ${generations.thumbnailUrl} IS NOT NULL THEN NULL ELSE ${generations.resultImageUrl} END`,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .where(conditions)
+        .orderBy(desc(generations.createdAt))
+        .limit(limit)
+        .offset(offset);
+      return rows;
+    } catch {
+      // Fallback: thumbnailUrl column doesn't exist yet
+      const rows = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        resultImageUrl: generations.resultImageUrl,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .where(conditions)
+        .orderBy(desc(generations.createdAt))
+        .limit(limit)
+        .offset(offset);
+      return rows.map((r: any) => ({ ...r, thumbnailUrl: null }));
+    }
   }
 
   async getGalleryCount(userId: string, type?: string): Promise<number> {
@@ -147,8 +165,15 @@ export class DatabaseStorage implements IStorage {
 
   async createGeneration(data: InsertGeneration): Promise<Generation> {
     const db = this.getDb();
-    const [generation] = await db.insert(generations).values(data).returning();
-    return generation;
+    try {
+      const [generation] = await db.insert(generations).values(data).returning();
+      return generation;
+    } catch {
+      // Fallback: thumbnailUrl column might not exist yet, strip it
+      const { thumbnailUrl, ...rest } = data as any;
+      const [generation] = await db.insert(generations).values(rest).returning();
+      return generation;
+    }
   }
 
   async ensureUserCredits(userId: string): Promise<UserCredits> {
