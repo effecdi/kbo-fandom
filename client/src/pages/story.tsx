@@ -312,6 +312,7 @@ interface DrawingLayer {
   y?: number;
   width?: number;
   height?: number;
+  locked?: boolean;
 }
 
 interface PanelData {
