@@ -4440,7 +4440,7 @@ export default function StoryPage() {
     startMouseX: number;
     startMouseY: number;
     startPositions: { x: number; y: number }[];
-    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r";
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2";
     startW?: number;
     startH?: number;
     startScale?: number;
@@ -4454,7 +4454,7 @@ export default function StoryPage() {
     mouseX: number,
     mouseY: number,
     panel: PanelData,
-    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r",
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2",
   ) => {
     if (type === "bubble") {
       const b = panel.bubbles.find(bb => bb.id === id);
@@ -4571,6 +4571,18 @@ export default function StoryPage() {
     const dy = mouseY - drag.startMouseY;
 
     if (drag.type === "bubble") {
+      // Tail handle modes — directly set tail position to mouse coords
+      if (drag.resizeMode === "move-tail" || drag.resizeMode === "tail-ctrl1" || drag.resizeMode === "tail-ctrl2") {
+        const newBubbles = p.bubbles.map(b => {
+          if (b.id !== drag.id) return b;
+          if (drag.resizeMode === "move-tail") return { ...b, tailTipX: mouseX, tailTipY: mouseY };
+          if (drag.resizeMode === "tail-ctrl1") return { ...b, tailCtrl1X: mouseX, tailCtrl1Y: mouseY };
+          if (drag.resizeMode === "tail-ctrl2") return { ...b, tailCtrl2X: mouseX, tailCtrl2Y: mouseY };
+          return b;
+        });
+        updatePanel(panelIdx, { ...p, bubbles: newBubbles });
+        return;
+      }
       const newBubbles = p.bubbles.map(b => {
         if (b.id !== drag.id) return b;
         if (drag.resizeMode) {
@@ -6476,6 +6488,32 @@ export default function StoryPage() {
                               if (selectedBubbleId) {
                                 const selB = panel.bubbles.find(b => b.id === selectedBubbleId);
                                 if (selB && !selB.locked) {
+                                  // Tail handles first (tip, ctrl1, ctrl2)
+                                  if (selB.tailStyle !== "none") {
+                                    const geo = getTailGeometry(selB);
+                                    const tailHitR = 12;
+                                    if (Math.hypot(canvasX - geo.tipX, canvasY - geo.tipY) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "move-tail");
+                                      return;
+                                    }
+                                    const baseMidX = (geo.baseAx + geo.baseBx) / 2;
+                                    const baseMidY = (geo.baseAy + geo.baseBy) / 2;
+                                    const pull = 0.5 + (selB.tailCurve ?? 0.5) * 0.45;
+                                    const tipPull = 0.3;
+                                    const cp1x = selB.tailCtrl1X ?? (geo.baseAx + (baseMidX - geo.baseAx) * pull);
+                                    const cp1y = selB.tailCtrl1Y ?? (geo.baseAy + (baseMidY - geo.baseAy) * pull);
+                                    const cp2x = selB.tailCtrl2X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
+                                    const cp2y = selB.tailCtrl2Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+                                    if (Math.hypot(canvasX - cp1x, canvasY - cp1y) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl1");
+                                      return;
+                                    }
+                                    if (Math.hypot(canvasX - cp2x, canvasY - cp2y) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl2");
+                                      return;
+                                    }
+                                  }
+                                  // Resize handles
                                   const bCorners: { mode: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r"; hx: number; hy: number }[] = [
                                     { mode: "tl", hx: selB.x, hy: selB.y },
                                     { mode: "tr", hx: selB.x + selB.width, hy: selB.y },

@@ -244,9 +244,30 @@ export function LayerListPanel({
               } ${item.visible === false ? "opacity-40" : ""} ${item.locked ? "opacity-70" : ""}`}
               onClick={(e) => handleClick(item, i, e)}
             >
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-1 min-w-0">
+                {/* 눈/잠금 — 맨 앞 */}
+                {onToggleVisibility && (
+                  <button
+                    type="button"
+                    className={`p-0.5 rounded hover:bg-muted/60 transition-colors shrink-0 ${item.visible === false ? "text-red-400" : "text-muted-foreground"}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleVisibility(item); }}
+                    title={item.visible !== false ? "숨기기" : "보이기"}
+                  >
+                    {item.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                  </button>
+                )}
+                {onToggleLock && (
+                  <button
+                    type="button"
+                    className={`p-0.5 rounded hover:bg-muted/60 transition-colors shrink-0 ${item.locked ? "text-yellow-500" : "text-muted-foreground"}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleLock(item); }}
+                    title={item.locked ? "잠금 해제" : "잠금"}
+                  >
+                    {item.locked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+                  </button>
+                )}
                 {isLinkedToMask && (
-                  <div className="w-0.5 h-4 bg-primary/40 rounded-full shrink-0 -ml-2" />
+                  <div className="w-0.5 h-4 bg-primary/40 rounded-full shrink-0" />
                 )}
                 <div className={`w-6 h-6 rounded overflow-hidden shrink-0 border border-border/50 bg-card flex items-center justify-center`}>
                   {item.type === "drawing" ? (
@@ -271,28 +292,6 @@ export function LayerListPanel({
                 </span>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                {/* 눈(가시성) — 항상 표시, 크고 명확하게 */}
-                {onToggleVisibility && (
-                  <button
-                    type="button"
-                    className={`p-1 rounded hover:bg-muted/60 transition-colors ${item.visible === false ? "text-red-500" : "text-foreground"}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleVisibility(item); }}
-                    title={item.visible !== false ? "숨기기" : "보이기"}
-                  >
-                    {item.visible !== false ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                  </button>
-                )}
-                {/* 잠금 — 항상 표시, 크고 명확하게 */}
-                {onToggleLock && (
-                  <button
-                    type="button"
-                    className={`p-1 rounded hover:bg-muted/60 transition-colors ${item.locked ? "text-yellow-500" : "text-foreground"}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleLock(item); }}
-                    title={item.locked ? "잠금 해제" : "잠금"}
-                  >
-                    {item.locked ? <Lock className="h-5 w-5" /> : <LockOpen className="h-5 w-5" />}
-                  </button>
-                )}
                 {/* 마스크 연결 */}
                 {!isMask && maskShapes.length > 0 && onToggleMaskLink && !hasMulti && (
                   <button
