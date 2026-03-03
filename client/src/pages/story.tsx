@@ -18,6 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -5708,6 +5712,249 @@ export default function StoryPage() {
     });
   };
 
+  const DOWNLOAD_SIZES = [
+    { label: "Original (450×600)", w: 450, h: 600 },
+    { label: "2x (900×1200)", w: 900, h: 1200 },
+    { label: "Instagram Story (1080×1920)", w: 1080, h: 1920 },
+    { label: "Instagram Post (1080×1080)", w: 1080, h: 1080 },
+  ];
+
+  const downloadPanelSized = (idx: number, targetW: number, targetH: number) => {
+    const p = panels[idx];
+    if (!p) return;
+    const srcCanvas = panelCanvasRefs.current.get(p.id);
+    if (!srcCanvas) return;
+    try {
+      const offscreen = document.createElement("canvas");
+      offscreen.width = targetW;
+      offscreen.height = targetH;
+      const ctx = offscreen.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(srcCanvas, 0, 0, targetW, targetH);
+      const dataUrl = offscreen.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `panel_${idx + 1}_${targetW}x${targetH}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch {
+      toast({ title: "다운로드 실패", description: "이미지를 생성할 수 없습니다.", variant: "destructive" });
+    }
+  };
+
+  const downloadPanelSvg = (idx: number) => {
+    const p = panels[idx];
+    if (!p) return;
+    const srcCanvas = panelCanvasRefs.current.get(p.id);
+    if (!srcCanvas) return;
+    try {
+      const dataUrl = srcCanvas.toDataURL("image/png");
+      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}"><image href="${dataUrl}" width="${CANVAS_W}" height="${CANVAS_H}"/></svg>`;
+      const blob = new Blob([svgContent], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = `panel_${idx + 1}.svg`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: "다운로드 실패", description: "SVG를 생성할 수 없습니다.", variant: "destructive" });
+    }
+  };
+
+  const downloadAllSized = (w: number, h: number) => {
+    if (panels.length === 0) return;
+    panels.forEach((_, i) => {
+      setTimeout(() => downloadPanelSized(i, w, h), i * 300);
+    });
+  };
+
+  const downloadAllSvg = () => {
+    if (panels.length === 0) return;
+    panels.forEach((_, i) => {
+      setTimeout(() => downloadPanelSvg(i), i * 300);
+    });
+  };
+
+  const renderLayerToCanvas = (item: LayerItem): HTMLCanvasElement | null => {
+    const p = activePanel;
+    if (!p) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    if (item.type === "char") {
+      const ch = p.characters.find(c => c.id === item.id);
+      if (!ch || !(ch.imageEl instanceof HTMLImageElement)) return null;
+      const w = ch.imageEl.naturalWidth * ch.scale;
+      const h = ch.imageEl.naturalHeight * ch.scale;
+      ctx.save();
+      ctx.translate(ch.x, ch.y);
+      ctx.rotate(ch.rotation || 0);
+      if (ch.flipX) ctx.scale(-1, 1);
+      ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
+      ctx.restore();
+    } else if (item.type === "bubble") {
+      const b = p.bubbles.find(bb => bb.id === item.id);
+      if (!b) return null;
+      drawBubble(ctx, b, false);
+    } else if (item.type === "drawing") {
+      const dl = (p.drawingLayers || []).find(d => d.id === item.id);
+      if (!dl || !(dl.imageEl instanceof HTMLImageElement)) return null;
+      ctx.save();
+      ctx.globalAlpha = dl.opacity ?? 1;
+      if (dl.type === "eraser") ctx.globalCompositeOperation = "destination-out";
+      ctx.drawImage(dl.imageEl, dl.x ?? 0, dl.y ?? 0, dl.width ?? CANVAS_W, dl.height ?? CANVAS_H);
+      ctx.restore();
+    } else if (item.type === "text") {
+      const te = (p.textElements || []).find((t: CanvasTextElement) => t.id === item.id);
+      if (!te) return null;
+      ctx.save();
+      ctx.globalAlpha = te.opacity;
+      let fontStyle = "";
+      if (te.italic) fontStyle += "italic ";
+      if (te.bold) fontStyle += "bold ";
+      fontStyle += `${te.fontSize}px `;
+      fontStyle += te.fontFamily === "default" ? "sans-serif" : `"${te.fontFamily}", sans-serif`;
+      ctx.font = fontStyle;
+      ctx.fillStyle = te.color;
+      ctx.textAlign = te.textAlign as CanvasTextAlign;
+      ctx.textBaseline = "top";
+      let displayText = te.text;
+      if (te.textTransform === "uppercase") displayText = displayText.toUpperCase();
+      else if (te.textTransform === "lowercase") displayText = displayText.toLowerCase();
+      const textX = te.textAlign === "center" ? te.x + te.width / 2 : te.textAlign === "right" ? te.x + te.width : te.x;
+      const textY = te.y + 8;
+      const words = displayText.split("");
+      let line = "";
+      let lineY = textY;
+      const lineHeight = te.fontSize * 1.3;
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > te.width && line.length > 0) {
+          ctx.fillText(line, textX, lineY);
+          if (te.underline) { const lw = ctx.measureText(line).width; const lx = te.textAlign === "center" ? textX - lw / 2 : te.textAlign === "right" ? textX - lw : textX; ctx.fillRect(lx, lineY + te.fontSize + 1, lw, 1); }
+          if (te.strikethrough) { const lw = ctx.measureText(line).width; const lx = te.textAlign === "center" ? textX - lw / 2 : te.textAlign === "right" ? textX - lw : textX; ctx.fillRect(lx, lineY + te.fontSize / 2, lw, 1); }
+          line = words[i];
+          lineY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) {
+        ctx.fillText(line, textX, lineY);
+        if (te.underline) { const lw = ctx.measureText(line).width; const lx = te.textAlign === "center" ? textX - lw / 2 : te.textAlign === "right" ? textX - lw : textX; ctx.fillRect(lx, lineY + te.fontSize + 1, lw, 1); }
+        if (te.strikethrough) { const lw = ctx.measureText(line).width; const lx = te.textAlign === "center" ? textX - lw / 2 : te.textAlign === "right" ? textX - lw : textX; ctx.fillRect(lx, lineY + te.fontSize / 2, lw, 1); }
+      }
+      ctx.restore();
+    } else if (item.type === "line") {
+      const le = (p.lineElements || []).find((l: CanvasLineElement) => l.id === item.id);
+      if (!le) return null;
+      ctx.save();
+      ctx.globalAlpha = le.opacity;
+      ctx.strokeStyle = le.color;
+      ctx.lineWidth = le.strokeWidth;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      if (le.dashPattern === "dashed") ctx.setLineDash([8, 4]);
+      else if (le.dashPattern === "dotted") ctx.setLineDash([2, 4]);
+      else ctx.setLineDash([]);
+      const pts = le.points;
+      if (pts.length >= 2) {
+        ctx.beginPath();
+        if (le.lineType === "curved" && pts.length >= 3) {
+          ctx.moveTo(pts[0].x, pts[0].y);
+          if (pts.length === 3) {
+            ctx.quadraticCurveTo(pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+          } else {
+            for (let j = 1; j < pts.length - 1; j++) {
+              const midX = (pts[j].x + pts[j + 1].x) / 2;
+              const midY = (pts[j].y + pts[j + 1].y) / 2;
+              ctx.quadraticCurveTo(pts[j].x, pts[j].y, midX, midY);
+            }
+            ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+          }
+        } else {
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let j = 1; j < pts.length; j++) {
+            ctx.lineTo(pts[j].x, pts[j].y);
+          }
+        }
+        ctx.stroke();
+        const drawArrow = (from: { x: number; y: number }, to: { x: number; y: number }) => {
+          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          const headLen = Math.max(le.strokeWidth * 3, 8);
+          ctx.beginPath();
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - headLen * Math.cos(angle - Math.PI / 6), to.y - headLen * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - headLen * Math.cos(angle + Math.PI / 6), to.y - headLen * Math.sin(angle + Math.PI / 6));
+          ctx.stroke();
+        };
+        ctx.setLineDash([]);
+        if (le.startArrow && pts.length >= 2) drawArrow(pts[1], pts[0]);
+        if (le.endArrow && pts.length >= 2) drawArrow(pts[pts.length - 2], pts[pts.length - 1]);
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    } else if (item.type === "shape") {
+      const se = (p.shapeElements || []).find((s: CanvasShapeElement) => s.id === item.id);
+      if (!se) return null;
+      ctx.save();
+      ctx.globalAlpha = se.opacity;
+      buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
+      if (se.fillColor !== "transparent") { ctx.fillStyle = se.fillColor; ctx.fill(); }
+      if (se.strokeWidth > 0) { ctx.strokeStyle = se.strokeColor; ctx.lineWidth = se.strokeWidth; ctx.stroke(); }
+      ctx.restore();
+    } else if (item.type === "topScript") {
+      if (p.topScript) drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
+    } else if (item.type === "bottomScript") {
+      if (p.bottomScript) drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H);
+    }
+
+    return canvas;
+  };
+
+  const downloadLayerPng = (item: LayerItem) => {
+    const canvas = renderLayerToCanvas(item);
+    if (!canvas) {
+      toast({ title: "다운로드 실패", description: "레이어를 렌더링할 수 없습니다.", variant: "destructive" });
+      return;
+    }
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = `layer_${item.type}_${item.id}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadLayerSvg = (item: LayerItem) => {
+    const canvas = renderLayerToCanvas(item);
+    if (!canvas) {
+      toast({ title: "다운로드 실패", description: "레이어를 렌더링할 수 없습니다.", variant: "destructive" });
+      return;
+    }
+    const dataUrl = canvas.toDataURL("image/png");
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}"><image href="${dataUrl}" width="${CANVAS_W}" height="${CANVAS_H}"/></svg>`;
+    const blob = new Blob([svgContent], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = `layer_${item.type}_${item.id}.svg`;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleShareInstagram = async (idx: number) => {
     const p = panels[idx];
     const canvas = panelCanvasRefs.current.get(p.id);
@@ -7059,19 +7306,72 @@ export default function StoryPage() {
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={startStoryTour} title="도움말" data-testid="button-story-help">
                     <Lightbulb className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => guard(() => downloadPanel(activePanelIndex))} title="다운로드" data-testid="button-download-panel">
-                    <Download className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1 h-7 text-xs px-2"
-                    onClick={() => guard(() => downloadAll())}
-                    data-testid="button-download-all-panels"
-                  >
-                    <Download className="h-3 w-3" />
-                    전체 다운로드
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="다운로드" data-testid="button-download-panel">
+                        <Download className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[200px]">
+                      <DropdownMenuLabel className="text-[11px]">PNG 다운로드</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => guard(() => downloadPanelSized(activePanelIndex, 450, 600))}>
+                        <span className="text-xs">Original (450×600)</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 900, 1200))}>
+                        <span className="text-xs">2x (900×1200)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 1080, 1920))}>
+                        <span className="text-xs">Instagram Story (1080×1920)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 1080, 1080))}>
+                        <span className="text-xs">Instagram Post (1080×1080)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSvg(activePanelIndex))}>
+                        <span className="text-xs">SVG</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 h-7 text-xs px-2"
+                        data-testid="button-download-all-panels"
+                      >
+                        <Download className="h-3 w-3" />
+                        전체 다운로드
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[200px]">
+                      <DropdownMenuLabel className="text-[11px]">PNG 전체 다운로드</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => guard(() => downloadAllSized(450, 600))}>
+                        <span className="text-xs">Original (450×600)</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(900, 1200))}>
+                        <span className="text-xs">2x (900×1200)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1920))}>
+                        <span className="text-xs">Instagram Story (1080×1920)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1080))}>
+                        <span className="text-xs">Instagram Post (1080×1080)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSvg())}>
+                        <span className="text-xs">SVG</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   <Button size="sm" onClick={() => guard(() => setShowSaveModal(true))} className="gap-1 h-7 text-xs px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
                     <Save className="h-3 w-3" />
@@ -8873,6 +9173,12 @@ export default function StoryPage() {
                             const newB = createBubble(CANVAS_W, CANVAS_H);
                             updatePanel(activePanelIndex, { ...activePanel, bubbles: [...activePanel.bubbles, newB] });
                             setSelectedBubbleId(newB.id);
+                            setSelectedCharId(null);
+                            setSelectedTextId(null);
+                            setSelectedLineId(null);
+                            setSelectedShapeId(null);
+                            setSelectedDrawingLayerId(null);
+                            setSelectedScriptPosition(null);
                           }}>
                           <Plus className="h-3.5 w-3.5 mr-1" /> 말풍선 추가
                         </Button>
@@ -9226,6 +9532,9 @@ export default function StoryPage() {
                         shapeElements: newShapes,
                       });
                     }}
+                    isPro={isPro}
+                    onDownloadLayerPng={(item) => guard(() => downloadLayerPng(item))}
+                    onDownloadLayerSvg={(item) => guard(() => downloadLayerSvg(item))}
                   />
                     </div>
                   </div>
@@ -9371,6 +9680,12 @@ export default function StoryPage() {
                               };
                               updatePanel(activePanelIndex, { ...activePanel, bubbles: [...activePanel.bubbles, newB] });
                               setSelectedBubbleId(newB.id);
+                              setSelectedCharId(null);
+                              setSelectedTextId(null);
+                              setSelectedLineId(null);
+                              setSelectedShapeId(null);
+                              setSelectedDrawingLayerId(null);
+                              setSelectedScriptPosition(null);
                             };
                             img.src = path;
                             setShowStoryTemplatePicker(false);

@@ -20,6 +20,8 @@ import {
   LockOpen,
   Copy,
   Subtitles,
+  Download,
+  Crown,
 } from "lucide-react";
 import { Spline, GitCommitHorizontal, GripVertical } from "lucide-react";
 import { STYLE_LABELS } from "@/lib/bubble-utils";
@@ -76,6 +78,9 @@ interface LayerListPanelProps {
   onSelectScript?: (position: "top" | "bottom" | null) => void;
   selectedScriptPosition?: "top" | "bottom" | null;
   externalMultiSelected?: Set<string>;
+  onDownloadLayerPng?: (item: LayerItem) => void;
+  onDownloadLayerSvg?: (item: LayerItem) => void;
+  isPro?: boolean;
 }
 
 export function LayerListPanel({
@@ -104,6 +109,9 @@ export function LayerListPanel({
   onSelectScript,
   selectedScriptPosition,
   externalMultiSelected,
+  onDownloadLayerPng,
+  onDownloadLayerSvg,
+  isPro,
 }: LayerListPanelProps) {
   const maskShapes = items.filter(it => it.type === "shape" && it.maskEnabled);
 
@@ -502,6 +510,26 @@ export function LayerListPanel({
                   }}>
                   <span>{isLinked ? "마스크 해제" : "마스크 연결"}</span>
                 </button>
+              </>
+            )}
+
+            {(onDownloadLayerPng || onDownloadLayerSvg) && (
+              <>
+                <div className="my-1 h-px bg-border" />
+                {onDownloadLayerPng && (
+                  <button type="button" className={ctxBtnClass}
+                    onClick={() => { onDownloadLayerPng(ci); setContextMenu(null); }}>
+                    <span className="flex items-center gap-1"><Download className="h-3 w-3" /> PNG 다운로드</span>
+                  </button>
+                )}
+                {onDownloadLayerSvg && (
+                  <button type="button" className={`${ctxBtnClass} ${!isPro ? "opacity-50" : ""}`}
+                    disabled={!isPro}
+                    onClick={() => { if (isPro) { onDownloadLayerSvg(ci); setContextMenu(null); } }}>
+                    <span className="flex items-center gap-1"><Download className="h-3 w-3" /> SVG 다운로드</span>
+                    {!isPro && <Crown className="h-3 w-3 text-yellow-500" />}
+                  </button>
+                )}
               </>
             )}
 
