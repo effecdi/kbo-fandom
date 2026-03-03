@@ -1417,9 +1417,9 @@ function PanelCanvas({
       }
     });
 
-    if (p.topScript)
+    if (p.topScript && p.topScript.visible !== false)
       drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
-    if (p.bottomScript)
+    if (p.bottomScript && p.bottomScript.visible !== false)
       drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H);
     if (!isPro) {
       ctx.save();
@@ -3650,42 +3650,49 @@ export default function StoryPage() {
         prev.map((panel, i) => {
           if (!data.panels[i]) return panel;
           const aiPanel = data.panels[i];
+
+          // AI가 내려준 position을 캔버스 픽셀 좌표로 변환
+          const getBubblePosition = (position?: string, index: number = 0) => {
+            const w = CANVAS_W;
+            const h = CANVAS_H;
+            const pos = position || (index % 2 === 0 ? "top-left" : "bottom-right");
+            switch (pos) {
+              case "top-left": return { x: w * 0.1, y: h * 0.15 };
+              case "top-right": return { x: w * 0.5, y: h * 0.15 };
+              case "bottom-left": return { x: w * 0.1, y: h * 0.55 };
+              case "bottom-right": return { x: w * 0.5, y: h * 0.55 };
+              case "center": return { x: w * 0.3, y: h * 0.35 };
+              default: return { x: w * 0.25, y: h * 0.2 };
+            }
+          };
+
           const newBubbles: SpeechBubble[] = (aiPanel.bubbles || [])
-            .map((b, bi) => {
-              const yPositions = [
-                CANVAS_H * 0.3,
-                CANVAS_H * 0.5,
-                CANVAS_H * 0.65,
-                CANVAS_H * 0.4,
-                CANVAS_H * 0.55,
-              ];
-              const xPositions = [
-                CANVAS_W * 0.35,
-                CANVAS_W * 0.6,
-                CANVAS_W * 0.45,
-                CANVAS_W * 0.3,
-                CANVAS_W * 0.65,
-              ];
-              return createBubble(
+            .map((b: any, bi: number) => {
+              const baseBubble = createBubble(
                 CANVAS_W,
                 CANVAS_H,
                 b.text,
                 (b.style as BubbleStyle) || "handwritten",
               );
-            })
-            .map((nb, bi) => ({
-              ...nb,
-              x: [CANVAS_W * 0.25, CANVAS_W * 0.45, CANVAS_W * 0.35][bi % 3],
-              y: [CANVAS_H * 0.2, CANVAS_H * 0.45, CANVAS_H * 0.65][bi % 3],
-            }));
+              const coords = getBubblePosition(b.position, bi);
+              let tailDirection: "top" | "bottom" | "left" | "right" = "bottom";
+              if (b.position?.includes("top")) tailDirection = "bottom";
+              if (b.position?.includes("bottom")) tailDirection = "top";
+              return {
+                ...baseBubble,
+                x: coords.x,
+                y: coords.y,
+                tailDirection,
+              };
+            });
 
           return {
             ...panel,
             topScript: aiPanel.top
-              ? { text: aiPanel.top, style: "no-bg", color: "yellow" }
+              ? { text: aiPanel.top, style: "no-border" as const, color: "dark", y: 20 }
               : null,
             bottomScript: aiPanel.bottom
-              ? { text: aiPanel.bottom, style: "no-bg", color: "sky" }
+              ? { text: aiPanel.bottom, style: "no-border" as const, color: "white", textColor: "#1a1a1a", y: CANVAS_H - 100 }
               : null,
             bubbles: newBubbles.length > 0 ? newBubbles : panel.bubbles,
           };
@@ -4429,6 +4436,7 @@ export default function StoryPage() {
   type ElementsSubTab = "script" | "bubble" | "template";
   const [elementsSubTab, setElementsSubTab] = useState<ElementsSubTab>("script");
   const [selectedToolItem, setSelectedToolItem] = useState<string>("select");
+  const [selectedScriptPosition, setSelectedScriptPosition] = useState<"top" | "bottom" | null>(null);
   const [showDrawingSettings, setShowDrawingSettings] = useState(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
   const [showStoryTemplatePicker, setShowStoryTemplatePicker] = useState(false);
@@ -8130,6 +8138,20 @@ export default function StoryPage() {
           }
 
           const rightLayerItems: LayerItem[] = [
+            ...(activePanel.topScript ? [{
+              type: "topScript" as const,
+              id: "topScript",
+              z: 9999,
+              label: `상단: ${activePanel.topScript.text || "상단 스크립트"}`,
+              visible: activePanel.topScript.visible,
+            }] : []),
+            ...(activePanel.bottomScript ? [{
+              type: "bottomScript" as const,
+              id: "bottomScript",
+              z: 9998,
+              label: `하단: ${activePanel.bottomScript.text || "하단 스크립트"}`,
+              visible: activePanel.bottomScript.visible,
+            }] : []),
             ...activePanel.characters.map((c: CharacterPlacement) => ({
               type: "char" as const,
               id: c.id,
@@ -8193,32 +8215,33 @@ export default function StoryPage() {
             })),
           ].sort((a, b) => b.z - a.z);
 
-          const applyRightLayerOrder = (ordered: Array<{ type: "char" | "bubble" | "drawing" | "text" | "line" | "shape"; id: string }>) => {
-            const n = ordered.length;
+          const applyRightLayerOrder = (ordered: Array<{ type: "char" | "bubble" | "drawing" | "text" | "line" | "shape" | "topScript" | "bottomScript"; id: string }>) => {
+            const filtered = ordered.filter(it => it.type !== "topScript" && it.type !== "bottomScript");
+            const n = filtered.length;
             updatePanel(activePanelIndex, {
               ...activePanel,
               characters: activePanel.characters.map((c) => {
-                const idx = ordered.findIndex((it) => it.type === "char" && it.id === c.id);
+                const idx = filtered.findIndex((it) => it.type === "char" && it.id === c.id);
                 return idx >= 0 ? { ...c, zIndex: n - 1 - idx } : c;
               }),
               bubbles: activePanel.bubbles.map((b) => {
-                const idx = ordered.findIndex((it) => it.type === "bubble" && it.id === b.id);
+                const idx = filtered.findIndex((it) => it.type === "bubble" && it.id === b.id);
                 return idx >= 0 ? { ...b, zIndex: n - 1 - idx } : b;
               }),
               drawingLayers: (activePanel.drawingLayers || []).map((dl) => {
-                const idx = ordered.findIndex((it) => it.type === "drawing" && it.id === dl.id);
+                const idx = filtered.findIndex((it) => it.type === "drawing" && it.id === dl.id);
                 return idx >= 0 ? { ...dl, zIndex: n - 1 - idx } : dl;
               }),
               textElements: (activePanel.textElements || []).map((te) => {
-                const idx = ordered.findIndex((it) => it.type === "text" && it.id === te.id);
+                const idx = filtered.findIndex((it) => it.type === "text" && it.id === te.id);
                 return idx >= 0 ? { ...te, zIndex: n - 1 - idx } : te;
               }),
               lineElements: (activePanel.lineElements || []).map((le) => {
-                const idx = ordered.findIndex((it) => it.type === "line" && it.id === le.id);
+                const idx = filtered.findIndex((it) => it.type === "line" && it.id === le.id);
                 return idx >= 0 ? { ...le, zIndex: n - 1 - idx } : le;
               }),
               shapeElements: (activePanel.shapeElements || []).map((se) => {
-                const idx = ordered.findIndex((it) => it.type === "shape" && it.id === se.id);
+                const idx = filtered.findIndex((it) => it.type === "shape" && it.id === se.id);
                 return idx >= 0 ? { ...se, zIndex: n - 1 - idx } : se;
               }),
             });
@@ -8228,7 +8251,7 @@ export default function StoryPage() {
             if (direction === "up" && index <= 0) return;
             if (direction === "down" && index >= rightLayerItems.length - 1) return;
             const swapIdx = direction === "up" ? index - 1 : index + 1;
-            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line" | "shape", id: li.id }));
+            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line" | "shape" | "topScript" | "bottomScript", id: li.id }));
             const tmp = newOrder[index];
             newOrder[index] = newOrder[swapIdx];
             newOrder[swapIdx] = tmp;
@@ -8239,7 +8262,7 @@ export default function StoryPage() {
             if (fromIndex === toIndex) return;
             if (fromIndex < 0 || fromIndex >= rightLayerItems.length) return;
             if (toIndex < 0 || toIndex >= rightLayerItems.length) return;
-            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line" | "shape", id: li.id }));
+            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line" | "shape" | "topScript" | "bottomScript", id: li.id }));
             const [moved] = newOrder.splice(fromIndex, 1);
             newOrder.splice(toIndex, 0, moved);
             applyRightLayerOrder(newOrder);
@@ -8783,6 +8806,18 @@ export default function StoryPage() {
                     onSelectLine={setSelectedLineId}
                     onSelectShape={setSelectedShapeId}
                     onSetToolItem={setSelectedToolItem}
+                    onSelectScript={(position) => {
+                      setSelectedScriptPosition(position);
+                      if (position) {
+                        setActiveLeftTab("elements");
+                        setElementsSubTab("script");
+                      }
+                    }}
+                    selectedScriptPosition={
+                      !selectedCharId && !selectedBubbleId && !selectedDrawingLayerId && !selectedTextId && !selectedLineId && !selectedShapeId
+                        ? selectedScriptPosition
+                        : null
+                    }
                     onMoveLayer={moveRightLayer}
                     onReorderLayer={reorderRightLayer}
                     onDeleteLayer={(item) => {
@@ -8816,6 +8851,10 @@ export default function StoryPage() {
                           shapeElements: (activePanel.shapeElements || []).filter((se: CanvasShapeElement) => se.id !== item.id),
                         });
                         if (selectedShapeId === item.id) setSelectedShapeId(null);
+                      } else if (item.type === "topScript") {
+                        updatePanel(activePanelIndex, { ...activePanel, topScript: null });
+                      } else if (item.type === "bottomScript") {
+                        updatePanel(activePanelIndex, { ...activePanel, bottomScript: null });
                       }
                     }}
                     onDuplicateLayer={(item) => {
@@ -8906,6 +8945,16 @@ export default function StoryPage() {
                           shapeElements: (activePanel.shapeElements || []).map((se: CanvasShapeElement) =>
                             se.id === item.id ? { ...se, visible: se.visible === false ? undefined : false } : se
                           ),
+                        });
+                      } else if (item.type === "topScript" && activePanel.topScript) {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          topScript: { ...activePanel.topScript, visible: activePanel.topScript.visible === false ? undefined : false },
+                        });
+                      } else if (item.type === "bottomScript" && activePanel.bottomScript) {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          bottomScript: { ...activePanel.bottomScript, visible: activePanel.bottomScript.visible === false ? undefined : false },
                         });
                       }
                     }}

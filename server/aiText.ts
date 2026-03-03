@@ -215,7 +215,7 @@ export async function generateStoryScripts(data: {
   topic: string;
   panelCount: number;
 }): Promise<{
-  panels: Array<{ top: string; bottom: string; bubbles: Array<{ text: string; style?: string }> }>;
+  panels: Array<{ top: string; bottom: string; bubbles: Array<{ text: string; style?: string; position?: string }> }>;
 }> {
   const prompt = `당신은 한국 인기 인스타툰 작가입니다. 주제를 기반으로 ${data.panelCount}컷 인스타툰 스크립트를 작성하세요.
 
@@ -223,36 +223,24 @@ export async function generateStoryScripts(data: {
 컷 수: ${data.panelCount}
 
 ■ 구조 규칙 (반드시 지켜주세요):
-- top: 상황/나레이션 (5~15자). 없으면 빈 문자열 "".
-- bottom: 독백/부연 (5~15자). 없으면 빈 문자열 "".
+- top: 화면 상단에 들어갈 상황/나레이션 자막 (5~15자). 없으면 빈 문자열 "".
+- bottom: 화면 하단에 들어갈 독백/부연 자막 (5~15자). 없으면 빈 문자열 "".
 - bubbles: 말풍선 배열.
   ★ 핵심: 대부분의 패널은 말풍선 0~1개. 대화 장면만 최대 2개. 절대 3개 이상 금지.
   ★ ${data.panelCount}컷 전체에서 말풍선 총 개수는 ${Math.max(data.panelCount, Math.ceil(data.panelCount * 0.8))}개 이하.
-  ★ 나레이션만으로 충분한 컷은 bubbles를 빈 배열 []로.
+  ★ 나레이션(top/bottom)만으로 충분한 컷은 bubbles를 빈 배열 []로.
 - bubble style: "handwritten"(감성/독백), "linedrawing"(일반 대화), "wobbly"(놀람/강조)
+- position: 말풍선이 배치될 화면 내 위치. "top-left", "top-right", "bottom-left", "bottom-right", "center" 중 하나를 반드시 선택하세요. 인물들의 대화 흐름이나 시선에 맞게 겹치지 않도록 배치하세요.
 
 ■ 인스타툰 작법:
 1. 한 문장은 최대 15자. 짧을수록 좋음. 여백의 미학.
 2. 기승전결: 도입(상황)→전개(갈등/기대)→절정(사건)→결말(반전/펀치라인).
 3. 마지막 컷은 반드시 웃기거나 공감되는 반전으로 끝내세요.
 4. MZ세대 구어체: "아 진짜...", "헐", "뭐지", "왜 이러는 건데" 등 자연스럽게.
-5. 감정 부호 절제: ㅋㅋ, ㅠㅠ는 정말 필요한 곳에만 1~2회.
-6. top과 bottom은 상호보완: 둘 다 쓸 필요 없으면 하나만 쓰고 다른 건 "".
-7. 시각적으로 상상되게 쓰세요: 표정, 동작, 상황이 그림으로 보이듯.
-
-■ 나쁜 예 (금지):
-- 매 컷마다 말풍선 2~3개씩 넣는 것
-- top과 bottom 모두 긴 문장으로 채우는 것
-- 의미 없는 감탄사 말풍선: "헉!", "와!", "어?" 만 반복
-
-■ 좋은 예:
-- 컷1: top:"월요일 아침" bottom:"" bubbles:[]
-- 컷2: top:"" bottom:"" bubbles:[{"text":"5분만...","style":"handwritten"}]
-- 컷3: top:"알람이 또 울린다" bottom:"이미 7번째" bubbles:[]
-- 컷4: top:"" bottom:"" bubbles:[{"text":"...출근 포기","style":"wobbly"}]
+5. top과 bottom은 상호보완: 둘 다 쓸 필요 없으면 하나만 쓰고 다른 건 "".
 
 다음 JSON만 출력 (설명 없이):
-{"panels":[{"top":"","bottom":"","bubbles":[{"text":"","style":"handwritten"}]}]}`;
+{"panels":[{"top":"","bottom":"","bubbles":[{"text":"","style":"handwritten","position":"top-right"}]}]}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",

@@ -19,12 +19,13 @@ import {
   Lock,
   LockOpen,
   Copy,
+  Subtitles,
 } from "lucide-react";
 import { Spline, GitCommitHorizontal, GripVertical } from "lucide-react";
 import { STYLE_LABELS } from "@/lib/bubble-utils";
 
 export interface LayerItem {
-  type: "char" | "bubble" | "drawing" | "text" | "line" | "shape";
+  type: "char" | "bubble" | "drawing" | "text" | "line" | "shape" | "topScript" | "bottomScript";
   id: string;
   z: number;
   label: string;
@@ -72,6 +73,8 @@ interface LayerListPanelProps {
   onFlipChar?: (id: string) => void;
   onSetToolItem?: (tool: string) => void;
   onToggleMaskLink?: (layerId: string, layerType: string, maskId: string) => void;
+  onSelectScript?: (position: "top" | "bottom" | null) => void;
+  selectedScriptPosition?: "top" | "bottom" | null;
   externalMultiSelected?: Set<string>;
 }
 
@@ -98,6 +101,8 @@ export function LayerListPanel({
   onFlipChar,
   onSetToolItem,
   onToggleMaskLink,
+  onSelectScript,
+  selectedScriptPosition,
   externalMultiSelected,
 }: LayerListPanelProps) {
   const maskShapes = items.filter(it => it.type === "shape" && it.maskEnabled);
@@ -132,6 +137,7 @@ export function LayerListPanel({
     onSelectText?.(null);
     onSelectLine?.(null);
     onSelectShape?.(null);
+    onSelectScript?.(null);
 
     if (item.type === "char") {
       onSelectChar(item.id);
@@ -149,8 +155,12 @@ export function LayerListPanel({
     } else if (item.type === "shape") {
       onSelectShape?.(item.id);
       onSetToolItem?.("select");
+    } else if (item.type === "topScript") {
+      onSelectScript?.("top");
+    } else if (item.type === "bottomScript") {
+      onSelectScript?.("bottom");
     }
-  }, [onSelectChar, onSelectBubble, onSelectDrawingLayer, onSelectText, onSelectLine, onSelectShape, onSetToolItem]);
+  }, [onSelectChar, onSelectBubble, onSelectDrawingLayer, onSelectText, onSelectLine, onSelectShape, onSetToolItem, onSelectScript]);
 
   const selectRange = useCallback((toIndex: number) => {
     const fromIndex = lastClickIndexRef.current;
@@ -243,6 +253,8 @@ export function LayerListPanel({
             : item.type === "text" ? selectedTextId === item.id
             : item.type === "line" ? selectedLineId === item.id
             : item.type === "shape" ? selectedShapeId === item.id
+            : item.type === "topScript" ? selectedScriptPosition === "top"
+            : item.type === "bottomScript" ? selectedScriptPosition === "bottom"
             : false;
 
           const isMultiSelected = multiSelected.has(key);
@@ -322,7 +334,7 @@ export function LayerListPanel({
                     {item.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                   </button>
                 )}
-                {onToggleLock && (
+                {onToggleLock && item.type !== "topScript" && item.type !== "bottomScript" && (
                   <button
                     type="button"
                     className={`p-0.5 rounded hover:bg-muted/60 transition-colors shrink-0 ${item.locked ? "text-yellow-500" : "text-muted-foreground"}`}
@@ -336,7 +348,9 @@ export function LayerListPanel({
                   <div className="w-0.5 h-4 bg-primary/40 rounded-full shrink-0" />
                 )}
                 <div className={`w-6 h-6 rounded overflow-hidden shrink-0 border border-border/50 bg-card flex items-center justify-center`}>
-                  {item.type === "drawing" ? (
+                  {item.type === "topScript" || item.type === "bottomScript" ? (
+                    <Subtitles className="h-3 w-3 text-yellow-500" />
+                  ) : item.type === "drawing" ? (
                     <DrawingIcon className="h-3 w-3 text-muted-foreground" />
                   ) : item.type === "text" ? (
                     <span className="text-[9px] font-semibold text-muted-foreground">T</span>
@@ -358,8 +372,8 @@ export function LayerListPanel({
                 </span>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                {/* 마스크 연결 */}
-                {!isMask && maskShapes.length > 0 && onToggleMaskLink && !hasMulti && (
+                {/* 마스크 연결 (스크립트 레이어 제외) */}
+                {!isMask && item.type !== "topScript" && item.type !== "bottomScript" && maskShapes.length > 0 && onToggleMaskLink && !hasMulti && (
                   <button
                     type="button"
                     className={`p-1 rounded hover:bg-muted/60 transition-colors ${isLinkedToMask ? "text-primary" : "text-foreground/50"}`}
@@ -426,6 +440,7 @@ export function LayerListPanel({
         const ciIdx = items.findIndex(it => layerKey(it) === layerKey(ci));
         const isMask = ci.type === "shape" && ci.maskEnabled;
         const isLinked = !!ci.clipMaskId;
+        const isScript = ci.type === "topScript" || ci.type === "bottomScript";
         const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
         const ctxShortcut = "text-[10px] text-muted-foreground ml-4";
         return (
@@ -439,15 +454,15 @@ export function LayerListPanel({
             className="fixed z-50 min-w-[170px] rounded-md border bg-popover p-1 shadow-md"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
-            {/* Duplicate */}
-            {onDuplicateLayer && (
+            {/* Duplicate (스크립트 제외) */}
+            {onDuplicateLayer && !isScript && (
               <button type="button" className={ctxBtnClass}
                 onClick={() => { onDuplicateLayer(ci); setContextMenu(null); }}>
                 <span>레이어 복제</span><span className={ctxShortcut}>⌘D</span>
               </button>
             )}
 
-            <div className="my-1 h-px bg-border" />
+            {!isScript && <div className="my-1 h-px bg-border" />}
 
             {/* Layer ordering */}
             <button type="button" className={ctxBtnClass} disabled={ciIdx <= 0}
@@ -461,8 +476,8 @@ export function LayerListPanel({
 
             <div className="my-1 h-px bg-border" />
 
-            {/* Lock / Visibility */}
-            {onToggleLock && (
+            {/* Lock / Visibility (잠금은 스크립트 제외) */}
+            {onToggleLock && !isScript && (
               <button type="button" className={ctxBtnClass}
                 onClick={() => { onToggleLock(ci); setContextMenu(null); }}>
                 <span>{ci.locked ? "잠금 해제" : "잠금"}</span><span className={ctxShortcut}>⌘L</span>
@@ -475,8 +490,8 @@ export function LayerListPanel({
               </button>
             )}
 
-            {/* Mask link */}
-            {!isMask && maskShapes.length > 0 && onToggleMaskLink && (
+            {/* Mask link (스크립트 제외) */}
+            {!isMask && !isScript && maskShapes.length > 0 && onToggleMaskLink && (
               <>
                 <div className="my-1 h-px bg-border" />
                 <button type="button" className={ctxBtnClass}

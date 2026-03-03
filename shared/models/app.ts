@@ -141,6 +141,7 @@ export type TopicSuggestRequest = z.infer<typeof topicSuggestSchema>;
 export interface StoryBubbleScript {
   text: string;
   style?: "handwritten" | "linedrawing" | "wobbly";
+  position?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
 }
 
 export interface StoryPanelScript {

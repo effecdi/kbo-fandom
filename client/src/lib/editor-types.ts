@@ -28,6 +28,7 @@ export interface ScriptData {
   bold?: boolean;
   x?: number;
   y?: number;
+  visible?: boolean;
 }
 
 export type DrawingLayerType = "drawing" | "straight" | "curve" | "polyline" | "text" | "eraser";
