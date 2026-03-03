@@ -887,6 +887,8 @@ function PanelCanvas({
   externalEditBubbleId,
   onEditBubbleIdChange,
   onSelectScript,
+  externalEditScriptPosition,
+  onEditScriptPositionChange,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -906,6 +908,8 @@ function PanelCanvas({
   externalEditBubbleId?: string | null;
   onEditBubbleIdChange?: (id: string | null) => void;
   onSelectScript?: (position: "top" | "bottom" | null) => void;
+  externalEditScriptPosition?: "top" | "bottom" | null;
+  onEditScriptPositionChange?: (position: "top" | "bottom" | null) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -922,6 +926,7 @@ function PanelCanvas({
   const panelRef = useRef(panel);
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
   const editingBubbleIdRef = useRef<string | null>(null);
+  const [editingScriptPos, setEditingScriptPos] = useState<"top" | "bottom" | null>(null);
 
   useEffect(() => {
     selectedBubbleIdRef.current = selectedBubbleId;
@@ -937,6 +942,14 @@ function PanelCanvas({
       onEditBubbleIdChange?.(null);
     }
   }, [externalEditBubbleId, onEditBubbleIdChange, onSelectBubble]);
+  // Sync external script editing trigger (from parent 상단/하단 button)
+  useEffect(() => {
+    if (externalEditScriptPosition) {
+      setEditingScriptPos(externalEditScriptPosition);
+      onSelectScript?.(externalEditScriptPosition);
+      onEditScriptPositionChange?.(null);
+    }
+  }, [externalEditScriptPosition, onEditScriptPositionChange, onSelectScript]);
   useEffect(() => {
     selectedCharIdRef.current = selectedCharId;
   }, [selectedCharId]);
@@ -2011,6 +2024,29 @@ function PanelCanvas({
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const pos = getCanvasPos(e.clientX, e.clientY);
       const p = panelRef.current;
+      // Check scripts first (they render on top)
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          for (const scriptType of ["top", "bottom"] as const) {
+            const sd = scriptType === "top" ? p.topScript : p.bottomScript;
+            if (sd && sd.text !== undefined && sd.visible !== false) {
+              const rect = getScriptRect(ctx, sd, scriptType, CANVAS_W, CANVAS_H);
+              if (
+                pos.x >= rect.bx &&
+                pos.x <= rect.bx + rect.bw &&
+                pos.y >= rect.by &&
+                pos.y <= rect.by + rect.bh
+              ) {
+                setEditingScriptPos(scriptType);
+                onSelectScript?.(scriptType);
+                return;
+              }
+            }
+          }
+        }
+      }
       for (let i = p.bubbles.length - 1; i >= 0; i--) {
         const b = p.bubbles[i];
         if (
@@ -2025,7 +2061,7 @@ function PanelCanvas({
         }
       }
     },
-    [getCanvasPos, onSelectBubble],
+    [getCanvasPos, onSelectBubble, onSelectScript],
   );
 
   const hasZoom = zoom !== undefined;
@@ -2541,6 +2577,59 @@ function PanelCanvas({
                   zIndex: 30,
                   overflow: "hidden",
                   lineHeight: 1.3,
+                  boxSizing: "border-box",
+                }}
+              />
+            );
+          })()}
+          {/* Script inline editing overlay */}
+          {editingScriptPos && (() => {
+            const sd = editingScriptPos === "top" ? panel.topScript : panel.bottomScript;
+            if (!sd) return null;
+            const canvas = canvasRef.current;
+            if (!canvas) return null;
+            const canvasRect = canvas.getBoundingClientRect();
+            const sx = canvasRect.width / CANVAS_W;
+            const sy = canvasRect.height / CANVAS_H;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return null;
+            const sr = getScriptRect(ctx, sd, editingScriptPos, CANVAS_W, CANVAS_H);
+            const fs = sd.fontSize || 20;
+            return (
+              <textarea
+                autoFocus
+                value={sd.text}
+                onChange={(e) => {
+                  const key = editingScriptPos === "top" ? "topScript" : "bottomScript";
+                  onUpdate({ ...panel, [key]: { ...sd, text: e.target.value } });
+                }}
+                onBlur={() => setEditingScriptPos(null)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Escape") {
+                    setEditingScriptPos(null);
+                  }
+                }}
+                style={{
+                  position: "absolute",
+                  left: sr.bx * sx,
+                  top: sr.by * sy,
+                  width: Math.max(sr.bw * sx, 120),
+                  minHeight: Math.max(sr.bh * sy, 36),
+                  fontSize: fs * sx,
+                  fontFamily: getFontFamily(sd.fontKey || "default"),
+                  fontWeight: sd.bold !== false ? "bold" : "normal",
+                  textAlign: "center",
+                  color: sd.textColor || "#1a1a1a",
+                  background: "rgba(255,255,255,0.9)",
+                  border: "2px solid hsl(var(--primary))",
+                  borderRadius: 6,
+                  padding: `${sr.padY * sy}px ${sr.padX * sx}px`,
+                  resize: "none",
+                  outline: "none",
+                  zIndex: 30,
+                  overflow: "hidden",
+                  lineHeight: 1.35,
                   boxSizing: "border-box",
                 }}
               />
@@ -4457,6 +4546,7 @@ export default function StoryPage() {
   const activePanel = panels[activePanelIndex];
   const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null);
   const [editingBubbleIdForOverlay, setEditingBubbleIdForOverlay] = useState<string | null>(null);
+  const [editingScriptPositionForCanvas, setEditingScriptPositionForCanvas] = useState<"top" | "bottom" | null>(null);
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
   const [selectedDrawingLayerId, setSelectedDrawingLayerId] = useState<string | null>(null);
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
@@ -7305,6 +7395,8 @@ export default function StoryPage() {
                               setActivePanelIndex(i);
                             }
                           }}
+                          externalEditScriptPosition={activePanelIndex === i ? editingScriptPositionForCanvas : null}
+                          onEditScriptPositionChange={setEditingScriptPositionForCanvas}
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}
@@ -8389,12 +8481,16 @@ export default function StoryPage() {
                           variant={activeScriptSection === "top" ? "secondary" : "outline"}
                           onClick={() => {
                             const p = activePanel;
+                            const isNew = !p.topScript;
                             updatePanel(activePanelIndex, {
                               ...p,
                               topScript:
                                 p.topScript ?? { text: "", style: "no-bg", color: "yellow" },
                             });
                             setActiveScriptSection("top");
+                            if (isNew) {
+                              setTimeout(() => setEditingScriptPositionForCanvas("top"), 100);
+                            }
                           }}
                           data-testid={`button-toggle-top-script-${activePanelIndex}`}
                         >
@@ -8406,12 +8502,16 @@ export default function StoryPage() {
                           variant={activeScriptSection === "bottom" ? "secondary" : "outline"}
                           onClick={() => {
                             const p = activePanel;
+                            const isNew = !p.bottomScript;
                             updatePanel(activePanelIndex, {
                               ...p,
                               bottomScript:
                                 p.bottomScript ?? { text: "", style: "no-bg", color: "sky" },
                             });
                             setActiveScriptSection("bottom");
+                            if (isNew) {
+                              setTimeout(() => setEditingScriptPositionForCanvas("bottom"), 100);
+                            }
                           }}
                           data-testid={`button-toggle-bottom-script-${activePanelIndex}`}
                         >
