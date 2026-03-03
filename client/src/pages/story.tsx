@@ -296,6 +296,7 @@ interface ScriptData {
   bold?: boolean;
   x?: number;
   y?: number;
+  visible?: boolean;
 }
 
 type DrawingLayerType = "drawing" | "straight" | "curve" | "polyline" | "text" | "eraser";
