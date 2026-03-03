@@ -886,6 +886,7 @@ function PanelCanvas({
   hideDrawingLayers,
   externalEditBubbleId,
   onEditBubbleIdChange,
+  onSelectScript,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -904,6 +905,7 @@ function PanelCanvas({
   hideDrawingLayers?: boolean;
   externalEditBubbleId?: string | null;
   onEditBubbleIdChange?: (id: string | null) => void;
+  onSelectScript?: (position: "top" | "bottom" | null) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -1624,6 +1626,7 @@ function PanelCanvas({
                   onSelectBubble(null);
                   selectedCharIdRef.current = charUnderneath.id;
                   selectedBubbleIdRef.current = null;
+                  onSelectScript?.(null);
                   dragModeRef.current = "move-char";
                   dragStartRef.current = pos;
                   dragCharStartRef.current = { x: charUnderneath.x, y: charUnderneath.y, scale: charUnderneath.scale };
@@ -1634,6 +1637,7 @@ function PanelCanvas({
               onSelectChar(null);
               selectedBubbleIdRef.current = b.id;
               selectedCharIdRef.current = null;
+              onSelectScript?.(null);
               if (editingBubbleIdRef.current && editingBubbleIdRef.current !== b.id) {
                 setEditingBubbleId(null);
               }
@@ -1660,6 +1664,7 @@ function PanelCanvas({
               selectedBubbleIdRef.current = null;
               selectedCharIdRef.current = ch.id;
               setEditingBubbleId(null);
+              onSelectScript?.(null);
               dragStartRef.current = pos;
               dragCharStartRef.current = { x: ch.x, y: ch.y, scale: ch.scale };
               // For full-canvas images, check corners near canvas edges
@@ -1717,6 +1722,7 @@ function PanelCanvas({
               onSelectChar(null);
               selectedBubbleIdRef.current = null;
               selectedCharIdRef.current = null;
+              onSelectScript?.(scriptType);
               return;
             } else {
               if (
@@ -1733,6 +1739,7 @@ function PanelCanvas({
                 onSelectChar(null);
                 selectedBubbleIdRef.current = null;
                 selectedCharIdRef.current = null;
+                onSelectScript?.(scriptType);
                 return;
               }
             }
@@ -1745,6 +1752,7 @@ function PanelCanvas({
       selectedBubbleIdRef.current = null;
       selectedCharIdRef.current = null;
       setEditingBubbleId(null);
+      onSelectScript?.(null);
     },
     [getCanvasPos, getHandleAtPos, onSelectBubble, onSelectChar],
   );
@@ -7285,6 +7293,18 @@ export default function StoryPage() {
                           hideDrawingLayers={isDrawingMode && activePanelIndex === i}
                           externalEditBubbleId={activePanelIndex === i ? editingBubbleIdForOverlay : null}
                           onEditBubbleIdChange={setEditingBubbleIdForOverlay}
+                          onSelectScript={(pos) => {
+                            setSelectedScriptPosition(pos);
+                            if (pos) {
+                              setSelectedCharId(null);
+                              setSelectedBubbleId(null);
+                              setSelectedTextId(null);
+                              setSelectedLineId(null);
+                              setSelectedShapeId(null);
+                              setSelectedDrawingLayerId(null);
+                              setActivePanelIndex(i);
+                            }
+                          }}
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}
