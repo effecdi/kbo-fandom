@@ -322,7 +322,7 @@ const TOOL_SECTIONS = [
 ];
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { data: usage, isLoading: usageLoading } = useQuery<UsageData>({
     queryKey: ["/api/usage"],
   });
@@ -603,18 +603,18 @@ export default function HomePage() {
 
             <Link href="/pricing">
               <Card
-                className="p-5 hover-elevate cursor-pointer bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950 dark:via-indigo-950 dark:to-purple-950 border-violet-200 dark:border-violet-800/50"
+                className="p-5 hover-elevate cursor-pointer bg-gradient-to-br from-primary/5 via-primary/8 to-primary/10 dark:from-primary/10 dark:via-primary/15 dark:to-primary/20 border-primary/20 dark:border-primary/30"
                 data-testid="card-credit-topup-home"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/50">
-                    <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/20">
+                    <Sparkles className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm">크레딧 충전</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">₩4,900 / 50 크레딧</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-violet-500 shrink-0" />
+                  <ArrowRight className="h-4 w-4 text-primary shrink-0" />
                 </div>
               </Card>
             </Link>
@@ -708,7 +708,7 @@ export default function HomePage() {
             </Card>
 
             {/* Pro Card */}
-            <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-primary text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
+            <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
               <div className="relative flex h-full flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <Badge className="bg-primary-foreground/15 text-primary-foreground text-[11px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
@@ -753,28 +753,51 @@ export default function HomePage() {
           </div>
 
           {/* Credit Top-Up */}
-          <Link href="/pricing">
+          {isAuthenticated ? (
+            <Link href="/pricing">
+              <Card
+                className="mt-6 relative overflow-hidden rounded-2xl border px-8 py-7 cursor-pointer hover:scale-[1.01] transition-transform bg-gradient-to-br from-primary/5 via-primary/8 to-primary/10 dark:from-primary/10 dark:via-primary/15 dark:to-primary/20 border-primary/20 dark:border-primary/30 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.15)]"
+                data-testid="card-credit-topup-bottom"
+              >
+                <div className="relative flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/20">
+                      <Sparkles className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-900 dark:text-white">크레딧 충전</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">50 크레딧으로 더 많은 작품을 만들어보세요</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-2xl font-black text-primary">₩4,900</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          ) : (
             <Card
-              className="mt-6 relative overflow-hidden rounded-2xl border px-8 py-7 cursor-pointer hover:scale-[1.01] transition-transform bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950 dark:via-indigo-950 dark:to-purple-950 border-violet-200 dark:border-violet-800/50 shadow-[0_8px_40px_rgba(139,92,246,0.08)] dark:shadow-[0_8px_40px_rgba(139,92,246,0.15)]"
+              className="mt-6 relative overflow-hidden rounded-2xl border px-8 py-7 opacity-50 cursor-not-allowed bg-gradient-to-br from-primary/5 via-primary/8 to-primary/10 dark:from-primary/10 dark:via-primary/15 dark:to-primary/20 border-primary/20 dark:border-primary/30 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.15)]"
               data-testid="card-credit-topup-bottom"
             >
               <div className="relative flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/50">
-                    <Sparkles className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/20">
+                    <Sparkles className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <h3 className="font-bold text-lg text-slate-900 dark:text-white">크레딧 충전</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">50 크레딧으로 더 많은 작품을 만들어보세요</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">로그인 후 이용 가능합니다</p>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-2xl font-black text-violet-600 dark:text-violet-400">₩4,900</div>
+                  <div className="text-2xl font-black text-primary">₩4,900</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
                 </div>
               </div>
             </Card>
-          </Link>
+          )}
         </div>
 
         <FAQCreditSection />
