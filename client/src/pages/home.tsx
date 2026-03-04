@@ -38,6 +38,7 @@ import {
   Check,
   Lock,
   Gift,
+  CreditCard,
 } from "lucide-react";
 import type { Generation, TrendingAccount } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
@@ -597,6 +598,24 @@ export default function HomePage() {
                 </Card>
               </Link>
             )}
+
+            <Link href="/pricing">
+              <Card
+                className="p-5 hover-elevate cursor-pointer bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950 dark:via-indigo-950 dark:to-purple-950 border-violet-200 dark:border-violet-800/50"
+                data-testid="card-credit-topup-home"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/50">
+                    <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm">크레딧 충전</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">₩4,900 / 50 크레딧</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-violet-500 shrink-0" />
+                </div>
+              </Card>
+            </Link>
           </div>
         </div>
 

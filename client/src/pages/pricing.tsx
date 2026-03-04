@@ -209,20 +209,13 @@ export default function PricingPage() {
         {plans.map((plan) => (
           <Card
             key={plan.name}
-            className={`relative h-full overflow-hidden rounded-3xl border-0 px-8 py-9 shadow-[0_22px_70px_rgba(15,23,42,0.85)] ${
+            className={`relative h-full overflow-hidden rounded-3xl border px-8 py-9 ${
               plan.highlighted
-                ? "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500 text-white"
-                : "bg-slate-950 text-slate-50"
+                ? "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500 text-white border-violet-400/30 shadow-[0_22px_70px_rgba(139,92,246,0.25)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                : "bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
             }`}
             data-testid={`card-plan-${plan.tier}`}
           >
-            <div
-              className={
-                plan.highlighted
-                  ? "absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10 mix-blend-screen"
-                  : "absolute inset-0 bg-gradient-to-br from-slate-800/50 via-slate-900 to-black"
-              }
-            />
             <div className="relative flex h-full flex-col">
               <div className="flex items-center justify-between mb-6">
                 {plan.highlighted ? (
@@ -232,8 +225,8 @@ export default function PricingPage() {
                   </>
                 ) : (
                   <>
-                    <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400">Free</h3>
-                    <span className="text-[11px] text-slate-400">{plan.period}</span>
+                    <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-400">{plan.period}</span>
                   </>
                 )}
               </div>
@@ -247,7 +240,7 @@ export default function PricingPage() {
                 </div>
                 <p
                   className={
-                    plan.highlighted ? "mt-2 text-xs text-white/85" : "mt-2 text-xs text-slate-400"
+                    plan.highlighted ? "mt-2 text-xs text-white/85" : "mt-2 text-xs text-slate-500 dark:text-slate-400"
                   }
                 >
                   {plan.description}
@@ -260,13 +253,13 @@ export default function PricingPage() {
                     {feature.included ? (
                       <Check
                         className={`h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-white" : "text-teal-300"
+                          plan.highlighted ? "text-white" : "text-emerald-500 dark:text-teal-300"
                         }`}
                       />
                     ) : (
                       <X
                         className={`h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-white/25" : "text-slate-500/60"
+                          plan.highlighted ? "text-white/25" : "text-slate-300 dark:text-slate-500/60"
                         }`}
                       />
                     )}
@@ -275,10 +268,10 @@ export default function PricingPage() {
                         feature.included
                           ? plan.highlighted
                             ? "text-white/95"
-                            : "text-slate-200"
+                            : "text-slate-700 dark:text-slate-200"
                           : plan.highlighted
                             ? "text-white/55"
-                            : "text-slate-400"
+                            : "text-slate-400 dark:text-slate-400"
                       }
                     >
                       {feature.text}
@@ -292,7 +285,7 @@ export default function PricingPage() {
                 className={`mt-auto w-full h-11 rounded-full ${
                   plan.highlighted
                     ? "bg-white text-slate-900 hover:bg-slate-100 border-0"
-                    : "border-slate-500/70 text-slate-50 hover:bg-slate-900/60"
+                    : "border-slate-300 dark:border-slate-500/70 text-slate-700 dark:text-slate-50 hover:bg-slate-50 dark:hover:bg-slate-900/60"
                 }`}
                 disabled={
                   (plan.tier === "free" && credits?.tier === "free") ||
@@ -315,24 +308,23 @@ export default function PricingPage() {
       {/* Credit Top-Up Card */}
       <div className="max-w-3xl mx-auto mt-8">
         <Card
-          className="relative overflow-hidden rounded-2xl border-0 px-8 py-7 shadow-lg bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 text-white cursor-pointer hover:scale-[1.01] transition-transform"
+          className="relative overflow-hidden rounded-2xl border px-8 py-7 cursor-pointer hover:scale-[1.01] transition-transform bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950 dark:via-indigo-950 dark:to-purple-950 border-violet-200 dark:border-violet-800/50 shadow-[0_8px_40px_rgba(139,92,246,0.08)] dark:shadow-[0_8px_40px_rgba(139,92,246,0.15)]"
           onClick={() => initiatePayment("credits")}
           data-testid="card-credit-topup"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10 mix-blend-screen" />
           <div className="relative flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                <Sparkles className="h-6 w-6" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/50">
+                <Sparkles className="h-6 w-6 text-violet-600 dark:text-violet-400" />
               </div>
               <div>
-                <h3 className="font-bold text-lg">크레딧 충전</h3>
-                <p className="text-sm text-white/80 mt-0.5">50 크레딧으로 더 많은 작품을 만들어보세요</p>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white">크레딧 충전</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">50 크레딧으로 더 많은 작품을 만들어보세요</p>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <div className="text-2xl font-black">₩4,900</div>
-              <div className="text-xs text-white/70">50 크레딧</div>
+              <div className="text-2xl font-black text-violet-600 dark:text-violet-400">₩4,900</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
             </div>
           </div>
         </Card>
