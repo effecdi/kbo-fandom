@@ -211,7 +211,7 @@ export default function PricingPage() {
             key={plan.name}
             className={`relative h-full overflow-hidden rounded-3xl border px-8 py-9 ${
               plan.highlighted
-                ? "bg-primary text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                ? "bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
                 : "bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
             }`}
             data-testid={`card-plan-${plan.tier}`}
@@ -308,14 +308,14 @@ export default function PricingPage() {
       {/* Credit Top-Up Card */}
       <div className="max-w-3xl mx-auto mt-8">
         <Card
-          className="relative overflow-hidden rounded-2xl border px-8 py-7 cursor-pointer hover:scale-[1.01] transition-transform bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950 dark:via-indigo-950 dark:to-purple-950 border-violet-200 dark:border-violet-800/50 shadow-[0_8px_40px_rgba(139,92,246,0.08)] dark:shadow-[0_8px_40px_rgba(139,92,246,0.15)]"
+          className="relative overflow-hidden rounded-2xl border px-8 py-7 cursor-pointer hover:scale-[1.01] transition-transform bg-gradient-to-br from-primary/5 via-primary/8 to-primary/10 dark:from-primary/10 dark:via-primary/15 dark:to-primary/20 border-primary/20 dark:border-primary/30 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.15)]"
           onClick={() => initiatePayment("credits")}
           data-testid="card-credit-topup"
         >
           <div className="relative flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/50">
-                <Sparkles className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/20">
+                <Sparkles className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h3 className="font-bold text-lg text-slate-900 dark:text-white">크레딧 충전</h3>
@@ -323,7 +323,7 @@ export default function PricingPage() {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <div className="text-2xl font-black text-violet-600 dark:text-violet-400">₩4,900</div>
+              <div className="text-2xl font-black text-primary">₩4,900</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
             </div>
           </div>
