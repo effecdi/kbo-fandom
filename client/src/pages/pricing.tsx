@@ -211,7 +211,7 @@ export default function PricingPage() {
             key={plan.name}
             className={`relative h-full overflow-hidden rounded-3xl border px-8 py-9 ${
               plan.highlighted
-                ? "bg-slate-900 dark:bg-gradient-to-br dark:from-violet-500 dark:via-fuchsia-500 dark:to-indigo-500 text-white border-slate-800 dark:border-violet-400/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                ? "bg-primary text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
                 : "bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
             }`}
             data-testid={`card-plan-${plan.tier}`}
@@ -220,8 +220,8 @@ export default function PricingPage() {
               <div className="flex items-center justify-between mb-6">
                 {plan.highlighted ? (
                   <>
-                    <Badge className="bg-violet-500/20 dark:bg-white/15 text-violet-300 dark:text-white text-[11px] px-3 py-1 border border-violet-400/30 dark:border-white/20">Pro</Badge>
-                    <span className="text-[11px] text-slate-400 dark:text-white/80">{plan.period}</span>
+                    <Badge className="bg-primary-foreground/15 text-primary-foreground text-[11px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
+                    <span className="text-[11px] text-primary-foreground/70">{plan.period}</span>
                   </>
                 ) : (
                   <>
@@ -232,15 +232,15 @@ export default function PricingPage() {
               </div>
               <div className="mb-2">
                 {plan.highlighted ? (
-                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400 dark:text-white/70 mb-1">크리에이터 추천</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
                 ) : null}
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-black tracking-tight">{plan.price}</span>
-                  <span className={plan.highlighted ? "text-sm text-slate-400 dark:text-white/80" : "text-sm text-slate-400"}>/월</span>
+                  <span className={plan.highlighted ? "text-sm text-primary-foreground/70" : "text-sm text-slate-400"}>/월</span>
                 </div>
                 <p
                   className={
-                    plan.highlighted ? "mt-2 text-xs text-slate-400 dark:text-white/85" : "mt-2 text-xs text-slate-500 dark:text-slate-400"
+                    plan.highlighted ? "mt-2 text-xs text-primary-foreground/80" : "mt-2 text-xs text-slate-500 dark:text-slate-400"
                   }
                 >
                   {plan.description}
@@ -253,13 +253,13 @@ export default function PricingPage() {
                     {feature.included ? (
                       <Check
                         className={`h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-violet-400 dark:text-white" : "text-emerald-500 dark:text-teal-300"
+                          plan.highlighted ? "text-primary-foreground" : "text-emerald-500 dark:text-teal-300"
                         }`}
                       />
                     ) : (
                       <X
                         className={`h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-slate-600 dark:text-white/25" : "text-slate-300 dark:text-slate-500/60"
+                          plan.highlighted ? "text-primary-foreground/25" : "text-slate-300 dark:text-slate-500/60"
                         }`}
                       />
                     )}
@@ -267,10 +267,10 @@ export default function PricingPage() {
                       className={
                         feature.included
                           ? plan.highlighted
-                            ? "text-slate-200 dark:text-white/95"
+                            ? "text-primary-foreground/95"
                             : "text-slate-700 dark:text-slate-200"
                           : plan.highlighted
-                            ? "text-slate-500 dark:text-white/55"
+                            ? "text-primary-foreground/50"
                             : "text-slate-400 dark:text-slate-400"
                       }
                     >
@@ -284,7 +284,7 @@ export default function PricingPage() {
                 variant={plan.highlighted ? "default" : "outline"}
                 className={`mt-auto w-full h-11 rounded-full ${
                   plan.highlighted
-                    ? "bg-white text-slate-900 hover:bg-slate-100 border-0"
+                    ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90 border-0"
                     : "border-slate-300 dark:border-slate-500/70 text-slate-700 dark:text-slate-50 hover:bg-slate-50 dark:hover:bg-slate-900/60"
                 }`}
                 disabled={
