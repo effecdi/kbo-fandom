@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
 import { generateCharacterImage, generatePoseImage, generateWithBackground, removeWhiteBackground, generateThumbnail } from "./imageGen";
-import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics } from "./aiText";
+import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown } from "./aiText";
 import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
@@ -590,6 +590,41 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Topic suggestion error:", error);
       res.status(500).json({ message: error.message || "주제 추천에 실패했습니다" });
+    }
+  });
+
+  // 자동화툰 - 스토리 → 장면 분해
+  app.post("/api/auto-webtoon/breakdown", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { storyPrompt, canvasCount, cutsPerCanvas, characterDescriptions } = req.body;
+
+      if (!storyPrompt || typeof storyPrompt !== "string" || storyPrompt.length < 5) {
+        return res.status(400).json({ message: "스토리를 5자 이상 입력해주세요." });
+      }
+      const cc = Number(canvasCount);
+      const cpc = Number(cutsPerCanvas);
+      if (!cc || cc < 1 || cc > 14 || !cpc || cpc < 1 || cpc > 4) {
+        return res.status(400).json({ message: "캔버스 수(1~14), 컷/캔버스(1~4)를 올바르게 입력해주세요." });
+      }
+
+      // 1 크레딧 차감
+      const ok = await storage.deductCredit(userId);
+      if (!ok) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
+      }
+
+      const totalCuts = cc * cpc;
+      const result = await generateWebtoonSceneBreakdown({
+        storyPrompt,
+        totalCuts,
+        characterDescriptions: characterDescriptions || [],
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Auto-webtoon breakdown error:", error);
+      res.status(500).json({ message: error.message || "장면 분해에 실패했습니다." });
     }
   });
 

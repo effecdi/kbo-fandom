@@ -300,6 +300,7 @@ const TOOL_SECTIONS = [
       { href: "/create", icon: Wand2, title: "캐릭터 생성", desc: "텍스트로 AI 캐릭터 만들기", testId: "card-tool-create", gradient: "from-violet-500 to-purple-600", lightGradient: "from-violet-50 to-purple-50 dark:from-violet-500 dark:to-purple-600" },
       { href: "/pose", icon: Layers, title: "포즈 / 표정", desc: "다양한 포즈 & 표정 생성", testId: "card-tool-pose", gradient: "from-blue-500 to-indigo-600", lightGradient: "from-blue-50 to-indigo-50 dark:from-blue-500 dark:to-indigo-600" },
       { href: "/background", icon: Trees, title: "배경 / 아이템", desc: "배경과 소품 추가", testId: "card-tool-background", gradient: "from-emerald-500 to-teal-600", lightGradient: "from-emerald-50 to-teal-50 dark:from-emerald-500 dark:to-teal-600" },
+      { href: "/auto-webtoon", icon: Zap, title: "자동화툰", desc: "스토리 입력으로 자동 생성", testId: "card-tool-autowebtoon", gradient: "from-fuchsia-500 to-pink-600", lightGradient: "from-fuchsia-50 to-pink-50 dark:from-fuchsia-500 dark:to-pink-600" },
     ],
   },
   {
@@ -672,13 +673,18 @@ export default function HomePage() {
                   </div>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">가입 시 50 크레딧 + 매월 30 크레딧 + 매일 출석 10 크레딧</p>
                 </div>
-                <ul className="space-y-2 text-sm mb-6 mt-2">
+                <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
                     { text: "가입 시 50 크레딧 즉시 지급", ok: true },
                     { text: "매월 30 크레딧 자동 충전", ok: true },
                     { text: "매일 출석 보너스 10 크레딧", ok: true },
-                    { text: "포즈 & 배경 / 말풍선 / 스토리", ok: true },
-                    { text: "프리미엄 스타일 & 워터마크 제거", ok: false },
+                    { text: "3가지 스타일 (심플 라인)", ok: true },
+                    { text: "기본 및 일부 무료 폰트 제공", ok: true },
+                    { text: "포즈 & 배경 생성", ok: true },
+                    { text: "말풍선 편집기", ok: true },
+                    { text: "스토리 에디터", ok: true },
+                    { text: "프리미엄 스타일", ok: false },
+                    { text: "워터마크 제거", ok: false },
                     { text: "상업적 이용", ok: false },
                   ].map((f) => (
                     <li key={f.text} className="flex items-center gap-2.5">
@@ -687,7 +693,7 @@ export default function HomePage() {
                       ) : (
                         <X className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500/60" />
                       )}
-                      <span className={f.ok ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}>{f.text}</span>
+                      <span className={f.ok ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-400"}>{f.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -702,38 +708,41 @@ export default function HomePage() {
             </Card>
 
             {/* Pro Card */}
-            <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-slate-900 dark:bg-gradient-to-br dark:from-violet-500 dark:via-fuchsia-500 dark:to-indigo-500 text-white border-slate-800 dark:border-violet-400/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
+            <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-primary text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
               <div className="relative flex h-full flex-col">
                 <div className="flex items-center justify-between mb-6">
-                  <Badge className="bg-violet-500/20 dark:bg-white/15 text-violet-300 dark:text-white text-[11px] px-3 py-1 border border-violet-400/30 dark:border-white/20">Pro</Badge>
-                  <span className="text-[11px] text-slate-400 dark:text-white/80">/월</span>
+                  <Badge className="bg-primary-foreground/15 text-primary-foreground text-[11px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
+                  <span className="text-[11px] text-primary-foreground/70">/월</span>
                 </div>
                 <div className="mb-2">
-                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400 dark:text-white/70 mb-1">크리에이터 추천</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-black tracking-tight">₩19,900</span>
-                    <span className="text-sm text-slate-400 dark:text-white/80">/월</span>
+                    <span className="text-sm text-primary-foreground/70">/월</span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-400 dark:text-white/85">본격적인 크리에이터를 위한 플랜</p>
+                  <p className="mt-2 text-xs text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
                 </div>
-                <ul className="space-y-2 text-sm mb-6 mt-2">
+                <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
                     "무제한 캐릭터 생성",
-                    "모든 스타일 & 폰트",
-                    "포즈 & 배경 무제한",
-                    "말풍선 & 스토리 무제한",
+                    "모든 스타일 사용 가능",
+                    "모든 폰트 제공",
+                    "포즈 & 배경 무제한 생성",
+                    "말풍선 & 스토리 에디터 무제한",
                     "워터마크 제거",
+                    "갤러리 전체 이용",
                     "상업적 이용 가능",
+                    "우선 지원",
                   ].map((text) => (
                     <li key={text} className="flex items-center gap-2.5">
-                      <Check className="h-4 w-4 shrink-0 text-violet-400 dark:text-white" />
-                      <span className="text-slate-200 dark:text-white/95">{text}</span>
+                      <Check className="h-4 w-4 shrink-0 text-primary-foreground" />
+                      <span className="text-primary-foreground/95">{text}</span>
                     </li>
                   ))}
                 </ul>
                 <Link href="/pricing">
                   <Button
-                    className="mt-auto w-full h-11 rounded-full bg-white text-slate-900 hover:bg-slate-100 border-0"
+                    className="mt-auto w-full h-11 rounded-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 border-0"
                     disabled={usage?.tier === "pro"}
                   >
                     {usage?.tier === "pro" ? "현재 플랜" : "Pro 업그레이드"}

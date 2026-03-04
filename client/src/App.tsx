@@ -25,6 +25,7 @@ import LoginPage from "@/pages/login";
 import AuthCallbackPage from "@/pages/auth-callback";
 import DashboardPage from "@/pages/dashboard";
 import PaymentsPage from "@/pages/payments";
+import AutoWebtoonPage from "@/pages/auto-webtoon";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -55,6 +56,7 @@ function Router() {
       <Route path="/bubble" component={BubblePage} />
       <Route path="/background" component={BackgroundPage} />
       <Route path="/story" component={StoryPage} />
+      <Route path="/auto-webtoon" component={AutoWebtoonPage} />
       <Route path="/edits" component={EditsPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/pricing" component={PricingPage} />
