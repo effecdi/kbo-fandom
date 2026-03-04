@@ -235,7 +235,31 @@ export class DatabaseStorage implements IStorage {
 
   async ensureUserCredits(userId: string): Promise<UserCredits> {
     const db = this.getDb();
-    const [existing] = await db.select().from(userCredits).where(eq(userCredits.userId, userId));
+
+    // Try with new columns first, fallback to legacy select if columns don't exist yet
+    let existing: UserCredits | undefined;
+    try {
+      const [row] = await db.select().from(userCredits).where(eq(userCredits.userId, userId));
+      existing = row;
+    } catch {
+      // Fallback: new columns (daily_bonus_credits, last_daily_bonus_at) may not exist yet
+      const [row] = await db.select({
+        id: userCredits.id,
+        userId: userCredits.userId,
+        credits: userCredits.credits,
+        tier: userCredits.tier,
+        authorName: userCredits.authorName,
+        genre: userCredits.genre,
+        totalGenerations: userCredits.totalGenerations,
+        bubbleUsesToday: userCredits.bubbleUsesToday,
+        storyUsesToday: userCredits.storyUsesToday,
+        lastResetAt: userCredits.lastResetAt,
+      }).from(userCredits).where(eq(userCredits.userId, userId));
+      if (row) {
+        existing = { ...row, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
+      }
+    }
+
     if (existing) {
       const now = new Date();
       const lastReset = new Date(existing.lastResetAt);
@@ -253,26 +277,51 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Daily bonus check (KST)
-      if (isNewDayKST(existing.lastDailyBonusAt)) {
-        updates.dailyBonusCredits = 10;
-        updates.lastDailyBonusAt = now;
+      // Daily bonus check (KST) — only if column exists
+      try {
+        if (isNewDayKST(existing.lastDailyBonusAt)) {
+          updates.dailyBonusCredits = 10;
+          updates.lastDailyBonusAt = now;
+        }
+      } catch {
+        // daily bonus columns not available yet
       }
 
       if (Object.keys(updates).length > 0) {
-        const [updated] = await db.update(userCredits)
-          .set(updates)
-          .where(eq(userCredits.userId, userId))
-          .returning();
-        return updated;
+        try {
+          const [updated] = await db.update(userCredits)
+            .set(updates)
+            .where(eq(userCredits.userId, userId))
+            .returning();
+          return updated;
+        } catch {
+          // If update fails due to missing columns, try without daily bonus fields
+          const { dailyBonusCredits, lastDailyBonusAt, ...safeUpdates } = updates;
+          if (Object.keys(safeUpdates).length > 0) {
+            const [updated] = await db.update(userCredits)
+              .set(safeUpdates)
+              .where(eq(userCredits.userId, userId))
+              .returning();
+            return { ...updated, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
+          }
+          return existing;
+        }
       }
       return existing;
     }
 
-    const [created] = await db.insert(userCredits)
-      .values({ userId, credits: 50, tier: "free" })
-      .returning();
-    return created;
+    try {
+      const [created] = await db.insert(userCredits)
+        .values({ userId, credits: 50, tier: "free" })
+        .returning();
+      return created;
+    } catch {
+      // Fallback: if insert fails with new default, try legacy
+      const [created] = await db.insert(userCredits)
+        .values({ userId, credits: 50, tier: "free" } as any)
+        .returning();
+      return { ...created, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
+    }
   }
 
   async getUserCredits(userId: string): Promise<UserCredits> {
@@ -286,10 +335,14 @@ export class DatabaseStorage implements IStorage {
     const db = this.getDb();
     // Deduct daily bonus credits first, then regular credits
     if (credits.dailyBonusCredits > 0) {
-      await db.update(userCredits)
-        .set({ dailyBonusCredits: credits.dailyBonusCredits - 1 })
-        .where(eq(userCredits.userId, userId));
-      return true;
+      try {
+        await db.update(userCredits)
+          .set({ dailyBonusCredits: credits.dailyBonusCredits - 1 })
+          .where(eq(userCredits.userId, userId));
+        return true;
+      } catch {
+        // daily_bonus_credits column may not exist yet, fall through to regular credits
+      }
     }
     if (credits.credits > 0) {
       await db.update(userCredits)
@@ -345,11 +398,19 @@ export class DatabaseStorage implements IStorage {
   async cancelPro(userId: string): Promise<UserCredits> {
     await this.ensureUserCredits(userId);
     const db = this.getDb();
-    const [updated] = await db.update(userCredits)
-      .set({ tier: "free", credits: 30 })
-      .where(eq(userCredits.userId, userId))
-      .returning();
-    return updated;
+    try {
+      const [updated] = await db.update(userCredits)
+        .set({ tier: "free", credits: 30 })
+        .where(eq(userCredits.userId, userId))
+        .returning();
+      return updated;
+    } catch {
+      const [updated] = await db.update(userCredits)
+        .set({ tier: "free", credits: 30 } as any)
+        .where(eq(userCredits.userId, userId))
+        .returning();
+      return { ...updated, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
+    }
   }
 
   async updateCreatorProfile(userId: string, profile: CreatorProfile): Promise<UserCredits> {

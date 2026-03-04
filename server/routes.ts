@@ -374,7 +374,7 @@ export async function registerRoutes(
       const isPro = credits.tier === "pro";
       res.json({
         credits: credits.credits,
-        dailyBonusCredits: credits.dailyBonusCredits,
+        dailyBonusCredits: credits.dailyBonusCredits ?? 0,
         tier: credits.tier,
         authorName: credits.authorName,
         genre: credits.genre,
