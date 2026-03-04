@@ -6,9 +6,19 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Check, Sparkles, Zap, X, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Check, Sparkles, Zap, X, Loader2, CreditCard } from "lucide-react";
 import { useState } from "react";
-import LiquidGlass from "liquid-glass-react";
 
 declare global {
   interface Window {
@@ -19,12 +29,17 @@ declare global {
   }
 }
 
+type PGMethod = "kakaopay" | "tosspayments";
+
 export default function PricingPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [pgDialogOpen, setPgDialogOpen] = useState(false);
+  const [pendingProductType, setPendingProductType] = useState<"pro" | "credits" | null>(null);
 
-  const { data: credits } = useQuery<{ credits: number; tier: string }>({
+  const { data: credits } = useQuery<{ credits: number; dailyBonusCredits: number; tier: string }>({
     queryKey: ["/api/usage"],
     enabled: isAuthenticated,
   });
@@ -39,17 +54,25 @@ export default function PricingPage() {
     }
   }, []);
 
-  const handlePayment = useCallback(async (productType: "pro" | "credits") => {
+  const initiatePayment = useCallback((productType: "pro" | "credits") => {
     if (!isAuthenticated) {
       window.location.href = "/login";
       return;
     }
+    setPendingProductType(productType);
+    setPgDialogOpen(true);
+  }, [isAuthenticated]);
+
+  const executePayment = useCallback(async (pgMethod: PGMethod) => {
+    setPgDialogOpen(false);
+    if (!pendingProductType) return;
 
     if (!window.IMP) {
       toast({ title: "결제 모듈 로딩 중", description: "잠시 후 다시 시도해주세요.", variant: "destructive" });
       return;
     }
 
+    const productType = pendingProductType;
     const merchantUid = `${productType}_${Date.now()}`;
     const amount = productType === "pro" ? 19900 : 4900;
     const name = productType === "pro" ? "OLLI Pro 멤버십 (월간)" : "OLLI 크레딧 50개";
@@ -60,7 +83,7 @@ export default function PricingPage() {
 
     window.IMP.request_pay(
       {
-        pg: "kakaopay",
+        pg: pgMethod,
         pay_method: "card",
         merchant_uid: merchantUid,
         name,
@@ -78,6 +101,7 @@ export default function PricingPage() {
             });
             const data = await res.json();
             queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
             toast({
               title: "결제 완료!",
               description: productType === "pro"
@@ -91,28 +115,42 @@ export default function PricingPage() {
           toast({ title: "결제 취소", description: response.error_msg || "결제가 취소되었습니다.", variant: "destructive" });
         }
         setIsProcessing(false);
+        setPendingProductType(null);
       }
     );
-  }, [isAuthenticated, user, toast]);
+  }, [pendingProductType, isAuthenticated, user, toast]);
+
+  const handleCancelPro = useCallback(async () => {
+    setIsCancelling(true);
+    try {
+      await apiRequest("POST", "/api/cancel-pro", {});
+      queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+      toast({ title: "멤버십 해지 완료", description: "무료 플랜으로 전환되었습니다. 30 크레딧이 지급되었습니다." });
+    } catch (error: any) {
+      toast({ title: "해지 실패", description: error.message || "관리자에게 문의하세요.", variant: "destructive" });
+    } finally {
+      setIsCancelling(false);
+    }
+  }, [toast]);
 
   const plans = [
     {
       name: "무료",
       price: "₩0",
       period: "영구 무료",
-      description: "첫 가입 후 3회까지 무료로 체험해보세요",
+      description: "가입 시 50 크레딧 + 매월 30 크레딧 + 매일 출석 10 크레딧",
       icon: Sparkles,
       features: [
-        { text: "첫 가입 후 3회 캐릭터 생성", included: true },
+        { text: "가입 시 50 크레딧 즉시 지급", included: true },
+        { text: "매월 30 크레딧 자동 충전", included: true },
+        { text: "매일 출석 보너스 10 크레딧", included: true },
         { text: "3가지 스타일 (심플 라인)", included: true },
         { text: "기본 및 일부 무료 폰트 제공", included: true },
-        { text: "포즈 & 배경 생성", included: false },
-        { text: "말풍선 편집기", included: false },
-        { text: "스토리 에디터", included: false },
-        { text: "갤러리 조회만 가능", included: true },
-        { text: "워터마크 포함", included: true },
+        { text: "포즈 & 배경 생성", included: true },
+        { text: "말풍선 편집기", included: true },
+        { text: "스토리 에디터", included: true },
         { text: "프리미엄 스타일", included: false },
-        { text: "채팅 이미지 메이커", included: false },
+        { text: "워터마크 제거", included: false },
         { text: "상업적 이용", included: false },
       ],
       tier: "free",
@@ -152,7 +190,7 @@ export default function PricingPage() {
       return;
     }
     if (tier === "pro" && credits?.tier !== "pro") {
-      handlePayment("pro");
+      initiatePayment("pro");
     }
   };
 
@@ -171,45 +209,38 @@ export default function PricingPage() {
         {plans.map((plan) => (
           <Card
             key={plan.name}
-            className={`relative h-full overflow-hidden rounded-3xl border-0 px-8 py-9 shadow-[0_22px_70px_rgba(15,23,42,0.85)] ${
+            className={`relative h-full overflow-hidden rounded-3xl border px-8 py-9 ${
               plan.highlighted
-                ? "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500 text-white"
-                : "bg-slate-950 text-slate-50"
+                ? "bg-slate-900 dark:bg-gradient-to-br dark:from-violet-500 dark:via-fuchsia-500 dark:to-indigo-500 text-white border-slate-800 dark:border-violet-400/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                : "bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
             }`}
             data-testid={`card-plan-${plan.tier}`}
           >
-            <div
-              className={
-                plan.highlighted
-                  ? "absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10 mix-blend-screen"
-                  : "absolute inset-0 bg-gradient-to-br from-slate-800/50 via-slate-900 to-black"
-              }
-            />
             <div className="relative flex h-full flex-col">
               <div className="flex items-center justify-between mb-6">
                 {plan.highlighted ? (
                   <>
-                    <Badge className="bg-white/15 text-[11px] px-3 py-1 border border-white/20">Pro</Badge>
-                    <span className="text-[11px] text-white/80">{plan.period}</span>
+                    <Badge className="bg-violet-500/20 dark:bg-white/15 text-violet-300 dark:text-white text-[11px] px-3 py-1 border border-violet-400/30 dark:border-white/20">Pro</Badge>
+                    <span className="text-[11px] text-slate-400 dark:text-white/80">{plan.period}</span>
                   </>
                 ) : (
                   <>
-                    <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400">Free</h3>
-                    <span className="text-[11px] text-slate-400">{plan.period}</span>
+                    <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-400">{plan.period}</span>
                   </>
                 )}
               </div>
               <div className="mb-2">
                 {plan.highlighted ? (
-                  <p className="text-xs uppercase tracking-[0.22em] text-white/70 mb-1">크리에이터 추천</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400 dark:text-white/70 mb-1">크리에이터 추천</p>
                 ) : null}
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-black tracking-tight">{plan.price}</span>
-                  <span className={plan.highlighted ? "text-sm text-white/80" : "text-sm text-slate-400"}>/월</span>
+                  <span className={plan.highlighted ? "text-sm text-slate-400 dark:text-white/80" : "text-sm text-slate-400"}>/월</span>
                 </div>
                 <p
                   className={
-                    plan.highlighted ? "mt-2 text-xs text-white/85" : "mt-2 text-xs text-slate-400"
+                    plan.highlighted ? "mt-2 text-xs text-slate-400 dark:text-white/85" : "mt-2 text-xs text-slate-500 dark:text-slate-400"
                   }
                 >
                   {plan.description}
@@ -222,13 +253,13 @@ export default function PricingPage() {
                     {feature.included ? (
                       <Check
                         className={`h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-white" : "text-teal-300"
+                          plan.highlighted ? "text-violet-400 dark:text-white" : "text-emerald-500 dark:text-teal-300"
                         }`}
                       />
                     ) : (
                       <X
                         className={`h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-white/25" : "text-slate-500/60"
+                          plan.highlighted ? "text-slate-600 dark:text-white/25" : "text-slate-300 dark:text-slate-500/60"
                         }`}
                       />
                     )}
@@ -236,11 +267,11 @@ export default function PricingPage() {
                       className={
                         feature.included
                           ? plan.highlighted
-                            ? "text-white/95"
-                            : "text-slate-200"
+                            ? "text-slate-200 dark:text-white/95"
+                            : "text-slate-700 dark:text-slate-200"
                           : plan.highlighted
-                            ? "text-white/55"
-                            : "text-slate-400"
+                            ? "text-slate-500 dark:text-white/55"
+                            : "text-slate-400 dark:text-slate-400"
                       }
                     >
                       {feature.text}
@@ -254,7 +285,7 @@ export default function PricingPage() {
                 className={`mt-auto w-full h-11 rounded-full ${
                   plan.highlighted
                     ? "bg-white text-slate-900 hover:bg-slate-100 border-0"
-                    : "border-slate-500/70 text-slate-50 hover:bg-slate-900/60"
+                    : "border-slate-300 dark:border-slate-500/70 text-slate-700 dark:text-slate-50 hover:bg-slate-50 dark:hover:bg-slate-900/60"
                 }`}
                 disabled={
                   (plan.tier === "free" && credits?.tier === "free") ||
@@ -274,12 +305,101 @@ export default function PricingPage() {
         ))}
       </div>
 
+      {/* Credit Top-Up Card */}
+      <div className="max-w-3xl mx-auto mt-8">
+        <Card
+          className="relative overflow-hidden rounded-2xl border px-8 py-7 cursor-pointer hover:scale-[1.01] transition-transform bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950 dark:via-indigo-950 dark:to-purple-950 border-violet-200 dark:border-violet-800/50 shadow-[0_8px_40px_rgba(139,92,246,0.08)] dark:shadow-[0_8px_40px_rgba(139,92,246,0.15)]"
+          onClick={() => initiatePayment("credits")}
+          data-testid="card-credit-topup"
+        >
+          <div className="relative flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/50">
+                <Sparkles className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white">크레딧 충전</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">50 크레딧으로 더 많은 작품을 만들어보세요</p>
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-2xl font-black text-violet-600 dark:text-violet-400">₩4,900</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Pro Cancel */}
+      {isAuthenticated && credits?.tier === "pro" && (
+        <div className="max-w-3xl mx-auto mt-8 text-center">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-muted-foreground" disabled={isCancelling}>
+                {isCancelling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Pro 멤버십 해지
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Pro 멤버십을 해지하시겠습니까?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  해지하면 무료 플랜으로 전환되며, 무제한 생성 등 Pro 혜택을 더 이상 이용할 수 없습니다.
+                  무료 플랜 전환 시 30 크레딧이 지급됩니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction onClick={handleCancelPro} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  해지하기
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+
       <div className="mt-12 text-center text-sm text-muted-foreground">
-        <p>무료 플랜은 첫 가입 후 캐릭터 생성 3회를 제공합니다.</p>
+        <p>무료 플랜은 가입 시 50 크레딧 + 매월 30 크레딧 + 매일 출석 보너스 10 크레딧을 제공합니다.</p>
         <p className="mt-1">
           Pro 멤버십은 포즈/배경 생성, 말풍선·스토리 에디터, 채팅 이미지 메이커, AI 광고주 매칭 등을 포함합니다.
         </p>
       </div>
+
+      {/* PG Method Selection Dialog */}
+      <AlertDialog open={pgDialogOpen} onOpenChange={setPgDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>결제 수단 선택</AlertDialogTitle>
+            <AlertDialogDescription>
+              원하시는 결제 수단을 선택해주세요.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid grid-cols-2 gap-3 py-4">
+            <Button
+              variant="outline"
+              className="h-20 flex flex-col gap-2"
+              onClick={() => executePayment("kakaopay")}
+              disabled={isProcessing}
+            >
+              <CreditCard className="h-6 w-6 text-yellow-500" />
+              <span className="text-sm font-medium">카카오페이</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-20 flex flex-col gap-2"
+              onClick={() => executePayment("tosspayments")}
+              disabled={isProcessing}
+            >
+              <CreditCard className="h-6 w-6 text-blue-500" />
+              <span className="text-sm font-medium">카드 / Google Pay</span>
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingProductType(null)}>취소</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

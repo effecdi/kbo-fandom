@@ -12,9 +12,13 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Download, RotateCcw, Upload, X, Trees, Package, ArrowLeft, ArrowRight, Bot } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { FlowStepper } from "@/components/flow-stepper";
 import { setFlowState, getFlowState } from "@/lib/flow";
 import type { Generation } from "@shared/schema";
+
+const MAX_SOURCES = 4;
 
 const bgPresets = [
   { label: "Cafe", bg: "cozy cafe interior, warm lighting, coffee cups", items: "coffee cup, pastry on table" },
@@ -27,28 +31,33 @@ const bgPresets = [
   { label: "Space", bg: "outer space with stars and planets", items: "rocket, moon, stars" },
 ];
 
+interface SourceEntry {
+  url: string;
+  characterId: number | null;
+}
+
 export default function BackgroundPage() {
   const search = useSearch();
   const bgParams = new URLSearchParams(search);
   const isFlow = bgParams.get("flow") === "1";
   const [, navigate] = useLocation();
-  const [sourceImage, setSourceImage] = useState<string | null>(null);
-  const [selectedCharacterId, setSelectedCharacterId] = useState<number | null>(null);
+  const [sourceImages, setSourceImages] = useState<SourceEntry[]>([]);
   const [bgPrompt, setBgPrompt] = useState("");
   const [itemsPrompt, setItemsPrompt] = useState("");
   const [bgResultImage, setBgResultImage] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
 
   const { data: usageData } = useQuery<{creatorTier: number; totalGenerations: number; tier: string; credits: number}>({ queryKey: ["/api/usage"] });
   const isPro = usageData?.tier === "pro";
   const isOutOfCredits = !isPro && (usageData?.credits ?? 0) <= 0;
 
   useEffect(() => {
-    if (isFlow && !sourceImage) {
+    if (isFlow && sourceImages.length === 0) {
       const flow = getFlowState();
       if (flow.lastPoseImageUrl) {
-        setSourceImage(flow.lastPoseImageUrl);
+        setSourceImages([{ url: flow.lastPoseImageUrl, characterId: null }]);
       }
     }
   }, []);
@@ -57,6 +66,24 @@ export default function BackgroundPage() {
     queryKey: ["/api/gallery"],
     select: (data: any[]) => data.filter((g) => g.type === "character" && g.resultImageUrl),
   });
+
+  const toggleGalleryItem = (item: Generation) => {
+    setSourceImages((prev) => {
+      const existingIdx = prev.findIndex((s) => s.characterId === item.characterId);
+      if (existingIdx !== -1) {
+        return prev.filter((_, i) => i !== existingIdx);
+      }
+      if (prev.length >= MAX_SOURCES) {
+        toast({ title: "최대 선택 초과", description: `이미지는 최대 ${MAX_SOURCES}개까지 선택할 수 있습니다.`, variant: "destructive" });
+        return prev;
+      }
+      return [...prev, { url: item.resultImageUrl!, characterId: item.characterId }];
+    });
+  };
+
+  const removeSource = (index: number) => {
+    setSourceImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const aiPromptMutation = useMutation({
     mutationFn: async () => {
@@ -79,12 +106,16 @@ export default function BackgroundPage() {
 
   const bgMutation = useMutation({
     mutationFn: async () => {
-      if (!sourceImage) throw new Error("No source image selected");
+      if (sourceImages.length === 0) throw new Error("이미지를 먼저 선택해주세요.");
+      const sourceImageDataList = sourceImages.map((s) => s.url);
+      const characterIds = sourceImages
+        .map((s) => s.characterId)
+        .filter((id): id is number => id !== null);
       const res = await apiRequest("POST", "/api/generate-background", {
-        sourceImageData: sourceImage,
+        sourceImageDataList,
         backgroundPrompt: bgPrompt,
         itemsPrompt: itemsPrompt || undefined,
-        characterId: selectedCharacterId || undefined,
+        characterIds: characterIds.length > 0 ? characterIds : undefined,
       });
       return res.json();
     },
@@ -111,30 +142,31 @@ export default function BackgroundPage() {
       toast({ title: "파일이 너무 커요", description: "10MB 이하 이미지를 선택해주세요.", variant: "destructive" });
       return;
     }
+    if (sourceImages.length >= MAX_SOURCES) {
+      toast({ title: "최대 선택 초과", description: `이미지는 최대 ${MAX_SOURCES}개까지 선택할 수 있습니다.`, variant: "destructive" });
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
-      setSourceImage(reader.result as string);
-      setSelectedCharacterId(null);
+      setSourceImages((prev) => [...prev, { url: reader.result as string, characterId: null }]);
     };
     reader.readAsDataURL(file);
-  }, [toast]);
+  }, [toast, sourceImages.length]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (!file || !file.type.startsWith("image/")) return;
+    if (sourceImages.length >= MAX_SOURCES) {
+      toast({ title: "최대 선택 초과", description: `이미지는 최대 ${MAX_SOURCES}개까지 선택할 수 있습니다.`, variant: "destructive" });
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
-      setSourceImage(reader.result as string);
-      setSelectedCharacterId(null);
+      setSourceImages((prev) => [...prev, { url: reader.result as string, characterId: null }]);
     };
     reader.readAsDataURL(file);
-  }, []);
-
-  const selectFromGallery = (item: Generation) => {
-    setSourceImage(item.resultImageUrl);
-    setSelectedCharacterId(item.characterId);
-  };
+  }, [toast, sourceImages.length]);
 
   const applyBgPreset = (preset: typeof bgPresets[0]) => {
     setBgPrompt(preset.bg);
@@ -165,37 +197,47 @@ export default function BackgroundPage() {
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
           <Card className="p-4">
-            <h3 className="text-sm font-medium mb-3 text-muted-foreground">원본 이미지 선택</h3>
+            <h3 className="text-sm font-medium mb-3 text-muted-foreground">
+              원본 이미지 선택 <span className="text-xs">({sourceImages.length}/{MAX_SOURCES})</span>
+            </h3>
 
-            {sourceImage ? (
-              <div className="relative">
-                <div className="overflow-hidden rounded-md border">
-                  <img
-                    src={sourceImage}
-                    alt="Source"
-                    className="w-full object-contain max-h-[300px]"
-                    data-testid="img-source-preview"
-                  />
+            {/* 선택된 이미지 미리보기 */}
+            {sourceImages.length > 0 && (
+              <div className="mb-3">
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {sourceImages.map((src, idx) => (
+                    <div key={idx} className="relative flex-shrink-0 w-20 h-20">
+                      <img
+                        src={src.url}
+                        alt={`Source ${idx + 1}`}
+                        className="w-full h-full object-cover rounded-md border-2 border-primary"
+                      />
+                      <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeSource(idx)}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute top-2 right-2"
-                  onClick={() => { setSourceImage(null); setSelectedCharacterId(null); }}
-                  data-testid="button-clear-source"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
-            ) : (
+            )}
+
+            {/* 업로드 영역 */}
+            {sourceImages.length < MAX_SOURCES && (
               <div
-                className="flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 cursor-pointer hover-elevate"
+                className="flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-6 cursor-pointer hover-elevate mb-3"
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => document.getElementById("bg-file-input")?.click()}
                 data-testid="dropzone-source-image"
               >
-                <Upload className="h-8 w-8 text-muted-foreground" />
+                <Upload className="h-6 w-6 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground text-center">
                   이미지를 드래그하거나 클릭해서 업로드
                 </p>
@@ -211,7 +253,8 @@ export default function BackgroundPage() {
             )}
           </Card>
 
-          {galleryItems && galleryItems.length > 0 && !sourceImage && (
+          {/* 갤러리에서 선택 (항상 표시) */}
+          {galleryItems && galleryItems.length > 0 && (
             <Card className="p-4">
               <h3 className="text-sm font-medium mb-3 text-muted-foreground">또는 내 캐릭터에서 선택</h3>
               <div className="grid grid-cols-4 gap-2 max-h-[200px] overflow-y-auto">
@@ -220,20 +263,29 @@ export default function BackgroundPage() {
                     <Skeleton key={i} className="aspect-square rounded-md" />
                   ))
                 ) : (
-                  galleryItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => selectFromGallery(item)}
-                      className="overflow-hidden rounded-md border hover-elevate active-elevate-2"
-                      data-testid={`button-select-char-${item.id}`}
-                    >
-                      <img
-                        src={item.resultImageUrl!}
-                        alt={item.prompt}
-                        className="w-full aspect-square object-cover"
-                      />
-                    </button>
-                  ))
+                  galleryItems.map((item) => {
+                    const selIndex = sourceImages.findIndex((s) => s.characterId === item.characterId);
+                    const isSelected = selIndex !== -1;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => toggleGalleryItem(item)}
+                        className={`relative overflow-hidden rounded-md border hover-elevate active-elevate-2 ${isSelected ? "ring-2 ring-primary" : ""}`}
+                        data-testid={`button-select-char-${item.id}`}
+                      >
+                        <img
+                          src={item.resultImageUrl!}
+                          alt={item.prompt}
+                          className="w-full aspect-square object-cover"
+                        />
+                        {isSelected && (
+                          <div className="absolute top-1 left-1 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                            {selIndex + 1}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </Card>
@@ -305,8 +357,8 @@ export default function BackgroundPage() {
           <Button
             size="lg"
             className="w-full gap-2"
-            onClick={() => bgMutation.mutate()}
-                disabled={!bgPrompt.trim() || bgMutation.isPending || isOutOfCredits}
+            onClick={() => guard(() => bgMutation.mutate())}
+            disabled={sourceImages.length === 0 || !bgPrompt.trim() || bgMutation.isPending || isOutOfCredits}
             data-testid="button-generate-bg"
           >
             {bgMutation.isPending ? (
@@ -317,7 +369,9 @@ export default function BackgroundPage() {
             ) : (
               <>
                 <Trees className="h-4 w-4" />
-                배경 생성하기
+                {sourceImages.length > 1
+                  ? `${sourceImages.length}캐릭터 배경 생성하기`
+                  : "배경 생성하기"}
               </>
             )}
           </Button>
@@ -397,6 +451,7 @@ export default function BackgroundPage() {
           </Button>
         </div>
       )}
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

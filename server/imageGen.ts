@@ -1,4 +1,5 @@
 import { GoogleGenAI, Modality } from "@google/genai";
+import sharp from "sharp";
 import type { Character } from "@shared/schema";
 
 // 한국어 프롬프트를 영어로 번역하는 함수
@@ -159,6 +160,103 @@ function getStyleConfig(style: string) {
 
 const noTextRule = `CRITICAL TEXT PROHIBITION: Do NOT include ANY text, letters, words, labels, captions, watermarks, or writing of ANY kind in the image - this includes Korean (한글/Hangul), English, Japanese, Chinese, or any other language. NO characters, NO letters, NO words, NO numbers, NO symbols that look like text. The image must contain ONLY the visual illustration with absolutely ZERO text or text-like elements. Any attempt to render non-Latin scripts like Korean will result in garbled, broken characters - so do NOT attempt it under any circumstances.`;
 
+/**
+ * base64 data URL 이미지를 200×200 JPEG 썸네일로 변환.
+ * 갤러리 목록 등에서 원본 대신 경량 이미지 표시용.
+ */
+export async function generateThumbnail(dataUrl: string, maxSize = 200): Promise<string> {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return dataUrl;
+
+  try {
+    const buf = Buffer.from(match[2], "base64");
+    const thumbBuf = await sharp(buf)
+      .resize(maxSize, maxSize, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 60 })
+      .toBuffer();
+    return `data:image/jpeg;base64,${thumbBuf.toString("base64")}`;
+  } catch (error) {
+    console.warn("Thumbnail generation failed, skipping:", error);
+    return "";
+  }
+}
+
+/**
+ * 이미지 가장자리에서 flood-fill하여 배경 흰색만 투명으로 변환.
+ * 캐릭터 내부의 흰색(눈, 옷 등)은 보존됨.
+ */
+export async function removeWhiteBackground(dataUrl: string): Promise<string> {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return dataUrl;
+
+  const buf = Buffer.from(match[2], "base64");
+  const { data: raw, info } = await sharp(buf)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const pixels = Buffer.from(raw);
+  const { width, height } = info;
+  const threshold = 235;
+
+  const isWhite = (idx: number) => {
+    return pixels[idx] >= threshold && pixels[idx + 1] >= threshold && pixels[idx + 2] >= threshold;
+  };
+
+  // BFS flood-fill from image edges
+  const visited = new Uint8Array(width * height);
+  const queue: number[] = [];
+
+  // Seed: all edge pixels that are white
+  for (let x = 0; x < width; x++) {
+    const topIdx = x;
+    const botIdx = (height - 1) * width + x;
+    if (isWhite(topIdx * 4) && !visited[topIdx]) { visited[topIdx] = 1; queue.push(topIdx); }
+    if (isWhite(botIdx * 4) && !visited[botIdx]) { visited[botIdx] = 1; queue.push(botIdx); }
+  }
+  for (let y = 0; y < height; y++) {
+    const leftIdx = y * width;
+    const rightIdx = y * width + (width - 1);
+    if (isWhite(leftIdx * 4) && !visited[leftIdx]) { visited[leftIdx] = 1; queue.push(leftIdx); }
+    if (isWhite(rightIdx * 4) && !visited[rightIdx]) { visited[rightIdx] = 1; queue.push(rightIdx); }
+  }
+
+  // BFS
+  let head = 0;
+  while (head < queue.length) {
+    const pos = queue[head++];
+    const x = pos % width;
+    const y = (pos - x) / width;
+    const neighbors = [
+      y > 0 ? pos - width : -1,
+      y < height - 1 ? pos + width : -1,
+      x > 0 ? pos - 1 : -1,
+      x < width - 1 ? pos + 1 : -1,
+    ];
+    for (const n of neighbors) {
+      if (n >= 0 && !visited[n] && isWhite(n * 4)) {
+        visited[n] = 1;
+        queue.push(n);
+      }
+    }
+  }
+
+  // Mark background pixels transparent
+  for (let i = 0; i < visited.length; i++) {
+    if (visited[i]) {
+      pixels[i * 4 + 3] = 0;
+    }
+  }
+
+  const pngBuf = await sharp(pixels, {
+    raw: { width, height, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+
+  return `data:image/png;base64,${pngBuf.toString("base64")}`;
+}
+
 export async function generateCharacterImage(prompt: string, style: string, sourceImageData?: string): Promise<string> {
   const config = getStyleConfig(style);
   const parts: any[] = [];
@@ -178,7 +276,7 @@ ${noTextRule}
 
 IMPORTANT: The character must be on a completely plain solid white background with NOTHING else - no shadows, no ground, no decorations, no patterns. Just the character floating on pure white. This is critical because the image will be used as a sticker/cutout.
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio (width:height = 3:4). The image must be taller than it is wide.
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
 
 Look at this reference image carefully. Analyze the character, person, or subject in it. Now create a NEW character illustration based on this image, but with the following modifications: ${translatedPrompt}
 
@@ -204,7 +302,7 @@ ${noTextRule}
 
 IMPORTANT: The character must be on a completely plain solid white background with NOTHING else - no shadows, no ground, no decorations, no patterns. Just the character floating on pure white. This is critical because the image will be used as a sticker/cutout.
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio (width:height = 3:4). The image must be taller than it is wide.
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
 
 Look at this reference image carefully. Analyze the character, person, or subject in it - their appearance, clothing, pose, expression, and key features. Now recreate this as a character illustration in the following style: ${config.keywords}.
 
@@ -228,7 +326,7 @@ ${noTextRule}
 
 IMPORTANT: The character must be on a completely plain solid white background with NOTHING else - no shadows, no ground, no decorations, no patterns. Just the character floating on pure white. This is critical because the image will be used as a sticker/cutout.
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio (width:height = 3:4). The image must be taller than it is wide.
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
 
 Create a character: ${translatedPrompt}.
 Style: ${config.keywords}.
@@ -238,77 +336,132 @@ Single character only, full body view, pure solid white background, no shadows o
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-image",
-    contents: [{ role: "user", parts }],
+    contents: parts,
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
+      imageConfig: {
+        aspectRatio: "3:4",
+      },
     },
   });
 
+  const promptFeedback = (response as any).promptFeedback;
+  if (promptFeedback?.blockReason) {
+    throw new Error(`Prompt blocked: ${promptFeedback.blockReason}`);
+  }
+
   const candidate = response.candidates?.[0];
+  if (!candidate) {
+    throw new Error("No candidates in response — model may have rejected the request");
+  }
+
   const imagePart = candidate?.content?.parts?.find(
     (part: any) => part.inlineData
   );
 
   if (!imagePart?.inlineData?.data) {
-    throw new Error("Failed to generate image - no image data in response");
+    const reason = candidate.finishReason ? ` (finishReason: ${candidate.finishReason})` : "";
+    throw new Error(`Failed to generate image - no image data in response${reason}`);
   }
 
   const mimeType = imagePart.inlineData.mimeType || "image/png";
-  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  const rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  return removeWhiteBackground(rawDataUrl);
 }
 
 export async function generatePoseImage(
-  character: Character,
+  characters: Character[],
   posePrompt: string,
   referenceImageData?: string
 ): Promise<string> {
-  const config = getStyleConfig(character.style);
+  const config = getStyleConfig(characters[0].style);
 
   // 한국어 프롬프트를 영어로 번역
   const translatedPosePrompt = await translateToEnglish(posePrompt, ai);
-  const translatedCharPrompt = await translateToEnglish(character.prompt, ai);
 
   const parts: any[] = [];
+  const isMulti = characters.length > 1;
 
-  parts.push({
-    text: `${config.instruction}
+  if (isMulti) {
+    // 다중 캐릭터: 모든 캐릭터 이미지를 parts에 추가
+    const charDescriptions = await Promise.all(
+      characters.map((c, i) => translateToEnglish(c.prompt, ai).then(t => `Character ${i + 1}: ${t}`))
+    );
+
+    parts.push({
+      text: `${config.instruction}
+
+${noTextRule}
+
+Look at these ${characters.length} reference character images. Generate ALL ${characters.length} characters together in a SINGLE scene. Keep each character looking EXACTLY the same as their reference - same style, same features, same colors, same proportions.
+
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+
+${charDescriptions.join("\n")}
+Style: ${config.keywords}
+Scene/pose: ${translatedPosePrompt}
+
+Place all ${characters.length} characters together in the scene, interacting naturally. Keep each character's unique appearance. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
+    });
+
+    for (const character of characters) {
+      if (character.imageUrl.startsWith("data:")) {
+        const match = character.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          parts.push({
+            inlineData: {
+              mimeType: match[1],
+              data: match[2],
+            }
+          });
+        }
+      }
+    }
+  } else {
+    // 단일 캐릭터: 기존 로직 유지
+    const character = characters[0];
+    const translatedCharPrompt = await translateToEnglish(character.prompt, ai);
+
+    parts.push({
+      text: `${config.instruction}
 
 ${noTextRule}
 
 Generate a new pose of the same character described below. Keep the character looking EXACTLY the same - same style, same features, same colors. Only change the pose and expression.
 
-IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3). The image should be slightly wider than it is tall.
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
 
 Original character description: ${translatedCharPrompt}
 Style: ${config.keywords}
 New pose/expression: ${translatedPosePrompt}
 
 Keep the SAME style. Single character. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
-  });
+    });
 
-  if (character.imageUrl.startsWith("data:")) {
-    const match = character.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (match) {
-      parts.push({
-        inlineData: {
-          mimeType: match[1],
-          data: match[2],
-        }
-      });
-      parts[0] = {
-        text: `${config.instruction}
+    if (character.imageUrl.startsWith("data:")) {
+      const match = character.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        parts.push({
+          inlineData: {
+            mimeType: match[1],
+            data: match[2],
+          }
+        });
+        parts[0] = {
+          text: `${config.instruction}
 
 ${noTextRule}
 
 Look at this reference character image. Generate the EXACT SAME character in a different pose. Keep it in the same style - same line thickness, same level of detail, same colors.
 
-IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3). The image should be slightly wider than it is tall.
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
 
 New pose/expression: ${translatedPosePrompt}
 Style: ${config.keywords}
 
 Keep the character identical to the reference. Only change the pose. Single character. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
-      };
+        };
+      }
     }
   }
 
@@ -326,27 +479,41 @@ Keep the character identical to the reference. Only change the pose. Single char
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-image",
-    contents: [{ role: "user", parts }],
+    contents: parts,
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
+      imageConfig: {
+        aspectRatio: "3:4",
+      },
     },
   });
 
+  const promptFeedback = (response as any).promptFeedback;
+  if (promptFeedback?.blockReason) {
+    throw new Error(`Prompt blocked: ${promptFeedback.blockReason}`);
+  }
+
   const candidate = response.candidates?.[0];
+  if (!candidate) {
+    throw new Error("No candidates in response — model may have rejected the request");
+  }
+
   const imagePart = candidate?.content?.parts?.find(
     (part: any) => part.inlineData
   );
 
   if (!imagePart?.inlineData?.data) {
-    throw new Error("Failed to generate pose - no image data in response");
+    const reason = candidate.finishReason ? ` (finishReason: ${candidate.finishReason})` : "";
+    throw new Error(`Failed to generate pose - no image data in response${reason}`);
   }
 
   const mimeType = imagePart.inlineData.mimeType || "image/png";
-  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  const rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  return removeWhiteBackground(rawDataUrl);
 }
 
 export async function generateWithBackground(
-  sourceImageData: string,
+  sourceImageDataList: string[],
   backgroundPrompt: string,
   itemsPrompt?: string
 ): Promise<string> {
@@ -355,13 +522,36 @@ export async function generateWithBackground(
   const translatedItemsPrompt = itemsPrompt ? await translateToEnglish(itemsPrompt, ai) : undefined;
 
   const parts: any[] = [];
+  const isMulti = sourceImageDataList.length > 1;
 
   const itemsInstruction = translatedItemsPrompt
-    ? `Also add these items/props around or with the character: ${translatedItemsPrompt}.`
+    ? `Also add these items/props around or with the characters: ${translatedItemsPrompt}.`
     : "";
 
-  parts.push({
-    text: `Take this character image and place the character into a new scene with a background and optional items.
+  if (isMulti) {
+    parts.push({
+      text: `Take these ${sourceImageDataList.length} character images and place ALL characters together into a new scene with a background and optional items.
+
+${noTextRule}
+
+IMPORTANT RULES:
+- Keep each character looking EXACTLY the same as their reference - same style, same features, same colors, same proportions
+- All ${sourceImageDataList.length} characters should appear together in the scene
+- The characters should be the main focus of the image
+- Draw the background in a style that matches the characters (simple, cute, instatoon style)
+- The background should complement the characters, not overwhelm them
+- Keep the overall style simple and cute, matching Korean Instagram webtoon (instatoon) aesthetics
+
+Background scene: ${translatedBgPrompt}
+${itemsInstruction}
+
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+
+Make the background and items in the same simple, cute drawing style as the characters. Keep thick outlines and flat colors. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
+    });
+  } else {
+    parts.push({
+      text: `Take this character image and place the character into a new scene with a background and optional items.
 
 ${noTextRule}
 
@@ -375,38 +565,75 @@ IMPORTANT RULES:
 Background scene: ${translatedBgPrompt}
 ${itemsInstruction}
 
-IMPORTANT: Generate the image in 4:3 aspect ratio (width:height = 4:3). The scene should be slightly wider than it is tall.
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
 
 Make the background and items in the same simple, cute drawing style as the character. Keep thick outlines and flat colors. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
-  });
-
-  const match = sourceImageData.match(/^data:([^;]+);base64,(.+)$/);
-  if (match) {
-    parts.push({
-      inlineData: {
-        mimeType: match[1],
-        data: match[2],
-      }
     });
   }
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
-    contents: [{ role: "user", parts }],
-    config: {
-      responseModalities: [Modality.TEXT, Modality.IMAGE],
-    },
-  });
-
-  const candidate = response.candidates?.[0];
-  const bgImagePart = candidate?.content?.parts?.find(
-    (part: any) => part.inlineData
-  );
-
-  if (!bgImagePart?.inlineData?.data) {
-    throw new Error("Failed to generate background - no image data in response");
+  for (const sourceImageData of sourceImageDataList) {
+    const match = sourceImageData.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      parts.push({
+        inlineData: {
+          mimeType: match[1],
+          data: match[2],
+        }
+      });
+    }
   }
 
-  const bgMimeType = bgImagePart.inlineData.mimeType || "image/png";
-  return `data:${bgMimeType};base64,${bgImagePart.inlineData.data}`;
+  // 최대 2회 시도 (첫 시도 실패 시 1회 재시도)
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: parts,
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+          imageConfig: {
+            aspectRatio: "3:4",
+          },
+        },
+      });
+
+      // 안전 필터 / 프롬프트 차단 확인
+      const promptFeedback = (response as any).promptFeedback;
+      if (promptFeedback?.blockReason) {
+        throw new Error(`Prompt blocked: ${promptFeedback.blockReason}`);
+      }
+
+      const candidate = response.candidates?.[0];
+      if (!candidate) {
+        throw new Error("No candidates in response — model may have rejected the request");
+      }
+
+      // finishReason 확인 (IMAGE_SAFETY, SAFETY 등)
+      const finishReason = candidate.finishReason;
+      if (finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
+        console.warn("Background generation finishReason:", finishReason);
+      }
+
+      const bgImagePart = candidate?.content?.parts?.find(
+        (part: any) => part.inlineData
+      );
+
+      if (!bgImagePart?.inlineData?.data) {
+        const reason = finishReason ? ` (finishReason: ${finishReason})` : "";
+        throw new Error(`Failed to generate background - no image data in response${reason}`);
+      }
+
+      const bgMimeType = bgImagePart.inlineData.mimeType || "image/png";
+      return `data:${bgMimeType};base64,${bgImagePart.inlineData.data}`;
+    } catch (err: any) {
+      lastError = err;
+      console.error(`Background generation attempt ${attempt + 1} failed:`, err?.message || err);
+      if (attempt === 0) {
+        // 첫 시도 실패 시 짧은 대기 후 재시도
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+  }
+  throw lastError || new Error("Failed to generate background after retries");
 }

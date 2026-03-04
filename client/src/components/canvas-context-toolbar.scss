@@ -118,6 +118,12 @@ $transition-fast: 150ms ease;
     transform: scale(1.1);
   }
 
+  &__color-dot--selected {
+    border-color: $primary;
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.4);
+    transform: scale(1.1);
+  }
+
   // ─── Dropdown ────────────────────────────────────────────────────────────
 
   &__dropdown-wrapper {
@@ -180,6 +186,27 @@ $transition-fast: 150ms ease;
       color: $primary;
       font-weight: 600;
     }
+
+    &--locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
+
+  &__lock-badge {
+    display: inline-block;
+    margin-left: auto;
+    padding: 0 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: hsl(45, 90%, 45%);
+    background: hsl(45, 90%, 90%);
+    border-radius: 3px;
+    line-height: 16px;
   }
 
   // ─── Color grid ──────────────────────────────────────────────────────────
@@ -352,6 +379,68 @@ $transition-fast: 150ms ease;
     min-width: 40px;
     text-align: right;
   }
+}
+
+// ─── Bubble Floating Settings ────────────────────────────────────────────────
+
+.bubble-floating-settings {
+  width: 260px;
+  max-height: 420px;
+  overflow-y: auto;
+
+  &__btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  &__mode-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+    border: none;
+    border-radius: 6px;
+    background: hsl(var(--muted) / 0.4);
+    color: $muted-fg;
+    cursor: pointer;
+    transition: all $transition-fast;
+    white-space: nowrap;
+
+    &:hover {
+      background: hsl(var(--muted) / 0.6);
+    }
+
+    &--active {
+      background: hsl(var(--primary) / 0.12);
+      color: $primary;
+      font-weight: 600;
+    }
+  }
+
+  &__style-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  &__cat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__cat-label {
+    font-size: 10px;
+    color: hsl(var(--muted-foreground) / 0.7);
+    font-weight: 500;
+  }
+}
+
+// ─── Color dot stroke variant ────────────────────────────────────────────────
+
+.context-toolbar__color-dot--stroke {
+  border-style: dashed;
 }
 
 // ─── Line sub-tool strip (inside left panel tools) ───────────────────────────

@@ -396,7 +396,7 @@ export default function FabricEditor({ isPro = false, className, onClose }: { is
     const oc = document.createElement("canvas");
     oc.width = w;
     oc.height = h;
-    const ctx = oc.getContext("2d");
+    const ctx = oc.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
     ctx.drawImage(el, 0, 0, w, h);
     const imageData = ctx.getImageData(0, 0, w, h);

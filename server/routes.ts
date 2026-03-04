@@ -2,9 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
-import { generateCharacterImage, generatePoseImage, generateWithBackground } from "./imageGen";
-import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics } from "./aiText";
-import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema } from "@shared/schema";
+import { generateCharacterImage, generatePoseImage, generateWithBackground, removeWhiteBackground, generateThumbnail } from "./imageGen";
+import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown } from "./aiText";
+import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
 
@@ -88,16 +88,21 @@ export async function registerRoutes(
         imageUrl: imageDataUrl,
       });
 
-      await storage.createGeneration({
-        userId,
-        characterId: character.id,
-        type: "character",
-        prompt,
-        resultImageUrl: imageDataUrl,
-        creditsUsed: 1,
-      });
-
-      await storage.incrementTotalGenerations(userId);
+      try {
+        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        await storage.createGeneration({
+          userId,
+          characterId: character.id,
+          type: "character",
+          prompt,
+          resultImageUrl: imageDataUrl,
+          thumbnailUrl: thumbnailUrl || null,
+          creditsUsed: 1,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        console.error("Character generation DB save failed (image still returned):", dbError?.message);
+      }
 
       res.json({ characterId: character.id, imageUrl: imageDataUrl });
     } catch (error: any) {
@@ -113,15 +118,19 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
-      const { characterId, prompt, referenceImageData } = parsed.data;
+      const { characterIds, prompt, referenceImageData } = parsed.data;
 
-      const character = await storage.getCharacter(characterId);
-      if (!character) {
-        return res.status(404).json({ message: "Character not found" });
-      }
-
-      if (character.userId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      // 모든 캐릭터 조회 및 소유권 검증
+      const characters = [];
+      for (const cid of characterIds) {
+        const character = await storage.getCharacter(cid);
+        if (!character) {
+          return res.status(404).json({ message: `Character ${cid} not found` });
+        }
+        if (character.userId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+        characters.push(character);
       }
 
       const canGenerate = await storage.deductCredit(userId);
@@ -129,19 +138,24 @@ export async function registerRoutes(
         return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
       }
 
-      const imageDataUrl = await generatePoseImage(character, prompt, referenceImageData);
+      const imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
 
-      await storage.createGeneration({
-        userId,
-        characterId,
-        type: "pose",
-        prompt,
-        referenceImageUrl: referenceImageData || null,
-        resultImageUrl: imageDataUrl,
-        creditsUsed: 1,
-      });
-
-      await storage.incrementTotalGenerations(userId);
+      try {
+        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        await storage.createGeneration({
+          userId,
+          characterId: characterIds[0],
+          type: "pose",
+          prompt,
+          referenceImageUrl: referenceImageData || null,
+          resultImageUrl: imageDataUrl,
+          thumbnailUrl: thumbnailUrl || null,
+          creditsUsed: 1,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        console.error("Pose generation DB save failed (image still returned):", dbError?.message);
+      }
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
@@ -157,15 +171,18 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
-      const { sourceImageData, backgroundPrompt, itemsPrompt, characterId } = parsed.data;
+      const { sourceImageDataList, backgroundPrompt, itemsPrompt, characterIds } = parsed.data;
 
-      if (characterId) {
-        const character = await storage.getCharacter(characterId);
-        if (!character) {
-          return res.status(404).json({ message: "Character not found" });
-        }
-        if (character.userId !== userId) {
-          return res.status(403).json({ message: "Access denied" });
+      // 모든 캐릭터 소유권 검증
+      if (characterIds && characterIds.length > 0) {
+        for (const cid of characterIds) {
+          const character = await storage.getCharacter(cid);
+          if (!character) {
+            return res.status(404).json({ message: `Character ${cid} not found` });
+          }
+          if (character.userId !== userId) {
+            return res.status(403).json({ message: "Access denied" });
+          }
         }
       }
 
@@ -174,28 +191,57 @@ export async function registerRoutes(
         return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
       }
 
-      const imageDataUrl = await generateWithBackground(sourceImageData, backgroundPrompt, itemsPrompt);
+      const imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);
 
+      // 이미지 생성 성공 — DB 저장은 비차단으로 처리 (thumbnail_url 컬럼 미존재 등에 대비)
       const fullPrompt = itemsPrompt
         ? `Background: ${backgroundPrompt}, Items: ${itemsPrompt}`
         : `Background: ${backgroundPrompt}`;
 
-      await storage.createGeneration({
-        userId,
-        characterId: characterId || null,
-        type: "background",
-        prompt: fullPrompt,
-        referenceImageUrl: null,
-        resultImageUrl: imageDataUrl,
-        creditsUsed: 1,
-      });
-
-      await storage.incrementTotalGenerations(userId);
+      try {
+        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        await storage.createGeneration({
+          userId,
+          characterId: characterIds?.[0] || null,
+          type: "background",
+          prompt: fullPrompt,
+          referenceImageUrl: null,
+          resultImageUrl: imageDataUrl,
+          thumbnailUrl: thumbnailUrl || null,
+          creditsUsed: 1,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        console.error("Background generation DB save failed (image still returned):", dbError?.message);
+      }
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
       console.error("Background generation error:", error);
       res.status(500).json({ message: error.message || "Failed to generate background" });
+    }
+  });
+
+  app.post("/api/remove-background", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const parsed = removeBackgroundSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+      }
+      const { sourceImageData } = parsed.data;
+
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        return res.status(403).json({ message: "배경 제거는 Pro 멤버십 전용 기능입니다." });
+      }
+
+      const imageDataUrl = await removeWhiteBackground(sourceImageData);
+
+      res.json({ imageUrl: imageDataUrl });
+    } catch (error: any) {
+      console.error("Remove background error:", error);
+      res.status(500).json({ message: error.message || "Failed to remove background" });
     }
   });
 
@@ -280,10 +326,44 @@ export async function registerRoutes(
   app.get("/api/gallery", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const gens = await storage.getGenerationsByUser(userId);
-      res.json(gens);
+      const isPaginated = req.query.limit !== undefined;
+
+      if (isPaginated) {
+        // New paginated format: { items, total, hasMore }
+        const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 24, 1), 100);
+        const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
+        const type = (req.query.type as string) || "all";
+
+        const [items, total] = await Promise.all([
+          storage.getGenerationsLight(userId, limit, offset, type),
+          storage.getGalleryCount(userId, type),
+        ]);
+
+        res.json({
+          items,
+          total,
+          hasMore: offset + items.length < total,
+        });
+      } else {
+        // Legacy format: plain array (used by pose, background, bubble, etc.)
+        const items = await storage.getGenerationsByUser(userId);
+        res.json(items);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch gallery" });
+    }
+  });
+
+  app.get("/api/gallery/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const gen = await storage.getGenerationById(id, userId);
+      if (!gen) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      res.json(gen);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch gallery item" });
     }
   });
 
@@ -294,11 +374,12 @@ export async function registerRoutes(
       const isPro = credits.tier === "pro";
       res.json({
         credits: credits.credits,
+        dailyBonusCredits: credits.dailyBonusCredits ?? 0,
         tier: credits.tier,
         authorName: credits.authorName,
         genre: credits.genre,
         totalGenerations: credits.totalGenerations,
-        dailyFreeCredits: isPro ? -1 : 3,
+        dailyFreeCredits: isPro ? -1 : 30,
         bubbleUsesToday: credits.bubbleUsesToday,
         storyUsesToday: credits.storyUsesToday,
         maxBubbleUses: isPro ? -1 : 3,
@@ -417,6 +498,32 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/payments", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const payments = await storage.getPaymentsByUser(userId);
+      res.json(payments);
+    } catch (error: any) {
+      console.error("Get payments error:", error);
+      res.status(500).json({ message: "결제 내역 조회에 실패했습니다." });
+    }
+  });
+
+  app.post("/api/cancel-pro", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        return res.status(400).json({ message: "현재 Pro 멤버십이 아닙니다." });
+      }
+      const updated = await storage.cancelPro(userId);
+      res.json({ success: true, tier: updated.tier, credits: updated.credits });
+    } catch (error: any) {
+      console.error("Cancel pro error:", error);
+      res.status(500).json({ message: "멤버십 해지에 실패했습니다." });
+    }
+  });
+
   // PortOne 웹훅 엔드포인트 (결제 상태 변경 알림)
   // 인증 없이 접근 가능하지만, imp_uid로 검증하여 중복 처리 방지
   app.post("/api/payment/webhook", async (req, res) => {
@@ -457,9 +564,9 @@ export async function registerRoutes(
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
 
-      const canUseStory = await storage.deductStoryUse(userId);
+      const canUseStory = await storage.deductCredit(userId);
       if (!canUseStory) {
-        return res.status(403).json({ message: "이번 달의 스토리 에디터 무료 사용 횟수(3회)를 모두 사용했습니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       const result = await generateStoryScripts(parsed.data);
@@ -483,6 +590,41 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Topic suggestion error:", error);
       res.status(500).json({ message: error.message || "주제 추천에 실패했습니다" });
+    }
+  });
+
+  // 자동화툰 - 스토리 → 장면 분해
+  app.post("/api/auto-webtoon/breakdown", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { storyPrompt, canvasCount, cutsPerCanvas, characterDescriptions } = req.body;
+
+      if (!storyPrompt || typeof storyPrompt !== "string" || storyPrompt.length < 5) {
+        return res.status(400).json({ message: "스토리를 5자 이상 입력해주세요." });
+      }
+      const cc = Number(canvasCount);
+      const cpc = Number(cutsPerCanvas);
+      if (!cc || cc < 1 || cc > 14 || !cpc || cpc < 1 || cpc > 4) {
+        return res.status(400).json({ message: "캔버스 수(1~14), 컷/캔버스(1~4)를 올바르게 입력해주세요." });
+      }
+
+      // 1 크레딧 차감
+      const ok = await storage.deductCredit(userId);
+      if (!ok) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
+      }
+
+      const totalCuts = cc * cpc;
+      const result = await generateWebtoonSceneBreakdown({
+        storyPrompt,
+        totalCuts,
+        characterDescriptions: characterDescriptions || [],
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Auto-webtoon breakdown error:", error);
+      res.status(500).json({ message: error.message || "장면 분해에 실패했습니다." });
     }
   });
 
@@ -551,6 +693,52 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Update bubble project error:", error);
       res.status(500).json({ message: error.message || "프로젝트 업데이트에 실패했습니다." });
+    }
+  });
+
+  // Bulk delete selected gallery items
+  app.post("/api/gallery/bulk-delete", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "삭제할 항목을 선택해주세요." });
+      }
+      const numIds = ids.map((id: any) => parseInt(String(id))).filter((id: number) => !isNaN(id));
+      const count = await storage.deleteGenerationsBulk(numIds, userId);
+      res.json({ success: true, deleted: count });
+    } catch (error: any) {
+      console.error("Bulk delete gallery error:", error);
+      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+    }
+  });
+
+  // Delete all gallery items for user
+  app.delete("/api/gallery", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const count = await storage.deleteAllGenerations(userId);
+      res.json({ success: true, deleted: count });
+    } catch (error: any) {
+      console.error("Delete all gallery error:", error);
+      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+    }
+  });
+
+  app.delete("/api/gallery/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const deleted = await storage.deleteGeneration(id, userId);
+      if (!deleted) {
+        console.warn(`Gallery delete failed: id=${id}, userId=${userId} — not found or not owned`);
+        return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      }
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Delete gallery item error:", error);
+      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
     }
   });
 

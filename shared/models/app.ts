@@ -21,6 +21,7 @@ export const generations = pgTable("generations", {
   prompt: text("prompt").notNull(),
   referenceImageUrl: text("reference_image_url"),
   resultImageUrl: text("result_image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
   creditsUsed: integer("credits_used").notNull().default(1),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -28,13 +29,15 @@ export const generations = pgTable("generations", {
 export const userCredits = pgTable("user_credits", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id).unique(),
-  credits: integer("credits").notNull().default(3),
+  credits: integer("credits").notNull().default(50),
   tier: text("tier").notNull().default("free"),
   authorName: text("author_name"),
   genre: text("genre"),
   totalGenerations: integer("total_generations").notNull().default(0),
   bubbleUsesToday: integer("bubble_uses_today").notNull().default(0),
   storyUsesToday: integer("story_uses_today").notNull().default(0),
+  dailyBonusCredits: integer("daily_bonus_credits").notNull().default(0),
+  lastDailyBonusAt: timestamp("last_daily_bonus_at"),
   lastResetAt: timestamp("last_reset_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -91,26 +94,16 @@ export const generateCharacterSchema = z.object({
 });
 
 export const generatePoseSchema = z.object({
-  characterId: z.number(),
+  characterIds: z.array(z.number()).min(1).max(4),
   prompt: z.string().min(3, "Pose description must be at least 3 characters"),
   referenceImageData: z.string().optional(),
 });
 
 export const generateBackgroundSchema = z.object({
-  sourceImageData: z.string().min(1, "Source image is required"),
+  sourceImageDataList: z.array(z.string().min(1)).min(1).max(4),
   backgroundPrompt: z.string().min(3, "Background description must be at least 3 characters"),
   itemsPrompt: z.string().optional(),
-  characterId: z.preprocess(
-    (val) => {
-      if (val === null || val === undefined || val === "") return undefined;
-      if (typeof val === "string") {
-        const n = Number(val);
-        if (!Number.isNaN(n)) return n;
-      }
-      return val;
-    },
-    z.number().optional(),
-  ),
+  characterIds: z.array(z.number()).optional(),
 });
 
 export const removeBackgroundSchema = z.object({
@@ -150,6 +143,7 @@ export type TopicSuggestRequest = z.infer<typeof topicSuggestSchema>;
 export interface StoryBubbleScript {
   text: string;
   style?: "handwritten" | "linedrawing" | "wobbly";
+  position?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
 }
 
 export interface StoryPanelScript {
@@ -195,6 +189,10 @@ export type InsertBubbleProject = z.infer<typeof insertBubbleProjectSchema>;
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = z.infer<typeof insertCharacterSchema>;
 export type Generation = typeof generations.$inferSelect;
+export type GenerationLight = Omit<Generation, "referenceImageUrl"> & {
+  resultImageUrl: string | null;
+  referenceImageUrl?: undefined;
+};
 export type InsertGeneration = z.infer<typeof insertGenerationSchema>;
 export type UserCredits = typeof userCredits.$inferSelect;
 export type TrendingAccount = typeof trendingAccounts.$inferSelect;

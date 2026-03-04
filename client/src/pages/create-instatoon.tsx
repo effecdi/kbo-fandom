@@ -148,10 +148,10 @@ export default function CreateInstatoonPage() {
         throw new Error("인스타툰 장면 프롬프트를 입력해주세요.");
       }
       const res = await apiRequest("POST", "/api/generate-background", {
-        sourceImageData: sourceImage,
+        sourceImageDataList: [sourceImage],
         backgroundPrompt: scenePrompt.trim(),
         itemsPrompt: itemsPrompt.trim() || undefined,
-        characterId: selectedGeneration?.characterId || undefined,
+        characterIds: selectedGeneration?.characterId ? [selectedGeneration.characterId] : undefined,
       });
       return res.json();
     },

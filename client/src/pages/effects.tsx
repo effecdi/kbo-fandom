@@ -9,6 +9,8 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation, useSearch } from "wouter";
 import { Upload, Download, RotateCcw, Eye, ArrowRight, ArrowLeft } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { FlowStepper } from "@/components/flow-stepper";
 import { getFlowState } from "@/lib/flow";
 
@@ -23,6 +25,7 @@ const BLUR_TYPES: { value: BlurType; label: string; labelKo: string }[] = [
 export default function EffectsPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const search = useSearch();
   const effectsParams = new URLSearchParams(search);
   const isFlow = effectsParams.get("flow") === "1";
@@ -175,24 +178,6 @@ export default function EffectsPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mx-auto mb-6">
-          <Eye className="h-10 w-10 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold mb-3" data-testid="text-login-required-effects">로그인이 필요합니다</h2>
-        <p className="text-muted-foreground mb-6">블러 효과 도구를 사용하려면 로그인하세요.</p>
-        <Button asChild data-testid="button-login-effects">
-          <a href="/login" className="gap-2">
-            로그인
-            <ArrowRight className="h-4 w-4" />
-          </a>
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="editor-page mx-auto max-w-6xl px-4 py-8">
       {isFlow && <FlowStepper currentStep={4} />}
@@ -216,7 +201,7 @@ export default function EffectsPage() {
             {!uploadedImage ? (
               <div
                 className="w-full border border-dashed rounded-md flex flex-col items-center justify-center gap-2 py-10 cursor-pointer hover-elevate"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => guard(() => fileInputRef.current?.click())}
                 data-testid="button-upload-trigger"
               >
                 <Upload className="h-8 w-8 text-muted-foreground" />
@@ -299,7 +284,7 @@ export default function EffectsPage() {
                 </Button>
                 <Button
                   className="flex-1 gap-1"
-                  onClick={handleDownload}
+                  onClick={() => guard(() => handleDownload())}
                   disabled={!uploadedImage || isProcessing}
                   data-testid="button-download-effect"
                 >
@@ -349,6 +334,7 @@ export default function EffectsPage() {
           </Button>
         </div>
       )}
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

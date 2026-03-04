@@ -142,6 +142,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
   ({ width, height, toolState, backgroundImage, className, drawingLayers, onLayerCreated, onRequestTextInput, onStrokeEnd }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const activeStrokeRef = useRef<HTMLCanvasElement | null>(null);
+    const drawingCompositeRef = useRef<HTMLCanvasElement | null>(null);
 
     const isDrawingRef = useRef(false);
     const pointsRef = useRef<Point[]>([]);
@@ -178,39 +179,79 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
     const onStrokeEndRef = useRef(onStrokeEnd);
     onStrokeEndRef.current = onStrokeEnd;
 
-    // Initialize off-screen canvas for active stroke
+    // Initialize off-screen canvases
     useEffect(() => {
       const activeStroke = document.createElement("canvas");
       activeStroke.width = width;
       activeStroke.height = height;
       activeStrokeRef.current = activeStroke;
+
+      const compositeCanvas = document.createElement("canvas");
+      compositeCanvas.width = width;
+      compositeCanvas.height = height;
+      drawingCompositeRef.current = compositeCanvas;
     }, [width, height]);
 
-    // Composite: only render active stroke as transparent overlay
-    // (existing drawing layers are rendered by PanelCanvas underneath)
+    // Composite final canvas = background + drawing layers composite + active stroke
     const composite = useCallback(() => {
       const canvas = canvasRef.current;
       const activeStroke = activeStrokeRef.current;
-      if (!canvas || !activeStroke) return;
+      const compositeCanvas = drawingCompositeRef.current;
+      if (!canvas || !activeStroke || !compositeCanvas) return;
 
       const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      const compCtx = compositeCanvas.getContext("2d");
+      if (!ctx || !compCtx) return;
 
-      // 1. Clear canvas (transparent — PanelCanvas shows through)
+      // 1. Clear main canvas
       ctx.clearRect(0, 0, width, height);
 
-      // 2. Draw active stroke (hide eraser marks — they become a layer on stroke end)
+      // 2. Draw background
+      if (backgroundImage) {
+        ctx.drawImage(backgroundImage, 0, 0, width, height);
+      }
+
+      // 3. Clear composite canvas and render drawing layers
+      compCtx.clearRect(0, 0, width, height);
+      const layers = drawingLayersRef.current;
+      if (layers && layers.length > 0) {
+        const sorted = [...layers].sort((a, b) => a.zIndex - b.zIndex);
+        for (const layer of sorted) {
+          if (!layer.visible || !layer.imageEl) continue;
+          compCtx.save();
+          compCtx.globalAlpha = layer.opacity ?? 1;
+          if (layer.type === "eraser") {
+            compCtx.globalCompositeOperation = "destination-out";
+          } else {
+            compCtx.globalCompositeOperation = "source-over";
+          }
+          compCtx.drawImage(layer.imageEl, 0, 0);
+          compCtx.restore();
+        }
+      }
+
+      // 4. If eraser is active, apply activeStroke as destination-out on composite
       const ts = toolStateRef.current;
+      if (ts.tool === "eraser") {
+        compCtx.save();
+        compCtx.globalCompositeOperation = "destination-out";
+        compCtx.drawImage(activeStroke, 0, 0);
+        compCtx.restore();
+      }
+
+      // 5. Draw composite onto main canvas
+      ctx.drawImage(compositeCanvas, 0, 0);
+
+      // 6. Draw active stroke on top (non-eraser only; eraser already applied above)
       if (ts.tool !== "eraser") {
         ctx.drawImage(activeStroke, 0, 0);
-      } else {
-        // Show faint eraser indicator
-        ctx.save();
-        ctx.globalAlpha = 0.25;
-        ctx.drawImage(activeStroke, 0, 0);
-        ctx.restore();
       }
-    }, [width, height]);
+    }, [width, height, backgroundImage]);
+
+    // Re-composite when background or layers change
+    useEffect(() => {
+      composite();
+    }, [composite, drawingLayers]);
 
     // ─── Layer creation helper ───
 
@@ -221,7 +262,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = width;
       exportCanvas.height = height;
-      const exportCtx = exportCanvas.getContext("2d");
+      const exportCtx = exportCanvas.getContext("2d", { willReadFrequently: true });
       if (!exportCtx) return;
       exportCtx.drawImage(activeStroke, 0, 0);
 
@@ -431,11 +472,12 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         }
 
         if (ts.tool === "eraser") {
-          // Draw with opaque pixels using source-over;
-          // the layer type "eraser" will use destination-out when rendered by PanelCanvas
+          // Draw solid white stroke on activeStroke canvas;
+          // composite() will apply it as destination-out for live preview,
+          // and the saved layer type "eraser" triggers destination-out during compositing.
           ctx.globalCompositeOperation = "source-over";
           ctx.globalAlpha = 1;
-          ctx.fillStyle = "#ff0000";
+          ctx.fillStyle = "#ffffff";
           ctx.beginPath();
           ctx.arc(point.x, point.y, ts.size / 2, 0, Math.PI * 2);
           ctx.fill();
@@ -550,11 +592,10 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         const pts = pointsRef.current;
 
         if (ts.tool === "eraser") {
-          // Draw with opaque pixels using source-over;
-          // the layer type "eraser" will use destination-out when rendered by PanelCanvas
+          // Draw solid white stroke; composite handles destination-out
           ctx.globalCompositeOperation = "source-over";
           ctx.globalAlpha = 1;
-          ctx.strokeStyle = "#ff0000";
+          ctx.strokeStyle = "#ffffff";
           ctx.lineWidth = ts.size;
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
@@ -781,30 +822,42 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
       ref,
       () => ({
         exportImage: (format = "png") => {
-          // Composite all drawing layers on-the-fly for export
-          const exportCanvas = document.createElement("canvas");
-          exportCanvas.width = width;
-          exportCanvas.height = height;
-          const ctx = exportCanvas.getContext("2d");
+          const canvas = canvasRef.current;
+          if (!canvas) return null;
+          return canvas.toDataURL(`image/${format}`);
+        },
+        exportMask: () => {
+          // Export all drawing layers combined as mask
+          const compositeCanvas = drawingCompositeRef.current;
+          if (!compositeCanvas) return null;
+
+          const maskCanvas = document.createElement("canvas");
+          maskCanvas.width = width;
+          maskCanvas.height = height;
+          const ctx = maskCanvas.getContext("2d", { willReadFrequently: true });
           if (!ctx) return null;
 
-          const layers = drawingLayersRef.current;
-          if (layers && layers.length > 0) {
-            const sorted = [...layers].sort((a, b) => a.zIndex - b.zIndex);
-            for (const layer of sorted) {
-              if (!layer.visible || !layer.imageEl) continue;
-              ctx.save();
-              ctx.globalAlpha = layer.opacity ?? 1;
-              if (layer.type === "eraser") {
-                ctx.globalCompositeOperation = "destination-out";
-              }
-              ctx.drawImage(layer.imageEl, 0, 0);
-              ctx.restore();
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, width, height);
+
+          const compCtx = compositeCanvas.getContext("2d", { willReadFrequently: true });
+          if (!compCtx) return null;
+
+          const imgData = compCtx.getImageData(0, 0, width, height);
+          const maskData = ctx.getImageData(0, 0, width, height);
+
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            if (imgData.data[i + 3] > 0) {
+              maskData.data[i] = 255;
+              maskData.data[i + 1] = 255;
+              maskData.data[i + 2] = 255;
+              maskData.data[i + 3] = 255;
             }
           }
-          return exportCanvas.toDataURL(`image/${format}`);
+
+          ctx.putImageData(maskData, 0, 0);
+          return maskCanvas.toDataURL("image/png");
         },
-        exportMask: () => null,
         getCanvas: () => canvasRef.current,
         commitText: (x: number, y: number, text: string, fontSize: number, color: string) => {
           const activeStroke = activeStrokeRef.current;

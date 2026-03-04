@@ -8,7 +8,17 @@ import {
   type Payment, type InsertPayment,
 } from "@shared/schema";
 import { requireDb } from "./db";
-import { eq, desc, sql, and, asc } from "drizzle-orm";
+import { eq, desc, sql, and, asc, inArray } from "drizzle-orm";
+
+function isNewDayKST(lastDate: Date | null): boolean {
+  if (!lastDate) return true;
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+  const nowKST = new Date(Date.now() + KST_OFFSET);
+  const lastKST = new Date(lastDate.getTime() + KST_OFFSET);
+  return nowKST.getUTCFullYear() !== lastKST.getUTCFullYear() ||
+         nowKST.getUTCMonth() !== lastKST.getUTCMonth() ||
+         nowKST.getUTCDate() !== lastKST.getUTCDate();
+}
 
 export interface IStorage {
   ensureUser(data: UpsertUser): Promise<void>;
@@ -18,6 +28,9 @@ export interface IStorage {
   createCharacter(data: InsertCharacter): Promise<Character>;
 
   getGenerationsByUser(userId: string): Promise<Generation[]>;
+  getGenerationsLight(userId: string, limit: number, offset: number, type?: string): Promise<any[]>;
+  getGalleryCount(userId: string, type?: string): Promise<number>;
+  getGenerationById(id: number, userId: string): Promise<Generation | undefined>;
   createGeneration(data: InsertGeneration): Promise<Generation>;
 
   getUserCredits(userId: string): Promise<UserCredits>;
@@ -28,6 +41,7 @@ export interface IStorage {
 
   updateUserTier(userId: string, tier: string): Promise<UserCredits>;
   addCredits(userId: string, amount: number): Promise<UserCredits>;
+  cancelPro(userId: string): Promise<UserCredits>;
 
   updateCreatorProfile(userId: string, profile: CreatorProfile): Promise<UserCredits>;
   incrementTotalGenerations(userId: string): Promise<void>;
@@ -40,6 +54,10 @@ export interface IStorage {
   getPaymentByImpUid(impUid: string): Promise<Payment | undefined>;
   updatePaymentStatus(id: number, status: string): Promise<Payment | undefined>;
   getPaymentsByUser(userId: string): Promise<Payment[]>;
+
+  deleteGeneration(id: number, userId: string): Promise<boolean>;
+  deleteGenerationsBulk(ids: number[], userId: string): Promise<number>;
+  deleteAllGenerations(userId: string): Promise<number>;
 
   createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject>;
   getBubbleProjectsByUser(userId: string): Promise<BubbleProject[]>;
@@ -90,48 +108,220 @@ export class DatabaseStorage implements IStorage {
 
   async getGenerationsByUser(userId: string): Promise<Generation[]> {
     const db = this.getDb();
-    return db.select().from(generations).where(eq(generations.userId, userId)).orderBy(desc(generations.createdAt));
+    try {
+      return await db.select().from(generations).where(eq(generations.userId, userId)).orderBy(desc(generations.createdAt));
+    } catch {
+      // Fallback: thumbnailUrl column might not exist yet
+      const rows = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        resultImageUrl: generations.resultImageUrl,
+        referenceImageUrl: generations.referenceImageUrl,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .where(eq(generations.userId, userId))
+        .orderBy(desc(generations.createdAt));
+      return rows.map((r: any) => ({ ...r, thumbnailUrl: null })) as Generation[];
+    }
+  }
+
+  async getGenerationsLight(userId: string, limit: number, offset: number, type?: string): Promise<any[]> {
+    const db = this.getDb();
+    const conditions = type && type !== "all"
+      ? and(eq(generations.userId, userId), eq(generations.type, type))
+      : eq(generations.userId, userId);
+
+    try {
+      // Try with thumbnailUrl column (after migration)
+      const rows = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        thumbnailUrl: generations.thumbnailUrl,
+        resultImageUrl: sql<string>`CASE WHEN ${generations.thumbnailUrl} IS NOT NULL THEN NULL ELSE ${generations.resultImageUrl} END`,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .where(conditions)
+        .orderBy(desc(generations.createdAt))
+        .limit(limit)
+        .offset(offset);
+      return rows;
+    } catch {
+      // Fallback: thumbnailUrl column doesn't exist yet
+      const rows = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        resultImageUrl: generations.resultImageUrl,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .where(conditions)
+        .orderBy(desc(generations.createdAt))
+        .limit(limit)
+        .offset(offset);
+      return rows.map((r: any) => ({ ...r, thumbnailUrl: null }));
+    }
+  }
+
+  async getGalleryCount(userId: string, type?: string): Promise<number> {
+    const db = this.getDb();
+    const conditions = type && type !== "all"
+      ? and(eq(generations.userId, userId), eq(generations.type, type))
+      : eq(generations.userId, userId);
+
+    const [result] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(generations)
+      .where(conditions);
+    return result?.count ?? 0;
+  }
+
+  async getGenerationById(id: number, userId: string): Promise<Generation | undefined> {
+    const db = this.getDb();
+    try {
+      const [row] = await db.select().from(generations)
+        .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+      return row || undefined;
+    } catch {
+      // Fallback: thumbnailUrl column might not exist yet
+      const [row] = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        resultImageUrl: generations.resultImageUrl,
+        referenceImageUrl: generations.referenceImageUrl,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+      return row ? { ...row, thumbnailUrl: null } as Generation : undefined;
+    }
   }
 
   async createGeneration(data: InsertGeneration): Promise<Generation> {
     const db = this.getDb();
-    const [generation] = await db.insert(generations).values(data).returning();
-    return generation;
+    try {
+      const [generation] = await db.insert(generations).values(data).returning();
+      return generation;
+    } catch {
+      // Fallback: thumbnailUrl column might not exist yet
+      // .returning() 도 thumbnail_url을 포함하므로 컬럼을 명시적으로 지정
+      const { thumbnailUrl, ...rest } = data as any;
+      const [generation] = await db.insert(generations).values(rest).returning({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        referenceImageUrl: generations.referenceImageUrl,
+        resultImageUrl: generations.resultImageUrl,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      });
+      return { ...generation, thumbnailUrl: null } as Generation;
+    }
   }
 
   async ensureUserCredits(userId: string): Promise<UserCredits> {
     const db = this.getDb();
-    const [existing] = await db.select().from(userCredits).where(eq(userCredits.userId, userId));
+
+    // Try with new columns first, fallback to legacy select if columns don't exist yet
+    let existing: UserCredits | undefined;
+    try {
+      const [row] = await db.select().from(userCredits).where(eq(userCredits.userId, userId));
+      existing = row;
+    } catch {
+      // Fallback: new columns (daily_bonus_credits, last_daily_bonus_at) may not exist yet
+      const [row] = await db.select({
+        id: userCredits.id,
+        userId: userCredits.userId,
+        credits: userCredits.credits,
+        tier: userCredits.tier,
+        authorName: userCredits.authorName,
+        genre: userCredits.genre,
+        totalGenerations: userCredits.totalGenerations,
+        bubbleUsesToday: userCredits.bubbleUsesToday,
+        storyUsesToday: userCredits.storyUsesToday,
+        lastResetAt: userCredits.lastResetAt,
+      }).from(userCredits).where(eq(userCredits.userId, userId));
+      if (row) {
+        existing = { ...row, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
+      }
+    }
+
     if (existing) {
       const now = new Date();
       const lastReset = new Date(existing.lastResetAt);
       const isNewMonth = now.getUTCMonth() !== lastReset.getUTCMonth() ||
         now.getUTCFullYear() !== lastReset.getUTCFullYear();
 
+      const updates: any = {};
+
       if (isNewMonth) {
-        // Reset monthly limits
-        const updates: any = {
-          bubbleUsesToday: 0,
-          storyUsesToday: 0,
-          lastResetAt: now
-        };
-        // Reset free tier generations to 3
+        updates.bubbleUsesToday = 0;
+        updates.storyUsesToday = 0;
+        updates.lastResetAt = now;
         if (existing.tier === "free") {
-          updates.credits = 3;
+          updates.credits = 30;
         }
-        const [updated] = await db.update(userCredits)
-          .set(updates)
-          .where(eq(userCredits.userId, userId))
-          .returning();
-        return updated;
+      }
+
+      // Daily bonus check (KST) — only if column exists
+      try {
+        if (isNewDayKST(existing.lastDailyBonusAt)) {
+          updates.dailyBonusCredits = 10;
+          updates.lastDailyBonusAt = now;
+        }
+      } catch {
+        // daily bonus columns not available yet
+      }
+
+      if (Object.keys(updates).length > 0) {
+        try {
+          const [updated] = await db.update(userCredits)
+            .set(updates)
+            .where(eq(userCredits.userId, userId))
+            .returning();
+          return updated;
+        } catch {
+          // If update fails due to missing columns, try without daily bonus fields
+          const { dailyBonusCredits, lastDailyBonusAt, ...safeUpdates } = updates;
+          if (Object.keys(safeUpdates).length > 0) {
+            const [updated] = await db.update(userCredits)
+              .set(safeUpdates)
+              .where(eq(userCredits.userId, userId))
+              .returning();
+            return { ...updated, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
+          }
+          return existing;
+        }
       }
       return existing;
     }
 
-    const [created] = await db.insert(userCredits)
-      .values({ userId, credits: 3, tier: "free" })
-      .returning();
-    return created;
+    try {
+      const [created] = await db.insert(userCredits)
+        .values({ userId, credits: 50, tier: "free" })
+        .returning();
+      return created;
+    } catch {
+      // Fallback: if insert fails with new default, try legacy
+      const [created] = await db.insert(userCredits)
+        .values({ userId, credits: 50, tier: "free" } as any)
+        .returning();
+      return { ...created, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
+    }
   }
 
   async getUserCredits(userId: string): Promise<UserCredits> {
@@ -141,13 +331,26 @@ export class DatabaseStorage implements IStorage {
   async deductCredit(userId: string): Promise<boolean> {
     const credits = await this.ensureUserCredits(userId);
     if (credits.tier === "pro") return true;
-    if (credits.credits <= 0) return false;
 
     const db = this.getDb();
-    await db.update(userCredits)
-      .set({ credits: credits.credits - 1 })
-      .where(eq(userCredits.userId, userId));
-    return true;
+    // Deduct daily bonus credits first, then regular credits
+    if (credits.dailyBonusCredits > 0) {
+      try {
+        await db.update(userCredits)
+          .set({ dailyBonusCredits: credits.dailyBonusCredits - 1 })
+          .where(eq(userCredits.userId, userId));
+        return true;
+      } catch {
+        // daily_bonus_credits column may not exist yet, fall through to regular credits
+      }
+    }
+    if (credits.credits > 0) {
+      await db.update(userCredits)
+        .set({ credits: credits.credits - 1 })
+        .where(eq(userCredits.userId, userId));
+      return true;
+    }
+    return false;
   }
 
   async deductBubbleUse(userId: string): Promise<boolean> {
@@ -190,6 +393,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userCredits.userId, userId))
       .returning();
     return updated;
+  }
+
+  async cancelPro(userId: string): Promise<UserCredits> {
+    await this.ensureUserCredits(userId);
+    const db = this.getDb();
+    try {
+      const [updated] = await db.update(userCredits)
+        .set({ tier: "free", credits: 30 })
+        .where(eq(userCredits.userId, userId))
+        .returning();
+      return updated;
+    } catch {
+      const [updated] = await db.update(userCredits)
+        .set({ tier: "free", credits: 30 } as any)
+        .where(eq(userCredits.userId, userId))
+        .returning();
+      return { ...updated, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
+    }
   }
 
   async updateCreatorProfile(userId: string, profile: CreatorProfile): Promise<UserCredits> {
@@ -258,6 +479,35 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(payments)
       .where(eq(payments.userId, userId))
       .orderBy(desc(payments.createdAt));
+  }
+
+  async deleteGeneration(id: number, userId: string): Promise<boolean> {
+    const db = this.getDb();
+    // First check if the generation exists at all, then delete with ownership check
+    const [existing] = await db.select({ id: generations.id, userId: generations.userId })
+      .from(generations).where(eq(generations.id, id));
+    if (!existing) return false;
+    // Allow deletion if the user owns it OR if userId is empty/null (legacy data)
+    if (existing.userId !== userId && existing.userId) {
+      return false;
+    }
+    await db.delete(generations).where(eq(generations.id, id));
+    return true;
+  }
+
+  async deleteGenerationsBulk(ids: number[], userId: string): Promise<number> {
+    if (ids.length === 0) return 0;
+    const db = this.getDb();
+    const result = await db.delete(generations)
+      .where(and(inArray(generations.id, ids), eq(generations.userId, userId)));
+    return result.rowCount ?? 0;
+  }
+
+  async deleteAllGenerations(userId: string): Promise<number> {
+    const db = this.getDb();
+    const result = await db.delete(generations)
+      .where(eq(generations.userId, userId));
+    return result.rowCount ?? 0;
   }
 
   async createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject> {

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, startTransition } from "react";
 import { useSearch } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ElementPropertiesPanel } from "@/components/element-properties-panel";
+import { LayerListPanel, type LayerItem } from "@/components/layer-list-panel";
 import {
   Select,
   SelectContent,
@@ -15,11 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { isUnauthorizedError, redirectToLogin } from "@/lib/auth-utils";
+import { isUnauthorizedError } from "@/lib/auth-utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { useLocation } from "wouter";
 import {
   Plus,
@@ -73,14 +82,18 @@ import {
   GitCommitHorizontal,
   Eye,
   EyeOff,
+  Square,
+  Circle,
+  Triangle,
+  Diamond,
+  ArrowRight as ArrowRightIcon,
 } from "lucide-react";
 import DrawingCanvas, { type DrawingToolState, type DrawingCanvasHandle } from "@/components/drawing-canvas";
-import CanvasFloatingToolbar from "@/components/canvas-floating-toolbar";
 import "@/components/drawing-tools-panel.scss";
 import { FlowStepper } from "@/components/flow-stepper";
 import { EditorOnboarding } from "@/components/editor-onboarding";
 import { getFlowState, clearFlowState } from "@/lib/flow";
-import type { StoryPanelScript, Generation } from "@shared/schema";
+import type { StoryPanelScript, Generation, GenerationLight } from "@shared/schema";
 import ReactFlow, { Background, Controls, type Node, type NodeChange, applyNodeChanges } from "reactflow";
 import {
   ContextMenu,
@@ -92,16 +105,25 @@ import {
 } from "@/components/ui/context-menu";
 import { KOREAN_FONTS, FONT_CSS, getFontFamily, getDefaultTailTip, getTailGeometry, drawBubble, STYLE_LABELS, FLASH_STYLE_LABELS, TAIL_LABELS } from "@/lib/bubble-utils";
 import { SpeechBubble, BubbleStyle, TailStyle, TailDrawMode } from "@/lib/bubble-types";
+import { HANDLE_COLOR } from "@/lib/editor-constants";
 import {
   TextContextToolbar,
   LineContextToolbar,
   DrawingContextToolbar,
+  BubbleContextToolbar,
+  BubbleFloatingSettings,
   FloatingSettingsModal,
+  ShapeContextToolbar,
+  CanvasBgToolbar,
+  CANVAS_BG_COLORS,
   createTextElement,
   createLineElement,
+  createShapeElement,
   type CanvasTextElement,
   type CanvasLineElement,
+  type CanvasShapeElement,
   type LineType,
+  type ShapeType,
 } from "@/components/canvas-context-toolbar";
 import "@/components/canvas-context-toolbar.scss";
 
@@ -139,7 +161,9 @@ type DragMode =
   | "resize-script-bottom"
   | "move-tail"
   | "tail-ctrl1"
-  | "tail-ctrl2";
+  | "tail-ctrl2"
+  | "tail-ctrl3"
+  | "tail-ctrl4";
 
 const SCRIPT_STYLE_OPTIONS: { value: ScriptStyle; label: string }[] = [
   { value: "filled", label: "채움" },
@@ -248,7 +272,8 @@ const BUBBLE_COLOR_PRESETS = [
   { label: "투명", fill: "transparent", stroke: "#222222" },
 ];
 
- 
+
+
 interface CharacterPlacement {
   id: string;
   imageUrl: string;
@@ -262,6 +287,7 @@ interface CharacterPlacement {
   imageEl: HTMLImageElement | null;
   zIndex?: number;
   locked?: boolean;
+  visible?: boolean;
 }
 
 interface ScriptData {
@@ -274,6 +300,7 @@ interface ScriptData {
   bold?: boolean;
   x?: number;
   y?: number;
+  visible?: boolean;
 }
 
 type DrawingLayerType = "drawing" | "straight" | "curve" | "polyline" | "text" | "eraser";
@@ -289,6 +316,9 @@ interface DrawingLayer {
   opacity: number;         // 0-1, per-layer opacity
   x?: number;
   y?: number;
+  width?: number;
+  height?: number;
+  locked?: boolean;
 }
 
 interface PanelData {
@@ -299,6 +329,8 @@ interface PanelData {
   characters: CharacterPlacement[];
   textElements: CanvasTextElement[];
   lineElements: CanvasLineElement[];
+  shapeElements: CanvasShapeElement[];
+  backgroundColor?: string;
   backgroundImageUrl?: string;
   backgroundImageEl?: HTMLImageElement | null;
   drawingLayers: DrawingLayer[];
@@ -358,6 +390,8 @@ function createPanel(): PanelData {
     characters: [],
     textElements: [],
     lineElements: [],
+    shapeElements: [],
+    backgroundColor: "#ffffff",
     backgroundImageUrl: undefined,
     backgroundImageEl: null,
     drawingLayers: [],
@@ -724,9 +758,115 @@ function drawScriptOverlay(
   ctx.arc(hx, hy, handleSize / 2, 0, Math.PI * 2);
   ctx.fillStyle = "rgba(255,255,255,0.96)";
   ctx.fill();
-  ctx.strokeStyle = "hsl(173, 80%, 45%)";
+  ctx.strokeStyle = HANDLE_COLOR;
   ctx.stroke();
   ctx.restore();
+}
+
+function buildShapePath(
+  ctx: CanvasRenderingContext2D,
+  shapeType: string,
+  x: number, y: number, w: number, h: number,
+) {
+  ctx.beginPath();
+  switch (shapeType) {
+    case "rectangle":
+      ctx.rect(x, y, w, h);
+      break;
+    case "circle":
+      ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+      break;
+    case "triangle":
+      ctx.moveTo(x + w / 2, y);
+      ctx.lineTo(x, y + h);
+      ctx.lineTo(x + w, y + h);
+      ctx.closePath();
+      break;
+    case "diamond":
+      ctx.moveTo(x + w / 2, y);
+      ctx.lineTo(x + w, y + h / 2);
+      ctx.lineTo(x + w / 2, y + h);
+      ctx.lineTo(x, y + h / 2);
+      ctx.closePath();
+      break;
+    case "star": {
+      const cx = x + w / 2;
+      const cy = y + h / 2;
+      const outerRx = w / 2;
+      const outerRy = h / 2;
+      const innerRx = outerRx * 0.4;
+      const innerRy = outerRy * 0.4;
+      const spikes = 5;
+      const step = Math.PI / spikes;
+      const rot = -Math.PI / 2;
+      for (let si = 0; si < spikes * 2; si++) {
+        const rx = si % 2 === 0 ? outerRx : innerRx;
+        const ry = si % 2 === 0 ? outerRy : innerRy;
+        const angle = rot + si * step;
+        const px = cx + Math.cos(angle) * rx;
+        const py = cy + Math.sin(angle) * ry;
+        if (si === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      break;
+    }
+    case "arrow": {
+      const shaftH = h * 0.4;
+      const headStart = w * 0.6;
+      ctx.moveTo(x, y + h / 2 - shaftH / 2);
+      ctx.lineTo(x + headStart, y + h / 2 - shaftH / 2);
+      ctx.lineTo(x + headStart, y);
+      ctx.lineTo(x + w, y + h / 2);
+      ctx.lineTo(x + headStart, y + h);
+      ctx.lineTo(x + headStart, y + h / 2 + shaftH / 2);
+      ctx.lineTo(x, y + h / 2 + shaftH / 2);
+      ctx.closePath();
+      break;
+    }
+  }
+}
+
+// ─── Multi-select utility helpers ──────────────────────────────────────────
+type BBox = { x: number; y: number; w: number; h: number };
+
+function getElementBoundingBox(
+  type: string,
+  el: any,
+): BBox | null {
+  if (type === "bubble") {
+    return { x: el.x, y: el.y, w: el.width, h: el.height };
+  }
+  if (type === "char") {
+    const cw = el.imageEl ? el.imageEl.naturalWidth * el.scale : 80;
+    const ch = el.imageEl ? el.imageEl.naturalHeight * el.scale : 80;
+    return { x: el.x - cw / 2, y: el.y - ch / 2, w: cw, h: ch };
+  }
+  if (type === "text") {
+    return { x: el.x, y: el.y, w: el.width, h: el.height };
+  }
+  if (type === "line") {
+    if (!el.points || el.points.length === 0) return null;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const pt of el.points) {
+      if (pt.x < minX) minX = pt.x;
+      if (pt.y < minY) minY = pt.y;
+      if (pt.x > maxX) maxX = pt.x;
+      if (pt.y > maxY) maxY = pt.y;
+    }
+    return { x: minX, y: minY, w: maxX - minX || 4, h: maxY - minY || 4 };
+  }
+  if (type === "drawing") {
+    return { x: el.x ?? 0, y: el.y ?? 0, w: el.width ?? 450, h: el.height ?? 600 };
+  }
+  if (type === "shape") {
+    return { x: el.x, y: el.y, w: el.width, h: el.height };
+  }
+  return null;
+}
+
+function rectsIntersect(a: BBox, b: BBox): boolean {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
 const CANVAS_W = 450;
@@ -739,6 +879,7 @@ function PanelCanvas({
   onSelectBubble,
   selectedCharId,
   onSelectChar,
+  selectedShapeId,
   canvasRef: externalCanvasRef,
   zoom,
   fontsReady,
@@ -746,6 +887,12 @@ function PanelCanvas({
   onEditBubble,
   onDoubleClickBubble,
   onDeletePanel,
+  hideDrawingLayers,
+  externalEditBubbleId,
+  onEditBubbleIdChange,
+  onSelectScript,
+  externalEditScriptPosition,
+  onEditScriptPositionChange,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -753,6 +900,7 @@ function PanelCanvas({
   onSelectBubble: (id: string | null) => void;
   selectedCharId: string | null;
   onSelectChar: (id: string | null) => void;
+  selectedShapeId?: string | null;
   canvasRef?: (el: HTMLCanvasElement | null) => void;
   zoom?: number;
   fontsReady?: boolean;
@@ -760,9 +908,14 @@ function PanelCanvas({
   onEditBubble?: () => void;
   onDoubleClickBubble?: () => void;
   onDeletePanel?: () => void;
+  hideDrawingLayers?: boolean;
+  externalEditBubbleId?: string | null;
+  onEditBubbleIdChange?: (id: string | null) => void;
+  onSelectScript?: (position: "top" | "bottom" | null) => void;
+  externalEditScriptPosition?: "top" | "bottom" | null;
+  onEditScriptPositionChange?: (position: "top" | "bottom" | null) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const drawingCompositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const { toast } = useToast();
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const dragModeRef = useRef<DragMode>(null);
@@ -773,15 +926,40 @@ function PanelCanvas({
   const dragScriptFontStartRef = useRef(20);
   const selectedBubbleIdRef = useRef(selectedBubbleId);
   const selectedCharIdRef = useRef(selectedCharId);
+  const selectedShapeIdRef = useRef(selectedShapeId);
   const panelRef = useRef(panel);
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
+  const editingBubbleIdRef = useRef<string | null>(null);
+  const [editingScriptPos, setEditingScriptPos] = useState<"top" | "bottom" | null>(null);
 
   useEffect(() => {
     selectedBubbleIdRef.current = selectedBubbleId;
   }, [selectedBubbleId]);
   useEffect(() => {
+    editingBubbleIdRef.current = editingBubbleId;
+  }, [editingBubbleId]);
+  // Sync external editing trigger from overlay double-click
+  useEffect(() => {
+    if (externalEditBubbleId) {
+      onSelectBubble(externalEditBubbleId);
+      setEditingBubbleId(externalEditBubbleId);
+      onEditBubbleIdChange?.(null);
+    }
+  }, [externalEditBubbleId, onEditBubbleIdChange, onSelectBubble]);
+  // Sync external script editing trigger (from parent 상단/하단 button)
+  useEffect(() => {
+    if (externalEditScriptPosition) {
+      setEditingScriptPos(externalEditScriptPosition);
+      onSelectScript?.(externalEditScriptPosition);
+      onEditScriptPositionChange?.(null);
+    }
+  }, [externalEditScriptPosition, onEditScriptPositionChange, onSelectScript]);
+  useEffect(() => {
     selectedCharIdRef.current = selectedCharId;
   }, [selectedCharId]);
+  useEffect(() => {
+    selectedShapeIdRef.current = selectedShapeId;
+  }, [selectedShapeId]);
   useEffect(() => {
     panelRef.current = panel;
   }, [panel]);
@@ -820,10 +998,9 @@ function PanelCanvas({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
     const p = panelRef.current;
+    ctx.fillStyle = p.backgroundColor || "#ffffff";
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     // Draw background image if present
     const bgImg = p.backgroundImageEl;
@@ -851,6 +1028,8 @@ function PanelCanvas({
       | { type: "bubble"; z: number; b: SpeechBubble }
       | { type: "text"; z: number; te: CanvasTextElement }
       | { type: "line"; z: number; le: CanvasLineElement }
+      | { type: "shape"; z: number; se: CanvasShapeElement }
+      | { type: "drawing"; z: number; dl: DrawingLayer }
     > = [
         ...p.characters.map((ch) => ({
           type: "char" as const,
@@ -872,9 +1051,57 @@ function PanelCanvas({
           z: le.zIndex ?? 20,
           le,
         })),
+        ...(p.shapeElements || []).map((se) => ({
+          type: "shape" as const,
+          z: se.zIndex ?? 20,
+          se,
+        })),
+        ...(!hideDrawingLayers ? (p.drawingLayers || []).map((dl) => ({
+          type: "drawing" as const,
+          z: dl.zIndex ?? 15,
+          dl,
+        })) : []),
       ];
     drawables.sort((a, b) => a.z - b.z);
+
+    // Build mask lookup: layer ID → mask shape element
+    const maskLookup = new Map<string, { shapeType: string; x: number; y: number; width: number; height: number }>();
+    for (const se of (p.shapeElements || [])) {
+      if (se.maskEnabled && se.maskedLayerIds) {
+        for (const lid of se.maskedLayerIds) {
+          maskLookup.set(lid, se);
+        }
+      }
+    }
+
     drawables.forEach((d) => {
+      // Skip invisible elements
+      const isHidden =
+        (d.type === "char" && d.ch.visible === false) ||
+        (d.type === "bubble" && d.b.visible === false) ||
+        (d.type === "text" && d.te.visible === false) ||
+        (d.type === "line" && d.le.visible === false) ||
+        (d.type === "shape" && d.se.visible === false) ||
+        (d.type === "drawing" && !d.dl.visible);
+      if (isHidden) return;
+
+      // Get the element ID for mask lookup
+      const elementId = d.type === "char" ? d.ch.id
+        : d.type === "bubble" ? d.b.id
+        : d.type === "text" ? d.te.id
+        : d.type === "line" ? d.le.id
+        : d.type === "drawing" ? d.dl.id
+        : d.type === "shape" ? d.se.id
+        : null;
+      const maskShape = elementId ? maskLookup.get(elementId) : null;
+
+      // If this layer is linked to a mask, apply clipping
+      if (maskShape && !(d.type === "shape" && d.se.maskEnabled)) {
+        ctx.save();
+        buildShapePath(ctx, maskShape.shapeType as any, maskShape.x, maskShape.y, maskShape.width, maskShape.height);
+        ctx.clip();
+      }
+
       if (d.type === "text") {
         const te = d.te;
         ctx.save();
@@ -945,7 +1172,7 @@ function PanelCanvas({
 
         // Selection box
         ctx.globalAlpha = 1;
-        ctx.strokeStyle = "hsl(173,80%,45%)";
+        ctx.strokeStyle = HANDLE_COLOR;
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 3]);
         ctx.strokeRect(te.x - 2, te.y - 2, te.width + 4, te.height + 4);
@@ -1011,20 +1238,119 @@ function PanelCanvas({
 
         ctx.setLineDash([]);
         ctx.restore();
+      } else if (d.type === "shape") {
+        const se = d.se;
+
+        if (se.maskEnabled) {
+          // Mask shape: draw dashed outline to show mask boundary
+          ctx.save();
+          ctx.globalAlpha = 0.5;
+          ctx.strokeStyle = HANDLE_COLOR;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+          buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+
+          // Selection indicator for mask shape
+          if (se.id === selectedShapeIdRef.current) {
+            ctx.save();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
+            ctx.setLineDash([]);
+            const hs = 8;
+            const handles = [
+              { x: se.x - hs / 2, y: se.y - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y - hs / 2 },
+              { x: se.x - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x + se.width / 2 - hs / 2, y: se.y - hs / 2 },
+              { x: se.x + se.width / 2 - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x - hs / 2, y: se.y + se.height / 2 - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y + se.height / 2 - hs / 2 },
+            ];
+            handles.forEach((c) => {
+              ctx.beginPath();
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(c.x, c.y, hs, hs);
+              ctx.strokeStyle = HANDLE_COLOR;
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(c.x, c.y, hs, hs);
+            });
+            ctx.restore();
+          }
+        } else {
+          // Normal shape rendering
+          ctx.save();
+          ctx.globalAlpha = se.opacity;
+          buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
+
+          if (se.fillColor !== "transparent") {
+            ctx.fillStyle = se.fillColor;
+            ctx.fill();
+          }
+          if (se.strokeWidth > 0) {
+            ctx.strokeStyle = se.strokeColor;
+            ctx.lineWidth = se.strokeWidth;
+            ctx.stroke();
+          }
+
+          // Selection indicator — always drawn for selected shape
+          if (se.id === selectedShapeIdRef.current) {
+            ctx.beginPath();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
+            ctx.setLineDash([]);
+
+            // Resize handles: 4 corners + 4 edges = 8 handles
+            const hs = 8;
+            const handles = [
+              // corners
+              { x: se.x - hs / 2, y: se.y - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y - hs / 2 },
+              { x: se.x - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y + se.height - hs / 2 },
+              // edges
+              { x: se.x + se.width / 2 - hs / 2, y: se.y - hs / 2 },
+              { x: se.x + se.width / 2 - hs / 2, y: se.y + se.height - hs / 2 },
+              { x: se.x - hs / 2, y: se.y + se.height / 2 - hs / 2 },
+              { x: se.x + se.width - hs / 2, y: se.y + se.height / 2 - hs / 2 },
+            ];
+            handles.forEach((c) => {
+              ctx.beginPath();
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(c.x, c.y, hs, hs);
+              ctx.strokeStyle = HANDLE_COLOR;
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(c.x, c.y, hs, hs);
+            });
+          }
+
+          ctx.restore();
+        }
       } else if (d.type === "drawing") {
         const dl = d.dl;
-        if (dl.visible && dl.imageEl) {
+        if (dl.visible && dl.imageEl instanceof HTMLImageElement) {
           ctx.save();
           ctx.globalAlpha = dl.opacity ?? 1;
           if (dl.type === "eraser") {
             ctx.globalCompositeOperation = "destination-out";
           }
-          ctx.drawImage(dl.imageEl, dl.x ?? 0, dl.y ?? 0, CANVAS_W, CANVAS_H);
+          const dlW = dl.width ?? CANVAS_W;
+          const dlH = dl.height ?? CANVAS_H;
+          ctx.drawImage(dl.imageEl, dl.x ?? 0, dl.y ?? 0, dlW, dlH);
           ctx.restore();
         }
       } else if (d.type === "char") {
         const ch = d.ch;
-        if (ch.imageEl) {
+        if (ch.imageEl instanceof HTMLImageElement) {
           const w = ch.imageEl.naturalWidth * ch.scale;
           const h = ch.imageEl.naturalHeight * ch.scale;
           ctx.save();
@@ -1033,6 +1359,36 @@ function PanelCanvas({
           if (ch.flipX) ctx.scale(-1, 1);
           ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
           ctx.restore();
+
+          // Selection indicator for selected character
+          if (ch.id === selectedCharIdRef.current) {
+            const cx = ch.x - w / 2;
+            const cy = ch.y - h / 2;
+            ctx.save();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.strokeRect(cx - 3, cy - 3, w + 6, h + 6);
+            ctx.setLineDash([]);
+
+            const handleSize = 8;
+            const corners = [
+              { x: cx - handleSize / 2, y: cy - handleSize / 2 },
+              { x: cx + w - handleSize / 2, y: cy - handleSize / 2 },
+              { x: cx - handleSize / 2, y: cy + h - handleSize / 2 },
+              { x: cx + w - handleSize / 2, y: cy + h - handleSize / 2 },
+            ];
+            corners.forEach((c) => {
+              ctx.beginPath();
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(c.x, c.y, handleSize, handleSize);
+              ctx.strokeStyle = HANDLE_COLOR;
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(c.x, c.y, handleSize, handleSize);
+            });
+            ctx.restore();
+          }
         } else if (ch.imageUrl) {
           // Show loading placeholder while imageEl is loading
           const ph = 80;
@@ -1043,7 +1399,7 @@ function PanelCanvas({
           ctx.roundRect(-ph/2, -ph/2, ph, ph, 8);
           ctx.fillStyle = "rgba(200,220,240,0.6)";
           ctx.fill();
-          ctx.strokeStyle = "hsl(173,80%,45%)";
+          ctx.strokeStyle = HANDLE_COLOR;
           ctx.lineWidth = 1.5;
           ctx.setLineDash([4, 3]);
           ctx.stroke();
@@ -1071,44 +1427,19 @@ function PanelCanvas({
         }
       } else {
         const b = d.b;
-        drawBubble(ctx, b, b.id === selectedBubbleIdRef.current);
+        const renderB = b.id === editingBubbleIdRef.current ? { ...b, text: "" } : b;
+        drawBubble(ctx, renderB, b.id === selectedBubbleIdRef.current);
+      }
+
+      // Restore clip if this layer was masked
+      if (maskShape && !(d.type === "shape" && d.se.maskEnabled)) {
+        ctx.restore();
       }
     });
 
-    // Render drawing layers on a separate composite canvas
-    // so eraser (destination-out) only affects other drawing layers, not background/characters
-    const dlayers = p.drawingLayers || [];
-    if (dlayers.length > 0) {
-      if (!drawingCompositeCanvasRef.current) {
-        const c = document.createElement("canvas");
-        c.width = CANVAS_W;
-        c.height = CANVAS_H;
-        drawingCompositeCanvasRef.current = c;
-      }
-      const comp = drawingCompositeCanvasRef.current;
-      const compCtx = comp.getContext("2d");
-      if (compCtx) {
-        compCtx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-        const sorted = [...dlayers].sort((a, b) => a.zIndex - b.zIndex);
-        for (const dl of sorted) {
-          if (!dl.visible || !dl.imageEl) continue;
-          compCtx.save();
-          compCtx.globalAlpha = dl.opacity ?? 1;
-          if (dl.type === "eraser") {
-            compCtx.globalCompositeOperation = "destination-out";
-          } else {
-            compCtx.globalCompositeOperation = "source-over";
-          }
-          compCtx.drawImage(dl.imageEl, 0, 0, CANVAS_W, CANVAS_H);
-          compCtx.restore();
-        }
-        ctx.drawImage(comp, 0, 0);
-      }
-    }
-
-    if (p.topScript)
+    if (p.topScript && p.topScript.visible !== false)
       drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
-    if (p.bottomScript)
+    if (p.bottomScript && p.bottomScript.visible !== false)
       drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H);
     if (!isPro) {
       ctx.save();
@@ -1121,13 +1452,13 @@ function PanelCanvas({
       ctx.fillText("OLLI Free", 0, 0);
       ctx.restore();
     }
-  }, [isPro]);
+  }, [isPro, hideDrawingLayers]);
 
   redrawRef.current = redraw;
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, redraw, fontsReady]);
+  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, redraw, fontsReady, hideDrawingLayers]);
 
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -1157,10 +1488,16 @@ function PanelCanvas({
         const cp1y = b.tailCtrl1Y ?? (geo.baseAy + (baseMidY - geo.baseAy) * pull);
         const cp2x = b.tailCtrl2X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
         const cp2y = b.tailCtrl2Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+        const cp3x = b.tailCtrl3X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
+        const cp3y = b.tailCtrl3Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+        const cp4x = b.tailCtrl4X ?? (geo.baseBx + (baseMidX - geo.baseBx) * pull);
+        const cp4y = b.tailCtrl4Y ?? (geo.baseBy + (baseMidY - geo.baseBy) * pull);
 
         const hitRadius = 12;
         if (Math.hypot(x - cp1x, y - cp1y) < hitRadius) return "tail-ctrl1";
         if (Math.hypot(x - cp2x, y - cp2y) < hitRadius) return "tail-ctrl2";
+        if (Math.hypot(x - cp3x, y - cp3y) < hitRadius) return "tail-ctrl3";
+        if (Math.hypot(x - cp4x, y - cp4y) < hitRadius) return "tail-ctrl4";
       }
 
       const handles: { mode: DragMode; hx: number; hy: number }[] = [
@@ -1306,6 +1643,7 @@ function PanelCanvas({
                   onSelectBubble(null);
                   selectedCharIdRef.current = charUnderneath.id;
                   selectedBubbleIdRef.current = null;
+                  onSelectScript?.(null);
                   dragModeRef.current = "move-char";
                   dragStartRef.current = pos;
                   dragCharStartRef.current = { x: charUnderneath.x, y: charUnderneath.y, scale: charUnderneath.scale };
@@ -1316,6 +1654,10 @@ function PanelCanvas({
               onSelectChar(null);
               selectedBubbleIdRef.current = b.id;
               selectedCharIdRef.current = null;
+              onSelectScript?.(null);
+              if (editingBubbleIdRef.current && editingBubbleIdRef.current !== b.id) {
+                setEditingBubbleId(null);
+              }
               dragModeRef.current = "move";
               dragStartRef.current = pos;
               dragBubbleStartRef.current = { x: b.x, y: b.y, w: b.width, h: b.height };
@@ -1338,6 +1680,8 @@ function PanelCanvas({
               onSelectBubble(null);
               selectedBubbleIdRef.current = null;
               selectedCharIdRef.current = ch.id;
+              setEditingBubbleId(null);
+              onSelectScript?.(null);
               dragStartRef.current = pos;
               dragCharStartRef.current = { x: ch.x, y: ch.y, scale: ch.scale };
               // For full-canvas images, check corners near canvas edges
@@ -1395,6 +1739,7 @@ function PanelCanvas({
               onSelectChar(null);
               selectedBubbleIdRef.current = null;
               selectedCharIdRef.current = null;
+              onSelectScript?.(scriptType);
               return;
             } else {
               if (
@@ -1411,6 +1756,7 @@ function PanelCanvas({
                 onSelectChar(null);
                 selectedBubbleIdRef.current = null;
                 selectedCharIdRef.current = null;
+                onSelectScript?.(scriptType);
                 return;
               }
             }
@@ -1422,6 +1768,8 @@ function PanelCanvas({
       onSelectChar(null);
       selectedBubbleIdRef.current = null;
       selectedCharIdRef.current = null;
+      setEditingBubbleId(null);
+      onSelectScript?.(null);
     },
     [getCanvasPos, getHandleAtPos, onSelectBubble, onSelectChar],
   );
@@ -1621,6 +1969,10 @@ function PanelCanvas({
         updateBubbleInPanel(sid, { tailCtrl1X: pos.x, tailCtrl1Y: pos.y });
       } else if (mode === "tail-ctrl2") {
         updateBubbleInPanel(sid, { tailCtrl2X: pos.x, tailCtrl2Y: pos.y });
+      } else if (mode === "tail-ctrl3") {
+        updateBubbleInPanel(sid, { tailCtrl3X: pos.x, tailCtrl3Y: pos.y });
+      } else if (mode === "tail-ctrl4") {
+        updateBubbleInPanel(sid, { tailCtrl4X: pos.x, tailCtrl4Y: pos.y });
       } else if (mode === "move-tail") {
         updateBubbleInPanel(sid, { tailTipX: pos.x, tailTipY: pos.y });
       } else if (mode === "move") {
@@ -1676,6 +2028,29 @@ function PanelCanvas({
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const pos = getCanvasPos(e.clientX, e.clientY);
       const p = panelRef.current;
+      // Check scripts first (they render on top)
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          for (const scriptType of ["top", "bottom"] as const) {
+            const sd = scriptType === "top" ? p.topScript : p.bottomScript;
+            if (sd && sd.text !== undefined && sd.visible !== false) {
+              const rect = getScriptRect(ctx, sd, scriptType, CANVAS_W, CANVAS_H);
+              if (
+                pos.x >= rect.bx &&
+                pos.x <= rect.bx + rect.bw &&
+                pos.y >= rect.by &&
+                pos.y <= rect.by + rect.bh
+              ) {
+                setEditingScriptPos(scriptType);
+                onSelectScript?.(scriptType);
+                return;
+              }
+            }
+          }
+        }
+      }
       for (let i = p.bubbles.length - 1; i >= 0; i--) {
         const b = p.bubbles[i];
         if (
@@ -1685,20 +2060,12 @@ function PanelCanvas({
           pos.y <= b.y + b.height
         ) {
           onSelectBubble(b.id);
-          // Switch to bubble tab + focus textarea
-          if (onDoubleClickBubble) {
-            onDoubleClickBubble();
-          }
-          if (onEditBubble) {
-            setTimeout(() => onEditBubble(), 80);
-          } else {
-            setEditingBubbleId(b.id);
-          }
+          setEditingBubbleId(b.id);
           return;
         }
       }
     },
-    [getCanvasPos, onSelectBubble, onEditBubble, onDoubleClickBubble],
+    [getCanvasPos, onSelectBubble, onSelectScript],
   );
 
   const hasZoom = zoom !== undefined;
@@ -1982,6 +2349,25 @@ function PanelCanvas({
     return () => window.removeEventListener("keydown", handler);
   }, [handleDeleteSelection, handleBringForward, handleSendBackward]);
 
+  // Auto-enter bubble edit mode on printable key press
+  const pendingCharRef = useRef<string | null>(null);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+      if (editingBubbleIdRef.current) return;
+      if (!selectedBubbleIdRef.current) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key.length === 1) {
+        e.preventDefault();
+        pendingCharRef.current = e.key;
+        setEditingBubbleId(selectedBubbleIdRef.current);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -2048,7 +2434,6 @@ function PanelCanvas({
             const selChar = selectedCharId ? panel.characters.find(c => c.id === selectedCharId) : null;
 
             const HANDLE_R = 5;
-            const HANDLE_COLOR = "hsl(173,80%,45%)";
 
             const handles: { x: number; y: number; cursor: string; mode: string }[] = [];
 
@@ -2142,6 +2527,118 @@ function PanelCanvas({
               </svg>
             );
           })()}
+
+          {/* Inline text editing overlay for bubbles */}
+          {editingBubbleId && (() => {
+            const b = panel.bubbles.find(bb => bb.id === editingBubbleId);
+            if (!b) return null;
+            const canvas = canvasRef.current;
+            if (!canvas) return null;
+            const rect = canvas.getBoundingClientRect();
+            const sx = rect.width / CANVAS_W;
+            const sy = rect.height / CANVAS_H;
+            return (
+              <textarea
+                autoFocus
+                ref={(el) => {
+                  if (el && pendingCharRef.current !== null) {
+                    const ch = pendingCharRef.current;
+                    pendingCharRef.current = null;
+                    const newText = b.text + ch;
+                    updateBubbleInPanel(b.id, { text: newText });
+                    requestAnimationFrame(() => {
+                      el.selectionStart = el.selectionEnd = newText.length;
+                    });
+                  }
+                }}
+                value={b.text}
+                onChange={(e) => {
+                  updateBubbleInPanel(b.id, { text: e.target.value });
+                }}
+                onBlur={() => setEditingBubbleId(null)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Escape") {
+                    setEditingBubbleId(null);
+                  }
+                }}
+                style={{
+                  position: "absolute",
+                  left: b.x * sx,
+                  top: b.y * sy,
+                  width: b.width * sx,
+                  height: b.height * sy,
+                  fontSize: b.fontSize * sx,
+                  fontFamily: getFontFamily(b.fontKey),
+                  textAlign: "center",
+                  color: b.strokeColor || "#222222",
+                  background: "rgba(255,255,255,0.85)",
+                  border: "2px solid hsl(var(--primary))",
+                  borderRadius: 6,
+                  padding: "4px",
+                  resize: "none",
+                  outline: "none",
+                  zIndex: 30,
+                  overflow: "hidden",
+                  lineHeight: 1.3,
+                  boxSizing: "border-box",
+                }}
+              />
+            );
+          })()}
+          {/* Script inline editing overlay */}
+          {editingScriptPos && (() => {
+            const sd = editingScriptPos === "top" ? panel.topScript : panel.bottomScript;
+            if (!sd) return null;
+            const canvas = canvasRef.current;
+            if (!canvas) return null;
+            const canvasRect = canvas.getBoundingClientRect();
+            const sx = canvasRect.width / CANVAS_W;
+            const sy = canvasRect.height / CANVAS_H;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return null;
+            const sr = getScriptRect(ctx, sd, editingScriptPos, CANVAS_W, CANVAS_H);
+            const fs = sd.fontSize || 20;
+            return (
+              <textarea
+                autoFocus
+                value={sd.text}
+                onChange={(e) => {
+                  const key = editingScriptPos === "top" ? "topScript" : "bottomScript";
+                  onUpdate({ ...panel, [key]: { ...sd, text: e.target.value } });
+                }}
+                onBlur={() => setEditingScriptPos(null)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Escape") {
+                    setEditingScriptPos(null);
+                  }
+                }}
+                style={{
+                  position: "absolute",
+                  left: sr.bx * sx,
+                  top: sr.by * sy,
+                  width: Math.max(sr.bw * sx, 120),
+                  minHeight: Math.max(sr.bh * sy, 36),
+                  fontSize: fs * sx,
+                  fontFamily: getFontFamily(sd.fontKey || "default"),
+                  fontWeight: sd.bold !== false ? "bold" : "normal",
+                  textAlign: "center",
+                  color: sd.textColor || "#1a1a1a",
+                  background: "rgba(255,255,255,0.9)",
+                  border: "2px solid hsl(var(--primary))",
+                  borderRadius: 6,
+                  padding: `${sr.padY * sy}px ${sr.padX * sx}px`,
+                  resize: "none",
+                  outline: "none",
+                  zIndex: 30,
+                  overflow: "hidden",
+                  lineHeight: 1.35,
+                  boxSizing: "border-box",
+                }}
+              />
+            );
+          })()}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-48">
@@ -2176,6 +2673,9 @@ function EditorPanel({
   onRemove,
   galleryImages,
   galleryLoading,
+  galleryHasMore,
+  onLoadMoreGallery,
+  fetchFullGeneration,
   selectedBubbleId,
   setSelectedBubbleId,
   selectedCharId,
@@ -2190,8 +2690,11 @@ function EditorPanel({
   total: number;
   onUpdate: (updated: PanelData) => void;
   onRemove: () => void;
-  galleryImages: Generation[];
+  galleryImages: GenerationLight[];
   galleryLoading: boolean;
+  galleryHasMore: boolean;
+  onLoadMoreGallery: () => void;
+  fetchFullGeneration: (id: number) => Promise<Generation | null>;
   selectedBubbleId: string | null;
   setSelectedBubbleId: (id: string | null) => void;
   selectedCharId: string | null;
@@ -2268,6 +2771,14 @@ function EditorPanel({
       updates.tailCtrl2X = 2 * cx - b.tailCtrl2X;
       updates.tailCtrl2Y = b.tailCtrl2Y;
     }
+    if (typeof b.tailCtrl3X === "number" && typeof b.tailCtrl3Y === "number") {
+      updates.tailCtrl3X = 2 * cx - b.tailCtrl3X;
+      updates.tailCtrl3Y = b.tailCtrl3Y;
+    }
+    if (typeof b.tailCtrl4X === "number" && typeof b.tailCtrl4Y === "number") {
+      updates.tailCtrl4X = 2 * cx - b.tailCtrl4X;
+      updates.tailCtrl4Y = b.tailCtrl4Y;
+    }
 
     updateBubble(b.id, updates);
   };
@@ -2325,7 +2836,9 @@ function EditorPanel({
     img.src = templatePath;
   };
 
-  const addCharacter = (gen: Generation) => {
+  const addCharacter = async (gen: GenerationLight) => {
+    const full = await fetchFullGeneration(gen.id);
+    if (!full) return;
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
@@ -2337,7 +2850,7 @@ function EditorPanel({
       );
       const newChar: CharacterPlacement = {
         id: generateId(),
-        imageUrl: gen.resultImageUrl,
+        imageUrl: full.resultImageUrl,
         x: CANVAS_W / 2,
         y: CANVAS_H / 2,
         scale: s,
@@ -2348,7 +2861,7 @@ function EditorPanel({
       setSelectedCharId(newChar.id);
       setSelectedBubbleId(null);
     };
-    img.src = gen.resultImageUrl;
+    img.src = full.resultImageUrl;
   };
 
   const removeCharacter = (id: string) => {
@@ -2525,13 +3038,15 @@ function EditorPanel({
     reader.readAsDataURL(file);
   };
 
-  const handleBackgroundFromGallery = (gen: Generation) => {
+  const handleBackgroundFromGallery = async (gen: GenerationLight) => {
+    const full = await fetchFullGeneration(gen.id);
+    if (!full) return;
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      onUpdate({ ...panel, backgroundImageUrl: gen.resultImageUrl, backgroundImageEl: img });
+      onUpdate({ ...panel, backgroundImageUrl: full.resultImageUrl, backgroundImageEl: img });
     };
-    img.src = gen.resultImageUrl;
+    img.src = full.resultImageUrl;
   };
 
   return (
@@ -2600,8 +3115,93 @@ function EditorPanel({
 
       {isImageMode && (
         <div className="rounded-md space-y-3">
+          {/* 캔버스 배경 섹션 */}
           <div className="space-y-1.5">
-            <Label className="text-[12px] text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
+            <Label className="text-xs text-muted-foreground">캔버스 배경</Label>
+
+            <div className="flex gap-1 flex-wrap items-center">
+              <span className="text-[11px] text-muted-foreground mr-0.5">배경색</span>
+              {CANVAS_BG_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => onUpdate({ ...panel, backgroundColor: c.value })}
+                  className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                    (panel.backgroundColor || "#ffffff") === c.value
+                      ? "border-foreground scale-110"
+                      : "border-muted-foreground/30"
+                  }`}
+                  style={{ backgroundColor: c.value }}
+                  title={c.label}
+                />
+              ))}
+            </div>
+
+            {panel.backgroundImageUrl && (
+              <div className="relative inline-block">
+                <img
+                  src={panel.backgroundImageUrl}
+                  alt="배경 미리보기"
+                  className="rounded border border-border max-h-[80px] object-cover"
+                />
+                <button
+                  type="button"
+                  className="absolute -top-1.5 -right-1.5 rounded-full bg-destructive text-destructive-foreground p-0.5"
+                  onClick={() => onUpdate({ ...panel, backgroundImageUrl: undefined, backgroundImageEl: null })}
+                  data-testid={`button-remove-bg-${index}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover-elevate"
+              onClick={() =>
+                document.getElementById(`story-bg-upload-${index}`)?.click()
+              }
+              data-testid={`button-upload-bg-${index}`}
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              <span>배경 이미지 업로드</span>
+            </button>
+            <input
+              id={`story-bg-upload-${index}`}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleBackgroundImageUpload}
+            />
+
+            {charImages.length > 0 && (
+              <>
+                <p className="text-[11px] text-muted-foreground pt-1">내 갤러리에서 선택:</p>
+                <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
+                  {charImages.map((gen) => (
+                    <button
+                      key={gen.id}
+                      className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
+                      onClick={() => handleBackgroundFromGallery(gen)}
+                      data-testid={`button-pick-bg-${gen.id}`}
+                    >
+                      <img
+                        src={gen.thumbnailUrl || gen.resultImageUrl}
+                        alt={gen.prompt}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <hr className="border-border" />
+
+          {/* 이미지 업로드 섹션 (기존) */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
             <button
               type="button"
               className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover-elevate"
@@ -2635,25 +3235,36 @@ function EditorPanel({
               생성된 이미지가 없습니다. 먼저 캐릭터나 배경을 만들어주세요.
             </p>
           ) : (
-            <div
-              className="grid grid-cols-3 gap-1.5 overflow-y-auto"
-              data-testid="character-picker-grid"
-            >
-              {charImages.map((gen) => (
+            <>
+              <div
+                className="grid grid-cols-3 gap-1.5 overflow-y-auto"
+                data-testid="character-picker-grid"
+              >
+                {charImages.map((gen) => (
+                  <button
+                    key={gen.id}
+                    className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
+                    onClick={() => addCharacter(gen)}
+                    data-testid={`button-pick-character-${gen.id}`}
+                  >
+                    <img
+                      src={gen.thumbnailUrl || gen.resultImageUrl}
+                      alt={gen.prompt}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+              {galleryHasMore && (
                 <button
-                  key={gen.id}
-                  className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
-                  onClick={() => addCharacter(gen)}
-                  data-testid={`button-pick-character-${gen.id}`}
+                  className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={onLoadMoreGallery}
                 >
-                  <img
-                    src={gen.resultImageUrl}
-                    alt={gen.prompt}
-                    className="w-full h-full object-cover"
-                  />
+                  더 보기
                 </button>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -2669,7 +3280,7 @@ function EditorPanel({
       {isImageMode && selectedChar && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2 mt-3">
-            <span className="text-[13px] font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               이미지 도구
             </span>
             {!isPro && (
@@ -2713,482 +3324,14 @@ function EditorPanel({
 
 
       {(isBubbleMode || isTemplateMode) && selectedBubble && (
-        <div className="space-y-4 pt-4">
-          
-          <div>
-            <Label className="text-[13px] mb-1 block">텍스트</Label>
-            <Textarea
-              ref={(el) => { if (bubbleTextareaRef) bubbleTextareaRef.current = el; }}
-              value={selectedBubble.text}
-              onChange={(e) =>
-                updateBubble(selectedBubble.id, { text: e.target.value })
-              }
-              placeholder="말풍선 내용..."
-              rows={2}
-              className="text-sm"
-              data-testid="input-selected-bubble-text"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-[13px] mb-1 block">글씨체</Label>
-              <Select
-                value={selectedBubble.fontKey}
-                onValueChange={(v) =>
-                  updateBubble(selectedBubble.id, { fontKey: v })
-                }
-              >
-                <SelectTrigger data-testid="select-bubble-font">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {availableFonts.map((f) => (
-                    <SelectItem key={f.value} value={f.value}>
-                      <span style={{ fontFamily: f.family }}>{f.label}</span>
-                    </SelectItem>
-                  ))}
-                  {!canAllFonts && (
-                    <div className="px-3 py-2 text-[11px] text-muted-foreground border-t">
-                      Pro 멤버십 또는 프로 연재러(30회+) 등급에서 전체 폰트 해금
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="col-span-2">
-              <Label className="text-[13px] mb-1.5 block">말풍선 형태</Label>
-              {/* 기본 스타일 */}
-              <div className="flex flex-wrap gap-1 mb-1.5">
-                {Object.entries(STYLE_LABELS).filter(([k]) => k !== "image").map(([k, l]) => (
-                  <button
-                    key={k}
-                    onClick={() => updateBubble(selectedBubble.id, { style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-                    className={`px-2 py-1 text-[11px] rounded-md border transition-colors ${selectedBubble.style === k ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                    data-testid={`btn-style-${k}`}
-                  >{l}</button>
-                ))}
-              </div>
-              {/* 특수 효과 스타일 */}
-              <p className="text-[10px] text-muted-foreground mb-1">✨ 특수 효과</p>
-              <div className="flex flex-wrap gap-1">
-                {Object.entries(FLASH_STYLE_LABELS).map(([k, l]) => (
-                  <button
-                    key={k}
-                    onClick={() => updateBubble(selectedBubble.id, { style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-                    className={`px-2 py-1 text-[11px] rounded-md border transition-colors ${selectedBubble.style === k ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                    data-testid={`btn-style-${k}`}
-                  >{l}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ── 스타일별 고급 파라미터 ── */}
-
-          {/* Wobble: handwritten / wobbly / wavy */}
-          {(["handwritten", "wobbly", "wavy"] as BubbleStyle[]).includes(selectedBubble.style) && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground w-14 shrink-0">흔들림 {selectedBubble.wobble ?? 5}</span>
-              <Slider value={[selectedBubble.wobble ?? 5]} onValueChange={([v]) => updateBubble(selectedBubble.id, { wobble: v })} min={0} max={20} step={0.5} className="flex-1" />
-            </div>
-          )}
-
-          {/* Polygon */}
-          {selectedBubble.style === "polygon" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">다각형 설정</p>
-              {([
-                { label: "변 수", key: "shapeSides", min: 3, max: 12, step: 1, def: 6 },
-                { label: "모서리", key: "shapeCornerRadius", min: 0, max: 40, step: 1, def: 8 },
-                { label: "흔들림", key: "shapeWobble", min: 0, max: 20, step: 0.5, def: 0 },
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(1) : val}</span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Spiky */}
-          {selectedBubble.style === "spiky" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">뾰족한 설정</p>
-              {([
-                { label: "가시 수", key: "shapeSpikeCount", min: 4, max: 30, step: 1, def: 12 },
-                { label: "가시 길이", key: "shapeSpikeHeight", min: 5, max: 60, step: 1, def: 20 },
-                { label: "날카로움", key: "shapeSpikeSharpness", min: 0.1, max: 1, step: 0.05, def: 0.7 },
-                { label: "흔들림", key: "shapeWobble", min: 0, max: 20, step: 0.5, def: 0 },
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Cloud */}
-          {selectedBubble.style === "cloud" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">구름 설정</p>
-              {([
-                { label: "구름 수", key: "shapeBumpCount", min: 4, max: 16, step: 1, def: 8 },
-                { label: "크기", key: "shapeBumpSize", min: 5, max: 40, step: 1, def: 15 },
-                { label: "둥글기", key: "shapeBumpRoundness", min: 0.1, max: 1.5, step: 0.05, def: 0.8 },
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Shout */}
-          {selectedBubble.style === "shout" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">외침 설정</p>
-              {([
-                { label: "가시 수", key: "shapeSpikeCount", min: 4, max: 32, step: 1, def: 12 },
-                { label: "가시 높이", key: "shapeWobble", min: 0.02, max: 0.8, step: 0.01, def: 0.25 },
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Flash / Eyelash 특수효과 파라미터 */}
-          {(selectedBubble.style.startsWith("flash_")) && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">효과 설정</p>
-              {(selectedBubble.style === "flash_eyelash" ? [
-                { label: "바늘 수", key: "flashLineCount" as string, min: 20, max: 180, step: 1, def: 90 },
-                { label: "바늘 길이", key: "flashLineLength" as string, min: 5, max: 80, step: 1, def: 28 },
-                { label: "바늘 굵기", key: "flashLineThickness" as string, min: 0.5, max: 8, step: 0.5, def: 2.5 },
-                { label: "내부크기", key: "flashInnerRadius" as string, min: 0.5, max: 0.98, step: 0.01, def: 0.88 },
-              ] : [
-                { label: "선 간격", key: "flashLineSpacing" as string, min: 0.05, max: 1, step: 0.05, def: 0.3 },
-                { label: "선 두께", key: "flashLineThickness" as string, min: 0.1, max: 4, step: 0.1, def: 0.8 },
-                { label: "선 길이", key: "flashLineLength" as string, min: 5, max: 100, step: 1, def: 30 },
-                { label: "선 개수", key: "flashLineCount" as string, min: 8, max: 60, step: 1, def: 24 },
-                { label: "내부크기", key: "flashInnerRadius" as string, min: 0.2, max: 0.9, step: 0.05, def: 0.65 },
-                ...(selectedBubble.style === "flash_black"
-                  ? [
-                      { label: "돌기 수", key: "flashBumpCount" as string, min: 6, max: 60, step: 1, def: 24 },
-                      { label: "돌기 높이", key: "flashBumpHeight" as string, min: 1, max: 30, step: 1, def: 10 },
-                    ]
-                  : []),
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">
-                      {label} {step < 1 ? (val as number).toFixed(2) : val}
-                    </span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-              {selectedBubble.style !== "flash_eyelash" && (
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] text-muted-foreground flex-1">내부 채우기</span>
-                  <button
-                    onClick={() => updateBubble(selectedBubble.id, { flashFilled: !(selectedBubble.flashFilled ?? true) })}
-                    className={`px-2 py-0.5 text-[11px] rounded-md border transition-colors ${(selectedBubble.flashFilled ?? true) ? "border-primary/40 bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                  >
-                    {(selectedBubble.flashFilled ?? true) ? "채움 ✓" : "비움"}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 귓속말(dashed) 설정 */}
-          {selectedBubble.style === "dashed" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">귓속말 설정</p>
-              {([
-                { label: "점선 길이", key: "flashLineLength", min: 2, max: 30, step: 1, def: 12 },
-                { label: "점선 간격", key: "flashLineSpacing", min: 0.1, max: 3, step: 0.1, def: 1.0 },
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(1) : val}</span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* 위엄(brush) 설정 */}
-          {selectedBubble.style === "brush" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">위엄 먹선 설정</p>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground w-14 shrink-0">굵기 배율 {(selectedBubble.flashLineThickness ?? 2.5).toFixed(1)}</span>
-                <Slider value={[selectedBubble.flashLineThickness ?? 2.5]} onValueChange={([v]) => updateBubble(selectedBubble.id, { flashLineThickness: v })} min={0.5} max={6} step={0.1} className="flex-1" />
-              </div>
-            </div>
-          )}
-
-          {/* 흐물(drip) 설정 */}
-          {selectedBubble.style === "drip" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">흐물 설정</p>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground w-14 shrink-0">흐물 길이 {selectedBubble.wobble ?? 5}</span>
-                <Slider value={[selectedBubble.wobble ?? 5]} onValueChange={([v]) => updateBubble(selectedBubble.id, { wobble: v })} min={0} max={20} step={0.5} className="flex-1" />
-              </div>
-              <p className="text-[9px] text-muted-foreground">0=없음 → 20=길게 흐물</p>
-            </div>
-          )}
-
-          {/* 신비(sparkle_ring) 설정 */}
-          {selectedBubble.style === "sparkle_ring" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">신비 설정</p>
-              {([
-                { label: "바늘 수", key: "flashLineCount", min: 12, max: 120, step: 1, def: 48 },
-                { label: "바늘 길이", key: "flashLineLength", min: 2, max: 40, step: 1, def: 12 },
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {val}</span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* 난처(embarrassed) 설정 */}
-          {selectedBubble.style === "embarrassed" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">난처 설정</p>
-              {([
-                { label: "흔들림", key: "wobble", min: 0, max: 12, step: 0.5, def: 4 },
-                { label: "선 갯수", key: "flashLineCount", min: 1, max: 12, step: 1, def: 5 },
-                { label: "선 길이", key: "flashLineLength", min: 5, max: 50, step: 1, def: 18 },
-                { label: "선 굵기", key: "flashLineThickness", min: 0.5, max: 6, step: 0.5, def: 2 },
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(1) : val}</span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* 독백(monologue) 설정 */}
-          {selectedBubble.style === "monologue" && (
-            <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-              <p className="text-[11px] font-semibold text-muted-foreground">독백 설정</p>
-              {([
-                { label: "꽃잎 수", key: "flashLineCount", min: 8, max: 60, step: 1, def: 28 },
-                { label: "꽃잎 크기", key: "flashLineLength", min: 3, max: 24, step: 1, def: 8 },
-                { label: "내부크기", key: "flashInnerRadius", min: 0.5, max: 0.95, step: 0.01, def: 0.82 },
-              ]).map(({ label, key, min, max, step, def }) => {
-                const val = (selectedBubble as any)[key] ?? def;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                    <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* 말꼬리 */}
-          <div className="space-y-2">
-            <Label className="text-[13px] mb-1 block">말꼬리 스타일</Label>
-            <div className="flex flex-wrap gap-1">
-              {Object.entries(TAIL_LABELS).map(([k, l]) => (
-                <button
-                  key={k}
-                  onClick={() => updateBubble(selectedBubble.id, {
-                    tailStyle: k as TailStyle,
-                    tailTipX: undefined, tailTipY: undefined,
-                    tailCtrl1X: undefined, tailCtrl1Y: undefined,
-                    tailCtrl2X: undefined, tailCtrl2Y: undefined,
-                  })}
-                  className={`px-2 py-1 text-[11px] rounded-md border transition-colors ${selectedBubble.tailStyle === k ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                  data-testid={`btn-tail-${k}`}
-                >{l}</button>
-              ))}
-            </div>
-          </div>
-
-          {selectedBubble.tailStyle !== "none" && (
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-[13px] mb-1 block">방향</Label>
-                  <Select
-                    value={selectedBubble.tailDirection}
-                    onValueChange={(v) =>
-                      updateBubble(selectedBubble.id, {
-                        tailDirection: v as SpeechBubble["tailDirection"],
-                        tailTipX: undefined, tailTipY: undefined,
-                        tailCtrl1X: undefined, tailCtrl1Y: undefined,
-                        tailCtrl2X: undefined, tailCtrl2Y: undefined,
-                      })
-                    }
-                  >
-                    <SelectTrigger data-testid="select-tail-direction">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bottom">아래</SelectItem>
-                      <SelectItem value="top">위</SelectItem>
-                      <SelectItem value="left">왼쪽</SelectItem>
-                      <SelectItem value="right">오른쪽</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-end">
-                  <Button type="button" variant="outline" size="sm" onClick={handleFlipTailHorizontally} className="w-full">
-                    좌우 반전
-                  </Button>
-                </div>
-              </div>
-
-              {/* 꼬리 고급 설정 (long / short 스타일일 때) */}
-              {(selectedBubble.tailStyle === "long" || selectedBubble.tailStyle === "short") && (
-                <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground">꼬리 세부 조정</p>
-                  {([
-                    { label: "밑넓이", key: "tailBaseSpread", min: 1, max: 60, step: 1, def: 8 },
-                    { label: "곡선", key: "tailCurve", min: 0, max: 1, step: 0.05, def: 0.5 },
-                    { label: "흔들림", key: "tailJitter", min: 0, max: 5, step: 0.1, def: 1 },
-                    { label: "끝 뭉툭함", key: "tailTipSpread", min: 0, max: 30, step: 1, def: 0 },
-                  ]).map(({ label, key, min, max, step, def }) => {
-                    const val = (selectedBubble as any)[key] ?? def;
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label} {step < 1 ? val.toFixed(2) : val}</span>
-                        <Slider value={[val]} onValueChange={([v]) => updateBubble(selectedBubble.id, { [key]: v } as any)} min={min} max={max} step={step} className="flex-1" />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* 점점점 꼬리 설정 */}
-              {selectedBubble.tailStyle.startsWith("dots_") && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-[13px] mb-1 block">점 크기</Label>
-                    <Slider value={[selectedBubble.dotsScale ?? 1]} onValueChange={([v]) => updateBubble(selectedBubble.id, { dotsScale: v })} min={0.5} max={1.5} step={0.05} data-testid="slider-dots-scale" />
-                  </div>
-                  <div>
-                    <Label className="text-[13px] mb-1 block">점 간격</Label>
-                    <Slider value={[selectedBubble.dotsSpacing ?? 1]} onValueChange={([v]) => updateBubble(selectedBubble.id, { dotsSpacing: v })} min={0.5} max={1.5} step={0.05} data-testid="slider-dots-spacing" />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-              <Label className="text-[13px]">글자 크기</Label>
-              <span className="text-[12px] text-muted-foreground tabular-nums">{selectedBubble.fontSize}px</span>
-            </div>
-            <Slider value={[selectedBubble.fontSize]} onValueChange={([v]) => updateBubble(selectedBubble.id, { fontSize: v })} min={8} max={40} step={1} data-testid="slider-font-size" />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-              <Label className="text-[13px]">테두리 두께</Label>
-              <span className="text-[12px] text-muted-foreground tabular-nums">{selectedBubble.strokeWidth}px</span>
-            </div>
-            <Slider value={[selectedBubble.strokeWidth]} onValueChange={([v]) => updateBubble(selectedBubble.id, { strokeWidth: v })} min={1} max={8} step={0.5} data-testid="slider-stroke-width" />
-          </div>
-
-          {/* Fill / Stroke Color */}
-          <div className="space-y-2">
-            <Label className="text-[13px] block">채우기 / 테두리 색</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {BUBBLE_COLOR_PRESETS.map((preset) => (
-                <button
-                  key={preset.label}
-                  title={preset.label}
-                  onClick={() => updateBubble(selectedBubble.id, { fillColor: preset.fill, strokeColor: preset.stroke })}
-                  className={`w-7 h-7 rounded-md border-2 transition-transform hover:scale-110 ${selectedBubble.fillColor === preset.fill ? "border-foreground scale-110" : "border-border"}`}
-                  style={{
-                    background: preset.fill === "transparent"
-                      ? "linear-gradient(135deg, #ccc 25%, transparent 25%, transparent 50%, #ccc 50%, #ccc 75%, transparent 75%)"
-                      : preset.fill,
-                    backgroundSize: preset.fill === "transparent" ? "6px 6px" : undefined,
-                  }}
-                />
-              ))}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-[11px] mb-1 block text-muted-foreground">채우기 색</Label>
-                <input type="color" value={selectedBubble.fillColor && selectedBubble.fillColor !== "transparent" ? selectedBubble.fillColor : "#ffffff"} onChange={(e) => updateBubble(selectedBubble.id, { fillColor: e.target.value })} className="w-full h-8 rounded cursor-pointer border border-border" />
-              </div>
-              <div>
-                <Label className="text-[11px] mb-1 block text-muted-foreground">테두리 색</Label>
-                <input type="color" value={selectedBubble.strokeColor || "#222222"} onChange={(e) => updateBubble(selectedBubble.id, { strokeColor: e.target.value })} className="w-full h-8 rounded cursor-pointer border border-border" />
-              </div>
-            </div>
-          </div>
-
-          {/* Draw Mode */}
-          <div>
-            <Label className="text-[13px] mb-1.5 block">그리기 모드</Label>
-            <div className="flex gap-1 flex-wrap">
-              {(["both", "fill_only", "stroke_only"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => updateBubble(selectedBubble.id, { drawMode: mode })}
-                  className={`px-2 py-1 text-[11px] rounded-md border transition-colors ${(selectedBubble.drawMode ?? "both") === mode ? "border-primary/40 bg-primary/10 text-primary font-semibold" : "border-border hover:bg-muted/60"}`}
-                >
-                  {mode === "both" ? "채움+테두리" : mode === "fill_only" ? "채움만" : "테두리만"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Fill Opacity */}
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-              <Label className="text-[13px]">채우기 투명도</Label>
-              <span className="text-[12px] text-muted-foreground tabular-nums">
-                {Math.round((selectedBubble.fillOpacity ?? 1) * 100)}%
-              </span>
-            </div>
-            <Slider
-              value={[(selectedBubble.fillOpacity ?? 1) * 100]}
-              onValueChange={([v]) => updateBubble(selectedBubble.id, { fillOpacity: v / 100 })}
-              min={0} max={100} step={5}
-            />
+        <div className="space-y-3 pt-4">
+          <div className="rounded-lg bg-muted/30 p-3 text-center">
+            <p className="text-[11px] text-muted-foreground">
+              선택된 말풍선: <span className="font-medium text-foreground">{selectedBubble.text || "(텍스트 없음)"}</span>
+            </p>
+            <p className="text-[10px] text-muted-foreground/70 mt-1">
+              우측 속성 패널에서 편집하세요
+            </p>
           </div>
         </div>
       )}
@@ -3209,6 +3352,7 @@ interface UsageData {
 export default function StoryPage() {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const [, setLocation] = useLocation();
   const [topic, setTopic] = useState("");
   const [aiMode, setAiMode] = useState<"subtitle" | "instatoonFull" | "instatoonPrompt" | null>(null);
@@ -3283,9 +3427,11 @@ export default function StoryPage() {
       characters: p.characters.map((c) => ({ ...c })),
       topScript: p.topScript ? { ...p.topScript } : null,
       bottomScript: p.bottomScript ? { ...p.bottomScript } : null,
+      backgroundColor: p.backgroundColor,
       backgroundImageUrl: p.backgroundImageUrl,
       backgroundImageEl: p.backgroundImageEl,
       drawingLayers: (p.drawingLayers || []).map((dl) => ({ ...dl })),
+      shapeElements: (p.shapeElements || []).map((s) => ({ ...s })),
     }));
   }, []);
 
@@ -3532,11 +3678,35 @@ export default function StoryPage() {
     });
   }, []);
 
-  const { data: galleryData, isLoading: galleryLoading } = useQuery<
-    Generation[]
+  const [galleryLimit, setGalleryLimit] = useState(30);
+  const { data: galleryRaw, isLoading: galleryLoading } = useQuery<
+    { items: GenerationLight[]; total: number; hasMore: boolean }
   >({
-    queryKey: ["/api/gallery"],
+    queryKey: ["/api/gallery", galleryLimit],
+    queryFn: async () => {
+      const authHeaders: Record<string, string> = {};
+      const { supabase: sb } = await import("@/lib/supabase");
+      const { data: sess } = await sb.auth.getSession();
+      if (sess.session?.access_token) authHeaders["Authorization"] = `Bearer ${sess.session.access_token}`;
+      const res = await fetch(`/api/gallery?limit=${galleryLimit}&offset=0`, { headers: authHeaders });
+      if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+      return res.json();
+    },
   });
+  const galleryData = galleryRaw?.items ?? [];
+  const galleryHasMore = galleryRaw?.hasMore ?? false;
+
+  const fetchFullGeneration = useCallback(async (id: number): Promise<Generation | null> => {
+    try {
+      const authHeaders: Record<string, string> = {};
+      const { supabase: sb } = await import("@/lib/supabase");
+      const { data: sess } = await sb.auth.getSession();
+      if (sess.session?.access_token) authHeaders["Authorization"] = `Bearer ${sess.session.access_token}`;
+      const res = await fetch(`/api/gallery/${id}`, { headers: authHeaders });
+      if (!res.ok) return null;
+      return res.json();
+    } catch { return null; }
+  }, []);
 
   const getDailyKey = (feature: string) => {
     const d = new Date();
@@ -3558,10 +3728,11 @@ export default function StoryPage() {
   };
 
   const generateMutation = useMutation({
-    mutationFn: async (variables: { mode: "basic" | "full" }) => {
+    mutationFn: async (variables: { mode: "basic" | "full"; scope: "current" | "all" }) => {
+      const isCurrent = variables.scope === "current";
       const body: any = {
         topic,
-        panelCount: panels.length,
+        panelCount: isCurrent ? 1 : panels.length,
       };
       if (variables.mode === "full") {
         if (instatoonScenePrompt.trim()) {
@@ -3575,72 +3746,94 @@ export default function StoryPage() {
         if (autoRefImageUrl) body.referenceImageUrl = autoRefImageUrl;
       }
       const res = await apiRequest("POST", "/api/story-scripts", body);
-      return res.json() as Promise<{ panels: StoryPanelScript[] }>;
+      const result = await res.json() as { panels: StoryPanelScript[] };
+      return { ...result, scope: variables.scope, targetIndex: activePanelIndex };
     },
     onSuccess: (data) => {
-      setPanels((prev) =>
-        prev.map((panel, i) => {
-          if (!data.panels[i]) return panel;
-          const aiPanel = data.panels[i];
-          const newBubbles: SpeechBubble[] = (aiPanel.bubbles || [])
-            .map((b, bi) => {
-              const yPositions = [
-                CANVAS_H * 0.3,
-                CANVAS_H * 0.5,
-                CANVAS_H * 0.65,
-                CANVAS_H * 0.4,
-                CANVAS_H * 0.55,
-              ];
-              const xPositions = [
-                CANVAS_W * 0.35,
-                CANVAS_W * 0.6,
-                CANVAS_W * 0.45,
-                CANVAS_W * 0.3,
-                CANVAS_W * 0.65,
-              ];
-              return createBubble(
-                CANVAS_W,
-                CANVAS_H,
-                b.text,
-                (b.style as BubbleStyle) || "handwritten",
-              );
-            })
-            .map((nb, bi) => ({
-              ...nb,
-              x: [CANVAS_W * 0.25, CANVAS_W * 0.45, CANVAS_W * 0.35][bi % 3],
-              y: [CANVAS_H * 0.2, CANVAS_H * 0.45, CANVAS_H * 0.65][bi % 3],
-            }));
+      // AI position을 캔버스 픽셀 좌표로 변환
+      const getBubblePosition = (position?: string, index: number = 0) => {
+        const w = CANVAS_W;
+        const h = CANVAS_H;
+        const pos = position || (index % 2 === 0 ? "top-left" : "bottom-right");
+        switch (pos) {
+          case "top-left": return { x: w * 0.1, y: h * 0.15 };
+          case "top-right": return { x: w * 0.5, y: h * 0.15 };
+          case "bottom-left": return { x: w * 0.1, y: h * 0.55 };
+          case "bottom-right": return { x: w * 0.5, y: h * 0.55 };
+          case "center": return { x: w * 0.3, y: h * 0.35 };
+          default: return { x: w * 0.25, y: h * 0.2 };
+        }
+      };
 
-          return {
-            ...panel,
-            topScript: aiPanel.top
-              ? { text: aiPanel.top, style: "no-bg", color: "yellow" }
-              : null,
-            bottomScript: aiPanel.bottom
-              ? { text: aiPanel.bottom, style: "no-bg", color: "sky" }
-              : null,
-            bubbles: newBubbles.length > 0 ? newBubbles : panel.bubbles,
-          };
-        }),
-      );
-      const totalBubbles = data.panels.reduce(
-        (sum, p) => sum + (p.bubbles?.length || 0),
-        0,
-      );
-      toast({
-        title: "스크립트 생성 완료",
-        description: `${data.panels.length}개 패널, ${totalBubbles}개 말풍선이 생성되었습니다`,
-      });
+      const applyAiPanel = (panel: any, aiPanel: StoryPanelScript) => {
+        const newBubbles: SpeechBubble[] = (aiPanel.bubbles || [])
+          .map((b: any, bi: number) => {
+            const baseBubble = createBubble(
+              CANVAS_W,
+              CANVAS_H,
+              b.text,
+              (b.style as BubbleStyle) || "handwritten",
+            );
+            const coords = getBubblePosition(b.position, bi);
+            let tailDirection: "top" | "bottom" | "left" | "right" = "bottom";
+            if (b.position?.includes("top")) tailDirection = "bottom";
+            if (b.position?.includes("bottom")) tailDirection = "top";
+            return {
+              ...baseBubble,
+              x: coords.x,
+              y: coords.y,
+              tailDirection,
+            };
+          });
+
+        return {
+          ...panel,
+          topScript: aiPanel.top
+            ? { text: aiPanel.top, style: "no-border" as const, color: "dark", y: 20 }
+            : null,
+          bottomScript: aiPanel.bottom
+            ? { text: aiPanel.bottom, style: "no-border" as const, color: "white", textColor: "#1a1a1a", y: CANVAS_H - 100 }
+            : null,
+          bubbles: newBubbles.length > 0 ? newBubbles : panel.bubbles,
+        };
+      };
+
+      if (data.scope === "current") {
+        // 선택된 캔버스 1개에만 적용
+        const aiPanel = data.panels[0];
+        if (aiPanel) {
+          setPanels((prev) =>
+            prev.map((panel, i) =>
+              i === data.targetIndex ? applyAiPanel(panel, aiPanel) : panel
+            ),
+          );
+        }
+        const bubbleCount = data.panels[0]?.bubbles?.length || 0;
+        toast({
+          title: "스크립트 생성 완료",
+          description: `선택 패널에 자막${bubbleCount > 0 ? `과 ${bubbleCount}개 말풍선이` : "이"} 생성되었습니다`,
+        });
+      } else {
+        // 전체 캔버스에 적용
+        setPanels((prev) =>
+          prev.map((panel, i) => {
+            if (!data.panels[i]) return panel;
+            return applyAiPanel(panel, data.panels[i]);
+          }),
+        );
+        const totalBubbles = data.panels.reduce(
+          (sum, p) => sum + (p.bubbles?.length || 0),
+          0,
+        );
+        toast({
+          title: "스크립트 생성 완료",
+          description: `${data.panels.length}개 패널, ${totalBubbles}개 말풍선이 생성되었습니다`,
+        });
+      }
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       if (/^403: /.test(error.message) && error.message.includes("크레딧을 전부 사용했어요")) {
@@ -3669,10 +3862,11 @@ export default function StoryPage() {
       }
 
       const results: { panelId: string; imageUrl: string }[] = [];
+      const errors: string[] = [];
       for (let i = 0; i < currentPanels.length; i++) {
         // Use scene-first prompt: pose/action described FIRST forces the AI to
         // re-compose the full scene with the new character action, not just add a background
-        let scenePrompt: string | undefined;
+        let scenePrompt: string;
         let finalItems: string | undefined;
 
         if (instatoonScenePrompt.trim()) {
@@ -3701,15 +3895,24 @@ export default function StoryPage() {
           finalItems = built.itemsPrompt;
         }
 
-        const res = await apiRequest("POST", "/api/generate-background", {
-          sourceImageData: currentRefImage,
-          backgroundPrompt: scenePrompt,
-          itemsPrompt: finalItems,
-          characterId: null,
-        });
-        const data = await res.json() as { imageUrl: string };
-        if (!data.imageUrl) throw new Error("이미지 생성 결과가 없습니다.");
-        results.push({ panelId: currentPanels[i].id, imageUrl: data.imageUrl });
+        try {
+          const res = await apiRequest("POST", "/api/generate-background", {
+            sourceImageDataList: [currentRefImage],
+            backgroundPrompt: scenePrompt,
+            itemsPrompt: finalItems,
+          });
+          const data = await res.json() as { imageUrl: string };
+          if (!data.imageUrl) throw new Error("이미지 생성 결과가 없습니다.");
+          results.push({ panelId: currentPanels[i].id, imageUrl: data.imageUrl });
+        } catch (err: any) {
+          console.error(`Panel ${i + 1} image generation failed:`, err?.message || err);
+          errors.push(`패널 ${i + 1}: ${err?.message || "실패"}`);
+          // 크레딧 부족 등 치명적 에러는 루프 중단
+          if (/^403/.test(err?.message)) break;
+        }
+      }
+      if (results.length === 0) {
+        throw new Error(errors[0] || "모든 패널의 이미지 생성에 실패했습니다.");
       }
       return results;
     },
@@ -3782,13 +3985,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       if (/^403/.test(error.message)) {
@@ -3859,13 +4056,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       toast({
@@ -3938,13 +4129,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       if (/^403/.test(error.message)) {
@@ -4021,13 +4206,7 @@ export default function StoryPage() {
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
-        redirectToLogin((o) =>
-          toast({
-            title: o.title,
-            description: o.description,
-            variant: o.variant as any,
-          }),
-        );
+        setShowLoginDialog(true);
         return;
       }
       if (/^403/.test(error.message)) {
@@ -4078,8 +4257,16 @@ export default function StoryPage() {
     // Items kept separate
     const itemsPrompt = items?.trim() || undefined;
 
+    // backgroundPrompt는 최소 3자 이상이어야 함 (서버 스키마 요구사항)
+    let backgroundPrompt = parts.join(", ");
+    if (!backgroundPrompt || backgroundPrompt.length < 3) {
+      backgroundPrompt = backgroundPrompt
+        ? `${backgroundPrompt}, cute instatoon scene`
+        : "cute instatoon scene with character";
+    }
+
     return {
-      backgroundPrompt: parts.join(", ") || undefined as any,
+      backgroundPrompt,
       itemsPrompt,
     };
   };
@@ -4133,10 +4320,9 @@ export default function StoryPage() {
 
       try {
         const res = await apiRequest("POST", "/api/generate-background", {
-          sourceImageData: sourceImageUrl,
+          sourceImageDataList: [sourceImageUrl],
           backgroundPrompt: scenePrompt,
           itemsPrompt: sceneItems,
-          characterId: null,
         });
         const data = await res.json() as { imageUrl: string };
         const imageUrl = data.imageUrl;
@@ -4310,6 +4496,7 @@ export default function StoryPage() {
         drawingLayers: [],
         textElements: [],
         lineElements: [],
+        shapeElements: [],
       };
       setPanels([fresh]);
       setActivePanelIndex(0);
@@ -4334,6 +4521,7 @@ export default function StoryPage() {
       id: generateId(),
       topScript: source.topScript ? { ...source.topScript } : null,
       bottomScript: source.bottomScript ? { ...source.bottomScript } : null,
+      backgroundColor: source.backgroundColor,
       backgroundImageUrl: source.backgroundImageUrl,
       backgroundImageEl: source.backgroundImageEl,
       bubbles: source.bubbles.map((b) => ({ ...b, id: generateId() })),
@@ -4341,6 +4529,7 @@ export default function StoryPage() {
       drawingLayers: (source.drawingLayers || []).map((dl) => ({ ...dl, id: generateId() })),
       textElements: (source.textElements || []).map((t) => ({ ...t, id: generateId() })),
       lineElements: (source.lineElements || []).map((l) => ({ ...l, id: generateId(), points: l.points.map(p => ({ ...p })) })),
+      shapeElements: (source.shapeElements || []).map((s) => ({ ...s, id: generateId() })),
     };
     const newPanels = [...panels];
     newPanels.splice(idx + 1, 0, cloned);
@@ -4360,6 +4549,8 @@ export default function StoryPage() {
 
   const activePanel = panels[activePanelIndex];
   const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null);
+  const [editingBubbleIdForOverlay, setEditingBubbleIdForOverlay] = useState<string | null>(null);
+  const [editingScriptPositionForCanvas, setEditingScriptPositionForCanvas] = useState<"top" | "bottom" | null>(null);
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
   const [selectedDrawingLayerId, setSelectedDrawingLayerId] = useState<string | null>(null);
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
@@ -4370,8 +4561,11 @@ export default function StoryPage() {
   type ElementsSubTab = "script" | "bubble" | "template";
   const [elementsSubTab, setElementsSubTab] = useState<ElementsSubTab>("script");
   const [selectedToolItem, setSelectedToolItem] = useState<string>("select");
+  const [selectedScriptPosition, setSelectedScriptPosition] = useState<"top" | "bottom" | null>(null);
   const [showDrawingSettings, setShowDrawingSettings] = useState(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
+  const [showStoryTemplatePicker, setShowStoryTemplatePicker] = useState(false);
+  const [storyTemplateCatIdx, setStoryTemplateCatIdx] = useState(0);
 
   // ─── Drawing tool state ─────────────────────────────────────────────
   const [drawingToolState, setDrawingToolState] = useState<DrawingToolState>({
@@ -4385,14 +4579,37 @@ export default function StoryPage() {
   const isDrawingMode = activeLeftTab === "tools" && selectedToolItem === "drawing";
   const isTextMode = activeLeftTab === "tools" && selectedToolItem === "text";
   const isLineMode = activeLeftTab === "tools" && selectedToolItem === "line";
+  const isShapeMode = activeLeftTab === "tools" && selectedToolItem === "shapes";
 
   // ─── Context toolbar state ────────────────────────────────────────────
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
   const [showLineSettings, setShowLineSettings] = useState(false);
   const [showDrawingContextSettings, setShowDrawingContextSettings] = useState(false);
+  const [showBubbleSettings, setShowBubbleSettings] = useState(false);
   const [drawingLayerSelected, setDrawingLayerSelected] = useState(false);
   const [selectedLineSubType, setSelectedLineSubType] = useState<LineType>("straight");
+  const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
+  const [showShapeSettings, setShowShapeSettings] = useState(false);
+  const [selectedShapeType, setSelectedShapeType] = useState<ShapeType>("rectangle");
+
+  // ─── Multi-select state ────────────────────────────────────────────
+  const [canvasMultiSelected, setCanvasMultiSelected] = useState<Set<string>>(new Set());
+  const canvasMultiSelectedRef = useRef<Set<string>>(canvasMultiSelected);
+  useEffect(() => { canvasMultiSelectedRef.current = canvasMultiSelected; }, [canvasMultiSelected]);
+
+  const rubberBandRef = useRef<{ active: boolean; startX: number; startY: number; curX: number; curY: number; panelIdx: number } | null>(null);
+  const [rubberBandRect, setRubberBandRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+
+  const multiDragRef = useRef<{
+    startMouseX: number;
+    startMouseY: number;
+    panelIdx: number;
+    startPositions: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>;
+  } | null>(null);
+
+  // Canvas overlay context menu state
+  const [overlayContextMenu, setOverlayContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   // Helper: get selected text element
   const selectedTextElement = selectedTextId && panels[activePanelIndex]
@@ -4402,6 +4619,11 @@ export default function StoryPage() {
   // Helper: get selected line element
   const selectedLineElement = selectedLineId && panels[activePanelIndex]
     ? panels[activePanelIndex].lineElements?.find((l) => l.id === selectedLineId) ?? null
+    : null;
+
+  // Helper: get selected shape element
+  const selectedShapeElement = selectedShapeId && panels[activePanelIndex]
+    ? (panels[activePanelIndex].shapeElements || []).find((s) => s.id === selectedShapeId) ?? null
     : null;
 
   // ─── Text/Line creation handlers ──────────────────────────────────────
@@ -4445,6 +4667,27 @@ export default function StoryPage() {
     updatePanel(activePanelIndex, { ...p, lineElements: newLines });
   }, [panels, activePanelIndex, updatePanel]);
 
+  const handleAddShape = useCallback((shapeType: ShapeType) => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const newShape = createShapeElement(CANVAS_W, CANVAS_H, shapeType);
+    const updated = { ...p, shapeElements: [...(p.shapeElements || []), newShape] };
+    updatePanel(activePanelIndex, updated);
+    setSelectedShapeId(newShape.id);
+    setSelectedTextId(null);
+    setSelectedLineId(null);
+    setSelectedBubbleId(null);
+    setSelectedCharId(null);
+    setSelectedDrawingLayerId(null);
+  }, [panels, activePanelIndex, updatePanel]);
+
+  const handleUpdateShapeElement = useCallback((updated: CanvasShapeElement) => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const newShapes = (p.shapeElements || []).map((s) => s.id === updated.id ? updated : s);
+    updatePanel(activePanelIndex, { ...p, shapeElements: newShapes });
+  }, [panels, activePanelIndex, updatePanel]);
+
   // Clear drawing layer selection on panel switch
   useEffect(() => {
     setSelectedDrawingLayerId(null);
@@ -4459,10 +4702,10 @@ export default function StoryPage() {
     const testCanvas = document.createElement("canvas");
     testCanvas.width = canvasWidth;
     testCanvas.height = canvasHeight;
-    const ctx = testCanvas.getContext("2d");
+    const ctx = testCanvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
     for (const layer of sorted) {
-      if (!layer.imageEl) continue;
+      if (!(layer.imageEl instanceof HTMLImageElement)) continue;
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       ctx.drawImage(layer.imageEl, 0, 0);
       const testX = Math.floor(canvasX - (layer.x ?? 0));
@@ -4506,23 +4749,61 @@ export default function StoryPage() {
   // Text element inline editing state
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
 
-  // Drag state for text/line element movement
+  // Drag state for text/line/shape/char/bubble element movement
   const dragElementRef = useRef<{
-    type: "text" | "line" | "drawing";
+    type: "text" | "line" | "drawing" | "shape" | "char" | "bubble";
     id: string;
     startMouseX: number;
     startMouseY: number;
     startPositions: { x: number; y: number }[];
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4";
+    startW?: number;
+    startH?: number;
+    startScale?: number;
+    // For mask group movement: linked layer start positions
+    linkedStarts?: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>;
   } | null>(null);
 
   const handleElementDragStart = useCallback((
-    type: "text" | "line" | "drawing",
+    type: "text" | "line" | "drawing" | "shape" | "char" | "bubble",
     id: string,
     mouseX: number,
     mouseY: number,
     panel: PanelData,
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4",
   ) => {
-    if (type === "text") {
+    if (type === "bubble") {
+      const b = panel.bubbles.find(bb => bb.id === id);
+      if (b) {
+        dragElementRef.current = {
+          type: "bubble",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: [{ x: b.x, y: b.y }],
+          resizeMode,
+          startW: b.width,
+          startH: b.height,
+        };
+      }
+    } else if (type === "char") {
+      const ch = panel.characters.find(c => c.id === id);
+      if (ch) {
+        const cw = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
+        const chH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
+        dragElementRef.current = {
+          type: "char",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: [{ x: ch.x, y: ch.y }],
+          resizeMode,
+          startScale: ch.scale,
+          startW: cw,
+          startH: chH,
+        };
+      }
+    } else if (type === "text") {
       const te = (panel.textElements || []).find(t => t.id === id);
       if (te) {
         dragElementRef.current = {
@@ -4553,6 +4834,45 @@ export default function StoryPage() {
           startMouseX: mouseX,
           startMouseY: mouseY,
           startPositions: [{ x: dl.x ?? 0, y: dl.y ?? 0 }],
+          resizeMode,
+          startW: dl.width ?? CANVAS_W,
+          startH: dl.height ?? CANVAS_H,
+        };
+      }
+    } else if (type === "shape") {
+      const se = (panel.shapeElements || []).find(s => s.id === id);
+      if (se) {
+        // Capture linked layer start positions for mask group movement
+        let linkedStarts: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }> | undefined;
+        if (se.maskEnabled && se.maskedLayerIds && se.maskedLayerIds.length > 0 && !resizeMode) {
+          linkedStarts = new Map();
+          const maskedSet = new Set(se.maskedLayerIds);
+          for (const c of panel.characters) {
+            if (maskedSet.has(c.id)) linkedStarts.set(c.id, { x: c.x, y: c.y });
+          }
+          for (const b of panel.bubbles) {
+            if (maskedSet.has(b.id)) linkedStarts.set(b.id, { x: b.x, y: b.y });
+          }
+          for (const dl of (panel.drawingLayers || [])) {
+            if (maskedSet.has(dl.id)) linkedStarts.set(dl.id, { x: dl.x ?? 0, y: dl.y ?? 0 });
+          }
+          for (const te of (panel.textElements || [])) {
+            if (maskedSet.has(te.id)) linkedStarts.set(te.id, { x: te.x, y: te.y });
+          }
+          for (const le of (panel.lineElements || [])) {
+            if (maskedSet.has(le.id)) linkedStarts.set(le.id, { points: le.points.map(pt => ({ x: pt.x, y: pt.y })) });
+          }
+        }
+        dragElementRef.current = {
+          type: "shape",
+          id,
+          startMouseX: mouseX,
+          startMouseY: mouseY,
+          startPositions: [{ x: se.x, y: se.y }],
+          resizeMode,
+          startW: se.width,
+          startH: se.height,
+          linkedStarts,
         };
       }
     }
@@ -4566,7 +4886,66 @@ export default function StoryPage() {
     const dx = mouseX - drag.startMouseX;
     const dy = mouseY - drag.startMouseY;
 
-    if (drag.type === "text") {
+    if (drag.type === "bubble") {
+      // Tail handle modes — directly set tail position to mouse coords
+      if (drag.resizeMode === "move-tail" || drag.resizeMode === "tail-ctrl1" || drag.resizeMode === "tail-ctrl2" || drag.resizeMode === "tail-ctrl3" || drag.resizeMode === "tail-ctrl4") {
+        const newBubbles = p.bubbles.map(b => {
+          if (b.id !== drag.id) return b;
+          if (drag.resizeMode === "move-tail") return { ...b, tailTipX: mouseX, tailTipY: mouseY };
+          if (drag.resizeMode === "tail-ctrl1") return { ...b, tailCtrl1X: mouseX, tailCtrl1Y: mouseY };
+          if (drag.resizeMode === "tail-ctrl2") return { ...b, tailCtrl2X: mouseX, tailCtrl2Y: mouseY };
+          if (drag.resizeMode === "tail-ctrl3") return { ...b, tailCtrl3X: mouseX, tailCtrl3Y: mouseY };
+          if (drag.resizeMode === "tail-ctrl4") return { ...b, tailCtrl4X: mouseX, tailCtrl4Y: mouseY };
+          return b;
+        });
+        updatePanel(panelIdx, { ...p, bubbles: newBubbles });
+        return;
+      }
+      const newBubbles = p.bubbles.map(b => {
+        if (b.id !== drag.id) return b;
+        if (drag.resizeMode) {
+          const startX = drag.startPositions[0].x;
+          const startY = drag.startPositions[0].y;
+          const startW = drag.startW ?? b.width;
+          const startH = drag.startH ?? b.height;
+          let newX = startX, newY = startY, newW = startW, newH = startH;
+          switch (drag.resizeMode) {
+            case "br": newW = Math.max(20, startW + dx); newH = Math.max(20, startH + dy); break;
+            case "bl": newX = startX + dx; newW = Math.max(20, startW - dx); newH = Math.max(20, startH + dy); break;
+            case "tr": newY = startY + dy; newW = Math.max(20, startW + dx); newH = Math.max(20, startH - dy); break;
+            case "tl": newX = startX + dx; newY = startY + dy; newW = Math.max(20, startW - dx); newH = Math.max(20, startH - dy); break;
+            case "r": newW = Math.max(20, startW + dx); break;
+            case "l": newX = startX + dx; newW = Math.max(20, startW - dx); break;
+            case "b": newH = Math.max(20, startH + dy); break;
+            case "t": newY = startY + dy; newH = Math.max(20, startH - dy); break;
+          }
+          return { ...b, x: newX, y: newY, width: newW, height: newH };
+        }
+        return { ...b, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
+      });
+      updatePanel(panelIdx, { ...p, bubbles: newBubbles });
+    } else if (drag.type === "char") {
+      const newChars = p.characters.map(ch => {
+        if (ch.id !== drag.id) return ch;
+        if (drag.resizeMode) {
+          const origW = drag.startW ?? 80;
+          const origH = drag.startH ?? 80;
+          let newW = origW;
+          let newH = origH;
+          switch (drag.resizeMode) {
+            case "br": newW = origW + dx; newH = origH + dy; break;
+            case "bl": newW = origW - dx; newH = origH + dy; break;
+            case "tr": newW = origW + dx; newH = origH - dy; break;
+            case "tl": newW = origW - dx; newH = origH - dy; break;
+          }
+          const avgRatio = (newW / origW + newH / origH) / 2;
+          const newScale = Math.max(0.05, Math.min(5, (drag.startScale ?? ch.scale) * avgRatio));
+          return { ...ch, scale: newScale };
+        }
+        return { ...ch, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
+      });
+      updatePanel(panelIdx, { ...p, characters: newChars });
+    } else if (drag.type === "text") {
       const newTexts = (p.textElements || []).map(te => {
         if (te.id !== drag.id) return te;
         return { ...te, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
@@ -4587,15 +4966,598 @@ export default function StoryPage() {
     } else if (drag.type === "drawing") {
       const newLayers = (p.drawingLayers || []).map(dl => {
         if (dl.id !== drag.id) return dl;
+        if (drag.resizeMode) {
+          const startX = drag.startPositions[0].x;
+          const startY = drag.startPositions[0].y;
+          const startW = drag.startW ?? CANVAS_W;
+          const startH = drag.startH ?? CANVAS_H;
+          let newX = startX, newY = startY, newW = startW, newH = startH;
+          switch (drag.resizeMode) {
+            case "br":
+              newW = Math.max(20, startW + dx);
+              newH = Math.max(20, startH + dy);
+              break;
+            case "bl":
+              newX = startX + dx;
+              newW = Math.max(20, startW - dx);
+              newH = Math.max(20, startH + dy);
+              break;
+            case "tr":
+              newY = startY + dy;
+              newW = Math.max(20, startW + dx);
+              newH = Math.max(20, startH - dy);
+              break;
+            case "tl":
+              newX = startX + dx;
+              newY = startY + dy;
+              newW = Math.max(20, startW - dx);
+              newH = Math.max(20, startH - dy);
+              break;
+          }
+          return { ...dl, x: newX, y: newY, width: newW, height: newH };
+        }
         return { ...dl, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
       updatePanel(panelIdx, { ...p, drawingLayers: newLayers });
+    } else if (drag.type === "shape") {
+      const draggedShape = (p.shapeElements || []).find(se => se.id === drag.id);
+      const newShapes = (p.shapeElements || []).map(se => {
+        if (se.id !== drag.id) return se;
+        if (drag.resizeMode) {
+          const startX = drag.startPositions[0].x;
+          const startY = drag.startPositions[0].y;
+          const startW = drag.startW ?? se.width;
+          const startH = drag.startH ?? se.height;
+          let newX = startX, newY = startY, newW = startW, newH = startH;
+          switch (drag.resizeMode) {
+            case "br":
+              newW = Math.max(20, startW + dx);
+              newH = Math.max(20, startH + dy);
+              break;
+            case "bl":
+              newX = startX + dx;
+              newW = Math.max(20, startW - dx);
+              newH = Math.max(20, startH + dy);
+              break;
+            case "tr":
+              newY = startY + dy;
+              newW = Math.max(20, startW + dx);
+              newH = Math.max(20, startH - dy);
+              break;
+            case "tl":
+              newX = startX + dx;
+              newY = startY + dy;
+              newW = Math.max(20, startW - dx);
+              newH = Math.max(20, startH - dy);
+              break;
+            case "r": newW = Math.max(20, startW + dx); break;
+            case "l": newX = startX + dx; newW = Math.max(20, startW - dx); break;
+            case "b": newH = Math.max(20, startH + dy); break;
+            case "t": newY = startY + dy; newH = Math.max(20, startH - dy); break;
+          }
+          return { ...se, x: newX, y: newY, width: newW, height: newH };
+        }
+        return { ...se, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
+      });
+
+      // If dragged mask shape, move linked layers together
+      const linked = drag.linkedStarts;
+      const updated: Record<string, any> = { shapeElements: newShapes };
+      if (linked && linked.size > 0 && !drag.resizeMode) {
+        updated.characters = p.characters.map(c => {
+          const s = linked.get(c.id);
+          return s && "x" in s ? { ...c, x: s.x + dx, y: s.y + dy } : c;
+        });
+        updated.bubbles = p.bubbles.map(b => {
+          const s = linked.get(b.id);
+          return s && "x" in s ? { ...b, x: s.x + dx, y: s.y + dy } : b;
+        });
+        updated.drawingLayers = (p.drawingLayers || []).map(dl => {
+          const s = linked.get(dl.id);
+          return s && "x" in s ? { ...dl, x: s.x + dx, y: s.y + dy } : dl;
+        });
+        updated.textElements = (p.textElements || []).map((te: any) => {
+          const s = linked.get(te.id);
+          return s && "x" in s ? { ...te, x: s.x + dx, y: s.y + dy } : te;
+        });
+        updated.lineElements = (p.lineElements || []).map((le: any) => {
+          const s = linked.get(le.id);
+          return s && "points" in s ? { ...le, points: s.points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy })) } : le;
+        });
+      }
+      updatePanel(panelIdx, { ...p, ...updated });
     }
   }, [panels, updatePanel]);
 
   const handleElementDragEnd = useCallback(() => {
     dragElementRef.current = null;
   }, []);
+
+  // ─── Canvas-level copy / paste for all element types ─────────────────
+  const handleOverlayCopy = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    // Multi-select copy
+    if (canvasMultiSelectedRef.current.size > 0) {
+      const items: any[] = [];
+      Array.from(canvasMultiSelectedRef.current).forEach(k => {
+        const [etype, eid] = k.split(":");
+        let el: any = null;
+        if (etype === "bubble") el = p.bubbles.find(b => b.id === eid);
+        else if (etype === "char") el = p.characters.find(c => c.id === eid);
+        else if (etype === "text") el = (p.textElements || []).find(t => t.id === eid);
+        else if (etype === "line") el = (p.lineElements || []).find(l => l.id === eid);
+        else if (etype === "drawing") el = (p.drawingLayers || []).find(d => d.id === eid);
+        else if (etype === "shape") el = (p.shapeElements || []).find(s => s.id === eid);
+        if (el) items.push({ type: etype, data: el });
+      });
+      if (items.length > 0) {
+        localStorage.setItem("olli_clipboard", JSON.stringify({ multi: true, items }));
+      }
+      return;
+    }
+    // Single selection copy
+    if (selectedBubbleId) {
+      const b = p.bubbles.find(bb => bb.id === selectedBubbleId);
+      if (b) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "bubble", data: b }));
+    } else if (selectedCharId) {
+      const c = p.characters.find(cc => cc.id === selectedCharId);
+      if (c) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "char", data: c }));
+    } else if (selectedTextId) {
+      const t = (p.textElements || []).find(tt => tt.id === selectedTextId);
+      if (t) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "text", data: t }));
+    } else if (selectedLineId) {
+      const l = (p.lineElements || []).find(ll => ll.id === selectedLineId);
+      if (l) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "line", data: l }));
+    } else if (selectedDrawingLayerId) {
+      const d = (p.drawingLayers || []).find(dd => dd.id === selectedDrawingLayerId);
+      if (d) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "drawing", data: d }));
+    } else if (selectedShapeId) {
+      const s = (p.shapeElements || []).find(ss => ss.id === selectedShapeId);
+      if (s) localStorage.setItem("olli_clipboard", JSON.stringify({ type: "shape", data: s }));
+    }
+  }, [panels, activePanelIndex, selectedBubbleId, selectedCharId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId]);
+
+  const handleOverlayPaste = useCallback(() => {
+    try {
+      const clip = localStorage.getItem("olli_clipboard");
+      if (!clip) return;
+      const parsed = JSON.parse(clip);
+      const p = panels[activePanelIndex];
+      if (!p) return;
+
+      const pasteOne = (type: string, data: any) => {
+        const id = generateId();
+        const offset = 20;
+        if (type === "bubble") {
+          const maxZ = p.bubbles.reduce((m: number, b: any) => Math.max(m, b.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, bubbles: [...p.bubbles, { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
+        } else if (type === "char") {
+          // Strip imageEl — DOM elements don't survive JSON serialization; the image reload effect will restore it from imageUrl
+          const maxZ = p.characters.reduce((m: number, c: any) => Math.max(m, c.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, characters: [...p.characters, { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1, imageEl: null }] });
+        } else if (type === "text") {
+          const maxZ = (p.textElements || []).reduce((m: number, t: any) => Math.max(m, t.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, textElements: [...(p.textElements || []), { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
+        } else if (type === "line") {
+          const maxZ = (p.lineElements || []).reduce((m: number, l: any) => Math.max(m, l.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, lineElements: [...(p.lineElements || []), { ...data, id, points: data.points.map((pt: any) => ({ ...pt, x: pt.x + offset, y: pt.y + offset })), zIndex: maxZ + 1 }] });
+        } else if (type === "drawing") {
+          // Strip imageEl — will be rebuilt from imageData by the reload effect
+          const maxZ = (p.drawingLayers || []).reduce((m: number, d: any) => Math.max(m, d.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, drawingLayers: [...(p.drawingLayers || []), { ...data, id, x: (data.x ?? 0) + offset, y: (data.y ?? 0) + offset, zIndex: maxZ + 1, imageEl: null }] });
+        } else if (type === "shape") {
+          const maxZ = (p.shapeElements || []).reduce((m: number, s: any) => Math.max(m, s.zIndex ?? 0), 0);
+          updatePanel(activePanelIndex, { ...p, shapeElements: [...(p.shapeElements || []), { ...data, id, x: data.x + offset, y: data.y + offset, zIndex: maxZ + 1 }] });
+        }
+      };
+
+      if (parsed.multi && Array.isArray(parsed.items)) {
+        for (const item of parsed.items) {
+          pasteOne(item.type, item.data);
+        }
+      } else if (parsed.type && parsed.data) {
+        pasteOne(parsed.type, parsed.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [panels, activePanelIndex, updatePanel]);
+
+  const handleOverlayDelete = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    if (canvasMultiSelectedRef.current.size > 0) {
+      const ids = canvasMultiSelectedRef.current;
+      const delIds = (type: string) => {
+        const out = new Set<string>();
+        Array.from(ids).forEach(k => { const [t, id] = k.split(":"); if (t === type) out.add(id); });
+        return out;
+      };
+      const bIds = delIds("bubble"), cIds = delIds("char"), tIds = delIds("text"), lIds = delIds("line"), dIds = delIds("drawing"), sIds = delIds("shape");
+      updatePanel(activePanelIndex, {
+        ...p,
+        bubbles: p.bubbles.filter(b => !bIds.has(b.id)),
+        characters: p.characters.filter(c => !cIds.has(c.id)),
+        textElements: (p.textElements || []).filter(t => !tIds.has(t.id)),
+        lineElements: (p.lineElements || []).filter(l => !lIds.has(l.id)),
+        drawingLayers: (p.drawingLayers || []).filter(d => !dIds.has(d.id)),
+        shapeElements: (p.shapeElements || []).filter(s => !sIds.has(s.id)),
+      });
+      setCanvasMultiSelected(new Set());
+    } else if (selectedBubbleId) {
+      updatePanel(activePanelIndex, { ...p, bubbles: p.bubbles.filter(b => b.id !== selectedBubbleId) });
+      setSelectedBubbleId(null);
+    } else if (selectedCharId) {
+      updatePanel(activePanelIndex, { ...p, characters: p.characters.filter(c => c.id !== selectedCharId) });
+      setSelectedCharId(null);
+    } else if (selectedTextId) {
+      updatePanel(activePanelIndex, { ...p, textElements: (p.textElements || []).filter(t => t.id !== selectedTextId) });
+      setSelectedTextId(null);
+    } else if (selectedLineId) {
+      updatePanel(activePanelIndex, { ...p, lineElements: (p.lineElements || []).filter(l => l.id !== selectedLineId) });
+      setSelectedLineId(null);
+    } else if (selectedDrawingLayerId) {
+      updatePanel(activePanelIndex, { ...p, drawingLayers: (p.drawingLayers || []).filter(d => d.id !== selectedDrawingLayerId) });
+      setSelectedDrawingLayerId(null);
+    } else if (selectedShapeId) {
+      updatePanel(activePanelIndex, { ...p, shapeElements: (p.shapeElements || []).filter(s => s.id !== selectedShapeId) });
+      setSelectedShapeId(null);
+    }
+  }, [panels, activePanelIndex, selectedBubbleId, selectedCharId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId, updatePanel]);
+
+  // ─── Cut (copy + delete) ───────────────────────────────────────────
+  const handleOverlayCut = useCallback(() => {
+    handleOverlayCopy();
+    handleOverlayDelete();
+  }, [handleOverlayCopy, handleOverlayDelete]);
+
+  // ─── Duplicate selected elements ───────────────────────────────────
+  const handleOverlayDuplicate = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const offset = 20;
+
+    const dupOne = (type: string, id: string) => {
+      const newId = generateId();
+      if (type === "char") {
+        const ch = p.characters.find(c => c.id === id);
+        if (!ch) return;
+        const maxZ = p.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, characters: [...p.characters, { ...ch, id: newId, x: ch.x + offset, y: ch.y + offset, zIndex: maxZ + 1 }] });
+        setSelectedCharId(newId);
+      } else if (type === "bubble") {
+        const b = p.bubbles.find(bb => bb.id === id);
+        if (!b) return;
+        const maxZ = p.bubbles.reduce((m, bb) => Math.max(m, bb.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, bubbles: [...p.bubbles, { ...b, id: newId, x: b.x + offset, y: b.y + offset, zIndex: maxZ + 1 }] });
+        setSelectedBubbleId(newId);
+      } else if (type === "text") {
+        const te = (p.textElements || []).find(t => t.id === id) as any;
+        if (!te) return;
+        const maxZ = (p.textElements || []).reduce((m: number, t: any) => Math.max(m, t.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, textElements: [...(p.textElements || []), { ...te, id: newId, x: te.x + offset, y: te.y + offset, zIndex: maxZ + 1 }] });
+        setSelectedTextId(newId);
+      } else if (type === "line") {
+        const le = (p.lineElements || []).find(l => l.id === id) as any;
+        if (!le) return;
+        const maxZ = (p.lineElements || []).reduce((m: number, l: any) => Math.max(m, l.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, lineElements: [...(p.lineElements || []), { ...le, id: newId, points: le.points.map((pt: any) => ({ ...pt, x: pt.x + offset, y: pt.y + offset })), zIndex: maxZ + 1 }] });
+        setSelectedLineId(newId);
+      } else if (type === "drawing") {
+        const dl = (p.drawingLayers || []).find(d => d.id === id);
+        if (!dl) return;
+        const maxZ = (p.drawingLayers || []).reduce((m, d) => Math.max(m, d.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, drawingLayers: [...(p.drawingLayers || []), { ...dl, id: newId, x: (dl.x ?? 0) + offset, y: (dl.y ?? 0) + offset, zIndex: maxZ + 1 }] });
+        setSelectedDrawingLayerId(newId);
+      } else if (type === "shape") {
+        const se = (p.shapeElements || []).find(s => s.id === id) as any;
+        if (!se) return;
+        const maxZ = (p.shapeElements || []).reduce((m: number, s: any) => Math.max(m, s.zIndex ?? 0), 0);
+        updatePanel(activePanelIndex, { ...p, shapeElements: [...(p.shapeElements || []), { ...se, id: newId, x: se.x + offset, y: se.y + offset, zIndex: maxZ + 1 }] });
+        setSelectedShapeId(newId);
+      }
+    };
+
+    if (canvasMultiSelectedRef.current.size > 0) {
+      Array.from(canvasMultiSelectedRef.current).forEach(k => {
+        const [etype, eid] = k.split(":");
+        dupOne(etype, eid);
+      });
+    } else if (selectedCharId) dupOne("char", selectedCharId);
+    else if (selectedBubbleId) dupOne("bubble", selectedBubbleId);
+    else if (selectedTextId) dupOne("text", selectedTextId);
+    else if (selectedLineId) dupOne("line", selectedLineId);
+    else if (selectedDrawingLayerId) dupOne("drawing", selectedDrawingLayerId);
+    else if (selectedShapeId) dupOne("shape", selectedShapeId);
+  }, [panels, activePanelIndex, selectedBubbleId, selectedCharId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId, updatePanel]);
+
+  // ─── Helper: get selected element info for context menu ────────────
+  const getSelectedElementInfo = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return null;
+    if (canvasMultiSelectedRef.current.size > 0) {
+      const items: Array<{ type: string; id: string; locked?: boolean; visible?: boolean }> = [];
+      Array.from(canvasMultiSelectedRef.current).forEach(k => {
+        const [t, id] = k.split(":");
+        let el: any = null;
+        if (t === "char") el = p.characters.find(c => c.id === id);
+        else if (t === "bubble") el = p.bubbles.find(b => b.id === id);
+        else if (t === "text") el = (p.textElements || []).find(x => x.id === id);
+        else if (t === "line") el = (p.lineElements || []).find(x => x.id === id);
+        else if (t === "drawing") el = (p.drawingLayers || []).find(x => x.id === id);
+        else if (t === "shape") el = (p.shapeElements || []).find(x => x.id === id);
+        if (el) items.push({ type: t, id, locked: el.locked, visible: el.visible });
+      });
+      return { multi: true, items, anyLocked: items.some(i => i.locked), anyHidden: items.some(i => i.visible === false) };
+    }
+    let type = "", id = "", el: any = null;
+    if (selectedCharId) { type = "char"; id = selectedCharId; el = p.characters.find(c => c.id === id); }
+    else if (selectedBubbleId) { type = "bubble"; id = selectedBubbleId; el = p.bubbles.find(b => b.id === id); }
+    else if (selectedTextId) { type = "text"; id = selectedTextId; el = (p.textElements || []).find(x => x.id === id); }
+    else if (selectedLineId) { type = "line"; id = selectedLineId; el = (p.lineElements || []).find(x => x.id === id); }
+    else if (selectedDrawingLayerId) { type = "drawing"; id = selectedDrawingLayerId; el = (p.drawingLayers || []).find(x => x.id === id); }
+    else if (selectedShapeId) { type = "shape"; id = selectedShapeId; el = (p.shapeElements || []).find(x => x.id === id); }
+    if (!el) return null;
+    return { multi: false, type, id, locked: el.locked, visible: el.visible, items: [{ type, id, locked: el.locked, visible: el.visible }] };
+  }, [panels, activePanelIndex, selectedCharId, selectedBubbleId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId]);
+
+  // ─── Toggle lock for selected element(s) ───────────────────────────
+  const handleOverlayToggleLock = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const info = getSelectedElementInfo();
+    if (!info) return;
+    const shouldLock = info.multi ? !info.anyLocked : !info.locked;
+    const ids = new Set(info.items.map(i => i.id));
+
+    updatePanel(activePanelIndex, {
+      ...p,
+      characters: p.characters.map(c => ids.has(c.id) ? { ...c, locked: shouldLock } : c),
+      bubbles: p.bubbles.map(b => ids.has(b.id) ? { ...b, locked: shouldLock } : b),
+      drawingLayers: (p.drawingLayers || []).map(d => ids.has(d.id) ? { ...d, locked: shouldLock } : d),
+      textElements: (p.textElements || []).map((t: any) => ids.has(t.id) ? { ...t, locked: shouldLock } : t),
+      lineElements: (p.lineElements || []).map((l: any) => ids.has(l.id) ? { ...l, locked: shouldLock } : l),
+      shapeElements: (p.shapeElements || []).map((s: any) => ids.has(s.id) ? { ...s, locked: shouldLock } : s),
+    });
+  }, [panels, activePanelIndex, getSelectedElementInfo, updatePanel]);
+
+  // ─── Toggle visibility for selected element(s) ─────────────────────
+  const handleOverlayToggleVisibility = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const info = getSelectedElementInfo();
+    if (!info) return;
+    const shouldHide = info.multi ? !info.anyHidden : info.visible !== false;
+    const newVis = shouldHide ? false : undefined;
+    const ids = new Set(info.items.map(i => i.id));
+
+    updatePanel(activePanelIndex, {
+      ...p,
+      characters: p.characters.map(c => ids.has(c.id) ? { ...c, visible: newVis } : c),
+      bubbles: p.bubbles.map(b => ids.has(b.id) ? { ...b, visible: newVis } : b),
+      drawingLayers: (p.drawingLayers || []).map(d => ids.has(d.id) ? { ...d, visible: newVis as any } : d),
+      textElements: (p.textElements || []).map((t: any) => ids.has(t.id) ? { ...t, visible: newVis } : t),
+      lineElements: (p.lineElements || []).map((l: any) => ids.has(l.id) ? { ...l, visible: newVis } : l),
+      shapeElements: (p.shapeElements || []).map((s: any) => ids.has(s.id) ? { ...s, visible: newVis } : s),
+    });
+  }, [panels, activePanelIndex, getSelectedElementInfo, updatePanel]);
+
+  // ─── Layer ordering helpers (all element types) ─────────────────────
+  const buildSortedLayerList = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return [];
+    type LI = { type: string; id: string; z: number };
+    const list: LI[] = [
+      ...p.characters.map(c => ({ type: "char", id: c.id, z: c.zIndex ?? 0 })),
+      ...p.bubbles.map(b => ({ type: "bubble", id: b.id, z: b.zIndex ?? 10 })),
+      ...(p.drawingLayers || []).map(d => ({ type: "drawing", id: d.id, z: d.zIndex ?? 15 })),
+      ...(p.textElements || []).map((t: any) => ({ type: "text", id: t.id, z: t.zIndex ?? 20 })),
+      ...(p.lineElements || []).map((l: any) => ({ type: "line", id: l.id, z: l.zIndex ?? 20 })),
+      ...(p.shapeElements || []).map((s: any) => ({ type: "shape", id: s.id, z: s.zIndex ?? 20 })),
+    ].sort((a, b) => a.z - b.z);
+    return list;
+  }, [panels, activePanelIndex]);
+
+  const applyLayerOrder = useCallback((ordered: Array<{ type: string; id: string }>) => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const n = ordered.length;
+    updatePanel(activePanelIndex, {
+      ...p,
+      characters: p.characters.map(c => { const idx = ordered.findIndex(it => it.type === "char" && it.id === c.id); return idx >= 0 ? { ...c, zIndex: n - 1 - idx } : c; }),
+      bubbles: p.bubbles.map(b => { const idx = ordered.findIndex(it => it.type === "bubble" && it.id === b.id); return idx >= 0 ? { ...b, zIndex: n - 1 - idx } : b; }),
+      drawingLayers: (p.drawingLayers || []).map(d => { const idx = ordered.findIndex(it => it.type === "drawing" && it.id === d.id); return idx >= 0 ? { ...d, zIndex: n - 1 - idx } : d; }),
+      textElements: (p.textElements || []).map((t: any) => { const idx = ordered.findIndex(it => it.type === "text" && it.id === t.id); return idx >= 0 ? { ...t, zIndex: n - 1 - idx } : t; }),
+      lineElements: (p.lineElements || []).map((l: any) => { const idx = ordered.findIndex(it => it.type === "line" && it.id === l.id); return idx >= 0 ? { ...l, zIndex: n - 1 - idx } : l; }),
+      shapeElements: (p.shapeElements || []).map((s: any) => { const idx = ordered.findIndex(it => it.type === "shape" && it.id === s.id); return idx >= 0 ? { ...s, zIndex: n - 1 - idx } : s; }),
+    });
+  }, [panels, activePanelIndex, updatePanel]);
+
+  const getSelectedId = useCallback(() => {
+    if (selectedCharId) return { type: "char", id: selectedCharId };
+    if (selectedBubbleId) return { type: "bubble", id: selectedBubbleId };
+    if (selectedTextId) return { type: "text", id: selectedTextId };
+    if (selectedLineId) return { type: "line", id: selectedLineId };
+    if (selectedDrawingLayerId) return { type: "drawing", id: selectedDrawingLayerId };
+    if (selectedShapeId) return { type: "shape", id: selectedShapeId };
+    return null;
+  }, [selectedCharId, selectedBubbleId, selectedTextId, selectedLineId, selectedDrawingLayerId, selectedShapeId]);
+
+  // Bring Forward (Ctrl+])
+  const handleOverlayBringForward = useCallback(() => {
+    const sel = getSelectedId();
+    if (!sel) return;
+    const list = buildSortedLayerList();
+    const idx = list.findIndex(x => x.type === sel.type && x.id === sel.id);
+    if (idx < 0 || idx >= list.length - 1) return;
+    const ordered = list.map(l => ({ type: l.type, id: l.id }));
+    const tmp = ordered[idx]; ordered[idx] = ordered[idx + 1]; ordered[idx + 1] = tmp;
+    applyLayerOrder(ordered);
+  }, [getSelectedId, buildSortedLayerList, applyLayerOrder]);
+
+  // Send Backward (Ctrl+[)
+  const handleOverlaySendBackward = useCallback(() => {
+    const sel = getSelectedId();
+    if (!sel) return;
+    const list = buildSortedLayerList();
+    const idx = list.findIndex(x => x.type === sel.type && x.id === sel.id);
+    if (idx <= 0) return;
+    const ordered = list.map(l => ({ type: l.type, id: l.id }));
+    const tmp = ordered[idx]; ordered[idx] = ordered[idx - 1]; ordered[idx - 1] = tmp;
+    applyLayerOrder(ordered);
+  }, [getSelectedId, buildSortedLayerList, applyLayerOrder]);
+
+  // Bring to Front (Ctrl+Shift+])
+  const handleOverlayBringToFront = useCallback(() => {
+    const sel = getSelectedId();
+    if (!sel) return;
+    const list = buildSortedLayerList();
+    const idx = list.findIndex(x => x.type === sel.type && x.id === sel.id);
+    if (idx < 0 || idx >= list.length - 1) return;
+    const ordered = list.map(l => ({ type: l.type, id: l.id }));
+    const [moved] = ordered.splice(idx, 1);
+    ordered.push(moved);
+    applyLayerOrder(ordered);
+  }, [getSelectedId, buildSortedLayerList, applyLayerOrder]);
+
+  // Send to Back (Ctrl+Shift+[)
+  const handleOverlaySendToBack = useCallback(() => {
+    const sel = getSelectedId();
+    if (!sel) return;
+    const list = buildSortedLayerList();
+    const idx = list.findIndex(x => x.type === sel.type && x.id === sel.id);
+    if (idx <= 0) return;
+    const ordered = list.map(l => ({ type: l.type, id: l.id }));
+    const [moved] = ordered.splice(idx, 1);
+    ordered.unshift(moved);
+    applyLayerOrder(ordered);
+  }, [getSelectedId, buildSortedLayerList, applyLayerOrder]);
+
+  // ─── Select All layers (Ctrl+A) ───────────────────────────────────
+  const handleOverlaySelectAll = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const all = new Set<string>();
+    p.characters.forEach(c => all.add(`char:${c.id}`));
+    p.bubbles.forEach(b => all.add(`bubble:${b.id}`));
+    (p.drawingLayers || []).forEach(d => all.add(`drawing:${d.id}`));
+    (p.textElements || []).forEach((t: any) => all.add(`text:${t.id}`));
+    (p.lineElements || []).forEach((l: any) => all.add(`line:${l.id}`));
+    (p.shapeElements || []).forEach((s: any) => { if (!s.maskEnabled) all.add(`shape:${s.id}`); });
+    setCanvasMultiSelected(all);
+  }, [panels, activePanelIndex]);
+
+  // ─── Toggle mask link for selected element(s) ──────────────────────
+  const handleOverlayToggleMask = useCallback(() => {
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const maskShape = (p.shapeElements || []).find((se: any) => se.maskEnabled);
+    if (!maskShape) return;
+    const info = getSelectedElementInfo();
+    if (!info) return;
+    const layerIds = info.items.map(i => i.id).filter(id => id !== maskShape.id);
+    if (layerIds.length === 0) return;
+    const existingMasked = (maskShape as any).maskedLayerIds || [];
+    const allLinked = layerIds.every(id => existingMasked.includes(id));
+
+    const newMaskedIds = allLinked
+      ? existingMasked.filter((id: string) => !layerIds.includes(id))
+      : Array.from(new Set([...existingMasked, ...layerIds]));
+
+    updatePanel(activePanelIndex, {
+      ...p,
+      shapeElements: (p.shapeElements || []).map((se: any) =>
+        se.id === maskShape.id ? { ...se, maskedLayerIds: newMaskedIds } : se
+      ),
+    });
+  }, [panels, activePanelIndex, getSelectedElementInfo, updatePanel]);
+
+  // ─── Comprehensive keyboard shortcuts (Photoshop-style) ────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      // Ctrl+C: Copy
+      if (ctrl && e.key === "c" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayCopy();
+        return;
+      }
+      // Ctrl+V: Paste
+      if (ctrl && e.key === "v" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayPaste();
+        return;
+      }
+      // Ctrl+X: Cut
+      if (ctrl && e.key === "x" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayCut();
+        return;
+      }
+      // Ctrl+D: Duplicate
+      if (ctrl && e.key === "d" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayDuplicate();
+        return;
+      }
+      // Ctrl+A: Select All
+      if (ctrl && e.key === "a" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlaySelectAll();
+        return;
+      }
+      // Escape: Deselect All
+      if (e.key === "Escape") {
+        setSelectedCharId(null); setSelectedBubbleId(null);
+        setSelectedTextId(null); setSelectedLineId(null);
+        setSelectedDrawingLayerId(null); setSelectedShapeId(null);
+        setCanvasMultiSelected(new Set());
+        setOverlayContextMenu(null);
+        return;
+      }
+      // Ctrl+Shift+]: Bring to Front
+      if (ctrl && e.shiftKey && e.key === "]") {
+        e.preventDefault();
+        handleOverlayBringToFront();
+        return;
+      }
+      // Ctrl+Shift+[: Send to Back
+      if (ctrl && e.shiftKey && e.key === "[") {
+        e.preventDefault();
+        handleOverlaySendToBack();
+        return;
+      }
+      // Ctrl+]: Bring Forward
+      if (ctrl && !e.shiftKey && e.key === "]") {
+        e.preventDefault();
+        handleOverlayBringForward();
+        return;
+      }
+      // Ctrl+[: Send Backward
+      if (ctrl && !e.shiftKey && e.key === "[") {
+        e.preventDefault();
+        handleOverlaySendBackward();
+        return;
+      }
+      // Ctrl+L: Toggle Lock
+      if (ctrl && e.key === "l" && !e.shiftKey) {
+        e.preventDefault();
+        handleOverlayToggleLock();
+        return;
+      }
+      // Ctrl+H: Toggle Visibility (Photoshop: Ctrl+, but we use Ctrl+H to avoid conflict)
+      // Actually Ctrl+; or Ctrl+H, let's use H alone (without ctrl) for visibility toggle like many editors
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handleOverlayCopy, handleOverlayPaste, handleOverlayCut, handleOverlayDuplicate, handleOverlaySelectAll,
+    handleOverlayBringToFront, handleOverlaySendToBack, handleOverlayBringForward, handleOverlaySendBackward,
+    handleOverlayToggleLock]);
 
   // Delete selected text/line/drawing elements on Delete/Backspace
   useEffect(() => {
@@ -4605,6 +5567,35 @@ export default function StoryPage() {
       if (e.key === "Delete" || e.key === "Backspace") {
         const p = panels[activePanelIndex];
         if (!p) return;
+        // Multi-select bulk delete
+        if (canvasMultiSelectedRef.current.size > 0) {
+          e.preventDefault();
+          const ids = canvasMultiSelectedRef.current;
+          const delIds = (type: string) => {
+            const out = new Set<string>();
+            Array.from(ids).forEach(k => { const [t, id] = k.split(":"); if (t === type) out.add(id); });
+            return out;
+          };
+          const bIds = delIds("bubble"), cIds = delIds("char"), tIds = delIds("text"), lIds = delIds("line"), dIds = delIds("drawing"), sIds = delIds("shape");
+          updatePanel(activePanelIndex, {
+            ...p,
+            bubbles: p.bubbles.filter(b => !bIds.has(b.id)),
+            characters: p.characters.filter(c => !cIds.has(c.id)),
+            textElements: (p.textElements || []).filter(t => !tIds.has(t.id)),
+            lineElements: (p.lineElements || []).filter(l => !lIds.has(l.id)),
+            drawingLayers: (p.drawingLayers || []).filter(d => !dIds.has(d.id)),
+            shapeElements: (p.shapeElements || []).filter(s => !sIds.has(s.id)),
+          });
+          setCanvasMultiSelected(new Set());
+          return;
+        }
+        if (selectedShapeId) {
+          e.preventDefault();
+          const newShapes = (p.shapeElements || []).filter(s => s.id !== selectedShapeId);
+          updatePanel(activePanelIndex, { ...p, shapeElements: newShapes });
+          setSelectedShapeId(null);
+          return;
+        }
         if (selectedTextId) {
           e.preventDefault();
           const newTexts = (p.textElements || []).filter(t => t.id !== selectedTextId);
@@ -4626,16 +5617,34 @@ export default function StoryPage() {
           setSelectedDrawingLayerId(null);
           return;
         }
+        if (selectedBubbleId) {
+          e.preventDefault();
+          updatePanel(activePanelIndex, { ...p, bubbles: p.bubbles.filter(b => b.id !== selectedBubbleId) });
+          setSelectedBubbleId(null);
+          return;
+        }
+        if (selectedCharId) {
+          e.preventDefault();
+          updatePanel(activePanelIndex, { ...p, characters: p.characters.filter(c => c.id !== selectedCharId) });
+          setSelectedCharId(null);
+          return;
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedDrawingLayerId, updatePanel]);
+  }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedShapeId, selectedDrawingLayerId, selectedBubbleId, selectedCharId, canvasMultiSelected, updatePanel]);
 
   const toggleLeftTab = (tab: LeftTab) => {
-    setActiveLeftTab((prev) => {
-      const next = prev === tab ? null : tab;
-      return next;
+    if (!isAuthenticated) {
+      setShowLoginDialog(true);
+      return;
+    }
+    startTransition(() => {
+      setActiveLeftTab((prev) => {
+        const next = prev === tab ? null : tab;
+        return next;
+      });
     });
   };
 
@@ -4703,6 +5712,249 @@ export default function StoryPage() {
     });
   };
 
+  const DOWNLOAD_SIZES = [
+    { label: "Original (450×600)", w: 450, h: 600 },
+    { label: "2x (900×1200)", w: 900, h: 1200 },
+    { label: "Instagram Story (1080×1920)", w: 1080, h: 1920 },
+    { label: "Instagram Post (1080×1080)", w: 1080, h: 1080 },
+  ];
+
+  const downloadPanelSized = (idx: number, targetW: number, targetH: number) => {
+    const p = panels[idx];
+    if (!p) return;
+    const srcCanvas = panelCanvasRefs.current.get(p.id);
+    if (!srcCanvas) return;
+    try {
+      const offscreen = document.createElement("canvas");
+      offscreen.width = targetW;
+      offscreen.height = targetH;
+      const ctx = offscreen.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(srcCanvas, 0, 0, targetW, targetH);
+      const dataUrl = offscreen.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `panel_${idx + 1}_${targetW}x${targetH}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch {
+      toast({ title: "다운로드 실패", description: "이미지를 생성할 수 없습니다.", variant: "destructive" });
+    }
+  };
+
+  const downloadPanelSvg = (idx: number) => {
+    const p = panels[idx];
+    if (!p) return;
+    const srcCanvas = panelCanvasRefs.current.get(p.id);
+    if (!srcCanvas) return;
+    try {
+      const dataUrl = srcCanvas.toDataURL("image/png");
+      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}"><image href="${dataUrl}" width="${CANVAS_W}" height="${CANVAS_H}"/></svg>`;
+      const blob = new Blob([svgContent], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = `panel_${idx + 1}.svg`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: "다운로드 실패", description: "SVG를 생성할 수 없습니다.", variant: "destructive" });
+    }
+  };
+
+  const downloadAllSized = (w: number, h: number) => {
+    if (panels.length === 0) return;
+    panels.forEach((_, i) => {
+      setTimeout(() => downloadPanelSized(i, w, h), i * 300);
+    });
+  };
+
+  const downloadAllSvg = () => {
+    if (panels.length === 0) return;
+    panels.forEach((_, i) => {
+      setTimeout(() => downloadPanelSvg(i), i * 300);
+    });
+  };
+
+  const renderLayerToCanvas = (item: LayerItem): HTMLCanvasElement | null => {
+    const p = activePanel;
+    if (!p) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    if (item.type === "char") {
+      const ch = p.characters.find(c => c.id === item.id);
+      if (!ch || !(ch.imageEl instanceof HTMLImageElement)) return null;
+      const w = ch.imageEl.naturalWidth * ch.scale;
+      const h = ch.imageEl.naturalHeight * ch.scale;
+      ctx.save();
+      ctx.translate(ch.x, ch.y);
+      ctx.rotate(ch.rotation || 0);
+      if (ch.flipX) ctx.scale(-1, 1);
+      ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
+      ctx.restore();
+    } else if (item.type === "bubble") {
+      const b = p.bubbles.find(bb => bb.id === item.id);
+      if (!b) return null;
+      drawBubble(ctx, b, false);
+    } else if (item.type === "drawing") {
+      const dl = (p.drawingLayers || []).find(d => d.id === item.id);
+      if (!dl || !(dl.imageEl instanceof HTMLImageElement)) return null;
+      ctx.save();
+      ctx.globalAlpha = dl.opacity ?? 1;
+      if (dl.type === "eraser") ctx.globalCompositeOperation = "destination-out";
+      ctx.drawImage(dl.imageEl, dl.x ?? 0, dl.y ?? 0, dl.width ?? CANVAS_W, dl.height ?? CANVAS_H);
+      ctx.restore();
+    } else if (item.type === "text") {
+      const te = (p.textElements || []).find((t: CanvasTextElement) => t.id === item.id);
+      if (!te) return null;
+      ctx.save();
+      ctx.globalAlpha = te.opacity;
+      let fontStyle = "";
+      if (te.italic) fontStyle += "italic ";
+      if (te.bold) fontStyle += "bold ";
+      fontStyle += `${te.fontSize}px `;
+      fontStyle += te.fontFamily === "default" ? "sans-serif" : `"${te.fontFamily}", sans-serif`;
+      ctx.font = fontStyle;
+      ctx.fillStyle = te.color;
+      ctx.textAlign = te.textAlign as CanvasTextAlign;
+      ctx.textBaseline = "top";
+      let displayText = te.text;
+      if (te.textTransform === "uppercase") displayText = displayText.toUpperCase();
+      else if (te.textTransform === "lowercase") displayText = displayText.toLowerCase();
+      const textX = te.textAlign === "center" ? te.x + te.width / 2 : te.textAlign === "right" ? te.x + te.width : te.x;
+      const textY = te.y + 8;
+      const words = displayText.split("");
+      let line = "";
+      let lineY = textY;
+      const lineHeight = te.fontSize * 1.3;
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > te.width && line.length > 0) {
+          ctx.fillText(line, textX, lineY);
+          if (te.underline) { const lw = ctx.measureText(line).width; const lx = te.textAlign === "center" ? textX - lw / 2 : te.textAlign === "right" ? textX - lw : textX; ctx.fillRect(lx, lineY + te.fontSize + 1, lw, 1); }
+          if (te.strikethrough) { const lw = ctx.measureText(line).width; const lx = te.textAlign === "center" ? textX - lw / 2 : te.textAlign === "right" ? textX - lw : textX; ctx.fillRect(lx, lineY + te.fontSize / 2, lw, 1); }
+          line = words[i];
+          lineY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) {
+        ctx.fillText(line, textX, lineY);
+        if (te.underline) { const lw = ctx.measureText(line).width; const lx = te.textAlign === "center" ? textX - lw / 2 : te.textAlign === "right" ? textX - lw : textX; ctx.fillRect(lx, lineY + te.fontSize + 1, lw, 1); }
+        if (te.strikethrough) { const lw = ctx.measureText(line).width; const lx = te.textAlign === "center" ? textX - lw / 2 : te.textAlign === "right" ? textX - lw : textX; ctx.fillRect(lx, lineY + te.fontSize / 2, lw, 1); }
+      }
+      ctx.restore();
+    } else if (item.type === "line") {
+      const le = (p.lineElements || []).find((l: CanvasLineElement) => l.id === item.id);
+      if (!le) return null;
+      ctx.save();
+      ctx.globalAlpha = le.opacity;
+      ctx.strokeStyle = le.color;
+      ctx.lineWidth = le.strokeWidth;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      if (le.dashPattern === "dashed") ctx.setLineDash([8, 4]);
+      else if (le.dashPattern === "dotted") ctx.setLineDash([2, 4]);
+      else ctx.setLineDash([]);
+      const pts = le.points;
+      if (pts.length >= 2) {
+        ctx.beginPath();
+        if (le.lineType === "curved" && pts.length >= 3) {
+          ctx.moveTo(pts[0].x, pts[0].y);
+          if (pts.length === 3) {
+            ctx.quadraticCurveTo(pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+          } else {
+            for (let j = 1; j < pts.length - 1; j++) {
+              const midX = (pts[j].x + pts[j + 1].x) / 2;
+              const midY = (pts[j].y + pts[j + 1].y) / 2;
+              ctx.quadraticCurveTo(pts[j].x, pts[j].y, midX, midY);
+            }
+            ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+          }
+        } else {
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let j = 1; j < pts.length; j++) {
+            ctx.lineTo(pts[j].x, pts[j].y);
+          }
+        }
+        ctx.stroke();
+        const drawArrow = (from: { x: number; y: number }, to: { x: number; y: number }) => {
+          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          const headLen = Math.max(le.strokeWidth * 3, 8);
+          ctx.beginPath();
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - headLen * Math.cos(angle - Math.PI / 6), to.y - headLen * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - headLen * Math.cos(angle + Math.PI / 6), to.y - headLen * Math.sin(angle + Math.PI / 6));
+          ctx.stroke();
+        };
+        ctx.setLineDash([]);
+        if (le.startArrow && pts.length >= 2) drawArrow(pts[1], pts[0]);
+        if (le.endArrow && pts.length >= 2) drawArrow(pts[pts.length - 2], pts[pts.length - 1]);
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    } else if (item.type === "shape") {
+      const se = (p.shapeElements || []).find((s: CanvasShapeElement) => s.id === item.id);
+      if (!se) return null;
+      ctx.save();
+      ctx.globalAlpha = se.opacity;
+      buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
+      if (se.fillColor !== "transparent") { ctx.fillStyle = se.fillColor; ctx.fill(); }
+      if (se.strokeWidth > 0) { ctx.strokeStyle = se.strokeColor; ctx.lineWidth = se.strokeWidth; ctx.stroke(); }
+      ctx.restore();
+    } else if (item.type === "topScript") {
+      if (p.topScript) drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
+    } else if (item.type === "bottomScript") {
+      if (p.bottomScript) drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H);
+    }
+
+    return canvas;
+  };
+
+  const downloadLayerPng = (item: LayerItem) => {
+    const canvas = renderLayerToCanvas(item);
+    if (!canvas) {
+      toast({ title: "다운로드 실패", description: "레이어를 렌더링할 수 없습니다.", variant: "destructive" });
+      return;
+    }
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = `layer_${item.type}_${item.id}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadLayerSvg = (item: LayerItem) => {
+    const canvas = renderLayerToCanvas(item);
+    if (!canvas) {
+      toast({ title: "다운로드 실패", description: "레이어를 렌더링할 수 없습니다.", variant: "destructive" });
+      return;
+    }
+    const dataUrl = canvas.toDataURL("image/png");
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}"><image href="${dataUrl}" width="${CANVAS_W}" height="${CANVAS_H}"/></svg>`;
+    const blob = new Blob([svgContent], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = `layer_${item.type}_${item.id}.svg`;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleShareInstagram = async (idx: number) => {
     const p = panels[idx];
     const canvas = panelCanvasRefs.current.get(p.id);
@@ -4739,6 +5991,7 @@ export default function StoryPage() {
         id: p.id,
         topScript: p.topScript,
         bottomScript: p.bottomScript,
+        backgroundColor: p.backgroundColor,
         backgroundImageUrl: p.backgroundImageUrl,
         bubbles: p.bubbles.map((b) => ({
           ...b,
@@ -4762,6 +6015,7 @@ export default function StoryPage() {
         })),
         textElements: p.textElements || [],
         lineElements: p.lineElements || [],
+        shapeElements: p.shapeElements || [],
       })),
       topic,
     });
@@ -4846,6 +6100,7 @@ export default function StoryPage() {
             id: p.id || generateId(),
             topScript: p.topScript || null,
             bottomScript: p.bottomScript || null,
+            backgroundColor: p.backgroundColor || "#ffffff",
             backgroundImageUrl: p.backgroundImageUrl || undefined,
             backgroundImageEl: null,
             bubbles: (p.bubbles || []).map((b: any) => ({
@@ -4862,6 +6117,7 @@ export default function StoryPage() {
             })),
             textElements: p.textElements || [],
             lineElements: p.lineElements || [],
+            shapeElements: p.shapeElements || [],
           }));
           rehydrateImages(restoredPanels);
           setPanelsRaw(restoredPanels);
@@ -4876,6 +6132,70 @@ export default function StoryPage() {
   const isPro = usageData?.tier === "pro";
   const canAllFontsStory = isPro || (usageData?.creatorTier ?? 0) >= 3;
   const availableFonts = canAllFontsStory ? KOREAN_FONTS : KOREAN_FONTS.slice(0, 3);
+
+  // ── 우측 패널용 함수들 (메인 Story 레벨) ──
+  const [removingBg, setRemovingBg] = useState(false);
+
+  const handleFlipTailHorizontally = useCallback(() => {
+    const selBubble = selectedBubbleId ? activePanel?.bubbles.find(b => b.id === selectedBubbleId) : null;
+    if (!selBubble || selBubble.tailStyle === "none") return;
+    const cx = selBubble.x + selBubble.width / 2;
+    const defaultTip = getDefaultTailTip(selBubble);
+    const origTipX = selBubble.tailTipX ?? defaultTip?.x ?? cx;
+    const origTipY = selBubble.tailTipY ?? defaultTip?.y ?? (selBubble.y + selBubble.height);
+    const updates: Partial<SpeechBubble> = {
+      tailTipX: 2 * cx - origTipX,
+      tailTipY: origTipY,
+    };
+    if (typeof selBubble.tailCtrl1X === "number" && typeof selBubble.tailCtrl1Y === "number") {
+      updates.tailCtrl1X = 2 * cx - selBubble.tailCtrl1X;
+      updates.tailCtrl1Y = selBubble.tailCtrl1Y;
+    }
+    if (typeof selBubble.tailCtrl2X === "number" && typeof selBubble.tailCtrl2Y === "number") {
+      updates.tailCtrl2X = 2 * cx - selBubble.tailCtrl2X;
+      updates.tailCtrl2Y = selBubble.tailCtrl2Y;
+    }
+    if (typeof selBubble.tailCtrl3X === "number" && typeof selBubble.tailCtrl3Y === "number") {
+      updates.tailCtrl3X = 2 * cx - selBubble.tailCtrl3X;
+      updates.tailCtrl3Y = selBubble.tailCtrl3Y;
+    }
+    if (typeof selBubble.tailCtrl4X === "number" && typeof selBubble.tailCtrl4Y === "number") {
+      updates.tailCtrl4X = 2 * cx - selBubble.tailCtrl4X;
+      updates.tailCtrl4Y = selBubble.tailCtrl4Y;
+    }
+    updatePanel(activePanelIndex, {
+      ...activePanel,
+      bubbles: activePanel.bubbles.map(b => b.id === selBubble.id ? { ...b, ...updates } : b),
+    });
+  }, [selectedBubbleId, activePanel, activePanelIndex, updatePanel]);
+
+  const handleRemoveBackground = useCallback(async () => {
+    const selChar = selectedCharId ? activePanel?.characters.find(c => c.id === selectedCharId) : null;
+    if (!selChar) return;
+    if (!isPro) {
+      toast({ title: "Pro 전용 기능", description: "배경제거는 Pro 멤버십 전용 기능입니다.", variant: "destructive" });
+      return;
+    }
+    setRemovingBg(true);
+    try {
+      const res = await apiRequest("POST", "/api/remove-background", { imageUrl: selChar.imageUrl });
+      const data = await res.json();
+      if (data.resultUrl) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = data.resultUrl;
+        updatePanel(activePanelIndex, {
+          ...activePanel,
+          characters: activePanel.characters.map(c => c.id === selChar.id ? { ...c, imageUrl: data.resultUrl, imgElement: img } : c),
+        });
+        toast({ title: "배경 제거 완료" });
+      }
+    } catch (e) {
+      toast({ title: "배경 제거 실패", variant: "destructive" });
+    } finally {
+      setRemovingBg(false);
+    }
+  }, [selectedCharId, activePanel, activePanelIndex, updatePanel, isPro, toast]);
 
   const startStoryTour = useCallback(() => {
     const ensureDriver = () =>
@@ -4956,6 +6276,14 @@ export default function StoryPage() {
     { id: "drawing", icon: Pen, label: "드로잉", color: "#ef4444" },
     { id: "line", icon: Minus, label: "선", color: "#3b82f6" },
     { id: "text", icon: Type, label: "텍스트", color: "#8b5cf6" },
+    { id: "shapes", icon: Square, label: "도형", color: "#10b981" },
+  ];
+
+  // ─── Element items for compact elements panel ─────────────────────────
+  const ELEMENT_ITEMS: { id: string; icon: typeof Pen; label: string; color?: string }[] = [
+    { id: "script", icon: AlignVerticalJustifyStart, label: "자막 설정", color: "#eab308" },
+    { id: "bubble", icon: MessageSquare, label: "말풍선", color: "#3b82f6" },
+    { id: "template", icon: LayoutGrid, label: "템플릿 가져오기", color: "#8b5cf6" },
   ];
 
   // ─── Drawing brush items for sub-panel ──────────────────────────────
@@ -4966,10 +6294,10 @@ export default function StoryPage() {
   ];
 
   return (
-    <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-muted/30 dark:bg-background relative">
+    <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative">
       <EditorOnboarding editor="story" />
       <div
-        className="flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-card dark:bg-card border-r"
+        className="flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-background/80 border-r"
         style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "50px" }}
         data-testid="left-icon-sidebar"
       >
@@ -4989,10 +6317,10 @@ export default function StoryPage() {
       <div className="flex flex-1 h-full">
         {activeLeftTab && (
           <div
-            className={`h-full bg-card overflow-y-auto border-r ${activeLeftTab === "tools" ? "w-auto" : "w-[320px]"}`}
+            className={`h-full bg-background/80 overflow-y-auto border-r ${(activeLeftTab === "tools" || activeLeftTab === "elements") ? "w-auto" : "w-[320px]"}`}
             data-testid="left-panel-content"
           >
-            <div className={activeLeftTab === "tools" ? "" : "p-3 space-y-5"}>
+            <div className={(activeLeftTab === "tools" || activeLeftTab === "elements") ? "" : "p-3 space-y-5"}>
                   {activeLeftTab === "ai" && (
                     <>
                       <div className="flex items-center justify-between gap-2">
@@ -5064,22 +6392,40 @@ export default function StoryPage() {
                             </Button>
                           </div>
 
-                          <Button
-                            className="w-full"
-                            size="sm"
-                            onClick={() => {
-                              generateMutation.mutate({ mode: "basic" });
-                            }}
-                            disabled={!topic.trim() || generateMutation.isPending}
-                            data-testid="button-generate-scripts"
-                          >
-                            {generateMutation.isPending ? (
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-2" />
-                            ) : (
-                              <Wand2 className="h-4 w-4 mr-2" />
-                            )}
-                            AI 자막 생성 실행
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                generateMutation.mutate({ mode: "basic", scope: "current" });
+                              }}
+                              disabled={!topic.trim() || generateMutation.isPending}
+                            >
+                              {generateMutation.isPending ? (
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-1.5" />
+                              ) : (
+                                <Wand2 className="h-4 w-4 mr-1.5" />
+                              )}
+                              선택 컷 생성
+                            </Button>
+                            <Button
+                              className="flex-1"
+                              size="sm"
+                              onClick={() => {
+                                generateMutation.mutate({ mode: "basic", scope: "all" });
+                              }}
+                              disabled={!topic.trim() || generateMutation.isPending}
+                              data-testid="button-generate-scripts"
+                            >
+                              {generateMutation.isPending ? (
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-1.5" />
+                              ) : (
+                                <Wand2 className="h-4 w-4 mr-1.5" />
+                              )}
+                              전체 생성 ({panels.length}컷)
+                            </Button>
+                          </div>
                         </div>
                       )}
 
@@ -5199,21 +6545,33 @@ export default function StoryPage() {
                                     생성된 이미지가 없어요.<br />먼저 캐릭터를 만들어주세요.
                                   </p>
                                 ) : (
-                                  <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
-                                    {galleryData.map((gen) => (
+                                  <>
+                                    <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
+                                      {galleryData.map((gen) => (
+                                        <button
+                                          key={gen.id}
+                                          className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
+                                          onClick={async () => {
+                                            const full = await fetchFullGeneration(gen.id);
+                                            if (!full) return;
+                                            setAutoRefImageUrl(full.resultImageUrl);
+                                            setAutoRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
+                                            setShowAutoGalleryPicker(false);
+                                          }}
+                                        >
+                                          <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
+                                        </button>
+                                      ))}
+                                    </div>
+                                    {galleryHasMore && (
                                       <button
-                                        key={gen.id}
-                                        className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
-                                        onClick={() => {
-                                          setAutoRefImageUrl(gen.resultImageUrl);
-                                          setAutoRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
-                                          setShowAutoGalleryPicker(false);
-                                        }}
+                                        className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                        onClick={() => setGalleryLimit((prev) => prev + 30)}
                                       >
-                                        <img src={gen.resultImageUrl} alt={gen.prompt} className="w-full h-full object-cover" />
+                                        더 보기
                                       </button>
-                                    ))}
-                                  </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}
@@ -5353,39 +6711,75 @@ export default function StoryPage() {
                             </p>
                           )}
 
-                          <Button
-                            className="w-full"
-                            size="sm"
-                            onClick={() => {
-                              if (!autoRefImageUrl) {
-                                toast({
-                                  title: "기준 이미지 필요",
-                                  description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
-                                  variant: "destructive",
-                                });
-                                return;
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                if (!autoRefImageUrl) {
+                                  toast({
+                                    title: "기준 이미지 필요",
+                                    description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                generateMutation.mutate({ mode: "full", scope: "current" });
+                                instatoonImageMutation.mutate();
+                              }}
+                              disabled={
+                                !topic.trim() ||
+                                generateMutation.isPending ||
+                                instatoonImageMutation.isPending
                               }
-                              generateMutation.mutate({ mode: "full" });
-                              instatoonImageMutation.mutate();
-                            }}
-                            disabled={
-                              !topic.trim() ||
-                              generateMutation.isPending ||
-                              instatoonImageMutation.isPending
-                            }
-                          >
-                            {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
-                              <>
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-2" />
-                                {instatoonImageMutation.isPending ? "이미지 변환 중..." : "스크립트 생성 중..."}
-                              </>
-                            ) : (
-                              <>
-                                <Wand2 className="h-4 w-4 mr-2" />
-                                인스타툰 자동 생성 실행
-                              </>
-                            )}
-                          </Button>
+                            >
+                              {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
+                                <>
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-1.5" />
+                                  생성 중...
+                                </>
+                              ) : (
+                                <>
+                                  <Wand2 className="h-4 w-4 mr-1.5" />
+                                  선택 컷 생성
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              className="flex-1"
+                              size="sm"
+                              onClick={() => {
+                                if (!autoRefImageUrl) {
+                                  toast({
+                                    title: "기준 이미지 필요",
+                                    description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                generateMutation.mutate({ mode: "full", scope: "all" });
+                                instatoonImageMutation.mutate();
+                              }}
+                              disabled={
+                                !topic.trim() ||
+                                generateMutation.isPending ||
+                                instatoonImageMutation.isPending
+                              }
+                            >
+                              {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
+                                <>
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-1.5" />
+                                  {instatoonImageMutation.isPending ? "변환 중..." : "생성 중..."}
+                                </>
+                              ) : (
+                                <>
+                                  <Wand2 className="h-4 w-4 mr-1.5" />
+                                  전체 생성 ({panels.length}컷)
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       )}
 
@@ -5446,21 +6840,33 @@ export default function StoryPage() {
                                 ) : !galleryData?.length ? (
                                   <p className="text-[11px] text-muted-foreground text-center py-2">생성된 이미지가 없어요.</p>
                                 ) : (
-                                  <div className="grid grid-cols-3 gap-1.5 max-h-[150px] overflow-y-auto">
-                                    {galleryData.map((gen) => (
+                                  <>
+                                    <div className="grid grid-cols-3 gap-1.5 max-h-[150px] overflow-y-auto">
+                                      {galleryData.map((gen) => (
+                                        <button
+                                          key={gen.id}
+                                          className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
+                                          onClick={async () => {
+                                            const full = await fetchFullGeneration(gen.id);
+                                            if (!full) return;
+                                            setPromptRefImageUrl(full.resultImageUrl);
+                                            setPromptRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
+                                            setShowPromptGalleryPicker(false);
+                                          }}
+                                        >
+                                          <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
+                                        </button>
+                                      ))}
+                                    </div>
+                                    {galleryHasMore && (
                                       <button
-                                        key={gen.id}
-                                        className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
-                                        onClick={() => {
-                                          setPromptRefImageUrl(gen.resultImageUrl);
-                                          setPromptRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
-                                          setShowPromptGalleryPicker(false);
-                                        }}
+                                        className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                        onClick={() => setGalleryLimit((prev) => prev + 30)}
                                       >
-                                        <img src={gen.resultImageUrl} alt={gen.prompt} className="w-full h-full object-cover" />
+                                        더 보기
                                       </button>
-                                    ))}
-                                  </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}
@@ -5593,6 +6999,9 @@ export default function StoryPage() {
                         onRemove={() => removePanel(activePanelIndex)}
                         galleryImages={galleryData ?? []}
                         galleryLoading={galleryLoading}
+                        galleryHasMore={galleryHasMore}
+                        onLoadMoreGallery={() => setGalleryLimit((prev) => prev + 30)}
+                        fetchFullGeneration={fetchFullGeneration}
                         selectedBubbleId={selectedBubbleId}
                         setSelectedBubbleId={setSelectedBubbleId}
                         selectedCharId={selectedCharId}
@@ -5778,89 +7187,1593 @@ export default function StoryPage() {
                           </button>
                         </div>
                       )}
+
+                      {/* Shape sub-tools strip */}
+                      {selectedToolItem === "shapes" && (
+                        <div className="tools-compact-panel__strip tools-compact-panel__strip--sub">
+                          <button
+                            onClick={() => { setSelectedShapeType("rectangle"); handleAddShape("rectangle"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="사각형"
+                          >
+                            <Square className="h-5 w-5" style={selectedShapeType !== "rectangle" ? { color: "#10b981" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("circle"); handleAddShape("circle"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "circle" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="원"
+                          >
+                            <Circle className="h-5 w-5" style={selectedShapeType !== "circle" ? { color: "#3b82f6" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("triangle"); handleAddShape("triangle"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "triangle" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="삼각형"
+                          >
+                            <Triangle className="h-5 w-5" style={selectedShapeType !== "triangle" ? { color: "#8b5cf6" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("diamond"); handleAddShape("diamond"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "diamond" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="다이아몬드"
+                          >
+                            <Diamond className="h-5 w-5" style={selectedShapeType !== "diamond" ? { color: "#f97316" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("star"); handleAddShape("star"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "star" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="별"
+                          >
+                            <Star className="h-5 w-5" style={selectedShapeType !== "star" ? { color: "#eab308" } : undefined} />
+                          </button>
+                          <button
+                            onClick={() => { setSelectedShapeType("arrow"); handleAddShape("arrow"); }}
+                            className={`tools-compact-panel__tool-btn ${selectedShapeType === "arrow" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                            title="화살표"
+                          >
+                            <ArrowRightIcon className="h-5 w-5" style={selectedShapeType !== "arrow" ? { color: "#ef4444" } : undefined} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
                 {activeLeftTab === "elements" && activePanel && (
-                  <>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => setActiveLeftTab(null)}
-                          className="text-muted-foreground hover-elevate rounded-md p-1"
-                        >
-                          <ArrowLeft className="h-3.5 w-3.5" />
-                        </button>
-                        <h3 className="text-sm font-semibold">요소</h3>
-                      </div>
-                      <button
-                        onClick={() => setActiveLeftTab(null)}
-                        className="text-muted-foreground hover-elevate rounded-md p-1"
-                      >
-                        <X className="h-3.5 w-3.5" />
+                  <div className="tools-compact-panel">
+                    <div className="tools-compact-panel__strip">
+                      <button onClick={() => setActiveLeftTab(null)} className="tools-compact-panel__close-btn" title="닫기">
+                        <X className="h-4 w-4" />
                       </button>
-                    </div>
-                    <div className="flex gap-1 mb-3">
-                      {([
-                        { id: "script" as const, label: "자막 설정" },
-                        { id: "bubble" as const, label: "말풍선" },
-                        { id: "template" as const, label: "템플릿 가져오기" },
-                      ]).map((sub) => (
+                      {ELEMENT_ITEMS.map((item) => (
                         <button
-                          key={sub.id}
-                          onClick={() => setElementsSubTab(sub.id)}
-                          className={`px-2.5 py-1 text-[11px] rounded-md border transition-colors ${elementsSubTab === sub.id ? "border-foreground/40 bg-foreground/10 font-semibold" : "border-border hover-elevate"}`}
+                          key={item.id}
+                          onClick={() => {
+                            if (item.id === "template") {
+                              setShowStoryTemplatePicker(true);
+                            } else {
+                              setElementsSubTab(item.id as any);
+                            }
+                          }}
+                          className={`tools-compact-panel__tool-btn ${
+                            item.id !== "template" && elementsSubTab === item.id
+                              ? "tools-compact-panel__tool-btn--active" : ""
+                          }`}
+                          title={item.label}
                         >
-                          {sub.label}
+                          <item.icon className="h-5 w-5"
+                            style={item.color && elementsSubTab !== item.id ? { color: item.color } : undefined}
+                          />
                         </button>
                       ))}
                     </div>
+                  </div>
+                )}
 
-                    {elementsSubTab === "bubble" && (
-                      <EditorPanel
-                        panel={activePanel}
-                        index={activePanelIndex}
-                        total={panels.length}
-                        onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
-                        onRemove={() => removePanel(activePanelIndex)}
-                        galleryImages={galleryData ?? []}
-                        galleryLoading={galleryLoading}
-                        selectedBubbleId={selectedBubbleId}
-                        setSelectedBubbleId={setSelectedBubbleId}
-                        selectedCharId={selectedCharId}
-                        setSelectedCharId={setSelectedCharId}
-                        creatorTier={usageData?.creatorTier ?? 0}
-                        isPro={isPro}
-                        mode="bubble"
-                        bubbleTextareaRef={bubbleTextareaRef}
-                      />
-                    )}
+                </div>
+              </div>
+          )}
 
-                    {elementsSubTab === "template" && (
-                      <EditorPanel
-                        panel={activePanel}
-                        index={activePanelIndex}
-                        total={panels.length}
-                        onUpdate={(updated) => updatePanel(activePanelIndex, updated)}
-                        onRemove={() => removePanel(activePanelIndex)}
-                        galleryImages={galleryData ?? []}
-                        galleryLoading={galleryLoading}
-                        selectedBubbleId={selectedBubbleId}
-                        setSelectedBubbleId={setSelectedBubbleId}
-                        selectedCharId={selectedCharId}
-                        setSelectedCharId={setSelectedCharId}
-                        creatorTier={usageData?.creatorTier ?? 0}
-                        isPro={isPro}
-                        mode="template"
-                      />
-                    )}
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div
+              className="w-full relative"
+              data-testid="canvas-toolbar"
+            >
+              <div
+                className="flex items-center justify-between gap-3 px-5 py-2 w-full flex-wrap bg-background/60 dark:bg-background/40"
+                style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 mr-1">
+                    <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
+                      <BookOpen className="h-3.5 w-3.5 text-white" />
+                    </div>
+                    <span className="text-sm font-bold tracking-tight" data-testid="text-story-title">스토리</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={undo} disabled={historyRef.current.length === 0} title="실행 취소 (Ctrl+Z)" data-testid="button-undo">
+                      <Undo2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={redo} disabled={futureRef.current.length === 0} title="다시 실행 (Ctrl+Shift+Z)" data-testid="button-redo">
+                      <Redo2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={resetAll} title="초기화" data-testid="button-reset-story">
+                      <RotateCcw className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 flex-wrap">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={startStoryTour} title="도움말" data-testid="button-story-help">
+                    <Lightbulb className="h-3.5 w-3.5" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="다운로드" data-testid="button-download-panel">
+                        <Download className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[200px]">
+                      <DropdownMenuLabel className="text-[11px]">PNG 다운로드</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => guard(() => downloadPanelSized(activePanelIndex, 450, 600))}>
+                        <span className="text-xs">Original (450×600)</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 900, 1200))}>
+                        <span className="text-xs">2x (900×1200)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 1080, 1920))}>
+                        <span className="text-xs">Instagram Story (1080×1920)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 1080, 1080))}>
+                        <span className="text-xs">Instagram Post (1080×1080)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSvg(activePanelIndex))}>
+                        <span className="text-xs">SVG</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 h-7 text-xs px-2"
+                        data-testid="button-download-all-panels"
+                      >
+                        <Download className="h-3 w-3" />
+                        전체 다운로드
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[200px]">
+                      <DropdownMenuLabel className="text-[11px]">PNG 전체 다운로드</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => guard(() => downloadAllSized(450, 600))}>
+                        <span className="text-xs">Original (450×600)</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(900, 1200))}>
+                        <span className="text-xs">2x (900×1200)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1920))}>
+                        <span className="text-xs">Instagram Story (1080×1920)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1080))}>
+                        <span className="text-xs">Instagram Post (1080×1080)</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSvg())}>
+                        <span className="text-xs">SVG</span>
+                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-                  {elementsSubTab === "script" && (
-                    <>
-                      <p className="text-[11px] text-muted-foreground">
-                        패널 {activePanelIndex + 1}의 상단/하단 스크립트를
-                        설정합니다.
-                      </p>
+                  <Button size="sm" onClick={() => guard(() => setShowSaveModal(true))} className="gap-1 h-7 text-xs px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
+                    <Save className="h-3 w-3" />
+                    저장
+                    {isPro && <Crown className="h-2.5 w-2.5 ml-0.5" />}
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setLocation("/edits")} title="내 편집" data-testid="button-story-my-edits">
+                    <FolderOpen className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
+            </div>
+
+            {/* Main Canvas Area - List View */}
+            <div
+              ref={canvasAreaRef}
+              className={`flex-1 overflow-y-auto bg-muted/20 dark:bg-muted/10 ${zoom >= 200 ? "p-0" : "p-8"}`}
+              data-testid="story-canvas-area"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) {
+                  setSelectedBubbleId(null);
+                  setSelectedCharId(null);
+                  setSelectedShapeId(null);
+                  setSelectedDrawingLayerId(null);
+                }
+              }}
+            >
+              <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-8 pt-16 pb-32">
+                {panels.map((panel, i) => (
+                  <ContextMenu key={panel.id}>
+                    <ContextMenuTrigger>
+                      <div
+                        onMouseDown={(e) => {
+                          if (e.target === e.currentTarget) {
+                            setSelectedBubbleId(null);
+                            setSelectedCharId(null);
+                            setSelectedDrawingLayerId(null);
+                          }
+                        }}
+                        onClick={() => setActivePanelIndex(i)}
+                        className={`relative shadow-lg transition-all ${activePanelIndex === i ? "ring-4 ring-primary ring-offset-2" : "opacity-90 hover:opacity-100"}`}
+                      >
+                        <div className="absolute -left-12 top-0 flex flex-col gap-2">
+                          <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold shadow-sm ${activePanelIndex === i ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                            {i + 1}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-red-500 shadow hover:bg-white z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removePanel(i);
+                          }}
+                          title="페이지 삭제"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+
+                        {/* ─── Context Toolbars ─── absolute above canvas */}
+                        {activePanelIndex === i && selectedTextElement && (
+                          <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                            <TextContextToolbar
+                              element={selectedTextElement}
+                              onChange={handleUpdateTextElement}
+                            />
+                          </div>
+                        )}
+                        {activePanelIndex === i && selectedLineElement && (
+                          <>
+                            <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                              <LineContextToolbar
+                                element={selectedLineElement}
+                                onChange={handleUpdateLineElement}
+                                showSettings={showLineSettings}
+                                onShowSettings={() => setShowLineSettings(s => !s)}
+                              />
+                            </div>
+                            {showLineSettings && (
+                              <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                                <FloatingSettingsModal
+                                  strokeWidth={selectedLineElement.strokeWidth}
+                                  opacity={selectedLineElement.opacity}
+                                  onStrokeWidthChange={(v) => handleUpdateLineElement({ ...selectedLineElement, strokeWidth: v })}
+                                  onOpacityChange={(v) => handleUpdateLineElement({ ...selectedLineElement, opacity: v })}
+                                  onClose={() => setShowLineSettings(false)}
+                                />
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {activePanelIndex === i && selectedShapeElement && (
+                          <>
+                            <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                              <ShapeContextToolbar
+                                element={selectedShapeElement}
+                                onChange={handleUpdateShapeElement}
+                                showSettings={showShapeSettings}
+                                onShowSettings={() => setShowShapeSettings(s => !s)}
+                              />
+                            </div>
+                            {showShapeSettings && (
+                              <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                                <FloatingSettingsModal
+                                  strokeWidth={selectedShapeElement.strokeWidth}
+                                  opacity={selectedShapeElement.opacity}
+                                  onStrokeWidthChange={(v) => handleUpdateShapeElement({ ...selectedShapeElement, strokeWidth: v })}
+                                  onOpacityChange={(v) => handleUpdateShapeElement({ ...selectedShapeElement, opacity: v })}
+                                  onClose={() => setShowShapeSettings(false)}
+                                  minStrokeWidth={0}
+                                />
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {activePanelIndex === i && selectedToolItem === "select" && selectedDrawingLayerId && (() => {
+                          const selLayer = (panel.drawingLayers || []).find(l => l.id === selectedDrawingLayerId) || null;
+                          return (
+                          <>
+                            <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                              <DrawingContextToolbar
+                                color={drawingToolState.color}
+                                onColorChange={(c) => setDrawingToolState(s => ({ ...s, color: c }))}
+                                showSettings={showDrawingContextSettings}
+                                onShowSettings={() => setShowDrawingContextSettings(s => !s)}
+                                layer={selLayer}
+                                onDelete={() => {
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).filter(l => l.id !== selectedDrawingLayerId),
+                                  });
+                                  setSelectedDrawingLayerId(null);
+                                }}
+                                onDuplicate={() => {
+                                  if (!selLayer) return;
+                                  const maxZ = (panel.drawingLayers || []).reduce((max, l) => Math.max(max, l.zIndex), 0);
+                                  const newLayer: DrawingLayer = {
+                                    ...selLayer,
+                                    id: generateId(),
+                                    zIndex: maxZ + 1,
+                                  };
+                                  const img = new Image();
+                                  img.onload = () => {
+                                    newLayer.imageEl = img;
+                                    updatePanel(i, {
+                                      ...panel,
+                                      drawingLayers: [...(panel.drawingLayers || []), newLayer],
+                                    });
+                                    setSelectedDrawingLayerId(newLayer.id);
+                                  };
+                                  img.src = selLayer.imageData;
+                                }}
+                                onToggleVisibility={() => {
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).map(l =>
+                                      l.id === selectedDrawingLayerId ? { ...l, visible: !l.visible } : l
+                                    ),
+                                  });
+                                }}
+                                onOpacityChange={(opacity) => {
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).map(l =>
+                                      l.id === selectedDrawingLayerId ? { ...l, opacity } : l
+                                    ),
+                                  });
+                                }}
+                                onBringForward={() => {
+                                  const layers = [...(panel.drawingLayers || [])].sort((a, b) => a.zIndex - b.zIndex);
+                                  const idx = layers.findIndex(l => l.id === selectedDrawingLayerId);
+                                  if (idx < 0 || idx >= layers.length - 1) return;
+                                  const cur = layers[idx].zIndex;
+                                  layers[idx] = { ...layers[idx], zIndex: layers[idx + 1].zIndex };
+                                  layers[idx + 1] = { ...layers[idx + 1], zIndex: cur };
+                                  updatePanel(i, { ...panel, drawingLayers: layers });
+                                }}
+                                onSendBackward={() => {
+                                  const layers = [...(panel.drawingLayers || [])].sort((a, b) => a.zIndex - b.zIndex);
+                                  const idx = layers.findIndex(l => l.id === selectedDrawingLayerId);
+                                  if (idx <= 0) return;
+                                  const cur = layers[idx].zIndex;
+                                  layers[idx] = { ...layers[idx], zIndex: layers[idx - 1].zIndex };
+                                  layers[idx - 1] = { ...layers[idx - 1], zIndex: cur };
+                                  updatePanel(i, { ...panel, drawingLayers: layers });
+                                }}
+                                onBringToFront={() => {
+                                  const maxZ = (panel.drawingLayers || []).reduce((max, l) => Math.max(max, l.zIndex), 0);
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).map(l =>
+                                      l.id === selectedDrawingLayerId ? { ...l, zIndex: maxZ + 1 } : l
+                                    ),
+                                  });
+                                }}
+                                onSendToBack={() => {
+                                  const minZ = (panel.drawingLayers || []).reduce((min, l) => Math.min(min, l.zIndex), Infinity);
+                                  updatePanel(i, {
+                                    ...panel,
+                                    drawingLayers: (panel.drawingLayers || []).map(l =>
+                                      l.id === selectedDrawingLayerId ? { ...l, zIndex: minZ - 1 } : l
+                                    ),
+                                  });
+                                }}
+                              />
+                            </div>
+                            {showDrawingContextSettings && (
+                              <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                                <FloatingSettingsModal
+                                  strokeWidth={drawingToolState.size}
+                                  opacity={drawingToolState.opacity}
+                                  onStrokeWidthChange={(v) => setDrawingToolState(s => ({ ...s, size: v }))}
+                                  onOpacityChange={(v) => setDrawingToolState(s => ({ ...s, opacity: v }))}
+                                  onClose={() => setShowDrawingContextSettings(false)}
+                                />
+                              </div>
+                            )}
+                          </>
+                          );
+                        })()}
+                        {/* Bubble context toolbar */}
+                        {activePanelIndex === i && selectedBubbleId && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedDrawingLayerId && (() => {
+                          const selBubble = panel.bubbles.find(b => b.id === selectedBubbleId);
+                          if (!selBubble) return null;
+                          return (
+                            <>
+                              <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                                <BubbleContextToolbar
+                                  bubble={selBubble}
+                                  onChange={(updates) => {
+                                    updatePanel(i, {
+                                      ...panel,
+                                      bubbles: panel.bubbles.map(b => b.id === selectedBubbleId ? { ...b, ...updates } : b),
+                                    });
+                                  }}
+                                  showSettings={showBubbleSettings}
+                                  onShowSettings={() => setShowBubbleSettings(s => !s)}
+                                  canAllFonts={canAllFontsStory}
+                                />
+                              </div>
+                              {showBubbleSettings && (
+                                <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                                  <BubbleFloatingSettings
+                                    bubble={selBubble}
+                                    onChange={(updates) => {
+                                      updatePanel(i, {
+                                        ...panel,
+                                        bubbles: panel.bubbles.map(b => b.id === selectedBubbleId ? { ...b, ...updates } : b),
+                                      });
+                                    }}
+                                    onClose={() => setShowBubbleSettings(false)}
+                                  />
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+
+                        {/* Canvas background toolbar — shown when nothing is selected */}
+                        {activePanelIndex === i && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedBubbleId && !selectedCharId && !selectedDrawingLayerId && (
+                          <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                            <CanvasBgToolbar
+                              backgroundColor={panel.backgroundColor || "#ffffff"}
+                              onColorChange={(color) => updatePanel(i, { ...panel, backgroundColor: color })}
+                            />
+                          </div>
+                        )}
+
+                        <PanelCanvas
+                          key={panel.id + "-main"}
+                          panel={panel}
+                          onUpdate={(updated) => updatePanel(i, updated)}
+                          selectedBubbleId={activePanelIndex === i ? selectedBubbleId : null}
+                          selectedShapeId={activePanelIndex === i ? selectedShapeId : null}
+                          onSelectBubble={(id) => {
+                            setSelectedBubbleId(id);
+                            setSelectedCharId(null);
+                            setSelectedTextId(null);
+                            setSelectedLineId(null);
+                            setSelectedShapeId(null);
+                            setSelectedDrawingLayerId(null);
+                            setActivePanelIndex(i);
+                            if (!id) setShowBubbleSettings(false);
+                          }}
+                          selectedCharId={activePanelIndex === i ? selectedCharId : null}
+                          onSelectChar={(id) => {
+                            setSelectedCharId(id);
+                            setSelectedBubbleId(null);
+                            setSelectedTextId(null);
+                            setSelectedLineId(null);
+                            setSelectedShapeId(null);
+                            setSelectedDrawingLayerId(null);
+                            setActivePanelIndex(i);
+                            setShowBubbleSettings(false);
+                            // Auto-switch to image tab when character is clicked on canvas
+                            if (id) setActiveLeftTab("image");
+                          }}
+                          canvasRef={(el) => {
+                            if (el) panelCanvasRefs.current.set(panel.id, el);
+                            else panelCanvasRefs.current.delete(panel.id);
+                          }}
+                          zoom={zoom}
+                          fontsReady={fontsReady}
+                          isPro={isPro}
+                          onEditBubble={undefined}
+                          onDoubleClickBubble={undefined}
+                          onDeletePanel={() => removePanel(i)}
+                          hideDrawingLayers={isDrawingMode && activePanelIndex === i}
+                          externalEditBubbleId={activePanelIndex === i ? editingBubbleIdForOverlay : null}
+                          onEditBubbleIdChange={setEditingBubbleIdForOverlay}
+                          onSelectScript={(pos) => {
+                            setSelectedScriptPosition(pos);
+                            if (pos) {
+                              setSelectedCharId(null);
+                              setSelectedBubbleId(null);
+                              setSelectedTextId(null);
+                              setSelectedLineId(null);
+                              setSelectedShapeId(null);
+                              setSelectedDrawingLayerId(null);
+                              setActivePanelIndex(i);
+                            }
+                          }}
+                          externalEditScriptPosition={activePanelIndex === i ? editingScriptPositionForCanvas : null}
+                          onEditScriptPositionChange={setEditingScriptPositionForCanvas}
+                        />
+
+                        {/* Canva-style drawing editor overlay — only in drawing mode */}
+                        {isDrawingMode && activePanelIndex === i && (
+                          <div
+                            className={`drawing-canvas-wrapper drawing-canvas-wrapper--active`}
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              width: "100%",
+                              height: "100%",
+                              zIndex: 20,
+                            }}
+                          >
+                            <DrawingCanvas
+                              ref={drawingCanvasRef}
+                              width={450}
+                              height={600}
+                              toolState={drawingToolState}
+                              className="rounded-md"
+                              drawingLayers={panel.drawingLayers || []}
+                              onLayerCreated={(newLayer) => {
+                                drawingUndoStackRef.current = [];
+                                setPanels(prev => {
+                                  const cur = prev[i];
+                                  if (!cur) return prev;
+                                  const existing = (cur.drawingLayers || []);
+                                  // 중복 방지: 동일 ID 레이어가 이미 있으면 무시
+                                  if (existing.some(dl => dl.id === newLayer.id)) return prev;
+                                  const next = [...prev];
+                                  next[i] = { ...cur, drawingLayers: [...existing, newLayer] };
+                                  return next;
+                                });
+                                setSelectedDrawingLayerId(newLayer.id);
+                                setSelectedToolItem("select");
+                              }}
+                              onRequestTextInput={(x, y) => {
+                                setTextInputPos({ x: (x / 450) * 100, y: (y / 600) * 100 });
+                                setTextInputValue("");
+                              }}
+                              onStrokeEnd={() => setDrawingLayerSelected(true)}
+                            />
+                            <div className="drawing-mode-indicator">
+                              <span className="drawing-mode-indicator__dot" />
+                              드로잉 모드
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Select-mode: click/drag/dblclick to interact with drawing/text/line layers */}
+                        {(selectedToolItem === "select" || selectedToolItem === "text" || selectedToolItem === "line" || selectedToolItem === "shapes") && activePanelIndex === i && (
+                          (panel.drawingLayers || []).length > 0 ||
+                          (panel.textElements || []).length > 0 ||
+                          (panel.lineElements || []).length > 0 ||
+                          (panel.shapeElements || []).length > 0 ||
+                          panel.bubbles.length > 0 ||
+                          panel.characters.length > 0
+                        ) && (
+                          <div
+                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: rubberBandRef.current?.active ? "crosshair" : multiDragRef.current ? "grabbing" : dragElementRef.current ? "grabbing" : "default" }}
+                            onContextMenu={(e) => {
+                              // Show context menu only if something is selected
+                              const hasSelection = canvasMultiSelectedRef.current.size > 0 || selectedBubbleId || selectedCharId || selectedTextId || selectedLineId || selectedDrawingLayerId || selectedShapeId;
+                              if (hasSelection) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setOverlayContextMenu({ x: e.clientX, y: e.clientY });
+                              }
+                            }}
+                            onMouseDown={(e) => {
+                              if (overlayContextMenu) setOverlayContextMenu(null);
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
+                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+
+                              const HANDLE_HIT = 10;
+
+                              // --- 1) Check resize handles of currently selected element first ---
+                              if (selectedShapeId) {
+                                const selShape = (panel.shapeElements || []).find(s => s.id === selectedShapeId);
+                                if (selShape) {
+                                  const shapeHandles: { mode: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r"; cx: number; cy: number }[] = [
+                                    { mode: "tl", cx: selShape.x, cy: selShape.y },
+                                    { mode: "tr", cx: selShape.x + selShape.width, cy: selShape.y },
+                                    { mode: "bl", cx: selShape.x, cy: selShape.y + selShape.height },
+                                    { mode: "br", cx: selShape.x + selShape.width, cy: selShape.y + selShape.height },
+                                    { mode: "t", cx: selShape.x + selShape.width / 2, cy: selShape.y },
+                                    { mode: "b", cx: selShape.x + selShape.width / 2, cy: selShape.y + selShape.height },
+                                    { mode: "l", cx: selShape.x, cy: selShape.y + selShape.height / 2 },
+                                    { mode: "r", cx: selShape.x + selShape.width, cy: selShape.y + selShape.height / 2 },
+                                  ];
+                                  for (const h of shapeHandles) {
+                                    if (Math.abs(canvasX - h.cx) <= HANDLE_HIT && Math.abs(canvasY - h.cy) <= HANDLE_HIT) {
+                                      handleElementDragStart("shape", selShape.id, canvasX, canvasY, panel, h.mode);
+                                      return;
+                                    }
+                                  }
+                                }
+                              }
+                              if (selectedCharId) {
+                                const selCh = panel.characters.find(c => c.id === selectedCharId);
+                                if (selCh && selCh.imageEl instanceof HTMLImageElement) {
+                                  const cw = selCh.imageEl.naturalWidth * selCh.scale;
+                                  const chH = selCh.imageEl.naturalHeight * selCh.scale;
+                                  const cx = selCh.x - cw / 2;
+                                  const cy = selCh.y - chH / 2;
+                                  const charCorners: { mode: "tl" | "tr" | "bl" | "br"; hx: number; hy: number }[] = [
+                                    { mode: "tl", hx: cx, hy: cy },
+                                    { mode: "tr", hx: cx + cw, hy: cy },
+                                    { mode: "bl", hx: cx, hy: chH + cy },
+                                    { mode: "br", hx: cx + cw, hy: chH + cy },
+                                  ];
+                                  for (const corner of charCorners) {
+                                    if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
+                                      handleElementDragStart("char", selCh.id, canvasX, canvasY, panel, corner.mode);
+                                      return;
+                                    }
+                                  }
+                                }
+                              }
+                              if (selectedBubbleId) {
+                                const selB = panel.bubbles.find(b => b.id === selectedBubbleId);
+                                if (selB && !selB.locked) {
+                                  // Tail handles first (tip, ctrl1~4)
+                                  if (selB.tailStyle !== "none") {
+                                    const geo = getTailGeometry(selB);
+                                    const tailHitR = 12;
+                                    if (Math.hypot(canvasX - geo.tipX, canvasY - geo.tipY) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "move-tail");
+                                      return;
+                                    }
+                                    const baseMidX = (geo.baseAx + geo.baseBx) / 2;
+                                    const baseMidY = (geo.baseAy + geo.baseBy) / 2;
+                                    const pull = 0.5 + (selB.tailCurve ?? 0.5) * 0.45;
+                                    const tipPull = 0.3;
+                                    const cp1x = selB.tailCtrl1X ?? (geo.baseAx + (baseMidX - geo.baseAx) * pull);
+                                    const cp1y = selB.tailCtrl1Y ?? (geo.baseAy + (baseMidY - geo.baseAy) * pull);
+                                    const cp2x = selB.tailCtrl2X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
+                                    const cp2y = selB.tailCtrl2Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+                                    const cp3x = selB.tailCtrl3X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
+                                    const cp3y = selB.tailCtrl3Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
+                                    const cp4x = selB.tailCtrl4X ?? (geo.baseBx + (baseMidX - geo.baseBx) * pull);
+                                    const cp4y = selB.tailCtrl4Y ?? (geo.baseBy + (baseMidY - geo.baseBy) * pull);
+                                    if (Math.hypot(canvasX - cp1x, canvasY - cp1y) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl1");
+                                      return;
+                                    }
+                                    if (Math.hypot(canvasX - cp2x, canvasY - cp2y) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl2");
+                                      return;
+                                    }
+                                    if (Math.hypot(canvasX - cp3x, canvasY - cp3y) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl3");
+                                      return;
+                                    }
+                                    if (Math.hypot(canvasX - cp4x, canvasY - cp4y) < tailHitR) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, "tail-ctrl4");
+                                      return;
+                                    }
+                                  }
+                                  // Resize handles
+                                  const bCorners: { mode: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r"; hx: number; hy: number }[] = [
+                                    { mode: "tl", hx: selB.x, hy: selB.y },
+                                    { mode: "tr", hx: selB.x + selB.width, hy: selB.y },
+                                    { mode: "bl", hx: selB.x, hy: selB.y + selB.height },
+                                    { mode: "br", hx: selB.x + selB.width, hy: selB.y + selB.height },
+                                    { mode: "t", hx: selB.x + selB.width / 2, hy: selB.y },
+                                    { mode: "b", hx: selB.x + selB.width / 2, hy: selB.y + selB.height },
+                                    { mode: "l", hx: selB.x, hy: selB.y + selB.height / 2 },
+                                    { mode: "r", hx: selB.x + selB.width, hy: selB.y + selB.height / 2 },
+                                  ];
+                                  for (const corner of bCorners) {
+                                    if (Math.abs(canvasX - corner.hx) <= HANDLE_HIT && Math.abs(canvasY - corner.hy) <= HANDLE_HIT) {
+                                      handleElementDragStart("bubble", selB.id, canvasX, canvasY, panel, corner.mode);
+                                      return;
+                                    }
+                                  }
+                                }
+                              }
+
+                              // --- 1.5) Multi-select group drag detection ---
+                              if (canvasMultiSelectedRef.current.size > 1) {
+                                const p = panels[i];
+                                if (p) {
+                                  const multiKeys = Array.from(canvasMultiSelectedRef.current);
+                                  let clickedOnSelected = false;
+                                  for (const key of multiKeys) {
+                                    const [etype, eid] = key.split(":");
+                                    let el: any = null;
+                                    if (etype === "bubble") el = p.bubbles.find(b => b.id === eid);
+                                    else if (etype === "char") el = p.characters.find(c => c.id === eid);
+                                    else if (etype === "text") el = (p.textElements || []).find(t => t.id === eid);
+                                    else if (etype === "line") el = (p.lineElements || []).find(l => l.id === eid);
+                                    else if (etype === "drawing") el = (p.drawingLayers || []).find(d => d.id === eid);
+                                    else if (etype === "shape") el = (p.shapeElements || []).find(s => s.id === eid);
+                                    if (!el) continue;
+                                    const bb = getElementBoundingBox(etype, el);
+                                    if (bb && canvasX >= bb.x && canvasX <= bb.x + bb.w && canvasY >= bb.y && canvasY <= bb.y + bb.h) {
+                                      clickedOnSelected = true;
+                                      break;
+                                    }
+                                  }
+                                  if (clickedOnSelected) {
+                                    // Start group drag
+                                    const starts = new Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>();
+                                    for (const key of multiKeys) {
+                                      const [etype, eid] = key.split(":");
+                                      if (etype === "bubble") { const b = p.bubbles.find(bb => bb.id === eid); if (b) starts.set(key, { x: b.x, y: b.y }); }
+                                      else if (etype === "char") { const c = p.characters.find(cc => cc.id === eid); if (c) starts.set(key, { x: c.x, y: c.y }); }
+                                      else if (etype === "text") { const t = (p.textElements || []).find(tt => tt.id === eid); if (t) starts.set(key, { x: t.x, y: t.y }); }
+                                      else if (etype === "line") { const l = (p.lineElements || []).find(ll => ll.id === eid); if (l) starts.set(key, { points: l.points.map(pt => ({ x: pt.x, y: pt.y })) }); }
+                                      else if (etype === "drawing") { const d = (p.drawingLayers || []).find(dd => dd.id === eid); if (d) starts.set(key, { x: d.x ?? 0, y: d.y ?? 0 }); }
+                                      else if (etype === "shape") { const s = (p.shapeElements || []).find(ss => ss.id === eid); if (s) starts.set(key, { x: s.x, y: s.y }); }
+                                    }
+                                    multiDragRef.current = { startMouseX: canvasX, startMouseY: canvasY, panelIdx: i, startPositions: starts };
+                                    return;
+                                  }
+                                }
+                              }
+
+                              // --- 2) Unified hit-test: ALL elements sorted by z-index (highest first) ---
+                              type HitItem =
+                                | { type: "shape"; z: number; se: (typeof panel.shapeElements extends (infer U)[] | undefined ? U : never) }
+                                | { type: "text"; z: number; te: (typeof panel.textElements extends (infer U)[] | undefined ? U : never) }
+                                | { type: "line"; z: number; le: (typeof panel.lineElements extends (infer U)[] | undefined ? U : never) }
+                                | { type: "drawing"; z: number; dl: (typeof panel.drawingLayers extends (infer U)[] | undefined ? U : never) }
+                                | { type: "bubble"; z: number; b: typeof panel.bubbles[0] }
+                                | { type: "char"; z: number; ch: (typeof panel.characters)[0] };
+
+                              const allItems: HitItem[] = [
+                                ...(panel.shapeElements || []).map(se => ({ type: "shape" as const, z: se.zIndex ?? 20, se })),
+                                ...(panel.textElements || []).map(te => ({ type: "text" as const, z: te.zIndex ?? 20, te })),
+                                ...(panel.lineElements || []).map(le => ({ type: "line" as const, z: le.zIndex ?? 20, le })),
+                                ...(panel.drawingLayers || []).filter(dl => dl.visible && !dl.locked).map(dl => ({ type: "drawing" as const, z: dl.zIndex ?? 0, dl })),
+                                ...panel.bubbles.map(b => ({ type: "bubble" as const, z: b.zIndex ?? 10, b })),
+                                ...panel.characters.map(ch => ({ type: "char" as const, z: ch.zIndex ?? 0, ch })),
+                              ];
+                              allItems.sort((a, b) => b.z - a.z);
+
+                              const clearSelections = () => {
+                                setSelectedShapeId(null); setSelectedTextId(null); setSelectedLineId(null);
+                                setSelectedDrawingLayerId(null); setSelectedCharId(null); setSelectedBubbleId(null);
+                                setCanvasMultiSelected(new Set());
+                              };
+
+                              for (const item of allItems) {
+                                if (item.type === "shape") {
+                                  const se = item.se;
+                                  if (se.locked || se.visible === false) continue;
+                                  // 마스크 도형은 히트테스트에서 제외 — 레이어 패널에서 선택
+                                  if (se.maskEnabled) continue;
+                                  const insideBBox = canvasX >= se.x && canvasX <= se.x + se.width && canvasY >= se.y && canvasY <= se.y + se.height;
+                                  if (!insideBBox) continue;
+                                  // 투명 채우기 도형은 테두리(stroke) 영역만 히트테스트
+                                  const isFilled = se.fillColor && se.fillColor !== "transparent" && se.fillColor !== "rgba(0,0,0,0)";
+                                  if (!isFilled) {
+                                    const hitMargin = Math.max(se.strokeWidth || 2, 8);
+                                    const insideInner = canvasX >= se.x + hitMargin && canvasX <= se.x + se.width - hitMargin &&
+                                                        canvasY >= se.y + hitMargin && canvasY <= se.y + se.height - hitMargin;
+                                    if (insideInner) continue; // 투명 내부 클릭은 아래 요소로 통과
+                                  }
+                                  clearSelections(); setSelectedShapeId(se.id);
+                                  handleElementDragStart("shape", se.id, canvasX, canvasY, panel);
+                                  return;
+                                } else if (item.type === "text") {
+                                  const te = item.te;
+                                  if (te.locked || te.visible === false) continue;
+                                  if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
+                                    clearSelections(); setSelectedTextId(te.id);
+                                    handleElementDragStart("text", te.id, canvasX, canvasY, panel);
+                                    return;
+                                  }
+                                } else if (item.type === "line") {
+                                  const le = item.le;
+                                  if (le.locked || le.visible === false) continue;
+                                  if (le.points.length < 2) continue;
+                                  const HIT_DIST = 12;
+                                  let hitLine = false;
+                                  for (let pi = 0; pi < le.points.length - 1; pi++) {
+                                    const ax = le.points[pi].x, ay = le.points[pi].y;
+                                    const bx = le.points[pi + 1].x, by = le.points[pi + 1].y;
+                                    const ldx = bx - ax, ldy = by - ay;
+                                    const lenSq = ldx * ldx + ldy * ldy;
+                                    const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((canvasX - ax) * ldx + (canvasY - ay) * ldy) / lenSq));
+                                    const projX = ax + t * ldx, projY = ay + t * ldy;
+                                    const dist = Math.sqrt((canvasX - projX) ** 2 + (canvasY - projY) ** 2);
+                                    if (dist <= HIT_DIST) { hitLine = true; break; }
+                                  }
+                                  if (hitLine) {
+                                    clearSelections(); setSelectedLineId(le.id);
+                                    handleElementDragStart("line", le.id, canvasX, canvasY, panel);
+                                    return;
+                                  }
+                                } else if (item.type === "drawing") {
+                                  const dl = item.dl;
+                                  const dlHit = hitTestDrawingLayers([dl], canvasX, canvasY, 450, 600);
+                                  if (dlHit) {
+                                    clearSelections(); setSelectedDrawingLayerId(dl.id);
+                                    handleElementDragStart("drawing", dl.id, canvasX, canvasY, panel);
+                                    return;
+                                  }
+                                } else if (item.type === "bubble") {
+                                  const b = item.b;
+                                  if (b.locked || b.visible === false) continue;
+                                  if (canvasX >= b.x && canvasX <= b.x + b.width && canvasY >= b.y && canvasY <= b.y + b.height) {
+                                    clearSelections(); setSelectedBubbleId(b.id);
+                                    handleElementDragStart("bubble", b.id, canvasX, canvasY, panel);
+                                    return;
+                                  }
+                                } else if (item.type === "char") {
+                                  const ch = item.ch;
+                                  if (ch.locked || ch.visible === false) continue;
+                                  const cw = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
+                                  const chH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
+                                  if (canvasX >= ch.x - cw / 2 && canvasX <= ch.x + cw / 2 &&
+                                      canvasY >= ch.y - chH / 2 && canvasY <= ch.y + chH / 2) {
+                                    clearSelections(); setSelectedCharId(ch.id);
+                                    handleElementDragStart("char", ch.id, canvasX, canvasY, panel);
+                                    return;
+                                  }
+                                }
+                              }
+
+                              // Nothing hit — clear all selections & start rubber band
+                              {
+                                clearSelections();
+                                setEditingTextId(null);
+                                rubberBandRef.current = { active: true, startX: canvasX, startY: canvasY, curX: canvasX, curY: canvasY, panelIdx: i };
+                              }
+                            }}
+                            onMouseMove={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
+                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+
+                              // 1) Rubber band drag
+                              if (rubberBandRef.current?.active) {
+                                rubberBandRef.current.curX = canvasX;
+                                rubberBandRef.current.curY = canvasY;
+                                const rb = rubberBandRef.current;
+                                const rx = Math.min(rb.startX, rb.curX);
+                                const ry = Math.min(rb.startY, rb.curY);
+                                const rw = Math.abs(rb.curX - rb.startX);
+                                const rh = Math.abs(rb.curY - rb.startY);
+                                setRubberBandRect({ x: rx, y: ry, w: rw, h: rh });
+                                return;
+                              }
+
+                              // 2) Multi-select group drag
+                              if (multiDragRef.current) {
+                                const md = multiDragRef.current;
+                                const dx = canvasX - md.startMouseX;
+                                const dy = canvasY - md.startMouseY;
+                                const p = panels[md.panelIdx];
+                                if (!p) return;
+                                const updated: Record<string, any> = {};
+                                updated.characters = p.characters.map(c => {
+                                  const s = md.startPositions.get(`char:${c.id}`);
+                                  return s && "x" in s ? { ...c, x: s.x + dx, y: s.y + dy } : c;
+                                });
+                                updated.bubbles = p.bubbles.map(b => {
+                                  const s = md.startPositions.get(`bubble:${b.id}`);
+                                  return s && "x" in s ? { ...b, x: s.x + dx, y: s.y + dy } : b;
+                                });
+                                updated.textElements = (p.textElements || []).map((te: any) => {
+                                  const s = md.startPositions.get(`text:${te.id}`);
+                                  return s && "x" in s ? { ...te, x: s.x + dx, y: s.y + dy } : te;
+                                });
+                                updated.lineElements = (p.lineElements || []).map((le: any) => {
+                                  const s = md.startPositions.get(`line:${le.id}`);
+                                  return s && "points" in s ? { ...le, points: s.points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy })) } : le;
+                                });
+                                updated.drawingLayers = (p.drawingLayers || []).map((dl: any) => {
+                                  const s = md.startPositions.get(`drawing:${dl.id}`);
+                                  return s && "x" in s ? { ...dl, x: s.x + dx, y: s.y + dy } : dl;
+                                });
+                                updated.shapeElements = (p.shapeElements || []).map((se: any) => {
+                                  const s = md.startPositions.get(`shape:${se.id}`);
+                                  return s && "x" in s ? { ...se, x: s.x + dx, y: s.y + dy } : se;
+                                });
+                                updatePanel(md.panelIdx, { ...p, ...updated });
+                                return;
+                              }
+
+                              // 3) Single element drag (existing)
+                              if (!dragElementRef.current) return;
+                              handleElementDragMove(canvasX, canvasY, i);
+                            }}
+                            onMouseUp={(e) => {
+                              // 1) Rubber band end — select intersecting elements
+                              if (rubberBandRef.current?.active) {
+                                const rb = rubberBandRef.current;
+                                const rx = Math.min(rb.startX, rb.curX);
+                                const ry = Math.min(rb.startY, rb.curY);
+                                const rw = Math.abs(rb.curX - rb.startX);
+                                const rh = Math.abs(rb.curY - rb.startY);
+                                rubberBandRef.current = null;
+                                setRubberBandRect(null);
+
+                                // Only select if rubber band is large enough (avoid accidental clicks)
+                                if (rw < 4 && rh < 4) return;
+
+                                const selRect: BBox = { x: rx, y: ry, w: rw, h: rh };
+                                const p = panels[rb.panelIdx];
+                                if (!p) return;
+                                const newSel = new Set<string>();
+
+                                for (const b of p.bubbles) {
+                                  if (b.locked || b.visible === false) continue;
+                                  const bb = getElementBoundingBox("bubble", b);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`bubble:${b.id}`);
+                                }
+                                for (const c of p.characters) {
+                                  if (c.locked || c.visible === false) continue;
+                                  const bb = getElementBoundingBox("char", c);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`char:${c.id}`);
+                                }
+                                for (const te of (p.textElements || [])) {
+                                  if (te.locked || te.visible === false) continue;
+                                  const bb = getElementBoundingBox("text", te);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`text:${te.id}`);
+                                }
+                                for (const le of (p.lineElements || [])) {
+                                  if (le.locked || le.visible === false) continue;
+                                  const bb = getElementBoundingBox("line", le);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`line:${le.id}`);
+                                }
+                                for (const dl of (p.drawingLayers || [])) {
+                                  if (!dl.visible || dl.locked) continue;
+                                  const bb = getElementBoundingBox("drawing", dl);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`drawing:${dl.id}`);
+                                }
+                                for (const se of (p.shapeElements || [])) {
+                                  if (se.locked || se.visible === false) continue;
+                                  if (se.maskEnabled) continue; // exclude mask shapes
+                                  const bb = getElementBoundingBox("shape", se);
+                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`shape:${se.id}`);
+                                }
+
+                                setCanvasMultiSelected(newSel);
+                                return;
+                              }
+
+                              // 2) Multi-select group drag end
+                              if (multiDragRef.current) {
+                                multiDragRef.current = null;
+                                return;
+                              }
+
+                              // 3) Single element drag end (existing)
+                              handleElementDragEnd();
+                            }}
+                            onMouseLeave={() => {
+                              if (rubberBandRef.current?.active) {
+                                rubberBandRef.current = null;
+                                setRubberBandRect(null);
+                              }
+                              if (multiDragRef.current) {
+                                multiDragRef.current = null;
+                              }
+                              if (dragElementRef.current) handleElementDragEnd();
+                            }}
+                            onDoubleClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
+                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+
+                              // Double-click on text element to edit
+                              const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
+                              for (const te of textEls) {
+                                if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
+                                  setEditingTextId(te.id);
+                                  setSelectedTextId(te.id);
+                                  return;
+                                }
+                              }
+
+                              // Double-click on bubble to edit text
+                              for (let bi = panel.bubbles.length - 1; bi >= 0; bi--) {
+                                const b = panel.bubbles[bi];
+                                if (canvasX >= b.x && canvasX <= b.x + b.width && canvasY >= b.y && canvasY <= b.y + b.height) {
+                                  setSelectedBubbleId(b.id);
+                                  setSelectedCharId(null);
+                                  setSelectedTextId(null);
+                                  setSelectedLineId(null);
+                                  setSelectedShapeId(null);
+                                  setSelectedDrawingLayerId(null);
+                                  setEditingBubbleIdForOverlay(b.id);
+                                  return;
+                                }
+                              }
+                            }}
+                          />
+                        )}
+
+                        {/* Canvas overlay context menu */}
+                        {activePanelIndex === i && overlayContextMenu && (() => {
+                          const ctxInfo = getSelectedElementInfo();
+                          const hasSelection = !!ctxInfo;
+                          const hasMaskShape = (panel.shapeElements || []).some((se: any) => se.maskEnabled);
+                          const isMaskLinked = hasSelection && !ctxInfo!.multi && (() => {
+                            const maskShape = (panel.shapeElements || []).find((se: any) => se.maskEnabled);
+                            if (!maskShape) return false;
+                            return ((maskShape as any).maskedLayerIds || []).includes(ctxInfo!.id);
+                          })();
+                          const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
+                          const ctxShortcut = "text-[10px] text-muted-foreground ml-4";
+                          return (
+                          <>
+                            <div
+                              className="fixed inset-0"
+                              style={{ zIndex: 49 }}
+                              onClick={() => setOverlayContextMenu(null)}
+                              onContextMenu={(e) => { e.preventDefault(); setOverlayContextMenu(null); }}
+                            />
+                            <div
+                              className="fixed min-w-[180px] rounded-md border bg-popover p-1 shadow-md"
+                              style={{ left: overlayContextMenu.x, top: overlayContextMenu.y, zIndex: 50 }}
+                            >
+                              {/* Copy / Cut / Paste / Duplicate */}
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayCopy(); setOverlayContextMenu(null); }}>
+                                <span>복사</span><span className={ctxShortcut}>⌘C</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayCut(); setOverlayContextMenu(null); }}>
+                                <span>잘라내기</span><span className={ctxShortcut}>⌘X</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass}
+                                onClick={() => { handleOverlayPaste(); setOverlayContextMenu(null); }}>
+                                <span>붙여넣기</span><span className={ctxShortcut}>⌘V</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayDuplicate(); setOverlayContextMenu(null); }}>
+                                <span>복제</span><span className={ctxShortcut}>⌘D</span>
+                              </button>
+
+                              <div className="my-1 h-px bg-border" />
+
+                              {/* Layer ordering */}
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection || ctxInfo?.multi}
+                                onClick={() => { handleOverlayBringToFront(); setOverlayContextMenu(null); }}>
+                                <span>맨 앞으로</span><span className={ctxShortcut}>⌘⇧]</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection || ctxInfo?.multi}
+                                onClick={() => { handleOverlayBringForward(); setOverlayContextMenu(null); }}>
+                                <span>앞으로</span><span className={ctxShortcut}>⌘]</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection || ctxInfo?.multi}
+                                onClick={() => { handleOverlaySendBackward(); setOverlayContextMenu(null); }}>
+                                <span>뒤로</span><span className={ctxShortcut}>⌘[</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection || ctxInfo?.multi}
+                                onClick={() => { handleOverlaySendToBack(); setOverlayContextMenu(null); }}>
+                                <span>맨 뒤로</span><span className={ctxShortcut}>⌘⇧[</span>
+                              </button>
+
+                              <div className="my-1 h-px bg-border" />
+
+                              {/* Lock / Visibility */}
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayToggleLock(); setOverlayContextMenu(null); }}>
+                                <span>{ctxInfo?.anyLocked || ctxInfo?.locked ? "잠금 해제" : "잠금"}</span><span className={ctxShortcut}>⌘L</span>
+                              </button>
+                              <button type="button" className={ctxBtnClass} disabled={!hasSelection}
+                                onClick={() => { handleOverlayToggleVisibility(); setOverlayContextMenu(null); }}>
+                                <span>{ctxInfo?.anyHidden || ctxInfo?.visible === false ? "보이기" : "숨기기"}</span>
+                              </button>
+
+                              {/* Mask link */}
+                              {hasMaskShape && hasSelection && (
+                                <button type="button" className={ctxBtnClass}
+                                  onClick={() => { handleOverlayToggleMask(); setOverlayContextMenu(null); }}>
+                                  <span>{isMaskLinked ? "마스크 해제" : "마스크 연결"}</span>
+                                </button>
+                              )}
+
+                              <div className="my-1 h-px bg-border" />
+
+                              {/* Select All */}
+                              <button type="button" className={ctxBtnClass}
+                                onClick={() => { handleOverlaySelectAll(); setOverlayContextMenu(null); }}>
+                                <span>전체 선택</span><span className={ctxShortcut}>⌘A</span>
+                              </button>
+
+                              <div className="my-1 h-px bg-border" />
+
+                              {/* Delete */}
+                              <button type="button"
+                                className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+                                disabled={!hasSelection}
+                                onClick={() => { handleOverlayDelete(); setOverlayContextMenu(null); }}>
+                                <span>삭제</span><span className={ctxShortcut}>Del</span>
+                              </button>
+                            </div>
+                          </>
+                          );
+                        })()}
+
+                        {/* Rubber band selection visual */}
+                        {activePanelIndex === i && rubberBandRect && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              left: `${(rubberBandRect.x / 450) * 100}%`,
+                              top: `${(rubberBandRect.y / 600) * 100}%`,
+                              width: `${(rubberBandRect.w / 450) * 100}%`,
+                              height: `${(rubberBandRect.h / 600) * 100}%`,
+                              border: `1.5px dashed ${HANDLE_COLOR}`,
+                              background: "rgba(59,130,246,0.08)",
+                              pointerEvents: "none",
+                              zIndex: 24,
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        )}
+
+                        {/* Multi-select element highlights */}
+                        {activePanelIndex === i && canvasMultiSelected.size > 0 && (() => {
+                          const p = panels[i];
+                          if (!p) return null;
+                          const boxes: { key: string; bb: BBox }[] = [];
+                          for (const k of Array.from(canvasMultiSelected)) {
+                            const [etype, eid] = k.split(":");
+                            let el: any = null;
+                            if (etype === "bubble") el = p.bubbles.find(b => b.id === eid);
+                            else if (etype === "char") el = p.characters.find(c => c.id === eid);
+                            else if (etype === "text") el = (p.textElements || []).find(t => t.id === eid);
+                            else if (etype === "line") el = (p.lineElements || []).find(l => l.id === eid);
+                            else if (etype === "drawing") el = (p.drawingLayers || []).find(d => d.id === eid);
+                            else if (etype === "shape") el = (p.shapeElements || []).find(s => s.id === eid);
+                            if (!el) continue;
+                            const bb = getElementBoundingBox(etype, el);
+                            if (bb) boxes.push({ key: k, bb });
+                          }
+                          if (boxes.length === 0) return null;
+                          // Compute group bounding box
+                          let gMinX = Infinity, gMinY = Infinity, gMaxX = -Infinity, gMaxY = -Infinity;
+                          for (const { bb } of boxes) {
+                            if (bb.x < gMinX) gMinX = bb.x;
+                            if (bb.y < gMinY) gMinY = bb.y;
+                            if (bb.x + bb.w > gMaxX) gMaxX = bb.x + bb.w;
+                            if (bb.y + bb.h > gMaxY) gMaxY = bb.y + bb.h;
+                          }
+                          return (
+                            <>
+                              {/* Individual element borders */}
+                              {boxes.map(({ key, bb }) => (
+                                <div
+                                  key={`multi-sel-${key}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: `${(bb.x / 450) * 100}%`,
+                                    top: `${(bb.y / 600) * 100}%`,
+                                    width: `${(bb.w / 450) * 100}%`,
+                                    height: `${(bb.h / 600) * 100}%`,
+                                    border: `1.5px solid ${HANDLE_COLOR}`,
+                                    pointerEvents: "none",
+                                    zIndex: 24,
+                                    boxSizing: "border-box",
+                                  }}
+                                />
+                              ))}
+                              {/* Group bounding box */}
+                              {boxes.length > 1 && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    left: `${((gMinX - 3) / 450) * 100}%`,
+                                    top: `${((gMinY - 3) / 600) * 100}%`,
+                                    width: `${((gMaxX - gMinX + 6) / 450) * 100}%`,
+                                    height: `${((gMaxY - gMinY + 6) / 600) * 100}%`,
+                                    border: `1.5px dashed ${HANDLE_COLOR}`,
+                                    pointerEvents: "none",
+                                    zIndex: 24,
+                                    boxSizing: "border-box",
+                                  }}
+                                />
+                              )}
+                            </>
+                          );
+                        })()}
+
+                        {/* Inline text editing overlay */}
+                        {activePanelIndex === i && editingTextId && (() => {
+                          const te = (panel.textElements || []).find(t => t.id === editingTextId);
+                          if (!te) return null;
+                          return (
+                            <div
+                              style={{
+                                position: "absolute",
+                                left: `${(te.x / 450) * 100}%`,
+                                top: `${(te.y / 600) * 100}%`,
+                                width: `${(te.width / 450) * 100}%`,
+                                minHeight: `${(te.height / 600) * 100}%`,
+                                zIndex: 30,
+                              }}
+                            >
+                              <textarea
+                                autoFocus
+                                value={te.text}
+                                onChange={(e) => {
+                                  const newText = e.target.value;
+                                  // Auto-adjust height based on content lines
+                                  const lines = newText.split("\n").length;
+                                  const minHeight = Math.max(te.height, lines * te.fontSize * 1.3 + 16);
+                                  handleUpdateTextElement({ ...te, text: newText, height: minHeight });
+                                }}
+                                onBlur={() => setEditingTextId(null)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Escape") {
+                                    setEditingTextId(null);
+                                  }
+                                }}
+                                style={{
+                                  width: "100%",
+                                  minHeight: "100%",
+                                  resize: "both",
+                                  overflow: "auto",
+                                  background: "rgba(255,255,255,0.95)",
+                                  border: `2px solid ${HANDLE_COLOR}`,
+                                  borderRadius: "4px",
+                                  padding: "4px 6px",
+                                  fontSize: `${te.fontSize * 0.7}px`,
+                                  fontWeight: te.bold ? "bold" : "normal",
+                                  fontStyle: te.italic ? "italic" : "normal",
+                                  color: te.color,
+                                  textAlign: te.textAlign,
+                                  outline: "none",
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                  fontFamily: te.fontFamily === "default" ? "sans-serif" : te.fontFamily,
+                                  lineHeight: "1.3",
+                                }}
+                              />
+                            </div>
+                          );
+                        })()}
+
+                        {/* Selected drawing layer bounding box with resize handles */}
+                        {selectedToolItem === "select" && activePanelIndex === i && selectedDrawingLayerId && (() => {
+                          const layer = (panel.drawingLayers || []).find(l => l.id === selectedDrawingLayerId);
+                          if (!layer || !layer.visible || !(layer.imageEl instanceof HTMLImageElement)) return null;
+                          const dlX = layer.x ?? 0;
+                          const dlY = layer.y ?? 0;
+                          const dlW = layer.width ?? CANVAS_W;
+                          const dlH = layer.height ?? CANVAS_H;
+                          // Compute bounding box from image data
+                          const testCanvas = document.createElement("canvas");
+                          testCanvas.width = 450;
+                          testCanvas.height = 600;
+                          const tCtx = testCanvas.getContext("2d", { willReadFrequently: true });
+                          if (!tCtx) return null;
+                          tCtx.drawImage(layer.imageEl, dlX, dlY, dlW, dlH);
+                          const imgData = tCtx.getImageData(0, 0, 450, 600);
+                          let minX = 450, minY = 600, maxX = 0, maxY = 0;
+                          for (let py = 0; py < 600; py++) {
+                            for (let px = 0; px < 450; px++) {
+                              if (imgData.data[(py * 450 + px) * 4 + 3] > 10) {
+                                if (px < minX) minX = px;
+                                if (px > maxX) maxX = px;
+                                if (py < minY) minY = py;
+                                if (py > maxY) maxY = py;
+                              }
+                            }
+                          }
+                          if (maxX <= minX || maxY <= minY) return null;
+                          const pad = 4;
+                          const bLeft = ((minX - pad) / 450) * 100;
+                          const bTop = ((minY - pad) / 600) * 100;
+                          const bW = ((maxX - minX + pad * 2) / 450) * 100;
+                          const bH = ((maxY - minY + pad * 2) / 600) * 100;
+                          return (
+                            <>
+                              <div style={{
+                                position: "absolute",
+                                left: `${bLeft}%`, top: `${bTop}%`,
+                                width: `${bW}%`, height: `${bH}%`,
+                                border: "2px dashed hsl(var(--primary))",
+                                pointerEvents: "none",
+                                zIndex: 25,
+                                borderRadius: "2px",
+                              }} />
+                              {/* Corner resize handles */}
+                              {(["tl","tr","bl","br"] as const).map(mode => (
+                                <div key={mode} style={{
+                                  position: "absolute",
+                                  left: mode.includes("l") ? `calc(${bLeft}% - 4px)` : `calc(${bLeft + bW}% - 4px)`,
+                                  top: mode.includes("t") ? `calc(${bTop}% - 4px)` : `calc(${bTop + bH}% - 4px)`,
+                                  width: 8, height: 8,
+                                  background: "#fff",
+                                  border: "1.5px solid hsl(var(--primary))",
+                                  borderRadius: 1,
+                                  zIndex: 26,
+                                  cursor: mode === "tl" || mode === "br" ? "nwse-resize" : "nesw-resize",
+                                  pointerEvents: "auto",
+                                }} onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  const parentEl = (e.currentTarget.parentElement?.parentElement as HTMLElement);
+                                  const canvasEl = parentEl?.querySelector("canvas");
+                                  if (!canvasEl) return;
+                                  const rect = canvasEl.getBoundingClientRect();
+                                  const cx = ((e.clientX - rect.left) / rect.width) * 450;
+                                  const cy = ((e.clientY - rect.top) / rect.height) * 600;
+                                  handleElementDragStart("drawing", layer.id, cx, cy, panel, mode);
+                                  const onMove = (me: MouseEvent) => {
+                                    const mx = ((me.clientX - rect.left) / rect.width) * 450;
+                                    const my = ((me.clientY - rect.top) / rect.height) * 600;
+                                    handleElementDragMove(mx, my, i);
+                                  };
+                                  const onUp = () => {
+                                    handleElementDragEnd();
+                                    window.removeEventListener("mousemove", onMove);
+                                    window.removeEventListener("mouseup", onUp);
+                                  };
+                                  window.addEventListener("mousemove", onMove);
+                                  window.addEventListener("mouseup", onUp);
+                                }} />
+                              ))}
+                            </>
+                          );
+                        })()}
+
+                      </div>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuLabel>Page {i + 1}</ContextMenuLabel>
+                      <ContextMenuSeparator />
+                      <ContextMenuItem
+                        onClick={() => {
+                          const newPanel = {
+                            ...panel,
+                            id: generateId(),
+                            bubbles: panel.bubbles.map((b) => ({ ...b, id: generateId() })),
+                            characters: panel.characters.map((c) => ({ ...c, id: generateId() })),
+                            drawingLayers: (panel.drawingLayers || []).map((dl) => ({ ...dl, id: generateId() })),
+                          };
+                          const newPanels = [...panels];
+                          newPanels.splice(i + 1, 0, newPanel);
+                          setPanels(newPanels);
+                        }}
+                      >
+                        <Copy className="mr-2 h-4 w-4" /> Duplicate Page
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onClick={() => removePanel(i)}
+                        className="text-red-500"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete Page
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                ))}
+
+                <Button variant="outline" className="h-24 w-full max-w-[500px] border-dashed" onClick={addPanel} disabled={panels.length >= maxPanels}>
+                  <Plus className="mr-2 h-6 w-6 text-muted-foreground/70" />
+                  <span className="text-muted-foreground">Add New Page</span>
+                </Button>
+              </div>
+            </div>
+            
+          </div>
+
+
+          <div className="flex items-center justify-center gap-3 px-4 py-2 border-t border-border bg-background shrink-0" data-testid="story-bottom-toolbar">
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setZoom((z) => Math.max(20, z - 10))}
+                disabled={zoom <= 20}
+                data-testid="button-story-zoom-out"
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </Button>
+              <Slider
+                min={20}
+                max={200}
+                step={5}
+                value={[zoom]}
+                onValueChange={([v]) => setZoom(v)}
+                className="w-28"
+                data-testid="slider-story-zoom"
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setZoom((z) => Math.min(200, z + 10))}
+                disabled={zoom >= 200}
+                data-testid="button-story-zoom-in"
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-xs text-muted-foreground tabular-nums w-9 text-right" data-testid="text-story-zoom-value">{zoom}%</span>
+            </div>
+            <div className="h-4 w-px bg-border" />
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={fitToView}
+              title="화면에 맞추기"
+              data-testid="button-story-fit-to-view"
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setZoom(200)}
+              title="전체 화면"
+              data-testid="button-story-fullscreen"
+            >
+              <Maximize className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Right Panel — Properties (top) + Layers (bottom) */}
+        {activePanel && (() => {
+          // Build reverse lookup: layerId → maskShapeId
+          const layerToMaskId = new Map<string, string>();
+          for (const se of (activePanel.shapeElements || [])) {
+            if (se.maskEnabled && se.maskedLayerIds) {
+              for (const lid of se.maskedLayerIds) {
+                layerToMaskId.set(lid, se.id);
+              }
+            }
+          }
+
+          const rightLayerItems: LayerItem[] = [
+            ...(activePanel.topScript ? [{
+              type: "topScript" as const,
+              id: "topScript",
+              z: 9999,
+              label: `상단: ${activePanel.topScript.text || "상단 스크립트"}`,
+              visible: activePanel.topScript.visible,
+            }] : []),
+            ...(activePanel.bottomScript ? [{
+              type: "bottomScript" as const,
+              id: "bottomScript",
+              z: 9998,
+              label: `하단: ${activePanel.bottomScript.text || "하단 스크립트"}`,
+              visible: activePanel.bottomScript.visible,
+            }] : []),
+            ...activePanel.characters.map((c: CharacterPlacement) => ({
+              type: "char" as const,
+              id: c.id,
+              z: c.zIndex ?? 0,
+              label: "캐릭터",
+              thumb: c.imageUrl,
+              visible: c.visible,
+              locked: c.locked,
+              clipMaskId: layerToMaskId.get(c.id),
+            })),
+            ...activePanel.bubbles.map((b: SpeechBubble, i: number) => ({
+              type: "bubble" as const,
+              id: b.id,
+              z: b.zIndex ?? 10,
+              label: b.text || STYLE_LABELS[b.style] || `말풍선 ${i + 1}`,
+              thumb: b.style === "image" && (b as any).templateSrc ? (b as any).templateSrc : undefined,
+              visible: b.visible,
+              locked: b.locked,
+              clipMaskId: layerToMaskId.get(b.id),
+            })),
+            ...(activePanel.drawingLayers || []).map((dl) => ({
+              type: "drawing" as const,
+              id: dl.id,
+              z: dl.zIndex,
+              label: dl.label,
+              thumb: dl.imageData,
+              drawingType: dl.type,
+              visible: dl.visible,
+              locked: dl.locked,
+              clipMaskId: layerToMaskId.get(dl.id),
+            })),
+            ...(activePanel.textElements || []).map((te: CanvasTextElement, i: number) => ({
+              type: "text" as const,
+              id: te.id,
+              z: te.zIndex ?? 20,
+              label: te.text || `텍스트 ${i + 1}`,
+              thumb: undefined as string | undefined,
+              visible: te.visible,
+              locked: te.locked,
+              clipMaskId: layerToMaskId.get(te.id),
+            })),
+            ...(activePanel.lineElements || []).map((le: CanvasLineElement, i: number) => ({
+              type: "line" as const,
+              id: le.id,
+              z: le.zIndex ?? 20,
+              label: le.lineType === "straight" ? "직선" : le.lineType === "curved" ? "곡선" : "꺾인선",
+              thumb: undefined as string | undefined,
+              visible: le.visible,
+              locked: le.locked,
+              clipMaskId: layerToMaskId.get(le.id),
+            })),
+            ...(activePanel.shapeElements || []).map((se: CanvasShapeElement, i: number) => ({
+              type: "shape" as const,
+              id: se.id,
+              z: se.zIndex ?? 20,
+              label: se.shapeType === "rectangle" ? "사각형" : se.shapeType === "circle" ? "원" : se.shapeType === "triangle" ? "삼각형" : se.shapeType === "diamond" ? "다이아몬드" : se.shapeType === "star" ? "별" : "화살표",
+              thumb: undefined as string | undefined,
+              visible: se.visible,
+              locked: se.locked,
+              maskEnabled: se.maskEnabled,
+            })),
+          ].sort((a, b) => b.z - a.z);
+
+          const applyRightLayerOrder = (ordered: Array<{ type: "char" | "bubble" | "drawing" | "text" | "line" | "shape" | "topScript" | "bottomScript"; id: string }>) => {
+            const filtered = ordered.filter(it => it.type !== "topScript" && it.type !== "bottomScript");
+            const n = filtered.length;
+            updatePanel(activePanelIndex, {
+              ...activePanel,
+              characters: activePanel.characters.map((c) => {
+                const idx = filtered.findIndex((it) => it.type === "char" && it.id === c.id);
+                return idx >= 0 ? { ...c, zIndex: n - 1 - idx } : c;
+              }),
+              bubbles: activePanel.bubbles.map((b) => {
+                const idx = filtered.findIndex((it) => it.type === "bubble" && it.id === b.id);
+                return idx >= 0 ? { ...b, zIndex: n - 1 - idx } : b;
+              }),
+              drawingLayers: (activePanel.drawingLayers || []).map((dl) => {
+                const idx = filtered.findIndex((it) => it.type === "drawing" && it.id === dl.id);
+                return idx >= 0 ? { ...dl, zIndex: n - 1 - idx } : dl;
+              }),
+              textElements: (activePanel.textElements || []).map((te) => {
+                const idx = filtered.findIndex((it) => it.type === "text" && it.id === te.id);
+                return idx >= 0 ? { ...te, zIndex: n - 1 - idx } : te;
+              }),
+              lineElements: (activePanel.lineElements || []).map((le) => {
+                const idx = filtered.findIndex((it) => it.type === "line" && it.id === le.id);
+                return idx >= 0 ? { ...le, zIndex: n - 1 - idx } : le;
+              }),
+              shapeElements: (activePanel.shapeElements || []).map((se) => {
+                const idx = filtered.findIndex((it) => it.type === "shape" && it.id === se.id);
+                return idx >= 0 ? { ...se, zIndex: n - 1 - idx } : se;
+              }),
+            });
+          };
+
+          const moveRightLayer = (index: number, direction: "up" | "down") => {
+            if (direction === "up" && index <= 0) return;
+            if (direction === "down" && index >= rightLayerItems.length - 1) return;
+            const swapIdx = direction === "up" ? index - 1 : index + 1;
+            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line" | "shape" | "topScript" | "bottomScript", id: li.id }));
+            const tmp = newOrder[index];
+            newOrder[index] = newOrder[swapIdx];
+            newOrder[swapIdx] = tmp;
+            applyRightLayerOrder(newOrder);
+          };
+
+          const reorderRightLayer = (fromIndex: number, toIndex: number) => {
+            if (fromIndex === toIndex) return;
+            if (fromIndex < 0 || fromIndex >= rightLayerItems.length) return;
+            if (toIndex < 0 || toIndex >= rightLayerItems.length) return;
+            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line" | "shape" | "topScript" | "bottomScript", id: li.id }));
+            const [moved] = newOrder.splice(fromIndex, 1);
+            newOrder.splice(toIndex, 0, moved);
+            applyRightLayerOrder(newOrder);
+          };
+
+          const selBubble = selectedBubbleId ? activePanel.bubbles.find(b => b.id === selectedBubbleId) : null;
+          const selChar = selectedCharId ? activePanel.characters.find(c => c.id === selectedCharId) : null;
+          const selText = selectedTextId ? (activePanel.textElements || []).find((te: CanvasTextElement) => te.id === selectedTextId) : null;
+          const selLine = selectedLineId ? (activePanel.lineElements || []).find((le: CanvasLineElement) => le.id === selectedLineId) : null;
+          const selShape = selectedShapeId ? (activePanel.shapeElements || []).find((se: CanvasShapeElement) => se.id === selectedShapeId) : null;
+
+          return (
+            <div
+              className="h-full w-[300px] shrink-0 bg-background/80 border-l"
+              data-testid="right-layer-panel"
+            >
+              <ResizablePanelGroup direction="vertical">
+                <ResizablePanel defaultSize={50} minSize={20}>
+                  {activeLeftTab === "elements" && elementsSubTab === "script" ? (
+                    <div className="h-full overflow-y-auto p-3 space-y-3">
+                      <h4 className="text-xs font-semibold">자막 설정</h4>
+                      <p className="text-[10px] text-muted-foreground">패널 {activePanelIndex + 1}</p>
 
                       <div className="flex gap-1 flex-wrap">
                         <Button
@@ -5868,12 +8781,16 @@ export default function StoryPage() {
                           variant={activeScriptSection === "top" ? "secondary" : "outline"}
                           onClick={() => {
                             const p = activePanel;
+                            const isNew = !p.topScript;
                             updatePanel(activePanelIndex, {
                               ...p,
                               topScript:
                                 p.topScript ?? { text: "", style: "no-bg", color: "yellow" },
                             });
                             setActiveScriptSection("top");
+                            if (isNew) {
+                              setTimeout(() => setEditingScriptPositionForCanvas("top"), 100);
+                            }
                           }}
                           data-testid={`button-toggle-top-script-${activePanelIndex}`}
                         >
@@ -5885,12 +8802,16 @@ export default function StoryPage() {
                           variant={activeScriptSection === "bottom" ? "secondary" : "outline"}
                           onClick={() => {
                             const p = activePanel;
+                            const isNew = !p.bottomScript;
                             updatePanel(activePanelIndex, {
                               ...p,
                               bottomScript:
                                 p.bottomScript ?? { text: "", style: "no-bg", color: "sky" },
                             });
                             setActiveScriptSection("bottom");
+                            if (isNew) {
+                              setTimeout(() => setEditingScriptPositionForCanvas("bottom"), 100);
+                            }
                           }}
                           data-testid={`button-toggle-bottom-script-${activePanelIndex}`}
                         >
@@ -5952,7 +8873,7 @@ export default function StoryPage() {
                                     },
                                   });
                                 }}
-                                className={`px-2 py-0.5 text-[11px] rounded-md border transition-colors ${activePanel.topScript!.style === opt.value ? "border-foreground/40 bg-foreground/10 font-semibold" : "border-border hover-elevate"}`}
+                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.topScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                                 data-testid={`button-top-script-style-${opt.value}-${activePanelIndex}`}
                               >
                                 {opt.label}
@@ -6057,7 +8978,7 @@ export default function StoryPage() {
                                   topScript: { ...p.topScript!, bold: !(p.topScript!.bold !== false) },
                                 });
                               }}
-                              className={`px-1.5 py-0.5 text-[11px] rounded-md border transition-colors font-bold ${activePanel.topScript!.bold !== false ? "border-foreground/40 bg-foreground/10" : "border-border hover-elevate"}`}
+                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.topScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                               data-testid={`button-top-script-bold-${activePanelIndex}`}
                             >
                               B
@@ -6122,7 +9043,7 @@ export default function StoryPage() {
                                     },
                                   });
                                 }}
-                                className={`px-2 py-0.5 text-[11px] rounded-md border transition-colors ${activePanel.bottomScript!.style === opt.value ? "border-foreground/40 bg-foreground/10 font-semibold" : "border-border hover-elevate"}`}
+                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.bottomScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                                 data-testid={`button-bottom-script-style-${opt.value}-${activePanelIndex}`}
                               >
                                 {opt.label}
@@ -6230,7 +9151,7 @@ export default function StoryPage() {
                                   bottomScript: { ...p.bottomScript!, bold: !(p.bottomScript!.bold !== false) },
                                 });
                               }}
-                              className={`px-1.5 py-0.5 text-[11px] rounded-md border transition-colors font-bold ${activePanel.bottomScript!.bold !== false ? "border-foreground/40 bg-foreground/10" : "border-border hover-elevate"}`}
+                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.bottomScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                               data-testid={`button-bottom-script-bold-${activePanelIndex}`}
                             >
                               B
@@ -6241,927 +9162,384 @@ export default function StoryPage() {
                           </p>
                         </div>
                       )}
-                    </>
-                  )}
-
-                  </>
-                )}
-
-                </div>
-              </div>
-          )}
-
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <div
-              className="w-full relative"
-              data-testid="canvas-toolbar"
-            >
-              <div
-                className="flex items-center justify-between gap-3 px-5 py-2 w-full flex-wrap bg-background/60 dark:bg-background/40"
-                style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
-              >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <div className="flex items-center gap-1.5 mr-1">
-                    <div className="w-6 h-6 rounded-md bg-[hsl(173_100%_35%)] flex items-center justify-center">
-                      <BookOpen className="h-3.5 w-3.5 text-white" />
                     </div>
-                    <span className="text-sm font-bold tracking-tight" data-testid="text-story-title">스토리</span>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={undo} disabled={historyRef.current.length === 0} title="실행 취소 (Ctrl+Z)" data-testid="button-undo">
-                      <Undo2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={redo} disabled={futureRef.current.length === 0} title="다시 실행 (Ctrl+Shift+Z)" data-testid="button-redo">
-                      <Redo2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={resetAll} title="초기화" data-testid="button-reset-story">
-                      <RotateCcw className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 flex-wrap">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={startStoryTour} title="도움말" data-testid="button-story-help">
-                    <Lightbulb className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => downloadPanel(activePanelIndex)} title="다운로드" data-testid="button-download-panel">
-                    <Download className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1 h-7 text-xs px-2"
-                    onClick={downloadAll}
-                    data-testid="button-download-all-panels"
-                  >
-                    <Download className="h-3 w-3" />
-                    전체 다운로드
-                  </Button>
-
-                  <Button size="sm" onClick={() => setShowSaveModal(true)} className="gap-1 h-7 text-xs px-2.5 bg-[hsl(173_100%_35%)] text-white border-[hsl(173_100%_35%)]" data-testid="button-save-story-project">
-                    <Save className="h-3 w-3" />
-                    저장
-                    {isPro && <Crown className="h-2.5 w-2.5 ml-0.5" />}
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setLocation("/edits")} title="내 편집" data-testid="button-story-my-edits">
-                    <FolderOpen className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-              <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[hsl(173_100%_35%)] to-transparent opacity-60" />
-            </div>
-
-            {/* Main Canvas Area - List View */}
-            <div
-              ref={canvasAreaRef}
-              className={`flex-1 overflow-y-auto bg-muted/20 dark:bg-muted/10 ${zoom >= 200 ? "p-0" : "p-8"}`}
-              data-testid="story-canvas-area"
-              onMouseDown={(e) => {
-                if (e.target === e.currentTarget) {
-                  setSelectedBubbleId(null);
-                  setSelectedCharId(null);
-                  setSelectedDrawingLayerId(null);
-                }
-              }}
-            >
-              <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-8 pt-16 pb-32">
-                {panels.map((panel, i) => (
-                  <ContextMenu key={panel.id}>
-                    <ContextMenuTrigger>
-                      <div
-                        onMouseDown={(e) => {
-                          if (e.target === e.currentTarget) {
-                            setSelectedBubbleId(null);
+                  ) : activeLeftTab === "elements" && elementsSubTab === "bubble" ? (
+                    <div className="h-full overflow-y-auto flex flex-col">
+                      <div className="p-3 border-b border-border space-y-2">
+                        <h4 className="text-xs font-semibold">말풍선</h4>
+                        <Button size="sm" variant="ghost" className="w-full bg-muted/40 hover:bg-muted/60"
+                          onClick={() => {
+                            if (activePanel.bubbles.length >= 5) return;
+                            const newB = createBubble(CANVAS_W, CANVAS_H);
+                            updatePanel(activePanelIndex, { ...activePanel, bubbles: [...activePanel.bubbles, newB] });
+                            setSelectedBubbleId(newB.id);
                             setSelectedCharId(null);
+                            setSelectedTextId(null);
+                            setSelectedLineId(null);
+                            setSelectedShapeId(null);
                             setSelectedDrawingLayerId(null);
-                          }
-                        }}
-                        onClick={() => setActivePanelIndex(i)}
-                        className={`relative shadow-lg transition-all ${activePanelIndex === i ? "ring-4 ring-primary ring-offset-2" : "opacity-90 hover:opacity-100"}`}
-                      >
-                        <div className="absolute -left-12 top-0 flex flex-col gap-2">
-                          <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold shadow-sm ${activePanelIndex === i ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                            {i + 1}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-red-500 shadow hover:bg-white z-10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removePanel(i);
+                            setSelectedScriptPosition(null);
+                          }}>
+                          <Plus className="h-3.5 w-3.5 mr-1" /> 말풍선 추가
+                        </Button>
+                      </div>
+                      <div className="flex-1 overflow-y-auto">
+                        <ElementPropertiesPanel
+                          selectedBubble={selBubble ?? null}
+                          selectedChar={selChar ?? null}
+                          selectedText={selText ?? null}
+                          selectedLine={selLine ?? null}
+                          onUpdateBubble={(id, updates) => {
+                            updatePanel(activePanelIndex, {
+                              ...activePanel,
+                              bubbles: activePanel.bubbles.map(b => b.id === id ? { ...b, ...updates } : b),
+                            });
                           }}
-                          title="페이지 삭제"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-
-                        {/* ─── Context Toolbars ─── absolute above canvas */}
-                        {activePanelIndex === i && selectedTextElement && (
-                          <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
-                            <TextContextToolbar
-                              element={selectedTextElement}
-                              onChange={handleUpdateTextElement}
-                            />
-                          </div>
-                        )}
-                        {activePanelIndex === i && selectedLineElement && (
-                          <>
-                            <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
-                              <LineContextToolbar
-                                element={selectedLineElement}
-                                onChange={handleUpdateLineElement}
-                                showSettings={showLineSettings}
-                                onShowSettings={() => setShowLineSettings(s => !s)}
-                              />
-                            </div>
-                            {showLineSettings && (
-                              <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
-                                <FloatingSettingsModal
-                                  strokeWidth={selectedLineElement.strokeWidth}
-                                  opacity={selectedLineElement.opacity}
-                                  onStrokeWidthChange={(v) => handleUpdateLineElement({ ...selectedLineElement, strokeWidth: v })}
-                                  onOpacityChange={(v) => handleUpdateLineElement({ ...selectedLineElement, opacity: v })}
-                                  onClose={() => setShowLineSettings(false)}
-                                />
-                              </div>
-                            )}
-                          </>
-                        )}
-                        {activePanelIndex === i && selectedToolItem === "select" && selectedDrawingLayerId && (
-                          <>
-                            <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
-                              <DrawingContextToolbar
-                                color={drawingToolState.color}
-                                onColorChange={(c) => setDrawingToolState(s => ({ ...s, color: c }))}
-                                showSettings={showDrawingContextSettings}
-                                onShowSettings={() => setShowDrawingContextSettings(s => !s)}
-                              />
-                            </div>
-                            {showDrawingContextSettings && (
-                              <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
-                                <FloatingSettingsModal
-                                  strokeWidth={drawingToolState.size}
-                                  opacity={drawingToolState.opacity}
-                                  onStrokeWidthChange={(v) => setDrawingToolState(s => ({ ...s, size: v }))}
-                                  onOpacityChange={(v) => setDrawingToolState(s => ({ ...s, opacity: v }))}
-                                  onClose={() => setShowDrawingContextSettings(false)}
-                                />
-                              </div>
-                            )}
-                          </>
-                        )}
-
-                        <PanelCanvas
-                          key={panel.id + "-main"}
-                          panel={panel}
-                          onUpdate={(updated) => updatePanel(i, updated)}
-                          selectedBubbleId={activePanelIndex === i ? selectedBubbleId : null}
-                          onSelectBubble={(id) => {
-                            setSelectedBubbleId(id);
-                            setSelectedCharId(null);
-                            setSelectedTextId(null);
-                            setSelectedLineId(null);
-                            setActivePanelIndex(i);
+                          onUpdateChar={(id, updates) => {
+                            updatePanel(activePanelIndex, {
+                              ...activePanel,
+                              characters: activePanel.characters.map(c => c.id === id ? { ...c, ...updates } : c),
+                            });
                           }}
-                          selectedCharId={activePanelIndex === i ? selectedCharId : null}
-                          onSelectChar={(id) => {
-                            setSelectedCharId(id);
-                            setSelectedBubbleId(null);
-                            setSelectedTextId(null);
-                            setSelectedLineId(null);
-                            setActivePanelIndex(i);
-                            // Auto-switch to image tab when character is clicked on canvas
-                            if (id) setActiveLeftTab("image");
+                          onDeleteBubble={(id) => {
+                            updatePanel(activePanelIndex, { ...activePanel, bubbles: activePanel.bubbles.filter(b => b.id !== id) });
+                            if (selectedBubbleId === id) setSelectedBubbleId(null);
                           }}
-                          canvasRef={(el) => {
-                            if (el) panelCanvasRefs.current.set(panel.id, el);
-                            else panelCanvasRefs.current.delete(panel.id);
+                          onDeleteChar={(id) => {
+                            updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== id) });
+                            if (selectedCharId === id) setSelectedCharId(null);
                           }}
-                          zoom={zoom}
-                          fontsReady={fontsReady}
+                          onFlipTailHorizontally={handleFlipTailHorizontally}
+                          onRemoveBackground={handleRemoveBackground}
+                          removingBg={removingBg}
                           isPro={isPro}
-                          onEditBubble={() => {
-                            // Focus sidebar bubble textarea
-                            setTimeout(() => bubbleTextareaRef.current?.focus(), 80);
-                          }}
-                          onDoubleClickBubble={() => {
-                            // Switch to element > bubble sub-tab on double-click
-                            setActiveLeftTab("elements");
-                            setElementsSubTab("bubble");
-                            setTimeout(() => bubbleTextareaRef.current?.focus(), 120);
-                          }}
-                          onDeletePanel={() => removePanel(i)}
                         />
-
-                        {/* Canva-style drawing editor overlay — only in drawing mode */}
-                        {isDrawingMode && activePanelIndex === i && (
-                          <div
-                            className={`drawing-canvas-wrapper drawing-canvas-wrapper--active`}
-                            style={{
-                              position: "absolute",
-                              top: 0,
-                              left: 0,
-                              width: "100%",
-                              height: "100%",
-                              zIndex: 20,
-                            }}
-                          >
-                            <DrawingCanvas
-                              ref={drawingCanvasRef}
-                              width={450}
-                              height={600}
-                              toolState={drawingToolState}
-                              className="rounded-md"
-                              drawingLayers={panel.drawingLayers || []}
-                              onLayerCreated={(newLayer) => {
-                                drawingUndoStackRef.current = [];
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: [...(panel.drawingLayers || []), newLayer],
-                                });
-                                setSelectedDrawingLayerId(newLayer.id);
-                                setSelectedToolItem("select");
-                              }}
-                              onRequestTextInput={(x, y) => {
-                                setTextInputPos({ x: (x / 450) * 100, y: (y / 600) * 100 });
-                                setTextInputValue("");
-                              }}
-                              onStrokeEnd={() => setDrawingLayerSelected(true)}
-                            />
-                            <div className="drawing-mode-indicator">
-                              <span className="drawing-mode-indicator__dot" />
-                              드로잉 모드
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Select-mode: click/drag/dblclick to interact with drawing/text/line layers */}
-                        {(selectedToolItem === "select" || selectedToolItem === "text" || selectedToolItem === "line") && activePanelIndex === i && (
-                          (panel.drawingLayers || []).length > 0 ||
-                          (panel.textElements || []).length > 0 ||
-                          (panel.lineElements || []).length > 0
-                        ) && (
-                          <div
-                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: dragElementRef.current ? "grabbing" : "default" }}
-                            onMouseDown={(e) => {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
-                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
-
-                              // Hit test text elements
-                              const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
-                              for (const te of textEls) {
-                                if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
-                                  setSelectedTextId(te.id);
-                                  setSelectedLineId(null);
-                                  setSelectedDrawingLayerId(null);
-                                  setSelectedCharId(null);
-                                  setSelectedBubbleId(null);
-                                  handleElementDragStart("text", te.id, canvasX, canvasY, panel);
-                                  return;
-                                }
-                              }
-
-                              // Hit test line elements
-                              const lineEls = [...(panel.lineElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
-                              for (const le of lineEls) {
-                                if (le.points.length < 2) continue;
-                                const HIT_DIST = 12;
-                                let hitLine = false;
-                                for (let pi = 0; pi < le.points.length - 1; pi++) {
-                                  const ax = le.points[pi].x;
-                                  const ay = le.points[pi].y;
-                                  const bx = le.points[pi + 1].x;
-                                  const by = le.points[pi + 1].y;
-                                  const dx = bx - ax, dy = by - ay;
-                                  const lenSq = dx * dx + dy * dy;
-                                  const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((canvasX - ax) * dx + (canvasY - ay) * dy) / lenSq));
-                                  const projX = ax + t * dx, projY = ay + t * dy;
-                                  const dist = Math.sqrt((canvasX - projX) ** 2 + (canvasY - projY) ** 2);
-                                  if (dist <= HIT_DIST) { hitLine = true; break; }
-                                }
-                                if (hitLine) {
-                                  setSelectedLineId(le.id);
-                                  setSelectedTextId(null);
-                                  setSelectedDrawingLayerId(null);
-                                  setSelectedCharId(null);
-                                  setSelectedBubbleId(null);
-                                  handleElementDragStart("line", le.id, canvasX, canvasY, panel);
-                                  return;
-                                }
-                              }
-
-                              // Hit test drawing layers
-                              const hit = hitTestDrawingLayers(panel.drawingLayers || [], canvasX, canvasY, 450, 600);
-                              if (hit) {
-                                setSelectedDrawingLayerId(hit.id);
-                                setSelectedTextId(null);
-                                setSelectedLineId(null);
-                                setSelectedCharId(null);
-                                setSelectedBubbleId(null);
-                                handleElementDragStart("drawing", hit.id, canvasX, canvasY, panel);
-                              } else {
-                                setSelectedDrawingLayerId(null);
-                                setSelectedTextId(null);
-                                setSelectedLineId(null);
-                                setEditingTextId(null);
-                              }
-                            }}
-                            onMouseMove={(e) => {
-                              if (!dragElementRef.current) return;
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
-                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
-                              handleElementDragMove(canvasX, canvasY, i);
-                            }}
-                            onMouseUp={() => {
-                              handleElementDragEnd();
-                            }}
-                            onMouseLeave={() => {
-                              handleElementDragEnd();
-                            }}
-                            onDoubleClick={(e) => {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
-                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
-
-                              // Double-click on text element to edit
-                              const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
-                              for (const te of textEls) {
-                                if (canvasX >= te.x && canvasX <= te.x + te.width && canvasY >= te.y && canvasY <= te.y + te.height) {
-                                  setEditingTextId(te.id);
-                                  setSelectedTextId(te.id);
-                                  return;
-                                }
-                              }
-                            }}
-                          />
-                        )}
-
-                        {/* Inline text editing overlay */}
-                        {activePanelIndex === i && editingTextId && (() => {
-                          const te = (panel.textElements || []).find(t => t.id === editingTextId);
-                          if (!te) return null;
-                          return (
-                            <div
-                              style={{
-                                position: "absolute",
-                                left: `${(te.x / 450) * 100}%`,
-                                top: `${(te.y / 600) * 100}%`,
-                                width: `${(te.width / 450) * 100}%`,
-                                minHeight: `${(te.height / 600) * 100}%`,
-                                zIndex: 30,
-                              }}
-                            >
-                              <textarea
-                                autoFocus
-                                value={te.text}
-                                onChange={(e) => {
-                                  const newText = e.target.value;
-                                  // Auto-adjust height based on content lines
-                                  const lines = newText.split("\n").length;
-                                  const minHeight = Math.max(te.height, lines * te.fontSize * 1.3 + 16);
-                                  handleUpdateTextElement({ ...te, text: newText, height: minHeight });
-                                }}
-                                onBlur={() => setEditingTextId(null)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Escape") {
-                                    setEditingTextId(null);
-                                  }
-                                }}
-                                style={{
-                                  width: "100%",
-                                  minHeight: "100%",
-                                  resize: "both",
-                                  overflow: "auto",
-                                  background: "rgba(255,255,255,0.95)",
-                                  border: "2px solid hsl(173,80%,45%)",
-                                  borderRadius: "4px",
-                                  padding: "4px 6px",
-                                  fontSize: `${te.fontSize * 0.7}px`,
-                                  fontWeight: te.bold ? "bold" : "normal",
-                                  fontStyle: te.italic ? "italic" : "normal",
-                                  color: te.color,
-                                  textAlign: te.textAlign,
-                                  outline: "none",
-                                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                                  fontFamily: te.fontFamily === "default" ? "sans-serif" : te.fontFamily,
-                                  lineHeight: "1.3",
-                                }}
-                              />
-                            </div>
-                          );
-                        })()}
-
-                        {/* Selected drawing layer bounding box */}
-                        {selectedToolItem === "select" && activePanelIndex === i && selectedDrawingLayerId && (() => {
-                          const layer = (panel.drawingLayers || []).find(l => l.id === selectedDrawingLayerId);
-                          if (!layer || !layer.visible || !layer.imageEl) return null;
-                          // Compute bounding box from image data
-                          const testCanvas = document.createElement("canvas");
-                          testCanvas.width = 450;
-                          testCanvas.height = 600;
-                          const tCtx = testCanvas.getContext("2d");
-                          if (!tCtx) return null;
-                          tCtx.drawImage(layer.imageEl, 0, 0);
-                          const imgData = tCtx.getImageData(0, 0, 450, 600);
-                          let minX = 450, minY = 600, maxX = 0, maxY = 0;
-                          for (let py = 0; py < 600; py++) {
-                            for (let px = 0; px < 450; px++) {
-                              if (imgData.data[(py * 450 + px) * 4 + 3] > 10) {
-                                if (px < minX) minX = px;
-                                if (px > maxX) maxX = px;
-                                if (py < minY) minY = py;
-                                if (py > maxY) maxY = py;
-                              }
-                            }
-                          }
-                          if (maxX <= minX || maxY <= minY) return null;
-                          const pad = 4;
-                          const offsetX = layer.x ?? 0;
-                          const offsetY = layer.y ?? 0;
-                          return (
-                            <div style={{
-                              position: "absolute",
-                              left: `${((minX + offsetX - pad) / 450) * 100}%`,
-                              top: `${((minY + offsetY - pad) / 600) * 100}%`,
-                              width: `${((maxX - minX + pad * 2) / 450) * 100}%`,
-                              height: `${((maxY - minY + pad * 2) / 600) * 100}%`,
-                              border: "2px dashed hsl(var(--primary))",
-                              pointerEvents: "none",
-                              zIndex: 25,
-                              borderRadius: "2px",
-                            }} />
-                          );
-                        })()}
-
-                        {/* Floating toolbar for selected drawing layer */}
-                        {selectedToolItem === "select" && activePanelIndex === i && selectedDrawingLayerId && (() => {
-                          const layer = (panel.drawingLayers || []).find(l => l.id === selectedDrawingLayerId);
-                          if (!layer) return null;
-                          return (
-                            <CanvasFloatingToolbar
-                              layer={layer}
-                              onDelete={() => {
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).filter(l => l.id !== selectedDrawingLayerId),
-                                });
-                                setSelectedDrawingLayerId(null);
-                              }}
-                              onDuplicate={() => {
-                                const maxZ = (panel.drawingLayers || []).reduce((max, l) => Math.max(max, l.zIndex), 0);
-                                const newLayer: DrawingLayer = {
-                                  ...layer,
-                                  id: generateId(),
-                                  zIndex: maxZ + 1,
-                                };
-                                // Load imageEl for the clone
-                                const img = new Image();
-                                img.onload = () => {
-                                  newLayer.imageEl = img;
-                                  updatePanel(i, {
-                                    ...panel,
-                                    drawingLayers: [...(panel.drawingLayers || []), newLayer],
-                                  });
-                                  setSelectedDrawingLayerId(newLayer.id);
-                                };
-                                img.src = layer.imageData;
-                              }}
-                              onToggleVisibility={() => {
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).map(l =>
-                                    l.id === selectedDrawingLayerId ? { ...l, visible: !l.visible } : l
-                                  ),
-                                });
-                              }}
-                              onOpacityChange={(opacity) => {
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).map(l =>
-                                    l.id === selectedDrawingLayerId ? { ...l, opacity } : l
-                                  ),
-                                });
-                              }}
-                              onBringForward={() => {
-                                const layers = [...(panel.drawingLayers || [])].sort((a, b) => a.zIndex - b.zIndex);
-                                const idx = layers.findIndex(l => l.id === selectedDrawingLayerId);
-                                if (idx < 0 || idx >= layers.length - 1) return;
-                                const cur = layers[idx].zIndex;
-                                layers[idx] = { ...layers[idx], zIndex: layers[idx + 1].zIndex };
-                                layers[idx + 1] = { ...layers[idx + 1], zIndex: cur };
-                                updatePanel(i, { ...panel, drawingLayers: layers });
-                              }}
-                              onSendBackward={() => {
-                                const layers = [...(panel.drawingLayers || [])].sort((a, b) => a.zIndex - b.zIndex);
-                                const idx = layers.findIndex(l => l.id === selectedDrawingLayerId);
-                                if (idx <= 0) return;
-                                const cur = layers[idx].zIndex;
-                                layers[idx] = { ...layers[idx], zIndex: layers[idx - 1].zIndex };
-                                layers[idx - 1] = { ...layers[idx - 1], zIndex: cur };
-                                updatePanel(i, { ...panel, drawingLayers: layers });
-                              }}
-                              onBringToFront={() => {
-                                const maxZ = (panel.drawingLayers || []).reduce((max, l) => Math.max(max, l.zIndex), 0);
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).map(l =>
-                                    l.id === selectedDrawingLayerId ? { ...l, zIndex: maxZ + 1 } : l
-                                  ),
-                                });
-                              }}
-                              onSendToBack={() => {
-                                const minZ = (panel.drawingLayers || []).reduce((min, l) => Math.min(min, l.zIndex), Infinity);
-                                updatePanel(i, {
-                                  ...panel,
-                                  drawingLayers: (panel.drawingLayers || []).map(l =>
-                                    l.id === selectedDrawingLayerId ? { ...l, zIndex: minZ - 1 } : l
-                                  ),
-                                });
-                              }}
-                              onClose={() => setSelectedDrawingLayerId(null)}
-                            />
-                          );
-                        })()}
                       </div>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuLabel>Page {i + 1}</ContextMenuLabel>
-                      <ContextMenuSeparator />
-                      <ContextMenuItem
-                        onClick={() => {
-                          const newPanel = {
-                            ...panel,
-                            id: generateId(),
-                            bubbles: panel.bubbles.map((b) => ({ ...b, id: generateId() })),
-                            characters: panel.characters.map((c) => ({ ...c, id: generateId() })),
-                            drawingLayers: (panel.drawingLayers || []).map((dl) => ({ ...dl, id: generateId() })),
-                          };
-                          const newPanels = [...panels];
-                          newPanels.splice(i + 1, 0, newPanel);
-                          setPanels(newPanels);
-                        }}
-                      >
-                        <Copy className="mr-2 h-4 w-4" /> Duplicate Page
-                      </ContextMenuItem>
-                      <ContextMenuItem
-                        onClick={() => removePanel(i)}
-                        className="text-red-500"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete Page
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  </ContextMenu>
-                ))}
-
-                <Button variant="outline" className="h-24 w-full max-w-[500px] border-dashed" onClick={addPanel} disabled={panels.length >= maxPanels}>
-                  <Plus className="mr-2 h-6 w-6 text-muted-foreground/70" />
-                  <span className="text-muted-foreground">Add New Page</span>
-                </Button>
-              </div>
-            </div>
-            
-          </div>
-
-
-          <div className="flex items-center justify-center gap-3 px-4 py-2 border-t border-border bg-background shrink-0" data-testid="story-bottom-toolbar">
-            <div className="flex items-center gap-1.5">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setZoom((z) => Math.max(20, z - 10))}
-                disabled={zoom <= 20}
-                data-testid="button-story-zoom-out"
-              >
-                <ZoomOut className="h-3.5 w-3.5" />
-              </Button>
-              <Slider
-                min={20}
-                max={200}
-                step={5}
-                value={[zoom]}
-                onValueChange={([v]) => setZoom(v)}
-                className="w-28"
-                data-testid="slider-story-zoom"
-              />
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setZoom((z) => Math.min(200, z + 10))}
-                disabled={zoom >= 200}
-                data-testid="button-story-zoom-in"
-              >
-                <ZoomIn className="h-3.5 w-3.5" />
-              </Button>
-              <span className="text-xs text-muted-foreground tabular-nums w-9 text-right" data-testid="text-story-zoom-value">{zoom}%</span>
-            </div>
-            <div className="h-4 w-px bg-border" />
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={fitToView}
-              title="화면에 맞추기"
-              data-testid="button-story-fit-to-view"
-            >
-              <Minimize2 className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setZoom(200)}
-              title="전체 화면"
-              data-testid="button-story-fullscreen"
-            >
-              <Maximize className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Right Layer Panel — always visible */}
-        {activePanel && (() => {
-          const DRAWING_TYPE_ICONS: Record<string, typeof Pen> = {
-            drawing: Pen,
-            straight: Minus,
-            curve: Spline,
-            polyline: GitCommitHorizontal,
-            text: Type,
-            eraser: Eraser,
-          };
-          const rightLayerItems: Array<{
-            type: "char" | "bubble" | "drawing" | "text" | "line";
-            id: string;
-            z: number;
-            label: string;
-            thumb?: string;
-            drawingType?: string;
-            visible?: boolean;
-          }> = [
-            ...activePanel.characters.map((c: CharacterPlacement) => ({
-              type: "char" as const,
-              id: c.id,
-              z: c.zIndex ?? 0,
-              label: "캐릭터",
-              thumb: c.imageUrl,
-            })),
-            ...activePanel.bubbles.map((b: SpeechBubble, i: number) => ({
-              type: "bubble" as const,
-              id: b.id,
-              z: b.zIndex ?? 10,
-              label: b.text || STYLE_LABELS[b.style] || `말풍선 ${i + 1}`,
-              thumb: b.style === "image" && (b as any).templateSrc ? (b as any).templateSrc : undefined,
-            })),
-            ...(activePanel.drawingLayers || []).map((dl) => ({
-              type: "drawing" as const,
-              id: dl.id,
-              z: dl.zIndex,
-              label: dl.label,
-              thumb: dl.imageData,
-              drawingType: dl.type,
-              visible: dl.visible,
-            })),
-            ...(activePanel.textElements || []).map((te: CanvasTextElement, i: number) => ({
-              type: "text" as const,
-              id: te.id,
-              z: te.zIndex ?? 20,
-              label: te.text || `텍스트 ${i + 1}`,
-              thumb: undefined as string | undefined,
-            })),
-            ...(activePanel.lineElements || []).map((le: CanvasLineElement, i: number) => ({
-              type: "line" as const,
-              id: le.id,
-              z: le.zIndex ?? 20,
-              label: le.lineType === "straight" ? "직선" : le.lineType === "curved" ? "곡선" : "꺾인선",
-              thumb: undefined as string | undefined,
-            })),
-          ].sort((a, b) => b.z - a.z);
-
-          const applyRightLayerOrder = (ordered: Array<{ type: "char" | "bubble" | "drawing" | "text" | "line"; id: string }>) => {
-            const n = ordered.length;
-            updatePanel(activePanelIndex, {
-              ...activePanel,
-              characters: activePanel.characters.map((c) => {
-                const idx = ordered.findIndex((it) => it.type === "char" && it.id === c.id);
-                return idx >= 0 ? { ...c, zIndex: n - 1 - idx } : c;
-              }),
-              bubbles: activePanel.bubbles.map((b) => {
-                const idx = ordered.findIndex((it) => it.type === "bubble" && it.id === b.id);
-                return idx >= 0 ? { ...b, zIndex: n - 1 - idx } : b;
-              }),
-              drawingLayers: (activePanel.drawingLayers || []).map((dl) => {
-                const idx = ordered.findIndex((it) => it.type === "drawing" && it.id === dl.id);
-                return idx >= 0 ? { ...dl, zIndex: n - 1 - idx } : dl;
-              }),
-              textElements: (activePanel.textElements || []).map((te) => {
-                const idx = ordered.findIndex((it) => it.type === "text" && it.id === te.id);
-                return idx >= 0 ? { ...te, zIndex: n - 1 - idx } : te;
-              }),
-              lineElements: (activePanel.lineElements || []).map((le) => {
-                const idx = ordered.findIndex((it) => it.type === "line" && it.id === le.id);
-                return idx >= 0 ? { ...le, zIndex: n - 1 - idx } : le;
-              }),
-            });
-          };
-
-          const moveRightLayer = (index: number, direction: "up" | "down") => {
-            if (direction === "up" && index <= 0) return;
-            if (direction === "down" && index >= rightLayerItems.length - 1) return;
-            const swapIdx = direction === "up" ? index - 1 : index + 1;
-            const newOrder = rightLayerItems.map((li) => ({ type: li.type as "char" | "bubble" | "drawing" | "text" | "line", id: li.id }));
-            const tmp = newOrder[index];
-            newOrder[index] = newOrder[swapIdx];
-            newOrder[swapIdx] = tmp;
-            applyRightLayerOrder(newOrder);
-          };
-
-          return (
-            <div
-              className="h-full w-[280px] shrink-0 bg-card border-l overflow-y-auto"
-              data-testid="right-layer-panel"
-            >
-              <div className="p-3 space-y-4">
-                <div className="flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-[13px] font-semibold">레이어 ({rightLayerItems.length})</span>
-                </div>
-
-                {rightLayerItems.length === 0 && (
-                  <p className="text-[11px] text-muted-foreground text-center py-4">레이어가 없습니다</p>
-                )}
-
-                <div className="space-y-1">
-                  {rightLayerItems.map((item, i) => {
-                    const isSelected =
-                      item.type === "char" ? selectedCharId === item.id
-                      : item.type === "bubble" ? selectedBubbleId === item.id
-                      : item.type === "drawing" ? selectedDrawingLayerId === item.id
-                      : item.type === "text" ? selectedTextId === item.id
-                      : item.type === "line" ? selectedLineId === item.id
-                      : false;
-                    const typeBg = item.type === "bubble"
-                      ? isSelected ? "bg-sky-500/15 border border-sky-500/30" : "hover:bg-sky-500/5"
-                      : item.type === "drawing"
-                      ? isSelected ? "bg-amber-500/15 border border-amber-500/30" : "hover:bg-amber-500/5"
-                      : item.type === "text"
-                      ? isSelected ? "bg-violet-500/15 border border-violet-500/30" : "hover:bg-violet-500/5"
-                      : item.type === "line"
-                      ? isSelected ? "bg-rose-500/15 border border-rose-500/30" : "hover:bg-rose-500/5"
-                      : isSelected ? "bg-emerald-500/15 border border-emerald-500/30" : "hover:bg-muted/50";
-                    const DrawingIcon = item.drawingType ? (DRAWING_TYPE_ICONS[item.drawingType] || Pen) : Pen;
-                    return (
-                    <div
-                      key={`${item.type}:${item.id}`}
-                      className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${typeBg} ${item.type === "drawing" && item.visible === false ? "opacity-40" : ""}`}
-                      onClick={() => {
-                        // Clear all selections first
-                        setSelectedCharId(null);
-                        setSelectedBubbleId(null);
-                        setSelectedDrawingLayerId(null);
-                        setSelectedTextId(null);
-                        setSelectedLineId(null);
-
-                        if (item.type === "char") {
-                          setSelectedCharId(item.id);
-                        } else if (item.type === "bubble") {
-                          setSelectedBubbleId(item.id);
-                        } else if (item.type === "drawing") {
-                          setSelectedDrawingLayerId(item.id);
-                          setSelectedToolItem("select");
-                        } else if (item.type === "text") {
-                          setSelectedTextId(item.id);
-                          setSelectedToolItem("select");
-                        } else if (item.type === "line") {
-                          setSelectedLineId(item.id);
-                          setSelectedToolItem("select");
-                        }
+                    </div>
+                  ) : (
+                    <ElementPropertiesPanel
+                      selectedBubble={selBubble ?? null}
+                      selectedChar={selChar ?? null}
+                      selectedText={selText ?? null}
+                      selectedLine={selLine ?? null}
+                      onUpdateBubble={(id, updates) => {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          bubbles: activePanel.bubbles.map(b => b.id === id ? { ...b, ...updates } : b),
+                        });
                       }}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className={`w-7 h-7 rounded overflow-hidden shrink-0 border ${
-                          item.type === "bubble" ? "border-sky-400/50 bg-sky-50 dark:bg-sky-950/30"
-                          : item.type === "drawing" ? "border-amber-400/50 bg-amber-50 dark:bg-amber-950/30"
-                          : item.type === "text" ? "border-violet-400/50 bg-violet-50 dark:bg-violet-950/30"
-                          : item.type === "line" ? "border-rose-400/50 bg-rose-50 dark:bg-rose-950/30"
-                          : "border-emerald-400/50 bg-emerald-50 dark:bg-emerald-950/30"
-                        }`}>
-                          {item.type === "drawing" ? (
-                            <div className="w-full h-full flex items-center justify-center text-amber-500">
-                              <DrawingIcon className="h-3.5 w-3.5" />
-                            </div>
-                          ) : item.type === "text" ? (
-                            <div className="w-full h-full flex items-center justify-center text-violet-500 text-[10px] font-semibold">T</div>
-                          ) : item.type === "line" ? (
-                            <div className="w-full h-full flex items-center justify-center text-rose-500 text-[10px] font-semibold">L</div>
-                          ) : item.thumb ? (
-                            <img src={item.thumb} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className={`w-full h-full flex items-center justify-center text-[10px] font-semibold ${
-                              item.type === "bubble" ? "text-sky-500"
-                              : "text-emerald-500"
-                            }`}>
-                              {item.type === "bubble" ? "B" : "C"}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-xs truncate">{item.label}</span>
-                      </div>
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        {item.type === "drawing" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updatePanel(activePanelIndex, {
-                                ...activePanel,
-                                drawingLayers: (activePanel.drawingLayers || []).map(dl =>
-                                  dl.id === item.id ? { ...dl, visible: !dl.visible } : dl
-                                ),
-                              });
-                            }}
-                            title={item.visible !== false ? "숨기기" : "보이기"}
-                          >
-                            {item.visible !== false ? (
-                              <Eye className="h-3.5 w-3.5" />
-                            ) : (
-                              <EyeOff className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-                        )}
-                        {item.type === "char" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const ch = activePanel.characters.find(c => c.id === item.id);
-                              if (!ch) return;
-                              updatePanel(activePanelIndex, {
-                                ...activePanel,
-                                characters: activePanel.characters.map(c =>
-                                  c.id === item.id ? { ...c, flipX: !c.flipX } : c
-                                ),
-                              });
-                            }}
-                            title="좌우 반전"
-                          >
-                            <FlipHorizontal2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                      onUpdateChar={(id, updates) => {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          characters: activePanel.characters.map(c => c.id === id ? { ...c, ...updates } : c),
+                        });
+                      }}
+                      onDeleteBubble={(id) => {
+                        updatePanel(activePanelIndex, { ...activePanel, bubbles: activePanel.bubbles.filter(b => b.id !== id) });
+                        if (selectedBubbleId === id) setSelectedBubbleId(null);
+                      }}
+                      onDeleteChar={(id) => {
+                        updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== id) });
+                        if (selectedCharId === id) setSelectedCharId(null);
+                      }}
+                      onFlipTailHorizontally={handleFlipTailHorizontally}
+                      onRemoveBackground={handleRemoveBackground}
+                      removingBg={removingBg}
+                      isPro={isPro}
+                    />
+                  )}
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={50} minSize={20}>
+                  <div className="h-full flex flex-col">
+                    {/* Add buttons - Bubble 화면과 동일 */}
+                    <div className="p-2 border-b border-border">
+                      <div className="flex items-center gap-1.5">
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={i === 0}
-                          onClick={(e) => { e.stopPropagation(); moveRightLayer(i, "up"); }}
-                          title="앞으로"
-                        >
-                          <ChevronUp className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={i === rightLayerItems.length - 1}
-                          onClick={(e) => { e.stopPropagation(); moveRightLayer(i, "down"); }}
-                          title="뒤로"
-                        >
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (item.type === "char") {
-                              const newChars = activePanel.characters.filter(c => c.id !== item.id);
-                              updatePanel(activePanelIndex, { ...activePanel, characters: newChars });
-                              if (selectedCharId === item.id) setSelectedCharId(null);
-                            } else if (item.type === "bubble") {
-                              const newBubbles = activePanel.bubbles.filter(b => b.id !== item.id);
-                              updatePanel(activePanelIndex, { ...activePanel, bubbles: newBubbles });
-                              if (selectedBubbleId === item.id) setSelectedBubbleId(null);
-                            } else if (item.type === "drawing") {
-                              updatePanel(activePanelIndex, {
-                                ...activePanel,
-                                drawingLayers: (activePanel.drawingLayers || []).filter(dl => dl.id !== item.id),
-                              });
-                              if (selectedDrawingLayerId === item.id) setSelectedDrawingLayerId(null);
-                            }
+                          size="sm"
+                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          onClick={() => {
+                            setElementsSubTab("bubble");
+                            setActiveLeftTab("elements");
                           }}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <MessageSquare className="h-3 w-3" />
+                          말풍선
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          onClick={() => {
+                            setActiveLeftTab("image");
+                          }}
+                        >
+                          <ImagePlus className="h-3 w-3" />
+                          캐릭터
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          onClick={() => {
+                            setElementsSubTab("template");
+                            setActiveLeftTab("elements");
+                          }}
+                        >
+                          <Type className="h-3 w-3" />
+                          템플릿
                         </Button>
                       </div>
                     </div>
-                  ); })}
-                </div>
-
-              </div>
+                    <div className="flex-1 overflow-hidden">
+                  <LayerListPanel
+                    items={rightLayerItems}
+                    externalMultiSelected={canvasMultiSelected}
+                    selectedCharId={selectedCharId}
+                    selectedBubbleId={selectedBubbleId}
+                    selectedDrawingLayerId={selectedDrawingLayerId}
+                    selectedTextId={selectedTextId}
+                    selectedLineId={selectedLineId}
+                    selectedShapeId={selectedShapeId}
+                    onSelectChar={setSelectedCharId}
+                    onSelectBubble={setSelectedBubbleId}
+                    onSelectDrawingLayer={setSelectedDrawingLayerId}
+                    onSelectText={setSelectedTextId}
+                    onSelectLine={setSelectedLineId}
+                    onSelectShape={setSelectedShapeId}
+                    onSetToolItem={setSelectedToolItem}
+                    onSelectScript={(position) => {
+                      setSelectedScriptPosition(position);
+                      if (position) {
+                        setActiveLeftTab("elements");
+                        setElementsSubTab("script");
+                      }
+                    }}
+                    selectedScriptPosition={
+                      !selectedCharId && !selectedBubbleId && !selectedDrawingLayerId && !selectedTextId && !selectedLineId && !selectedShapeId
+                        ? selectedScriptPosition
+                        : null
+                    }
+                    onMoveLayer={moveRightLayer}
+                    onReorderLayer={reorderRightLayer}
+                    onDeleteLayer={(item) => {
+                      if (item.type === "char") {
+                        updatePanel(activePanelIndex, { ...activePanel, characters: activePanel.characters.filter(c => c.id !== item.id) });
+                        if (selectedCharId === item.id) setSelectedCharId(null);
+                      } else if (item.type === "bubble") {
+                        updatePanel(activePanelIndex, { ...activePanel, bubbles: activePanel.bubbles.filter(b => b.id !== item.id) });
+                        if (selectedBubbleId === item.id) setSelectedBubbleId(null);
+                      } else if (item.type === "drawing") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          drawingLayers: (activePanel.drawingLayers || []).filter(dl => dl.id !== item.id),
+                        });
+                        if (selectedDrawingLayerId === item.id) setSelectedDrawingLayerId(null);
+                      } else if (item.type === "text") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          textElements: (activePanel.textElements || []).filter((te: CanvasTextElement) => te.id !== item.id),
+                        });
+                        if (selectedTextId === item.id) setSelectedTextId(null);
+                      } else if (item.type === "line") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          lineElements: (activePanel.lineElements || []).filter((le: CanvasLineElement) => le.id !== item.id),
+                        });
+                        if (selectedLineId === item.id) setSelectedLineId(null);
+                      } else if (item.type === "shape") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          shapeElements: (activePanel.shapeElements || []).filter((se: CanvasShapeElement) => se.id !== item.id),
+                        });
+                        if (selectedShapeId === item.id) setSelectedShapeId(null);
+                      } else if (item.type === "topScript") {
+                        updatePanel(activePanelIndex, { ...activePanel, topScript: null });
+                      } else if (item.type === "bottomScript") {
+                        updatePanel(activePanelIndex, { ...activePanel, bottomScript: null });
+                      }
+                    }}
+                    onDuplicateLayer={(item) => {
+                      const id = generateId();
+                      if (item.type === "char") {
+                        const ch = activePanel.characters.find(c => c.id === item.id);
+                        if (!ch) return;
+                        const maxZ = activePanel.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0);
+                        const dup = { ...ch, id, x: ch.x + 24, y: ch.y + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, characters: [...activePanel.characters, dup] });
+                        setSelectedCharId(id);
+                      } else if (item.type === "bubble") {
+                        const b = activePanel.bubbles.find(bb => bb.id === item.id);
+                        if (!b) return;
+                        const maxZ = activePanel.bubbles.reduce((m, bb) => Math.max(m, bb.zIndex ?? 0), 0);
+                        const dup = { ...b, id, x: b.x + 24, y: b.y + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, bubbles: [...activePanel.bubbles, dup] });
+                        setSelectedBubbleId(id);
+                      } else if (item.type === "drawing") {
+                        const dl = (activePanel.drawingLayers || []).find(d => d.id === item.id);
+                        if (!dl) return;
+                        const maxZ = (activePanel.drawingLayers || []).reduce((m, d) => Math.max(m, d.zIndex ?? 0), 0);
+                        const dup = { ...dl, id, x: (dl.x ?? 0) + 24, y: (dl.y ?? 0) + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, drawingLayers: [...(activePanel.drawingLayers || []), dup] });
+                        setSelectedDrawingLayerId(id);
+                      } else if (item.type === "text") {
+                        const te = (activePanel.textElements || []).find((t: any) => t.id === item.id);
+                        if (!te) return;
+                        const maxZ = (activePanel.textElements || []).reduce((m: number, t: any) => Math.max(m, t.zIndex ?? 0), 0);
+                        const dup = { ...te, id, x: te.x + 24, y: te.y + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, textElements: [...(activePanel.textElements || []), dup] });
+                        setSelectedTextId(id);
+                      } else if (item.type === "line") {
+                        const le = (activePanel.lineElements || []).find((l: any) => l.id === item.id);
+                        if (!le) return;
+                        const maxZ = (activePanel.lineElements || []).reduce((m: number, l: any) => Math.max(m, l.zIndex ?? 0), 0);
+                        const dup = { ...le, id, points: le.points.map((pt: any) => ({ ...pt, x: pt.x + 24, y: pt.y + 24 })), zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, lineElements: [...(activePanel.lineElements || []), dup] });
+                        setSelectedLineId(id);
+                      } else if (item.type === "shape") {
+                        const se = (activePanel.shapeElements || []).find((s: any) => s.id === item.id);
+                        if (!se) return;
+                        const maxZ = (activePanel.shapeElements || []).reduce((m: number, s: any) => Math.max(m, s.zIndex ?? 0), 0);
+                        const dup = { ...se, id, x: se.x + 24, y: se.y + 24, zIndex: maxZ + 1 };
+                        updatePanel(activePanelIndex, { ...activePanel, shapeElements: [...(activePanel.shapeElements || []), dup] });
+                        setSelectedShapeId(id);
+                      }
+                    }}
+                    onToggleVisibility={(item) => {
+                      if (item.type === "drawing") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          drawingLayers: (activePanel.drawingLayers || []).map(dl =>
+                            dl.id === item.id ? { ...dl, visible: !dl.visible } : dl
+                          ),
+                        });
+                      } else if (item.type === "char") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          characters: activePanel.characters.map(c =>
+                            c.id === item.id ? { ...c, visible: c.visible === false ? undefined : false } : c
+                          ),
+                        });
+                      } else if (item.type === "bubble") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          bubbles: activePanel.bubbles.map(b =>
+                            b.id === item.id ? { ...b, visible: b.visible === false ? undefined : false } : b
+                          ),
+                        });
+                      } else if (item.type === "text") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          textElements: (activePanel.textElements || []).map((te: CanvasTextElement) =>
+                            te.id === item.id ? { ...te, visible: te.visible === false ? undefined : false } : te
+                          ),
+                        });
+                      } else if (item.type === "line") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          lineElements: (activePanel.lineElements || []).map((le: CanvasLineElement) =>
+                            le.id === item.id ? { ...le, visible: le.visible === false ? undefined : false } : le
+                          ),
+                        });
+                      } else if (item.type === "shape") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          shapeElements: (activePanel.shapeElements || []).map((se: CanvasShapeElement) =>
+                            se.id === item.id ? { ...se, visible: se.visible === false ? undefined : false } : se
+                          ),
+                        });
+                      } else if (item.type === "topScript" && activePanel.topScript) {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          topScript: { ...activePanel.topScript, visible: activePanel.topScript.visible === false ? undefined : false },
+                        });
+                      } else if (item.type === "bottomScript" && activePanel.bottomScript) {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          bottomScript: { ...activePanel.bottomScript, visible: activePanel.bottomScript.visible === false ? undefined : false },
+                        });
+                      }
+                    }}
+                    onToggleLock={(item) => {
+                      if (item.type === "char") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          characters: activePanel.characters.map(c =>
+                            c.id === item.id ? { ...c, locked: !c.locked } : c
+                          ),
+                        });
+                      } else if (item.type === "bubble") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          bubbles: activePanel.bubbles.map(b =>
+                            b.id === item.id ? { ...b, locked: !b.locked } : b
+                          ),
+                        });
+                      } else if (item.type === "drawing") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          drawingLayers: (activePanel.drawingLayers || []).map(dl =>
+                            dl.id === item.id ? { ...dl, locked: !dl.locked } : dl
+                          ),
+                        });
+                      } else if (item.type === "text") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          textElements: (activePanel.textElements || []).map((te: CanvasTextElement) =>
+                            te.id === item.id ? { ...te, locked: !te.locked } : te
+                          ),
+                        });
+                      } else if (item.type === "line") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          lineElements: (activePanel.lineElements || []).map((le: CanvasLineElement) =>
+                            le.id === item.id ? { ...le, locked: !le.locked } : le
+                          ),
+                        });
+                      } else if (item.type === "shape") {
+                        updatePanel(activePanelIndex, {
+                          ...activePanel,
+                          shapeElements: (activePanel.shapeElements || []).map((se: CanvasShapeElement) =>
+                            se.id === item.id ? { ...se, locked: !se.locked } : se
+                          ),
+                        });
+                      }
+                    }}
+                    onFlipChar={(id) => {
+                      updatePanel(activePanelIndex, {
+                        ...activePanel,
+                        characters: activePanel.characters.map(c =>
+                          c.id === id ? { ...c, flipX: !c.flipX } : c
+                        ),
+                      });
+                    }}
+                    onToggleMaskLink={(layerId, _layerType, maskId) => {
+                      // Toggle: if already linked to this mask, unlink; otherwise link
+                      const newShapes = (activePanel.shapeElements || []).map((se: CanvasShapeElement) => {
+                        if (se.id !== maskId) return se;
+                        const existing = se.maskedLayerIds || [];
+                        const isLinked = existing.includes(layerId);
+                        return {
+                          ...se,
+                          maskedLayerIds: isLinked
+                            ? existing.filter(id => id !== layerId)
+                            : [...existing, layerId],
+                        };
+                      });
+                      updatePanel(activePanelIndex, {
+                        ...activePanel,
+                        shapeElements: newShapes,
+                      });
+                    }}
+                    isPro={isPro}
+                    onDownloadLayerPng={(item) => guard(() => downloadLayerPng(item))}
+                    onDownloadLayerSvg={(item) => guard(() => downloadLayerSvg(item))}
+                  />
+                    </div>
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
             </div>
           );
         })()}
@@ -7242,6 +9620,87 @@ export default function StoryPage() {
                 )}
               </DialogContent>
             </Dialog>
+          {/* ── Story-level Template Picker Popup ── */}
+          {showStoryTemplatePicker && activePanel && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStoryTemplatePicker(false)} data-testid="modal-story-template-picker-elements">
+              <Card className="w-full max-w-lg max-h-[70vh] flex flex-col m-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border flex-wrap">
+                  <h3 className="text-sm font-semibold">말풍선 템플릿</h3>
+                  <Button variant="ghost" size="icon" onClick={() => setShowStoryTemplatePicker(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-1.5 px-4 pt-3 pb-1 overflow-x-auto flex-wrap">
+                  {BUBBLE_TEMPLATE_CATEGORIES.map((cat, ci) => (
+                    <Badge
+                      key={ci}
+                      className={`cursor-pointer shrink-0 toggle-elevate ${ci === storyTemplateCatIdx ? "toggle-elevated" : ""}`}
+                      variant={ci === storyTemplateCatIdx ? "default" : "outline"}
+                      onClick={() => setStoryTemplateCatIdx(ci)}
+                    >
+                      {cat.label}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="overflow-y-auto p-4 flex-1">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                    {BUBBLE_TEMPLATE_CATEGORIES[storyTemplateCatIdx]?.ids.map((id) => {
+                      const path = bubblePath(id);
+                      return (
+                        <div
+                          key={id}
+                          className="aspect-square rounded-md border border-border overflow-hidden cursor-pointer hover-elevate bg-muted/30 p-1.5"
+                          onClick={() => {
+                            if (activePanel.bubbles.length >= 5) return;
+                            const img = new Image();
+                            img.crossOrigin = "anonymous";
+                            img.onload = () => {
+                              const maxDim = Math.min(CANVAS_W, CANVAS_H) * 0.4;
+                              const aspect = img.width / img.height;
+                              let w: number, h: number;
+                              if (aspect > 1) { w = maxDim; h = maxDim / aspect; }
+                              else { h = maxDim; w = maxDim * aspect; }
+                              const newB: SpeechBubble = {
+                                id: generateId(),
+                                seed: Math.floor(Math.random() * 100000),
+                                x: CANVAS_W / 2 - w / 2,
+                                y: CANVAS_H / 2 - h / 2,
+                                width: w,
+                                height: h,
+                                text: "",
+                                style: "image",
+                                tailStyle: "none",
+                                tailDirection: "bottom",
+                                strokeWidth: 2,
+                                wobble: 5,
+                                fontSize: 15,
+                                fontKey: "default",
+                                templateSrc: path,
+                                templateImg: img,
+                              };
+                              updatePanel(activePanelIndex, { ...activePanel, bubbles: [...activePanel.bubbles, newB] });
+                              setSelectedBubbleId(newB.id);
+                              setSelectedCharId(null);
+                              setSelectedTextId(null);
+                              setSelectedLineId(null);
+                              setSelectedShapeId(null);
+                              setSelectedDrawingLayerId(null);
+                              setSelectedScriptPosition(null);
+                            };
+                            img.src = path;
+                            setShowStoryTemplatePicker(false);
+                          }}
+                        >
+                          <img src={path} alt={`말풍선 ${id}`} className="w-full h-full object-contain" loading="lazy" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+          <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
           </div >
           );
 }

@@ -85,6 +85,22 @@ export const TAIL_LABELS: Record<TailStyle, string> = {
     dots_linedrawing: "점점점 (라인)",
 };
 
+export const ALL_STYLE_LABELS: Record<string, string> = {
+    ...STYLE_LABELS,
+    ...FLASH_STYLE_LABELS,
+};
+
+export const BUBBLE_CATEGORIES: { label: string; styles: string[] }[] = [
+    {
+        label: "기본",
+        styles: Object.keys(STYLE_LABELS),
+    },
+    {
+        label: "효과/특수",
+        styles: Object.keys(FLASH_STYLE_LABELS),
+    },
+];
+
 export function generateId() {
     return Math.random().toString(36).slice(2, 10);
 }
@@ -1434,7 +1450,7 @@ case "sticker":
         const jitterScale = jitter * 10;
 
         // tailRoundness: 0=sharp tip, >0=oval/ellipse tip
-        const tailRoundness = bubble.tailRoundness ?? 4;
+        const tailRoundness = bubble.tailRoundness ?? 0;
         const tailAngle = Math.atan2(geo.tipY - baseMidY, geo.tipX - baseMidX);
 
         const baseC1x = geo.baseAx + (baseMidX - geo.baseAx) * (0.5 + curvePull * 0.45);
@@ -1444,6 +1460,8 @@ case "sticker":
 
         const hasCtrl1 = typeof bubble.tailCtrl1X === "number" && typeof bubble.tailCtrl1Y === "number";
         const hasCtrl2 = typeof bubble.tailCtrl2X === "number" && typeof bubble.tailCtrl2Y === "number";
+        const hasCtrl3 = typeof bubble.tailCtrl3X === "number" && typeof bubble.tailCtrl3Y === "number";
+        const hasCtrl4 = typeof bubble.tailCtrl4X === "number" && typeof bubble.tailCtrl4Y === "number";
 
         const c1 = hasCtrl1
             ? { x: bubble.tailCtrl1X as number, y: bubble.tailCtrl1Y as number }
@@ -1451,11 +1469,18 @@ case "sticker":
         const c2 = hasCtrl2
             ? { x: bubble.tailCtrl2X as number, y: bubble.tailCtrl2Y as number }
             : { x: baseC2x + (randT() - 0.5) * jitterScale, y: baseC2y + (randT() - 0.5) * jitterScale };
-        const c3 = { x: c2.x, y: c2.y };
-        const c4 = {
+        // Return path controls: default mirrors c2/c1 for symmetric tail
+        const defaultC3 = { x: baseC2x + (randT() - 0.5) * jitterScale, y: baseC2y + (randT() - 0.5) * jitterScale };
+        const defaultC4 = {
             x: geo.baseBx + (baseMidX - geo.baseBx) * (0.5 + curvePull * 0.45),
             y: geo.baseBy + (baseMidY - geo.baseBy) * (0.5 + curvePull * 0.45),
         };
+        const c3 = hasCtrl3
+            ? { x: bubble.tailCtrl3X as number, y: bubble.tailCtrl3Y as number }
+            : defaultC3;
+        const c4 = hasCtrl4
+            ? { x: bubble.tailCtrl4X as number, y: bubble.tailCtrl4Y as number }
+            : defaultC4;
 
         // Step 1: Fill tail area with body fill color to cover the body stroke seam
         if (drawMode !== "stroke_only") {
@@ -1629,8 +1654,18 @@ case "sticker":
             const geo = getTailGeometry(bubble);
             const baseCx = (geo.baseAx + geo.baseBx) / 2;
             const baseCy = (geo.baseAy + geo.baseBy) / 2;
-            const pull = 0.97;
-            const tipPull = 0.6;
+            const curvePull = bubble.tailCurve ?? 0.5;
+            const pullFactor = 0.5 + curvePull * 0.45;
+
+            // Compute handle positions matching actual bezier control points
+            const cp1x = bubble.tailCtrl1X ?? (geo.baseAx + (baseCx - geo.baseAx) * pullFactor);
+            const cp1y = bubble.tailCtrl1Y ?? (geo.baseAy + (baseCy - geo.baseAy) * pullFactor);
+            const cp2x = bubble.tailCtrl2X ?? (geo.tipX + (baseCx - geo.tipX) * 0.3);
+            const cp2y = bubble.tailCtrl2Y ?? (geo.tipY + (baseCy - geo.tipY) * 0.3);
+            const cp3x = bubble.tailCtrl3X ?? (geo.tipX + (baseCx - geo.tipX) * 0.3);
+            const cp3y = bubble.tailCtrl3Y ?? (geo.tipY + (baseCy - geo.tipY) * 0.3);
+            const cp4x = bubble.tailCtrl4X ?? (geo.baseBx + (baseCx - geo.baseBx) * pullFactor);
+            const cp4y = bubble.tailCtrl4Y ?? (geo.baseBy + (baseCy - geo.baseBy) * pullFactor);
 
             // tip 핸들 (파란 원)
             ctx.beginPath();
@@ -1641,38 +1676,43 @@ case "sticker":
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // control point 핸들 (노란 마름모 2개)
-            const cp1x = bubble.tailCtrl1X ?? (geo.baseAx + (baseCx - geo.baseAx) * pull);
-            const cp1y = bubble.tailCtrl1Y ?? (geo.baseAy + (baseCy - geo.baseAy) * pull);
-            const cp2x = bubble.tailCtrl2X ?? (geo.tipX + (baseCx - geo.tipX) * tipPull);
-            const cp2y = bubble.tailCtrl2Y ?? (geo.tipY + (baseCy - geo.tipY) * tipPull);
-
-            // 가이드 선 (control point → 연결점)
+            // 가이드 선
             ctx.setLineDash([3, 3]);
             ctx.lineWidth = 1;
             ctx.strokeStyle = "rgba(255,220,0,0.6)";
             ctx.beginPath();
-            ctx.moveTo(geo.baseAx, geo.baseAy);
-            ctx.lineTo(cp1x, cp1y);
-            ctx.moveTo(geo.tipX, geo.tipY);
-            ctx.lineTo(cp2x, cp2y);
+            ctx.moveTo(geo.baseAx, geo.baseAy); ctx.lineTo(cp1x, cp1y);
+            ctx.moveTo(geo.tipX, geo.tipY); ctx.lineTo(cp2x, cp2y);
+            ctx.stroke();
+            ctx.strokeStyle = "rgba(100,200,255,0.6)";
+            ctx.beginPath();
+            ctx.moveTo(geo.tipX, geo.tipY); ctx.lineTo(cp3x, cp3y);
+            ctx.moveTo(geo.baseBx, geo.baseBy); ctx.lineTo(cp4x, cp4y);
             ctx.stroke();
             ctx.setLineDash([]);
 
-            [{ x: cp1x, y: cp1y, mode: "tail-ctrl1" }, { x: cp2x, y: cp2y, mode: "tail-ctrl2" }]
-                .forEach(({ x, y }) => {
-                    ctx.beginPath();
-                    ctx.moveTo(x, y - 7);
-                    ctx.lineTo(x + 7, y);
-                    ctx.lineTo(x, y + 7);
-                    ctx.lineTo(x - 7, y);
-                    ctx.closePath();
-                    ctx.fillStyle = "rgba(255,220,0,0.95)";
-                    ctx.fill();
-                    ctx.strokeStyle = "hsl(173, 80%, 45%)";
-                    ctx.lineWidth = 1.8;
-                    ctx.stroke();
-                });
+            // ctrl1/ctrl2 핸들 (노란 마름모 — 왼쪽 곡선)
+            [{ x: cp1x, y: cp1y }, { x: cp2x, y: cp2y }].forEach(({ x, y }) => {
+                ctx.beginPath();
+                ctx.moveTo(x, y - 6); ctx.lineTo(x + 6, y); ctx.lineTo(x, y + 6); ctx.lineTo(x - 6, y);
+                ctx.closePath();
+                ctx.fillStyle = "rgba(255,220,0,0.95)";
+                ctx.fill();
+                ctx.strokeStyle = "hsl(173, 80%, 45%)";
+                ctx.lineWidth = 1.8;
+                ctx.stroke();
+            });
+            // ctrl3/ctrl4 핸들 (파란 마름모 — 오른쪽 곡선)
+            [{ x: cp3x, y: cp3y }, { x: cp4x, y: cp4y }].forEach(({ x, y }) => {
+                ctx.beginPath();
+                ctx.moveTo(x, y - 6); ctx.lineTo(x + 6, y); ctx.lineTo(x, y + 6); ctx.lineTo(x - 6, y);
+                ctx.closePath();
+                ctx.fillStyle = "rgba(100,200,255,0.95)";
+                ctx.fill();
+                ctx.strokeStyle = "hsl(173, 80%, 45%)";
+                ctx.lineWidth = 1.8;
+                ctx.stroke();
+            });
         }
     }
 

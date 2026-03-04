@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, ArrowRight, ArrowLeft, FileText, ChevronLeft, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { Download, ArrowLeft, FileText, ChevronLeft, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import html2canvas from "html2canvas";
 import { apiRequest } from "@/lib/queryClient";
@@ -61,6 +63,7 @@ const BAR_COLORS = ["#00B39E", "#18C4B0", "#40D6C8", "#78E8DE", "#AEEFE8"];
 export default function MediaKitPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -396,21 +399,6 @@ export default function MediaKitPage() {
     </div>,
   ];
 
-  if (!isAuthenticated) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mx-auto mb-6">
-          <FileText className="h-10 w-10 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold mb-3" data-testid="text-login-required-mediakit">로그인이 필요합니다</h2>
-        <p className="text-muted-foreground mb-6">미디어킷을 만들려면 로그인하세요.</p>
-        <Button asChild data-testid="button-login-mediakit">
-          <a href="/login" className="gap-2">로그인 <ArrowRight className="h-4 w-4" /></a>
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-6">
@@ -563,7 +551,7 @@ export default function MediaKitPage() {
               </div>
             </Card>
 
-            <Button size="lg" className="gap-2" onClick={handleGenerate} data-testid="button-generate-mediakit">
+            <Button size="lg" className="gap-2" onClick={() => guard(() => handleGenerate())} data-testid="button-generate-mediakit">
               <FileText className="h-4 w-4" />
               미디어킷 생성
             </Button>
@@ -634,6 +622,7 @@ export default function MediaKitPage() {
           </div>
         </div>
       )}
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

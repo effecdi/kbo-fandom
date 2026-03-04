@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowRight, Trash2, FolderOpen, Plus, Loader2, Crown, Clock, MessageCircle, BookOpen } from "lucide-react";
+import { Trash2, FolderOpen, Loader2, Crown, Clock, MessageCircle, BookOpen } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { useLocation } from "wouter";
 
 interface BubbleProject {
@@ -22,6 +24,7 @@ interface BubbleProject {
 export default function EditsPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { showLoginDialog, setShowLoginDialog } = useLoginGuard();
   const [, setLocation] = useLocation();
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
@@ -64,19 +67,6 @@ export default function EditsPage() {
     if (diffDay < 7) return `${diffDay}일 전`;
     return d.toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" });
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full py-20">
-        <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-        <h2 className="text-xl font-bold mb-2" data-testid="text-login-required-edits">로그인이 필요합니다</h2>
-        <p className="text-sm text-muted-foreground mb-5">내 편집 목록을 보려면 로그인해주세요.</p>
-        <Button size="sm" asChild data-testid="button-login-edits">
-          <a href="/login" className="gap-2">로그인 <ArrowRight className="h-3.5 w-3.5" /></a>
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -213,6 +203,7 @@ export default function EditsPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

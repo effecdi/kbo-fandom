@@ -10,10 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Download, RotateCcw, Upload, X, ArrowLeft, ArrowRight, Bot, Sparkles } from "lucide-react";
+import { Loader2, Download, RotateCcw, Upload, X, ArrowLeft, ArrowRight, Bot, Sparkles, Trees } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { FlowStepper } from "@/components/flow-stepper";
 import { setFlowState } from "@/lib/flow";
 import type { Generation } from "@shared/schema";
+
+const MAX_CHARACTERS = 4;
 
 const posePresets = [
   { label: "서 있기", prompt: "편하게 서 있는 포즈, 정면, 자연스러운 표정" },
@@ -26,15 +30,24 @@ const posePresets = [
   { label: "화남", prompt: "팔짱을 낀 채 화난 포즈, 볼이 붉어진 표정" },
 ];
 
+const multiPosePresets = [
+  { label: "하이파이브", prompt: "두 캐릭터가 서로 하이파이브하는 포즈, 밝은 미소" },
+  { label: "포옹", prompt: "캐릭터들이 서로 포옹하는 따뜻한 장면" },
+  { label: "대화", prompt: "캐릭터들이 마주보며 즐겁게 대화하는 장면" },
+  { label: "단체사진", prompt: "캐릭터들이 나란히 서서 카메라를 보며 포즈, 단체사진" },
+  { label: "뛰어놀기", prompt: "캐릭터들이 함께 뛰어놀며 즐거워하는 장면" },
+  { label: "축하", prompt: "캐릭터들이 함께 축하하며 손을 흔드는 파티 장면" },
+];
+
 export default function PosePage() {
   const search = useSearch();
   const params = new URLSearchParams(search);
   const isFlow = params.get("flow") === "1";
   const [, navigate] = useLocation();
 
-  const [selectedCharacterId, setSelectedCharacterId] = useState<number | null>(() => {
+  const [selectedCharacterIds, setSelectedCharacterIds] = useState<number[]>(() => {
     const charId = params.get("characterId");
-    return charId && !isNaN(parseInt(charId)) ? parseInt(charId) : null;
+    return charId && !isNaN(parseInt(charId)) ? [parseInt(charId)] : [];
   });
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [posePrompt, setPosePrompt] = useState("");
@@ -42,6 +55,7 @@ export default function PosePage() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
 
   const { data: usageData } = useQuery<{ creatorTier: number; totalGenerations: number; tier: string; credits: number }>({
     queryKey: ["/api/usage"],
@@ -54,13 +68,30 @@ export default function PosePage() {
     select: (data: any[]) => data.filter((g) => g.type === "character" && g.resultImageUrl),
   });
 
-  const selectedGeneration = galleryItems?.find((g) => g.characterId === selectedCharacterId) || null;
+  const toggleCharacter = (characterId: number) => {
+    setSelectedCharacterIds((prev) => {
+      if (prev.includes(characterId)) {
+        return prev.filter((id) => id !== characterId);
+      }
+      if (prev.length >= MAX_CHARACTERS) {
+        toast({ title: "최대 선택 초과", description: `캐릭터는 최대 ${MAX_CHARACTERS}개까지 선택할 수 있습니다.`, variant: "destructive" });
+        return prev;
+      }
+      return [...prev, characterId];
+    });
+  };
+
+  const removeCharacter = (characterId: number) => {
+    setSelectedCharacterIds((prev) => prev.filter((id) => id !== characterId));
+  };
+
+  const selectedGenerations = galleryItems?.filter((g) => g.characterId && selectedCharacterIds.includes(g.characterId)) || [];
 
   const aiPromptMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/ai-prompt", {
         type: "pose",
-        context: selectedGeneration?.prompt || "",
+        context: selectedGenerations[0]?.prompt || "",
       });
       return res.json();
     },
@@ -74,7 +105,7 @@ export default function PosePage() {
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedCharacterId) {
+      if (selectedCharacterIds.length === 0) {
         throw new Error("캐릭터를 먼저 선택해주세요.");
       }
       const pose = posePrompt.trim();
@@ -82,7 +113,7 @@ export default function PosePage() {
         throw new Error("표정 또는 포즈 설명을 입력해주세요.");
       }
       const res = await apiRequest("POST", "/api/generate-pose", {
-        characterId: selectedCharacterId,
+        characterIds: selectedCharacterIds,
         prompt: pose,
         referenceImageData: referenceImage || undefined,
       });
@@ -132,7 +163,9 @@ export default function PosePage() {
     reader.readAsDataURL(file);
   }, []);
 
-  const applyPosePreset = (preset: typeof posePresets[0]) => {
+  const currentPresets = selectedCharacterIds.length > 1 ? multiPosePresets : posePresets;
+
+  const applyPosePreset = (preset: { label: string; prompt: string }) => {
     setPosePrompt(preset.prompt);
   };
 
@@ -144,7 +177,7 @@ export default function PosePage() {
   };
 
   const canGenerate =
-    !!selectedCharacterId &&
+    selectedCharacterIds.length > 0 &&
     !!posePrompt.trim() &&
     !generateMutation.isPending &&
     !isOutOfCredits;
@@ -160,43 +193,56 @@ export default function PosePage() {
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
           <Card className="p-4">
-            <h3 className="text-sm font-medium mb-3 text-muted-foreground">기준 캐릭터 선택</h3>
+            <h3 className="text-sm font-medium mb-3 text-muted-foreground">
+              기준 캐릭터 선택 <span className="text-xs">({selectedCharacterIds.length}/{MAX_CHARACTERS})</span>
+            </h3>
 
-            {selectedGeneration ? (
-              <div className="relative">
-                <div className="overflow-hidden rounded-md border">
-                  <img
-                    src={selectedGeneration.resultImageUrl!}
-                    alt={selectedGeneration.prompt}
-                    className="w-full object-contain max-h-[300px]"
-                  />
+            {/* 선택된 캐릭터 미리보기 */}
+            {selectedCharacterIds.length > 0 && (
+              <div className="mb-3">
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {selectedGenerations.map((gen, idx) => (
+                    <div key={gen.id} className="relative flex-shrink-0 w-16 h-16">
+                      <img
+                        src={gen.resultImageUrl!}
+                        alt={gen.prompt}
+                        className="w-full h-full object-cover rounded-md border-2 border-primary"
+                      />
+                      <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeCharacter(gen.characterId!)}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute top-2 right-2"
-                  onClick={() => setSelectedCharacterId(null)}
-                  data-testid="button-clear-selected-character"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
-            ) : (
-              <div>
-                {galleryLoading ? (
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <Skeleton key={i} className="aspect-square rounded-md" />
-                    ))}
-                  </div>
-                ) : galleryItems && galleryItems.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-2 max-h-[220px] overflow-y-auto">
-                    {galleryItems.map((item) => (
+            )}
+
+            {/* 갤러리 그리드 (항상 표시) */}
+            <div>
+              {galleryLoading ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-square rounded-md" />
+                  ))}
+                </div>
+              ) : galleryItems && galleryItems.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2 max-h-[220px] overflow-y-auto">
+                  {galleryItems.map((item) => {
+                    const selIndex = selectedCharacterIds.indexOf(item.characterId!);
+                    const isSelected = selIndex !== -1;
+                    return (
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setSelectedCharacterId(item.characterId)}
-                        className="overflow-hidden rounded-md border hover-elevate active-elevate-2"
+                        onClick={() => toggleCharacter(item.characterId!)}
+                        className={`relative overflow-hidden rounded-md border hover-elevate active-elevate-2 ${isSelected ? "ring-2 ring-primary" : ""}`}
                         data-testid={`button-select-pose-char-${item.id}`}
                       >
                         <img
@@ -204,16 +250,21 @@ export default function PosePage() {
                           alt={item.prompt}
                           className="w-full aspect-square object-cover"
                         />
+                        {isSelected && (
+                          <div className="absolute top-1 left-1 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                            {selIndex + 1}
+                          </div>
+                        )}
                       </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    생성된 캐릭터가 없습니다. 먼저 캐릭터를 만들어주세요.
-                  </p>
-                )}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  생성된 캐릭터가 없습니다. 먼저 캐릭터를 만들어주세요.
+                </p>
+              )}
+            </div>
           </Card>
 
           <Card className="p-4">
@@ -263,9 +314,11 @@ export default function PosePage() {
           </Card>
 
           <Card className="p-4">
-            <h3 className="text-sm font-medium mb-3">빠른 포즈 프리셋</h3>
+            <h3 className="text-sm font-medium mb-3">
+              {selectedCharacterIds.length > 1 ? "상호작용 프리셋" : "빠른 포즈 프리셋"}
+            </h3>
             <div className="flex flex-wrap gap-2">
-              {posePresets.map((preset) => (
+              {currentPresets.map((preset) => (
                 <Badge
                   key={preset.label}
                   variant="outline"
@@ -316,7 +369,7 @@ export default function PosePage() {
           <Button
             size="lg"
             className="w-full gap-2"
-            onClick={() => generateMutation.mutate()}
+            onClick={() => guard(() => generateMutation.mutate())}
             disabled={!canGenerate}
             data-testid="button-generate-pose"
           >
@@ -328,7 +381,9 @@ export default function PosePage() {
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                포즈 생성하기
+                {selectedCharacterIds.length > 1
+                  ? `${selectedCharacterIds.length}캐릭터 포즈 생성하기`
+                  : "포즈 생성하기"}
               </>
             )}
           </Button>
@@ -354,7 +409,14 @@ export default function PosePage() {
               </div>
             ) : poseResultImage ? (
               <div className="flex flex-col gap-3 w-full">
-                <div className="overflow-hidden rounded-md border">
+                <div
+                  className="overflow-hidden rounded-md border"
+                  style={{
+                    backgroundImage: "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
+                    backgroundSize: "16px 16px",
+                    backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                  }}
+                >
                   <img
                     src={poseResultImage}
                     alt="Pose result"
@@ -362,6 +424,18 @@ export default function PosePage() {
                     data-testid="img-pose-result"
                   />
                 </div>
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    setFlowState({ lastPoseImageUrl: poseResultImage });
+                    navigate("/background?flow=1");
+                  }}
+                  data-testid="button-go-background"
+                >
+                  <Trees className="h-4 w-4" />
+                  배경/아이템 만들기
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -424,6 +498,7 @@ export default function PosePage() {
           </Button>
         </div>
       )}
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

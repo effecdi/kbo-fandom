@@ -49,6 +49,10 @@ export interface SpeechBubble {
     tailCtrl1Y?: number;
     tailCtrl2X?: number;
     tailCtrl2Y?: number;
+    tailCtrl3X?: number;  // return path: control near tip
+    tailCtrl3Y?: number;
+    tailCtrl4X?: number;  // return path: control near baseB
+    tailCtrl4Y?: number;
     dotsScale?: number;
     dotsSpacing?: number;
     tailDrawMode?: TailDrawMode;
@@ -83,6 +87,7 @@ export interface SpeechBubble {
     zIndex?: number;
     groupId?: string;
     locked?: boolean;
+    visible?: boolean;
 }
 
 export interface CharacterOverlay {

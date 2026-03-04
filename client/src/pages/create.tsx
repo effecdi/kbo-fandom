@@ -11,6 +11,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wand2, ArrowRight, Loader2, Palette, Sparkles, MessageCircle, Bot, Lock, UploadCloud, X, ImageIcon } from "lucide-react";
+import { useLoginGuard } from "@/hooks/use-login-guard";
+import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { Badge } from "@/components/ui/badge";
 import { FlowStepper } from "@/components/flow-stepper";
 import { setFlowState } from "@/lib/flow";
@@ -39,6 +41,7 @@ export default function CreatePage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const { data: usage, isLoading: usageLoading } = useQuery<{ tier: string; credits: number }>({ queryKey: ["/api/usage"] });
   const isPro = usage?.tier === "pro";
   const isOutOfCredits = !usageLoading && !isPro && typeof usage?.credits === "number" && usage.credits <= 0;
@@ -291,7 +294,7 @@ export default function CreatePage() {
           <Button
             size="lg"
             className="w-full gap-2"
-            onClick={() => generateMutation.mutate()}
+            onClick={() => guard(() => generateMutation.mutate())}
             disabled={!canGenerate || generateMutation.isPending || isOutOfCredits || usageLoading}
             data-testid="button-generate"
           >
@@ -330,7 +333,14 @@ export default function CreatePage() {
               </div>
             ) : generatedImage ? (
               <div className="flex flex-col items-center gap-5 w-full">
-                <div className="w-full overflow-hidden rounded-lg border">
+                <div
+                  className="w-full overflow-hidden rounded-lg border"
+                  style={{
+                    backgroundImage: "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
+                    backgroundSize: "16px 16px",
+                    backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                  }}
+                >
                   <img
                     src={generatedImage}
                     alt="Generated character"
@@ -377,6 +387,7 @@ export default function CreatePage() {
           </Card>
         </div>
       </div>
+      <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
 }

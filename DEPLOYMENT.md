@@ -230,21 +230,93 @@ Railway 대시보드 → **Deployments** → **Logs**에서 확인:
 - Railway Variables에 설정했는지 확인 (Secrets가 아님)
 - 빌드 후 재배포 필요
 
-## 10. 릴리즈 프로세스
+## 10. 개발서버 환경 구축
 
-### 개발 → 운영 배포
+프로덕션과 분리된 개발/테스트 환경을 Railway에 구성합니다.
 
-1. `main` 브랜치에 푸시
-2. Railway 자동 배포 트리거
-3. 배포 완료 후 핵심 플로우 수동 테스트
-4. 문제 발생 시 Railway에서 롤백
+### 10-1. 브랜치 전략
+
+| 브랜치 | 환경 | Railway 서비스 | 자동 배포 |
+|--------|------|---------------|----------|
+| `main` | 프로덕션 | olli-production | ✅ push 시 자동 |
+| `dev` | 개발 | olli-dev | ✅ push 시 자동 |
+
+### 10-2. Supabase (프로덕션과 동일)
+
+개발서버와 프로덕션은 **동일한 Supabase 프로젝트**를 공유합니다.
+별도의 Supabase 설정은 필요하지 않으며, 프로덕션과 같은 URL/키를 사용합니다.
+
+> ⚠️ **주의**: 개발서버에서의 DB 변경이 프로덕션 데이터에 직접 영향을 줍니다.
+> 테스트 시 실제 사용자 데이터에 영향을 주지 않도록 주의하세요.
+
+### 10-3. Railway 개발서버 생성
+
+1. [Railway](https://railway.app) 대시보드 → **New Project** → **Deploy from GitHub Repo**
+2. 저장소 선택 후 **브랜치를 `dev`로 변경**
+3. 서비스 이름: `olli-dev` (또는 원하는 이름)
+4. Build/Start 명령은 프로덕션과 동일:
+   - **Build Command**: `npm ci && npm run build`
+   - **Start Command**: `npm start`
+
+### 10-4. 개발서버 환경변수 설정
+
+Railway 개발 서비스에 다음 환경변수를 설정합니다.
+프로덕션과 동일한 Supabase 값을 사용합니다.
+
+| 변수명 | 값 | 비고 |
+|--------|------|------|
+| `DATABASE_URL` | 프로덕션과 동일 | Supabase 공유 |
+| `SUPABASE_URL` | 프로덕션과 동일 | |
+| `SUPABASE_KEY` | 프로덕션과 동일 | |
+| `VITE_SUPABASE_URL` | 프로덕션과 동일 | 공개값 |
+| `VITE_SUPABASE_ANON_KEY` | 프로덕션과 동일 | 공개값 |
+| `NODE_ENV` | `production` | Railway에서는 production으로 빌드 |
+| `PORTONE_API_KEY` | 프로덕션과 동일 또는 테스트용 | 선택 |
+| `PORTONE_API_SECRET` | 프로덕션과 동일 또는 테스트용 | 선택 |
+| `VITE_PORTONE_MERCHANT_ID` | 프로덕션과 동일 또는 테스트용 | 선택 |
+
+### 10-5. 개발서버 확인
+
+배포 완료 후:
+
+```bash
+# 개발서버 헬스체크
+curl https://olli-dev.up.railway.app/api/health
+```
+
+### 10-6. 비용 관리
+
+개발서버도 별도로 **Hard Limit**을 설정하세요:
+- Railway 대시보드 → Workspace → Usage Limits
+- 개발서버는 프로덕션보다 낮은 한도 권장 (예: 월 $5~10)
+
+## 11. 릴리즈 프로세스
+
+### 개발 → 프로덕션 워크플로우
+
+```
+[로컬 개발] → git push origin dev → [개발서버 자동 배포] → 테스트
+                                                              ↓
+                                                         문제 없으면
+                                                              ↓
+                    git checkout main && git merge dev → git push origin main → [프로덕션 자동 배포]
+```
+
+1. `dev` 브랜치에서 개발 및 커밋
+2. `dev` push → 개발 Railway 서비스 자동 배포
+3. 개발서버에서 테스트 완료
+4. `main` 브랜치로 머지: `git checkout main && git merge dev`
+5. `main` push → 프로덕션 Railway 서비스 자동 배포
+6. 프로덕션에서 핵심 플로우 수동 테스트
+7. 문제 발생 시 Railway에서 롤백
 
 ### DB 스키마 변경 시
 
+동일한 Supabase를 사용하므로 스키마 변경은 한 번만 반영하면 됩니다.
+
 1. 로컬에서 스키마 수정
-2. `npm run db:push` 실행하여 변경사항 확인
-3. Railway 쉘에서 `npm run db:push` 실행
-4. 또는 Railway에서 직접 SQL 실행
+2. `npm run db:push` 실행하여 변경사항 반영
+3. 개발서버에서 테스트 후 프로덕션에 코드 머지
 
 ## 참고 자료
 
