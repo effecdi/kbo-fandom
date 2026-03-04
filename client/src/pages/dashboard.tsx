@@ -29,9 +29,11 @@ import {
   Star,
 } from "lucide-react";
 import type { Generation, TrendingAccount } from "@shared/schema";
+import { FAQCreditSection } from "@/components/faq-credit-section";
 
 interface UsageData {
   credits: number;
+  dailyBonusCredits: number;
   tier: string;
   authorName: string | null;
   genre: string | null;
@@ -394,7 +396,7 @@ export default function DashboardPage() {
                       </Badge>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {usage?.tier === "pro" ? "무제한" : `${usage?.credits ?? 0}/${tier.dailyCredits}회`}
+                      {usage?.tier === "pro" ? "무제한" : `${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
                     </span>
                   </div>
                 </div>
@@ -595,6 +597,8 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+        <FAQCreditSection />
     </div>
   );
 }

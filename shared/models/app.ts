@@ -29,13 +29,15 @@ export const generations = pgTable("generations", {
 export const userCredits = pgTable("user_credits", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id).unique(),
-  credits: integer("credits").notNull().default(3),
+  credits: integer("credits").notNull().default(50),
   tier: text("tier").notNull().default("free"),
   authorName: text("author_name"),
   genre: text("genre"),
   totalGenerations: integer("total_generations").notNull().default(0),
   bubbleUsesToday: integer("bubble_uses_today").notNull().default(0),
   storyUsesToday: integer("story_uses_today").notNull().default(0),
+  dailyBonusCredits: integer("daily_bonus_credits").notNull().default(0),
+  lastDailyBonusAt: timestamp("last_daily_bonus_at"),
   lastResetAt: timestamp("last_reset_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

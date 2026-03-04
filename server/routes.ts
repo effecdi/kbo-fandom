@@ -374,11 +374,12 @@ export async function registerRoutes(
       const isPro = credits.tier === "pro";
       res.json({
         credits: credits.credits,
+        dailyBonusCredits: credits.dailyBonusCredits,
         tier: credits.tier,
         authorName: credits.authorName,
         genre: credits.genre,
         totalGenerations: credits.totalGenerations,
-        dailyFreeCredits: isPro ? -1 : 3,
+        dailyFreeCredits: isPro ? -1 : 30,
         bubbleUsesToday: credits.bubbleUsesToday,
         storyUsesToday: credits.storyUsesToday,
         maxBubbleUses: isPro ? -1 : 3,
@@ -494,6 +495,32 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Payment verification error:", error);
       res.status(500).json({ message: error.message || "결제 검증에 실패했습니다." });
+    }
+  });
+
+  app.get("/api/payments", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const payments = await storage.getPaymentsByUser(userId);
+      res.json(payments);
+    } catch (error: any) {
+      console.error("Get payments error:", error);
+      res.status(500).json({ message: "결제 내역 조회에 실패했습니다." });
+    }
+  });
+
+  app.post("/api/cancel-pro", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        return res.status(400).json({ message: "현재 Pro 멤버십이 아닙니다." });
+      }
+      const updated = await storage.cancelPro(userId);
+      res.json({ success: true, tier: updated.tier, credits: updated.credits });
+    } catch (error: any) {
+      console.error("Cancel pro error:", error);
+      res.status(500).json({ message: "멤버십 해지에 실패했습니다." });
     }
   });
 

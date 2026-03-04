@@ -40,9 +40,11 @@ import {
   Gift,
 } from "lucide-react";
 import type { Generation, TrendingAccount } from "@shared/schema";
+import { FAQCreditSection } from "@/components/faq-credit-section";
 
 interface UsageData {
   credits: number;
+  dailyBonusCredits: number;
   tier: string;
   authorName: string | null;
   genre: string | null;
@@ -423,7 +425,7 @@ export default function HomePage() {
                         <Badge variant="secondary" className="text-[11px]" data-testid="badge-plan">Free</Badge>
                       )}
                       <span className="text-xs text-muted-foreground" data-testid="text-credits">
-                        {usage?.tier === "pro" ? "무제한" : `${usage?.credits ?? 0}/${tier.dailyCredits}회`}
+                        {usage?.tier === "pro" ? "무제한" : `${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
                       </span>
                     </div>
                     {usage?.tier === "pro" ? (
@@ -631,6 +633,8 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+
+        <FAQCreditSection />
       </div>
     </>
   );

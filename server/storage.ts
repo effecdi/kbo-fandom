@@ -10,6 +10,16 @@ import {
 import { requireDb } from "./db";
 import { eq, desc, sql, and, asc, inArray } from "drizzle-orm";
 
+function isNewDayKST(lastDate: Date | null): boolean {
+  if (!lastDate) return true;
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+  const nowKST = new Date(Date.now() + KST_OFFSET);
+  const lastKST = new Date(lastDate.getTime() + KST_OFFSET);
+  return nowKST.getUTCFullYear() !== lastKST.getUTCFullYear() ||
+         nowKST.getUTCMonth() !== lastKST.getUTCMonth() ||
+         nowKST.getUTCDate() !== lastKST.getUTCDate();
+}
+
 export interface IStorage {
   ensureUser(data: UpsertUser): Promise<void>;
 
@@ -31,6 +41,7 @@ export interface IStorage {
 
   updateUserTier(userId: string, tier: string): Promise<UserCredits>;
   addCredits(userId: string, amount: number): Promise<UserCredits>;
+  cancelPro(userId: string): Promise<UserCredits>;
 
   updateCreatorProfile(userId: string, profile: CreatorProfile): Promise<UserCredits>;
   incrementTotalGenerations(userId: string): Promise<void>;
@@ -231,17 +242,24 @@ export class DatabaseStorage implements IStorage {
       const isNewMonth = now.getUTCMonth() !== lastReset.getUTCMonth() ||
         now.getUTCFullYear() !== lastReset.getUTCFullYear();
 
+      const updates: any = {};
+
       if (isNewMonth) {
-        // Reset monthly limits
-        const updates: any = {
-          bubbleUsesToday: 0,
-          storyUsesToday: 0,
-          lastResetAt: now
-        };
-        // Reset free tier generations to 3
+        updates.bubbleUsesToday = 0;
+        updates.storyUsesToday = 0;
+        updates.lastResetAt = now;
         if (existing.tier === "free") {
-          updates.credits = 3;
+          updates.credits = 30;
         }
+      }
+
+      // Daily bonus check (KST)
+      if (isNewDayKST(existing.lastDailyBonusAt)) {
+        updates.dailyBonusCredits = 10;
+        updates.lastDailyBonusAt = now;
+      }
+
+      if (Object.keys(updates).length > 0) {
         const [updated] = await db.update(userCredits)
           .set(updates)
           .where(eq(userCredits.userId, userId))
@@ -252,7 +270,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     const [created] = await db.insert(userCredits)
-      .values({ userId, credits: 3, tier: "free" })
+      .values({ userId, credits: 50, tier: "free" })
       .returning();
     return created;
   }
@@ -264,13 +282,22 @@ export class DatabaseStorage implements IStorage {
   async deductCredit(userId: string): Promise<boolean> {
     const credits = await this.ensureUserCredits(userId);
     if (credits.tier === "pro") return true;
-    if (credits.credits <= 0) return false;
 
     const db = this.getDb();
-    await db.update(userCredits)
-      .set({ credits: credits.credits - 1 })
-      .where(eq(userCredits.userId, userId));
-    return true;
+    // Deduct daily bonus credits first, then regular credits
+    if (credits.dailyBonusCredits > 0) {
+      await db.update(userCredits)
+        .set({ dailyBonusCredits: credits.dailyBonusCredits - 1 })
+        .where(eq(userCredits.userId, userId));
+      return true;
+    }
+    if (credits.credits > 0) {
+      await db.update(userCredits)
+        .set({ credits: credits.credits - 1 })
+        .where(eq(userCredits.userId, userId));
+      return true;
+    }
+    return false;
   }
 
   async deductBubbleUse(userId: string): Promise<boolean> {
@@ -310,6 +337,16 @@ export class DatabaseStorage implements IStorage {
     const db = this.getDb();
     const [updated] = await db.update(userCredits)
       .set({ credits: credits.credits + amount })
+      .where(eq(userCredits.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async cancelPro(userId: string): Promise<UserCredits> {
+    await this.ensureUserCredits(userId);
+    const db = this.getDb();
+    const [updated] = await db.update(userCredits)
+      .set({ tier: "free", credits: 30 })
       .where(eq(userCredits.userId, userId))
       .returning();
     return updated;

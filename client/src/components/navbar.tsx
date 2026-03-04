@@ -24,7 +24,7 @@ export function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const [location] = useLocation();
 
-  const { data: credits } = useQuery<{ credits: number; tier: string }>({
+  const { data: credits } = useQuery<{ credits: number; dailyBonusCredits: number; tier: string }>({
     queryKey: ["/api/usage"],
     enabled: isAuthenticated,
   });
@@ -140,7 +140,7 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Badge variant="secondary" data-testid="badge-credits" className="gap-1 bg-primary/10 text-primary border-primary/20 cursor-pointer">
                   <Sparkles className="h-3 w-3" />
-                  {credits.tier === "pro" ? "Unlimited" : `${credits.credits} credits`}
+                  {credits.tier === "pro" ? "Unlimited" : `${(credits.credits ?? 0) + (credits.dailyBonusCredits ?? 0)} credits`}
                   <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
                 </Badge>
               </DropdownMenuTrigger>
@@ -186,6 +186,12 @@ export function Navbar() {
                   <Link href="/gallery" className="cursor-pointer">
                     <Image className="mr-2 h-4 w-4" />
                     My Gallery
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/payments" className="cursor-pointer">
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    결제 내역
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
