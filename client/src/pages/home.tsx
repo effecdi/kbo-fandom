@@ -39,6 +39,7 @@ import {
   Lock,
   Gift,
   CreditCard,
+  X,
 } from "lucide-react";
 import type { Generation, TrendingAccount } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
@@ -651,6 +652,120 @@ export default function HomePage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* 요금제 & 크레딧 충전 */}
+        <div>
+          <h2 className="text-lg font-bold mb-4">요금제 & 크레딧 충전</h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Free Card */}
+            <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
+              <div className="relative flex h-full flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-400">영구 무료</span>
+                </div>
+                <div className="mb-2">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-black tracking-tight">₩0</span>
+                    <span className="text-sm text-slate-400">/월</span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">가입 시 50 크레딧 + 매월 30 크레딧 + 매일 출석 10 크레딧</p>
+                </div>
+                <ul className="space-y-2 text-sm mb-6 mt-2">
+                  {[
+                    { text: "가입 시 50 크레딧 즉시 지급", ok: true },
+                    { text: "매월 30 크레딧 자동 충전", ok: true },
+                    { text: "매일 출석 보너스 10 크레딧", ok: true },
+                    { text: "포즈 & 배경 / 말풍선 / 스토리", ok: true },
+                    { text: "프리미엄 스타일 & 워터마크 제거", ok: false },
+                    { text: "상업적 이용", ok: false },
+                  ].map((f) => (
+                    <li key={f.text} className="flex items-center gap-2.5">
+                      {f.ok ? (
+                        <Check className="h-4 w-4 shrink-0 text-emerald-500 dark:text-teal-300" />
+                      ) : (
+                        <X className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500/60" />
+                      )}
+                      <span className={f.ok ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}>{f.text}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  variant="outline"
+                  className="mt-auto w-full h-11 rounded-full border-slate-300 dark:border-slate-500/70 text-slate-700 dark:text-slate-50 hover:bg-slate-50 dark:hover:bg-slate-900/60"
+                  disabled={usage?.tier === "free"}
+                >
+                  {usage?.tier === "free" ? "현재 플랜" : "무료 플랜"}
+                </Button>
+              </div>
+            </Card>
+
+            {/* Pro Card */}
+            <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-slate-900 dark:bg-gradient-to-br dark:from-violet-500 dark:via-fuchsia-500 dark:to-indigo-500 text-white border-slate-800 dark:border-violet-400/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
+              <div className="relative flex h-full flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <Badge className="bg-violet-500/20 dark:bg-white/15 text-violet-300 dark:text-white text-[11px] px-3 py-1 border border-violet-400/30 dark:border-white/20">Pro</Badge>
+                  <span className="text-[11px] text-slate-400 dark:text-white/80">/월</span>
+                </div>
+                <div className="mb-2">
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400 dark:text-white/70 mb-1">크리에이터 추천</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-black tracking-tight">₩19,900</span>
+                    <span className="text-sm text-slate-400 dark:text-white/80">/월</span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-400 dark:text-white/85">본격적인 크리에이터를 위한 플랜</p>
+                </div>
+                <ul className="space-y-2 text-sm mb-6 mt-2">
+                  {[
+                    "무제한 캐릭터 생성",
+                    "모든 스타일 & 폰트",
+                    "포즈 & 배경 무제한",
+                    "말풍선 & 스토리 무제한",
+                    "워터마크 제거",
+                    "상업적 이용 가능",
+                  ].map((text) => (
+                    <li key={text} className="flex items-center gap-2.5">
+                      <Check className="h-4 w-4 shrink-0 text-violet-400 dark:text-white" />
+                      <span className="text-slate-200 dark:text-white/95">{text}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/pricing">
+                  <Button
+                    className="mt-auto w-full h-11 rounded-full bg-white text-slate-900 hover:bg-slate-100 border-0"
+                    disabled={usage?.tier === "pro"}
+                  >
+                    {usage?.tier === "pro" ? "현재 플랜" : "Pro 업그레이드"}
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          </div>
+
+          {/* Credit Top-Up */}
+          <Link href="/pricing">
+            <Card
+              className="mt-6 relative overflow-hidden rounded-2xl border px-8 py-7 cursor-pointer hover:scale-[1.01] transition-transform bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950 dark:via-indigo-950 dark:to-purple-950 border-violet-200 dark:border-violet-800/50 shadow-[0_8px_40px_rgba(139,92,246,0.08)] dark:shadow-[0_8px_40px_rgba(139,92,246,0.15)]"
+              data-testid="card-credit-topup-bottom"
+            >
+              <div className="relative flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/50">
+                    <Sparkles className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">크레딧 충전</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">50 크레딧으로 더 많은 작품을 만들어보세요</p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-2xl font-black text-violet-600 dark:text-violet-400">₩4,900</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
+                </div>
+              </div>
+            </Card>
+          </Link>
         </div>
 
         <FAQCreditSection />

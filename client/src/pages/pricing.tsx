@@ -211,7 +211,7 @@ export default function PricingPage() {
             key={plan.name}
             className={`relative h-full overflow-hidden rounded-3xl border px-8 py-9 ${
               plan.highlighted
-                ? "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500 text-white border-violet-400/30 shadow-[0_22px_70px_rgba(139,92,246,0.25)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                ? "bg-slate-900 dark:bg-gradient-to-br dark:from-violet-500 dark:via-fuchsia-500 dark:to-indigo-500 text-white border-slate-800 dark:border-violet-400/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
                 : "bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
             }`}
             data-testid={`card-plan-${plan.tier}`}
@@ -220,8 +220,8 @@ export default function PricingPage() {
               <div className="flex items-center justify-between mb-6">
                 {plan.highlighted ? (
                   <>
-                    <Badge className="bg-white/15 text-[11px] px-3 py-1 border border-white/20">Pro</Badge>
-                    <span className="text-[11px] text-white/80">{plan.period}</span>
+                    <Badge className="bg-violet-500/20 dark:bg-white/15 text-violet-300 dark:text-white text-[11px] px-3 py-1 border border-violet-400/30 dark:border-white/20">Pro</Badge>
+                    <span className="text-[11px] text-slate-400 dark:text-white/80">{plan.period}</span>
                   </>
                 ) : (
                   <>
@@ -232,15 +232,15 @@ export default function PricingPage() {
               </div>
               <div className="mb-2">
                 {plan.highlighted ? (
-                  <p className="text-xs uppercase tracking-[0.22em] text-white/70 mb-1">크리에이터 추천</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400 dark:text-white/70 mb-1">크리에이터 추천</p>
                 ) : null}
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-black tracking-tight">{plan.price}</span>
-                  <span className={plan.highlighted ? "text-sm text-white/80" : "text-sm text-slate-400"}>/월</span>
+                  <span className={plan.highlighted ? "text-sm text-slate-400 dark:text-white/80" : "text-sm text-slate-400"}>/월</span>
                 </div>
                 <p
                   className={
-                    plan.highlighted ? "mt-2 text-xs text-white/85" : "mt-2 text-xs text-slate-500 dark:text-slate-400"
+                    plan.highlighted ? "mt-2 text-xs text-slate-400 dark:text-white/85" : "mt-2 text-xs text-slate-500 dark:text-slate-400"
                   }
                 >
                   {plan.description}
@@ -253,13 +253,13 @@ export default function PricingPage() {
                     {feature.included ? (
                       <Check
                         className={`h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-white" : "text-emerald-500 dark:text-teal-300"
+                          plan.highlighted ? "text-violet-400 dark:text-white" : "text-emerald-500 dark:text-teal-300"
                         }`}
                       />
                     ) : (
                       <X
                         className={`h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-white/25" : "text-slate-300 dark:text-slate-500/60"
+                          plan.highlighted ? "text-slate-600 dark:text-white/25" : "text-slate-300 dark:text-slate-500/60"
                         }`}
                       />
                     )}
@@ -267,10 +267,10 @@ export default function PricingPage() {
                       className={
                         feature.included
                           ? plan.highlighted
-                            ? "text-white/95"
+                            ? "text-slate-200 dark:text-white/95"
                             : "text-slate-700 dark:text-slate-200"
                           : plan.highlighted
-                            ? "text-white/55"
+                            ? "text-slate-500 dark:text-white/55"
                             : "text-slate-400 dark:text-slate-400"
                       }
                     >
