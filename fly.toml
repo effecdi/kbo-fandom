@@ -2,6 +2,10 @@ app = 'olli-app'
 primary_region = 'nrt'  # 도쿄 (한국에서 가장 빠름)
 
 [build]
+  [build.args]
+    VITE_SUPABASE_URL = "https://wyksoifoncpxdvskkjea.supabase.co"
+    VITE_SUPABASE_ANON_KEY = "sb_publishable_5FcShG1n5Q1TgI8udtBJvg_Qi1d0QUN"
+    VITE_PORTONE_MERCHANT_ID = "imp30272272"
 
 [env]
   NODE_ENV = 'production'
