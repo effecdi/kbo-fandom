@@ -117,6 +117,7 @@ import {
   BubbleFloatingSettings,
   FloatingSettingsModal,
   ShapeContextToolbar,
+  ScriptContextToolbar,
   CanvasBgToolbar,
   CANVAS_BG_COLORS,
   createTextElement,
@@ -952,6 +953,7 @@ function PanelCanvas({
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
   const editingBubbleIdRef = useRef<string | null>(null);
   const [editingScriptPos, setEditingScriptPos] = useState<"top" | "bottom" | null>(null);
+  const editingScriptPosRef = useRef<"top" | "bottom" | null>(null);
 
   useEffect(() => {
     selectedBubbleIdRef.current = selectedBubbleId;
@@ -959,6 +961,9 @@ function PanelCanvas({
   useEffect(() => {
     editingBubbleIdRef.current = editingBubbleId;
   }, [editingBubbleId]);
+  useEffect(() => {
+    editingScriptPosRef.current = editingScriptPos;
+  }, [editingScriptPos]);
   // Sync external editing trigger from overlay double-click
   useEffect(() => {
     if (externalEditBubbleId) {
@@ -1769,7 +1774,7 @@ function PanelCanvas({
               { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
               { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
             ];
-            const nearHandle = editingScriptPos === scriptType && corners.some(
+            const nearHandle = editingScriptPosRef.current === scriptType && corners.some(
               (c) => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs
             );
             if (nearHandle) {
@@ -1794,7 +1799,7 @@ function PanelCanvas({
                 onSelectChar(null);
                 selectedBubbleIdRef.current = null;
                 selectedCharIdRef.current = null;
-                if (editingScriptPos === scriptType) {
+                if (editingScriptPosRef.current === scriptType) {
                   // 이미 선택된 상태 → 드래그로 이동 가능
                   dragModeRef.current =
                     scriptType === "top" ? "move-script-top" : "move-script-bottom";
@@ -1817,6 +1822,7 @@ function PanelCanvas({
       selectedBubbleIdRef.current = null;
       selectedCharIdRef.current = null;
       setEditingBubbleId(null);
+      setEditingScriptPos(null);
       onSelectScript?.(null);
     },
     [getCanvasPos, getHandleAtPos, onSelectBubble, onSelectChar],
@@ -1906,7 +1912,7 @@ function PanelCanvas({
                     CANVAS_W,
                     CANVAS_H,
                   );
-                  if (editingScriptPos === scriptType) {
+                  if (editingScriptPosRef.current === scriptType) {
                     const hs = 8;
                     const corners = [
                       { x: rect.bx - 2, y: rect.by - 2 },
@@ -1925,7 +1931,7 @@ function PanelCanvas({
                     pos.y >= rect.by &&
                     pos.y <= rect.by + rect.bh
                   ) {
-                    cvs.style.cursor = editingScriptPos === scriptType ? "move" : "pointer";
+                    cvs.style.cursor = editingScriptPosRef.current === scriptType ? "move" : "pointer";
                     return;
                   }
                 }
@@ -7870,8 +7876,26 @@ export default function StoryPage() {
                           );
                         })()}
 
+                        {/* Script context toolbar */}
+                        {activePanelIndex === i && selectedScriptPosition && !selectedBubbleId && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedDrawingLayerId && (() => {
+                          const sd = selectedScriptPosition === "top" ? panel.topScript : panel.bottomScript;
+                          if (!sd) return null;
+                          return (
+                            <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                              <ScriptContextToolbar
+                                script={sd}
+                                onChange={(updates) => {
+                                  const key = selectedScriptPosition === "top" ? "topScript" : "bottomScript";
+                                  updatePanel(i, { ...panel, [key]: { ...sd, ...updates } });
+                                }}
+                                canAllFonts={canAllFontsStory}
+                              />
+                            </div>
+                          );
+                        })()}
+
                         {/* Canvas background toolbar — shown when nothing is selected */}
-                        {activePanelIndex === i && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedBubbleId && !selectedCharId && !selectedDrawingLayerId && (
+                        {activePanelIndex === i && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedBubbleId && !selectedCharId && !selectedDrawingLayerId && !selectedScriptPosition && (
                           <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
                             <CanvasBgToolbar
                               backgroundColor={panel.backgroundColor || "#ffffff"}

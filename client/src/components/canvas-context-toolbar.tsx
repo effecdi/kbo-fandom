@@ -1408,3 +1408,180 @@ export function CanvasBgToolbar({ backgroundColor, onColorChange }: CanvasBgTool
     </div>
   );
 }
+
+// ─── Script Context Toolbar ──────────────────────────────────────────────────
+
+export interface ScriptToolbarData {
+  text: string;
+  style: string;
+  color: string;
+  fontSize?: number;
+  fontKey?: string;
+  textColor?: string;
+  bold?: boolean;
+}
+
+const SCRIPT_FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 36];
+
+const SCRIPT_STYLES = [
+  { value: "filled", label: "채움" },
+  { value: "box", label: "박스" },
+  { value: "handwritten-box", label: "손글씨" },
+  { value: "no-bg", label: "배경없음" },
+  { value: "no-border", label: "라인없음" },
+];
+
+interface ScriptToolbarProps {
+  script: ScriptToolbarData;
+  onChange: (updates: Partial<ScriptToolbarData>) => void;
+  canAllFonts?: boolean;
+}
+
+export function ScriptContextToolbar({ script, onChange, canAllFonts = true }: ScriptToolbarProps) {
+  const [showFontDropdown, setShowFontDropdown] = useState(false);
+  const [showSizeDropdown, setShowSizeDropdown] = useState(false);
+  const [showStyleDropdown, setShowStyleDropdown] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const colorInputRef = useRef<HTMLInputElement>(null);
+
+  const closeAll = () => { setShowFontDropdown(false); setShowSizeDropdown(false); setShowStyleDropdown(false); setShowColorPicker(false); };
+
+  const fontLabel = KOREAN_FONTS.find((f) => f.value === (script.fontKey || "default"))?.label || "기본 고딕";
+  const styleLabel = SCRIPT_STYLES.find((s) => s.value === script.style)?.label || "채움";
+
+  return (
+    <div className="context-toolbar context-toolbar--script">
+      {/* Font family */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn context-toolbar__btn--wide"
+          onClick={() => { closeAll(); setShowFontDropdown((v) => !v); }}
+        >
+          <span className="context-toolbar__btn-label">{fontLabel}</span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+        {showFontDropdown && (
+          <div className="context-toolbar__dropdown">
+            {KOREAN_FONTS.map((f, idx) => {
+              const locked = !canAllFonts && idx >= 3;
+              return (
+                <button
+                  key={f.value}
+                  className={`context-toolbar__dropdown-item ${(script.fontKey || "default") === f.value ? "context-toolbar__dropdown-item--active" : ""} ${locked ? "context-toolbar__dropdown-item--locked" : ""}`}
+                  onClick={() => { if (!locked) { onChange({ fontKey: f.value }); setShowFontDropdown(false); } }}
+                  disabled={locked}
+                >
+                  <span style={{ fontFamily: f.family }}>{f.label}</span>
+                  {locked && <span className="context-toolbar__lock-badge">Pro</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Font size */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn context-toolbar__btn--narrow"
+          onClick={() => { closeAll(); setShowSizeDropdown((v) => !v); }}
+        >
+          <span className="context-toolbar__btn-label">{script.fontSize || 20}</span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+        {showSizeDropdown && (
+          <div className="context-toolbar__dropdown">
+            {SCRIPT_FONT_SIZES.map((s) => (
+              <button
+                key={s}
+                className={`context-toolbar__dropdown-item ${(script.fontSize || 20) === s ? "context-toolbar__dropdown-item--active" : ""}`}
+                onClick={() => { onChange({ fontSize: s }); setShowSizeDropdown(false); }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Bold */}
+      <button
+        className={`context-toolbar__btn ${script.bold !== false ? "context-toolbar__btn--active" : ""}`}
+        onClick={() => { closeAll(); onChange({ bold: script.bold === false ? true : false }); }}
+        title="굵게"
+      >
+        <Bold className="h-4 w-4" />
+      </button>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Text color */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn"
+          onClick={() => { closeAll(); setShowColorPicker((v) => !v); }}
+          title="글자색"
+        >
+          <span
+            className="context-toolbar__color-dot"
+            style={{ backgroundColor: script.textColor || "#1a1a1a" }}
+          />
+        </button>
+        {showColorPicker && (
+          <div className="context-toolbar__dropdown context-toolbar__dropdown--colors">
+            <div className="context-toolbar__color-grid">
+              {COLOR_PRESETS.map((c) => (
+                <button
+                  key={c}
+                  className={`context-toolbar__color-swatch ${(script.textColor || "#1a1a1a") === c ? "context-toolbar__color-swatch--active" : ""}`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => { onChange({ textColor: c }); setShowColorPicker(false); }}
+                />
+              ))}
+            </div>
+            <div className="context-toolbar__custom-color-row">
+              <input
+                ref={colorInputRef}
+                type="color"
+                value={script.textColor || "#1a1a1a"}
+                onChange={(e) => onChange({ textColor: e.target.value })}
+                className="context-toolbar__color-input"
+              />
+              <span className="context-toolbar__color-hex">{script.textColor || "#1a1a1a"}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Style */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn context-toolbar__btn--wide"
+          onClick={() => { closeAll(); setShowStyleDropdown((v) => !v); }}
+        >
+          <span className="context-toolbar__btn-label">{styleLabel}</span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+        {showStyleDropdown && (
+          <div className="context-toolbar__dropdown">
+            {SCRIPT_STYLES.map((s) => (
+              <button
+                key={s.value}
+                className={`context-toolbar__dropdown-item ${script.style === s.value ? "context-toolbar__dropdown-item--active" : ""}`}
+                onClick={() => { onChange({ style: s.value }); setShowStyleDropdown(false); }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
