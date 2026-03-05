@@ -1790,12 +1790,20 @@ function PanelCanvas({
                 pos.y >= rect.by &&
                 pos.y <= rect.by + rect.bh
               ) {
-                // 클릭 시 바로 텍스트 편집 + 설정 활성화
-                setEditingScriptPos(scriptType);
                 onSelectBubble(null);
                 onSelectChar(null);
                 selectedBubbleIdRef.current = null;
                 selectedCharIdRef.current = null;
+                if (editingScriptPos === scriptType) {
+                  // 이미 선택된 상태 → 드래그로 이동 가능
+                  dragModeRef.current =
+                    scriptType === "top" ? "move-script-top" : "move-script-bottom";
+                  dragStartRef.current = pos;
+                  dragScriptStartRef.current = { x: sd.x ?? rect.bx, y: sd.y ?? rect.by };
+                } else {
+                  // 첫 클릭 → 선택 + 텍스트 편집 활성화
+                  setEditingScriptPos(scriptType);
+                }
                 onSelectScript?.(scriptType);
                 return;
               }
@@ -1898,15 +1906,18 @@ function PanelCanvas({
                     CANVAS_W,
                     CANVAS_H,
                   );
-                  const handleSize = 10;
-                  const hx = rect.bx + rect.bw - 6;
-                  const hy = rect.by + rect.bh - 6;
-                  if (
-                    Math.abs(pos.x - hx) <= handleSize &&
-                    Math.abs(pos.y - hy) <= handleSize
-                  ) {
-                    cvs.style.cursor = "nwse-resize";
-                    return;
+                  if (editingScriptPos === scriptType) {
+                    const hs = 8;
+                    const corners = [
+                      { x: rect.bx - 2, y: rect.by - 2 },
+                      { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
+                      { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
+                      { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
+                    ];
+                    if (corners.some(c => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs)) {
+                      cvs.style.cursor = "nwse-resize";
+                      return;
+                    }
                   }
                   if (
                     pos.x >= rect.bx &&
@@ -1914,7 +1925,7 @@ function PanelCanvas({
                     pos.y >= rect.by &&
                     pos.y <= rect.by + rect.bh
                   ) {
-                    cvs.style.cursor = "move";
+                    cvs.style.cursor = editingScriptPos === scriptType ? "move" : "pointer";
                     return;
                   }
                 }
