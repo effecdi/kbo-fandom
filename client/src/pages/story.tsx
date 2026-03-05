@@ -4548,7 +4548,7 @@ export default function StoryPage() {
     setTopic("");
   };
 
-  const activePanel = panels[activePanelIndex];
+  const activePanel = panels[activePanelIndex] ?? panels[0];
   const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null);
   const [editingBubbleIdForOverlay, setEditingBubbleIdForOverlay] = useState<string | null>(null);
   const [editingScriptPositionForCanvas, setEditingScriptPositionForCanvas] = useState<"top" | "bottom" | null>(null);
@@ -6998,9 +6998,9 @@ export default function StoryPage() {
                             galleryData={galleryData}
                             galleryLoading={galleryLoading}
                             onPanelsGenerated={(newPanels) => {
-                              setPanels(newPanels as any);
-                              rehydrateImages(newPanels as any);
                               setActivePanelIndex(0);
+                              setPanelsRaw(newPanels as any);
+                              rehydrateImages(newPanels as any);
                               setAiMode(null);
                             }}
                             onClose={() => setAiMode(null)}
