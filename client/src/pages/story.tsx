@@ -7498,8 +7498,14 @@ export default function StoryPage() {
                         <button
                           key={item.id}
                           onClick={() => {
-                            if (item.id === "template") {
-                              setShowStoryTemplatePicker(true);
+                            if (item.id === "bubble" || item.id === "template") {
+                              guard(() => {
+                                if (item.id === "template") {
+                                  setShowStoryTemplatePicker(true);
+                                } else {
+                                  setElementsSubTab(item.id as any);
+                                }
+                              });
                             } else {
                               setElementsSubTab(item.id as any);
                             }
@@ -9545,10 +9551,10 @@ export default function StoryPage() {
                           variant="ghost"
                           size="sm"
                           className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                          onClick={() => {
+                          onClick={() => guard(() => {
                             setElementsSubTab("bubble");
                             setActiveLeftTab("elements");
-                          }}
+                          })}
                         >
                           <MessageSquare className="h-3 w-3" />
                           말풍선
@@ -9557,9 +9563,9 @@ export default function StoryPage() {
                           variant="ghost"
                           size="sm"
                           className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                          onClick={() => {
+                          onClick={() => guard(() => {
                             setActiveLeftTab("image");
-                          }}
+                          })}
                         >
                           <ImagePlus className="h-3 w-3" />
                           캐릭터
@@ -9568,10 +9574,10 @@ export default function StoryPage() {
                           variant="ghost"
                           size="sm"
                           className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                          onClick={() => {
+                          onClick={() => guard(() => {
                             setElementsSubTab("template");
                             setActiveLeftTab("elements");
-                          }}
+                          })}
                         >
                           <Type className="h-3 w-3" />
                           템플릿
