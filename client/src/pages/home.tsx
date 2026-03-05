@@ -671,12 +671,12 @@ export default function HomePage() {
                     <span className="text-4xl font-black tracking-tight">₩0</span>
                     <span className="text-sm text-slate-400">/월</span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">가입 시 50 크레딧 + 매월 30 크레딧 + 매일 출석 10 크레딧</p>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 10 크레딧</p>
                 </div>
                 <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
                     { text: "가입 시 50 크레딧 즉시 지급", ok: true },
-                    { text: "매월 30 크레딧 자동 충전", ok: true },
+                    { text: "매월 10 크레딧 자동 충전", ok: true },
                     { text: "매일 출석 보너스 10 크레딧", ok: true },
                     { text: "3가지 스타일 (심플 라인)", ok: true },
                     { text: "기본 및 일부 무료 폰트 제공", ok: true },
@@ -724,7 +724,7 @@ export default function HomePage() {
                 </div>
                 <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
-                    "무제한 캐릭터 생성",
+                    "매월 200 크레딧 제공",
                     "모든 스타일 사용 가능",
                     "모든 폰트 제공",
                     "포즈 & 배경 무제한 생성",

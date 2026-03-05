@@ -125,7 +125,7 @@ export default function PricingPage() {
     try {
       await apiRequest("POST", "/api/cancel-pro", {});
       queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
-      toast({ title: "멤버십 해지 완료", description: "무료 플랜으로 전환되었습니다. 30 크레딧이 지급되었습니다." });
+      toast({ title: "멤버십 해지 완료", description: "무료 플랜으로 전환되었습니다. 10 크레딧이 지급되었습니다." });
     } catch (error: any) {
       toast({ title: "해지 실패", description: error.message || "관리자에게 문의하세요.", variant: "destructive" });
     } finally {
@@ -138,11 +138,11 @@ export default function PricingPage() {
       name: "무료",
       price: "₩0",
       period: "영구 무료",
-      description: "가입 시 50 크레딧 + 매월 30 크레딧 + 매일 출석 10 크레딧",
+      description: "가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 10 크레딧",
       icon: Sparkles,
       features: [
         { text: "가입 시 50 크레딧 즉시 지급", included: true },
-        { text: "매월 30 크레딧 자동 충전", included: true },
+        { text: "매월 10 크레딧 자동 충전", included: true },
         { text: "매일 출석 보너스 10 크레딧", included: true },
         { text: "3가지 스타일 (심플 라인)", included: true },
         { text: "기본 및 일부 무료 폰트 제공", included: true },
@@ -162,7 +162,7 @@ export default function PricingPage() {
       description: "본격적인 크리에이터를 위한 플랜",
       icon: Zap,
       features: [
-        { text: "무제한 캐릭터 생성", included: true },
+        { text: "매월 200 크레딧 제공", included: true },
         { text: "모든 스타일 사용 가능", included: true },
         { text: "모든 폰트 제공", included: true },
         { text: "포즈 & 배경 무제한 생성", included: true },
@@ -345,7 +345,7 @@ export default function PricingPage() {
                 <AlertDialogTitle>Pro 멤버십을 해지하시겠습니까?</AlertDialogTitle>
                 <AlertDialogDescription>
                   해지하면 무료 플랜으로 전환되며, 무제한 생성 등 Pro 혜택을 더 이상 이용할 수 없습니다.
-                  무료 플랜 전환 시 30 크레딧이 지급됩니다.
+                  무료 플랜 전환 시 10 크레딧이 지급됩니다.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -360,7 +360,7 @@ export default function PricingPage() {
       )}
 
       <div className="mt-12 text-center text-sm text-muted-foreground">
-        <p>무료 플랜은 가입 시 50 크레딧 + 매월 30 크레딧 + 매일 출석 보너스 10 크레딧을 제공합니다.</p>
+        <p>무료 플랜은 가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 보너스 10 크레딧을 제공합니다.</p>
         <p className="mt-1">
           Pro 멤버십은 포즈/배경 생성, 말풍선·스토리 에디터, 채팅 이미지 메이커, AI 광고주 매칭 등을 포함합니다.
         </p>
