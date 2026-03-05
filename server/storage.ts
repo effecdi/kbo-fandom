@@ -279,7 +279,7 @@ export class DatabaseStorage implements IStorage {
         updates.storyUsesToday = 0;
         updates.lastResetAt = now;
         if (existing.tier === "free") {
-          updates.credits = 30;
+          updates.credits = 10;
         }
       }
 
