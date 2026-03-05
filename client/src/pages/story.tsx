@@ -1823,6 +1823,24 @@ function PanelCanvas({
           drawables.sort((a, b) => a.z - b.z);
           for (let i = drawables.length - 1; i >= 0; i--) {
             const d = drawables[i];
+            if (d.type === "bubble") {
+              const b = d.b;
+              if (pos.x >= b.x && pos.x <= b.x + b.width && pos.y >= b.y && pos.y <= b.y + b.height) {
+                if (canvas) canvas.style.cursor = "move";
+                return;
+              }
+            } else if (d.type === "char") {
+              const ch = d.ch;
+              const naturalW = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
+              const naturalH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
+              const cw2 = Math.min(naturalW, CANVAS_W * 2);
+              const ch2h = Math.min(naturalH, CANVAS_H * 2);
+              if (pos.x >= ch.x - cw2 / 2 && pos.x <= ch.x + cw2 / 2 &&
+                  pos.y >= ch.y - ch2h / 2 && pos.y <= ch.y + ch2h / 2) {
+                if (canvas) canvas.style.cursor = "move";
+                return;
+              }
+            }
           }
         }
 
@@ -3369,9 +3387,8 @@ export default function StoryPage() {
     "auto":         { label: "자동 감지",        promptKeyword: "",                                                                                  description: "이미지에서 자동 분석" },
   };
 
-  // 인스타툰 자동화 생성용 - 기준 캐릭터 이미지
-  const [autoRefImageUrl, setAutoRefImageUrl] = useState<string | null>(null);
-  const [autoRefImageName, setAutoRefImageName] = useState<string>("");
+  // 인스타툰 자동화 생성용 - 기준 캐릭터 이미지 (복수, 최대 4개)
+  const [autoRefImages, setAutoRefImages] = useState<{ url: string; name: string }[]>([]);
   const [showAutoGalleryPicker, setShowAutoGalleryPicker] = useState(false);
   // Style detection for visual consistency
   const [detectedStyle, setDetectedStyle] = useState<string>("auto");    // auto | style key
@@ -3744,7 +3761,7 @@ export default function StoryPage() {
           if (itemPrompt.trim()) body.itemPrompt = itemPrompt.trim();
           if (backgroundPrompt.trim()) body.backgroundPrompt = backgroundPrompt.trim();
         }
-        if (autoRefImageUrl) body.referenceImageUrl = autoRefImageUrl;
+        if (autoRefImages.length > 0) body.referenceImageUrl = autoRefImages[0].url;
       }
       const res = await apiRequest("POST", "/api/story-scripts", body);
       const result = await res.json() as { panels: StoryPanelScript[] };
@@ -3855,16 +3872,22 @@ export default function StoryPage() {
   });
 
   const instatoonImageMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (variables?: { scope?: "current" | "all" }) => {
+      const scope = variables?.scope ?? "all";
       const currentPanels = panels;
-      const currentRefImage = autoRefImageUrl;
-      if (!currentRefImage) {
+      const currentRefImages = autoRefImages.map(img => img.url);
+      if (currentRefImages.length === 0) {
         throw new Error("먼저 기준 캐릭터 이미지를 선택해주세요.");
       }
 
+      // scope === "current" 이면 선택된 패널 1개만, "all" 이면 전체
+      const targetIndices = scope === "current"
+        ? [activePanelIndex]
+        : currentPanels.map((_, i) => i);
+
       const results: { panelId: string; imageUrl: string }[] = [];
       const errors: string[] = [];
-      for (let i = 0; i < currentPanels.length; i++) {
+      for (const i of targetIndices) {
         // Use scene-first prompt: pose/action described FIRST forces the AI to
         // re-compose the full scene with the new character action, not just add a background
         let scenePrompt: string;
@@ -3898,7 +3921,7 @@ export default function StoryPage() {
 
         try {
           const res = await apiRequest("POST", "/api/generate-background", {
-            sourceImageDataList: [currentRefImage],
+            sourceImageDataList: currentRefImages,
             backgroundPrompt: scenePrompt,
             itemsPrompt: finalItems,
           });
@@ -4094,9 +4117,9 @@ export default function StoryPage() {
       setItemPrompt(items);
 
       // Auto-generate character image if reference image is available
-      // backgroundPromptMutation is used in instatoonFull flow (autoRefImageUrl)
-      const refImg = autoRefImageUrl || promptRefImageUrl;
-      if (refImg) {
+      // backgroundPromptMutation is used in instatoonFull flow (autoRefImages)
+      const refImgs = autoRefImages.length > 0 ? autoRefImages.map(i => i.url) : promptRefImageUrl ? [promptRefImageUrl] : [];
+      if (refImgs.length > 0) {
         toast({
           title: "배경/아이템 완성 — 이미지 생성 시작",
           description: "캐릭터 이미지를 생성해 캔버스에 추가합니다...",
@@ -4104,7 +4127,7 @@ export default function StoryPage() {
         // Use functional access to get current panel IDs to avoid stale closure
         // panels state is always current in onSuccess (TanStack Query uses latest closure)
         const currentPanelIds = panels.map(p => p.id);
-        generateAndAddCharacterImages(refImg, {
+        generateAndAddCharacterImages(refImgs, {
           bg,
           items,
           pose: posePrompt,
@@ -4174,14 +4197,14 @@ export default function StoryPage() {
       setInstatoonScenePrompt(scene);
 
       // If a reference character image is provided, auto-generate and place on canvas
-      const refImg = promptRefImageUrl || autoRefImageUrl;
-      if (refImg) {
+      const refImgs2 = autoRefImages.length > 0 ? autoRefImages.map(i => i.url) : promptRefImageUrl ? [promptRefImageUrl] : [];
+      if (refImgs2.length > 0) {
         toast({
           title: "프롬프트 완성 — 이미지 생성 시작",
           description: "캐릭터 이미지를 생성해 캔버스에 추가합니다...",
         });
         const currentPanelIds2 = panels.map(p => p.id);
-        generateAndAddCharacterImages(refImg, {
+        generateAndAddCharacterImages(refImgs2, {
           bg: parsedBg || scene,
           items: parsedItems,
           pose: posePrompt,
@@ -4274,7 +4297,7 @@ export default function StoryPage() {
 
   // Helper: generate character images per panel and add as CharacterPlacements on canvas
   const generateAndAddCharacterImages = async (
-    sourceImageUrl: string,
+    sourceImageUrls: string[],
     promptParts: { bg?: string; items?: string; pose?: string; expression?: string; topic?: string },
     panelIds?: string[]
   ) => {
@@ -4321,7 +4344,7 @@ export default function StoryPage() {
 
       try {
         const res = await apiRequest("POST", "/api/generate-background", {
-          sourceImageDataList: [sourceImageUrl],
+          sourceImageDataList: sourceImageUrls,
           backgroundPrompt: scenePrompt,
           itemsPrompt: sceneItems,
         });
@@ -4424,21 +4447,27 @@ export default function StoryPage() {
     return "auto";
   };
 
-  // 이미지 파일 → base64 변환 후 state에 저장
+  // 이미지 파일 → base64 변환 후 state에 추가 (최대 4개)
   const handleAutoRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (autoRefImages.length >= 4) {
+      toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" });
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
-      setAutoRefImageUrl(dataUrl);
-      setAutoRefImageName(file.name);
-      setShowAutoGalleryPicker(false);
-      setDetectedStyle("auto");  // reset while detecting
-      // Auto-detect style from the uploaded image
-      detectArtStyle(dataUrl).finally(() => setIsDetectingStyle(false));
+      setAutoRefImages(prev => [...prev, { url: dataUrl, name: file.name }]);
+      // 스타일 감지는 첫 번째 이미지에서만 수행
+      if (autoRefImages.length === 0) {
+        setDetectedStyle("auto");
+        detectArtStyle(dataUrl).finally(() => setIsDetectingStyle(false));
+      }
     };
     reader.readAsDataURL(file);
+    // reset input so same file can be re-selected
+    e.target.value = "";
   };
 
   const handlePromptRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -4458,7 +4487,7 @@ export default function StoryPage() {
   };
 
   const TIER_NAMES = ["입문 작가", "신인 작가", "인기 작가", "프로 연재러"];
-  const TIER_PANEL_LIMITS = [3, 5, 8, 10];
+  const TIER_PANEL_LIMITS = [3, 5, 8, 14];
 
   const addPanel = () => {
     if (panels.length >= maxPanels) {
@@ -4474,7 +4503,7 @@ export default function StoryPage() {
       } else {
         toast({
           title: "최대 패널 수 도달",
-          description: "최대 10개의 패널까지 추가할 수 있습니다",
+          description: "최대 14개의 패널까지 추가할 수 있습니다",
           variant: "destructive",
         });
       }
@@ -6455,22 +6484,39 @@ export default function StoryPage() {
                               🎨 이미지 업로드 시 그림 스타일을 자동 감지 → 배경·아이템도 같은 스타일로 생성됩니다
                             </p>
 
-                            {/* 이미지 미리보기 */}
-                            {autoRefImageUrl ? (
-                              <div className="relative w-full aspect-square max-w-[100px] rounded-lg overflow-hidden border border-border bg-muted mx-auto">
-                                <img src={autoRefImageUrl} alt="기준 캐릭터" className="w-full h-full object-cover" />
-                                <button
-                                  onClick={() => { setAutoRefImageUrl(null); setAutoRefImageName(""); }}
-                                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[9px] px-1 py-0.5 truncate">
-                                  <CheckCircle2 className="h-2.5 w-2.5 inline mr-0.5 text-green-400" />
-                                  {autoRefImageName || "선택됨"}
-                                </div>
+                            {/* 선택된 이미지 썸네일 목록 */}
+                            {autoRefImages.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {autoRefImages.map((img, idx) => (
+                                  <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-muted">
+                                    <img src={img.url} alt={`캐릭터 ${idx + 1}`} className="w-full h-full object-cover" />
+                                    <button
+                                      onClick={() => {
+                                        const remaining = autoRefImages.filter((_, i) => i !== idx);
+                                        setAutoRefImages(remaining);
+                                        // 첫 번째 이미지 제거 시 스타일 재감지
+                                        if (idx === 0 && remaining.length > 0) {
+                                          setDetectedStyle("auto");
+                                          detectArtStyle(remaining[0].url).finally(() => setIsDetectingStyle(false));
+                                        }
+                                        if (remaining.length === 0) {
+                                          setDetectedStyle("auto");
+                                        }
+                                      }}
+                                      className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
+                                    >
+                                      <X className="h-2.5 w-2.5" />
+                                    </button>
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] px-0.5 py-0.5 truncate text-center">
+                                      {img.name?.slice(0, 8) || `캐릭터${idx + 1}`}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ) : (
+                            )}
+
+                            {/* 업로드/갤러리 버튼: 4개 미만일 때만 표시 */}
+                            {autoRefImages.length < 4 && (
                               <div className="grid grid-cols-2 gap-2">
                                 {/* 직접 업로드 */}
                                 <button
@@ -6479,7 +6525,7 @@ export default function StoryPage() {
                                 >
                                   <UploadCloud className="h-5 w-5 text-muted-foreground/70" />
                                   <span className="text-[11px] font-medium">이미지 업로드</span>
-                                  <span className="text-[10px] opacity-70">JPG·PNG</span>
+                                  <span className="text-[10px] opacity-70">JPG·PNG ({autoRefImages.length}/4)</span>
                                 </button>
                                 {/* 갤러리에서 가져오기 */}
                                 <button
@@ -6488,7 +6534,7 @@ export default function StoryPage() {
                                 >
                                   <ImagePlus className="h-5 w-5 opacity-70" />
                                   <span className="text-[11px] font-medium">갤러리에서</span>
-                                  <span className="text-[10px] opacity-70">생성 이미지</span>
+                                  <span className="text-[10px] opacity-70">생성 이미지 ({autoRefImages.length}/4)</span>
                                 </button>
                               </div>
                             )}
@@ -6502,7 +6548,7 @@ export default function StoryPage() {
                             />
 
                             {/* Style detector & manual override */}
-                            {autoRefImageUrl && (
+                            {autoRefImages.length > 0 && (
                               <div className="space-y-1.5">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-[10px] font-semibold text-muted-foreground">그림 스타일</span>
@@ -6545,7 +6591,7 @@ export default function StoryPage() {
                             {/* 갤러리 그리드 */}
                             {showAutoGalleryPicker && (
                               <div className="space-y-1.5">
-                                <p className="text-[11px] text-muted-foreground">생성된 이미지 선택:</p>
+                                <p className="text-[11px] text-muted-foreground">생성된 이미지 선택 (최대 4개, 클릭으로 토글):</p>
                                 {galleryLoading ? (
                                   <div className="flex justify-center py-4">
                                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -6557,21 +6603,42 @@ export default function StoryPage() {
                                 ) : (
                                   <>
                                     <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
-                                      {galleryData.map((gen) => (
+                                      {galleryData.map((gen) => {
+                                        const isSelected = autoRefImages.some(img => img.url === (gen.resultImageUrl));
+                                        return (
                                         <button
                                           key={gen.id}
-                                          className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
+                                          className={`relative aspect-square rounded-md overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                                           onClick={async () => {
+                                            if (isSelected) {
+                                              // 선택 해제
+                                              setAutoRefImages(prev => prev.filter(img => img.url !== gen.resultImageUrl));
+                                              return;
+                                            }
+                                            if (autoRefImages.length >= 4) {
+                                              toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" });
+                                              return;
+                                            }
                                             const full = await fetchFullGeneration(gen.id);
                                             if (!full) return;
-                                            setAutoRefImageUrl(full.resultImageUrl);
-                                            setAutoRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
-                                            setShowAutoGalleryPicker(false);
+                                            const imgName = gen.prompt?.slice(0, 20) ?? "갤러리 이미지";
+                                            setAutoRefImages(prev => [...prev, { url: full.resultImageUrl, name: imgName }]);
+                                            // 스타일 감지는 첫 번째 이미지에서만 수행
+                                            if (autoRefImages.length === 0) {
+                                              setDetectedStyle("auto");
+                                              detectArtStyle(full.resultImageUrl).finally(() => setIsDetectingStyle(false));
+                                            }
                                           }}
                                         >
                                           <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
+                                          {isSelected && (
+                                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                              <CheckCircle2 className="h-5 w-5 text-primary drop-shadow" />
+                                            </div>
+                                          )}
                                         </button>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                     {galleryHasMore && (
                                       <button
@@ -6715,7 +6782,7 @@ export default function StoryPage() {
                             </div>
                           </div>
 
-                          {!autoRefImageUrl && (
+                          {autoRefImages.length === 0 && (
                             <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-md px-2.5 py-1.5">
                               ⚠️ 기준 캐릭터 이미지를 선택해야 포즈·표정이 자동 변형됩니다.
                             </p>
@@ -6727,7 +6794,7 @@ export default function StoryPage() {
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                if (!autoRefImageUrl) {
+                                if (autoRefImages.length === 0) {
                                   toast({
                                     title: "기준 이미지 필요",
                                     description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
@@ -6736,7 +6803,7 @@ export default function StoryPage() {
                                   return;
                                 }
                                 generateMutation.mutate({ mode: "full", scope: "current" });
-                                instatoonImageMutation.mutate();
+                                instatoonImageMutation.mutate({ scope: "current" });
                               }}
                               disabled={
                                 !topic.trim() ||
@@ -6760,7 +6827,7 @@ export default function StoryPage() {
                               className="flex-1"
                               size="sm"
                               onClick={() => {
-                                if (!autoRefImageUrl) {
+                                if (autoRefImages.length === 0) {
                                   toast({
                                     title: "기준 이미지 필요",
                                     description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
@@ -6769,7 +6836,7 @@ export default function StoryPage() {
                                   return;
                                 }
                                 generateMutation.mutate({ mode: "full", scope: "all" });
-                                instatoonImageMutation.mutate();
+                                instatoonImageMutation.mutate({ scope: "all" });
                               }}
                               disabled={
                                 !topic.trim() ||
@@ -6883,7 +6950,7 @@ export default function StoryPage() {
                           </div>
 
                           {/* Style selector for promptRef mode */}
-                          {(promptRefImageUrl || autoRefImageUrl) && (
+                          {(promptRefImageUrl || autoRefImages.length > 0) && (
                             <div className="space-y-1.5 border border-border/60 rounded-lg p-2.5 bg-muted/30">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-[10px] font-semibold text-foreground">🎨 그림 스타일 통일</span>
@@ -6995,6 +7062,7 @@ export default function StoryPage() {
                             isAuthenticated={isAuthenticated}
                             isPro={isPro}
                             maxPanels={maxPanels}
+                            currentPanelCount={panels.length}
                             galleryData={galleryData}
                             galleryLoading={galleryLoading}
                             onPanelsGenerated={(newPanels) => {
@@ -7003,8 +7071,8 @@ export default function StoryPage() {
                                 && panels[0].characters.length === 0
                                 && panels[0].bubbles.length === 0
                                 && !panels[0].backgroundImageUrl
-                                && panels[0].textElements.length === 0
-                                && panels[0].lineElements.length === 0;
+                                && (panels[0].textElements?.length ?? 0) === 0
+                                && (panels[0].lineElements?.length ?? 0) === 0;
 
                               if (isDefaultEmpty) {
                                 // maxPanels 제한 적용
@@ -7710,8 +7778,15 @@ export default function StoryPage() {
                             setSelectedLineId(null);
                             setSelectedShapeId(null);
                             setSelectedDrawingLayerId(null);
+                            setSelectedScriptPosition(null);
                             setActivePanelIndex(i);
-                            if (!id) setShowBubbleSettings(false);
+                            if (id) {
+                              // 말풍선 설정 패널로 자동 전환
+                              setActiveLeftTab("elements");
+                              setElementsSubTab("bubble");
+                            } else {
+                              setShowBubbleSettings(false);
+                            }
                           }}
                           selectedCharId={activePanelIndex === i ? selectedCharId : null}
                           onSelectChar={(id) => {
@@ -7721,6 +7796,7 @@ export default function StoryPage() {
                             setSelectedLineId(null);
                             setSelectedShapeId(null);
                             setSelectedDrawingLayerId(null);
+                            setSelectedScriptPosition(null);
                             setActivePanelIndex(i);
                             setShowBubbleSettings(false);
                             // Auto-switch to image tab when character is clicked on canvas
@@ -7749,6 +7825,10 @@ export default function StoryPage() {
                               setSelectedShapeId(null);
                               setSelectedDrawingLayerId(null);
                               setActivePanelIndex(i);
+                              // 설정 패널로 자동 전환
+                              setActiveLeftTab("elements");
+                              setElementsSubTab("script");
+                              setActiveScriptSection(pos);
                             }
                           }}
                           externalEditScriptPosition={activePanelIndex === i ? editingScriptPositionForCanvas : null}
@@ -9370,6 +9450,7 @@ export default function StoryPage() {
                       if (position) {
                         setActiveLeftTab("elements");
                         setElementsSubTab("script");
+                        setActiveScriptSection(position);
                       }
                     }}
                     selectedScriptPosition={

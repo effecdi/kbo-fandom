@@ -120,6 +120,7 @@ export interface AutoWebtoonPanelProps {
   isAuthenticated: boolean;
   isPro: boolean;
   maxPanels: number;
+  currentPanelCount: number;
   galleryData: GenerationLight[];
   galleryLoading: boolean;
   onPanelsGenerated: (panels: GeneratedPanelData[]) => void;
@@ -141,6 +142,7 @@ export function AutoWebtoonPanel({
   isAuthenticated,
   isPro,
   maxPanels,
+  currentPanelCount,
   galleryData: externalGalleryData,
   galleryLoading: externalGalleryLoading,
   onPanelsGenerated,
@@ -154,7 +156,7 @@ export function AutoWebtoonPanel({
 
   // Step 1 state
   const [storyPrompt, setStoryPrompt] = useState("");
-  const [canvasCount, setCanvasCount] = useState(3);
+  const [canvasCount, setCanvasCount] = useState(Math.max(1, currentPanelCount));
   const [cutsPerCanvas, setCutsPerCanvas] = useState(4);
   const [selectedStyle, setSelectedStyle] = useState("simple-line");
   const [selectedCharacters, setSelectedCharacters] = useState<SelectedCharacter[]>([]);
@@ -564,7 +566,7 @@ export function AutoWebtoonPanel({
               type="button"
               className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg border-2 transition-colors cursor-pointer ${
                 cutsPerCanvas === n
-                  ? "border-primary bg-primary/5"
+                  ? "border-primary bg-primary/20 shadow-sm"
                   : "border-border hover:border-primary/50"
               }`}
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCutsPerCanvas(n); }}
