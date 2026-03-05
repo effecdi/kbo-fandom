@@ -26,6 +26,9 @@ import AuthCallbackPage from "@/pages/auth-callback";
 import DashboardPage from "@/pages/dashboard";
 import PaymentsPage from "@/pages/payments";
 import AutoWebtoonPage from "@/pages/auto-webtoon";
+import TermsPage from "@/pages/terms";
+import PrivacyPage from "@/pages/privacy";
+import RefundPolicyPage from "@/pages/refund-policy";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -63,6 +66,9 @@ function Router() {
       <Route path="/payments" component={PaymentsPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/auth/callback" component={AuthCallbackPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/refund-policy" component={RefundPolicyPage} />
       <Route component={NotFound} />
     </Switch>
   );
