@@ -406,13 +406,13 @@ export class DatabaseStorage implements IStorage {
     const db = this.getDb();
     try {
       const [updated] = await db.update(userCredits)
-        .set({ tier: "free", credits: 30 })
+        .set({ tier: "free", credits: 10 })
         .where(eq(userCredits.userId, userId))
         .returning();
       return updated;
     } catch {
       const [updated] = await db.update(userCredits)
-        .set({ tier: "free", credits: 30 } as any)
+        .set({ tier: "free", credits: 10 } as any)
         .where(eq(userCredits.userId, userId))
         .returning();
       return { ...updated, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
