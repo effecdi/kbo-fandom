@@ -91,6 +91,7 @@ import {
 import DrawingCanvas, { type DrawingToolState, type DrawingCanvasHandle } from "@/components/drawing-canvas";
 import "@/components/drawing-tools-panel.scss";
 import { FlowStepper } from "@/components/flow-stepper";
+import { AutoWebtoonPanel } from "@/components/auto-webtoon-panel";
 import { EditorOnboarding } from "@/components/editor-onboarding";
 import { getFlowState, clearFlowState } from "@/lib/flow";
 import type { StoryPanelScript, Generation, GenerationLight } from "@shared/schema";
@@ -3355,7 +3356,7 @@ export default function StoryPage() {
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const [, setLocation] = useLocation();
   const [topic, setTopic] = useState("");
-  const [aiMode, setAiMode] = useState<"subtitle" | "instatoonFull" | "instatoonPrompt" | null>(null);
+  const [aiMode, setAiMode] = useState<"subtitle" | "instatoonFull" | "instatoonPrompt" | "autoWebtoon" | null>(null);
   // Art style definitions (matching /api/generate-character styles)
   // These are used to enforce visual consistency when generating backgrounds/items
   const ART_STYLES: Record<string, { label: string; promptKeyword: string; description: string }> = {
@@ -6365,6 +6366,15 @@ export default function StoryPage() {
                           <Wand2 className="h-4 w-4 mr-2" />
                           인스타툰 프롬프트 자동 작성
                         </Button>
+                        <Button
+                          variant={aiMode === "autoWebtoon" ? "default" : "outline"}
+                          size="sm"
+                          className="justify-start"
+                          onClick={() => setAiMode("autoWebtoon")}
+                        >
+                          <Wand2 className="h-4 w-4 mr-2" />
+                          자동화툰 멀티컷 생성
+                        </Button>
                       </div>
 
                       {aiMode === "subtitle" && (
@@ -6976,6 +6986,25 @@ export default function StoryPage() {
                               ? "배경/아이템 자동 완성"
                               : "전체 프롬프트 자동 작성"}
                           </Button>
+                        </div>
+                      )}
+
+                      {aiMode === "autoWebtoon" && (
+                        <div className="mt-4">
+                          <AutoWebtoonPanel
+                            isAuthenticated={isAuthenticated}
+                            isPro={isPro}
+                            maxPanels={maxPanels}
+                            galleryData={galleryData}
+                            galleryLoading={galleryLoading}
+                            onPanelsGenerated={(newPanels) => {
+                              setPanels(newPanels as any);
+                              rehydrateImages(newPanels as any);
+                              setActivePanelIndex(0);
+                              setAiMode(null);
+                            }}
+                            onClose={() => setAiMode(null)}
+                          />
                         </div>
                       )}
                     </>

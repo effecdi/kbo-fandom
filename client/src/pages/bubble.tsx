@@ -68,7 +68,7 @@ export default function BubblePage() {
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
-  const loadProjectId = searchParams.get("id");
+  const loadProjectId = searchParams.get("projectId");
   const from = searchParams.get("from");
   const canvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
 
