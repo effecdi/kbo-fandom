@@ -486,41 +486,46 @@ export default function BubblePage() {
       try {
         const data = JSON.parse(loadedProject.canvasData);
         if (data.pages) {
-          setPages(data.pages.map((p: PageData) => ({
+          const restoredPages = data.pages.map((p: PageData) => ({
             ...p,
-            bubbles: p.bubbles.map(b => {
+            bubbles: p.bubbles.map((b: any) => {
               if (b.templateSrc && !b.templateImg) {
                 const img = new Image();
-                img.src = b.templateSrc;
                 img.crossOrigin = "anonymous";
+                img.onload = () => setPages(cur => [...cur]);
+                img.src = b.templateSrc;
                 return { ...b, templateImg: img };
               }
               return b;
             }),
-            characters: p.characters.map(c => {
+            characters: p.characters.map((c: any) => {
               if (c.imageUrl && !c.imgElement) {
                 const img = new Image();
-                img.src = c.imageUrl;
                 img.crossOrigin = "anonymous";
+                img.onload = () => setPages(cur => [...cur]);
+                img.src = c.imageUrl;
                 return { ...c, imgElement: img };
               }
               return c;
             }),
             imageElement: p.imageDataUrl ? (() => {
               const img = new Image();
-              img.src = p.imageDataUrl;
               img.crossOrigin = "anonymous";
+              img.onload = () => setPages(cur => [...cur]);
+              img.src = p.imageDataUrl;
               return img;
             })() : undefined
-          })));
+          }));
+          setPages(restoredPages);
         } else {
           const newPage: PageData = {
             id: generateId(),
             bubbles: (data.bubbles || []).map((b: any) => {
               if (b.templateSrc) {
                 const img = new Image();
-                img.src = b.templateSrc;
                 img.crossOrigin = "anonymous";
+                img.onload = () => setPages(cur => [...cur]);
+                img.src = b.templateSrc;
                 return { ...b, templateImg: img };
               }
               return b;
@@ -528,8 +533,9 @@ export default function BubblePage() {
             characters: (data.characterOverlays || []).map((c: any) => {
               if (c.imageUrl) {
                 const img = new Image();
-                img.src = c.imageUrl;
                 img.crossOrigin = "anonymous";
+                img.onload = () => setPages(cur => [...cur]);
+                img.src = c.imageUrl;
                 return { ...c, imgElement: img };
               }
               return c;
@@ -538,8 +544,9 @@ export default function BubblePage() {
             imageDataUrl: data.imageDataUrl,
             imageElement: data.imageDataUrl ? (() => {
               const img = new Image();
-              img.src = data.imageDataUrl;
               img.crossOrigin = "anonymous";
+              img.onload = () => setPages(cur => [...cur]);
+              img.src = data.imageDataUrl;
               return img;
             })() : undefined
           };
