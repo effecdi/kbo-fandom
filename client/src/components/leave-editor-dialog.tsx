@@ -1,4 +1,5 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { TriangleAlert } from "lucide-react";
 
@@ -12,6 +13,7 @@ export function LeaveEditorDialog({ open, onConfirm, onCancel }: LeaveEditorDial
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onCancel(); }}>
       <DialogContent className="max-w-xs">
+        <VisuallyHidden.Root><DialogTitle>편집 나가기 확인</DialogTitle></VisuallyHidden.Root>
         <div className="flex flex-col items-center text-center gap-3 pt-2">
           <TriangleAlert className="h-10 w-10 text-amber-500" />
           <h3 className="text-lg font-bold">현재 편집중이에요!</h3>

@@ -25,7 +25,7 @@ import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { LeaveEditorDialog } from "@/components/leave-editor-dialog";
 import { useNavigationGuard } from "@/hooks/use-navigation-guard";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { BubbleCanvas } from "@/components/bubble-canvas";
 import { SpeechBubble, CharacterOverlay, PageData, DragMode, BubbleStyle, TailStyle } from "@/lib/bubble-types";
 import { generateId, KOREAN_FONTS, STYLE_LABELS, FLASH_STYLE_LABELS, TAIL_LABELS, drawBubble, getTailGeometry, getDefaultTailTip, getFontFamily } from "@/lib/bubble-utils";
@@ -70,7 +70,8 @@ export default function BubblePage() {
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const { showDialog: showLeaveDialog, confirmLeave, cancelLeave } = useNavigationGuard();
   const [location, setLocation] = useLocation();
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
   const loadProjectId = searchParams.get("projectId");
   const from = searchParams.get("from");
   const canvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
