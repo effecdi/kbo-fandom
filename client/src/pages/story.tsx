@@ -29,6 +29,8 @@ import { isUnauthorizedError } from "@/lib/auth-utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
+import { LeaveEditorDialog } from "@/components/leave-editor-dialog";
+import { useNavigationGuard } from "@/hooks/use-navigation-guard";
 import { useLocation } from "wouter";
 import {
   Plus,
@@ -3409,6 +3411,7 @@ export default function StoryPage() {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
+  const { showDialog: showLeaveDialog, confirmLeave, cancelLeave } = useNavigationGuard();
   const [, setLocation] = useLocation();
   const [topic, setTopic] = useState("");
   const [aiMode, setAiMode] = useState<"subtitle" | "instatoonFull" | "instatoonPrompt" | "autoWebtoon" | null>(null);
@@ -9945,6 +9948,7 @@ export default function StoryPage() {
             </div>
           )}
           <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
+          <LeaveEditorDialog open={showLeaveDialog} onConfirm={confirmLeave} onCancel={cancelLeave} />
           </div >
           );
 }

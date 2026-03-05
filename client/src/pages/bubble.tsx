@@ -23,6 +23,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Upload, Download, Plus, Trash2, MessageCircle, ArrowRight, Type, Move, Maximize2, ImagePlus, X, Loader2, Layers, ChevronUp, ChevronDown, Save, Minimize2, ZoomIn, ZoomOut, FolderOpen, Share2, Crown, Lightbulb, Copy, FilePlus, Wand2 } from "lucide-react";
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
+import { LeaveEditorDialog } from "@/components/leave-editor-dialog";
+import { useNavigationGuard } from "@/hooks/use-navigation-guard";
 import { useLocation } from "wouter";
 import { BubbleCanvas } from "@/components/bubble-canvas";
 import { SpeechBubble, CharacterOverlay, PageData, DragMode, BubbleStyle, TailStyle } from "@/lib/bubble-types";
@@ -66,6 +68,7 @@ export default function BubblePage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
+  const { showDialog: showLeaveDialog, confirmLeave, cancelLeave } = useNavigationGuard();
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const loadProjectId = searchParams.get("projectId");
@@ -1160,6 +1163,7 @@ export default function BubblePage() {
         </DialogContent>
       </Dialog>
       <LoginRequiredDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
+      <LeaveEditorDialog open={showLeaveDialog} onConfirm={confirmLeave} onCancel={cancelLeave} />
     </div>
   );
 }
