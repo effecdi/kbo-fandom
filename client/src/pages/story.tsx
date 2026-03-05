@@ -1767,10 +1767,8 @@ function PanelCanvas({
                 pos.y >= rect.by &&
                 pos.y <= rect.by + rect.bh
               ) {
-                dragModeRef.current =
-                  scriptType === "top" ? "move-script-top" : "move-script-bottom";
-                dragStartRef.current = pos;
-                dragScriptStartRef.current = { x: rect.bx, y: rect.by };
+                // 클릭 시 바로 텍스트 편집 + 설정 활성화
+                setEditingScriptPos(scriptType);
                 onSelectBubble(null);
                 onSelectChar(null);
                 selectedBubbleIdRef.current = null;
