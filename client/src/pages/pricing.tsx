@@ -138,12 +138,12 @@ export default function PricingPage() {
       name: "무료",
       price: "₩0",
       period: "영구 무료",
-      description: "가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 10 크레딧",
+      description: "가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧",
       icon: Sparkles,
       features: [
         { text: "가입 시 50 크레딧 즉시 지급", included: true },
         { text: "매월 10 크레딧 자동 충전", included: true },
-        { text: "매일 출석 보너스 10 크레딧", included: true },
+        { text: "매일 출석 보너스 5 크레딧", included: true },
         { text: "3가지 스타일 (심플 라인)", included: true },
         { text: "기본 및 일부 무료 폰트 제공", included: true },
         { text: "포즈 & 배경 생성", included: true },
@@ -360,7 +360,7 @@ export default function PricingPage() {
       )}
 
       <div className="mt-12 text-center text-sm text-muted-foreground">
-        <p>무료 플랜은 가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 보너스 10 크레딧을 제공합니다.</p>
+        <p>무료 플랜은 가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 보너스 5 크레딧을 제공합니다.</p>
         <p className="mt-1">
           Pro 멤버십은 포즈/배경 생성, 말풍선·스토리 에디터, 채팅 이미지 메이커, AI 광고주 매칭 등을 포함합니다.
         </p>
