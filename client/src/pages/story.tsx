@@ -6492,13 +6492,14 @@ export default function StoryPage() {
                                     <img src={img.url} alt={`캐릭터 ${idx + 1}`} className="w-full h-full object-cover" />
                                     <button
                                       onClick={() => {
-                                        setAutoRefImages(prev => prev.filter((_, i) => i !== idx));
+                                        const remaining = autoRefImages.filter((_, i) => i !== idx);
+                                        setAutoRefImages(remaining);
                                         // 첫 번째 이미지 제거 시 스타일 재감지
-                                        if (idx === 0 && autoRefImages.length > 1) {
+                                        if (idx === 0 && remaining.length > 0) {
                                           setDetectedStyle("auto");
-                                          detectArtStyle(autoRefImages[1].url).finally(() => setIsDetectingStyle(false));
+                                          detectArtStyle(remaining[0].url).finally(() => setIsDetectingStyle(false));
                                         }
-                                        if (autoRefImages.length === 1) {
+                                        if (remaining.length === 0) {
                                           setDetectedStyle("auto");
                                         }
                                       }}
@@ -7061,6 +7062,7 @@ export default function StoryPage() {
                             isAuthenticated={isAuthenticated}
                             isPro={isPro}
                             maxPanels={maxPanels}
+                            currentPanelCount={panels.length}
                             galleryData={galleryData}
                             galleryLoading={galleryLoading}
                             onPanelsGenerated={(newPanels) => {
@@ -7069,8 +7071,8 @@ export default function StoryPage() {
                                 && panels[0].characters.length === 0
                                 && panels[0].bubbles.length === 0
                                 && !panels[0].backgroundImageUrl
-                                && panels[0].textElements.length === 0
-                                && panels[0].lineElements.length === 0;
+                                && (panels[0].textElements?.length ?? 0) === 0
+                                && (panels[0].lineElements?.length ?? 0) === 0;
 
                               if (isDefaultEmpty) {
                                 // maxPanels 제한 적용
