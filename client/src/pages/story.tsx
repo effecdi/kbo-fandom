@@ -635,6 +635,7 @@ function drawScriptOverlay(
   type: "top" | "bottom",
   canvasW: number,
   canvasH: number,
+  isSelected?: boolean,
 ) {
   if (!script.text) return;
   ctx.save();
@@ -751,16 +752,31 @@ function drawScriptOverlay(
     ctx.fillText(line, bx + bw / 2, ly);
   });
 
-  const handleSize = 10;
-  const hx = bx + bw - 6;
-  const hy = by + bh - 6;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.arc(hx, hy, handleSize / 2, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.96)";
-  ctx.fill();
-  ctx.strokeStyle = HANDLE_COLOR;
-  ctx.stroke();
+  // 선택된 경우에만 점선 사각형 + 리사이즈 핸들 표시
+  if (isSelected) {
+    ctx.strokeStyle = HANDLE_COLOR;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.setLineDash([]);
+
+    // 네 모서리 리사이즈 핸들
+    const hs = 6;
+    const corners = [
+      { x: bx - 2, y: by - 2 },
+      { x: bx + bw + 2, y: by - 2 },
+      { x: bx - 2, y: by + bh + 2 },
+      { x: bx + bw + 2, y: by + bh + 2 },
+    ];
+    corners.forEach((c) => {
+      ctx.fillStyle = "rgba(255,255,255,0.96)";
+      ctx.fillRect(c.x - hs / 2, c.y - hs / 2, hs, hs);
+      ctx.strokeStyle = HANDLE_COLOR;
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(c.x - hs / 2, c.y - hs / 2, hs, hs);
+    });
+  }
+
   ctx.restore();
 }
 
@@ -1441,9 +1457,9 @@ function PanelCanvas({
     });
 
     if (p.topScript && p.topScript.visible !== false)
-      drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
+      drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H, editingScriptPos === "top");
     if (p.bottomScript && p.bottomScript.visible !== false)
-      drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H);
+      drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H, editingScriptPos === "bottom");
     if (!isPro) {
       ctx.save();
       ctx.translate(CANVAS_W / 2, CANVAS_H / 2);
@@ -1744,11 +1760,16 @@ function PanelCanvas({
               CANVAS_W,
               CANVAS_H,
             );
-            const handleSize = 10;
-            const hx = rect.bx + rect.bw - 6;
-            const hy = rect.by + rect.bh - 6;
-            const nearHandle =
-              Math.abs(pos.x - hx) <= handleSize && Math.abs(pos.y - hy) <= handleSize;
+            const hs = 8;
+            const corners = [
+              { x: rect.bx - 2, y: rect.by - 2 },
+              { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
+              { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
+              { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
+            ];
+            const nearHandle = editingScriptPos === scriptType && corners.some(
+              (c) => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs
+            );
             if (nearHandle) {
               dragModeRef.current =
                 scriptType === "top" ? "resize-script-top" : "resize-script-bottom";
@@ -5959,9 +5980,9 @@ export default function StoryPage() {
       if (se.strokeWidth > 0) { ctx.strokeStyle = se.strokeColor; ctx.lineWidth = se.strokeWidth; ctx.stroke(); }
       ctx.restore();
     } else if (item.type === "topScript") {
-      if (p.topScript) drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
+      if (p.topScript) drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H, false);
     } else if (item.type === "bottomScript") {
-      if (p.bottomScript) drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H);
+      if (p.bottomScript) drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H, false);
     }
 
     return canvas;
