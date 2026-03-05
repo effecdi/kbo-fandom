@@ -24,6 +24,7 @@ import {
   Palette,
   Users,
   Check,
+  X,
 } from "lucide-react";
 import sample1 from "@assets/sample-char-1.png";
 import sample2 from "@assets/sample-char-2.png";
@@ -385,84 +386,107 @@ export default function LandingPage() {
               필요할 때 업그레이드하면 돼요
             </motion.p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 max-w-3xl mx-auto">
+          <div className="grid gap-6 sm:grid-cols-2 max-w-3xl mx-auto">
+            {/* Free Card */}
             <motion.div initial="hidden" animate={pricingInView ? "visible" : "hidden"} variants={fadeUp} custom={2}>
-              <TiltCard className="h-full rounded-3xl" maxTilt={5}>
-                <Card
-                  className="relative h-full overflow-hidden rounded-3xl border-0 bg-slate-950 text-slate-50 px-8 py-9 shadow-[0_24px_80px_rgba(15,23,42,0.85)]"
-                  data-testid="card-pricing-free"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 via-slate-900 to-black" />
-                  <div className="relative flex h-full flex-col">
-                    <div className="mb-6">
-                      <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 mb-2">Free</h3>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black tracking-tight">₩0</span>
-                        <span className="text-sm text-slate-400">/월</span>
-                      </div>
-                      <p className="mt-2 text-xs text-slate-400">
-                        가볍게 써보는 입문 플랜
-                      </p>
-                    </div>
-                    <ul className="space-y-2.5 text-sm text-slate-200 mb-7">
-                      <li className="flex items-center gap-2.5"><Zap className="h-4 w-4 text-teal-300 shrink-0" /> 첫 가입 후 3회 캐릭터 생성</li>
-                      <li className="flex items-center gap-2.5"><Palette className="h-4 w-4 text-teal-300 shrink-0" /> 3가지 스타일 (심플 라인)</li>
-                      <li className="flex items-center gap-2.5"><Layers className="h-4 w-4 text-teal-300 shrink-0" /> 워터마크 포함</li>
-                      <li className="flex items-center gap-2.5"><Paintbrush className="h-4 w-4 text-teal-300 shrink-0" /> 포즈·배경·에디터 기능 제한</li>
-                    </ul>
-                    <Button
-                      className="mt-auto w-full h-11 rounded-full border-slate-500/70 text-slate-50 hover:bg-slate-900/60"
-                      size="lg"
-                      variant="outline"
-                      asChild
-                      data-testid="button-pricing-free"
-                    >
-                      <a href="/login">무료로 시작하기</a>
-                    </Button>
+              <Card
+                className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                data-testid="card-pricing-free"
+              >
+                <div className="relative flex h-full flex-col">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-400">영구 무료</span>
                   </div>
-                </Card>
-              </TiltCard>
+                  <div className="mb-2">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black tracking-tight">₩0</span>
+                      <span className="text-sm text-slate-400">/월</span>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 10 크레딧</p>
+                  </div>
+                  <ul className="space-y-2.5 text-sm mb-7 mt-2">
+                    {[
+                      { text: "가입 시 50 크레딧 즉시 지급", ok: true },
+                      { text: "매월 10 크레딧 자동 충전", ok: true },
+                      { text: "매일 출석 보너스 10 크레딧", ok: true },
+                      { text: "3가지 스타일 (심플 라인)", ok: true },
+                      { text: "기본 및 일부 무료 폰트 제공", ok: true },
+                      { text: "포즈 & 배경 생성", ok: true },
+                      { text: "말풍선 편집기", ok: true },
+                      { text: "스토리 에디터", ok: true },
+                      { text: "프리미엄 스타일", ok: false },
+                      { text: "워터마크 제거", ok: false },
+                      { text: "상업적 이용", ok: false },
+                    ].map((f) => (
+                      <li key={f.text} className="flex items-center gap-2.5">
+                        {f.ok ? (
+                          <Check className="h-4 w-4 shrink-0 text-emerald-500 dark:text-teal-300" />
+                        ) : (
+                          <X className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500/60" />
+                        )}
+                        <span className={f.ok ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-400"}>{f.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant="outline"
+                    className="mt-auto w-full h-11 rounded-full border-slate-300 dark:border-slate-500/70 text-slate-700 dark:text-slate-50 hover:bg-slate-50 dark:hover:bg-slate-900/60"
+                    asChild
+                    data-testid="button-pricing-free"
+                  >
+                    <a href="/login">무료로 시작하기</a>
+                  </Button>
+                </div>
+              </Card>
             </motion.div>
 
+            {/* Pro Card */}
             <motion.div initial="hidden" animate={pricingInView ? "visible" : "hidden"} variants={fadeUp} custom={3}>
-              <TiltCard className="h-full rounded-3xl" maxTilt={5}>
-                <Card
-                  className="relative h-full overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500 text-white px-8 py-9 shadow-[0_26px_90px_rgba(109,40,217,0.75)]"
-                  data-testid="card-pricing-pro"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10 mix-blend-screen" />
-                  <div className="relative flex h-full flex-col">
-                    <div className="flex items-center justify-between mb-6">
-                      <Badge className="bg-white/15 text-[11px] px-3 py-1 border border-white/20">Pro</Badge>
-                      <span className="text-[11px] text-white/80">월간</span>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-xs uppercase tracking-[0.22em] text-white/70 mb-1">크리에이터 추천</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black tracking-tight">₩19,900</span>
-                        <span className="text-sm text-white/80">/월</span>
-                      </div>
-                      <p className="mt-2 text-xs text-white/85">
-                        본격적인 인스타툰 크리에이터를 위한 풀 옵션 플랜
-                      </p>
-                    </div>
-                    <ul className="space-y-2.5 text-sm text-white/95 mb-7 mt-2">
-                      <li className="flex items-center gap-2.5"><Zap className="h-4 w-4 text-white shrink-0" /> 무제한 캐릭터 생성</li>
-                      <li className="flex items-center gap-2.5"><Palette className="h-4 w-4 text-white shrink-0" /> 6가지 전체 스타일</li>
-                      <li className="flex items-center gap-2.5"><MessageCircle className="h-4 w-4 text-white shrink-0" /> 카카오톡 채팅 이미지</li>
-                      <li className="flex items-center gap-2.5"><Target className="h-4 w-4 text-white shrink-0" /> AI 광고주 매칭</li>
-                    </ul>
-                    <Button
-                      className="mt-auto w-full h-11 rounded-full bg-white text-slate-900 hover:bg-slate-100"
-                      size="lg"
-                      asChild
-                      data-testid="button-pricing-pro"
-                    >
-                      <a href="/login">Pro 시작하기</a>
-                    </Button>
+              <Card
+                className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                data-testid="card-pricing-pro"
+              >
+                <div className="relative flex h-full flex-col">
+                  <div className="flex items-center justify-between mb-6">
+                    <Badge className="bg-primary-foreground/15 text-primary-foreground text-[11px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
+                    <span className="text-[11px] text-primary-foreground/70">/월</span>
                   </div>
-                </Card>
-              </TiltCard>
+                  <div className="mb-2">
+                    <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black tracking-tight">₩19,900</span>
+                      <span className="text-sm text-primary-foreground/70">/월</span>
+                    </div>
+                    <p className="mt-2 text-xs text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
+                  </div>
+                  <ul className="space-y-2.5 text-sm mb-7 mt-2">
+                    {[
+                      "매월 200 크레딧 제공",
+                      "모든 스타일 사용 가능",
+                      "모든 폰트 제공",
+                      "포즈 & 배경 무제한 생성",
+                      "말풍선 & 스토리 에디터 무제한",
+                      "워터마크 제거",
+                      "갤러리 전체 이용",
+                      "상업적 이용 가능",
+                      "우선 지원",
+                    ].map((text) => (
+                      <li key={text} className="flex items-center gap-2.5">
+                        <Check className="h-4 w-4 shrink-0 text-primary-foreground" />
+                        <span className="text-primary-foreground/95">{text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className="mt-auto w-full h-11 rounded-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 border-0"
+                    asChild
+                    data-testid="button-pricing-pro"
+                  >
+                    <a href="/pricing">Pro 시작하기</a>
+                  </Button>
+                </div>
+              </Card>
             </motion.div>
           </div>
         </div>
