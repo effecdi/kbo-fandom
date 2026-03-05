@@ -214,14 +214,28 @@ export async function enhanceBio(data: {
 export async function generateStoryScripts(data: {
   topic: string;
   panelCount: number;
+  posePrompt?: string;
+  expressionPrompt?: string;
+  itemPrompt?: string;
+  backgroundPrompt?: string;
 }): Promise<{
   panels: Array<{ top: string; bottom: string; bubbles: Array<{ text: string; style?: string; position?: string }> }>;
 }> {
+  // 유저가 입력한 포즈/표정/배경/아이템 프롬프트를 AI에게 전달
+  const contextLines: string[] = [];
+  if (data.posePrompt) contextLines.push(`캐릭터 포즈: ${data.posePrompt}`);
+  if (data.expressionPrompt) contextLines.push(`캐릭터 표정: ${data.expressionPrompt}`);
+  if (data.backgroundPrompt) contextLines.push(`배경 설정: ${data.backgroundPrompt}`);
+  if (data.itemPrompt) contextLines.push(`등장 소품/아이템: ${data.itemPrompt}`);
+  const contextBlock = contextLines.length > 0
+    ? `\n■ 유저가 지정한 장면 힌트 (반드시 자막/대사에 반영하세요):\n${contextLines.join("\n")}\n`
+    : "";
+
   const prompt = `당신은 한국 인기 인스타툰 작가입니다. 주제를 기반으로 ${data.panelCount}컷 인스타툰 스크립트를 작성하세요.
 
 주제: "${data.topic}"
 컷 수: ${data.panelCount}
-
+${contextBlock}
 ■ 구조 규칙 (반드시 지켜주세요):
 - top: 화면 상단에 들어갈 상황/나레이션 자막 (5~15자). 없으면 빈 문자열 "".
 - bottom: 화면 하단에 들어갈 독백/부연 자막 (5~15자). 없으면 빈 문자열 "".
@@ -238,6 +252,7 @@ export async function generateStoryScripts(data: {
 3. 마지막 컷은 반드시 웃기거나 공감되는 반전으로 끝내세요.
 4. MZ세대 구어체: "아 진짜...", "헐", "뭐지", "왜 이러는 건데" 등 자연스럽게.
 5. top과 bottom은 상호보완: 둘 다 쓸 필요 없으면 하나만 쓰고 다른 건 "".
+6. 위에 주어진 장면 힌트(포즈/표정/배경/아이템)가 있으면, 그에 맞는 상황과 대사를 작성하세요. 힌트와 동떨어진 내용은 금지.
 
 다음 JSON만 출력 (설명 없이):
 {"panels":[{"top":"","bottom":"","bubbles":[{"text":"","style":"handwritten","position":"top-right"}]}]}`;

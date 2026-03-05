@@ -372,6 +372,8 @@ export async function registerRoutes(
       const userId = req.userId!;
       const credits = await storage.getUserCredits(userId);
       const isPro = credits.tier === "pro";
+      const creatorTier = isPro ? 3 : 0;
+      const tierPanelLimits = [3, 5, 8, 14];
       res.json({
         credits: credits.credits,
         dailyBonusCredits: credits.dailyBonusCredits ?? 0,
@@ -384,6 +386,8 @@ export async function registerRoutes(
         storyUsesToday: credits.storyUsesToday,
         maxBubbleUses: isPro ? -1 : 3,
         maxStoryUses: isPro ? -1 : 3,
+        maxStoryPanels: tierPanelLimits[creatorTier] ?? 3,
+        creatorTier,
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch usage" });
