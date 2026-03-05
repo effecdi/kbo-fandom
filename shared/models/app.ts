@@ -100,7 +100,7 @@ export const generatePoseSchema = z.object({
 });
 
 export const generateBackgroundSchema = z.object({
-  sourceImageDataList: z.array(z.string().min(1)).min(1).max(4),
+  sourceImageDataList: z.array(z.string().min(1)).max(4).optional(),
   backgroundPrompt: z.string().min(3, "Background description must be at least 3 characters"),
   itemsPrompt: z.string().optional(),
   characterIds: z.array(z.number()).optional(),

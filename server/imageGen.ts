@@ -513,7 +513,7 @@ Keep the character identical to the reference. Only change the pose. Single char
 }
 
 export async function generateWithBackground(
-  sourceImageDataList: string[],
+  sourceImageDataList: string[] | undefined,
   backgroundPrompt: string,
   itemsPrompt?: string
 ): Promise<string> {
@@ -522,21 +522,42 @@ export async function generateWithBackground(
   const translatedItemsPrompt = itemsPrompt ? await translateToEnglish(itemsPrompt, ai) : undefined;
 
   const parts: any[] = [];
-  const isMulti = sourceImageDataList.length > 1;
+  const images = sourceImageDataList ?? [];
+  const isMulti = images.length > 1;
+  const hasImages = images.length > 0;
 
   const itemsInstruction = translatedItemsPrompt
     ? `Also add these items/props around or with the characters: ${translatedItemsPrompt}.`
     : "";
 
-  if (isMulti) {
+  if (!hasImages) {
+    // 캐릭터 이미지 없이 배경/장면만 생성
     parts.push({
-      text: `Take these ${sourceImageDataList.length} character images and place ALL characters together into a new scene with a background and optional items.
+      text: `Generate an illustration for the following scene.
+
+${noTextRule}
+
+IMPORTANT RULES:
+- Draw in a simple, cute Korean Instagram webtoon (instatoon) style
+- Keep thick outlines and flat colors
+- The scene should be clear and visually engaging
+
+Scene: ${translatedBgPrompt}
+${itemsInstruction}
+
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+
+Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
+    });
+  } else if (isMulti) {
+    parts.push({
+      text: `Take these ${images.length} character images and place ALL characters together into a new scene with a background and optional items.
 
 ${noTextRule}
 
 IMPORTANT RULES:
 - Keep each character looking EXACTLY the same as their reference - same style, same features, same colors, same proportions
-- All ${sourceImageDataList.length} characters should appear together in the scene
+- All ${images.length} characters should appear together in the scene
 - The characters should be the main focus of the image
 - Draw the background in a style that matches the characters (simple, cute, instatoon style)
 - The background should complement the characters, not overwhelm them
@@ -571,7 +592,7 @@ Make the background and items in the same simple, cute drawing style as the char
     });
   }
 
-  for (const sourceImageData of sourceImageDataList) {
+  for (const sourceImageData of images) {
     const match = sourceImageData.match(/^data:([^;]+);base64,(.+)$/);
     if (match) {
       parts.push({
