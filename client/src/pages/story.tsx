@@ -954,6 +954,8 @@ function PanelCanvas({
   const editingBubbleIdRef = useRef<string | null>(null);
   const [editingScriptPos, setEditingScriptPos] = useState<"top" | "bottom" | null>(null);
   const editingScriptPosRef = useRef<"top" | "bottom" | null>(null);
+  const [selectedScriptPos, setSelectedScriptPos] = useState<"top" | "bottom" | null>(null);
+  const selectedScriptPosRef = useRef<"top" | "bottom" | null>(null);
 
   useEffect(() => {
     selectedBubbleIdRef.current = selectedBubbleId;
@@ -964,6 +966,9 @@ function PanelCanvas({
   useEffect(() => {
     editingScriptPosRef.current = editingScriptPos;
   }, [editingScriptPos]);
+  useEffect(() => {
+    selectedScriptPosRef.current = selectedScriptPos;
+  }, [selectedScriptPos]);
   // Sync external editing trigger from overlay double-click
   useEffect(() => {
     if (externalEditBubbleId) {
@@ -975,6 +980,7 @@ function PanelCanvas({
   // Sync external script editing trigger (from parent 상단/하단 button)
   useEffect(() => {
     if (externalEditScriptPosition) {
+      setSelectedScriptPos(externalEditScriptPosition);
       setEditingScriptPos(externalEditScriptPosition);
       onSelectScript?.(externalEditScriptPosition);
       onEditScriptPositionChange?.(null);
@@ -1464,9 +1470,9 @@ function PanelCanvas({
     });
 
     if (p.topScript && p.topScript.visible !== false)
-      drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H, editingScriptPos === "top");
+      drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H, selectedScriptPos === "top" || editingScriptPos === "top");
     if (p.bottomScript && p.bottomScript.visible !== false)
-      drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H, editingScriptPos === "bottom");
+      drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H, selectedScriptPos === "bottom" || editingScriptPos === "bottom");
     if (!isPro) {
       ctx.save();
       ctx.translate(CANVAS_W / 2, CANVAS_H / 2);
@@ -1494,7 +1500,7 @@ function PanelCanvas({
       ctx.fillText("잠시만 기다려주세요", CANVAS_W / 2, CANVAS_H / 2 + 14);
       ctx.restore();
     }
-  }, [isPro, hideDrawingLayers, isGenerating]);
+  }, [isPro, hideDrawingLayers, isGenerating, selectedScriptPos]);
 
   redrawRef.current = redraw;
 
@@ -1686,6 +1692,8 @@ function PanelCanvas({
                   selectedCharIdRef.current = charUnderneath.id;
                   selectedBubbleIdRef.current = null;
                   onSelectScript?.(null);
+                  setSelectedScriptPos(null);
+                  setEditingScriptPos(null);
                   dragModeRef.current = "move-char";
                   dragStartRef.current = pos;
                   dragCharStartRef.current = { x: charUnderneath.x, y: charUnderneath.y, scale: charUnderneath.scale };
@@ -1697,6 +1705,8 @@ function PanelCanvas({
               selectedBubbleIdRef.current = b.id;
               selectedCharIdRef.current = null;
               onSelectScript?.(null);
+              setSelectedScriptPos(null);
+              setEditingScriptPos(null);
               if (editingBubbleIdRef.current && editingBubbleIdRef.current !== b.id) {
                 setEditingBubbleId(null);
               }
@@ -1723,6 +1733,8 @@ function PanelCanvas({
               selectedBubbleIdRef.current = null;
               selectedCharIdRef.current = ch.id;
               setEditingBubbleId(null);
+              setSelectedScriptPos(null);
+              setEditingScriptPos(null);
               onSelectScript?.(null);
               dragStartRef.current = pos;
               dragCharStartRef.current = { x: ch.x, y: ch.y, scale: ch.scale };
@@ -1774,7 +1786,7 @@ function PanelCanvas({
               { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
               { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
             ];
-            const nearHandle = editingScriptPosRef.current === scriptType && corners.some(
+            const nearHandle = (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) && corners.some(
               (c) => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs
             );
             if (nearHandle) {
@@ -1799,15 +1811,15 @@ function PanelCanvas({
                 onSelectChar(null);
                 selectedBubbleIdRef.current = null;
                 selectedCharIdRef.current = null;
-                if (editingScriptPosRef.current === scriptType) {
+                if (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) {
                   // 이미 선택된 상태 → 드래그로 이동 가능
                   dragModeRef.current =
                     scriptType === "top" ? "move-script-top" : "move-script-bottom";
                   dragStartRef.current = pos;
                   dragScriptStartRef.current = { x: sd.x ?? rect.bx, y: sd.y ?? rect.by };
                 } else {
-                  // 첫 클릭 → 선택 + 텍스트 편집 활성화
-                  setEditingScriptPos(scriptType);
+                  // 첫 클릭 → 선택만 (텍스트 편집 없음)
+                  setSelectedScriptPos(scriptType);
                 }
                 onSelectScript?.(scriptType);
                 return;
@@ -1823,6 +1835,7 @@ function PanelCanvas({
       selectedCharIdRef.current = null;
       setEditingBubbleId(null);
       setEditingScriptPos(null);
+      setSelectedScriptPos(null);
       onSelectScript?.(null);
     },
     [getCanvasPos, getHandleAtPos, onSelectBubble, onSelectChar],
@@ -1912,7 +1925,7 @@ function PanelCanvas({
                     CANVAS_W,
                     CANVAS_H,
                   );
-                  if (editingScriptPosRef.current === scriptType) {
+                  if (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) {
                     const hs = 8;
                     const corners = [
                       { x: rect.bx - 2, y: rect.by - 2 },
@@ -1931,7 +1944,7 @@ function PanelCanvas({
                     pos.y >= rect.by &&
                     pos.y <= rect.by + rect.bh
                   ) {
-                    cvs.style.cursor = editingScriptPosRef.current === scriptType ? "move" : "pointer";
+                    cvs.style.cursor = (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) ? "move" : "pointer";
                     return;
                   }
                 }
@@ -3430,6 +3443,7 @@ export default function StoryPage() {
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const { showDialog: showLeaveDialog, confirmLeave, cancelLeave } = useNavigationGuard();
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const [topic, setTopic] = useState("");
   const [aiMode, setAiMode] = useState<"subtitle" | "instatoonFull" | "instatoonPrompt" | "autoWebtoon" | null>(null);
   // Art style definitions (matching /api/generate-character styles)
@@ -6165,7 +6179,7 @@ export default function StoryPage() {
     }
   };
 
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(searchString);
   const loadProjectId = urlParams.get("projectId");
 
   const { data: loadedProject } = useQuery<any>({

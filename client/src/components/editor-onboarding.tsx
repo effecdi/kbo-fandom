@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import {
   Wand2,
   Layers,
@@ -167,6 +168,7 @@ export function EditorOnboarding({ editor }: { editor: "story" | "bubble" }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="max-w-sm p-0 overflow-hidden gap-0" data-testid="modal-editor-onboarding">
+        <VisuallyHidden.Root><DialogTitle>에디터 가이드</DialogTitle></VisuallyHidden.Root>
         <div className="relative">
           <div className="bg-gradient-to-br from-[hsl(173_100%_35%)] to-[hsl(262_83%_45%)] px-6 pt-8 pb-6 text-white">
             <div className="flex items-center gap-2 mb-1">
