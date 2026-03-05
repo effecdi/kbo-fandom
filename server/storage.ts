@@ -85,7 +85,13 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(users.id, data.id!));
     } else {
-      await db.insert(users).values(data);
+      try {
+        await db.insert(users).values(data);
+      } catch (e: any) {
+        // Race condition: another request already inserted this user (duplicate key)
+        if (e?.code === "23505") return;
+        throw e;
+      }
     }
   }
 
