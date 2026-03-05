@@ -518,6 +518,11 @@ export default function LandingPage() {
             <img src={logoImg} alt="OLLI" className="h-6 w-6 rounded object-cover" />
             <span className="font-bold text-base">OLLI</span>
           </div>
+          <div className="flex items-center gap-4">
+            <a href="/terms" className="hover:text-foreground transition-colors">이용약관</a>
+            <a href="/privacy" className="hover:text-foreground transition-colors">개인정보처리방침</a>
+            <a href="/refund-policy" className="hover:text-foreground transition-colors">환불정책</a>
+          </div>
           <p data-testid="text-footer-copyright">&copy; {new Date().getFullYear()} OLLI. All rights reserved.</p>
         </div>
       </footer>
