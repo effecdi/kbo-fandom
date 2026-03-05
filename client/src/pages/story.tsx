@@ -894,6 +894,7 @@ function PanelCanvas({
   onSelectScript,
   externalEditScriptPosition,
   onEditScriptPositionChange,
+  isGenerating,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -915,6 +916,7 @@ function PanelCanvas({
   onSelectScript?: (position: "top" | "bottom" | null) => void;
   externalEditScriptPosition?: "top" | "bottom" | null;
   onEditScriptPositionChange?: (position: "top" | "bottom" | null) => void;
+  isGenerating?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -1453,13 +1455,29 @@ function PanelCanvas({
       ctx.fillText("OLLI Free", 0, 0);
       ctx.restore();
     }
-  }, [isPro, hideDrawingLayers]);
+
+    // 이미지 생성 중 오버레이
+    if (isGenerating) {
+      ctx.save();
+      ctx.fillStyle = "rgba(235,240,255,0.85)";
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.font = "bold 18px sans-serif";
+      ctx.fillStyle = "hsl(220,60%,55%)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🎨 이미지 생성 중...", CANVAS_W / 2, CANVAS_H / 2 - 16);
+      ctx.font = "13px sans-serif";
+      ctx.fillStyle = "hsl(220,40%,60%)";
+      ctx.fillText("잠시만 기다려주세요", CANVAS_W / 2, CANVAS_H / 2 + 14);
+      ctx.restore();
+    }
+  }, [isPro, hideDrawingLayers, isGenerating]);
 
   redrawRef.current = redraw;
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, redraw, fontsReady, hideDrawingLayers]);
+  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, redraw, fontsReady, hideDrawingLayers, isGenerating]);
 
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -7833,6 +7851,12 @@ export default function StoryPage() {
                           }}
                           externalEditScriptPosition={activePanelIndex === i ? editingScriptPositionForCanvas : null}
                           onEditScriptPositionChange={setEditingScriptPositionForCanvas}
+                          isGenerating={
+                            instatoonImageMutation.isPending && (
+                              instatoonImageMutation.variables?.scope === "all" ||
+                              (instatoonImageMutation.variables?.scope === "current" && activePanelIndex === i)
+                            )
+                          }
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}
