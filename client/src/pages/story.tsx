@@ -6998,9 +6998,36 @@ export default function StoryPage() {
                             galleryData={galleryData}
                             galleryLoading={galleryLoading}
                             onPanelsGenerated={(newPanels) => {
-                              setActivePanelIndex(0);
-                              setPanelsRaw(newPanels as any);
-                              rehydrateImages(newPanels as any);
+                              // 기존 패널이 빈 기본 패널 1개뿐이면 교체, 아니면 뒤에 추가
+                              const isDefaultEmpty = panels.length === 1
+                                && panels[0].characters.length === 0
+                                && panels[0].bubbles.length === 0
+                                && !panels[0].backgroundImageUrl
+                                && panels[0].textElements.length === 0
+                                && panels[0].lineElements.length === 0;
+
+                              if (isDefaultEmpty) {
+                                // maxPanels 제한 적용
+                                const limited = (newPanels as any[]).slice(0, maxPanels);
+                                setActivePanelIndex(0);
+                                setPanels(limited as any);
+                                rehydrateImages(limited as any);
+                              } else {
+                                // 기존 패널 뒤에 추가 (maxPanels 제한)
+                                const available = maxPanels - panels.length;
+                                if (available <= 0) {
+                                  toast({ title: `패널 ${maxPanels}개 제한`, description: "추가할 수 있는 패널이 없습니다.", variant: "destructive" });
+                                  return;
+                                }
+                                const toAdd = (newPanels as any[]).slice(0, available);
+                                const merged = [...panels, ...toAdd] as any;
+                                setActivePanelIndex(panels.length); // 첫 번째 새 패널로 이동
+                                setPanels(merged);
+                                rehydrateImages(toAdd as any);
+                                if (toAdd.length < newPanels.length) {
+                                  toast({ title: `${toAdd.length}/${newPanels.length}개 패널만 추가됨`, description: `패널 최대 ${maxPanels}개 제한`, variant: "destructive" });
+                                }
+                              }
                               setAiMode(null);
                             }}
                             onClose={() => setAiMode(null)}
