@@ -286,7 +286,7 @@ export class DatabaseStorage implements IStorage {
       // Daily bonus check (KST) — only if column exists
       try {
         if (isNewDayKST(existing.lastDailyBonusAt)) {
-          updates.dailyBonusCredits = 10;
+          updates.dailyBonusCredits = 5;
           updates.lastDailyBonusAt = now;
         }
       } catch {
