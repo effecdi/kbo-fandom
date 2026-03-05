@@ -635,6 +635,7 @@ function drawScriptOverlay(
   type: "top" | "bottom",
   canvasW: number,
   canvasH: number,
+  isSelected?: boolean,
 ) {
   if (!script.text) return;
   ctx.save();
@@ -751,16 +752,31 @@ function drawScriptOverlay(
     ctx.fillText(line, bx + bw / 2, ly);
   });
 
-  const handleSize = 10;
-  const hx = bx + bw - 6;
-  const hy = by + bh - 6;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.arc(hx, hy, handleSize / 2, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.96)";
-  ctx.fill();
-  ctx.strokeStyle = HANDLE_COLOR;
-  ctx.stroke();
+  // 선택된 경우에만 점선 사각형 + 리사이즈 핸들 표시
+  if (isSelected) {
+    ctx.strokeStyle = HANDLE_COLOR;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.setLineDash([]);
+
+    // 네 모서리 리사이즈 핸들
+    const hs = 6;
+    const corners = [
+      { x: bx - 2, y: by - 2 },
+      { x: bx + bw + 2, y: by - 2 },
+      { x: bx - 2, y: by + bh + 2 },
+      { x: bx + bw + 2, y: by + bh + 2 },
+    ];
+    corners.forEach((c) => {
+      ctx.fillStyle = "rgba(255,255,255,0.96)";
+      ctx.fillRect(c.x - hs / 2, c.y - hs / 2, hs, hs);
+      ctx.strokeStyle = HANDLE_COLOR;
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(c.x - hs / 2, c.y - hs / 2, hs, hs);
+    });
+  }
+
   ctx.restore();
 }
 
@@ -894,6 +910,7 @@ function PanelCanvas({
   onSelectScript,
   externalEditScriptPosition,
   onEditScriptPositionChange,
+  isGenerating,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -915,6 +932,7 @@ function PanelCanvas({
   onSelectScript?: (position: "top" | "bottom" | null) => void;
   externalEditScriptPosition?: "top" | "bottom" | null;
   onEditScriptPositionChange?: (position: "top" | "bottom" | null) => void;
+  isGenerating?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -1439,9 +1457,9 @@ function PanelCanvas({
     });
 
     if (p.topScript && p.topScript.visible !== false)
-      drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
+      drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H, editingScriptPos === "top");
     if (p.bottomScript && p.bottomScript.visible !== false)
-      drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H);
+      drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H, editingScriptPos === "bottom");
     if (!isPro) {
       ctx.save();
       ctx.translate(CANVAS_W / 2, CANVAS_H / 2);
@@ -1453,13 +1471,29 @@ function PanelCanvas({
       ctx.fillText("OLLI Free", 0, 0);
       ctx.restore();
     }
-  }, [isPro, hideDrawingLayers]);
+
+    // 이미지 생성 중 오버레이
+    if (isGenerating) {
+      ctx.save();
+      ctx.fillStyle = "rgba(235,240,255,0.85)";
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.font = "bold 18px sans-serif";
+      ctx.fillStyle = "hsl(220,60%,55%)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🎨 이미지 생성 중...", CANVAS_W / 2, CANVAS_H / 2 - 16);
+      ctx.font = "13px sans-serif";
+      ctx.fillStyle = "hsl(220,40%,60%)";
+      ctx.fillText("잠시만 기다려주세요", CANVAS_W / 2, CANVAS_H / 2 + 14);
+      ctx.restore();
+    }
+  }, [isPro, hideDrawingLayers, isGenerating]);
 
   redrawRef.current = redraw;
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, redraw, fontsReady, hideDrawingLayers]);
+  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, redraw, fontsReady, hideDrawingLayers, isGenerating]);
 
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -1726,11 +1760,16 @@ function PanelCanvas({
               CANVAS_W,
               CANVAS_H,
             );
-            const handleSize = 10;
-            const hx = rect.bx + rect.bw - 6;
-            const hy = rect.by + rect.bh - 6;
-            const nearHandle =
-              Math.abs(pos.x - hx) <= handleSize && Math.abs(pos.y - hy) <= handleSize;
+            const hs = 8;
+            const corners = [
+              { x: rect.bx - 2, y: rect.by - 2 },
+              { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
+              { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
+              { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
+            ];
+            const nearHandle = editingScriptPos === scriptType && corners.some(
+              (c) => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs
+            );
             if (nearHandle) {
               dragModeRef.current =
                 scriptType === "top" ? "resize-script-top" : "resize-script-bottom";
@@ -1749,10 +1788,8 @@ function PanelCanvas({
                 pos.y >= rect.by &&
                 pos.y <= rect.by + rect.bh
               ) {
-                dragModeRef.current =
-                  scriptType === "top" ? "move-script-top" : "move-script-bottom";
-                dragStartRef.current = pos;
-                dragScriptStartRef.current = { x: rect.bx, y: rect.by };
+                // 클릭 시 바로 텍스트 편집 + 설정 활성화
+                setEditingScriptPos(scriptType);
                 onSelectBubble(null);
                 onSelectChar(null);
                 selectedBubbleIdRef.current = null;
@@ -5943,9 +5980,9 @@ export default function StoryPage() {
       if (se.strokeWidth > 0) { ctx.strokeStyle = se.strokeColor; ctx.lineWidth = se.strokeWidth; ctx.stroke(); }
       ctx.restore();
     } else if (item.type === "topScript") {
-      if (p.topScript) drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H);
+      if (p.topScript) drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H, false);
     } else if (item.type === "bottomScript") {
-      if (p.bottomScript) drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H);
+      if (p.bottomScript) drawScriptOverlay(ctx, p.bottomScript, "bottom", CANVAS_W, CANVAS_H, false);
     }
 
     return canvas;
@@ -6257,36 +6294,100 @@ export default function StoryPage() {
     ensureDriver().then(() => {
       const driver = (window as any).driver.js.driver;
       const driverObj = driver({
-        overlayColor: "rgba(0,0,0,0.6)",
+        overlayColor: "rgba(0,0,0,0.55)",
         showProgress: true,
+        progressText: "{{current}} / {{total}}",
+        nextBtnText: "다음",
+        prevBtnText: "이전",
+        doneBtnText: "완료",
         steps: [
           {
+            element: '[data-testid="left-icon-sidebar"]',
+            popover: {
+              title: "좌측 탭 메뉴",
+              description: "4가지 탭으로 에디터 기능을 전환합니다.\n\n• 이미지 선택: 갤러리/업로드로 캐릭터 이미지 배치\n• AI 프롬프트: AI 자동 스크립트 & 이미지 생성\n• 도구: 드로잉, 선, 텍스트, 도형 도구\n• 요소: 자막, 말풍선, 템플릿 관리",
+              side: "right",
+            },
+          },
+          {
+            element: '[data-testid="button-left-tab-image"]',
+            popover: {
+              title: "이미지 선택/업로드",
+              description: "갤러리에서 캐릭터를 클릭하면 캔버스에 바로 배치됩니다. 파일을 직접 업로드하거나 배경 제거(Pro) 기능도 사용할 수 있어요.",
+              side: "right",
+            },
+          },
+          {
+            element: '[data-testid="button-left-tab-ai"]',
+            popover: {
+              title: "AI 프롬프트 (자동 생성)",
+              description: "주제를 입력하고 AI가 자막/말풍선을 자동 생성합니다.\n\n• 인스타툰 자동화 생성: 캐릭터 기준 이미지 + 주제로 이미지까지 한번에\n• 인스타툰 프롬프트 자동 작성: 포즈/표정/배경 프롬프트 자동 생성\n• 자동화툰 멀티컷: 여러 장면을 한번에 생성",
+              side: "right",
+            },
+          },
+          {
+            element: '[data-testid="button-left-tab-tools"]',
+            popover: {
+              title: "도구 모음",
+              description: "• 선택: 요소 선택/이동/크기 조절\n• 드로잉: 펜, 마커, 형광펜으로 자유 드로잉\n• 선: 직선/곡선 추가, 화살표/점선 지원\n• 텍스트: 자유 위치 텍스트 추가\n• 도형: 사각형, 원, 삼각형, 별 등 + 마스크",
+              side: "right",
+            },
+          },
+          {
+            element: '[data-testid="button-left-tab-elements"]',
+            popover: {
+              title: "요소 관리",
+              description: "• 자막 설정: 상단/하단 자막 텍스트, 폰트, 색상, 배경 스타일 설정\n• 말풍선: 말풍선 추가 및 스타일/텍스트/꼬리 편집\n• 템플릿: 미리 디자인된 말풍선 템플릿 가져오기",
+              side: "right",
+            },
+          },
+          {
             element: '[data-testid="canvas-toolbar"]',
-            popover: { title: "툴바", description: "패널 추가, 실행 취소 등을 할 수 있어요." },
+            popover: {
+              title: "상단 툴바",
+              description: "패널 추가(+), 좌우 이동, 실행 취소/다시 실행, 줌 조절을 할 수 있어요.",
+              side: "bottom",
+            },
           },
           {
             element: '[data-testid="button-add-panel"]',
-            popover: { title: "패널 추가", description: "스토리 패널을 추가합니다." },
-          },
-          {
-            element: '[data-testid="button-undo"]',
-            popover: { title: "실행 취소", description: "최근 변경을 되돌립니다." },
-          },
-          {
-            element: '[data-testid="button-redo"]',
-            popover: { title: "다시 실행", description: "되돌린 변경을 다시 적용합니다." },
+            popover: {
+              title: "패널 추가",
+              description: "새 스토리 패널을 추가합니다. Pro 등급에 따라 최대 14개까지 가능해요.",
+              side: "bottom",
+            },
           },
           {
             element: '[data-testid="story-canvas-area"]',
-            popover: { title: "캔버스", description: "패널에서 말풍선/캐릭터를 편집하세요." },
+            popover: {
+              title: "캔버스 영역",
+              description: "스토리 패널을 편집하는 메인 영역이에요.\n\n• 요소 클릭: 선택 → 우측에 설정 표시\n• 드래그: 위치 이동\n• 모서리 드래그: 크기 조절\n• 우클릭: 레이어 순서, 복제, 삭제 메뉴\n• 상/하단 자막 클릭: 바로 텍스트 편집",
+              side: "left",
+            },
+          },
+          {
+            element: '[data-testid="button-story-help"]',
+            popover: {
+              title: "도움말 (이 가이드)",
+              description: "언제든 이 버튼을 클릭하면 에디터 기능 가이드를 다시 볼 수 있어요.",
+              side: "bottom",
+            },
           },
           {
             element: '[data-testid="button-download-panel"]',
-            popover: { title: "다운로드", description: "현재 패널을 이미지로 저장합니다." },
+            popover: {
+              title: "다운로드",
+              description: "현재 패널 1장 또는 전체 패널을 하나의 세로 이미지로 다운로드할 수 있어요.",
+              side: "bottom",
+            },
           },
           {
             element: '[data-testid="button-save-story-project"]',
-            popover: { title: "프로젝트 저장", description: "작업을 프로젝트로 저장합니다." },
+            popover: {
+              title: "프로젝트 저장 (Pro)",
+              description: "현재 작업을 프로젝트로 저장합니다. '내 편집' 페이지에서 언제든 불러올 수 있어요. Instagram 공유 기능도 지원합니다.",
+              side: "bottom",
+            },
           },
         ],
       });
@@ -7838,6 +7939,12 @@ export default function StoryPage() {
                           }}
                           externalEditScriptPosition={activePanelIndex === i ? editingScriptPositionForCanvas : null}
                           onEditScriptPositionChange={setEditingScriptPositionForCanvas}
+                          isGenerating={
+                            instatoonImageMutation.isPending && (
+                              instatoonImageMutation.variables?.scope === "all" ||
+                              (instatoonImageMutation.variables?.scope === "current" && activePanelIndex === i)
+                            )
+                          }
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}

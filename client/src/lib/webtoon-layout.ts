@@ -45,31 +45,41 @@ export function getCutRegions(cutsPerCanvas: number): CutRegion[] {
 /** 컷 구분선 LineElement 배열 반환 (story.tsx의 CanvasLineElement 호환) */
 export function buildDividerLines(cutsPerCanvas: number): Array<{
   id: string;
-  type: "straight";
-  x1: number; y1: number;
-  x2: number; y2: number;
-  strokeColor: string;
+  lineType: "straight";
+  points: { x: number; y: number }[];
+  color: string;
   strokeWidth: number;
+  opacity: number;
+  startArrow: boolean;
+  endArrow: boolean;
+  dashPattern: "solid";
   zIndex: number;
   visible: boolean;
 }> {
   const lines: Array<{
     id: string;
-    type: "straight";
-    x1: number; y1: number;
-    x2: number; y2: number;
-    strokeColor: string;
+    lineType: "straight";
+    points: { x: number; y: number }[];
+    color: string;
     strokeWidth: number;
+    opacity: number;
+    startArrow: boolean;
+    endArrow: boolean;
+    dashPattern: "solid";
     zIndex: number;
     visible: boolean;
   }> = [];
 
   const makeLine = (x1: number, y1: number, x2: number, y2: number) => ({
     id: Math.random().toString(36).slice(2, 10),
-    type: "straight" as const,
-    x1, y1, x2, y2,
-    strokeColor: "#000000",
+    lineType: "straight" as const,
+    points: [{ x: x1, y: y1 }, { x: x2, y: y2 }],
+    color: "#000000",
     strokeWidth: DIVIDER_THICKNESS,
+    opacity: 1,
+    startArrow: false,
+    endArrow: false,
+    dashPattern: "solid" as const,
     zIndex: 100,
     visible: true,
   });
