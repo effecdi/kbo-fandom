@@ -6396,13 +6396,18 @@ export default function StoryPage() {
                           인스타툰 프롬프트 자동 작성
                         </Button>
                         <Button
-                          variant={aiMode === "autoWebtoon" ? "default" : "outline"}
+                          variant="outline"
                           size="sm"
-                          className="justify-start"
-                          onClick={() => setAiMode("autoWebtoon")}
+                          className="justify-start opacity-60"
+                          onClick={() => {
+                            toast({
+                              title: "준비중이에요",
+                              description: "자동화툰 멀티컷 생성 기능은 현재 준비중입니다. 조금만 기다려주세요!",
+                            });
+                          }}
                         >
                           <Wand2 className="h-4 w-4 mr-2" />
-                          자동화툰 멀티컷 생성
+                          자동화툰 멀티컷 생성 (준비중)
                         </Button>
                       </div>
 
