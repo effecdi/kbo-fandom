@@ -1431,6 +1431,17 @@ const SCRIPT_STYLES = [
   { value: "no-border", label: "라인없음" },
 ];
 
+const SCRIPT_BG_COLORS = [
+  { value: "yellow", label: "노랑", bg: "#facc15" },
+  { value: "sky", label: "하늘", bg: "#38bdf8" },
+  { value: "pink", label: "분홍", bg: "#f472b6" },
+  { value: "green", label: "초록", bg: "#4ade80" },
+  { value: "orange", label: "주황", bg: "#fb923c" },
+  { value: "purple", label: "보라", bg: "#a78bfa" },
+  { value: "white", label: "흰색", bg: "#ffffff" },
+  { value: "dark", label: "어두운", bg: "#1e1e1e" },
+];
+
 interface ScriptToolbarProps {
   script: ScriptToolbarData;
   onChange: (updates: Partial<ScriptToolbarData>) => void;
@@ -1442,9 +1453,10 @@ export function ScriptContextToolbar({ script, onChange, canAllFonts = true }: S
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showBgColorPicker, setShowBgColorPicker] = useState(false);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
-  const closeAll = () => { setShowFontDropdown(false); setShowSizeDropdown(false); setShowStyleDropdown(false); setShowColorPicker(false); };
+  const closeAll = () => { setShowFontDropdown(false); setShowSizeDropdown(false); setShowStyleDropdown(false); setShowColorPicker(false); setShowBgColorPicker(false); };
 
   const fontLabel = KOREAN_FONTS.find((f) => f.value === (script.fontKey || "default"))?.label || "기본 고딕";
   const styleLabel = SCRIPT_STYLES.find((s) => s.value === script.style)?.label || "채움";
@@ -1552,6 +1564,37 @@ export function ScriptContextToolbar({ script, onChange, canAllFonts = true }: S
                 className="context-toolbar__color-input"
               />
               <span className="context-toolbar__color-hex">{script.textColor || "#1a1a1a"}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="context-toolbar__divider" />
+
+      {/* Background color */}
+      <div className="context-toolbar__dropdown-wrapper">
+        <button
+          className="context-toolbar__btn"
+          onClick={() => { closeAll(); setShowBgColorPicker((v) => !v); }}
+          title="배경색"
+        >
+          <span
+            className="context-toolbar__color-dot context-toolbar__color-dot--stroke"
+            style={{ backgroundColor: SCRIPT_BG_COLORS.find((c) => c.value === script.color)?.bg || "#facc15" }}
+          />
+        </button>
+        {showBgColorPicker && (
+          <div className="context-toolbar__dropdown context-toolbar__dropdown--colors">
+            <div className="context-toolbar__color-grid">
+              {SCRIPT_BG_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  className={`context-toolbar__color-swatch ${script.color === c.value ? "context-toolbar__color-swatch--active" : ""}`}
+                  style={{ backgroundColor: c.bg }}
+                  onClick={() => { onChange({ color: c.value }); setShowBgColorPicker(false); }}
+                  title={c.label}
+                />
+              ))}
             </div>
           </div>
         )}
