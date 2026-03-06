@@ -3552,24 +3552,45 @@ export default function StoryPage() {
 
   const rehydrateImages = useCallback((panels: PanelData[]) => {
     panels.forEach((p) => {
+      const panelId = p.id;
       p.characters.forEach((c) => {
         if (!c.imageEl && c.imageUrl) {
+          const charId = c.id;
           const img = new Image();
           img.crossOrigin = "anonymous";
           img.onload = () => {
-            c.imageEl = img;
-            setPanelsRaw((cur) => [...cur]);
+            setPanelsRaw((cur) => cur.map(panel => {
+              if (panel.id !== panelId) return panel;
+              const hasMatch = panel.characters.some(ch => ch.id === charId && !ch.imageEl);
+              if (!hasMatch) return panel;
+              return {
+                ...panel,
+                characters: panel.characters.map(ch =>
+                  ch.id === charId && !ch.imageEl ? { ...ch, imageEl: img } : ch
+                ),
+              };
+            }));
           };
           img.src = c.imageUrl;
         }
       });
       p.bubbles.forEach((b) => {
         if (b.style === "image" && b.templateSrc && !b.templateImg) {
+          const bubbleId = b.id;
           const img = new Image();
           img.crossOrigin = "anonymous";
           img.onload = () => {
-            b.templateImg = img;
-            setPanelsRaw((cur) => [...cur]);
+            setPanelsRaw((cur) => cur.map(panel => {
+              if (panel.id !== panelId) return panel;
+              const hasMatch = panel.bubbles.some(bb => bb.id === bubbleId && !bb.templateImg);
+              if (!hasMatch) return panel;
+              return {
+                ...panel,
+                bubbles: panel.bubbles.map(bb =>
+                  bb.id === bubbleId && !bb.templateImg ? { ...bb, templateImg: img } : bb
+                ),
+              };
+            }));
           };
           img.src = b.templateSrc;
         }
@@ -3579,8 +3600,10 @@ export default function StoryPage() {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
-          p.backgroundImageEl = img;
-          setPanelsRaw((cur) => [...cur]);
+          setPanelsRaw((cur) => cur.map(panel => {
+            if (panel.id !== panelId || panel.backgroundImageEl) return panel;
+            return { ...panel, backgroundImageEl: img };
+          }));
         };
         img.src = p.backgroundImageUrl;
       }
@@ -3588,10 +3611,20 @@ export default function StoryPage() {
       (p.drawingLayers || []).forEach((dl) => {
         if (dl.opacity === undefined || dl.opacity === null) dl.opacity = 1;
         if (dl.imageData && !dl.imageEl) {
+          const dlId = dl.id;
           const img = new Image();
           img.onload = () => {
-            dl.imageEl = img;
-            setPanelsRaw((cur) => [...cur]);
+            setPanelsRaw((cur) => cur.map(panel => {
+              if (panel.id !== panelId) return panel;
+              const hasMatch = (panel.drawingLayers || []).some(d => d.id === dlId && !d.imageEl);
+              if (!hasMatch) return panel;
+              return {
+                ...panel,
+                drawingLayers: (panel.drawingLayers || []).map(d =>
+                  d.id === dlId && !d.imageEl ? { ...d, imageEl: img } : d
+                ),
+              };
+            }));
           };
           img.src = dl.imageData;
         }
