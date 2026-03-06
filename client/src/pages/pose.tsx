@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -63,9 +63,23 @@ export default function PosePage() {
   const isPro = usageData?.tier === "pro";
   const isOutOfCredits = !isPro && (usageData?.credits ?? 0) <= 0;
 
+  // URL에서 전달된 characterId를 직접 fetch (gallery 캐시와 무관하게 즉시 표시)
+  const urlCharId = params.get("characterId");
+  const urlCharIdNum = urlCharId ? parseInt(urlCharId) : null;
+
+  const { data: directCharacter } = useQuery<{ id: number; imageUrl: string; prompt: string }>({
+    queryKey: ["/api/characters", urlCharIdNum],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/characters/${urlCharIdNum}`);
+      return res.json();
+    },
+    enabled: !!urlCharIdNum && !isNaN(urlCharIdNum!),
+  });
+
   const { data: galleryItems, isLoading: galleryLoading } = useQuery<Generation[]>({
     queryKey: ["/api/gallery"],
     select: (data: any[]) => data.filter((g) => g.type === "character" && g.resultImageUrl),
+    staleTime: 0, // 항상 최신 캐릭터 목록을 가져오도록
   });
 
   const toggleCharacter = (characterId: number) => {
@@ -85,7 +99,21 @@ export default function PosePage() {
     setSelectedCharacterIds((prev) => prev.filter((id) => id !== characterId));
   };
 
-  const selectedGenerations = galleryItems?.filter((g) => g.characterId && selectedCharacterIds.includes(g.characterId)) || [];
+  // gallery에서 선택된 캐릭터 + directCharacter fallback (gallery 캐시가 stale일 때)
+  const selectedGenerations = useMemo(() => {
+    const fromGallery = galleryItems?.filter((g) => g.characterId && selectedCharacterIds.includes(g.characterId)) || [];
+    // URL에서 전달된 캐릭터가 gallery에 아직 없으면 direct fetch 결과로 표시
+    if (directCharacter && urlCharIdNum && selectedCharacterIds.includes(urlCharIdNum) &&
+        !fromGallery.some(g => g.characterId === urlCharIdNum)) {
+      return [{
+        id: -(directCharacter.id),
+        characterId: directCharacter.id,
+        resultImageUrl: directCharacter.imageUrl,
+        prompt: directCharacter.prompt,
+      } as any, ...fromGallery];
+    }
+    return fromGallery;
+  }, [galleryItems, selectedCharacterIds, directCharacter, urlCharIdNum]);
 
   const aiPromptMutation = useMutation({
     mutationFn: async () => {

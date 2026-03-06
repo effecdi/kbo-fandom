@@ -118,41 +118,64 @@ function SpotlightOverlay() {
   const { currentStep, currentStepIndex, totalSteps, nextStep, prevStep, endTour } =
     useTour();
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
-  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<MutationObserver | null>(null);
   const rafRef = useRef<number>(0);
 
+  const TOOLTIP_W = 340;
+  const GAP = 16;
+  const EDGE_PAD = 12;
+
+  // ── compute tooltip position with viewport clamping ──────
+  const computeTooltipPosition = useCallback(
+    (rect: Rect, position: TourStep["position"]) => {
+      const tooltipH = tooltipRef.current?.offsetHeight ?? 220;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      let top = 0;
+      let left = 0;
+      let resolvedPos = position;
+
+      // Auto-flip if not enough space
+      if (resolvedPos === "bottom" && rect.top + rect.height + GAP + tooltipH > vh) {
+        resolvedPos = "top";
+      }
+      if (resolvedPos === "top" && rect.top - GAP - tooltipH < 0) {
+        resolvedPos = "bottom";
+      }
+
+      switch (resolvedPos) {
+        case "bottom":
+          top = rect.top + rect.height + GAP;
+          left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
+          break;
+        case "top":
+          top = rect.top - GAP - tooltipH;
+          left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
+          break;
+        case "right":
+          top = rect.top + rect.height / 2 - tooltipH / 2;
+          left = rect.left + rect.width + GAP;
+          break;
+        case "left":
+          top = rect.top + rect.height / 2 - tooltipH / 2;
+          left = rect.left - TOOLTIP_W - GAP;
+          break;
+      }
+
+      // Clamp horizontal
+      left = Math.max(EDGE_PAD, Math.min(left, vw - TOOLTIP_W - EDGE_PAD));
+      // Clamp vertical
+      top = Math.max(EDGE_PAD, Math.min(top, vh - tooltipH - EDGE_PAD));
+
+      setTooltipPos({ top, left });
+    },
+    [],
+  );
+
   // ── locate target element ────────────────────────────────
-  const locateTarget = useCallback(() => {
-    if (!currentStep) return;
-
-    const el = document.querySelector(currentStep.targetSelector) as HTMLElement | null;
-    if (!el) {
-      setTargetRect(null);
-      return;
-    }
-
-    // scroll into view if needed
-    const rect = el.getBoundingClientRect();
-    const inView =
-      rect.top >= 0 &&
-      rect.left >= 0 &&
-      rect.bottom <= window.innerHeight &&
-      rect.right <= window.innerWidth;
-
-    if (!inView) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      // re-measure after scroll
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          measureAndSet(el);
-        });
-      });
-    } else {
-      measureAndSet(el);
-    }
-  }, [currentStep]);
-
   const measureAndSet = useCallback(
     (el: HTMLElement) => {
       if (!currentStep) return;
@@ -165,69 +188,45 @@ function SpotlightOverlay() {
         height: r.height + pad * 2,
       };
       setTargetRect(rect);
-      computeTooltipPosition(rect, currentStep.position);
+      requestAnimationFrame(() => {
+        computeTooltipPosition(rect, currentStep.position);
+      });
     },
-    [currentStep],
+    [currentStep, computeTooltipPosition],
   );
 
-  const computeTooltipPosition = useCallback(
-    (rect: Rect, position: TourStep["position"]) => {
-      const TOOLTIP_W = 340;
-      const GAP = 16;
-      let top = 0;
-      let left = 0;
+  const locateTarget = useCallback(() => {
+    if (!currentStep) return;
 
-      switch (position) {
-        case "bottom":
-          top = rect.top + rect.height + GAP;
-          left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
-          break;
-        case "top":
-          top = rect.top - GAP;
-          left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
-          break;
-        case "right":
-          top = rect.top + rect.height / 2;
-          left = rect.left + rect.width + GAP;
-          break;
-        case "left":
-          top = rect.top + rect.height / 2;
-          left = rect.left - TOOLTIP_W - GAP;
-          break;
-      }
+    const el = document.querySelector(currentStep.targetSelector) as HTMLElement | null;
+    if (!el) {
+      setTargetRect(null);
+      return;
+    }
 
-      // Clamp within viewport
-      left = Math.max(12, Math.min(left, window.innerWidth - TOOLTIP_W - 12));
-      top = Math.max(12, top);
+    const rect = el.getBoundingClientRect();
+    const inView =
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= window.innerHeight &&
+      rect.right <= window.innerWidth;
 
-      const style: React.CSSProperties = {
-        position: "fixed",
-        top,
-        left,
-        width: TOOLTIP_W,
-        zIndex: 10000,
-      };
-
-      if (position === "top") {
-        style.transform = "translateY(-100%)";
-      }
-      if (position === "left" || position === "right") {
-        style.transform = "translateY(-50%)";
-      }
-
-      setTooltipStyle(style);
-    },
-    [],
-  );
+    if (!inView) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => {
+        measureAndSet(el);
+      }, 400);
+    } else {
+      measureAndSet(el);
+    }
+  }, [currentStep, measureAndSet]);
 
   // ── watch for target element to appear ───────────────────
   useEffect(() => {
-    // small delay for page transitions
     const timeout = setTimeout(() => {
       locateTarget();
     }, 300);
 
-    // MutationObserver fallback for lazy-loaded elements
     observerRef.current = new MutationObserver(() => {
       if (!currentStep) return;
       const el = document.querySelector(currentStep.targetSelector);
@@ -242,7 +241,6 @@ function SpotlightOverlay() {
       subtree: true,
     });
 
-    // re-measure on resize/scroll
     const handleResize = () => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(locateTarget);
@@ -260,6 +258,15 @@ function SpotlightOverlay() {
     };
   }, [currentStep, locateTarget]);
 
+  // ── re-calc position after tooltip renders ──
+  useEffect(() => {
+    if (targetRect && currentStep) {
+      requestAnimationFrame(() => {
+        computeTooltipPosition(targetRect, currentStep.position);
+      });
+    }
+  }, [currentStepIndex]);
+
   // ── keyboard shortcuts ───────────────────────────────────
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -273,7 +280,6 @@ function SpotlightOverlay() {
 
   if (!currentStep) return null;
 
-  // SVG mask path for the spotlight cutout
   const maskId = "spotlight-mask";
   const svgMask = targetRect ? (
     <svg
@@ -308,7 +314,6 @@ function SpotlightOverlay() {
       />
     </svg>
   ) : (
-    // No target found yet — show full overlay
     <div
       className="fixed inset-0 bg-black/70"
       style={{ zIndex: 9999 }}
@@ -317,10 +322,9 @@ function SpotlightOverlay() {
 
   return createPortal(
     <>
-      {/* Overlay with spotlight cutout */}
       {svgMask}
 
-      {/* Click catcher on the overlay area (not the spotlight hole) */}
+      {/* Click catcher */}
       <div
         className="fixed inset-0"
         style={{ zIndex: 9999, pointerEvents: "none" }}
@@ -330,12 +334,21 @@ function SpotlightOverlay() {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep.id}
-          initial={{ opacity: 0, y: 10 }}
+          ref={tooltipRef}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.25 }}
-          style={tooltipStyle}
-          className="bg-background border border-border rounded-xl shadow-2xl overflow-hidden"
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+          style={{
+            position: "fixed",
+            top: tooltipPos.top,
+            left: tooltipPos.left,
+            width: TOOLTIP_W,
+            maxWidth: `calc(100vw - ${EDGE_PAD * 2}px)`,
+            maxHeight: `calc(100vh - ${EDGE_PAD * 2}px)`,
+            zIndex: 10000,
+          }}
+          className="bg-background border border-border rounded-xl shadow-2xl overflow-auto"
         >
           {/* Video player */}
           {currentStep.videoUrl && <VideoPlayer url={currentStep.videoUrl} />}
@@ -400,7 +413,7 @@ function SpotlightOverlay() {
   );
 }
 
-// ─── Video Player (simple) ────────────────────────────────
+// ─── Video Player ─────────────────────────────────────────
 
 function VideoPlayer({ url }: { url: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);

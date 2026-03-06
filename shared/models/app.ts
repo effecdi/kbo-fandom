@@ -197,3 +197,51 @@ export type InsertGeneration = z.infer<typeof insertGenerationSchema>;
 export type UserCredits = typeof userCredits.$inferSelect;
 export type TrendingAccount = typeof trendingAccounts.$inferSelect;
 export type InsertTrendingAccount = z.infer<typeof insertTrendingAccountSchema>;
+
+// Instagram 계정 연결
+export const instagramConnections = pgTable("instagram_connections", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  igUserId: varchar("ig_user_id").notNull(),
+  igUsername: varchar("ig_username"),
+  fbPageId: varchar("fb_page_id").notNull(),
+  accessToken: text("access_token").notNull(),
+  tokenExpiresAt: timestamp("token_expires_at").notNull(),
+  connectedAt: timestamp("connected_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// Instagram 게시 이력
+export const instagramPublishLog = pgTable("instagram_publish_log", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  igMediaId: varchar("ig_media_id"),
+  publishType: text("publish_type").notNull(),
+  imageCount: integer("image_count").notNull().default(1),
+  caption: text("caption"),
+  status: text("status").notNull().default("pending"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertInstagramConnectionSchema = createInsertSchema(instagramConnections).omit({
+  id: true,
+  connectedAt: true,
+  updatedAt: true,
+});
+
+export const insertInstagramPublishLogSchema = createInsertSchema(instagramPublishLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const instagramPublishSchema = z.object({
+  publishType: z.enum(["feed", "carousel", "story"]),
+  images: z.array(z.string().min(1)).min(1).max(10),
+  caption: z.string().max(2200).optional(),
+});
+
+export type InstagramConnection = typeof instagramConnections.$inferSelect;
+export type InsertInstagramConnection = z.infer<typeof insertInstagramConnectionSchema>;
+export type InstagramPublishLog = typeof instagramPublishLog.$inferSelect;
+export type InsertInstagramPublishLog = z.infer<typeof insertInstagramPublishLogSchema>;

@@ -2,11 +2,16 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
-import { generateCharacterImage, generatePoseImage, generateWithBackground, removeWhiteBackground, generateThumbnail, applyWatermark } from "./imageGen";
+import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, generateThumbnail, applyWatermark } from "./imageGen";
 import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown } from "./aiText";
-import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema } from "@shared/schema";
+import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, instagramPublishSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
+import {
+  getOAuthUrl, exchangeCodeForToken, getInstagramBusinessAccount,
+  refreshLongLivedToken, encryptToken, decryptToken,
+  uploadImageToStorage, publishSingleImage, publishCarousel, publishStory,
+} from "./instagramService";
 
 // Product prices (must match client-side pricing)
 const PRODUCT_PRICES = {
@@ -643,6 +648,52 @@ export async function registerRoutes(
     }
   });
 
+  // 자동 웹툰 전용 장면 이미지 생성 (주제 컨텍스트 포함)
+  app.post("/api/auto-webtoon/generate-scene", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { sceneDescription, storyContext, sourceImageDataList } = req.body;
+
+      if (!sceneDescription || typeof sceneDescription !== "string") {
+        return res.status(400).json({ message: "sceneDescription is required" });
+      }
+
+      const canGenerate = await storage.deductCredit(userId);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
+      }
+
+      const imageDataUrl = await generateWebtoonScene(
+        sceneDescription,
+        storyContext || "",
+        sourceImageDataList,
+      );
+
+      // DB 저장 (비차단)
+      try {
+        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        await storage.createGeneration({
+          userId,
+          characterId: null,
+          type: "background",
+          prompt: `Scene: ${sceneDescription}`,
+          referenceImageUrl: null,
+          resultImageUrl: imageDataUrl,
+          thumbnailUrl: thumbnailUrl || null,
+          creditsUsed: 1,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        console.error("Scene generation DB save failed:", dbError?.message);
+      }
+
+      res.json({ imageUrl: imageDataUrl });
+    } catch (error: any) {
+      console.error("Auto-webtoon scene generation error:", error);
+      res.status(500).json({ message: error.message || "장면 이미지 생성에 실패했습니다." });
+    }
+  });
+
   app.post("/api/bubble-projects", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
@@ -768,6 +819,227 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Delete bubble project error:", error);
       res.status(500).json({ message: error.message || "프로젝트 삭제에 실패했습니다." });
+    }
+  });
+
+  // ── Instagram Graph API routes ──
+
+  // 1. OAuth URL 생성
+  app.get("/api/instagram/connect", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      if (!config.metaAppId || !config.metaAppSecret) {
+        return res.status(503).json({ message: "Instagram 연동이 아직 설정되지 않았습니다." });
+      }
+      const url = getOAuthUrl(req.userId!);
+      res.json({ url });
+    } catch (error: any) {
+      console.error("Instagram connect error:", error);
+      res.status(500).json({ message: error.message || "Instagram 연결 URL 생성에 실패했습니다." });
+    }
+  });
+
+  // 2. OAuth 콜백
+  app.get("/api/instagram/callback", async (req, res) => {
+    try {
+      const { code, state, error: oauthError } = req.query;
+      if (oauthError) {
+        return res.redirect("/?instagram_error=denied");
+      }
+      if (!code || !state) {
+        return res.redirect("/?instagram_error=invalid");
+      }
+
+      const stateData = JSON.parse(Buffer.from(String(state), "base64url").toString());
+      const userId = stateData.userId;
+      if (!userId) return res.redirect("/?instagram_error=invalid_state");
+
+      const { accessToken, expiresAt } = await exchangeCodeForToken(String(code));
+      const { igUserId, igUsername, fbPageId } = await getInstagramBusinessAccount(accessToken);
+
+      const encryptedToken = encryptToken(accessToken);
+
+      await storage.upsertInstagramConnection({
+        userId,
+        igUserId,
+        igUsername,
+        fbPageId,
+        accessToken: encryptedToken,
+        tokenExpiresAt: expiresAt,
+      });
+
+      res.redirect("/dashboard?instagram_connected=true");
+    } catch (error: any) {
+      console.error("Instagram callback error:", error);
+      res.redirect(`/dashboard?instagram_error=${encodeURIComponent(error.message || "연결 실패")}`);
+    }
+  });
+
+  // 3. 연결 상태 조회
+  app.get("/api/instagram/status", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const conn = await storage.getInstagramConnection(req.userId!);
+      if (!conn) return res.json({ connected: false });
+
+      // Auto-refresh if expiring within 7 days
+      const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      let tokenWarning = false;
+      if (conn.tokenExpiresAt < sevenDaysFromNow) {
+        try {
+          const plainToken = decryptToken(conn.accessToken);
+          const refreshed = await refreshLongLivedToken(plainToken);
+          const newEncrypted = encryptToken(refreshed.accessToken);
+          await storage.updateInstagramToken(req.userId!, newEncrypted, refreshed.expiresAt);
+        } catch {
+          tokenWarning = true;
+        }
+      }
+
+      res.json({
+        connected: true,
+        igUsername: conn.igUsername,
+        igUserId: conn.igUserId,
+        tokenExpiresAt: conn.tokenExpiresAt,
+        tokenWarning,
+        connectedAt: conn.connectedAt,
+      });
+    } catch (error: any) {
+      console.error("Instagram status error:", error);
+      res.status(500).json({ message: "Instagram 상태 조회에 실패했습니다." });
+    }
+  });
+
+  // 4. 연결 해제
+  app.delete("/api/instagram/disconnect", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteInstagramConnection(req.userId!);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Instagram disconnect error:", error);
+      res.status(500).json({ message: "Instagram 연결 해제에 실패했습니다." });
+    }
+  });
+
+  // 5. 토큰 수동 갱신
+  app.post("/api/instagram/refresh-token", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const conn = await storage.getInstagramConnection(req.userId!);
+      if (!conn) return res.status(404).json({ message: "Instagram 계정이 연결되어 있지 않습니다." });
+
+      const plainToken = decryptToken(conn.accessToken);
+      const refreshed = await refreshLongLivedToken(plainToken);
+      const newEncrypted = encryptToken(refreshed.accessToken);
+      await storage.updateInstagramToken(req.userId!, newEncrypted, refreshed.expiresAt);
+
+      res.json({ success: true, tokenExpiresAt: refreshed.expiresAt });
+    } catch (error: any) {
+      console.error("Instagram refresh token error:", error);
+      res.status(500).json({ message: error.message || "토큰 갱신에 실패했습니다." });
+    }
+  });
+
+  // 6. 게시 실행
+  app.post("/api/instagram/publish", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const parsed = instagramPublishSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || "잘못된 입력입니다." });
+      }
+
+      const { publishType, images, caption } = parsed.data;
+
+      // Validate image count by type
+      if (publishType === "feed" && images.length !== 1) {
+        return res.status(400).json({ message: "피드 게시는 이미지 1장만 가능합니다." });
+      }
+      if (publishType === "story" && images.length !== 1) {
+        return res.status(400).json({ message: "스토리 게시는 이미지 1장만 가능합니다." });
+      }
+      if (publishType === "carousel" && (images.length < 2 || images.length > 10)) {
+        return res.status(400).json({ message: "캐러셀은 2~10장의 이미지가 필요합니다." });
+      }
+
+      // Check connection
+      const conn = await storage.getInstagramConnection(userId);
+      if (!conn) return res.status(400).json({ message: "Instagram 계정이 연결되어 있지 않습니다." });
+
+      // Rate limit: 50 posts per 24h
+      const recentCount = await storage.getPublishCountLast24h(userId);
+      if (recentCount >= 50) {
+        return res.status(429).json({ message: "24시간 내 게시 횟수(50회)를 초과했습니다. 잠시 후 다시 시도해주세요." });
+      }
+
+      // Create log entry
+      const log = await storage.createInstagramPublishLog({
+        userId,
+        publishType,
+        imageCount: images.length,
+        caption: caption || null,
+        status: "pending",
+      });
+
+      try {
+        const plainToken = decryptToken(conn.accessToken);
+
+        // Auto-refresh token if expiring soon
+        let token = plainToken;
+        const sevenDays = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        if (conn.tokenExpiresAt < sevenDays) {
+          try {
+            const refreshed = await refreshLongLivedToken(plainToken);
+            token = refreshed.accessToken;
+            await storage.updateInstagramToken(userId, encryptToken(token), refreshed.expiresAt);
+          } catch {
+            // Continue with existing token
+          }
+        }
+
+        // Upload images to Supabase Storage
+        const imageUrls: string[] = [];
+        for (let i = 0; i < images.length; i++) {
+          const url = await uploadImageToStorage(userId, images[i], `panel-${i + 1}.png`);
+          imageUrls.push(url);
+        }
+
+        // Publish based on type
+        let mediaId: string;
+        if (publishType === "carousel") {
+          mediaId = await publishCarousel(conn.igUserId, token, imageUrls, caption);
+        } else if (publishType === "story") {
+          mediaId = await publishStory(conn.igUserId, token, imageUrls[0]);
+        } else {
+          mediaId = await publishSingleImage(conn.igUserId, token, imageUrls[0], caption);
+        }
+
+        await storage.updateInstagramPublishLog(log.id, {
+          igMediaId: mediaId,
+          status: "published",
+        });
+
+        res.json({ success: true, mediaId, publishType });
+      } catch (publishError: any) {
+        await storage.updateInstagramPublishLog(log.id, {
+          status: "failed",
+          errorMessage: publishError.message || "게시 실패",
+        });
+        throw publishError;
+      }
+    } catch (error: any) {
+      console.error("Instagram publish error:", error);
+      const msg = error.response?.data?.error?.message || error.message || "게시에 실패했습니다.";
+      res.status(500).json({ message: msg });
+    }
+  });
+
+  // 7. 게시 이력 조회
+  app.get("/api/instagram/publish-history", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 20, 1), 100);
+      const logs = await storage.getInstagramPublishLogs(req.userId!, limit);
+      res.json(logs);
+    } catch (error: any) {
+      console.error("Instagram publish history error:", error);
+      res.status(500).json({ message: "게시 이력 조회에 실패했습니다." });
     }
   });
 

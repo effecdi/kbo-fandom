@@ -40,9 +40,11 @@ import {
   Gift,
   CreditCard,
   X,
+  HelpCircle,
 } from "lucide-react";
 import type { Generation, TrendingAccount } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
+import { useTour } from "@/components/spotlight-tour";
 
 interface UsageData {
   credits: number;
@@ -337,14 +339,25 @@ export default function HomePage() {
     queryKey: ["/api/trending"],
   });
 
+  const { startTour } = useTour();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTierGuide, setShowTierGuide] = useState(false);
+  const [showTourBanner, setShowTourBanner] = useState(false);
 
   useEffect(() => {
     if (!usageLoading && usage && !usage.authorName && !usage.genre) {
       setShowOnboarding(true);
     }
   }, [usage, usageLoading]);
+
+  // Show tour banner for first-time visitors
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("olli_tour_completed")) {
+        setShowTourBanner(true);
+      }
+    } catch {}
+  }, []);
 
   const totalGen = usage?.totalGenerations || 0;
   const tier = getTier(totalGen);
@@ -390,14 +403,68 @@ export default function HomePage() {
               오늘도 멋진 인스타툰을 만들어볼까요?
             </p>
           </div>
-          <Link href="/pricing">
-            <Avatar className="h-10 w-10 cursor-pointer" data-testid="avatar-profile">
-              <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
-                {(usage?.authorName || user?.firstName || "C").charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={startTour}
+              data-testid="button-start-guide"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">사용 가이드</span>
+            </Button>
+            <Link href="/pricing">
+              <Avatar className="h-10 w-10 cursor-pointer" data-testid="avatar-profile">
+                <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                  {(usage?.authorName || user?.firstName || "C").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          </div>
         </div>
+
+        {/* First-visit tour banner */}
+        {showTourBanner && (
+          <div
+            className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4"
+            data-testid="banner-tour"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <HelpCircle className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">처음이신가요?</p>
+                <p className="text-xs text-muted-foreground">
+                  사용 가이드를 통해 주요 기능을 빠르게 둘러보세요.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setShowTourBanner(false);
+                  startTour();
+                }}
+              >
+                가이드 시작
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  setShowTourBanner(false);
+                  try { localStorage.setItem("olli_tour_completed", "true"); } catch {}
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
