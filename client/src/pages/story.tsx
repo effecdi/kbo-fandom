@@ -5827,8 +5827,8 @@ export default function StoryPage() {
     });
   };
 
-  // 선택 해제 → 깨끗한 캔버스 캡처 → 선택 복원
-  const captureCleanCanvas = (callback: () => void) => {
+  // Helper: clear ALL selections, wait for canvas redraw, run callback, restore selections
+  const withCleanCanvas = (fn: () => void) => {
     const prevBubble = selectedBubbleId;
     const prevChar = selectedCharId;
     const prevScript = selectedScriptPosition;
@@ -5843,36 +5843,26 @@ export default function StoryPage() {
     setSelectedLineId(null);
     setSelectedShapeId(null);
     setSelectedDrawingLayerId(null);
-    // 2프레임 대기: React re-render + canvas redraw
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        callback();
-        setSelectedBubbleId(prevBubble);
-        setSelectedCharId(prevChar);
-        setSelectedScriptPosition(prevScript);
-        setSelectedTextId(prevText);
-        setSelectedLineId(prevLine);
-        setSelectedShapeId(prevShape);
-        setSelectedDrawingLayerId(prevDrawing);
+        try { fn(); } finally {
+          setSelectedBubbleId(prevBubble);
+          setSelectedCharId(prevChar);
+          setSelectedScriptPosition(prevScript);
+          setSelectedTextId(prevText);
+          setSelectedLineId(prevLine);
+          setSelectedShapeId(prevShape);
+          setSelectedDrawingLayerId(prevDrawing);
+        }
       });
     });
   };
 
-  const downloadPanel = (idx: number) => {
-    const p = panels[idx];
-    if (!p) {
-      toast({ title: "다운로드 실패", description: "패널을 찾을 수 없습니다.", variant: "destructive" });
-      return;
-    }
-    const canvas = panelCanvasRefs.current.get(p.id);
-    if (!canvas) {
-      toast({ title: "다운로드 실패", description: "캔버스가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.", variant: "destructive" });
-      return;
-    }
+  const captureCanvas = (canvas: HTMLCanvasElement, filename: string) => {
     try {
       const dataUrl = canvas.toDataURL("image/png");
       const link = document.createElement("a");
-      link.download = `panel_${idx + 1}.png`;
+      link.download = filename;
       link.href = dataUrl;
       document.body.appendChild(link);
       link.click();
@@ -5887,7 +5877,7 @@ export default function StoryPage() {
           ctx.drawImage(canvas, 0, 0);
           const dataUrl = cleanCanvas.toDataURL("image/png");
           const link = document.createElement("a");
-          link.download = `panel_${idx + 1}.png`;
+          link.download = filename;
           link.href = dataUrl;
           document.body.appendChild(link);
           link.click();
@@ -5902,7 +5892,7 @@ export default function StoryPage() {
         }
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.download = `panel_${idx + 1}.png`;
+        link.download = filename;
         link.href = url;
         document.body.appendChild(link);
         link.click();
@@ -5911,12 +5901,28 @@ export default function StoryPage() {
       }, "image/png");
     }
   };
+  const downloadPanel = (idx: number) => {
+    const p = panels[idx];
+    if (!p) {
+      toast({ title: "다운로드 실패", description: "패널을 찾을 수 없습니다.", variant: "destructive" });
+      return;
+    }
+    const canvas = panelCanvasRefs.current.get(p.id);
+    if (!canvas) {
+      toast({ title: "다운로드 실패", description: "캔버스가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.", variant: "destructive" });
+      return;
+    }
+    withCleanCanvas(() => captureCanvas(canvas, `panel_${idx + 1}.png`));
+  };
 
   const downloadAll = () => {
     if (panels.length === 0) return;
-    captureCleanCanvas(() => {
-      panels.forEach((_, i) => {
-        setTimeout(() => downloadPanel(i), i * 300);
+    withCleanCanvas(() => {
+      panels.forEach((p, i) => {
+        const canvas = panelCanvasRefs.current.get(p.id);
+        if (canvas) {
+          setTimeout(() => captureCanvas(canvas, `panel_${i + 1}.png`), i * 300);
+        }
       });
     });
   };
@@ -5931,23 +5937,25 @@ export default function StoryPage() {
     if (!p) return;
     const srcCanvas = panelCanvasRefs.current.get(p.id);
     if (!srcCanvas) return;
-    try {
-      const offscreen = document.createElement("canvas");
-      offscreen.width = targetW;
-      offscreen.height = targetH;
-      const ctx = offscreen.getContext("2d");
-      if (!ctx) return;
-      ctx.drawImage(srcCanvas, 0, 0, targetW, targetH);
-      const dataUrl = offscreen.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.download = `panel_${idx + 1}_${targetW}x${targetH}.png`;
-      link.href = dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch {
-      toast({ title: "다운로드 실패", description: "이미지를 생성할 수 없습니다.", variant: "destructive" });
-    }
+    withCleanCanvas(() => {
+      try {
+        const offscreen = document.createElement("canvas");
+        offscreen.width = targetW;
+        offscreen.height = targetH;
+        const ctx = offscreen.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(srcCanvas, 0, 0, targetW, targetH);
+        const dataUrl = offscreen.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.download = `panel_${idx + 1}_${targetW}x${targetH}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch {
+        toast({ title: "다운로드 실패", description: "이미지를 생성할 수 없습니다.", variant: "destructive" });
+      }
+    });
   };
 
   const capturePanelForInstagram = useCallback(async (idx: number): Promise<string> => {
@@ -5969,37 +5977,73 @@ export default function StoryPage() {
     if (!p) return;
     const srcCanvas = panelCanvasRefs.current.get(p.id);
     if (!srcCanvas) return;
-    try {
-      const dataUrl = srcCanvas.toDataURL("image/png");
-      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}"><image href="${dataUrl}" width="${CANVAS_W}" height="${CANVAS_H}"/></svg>`;
-      const blob = new Blob([svgContent], { type: "image/svg+xml" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.download = `panel_${idx + 1}.svg`;
-      link.href = url;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch {
-      toast({ title: "다운로드 실패", description: "SVG를 생성할 수 없습니다.", variant: "destructive" });
-    }
+    withCleanCanvas(() => {
+      try {
+        const dataUrl = srcCanvas.toDataURL("image/png");
+        const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}"><image href="${dataUrl}" width="${CANVAS_W}" height="${CANVAS_H}"/></svg>`;
+        const blob = new Blob([svgContent], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.download = `panel_${idx + 1}.svg`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch {
+        toast({ title: "다운로드 실패", description: "SVG를 생성할 수 없습니다.", variant: "destructive" });
+      }
+    });
   };
 
   const downloadAllSized = (w: number, h: number) => {
     if (panels.length === 0) return;
-    captureCleanCanvas(() => {
-      panels.forEach((_, i) => {
-        setTimeout(() => downloadPanelSized(i, w, h), i * 300);
+    withCleanCanvas(() => {
+      panels.forEach((p, i) => {
+        const srcCanvas = panelCanvasRefs.current.get(p.id);
+        if (!srcCanvas) return;
+        setTimeout(() => {
+          try {
+            const offscreen = document.createElement("canvas");
+            offscreen.width = w;
+            offscreen.height = h;
+            const ctx = offscreen.getContext("2d");
+            if (!ctx) return;
+            ctx.drawImage(srcCanvas, 0, 0, w, h);
+            const dataUrl = offscreen.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.download = `panel_${i + 1}_${w}x${h}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          } catch {}
+        }, i * 300);
       });
     });
   };
 
   const downloadAllSvg = () => {
     if (panels.length === 0) return;
-    captureCleanCanvas(() => {
-      panels.forEach((_, i) => {
-        setTimeout(() => downloadPanelSvg(i), i * 300);
+    withCleanCanvas(() => {
+      panels.forEach((p, i) => {
+        const srcCanvas = panelCanvasRefs.current.get(p.id);
+        if (!srcCanvas) return;
+        setTimeout(() => {
+          try {
+            const dataUrl = srcCanvas.toDataURL("image/png");
+            const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}"><image href="${dataUrl}" width="${CANVAS_W}" height="${CANVAS_H}"/></svg>`;
+            const blob = new Blob([svgContent], { type: "image/svg+xml" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.download = `panel_${i + 1}.svg`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          } catch {}
+        }, i * 300);
       });
     });
   };
