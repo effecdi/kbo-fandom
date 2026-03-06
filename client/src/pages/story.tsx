@@ -7841,6 +7841,7 @@ export default function StoryPage() {
                         onClick={() => {
                           if (activePanelIndex !== i) {
                             setSelectedScriptPosition(null);
+                            setEditingScriptPositionForCanvas(null);
                             setSelectedBubbleId(null);
                             setSelectedCharId(null);
                             setSelectedTextId(null);
@@ -10026,8 +10027,6 @@ export default function StoryPage() {
                     onSelectScript={(position) => {
                       setSelectedScriptPosition(position);
                       if (position) {
-                        setActiveLeftTab("elements");
-                        setElementsSubTab("script");
                         setActiveScriptSection(position);
                       }
                     }}
