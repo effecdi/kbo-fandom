@@ -541,6 +541,7 @@ IMPORTANT RULES:
 - Draw in a simple, cute Korean Instagram webtoon (instatoon) style
 - Keep thick outlines and flat colors
 - The scene should be clear and visually engaging
+- The illustration MUST fill the ENTIRE image from edge to edge. There must be NO white borders, margins, or empty padding around the edges. The background color/scene must extend all the way to every edge of the image.
 
 Scene: ${translatedBgPrompt}
 ${itemsInstruction}
@@ -562,6 +563,7 @@ IMPORTANT RULES:
 - Draw the background in a style that matches the characters (simple, cute, instatoon style)
 - The background should complement the characters, not overwhelm them
 - Keep the overall style simple and cute, matching Korean Instagram webtoon (instatoon) aesthetics
+- The illustration MUST fill the ENTIRE image from edge to edge. There must be NO white borders, margins, or empty padding around the edges. The background color/scene must extend all the way to every edge of the image.
 
 Background scene: ${translatedBgPrompt}
 ${itemsInstruction}
@@ -582,6 +584,7 @@ IMPORTANT RULES:
 - Draw the background in a style that matches the character (simple, cute, instatoon style)
 - The background should complement the character, not overwhelm it
 - Keep the overall style simple and cute, matching Korean Instagram webtoon (instatoon) aesthetics
+- The illustration MUST fill the ENTIRE image from edge to edge. There must be NO white borders, margins, or empty padding around the edges. The background color/scene must extend all the way to every edge of the image.
 
 Background scene: ${translatedBgPrompt}
 ${itemsInstruction}
