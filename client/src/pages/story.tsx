@@ -920,6 +920,7 @@ function PanelCanvas({
   onSelectScript,
   externalEditScriptPosition,
   onEditScriptPositionChange,
+  externalSelectedScriptPosition,
   isGenerating,
 }: {
   panel: PanelData;
@@ -942,6 +943,7 @@ function PanelCanvas({
   onSelectScript?: (position: "top" | "bottom" | null) => void;
   externalEditScriptPosition?: "top" | "bottom" | null;
   onEditScriptPositionChange?: (position: "top" | "bottom" | null) => void;
+  externalSelectedScriptPosition?: "top" | "bottom" | null;
   isGenerating?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -994,6 +996,13 @@ function PanelCanvas({
       onEditScriptPositionChange?.(null);
     }
   }, [externalEditScriptPosition, onEditScriptPositionChange, onSelectScript]);
+  // Sync parent's script selection → PanelCanvas internal state
+  useEffect(() => {
+    if (externalSelectedScriptPosition === null && selectedScriptPos !== null) {
+      setSelectedScriptPos(null);
+      setEditingScriptPos(null);
+    }
+  }, [externalSelectedScriptPosition]);
   useEffect(() => {
     selectedCharIdRef.current = selectedCharId;
   }, [selectedCharId]);
@@ -7809,7 +7818,18 @@ export default function StoryPage() {
                             setSelectedDrawingLayerId(null);
                           }
                         }}
-                        onClick={() => setActivePanelIndex(i)}
+                        onClick={() => {
+                          if (activePanelIndex !== i) {
+                            setSelectedScriptPosition(null);
+                            setSelectedBubbleId(null);
+                            setSelectedCharId(null);
+                            setSelectedTextId(null);
+                            setSelectedLineId(null);
+                            setSelectedShapeId(null);
+                            setSelectedDrawingLayerId(null);
+                          }
+                          setActivePanelIndex(i);
+                        }}
                         className={`relative shadow-lg transition-all ${activePanelIndex === i ? "ring-4 ring-primary ring-offset-2" : "opacity-90 hover:opacity-100"}`}
                       >
                         <div className="absolute -left-12 top-0 flex flex-col gap-2">
@@ -7819,7 +7839,8 @@ export default function StoryPage() {
                         </div>
                         <button
                           type="button"
-                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-red-500 shadow hover:bg-white z-10"
+                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-red-500 shadow hover:bg-white"
+                          style={{ zIndex: 25 }}
                           onClick={(e) => {
                             e.stopPropagation();
                             removePanel(i);
@@ -8116,14 +8137,12 @@ export default function StoryPage() {
                               setSelectedShapeId(null);
                               setSelectedDrawingLayerId(null);
                               setActivePanelIndex(i);
-                              // 설정 패널로 자동 전환
-                              setActiveLeftTab("elements");
-                              setElementsSubTab("script");
                               setActiveScriptSection(pos);
                             }
                           }}
                           externalEditScriptPosition={activePanelIndex === i ? editingScriptPositionForCanvas : null}
                           onEditScriptPositionChange={setEditingScriptPositionForCanvas}
+                          externalSelectedScriptPosition={activePanelIndex === i ? selectedScriptPosition : null}
                           isGenerating={
                             instatoonImageMutation.isPending && (
                               instatoonImageMutation.variables?.scope === "all" ||
@@ -8379,8 +8398,6 @@ export default function StoryPage() {
                                       if (nearHandle) {
                                         clearAllSel();
                                         setSelectedScriptPosition(scriptType);
-                                        setActiveLeftTab("elements");
-                                        setElementsSubTab("script");
                                         setActiveScriptSection(scriptType);
                                         dragScriptOverlayRef.current = {
                                           position: scriptType,
@@ -8404,8 +8421,6 @@ export default function StoryPage() {
                                       ) {
                                         clearAllSel();
                                         setSelectedScriptPosition(scriptType);
-                                        setActiveLeftTab("elements");
-                                        setElementsSubTab("script");
                                         setActiveScriptSection(scriptType);
                                         dragScriptOverlayRef.current = {
                                           position: scriptType,
