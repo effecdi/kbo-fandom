@@ -304,6 +304,8 @@ interface ScriptData {
   bold?: boolean;
   x?: number;
   y?: number;
+  width?: number;
+  height?: number;
   visible?: boolean;
 }
 
@@ -619,15 +621,18 @@ function getScriptRect(
   const fontFamily = getFontFamily(script.fontKey || "default");
   const weight = script.bold !== false ? "bold" : "normal";
   ctx.font = `${weight} ${fs}px ${fontFamily}`;
-  const maxW = canvasW - padX * 2 - 8;
+  // 사용자가 리사이즈한 width가 있으면 해당 너비 사용
+  const explicitW = script.width;
+  const maxW = explicitW ? explicitW - padX * 2 : canvasW - padX * 2 - 8;
   const lines = scriptWrapLines(ctx, script.text || "", maxW);
   const lineH = fs * 1.35;
   const textW = Math.max(...lines.map(l => ctx.measureText(l).width), 20);
-  const bw = Math.min(canvasW - 8, textW + padX * 2);
-  const bh = lines.length * lineH + padY * 2;
+  const bw = explicitW ? explicitW : Math.min(canvasW - 8, textW + padX * 2);
+  const autoH = lines.length * lineH + padY * 2;
+  const bh = script.height ? Math.max(script.height, autoH) : autoH;
   const defaultX = canvasW / 2 - bw / 2;
   const defaultY = type === "top" ? 8 : canvasH - bh - 8;
-  const bx = script.x !== undefined ? Math.max(4, Math.min(canvasW - bw - 4, script.x)) : defaultX;
+  const bx = script.x !== undefined ? script.x : defaultX;
   const by = script.y !== undefined ? script.y : defaultY;
   return { bx, by, bw, bh, fs, lines, lineH, padX, padY };
 }
@@ -877,7 +882,7 @@ function getElementBoundingBox(
     return { x: minX, y: minY, w: maxX - minX || 4, h: maxY - minY || 4 };
   }
   if (type === "drawing") {
-    return { x: el.x ?? 0, y: el.y ?? 0, w: el.width ?? 450, h: el.height ?? 600 };
+    return { x: el.x ?? 0, y: el.y ?? 0, w: el.width ?? CANVAS_W, h: el.height ?? CANVAS_H };
   }
   if (type === "shape") {
     return { x: el.x, y: el.y, w: el.width, h: el.height };
@@ -889,8 +894,8 @@ function rectsIntersect(a: BBox, b: BBox): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
-const CANVAS_W = 450;
-const CANVAS_H = 600;
+const CANVAS_W = 540;
+const CANVAS_H = 675;
 
 function PanelCanvas({
   panel,
@@ -946,6 +951,7 @@ function PanelCanvas({
   const dragCharStartRef = useRef({ x: 0, y: 0, scale: 1 });
   const dragScriptStartRef = useRef({ x: 0, y: 0 });
   const dragScriptFontStartRef = useRef(20);
+  const dragScriptSizeStartRef = useRef({ w: 0, h: 0 });
   const selectedBubbleIdRef = useRef(selectedBubbleId);
   const selectedCharIdRef = useRef(selectedCharId);
   const selectedShapeIdRef = useRef(selectedShapeId);
@@ -1662,6 +1668,65 @@ function PanelCanvas({
         }
       }
 
+      // 스크립트(상/하단)는 캔버스 최상위에 렌더링되므로 히트 감지도 가장 먼저 처리
+      const scriptCtx = canvas.getContext("2d");
+      if (scriptCtx) {
+        for (const scriptType of ["top", "bottom"] as const) {
+          const sd = scriptType === "top" ? p.topScript : p.bottomScript;
+          if (sd && sd.text && sd.visible !== false) {
+            const rect = getScriptRect(
+              scriptCtx,
+              sd,
+              scriptType,
+              CANVAS_W,
+              CANVAS_H,
+            );
+            const hs = 8;
+            const corners = [
+              { x: rect.bx - 2, y: rect.by - 2 },
+              { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
+              { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
+              { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
+            ];
+            const nearHandle = (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) && corners.some(
+              (c) => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs
+            );
+            if (nearHandle) {
+              dragModeRef.current =
+                scriptType === "top" ? "resize-script-top" : "resize-script-bottom";
+              dragStartRef.current = pos;
+              dragScriptFontStartRef.current = sd.fontSize || 20;
+              dragScriptSizeStartRef.current = { w: rect.bw, h: rect.bh };
+              onSelectBubble(null);
+              onSelectChar(null);
+              selectedBubbleIdRef.current = null;
+              selectedCharIdRef.current = null;
+              onSelectScript?.(scriptType);
+              return;
+            } else if (
+              pos.x >= rect.bx &&
+              pos.x <= rect.bx + rect.bw &&
+              pos.y >= rect.by &&
+              pos.y <= rect.by + rect.bh
+            ) {
+              onSelectBubble(null);
+              onSelectChar(null);
+              selectedBubbleIdRef.current = null;
+              selectedCharIdRef.current = null;
+              // 클릭 즉시 선택 + 드래그 이동 가능 (말풍선과 동일)
+              setSelectedScriptPos(scriptType);
+              dragModeRef.current =
+                scriptType === "top" ? "move-script-top" : "move-script-bottom";
+              dragStartRef.current = pos;
+              dragScriptStartRef.current = { x: sd.x ?? rect.bx, y: sd.y ?? rect.by };
+              onSelectScript?.(scriptType);
+              return;
+            }
+          }
+        }
+      }
+
+      // 캐릭터 + 말풍선 히트 감지 (z-order 역순)
       {
         const drawables: Array<
           | { type: "char"; z: number; ch: CharacterPlacement }
@@ -1676,8 +1741,6 @@ function PanelCanvas({
           if (d.type === "bubble") {
             const b = d.b;
             if (pos.x >= b.x && pos.x <= b.x + b.width && pos.y >= b.y && pos.y <= b.y + b.height) {
-              // If this bubble is already selected, check if a char is also underneath
-              // If so, prefer switching to the char (fixes char re-selection bug)
               if (selectedBubbleIdRef.current === b.id) {
                 const charUnderneath = p.characters.find(ch => {
                   if (!ch.imageEl) return false;
@@ -1717,10 +1780,9 @@ function PanelCanvas({
             }
           } else if (d.type === "char") {
             const ch = d.ch;
-            // Use actual image size (clamped to canvas bounds for full-canvas images)
-            const naturalW = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
-            const naturalH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
-            const cw2 = Math.min(naturalW, CANVAS_W * 2); // allow slightly outside
+            const naturalW = ch.imageEl && ch.imageEl.naturalWidth ? ch.imageEl.naturalWidth * ch.scale : 80;
+            const naturalH = ch.imageEl && ch.imageEl.naturalHeight ? ch.imageEl.naturalHeight * ch.scale : 80;
+            const cw2 = Math.min(naturalW, CANVAS_W * 2);
             const ch2h = Math.min(naturalH, CANVAS_H * 2);
             if (
               pos.x >= ch.x - cw2 / 2 &&
@@ -1738,13 +1800,10 @@ function PanelCanvas({
               onSelectScript?.(null);
               dragStartRef.current = pos;
               dragCharStartRef.current = { x: ch.x, y: ch.y, scale: ch.scale };
-              // For full-canvas images, check corners near canvas edges
-              // Use inward offset corners if char covers the whole canvas
               const isFullCanvas = naturalW >= CANVAS_W * 0.8;
               const cxL = ch.x - cw2 / 2;
               const cyT = ch.y - ch2h / 2;
               const cornerHitZone = isFullCanvas ? 36 : 20;
-              // Inward corner positions for full-canvas images
               const inOff = isFullCanvas ? 20 : 0;
               const corners2: { mode: DragMode; hx: number; hy: number }[] = [
                 { mode: "resize-char-tl", hx: cxL + inOff, hy: cyT + inOff },
@@ -1762,68 +1821,6 @@ function PanelCanvas({
               }
               if (!foundCorner) dragModeRef.current = "move-char";
               return;
-            }
-          }
-        }
-      }
-
-      const scriptCtx = canvas.getContext("2d");
-      if (scriptCtx) {
-        for (const scriptType of ["top", "bottom"] as const) {
-          const sd = scriptType === "top" ? p.topScript : p.bottomScript;
-          if (sd && sd.text) {
-            const rect = getScriptRect(
-              scriptCtx,
-              sd,
-              scriptType,
-              CANVAS_W,
-              CANVAS_H,
-            );
-            const hs = 8;
-            const corners = [
-              { x: rect.bx - 2, y: rect.by - 2 },
-              { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
-              { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
-              { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
-            ];
-            const nearHandle = (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) && corners.some(
-              (c) => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs
-            );
-            if (nearHandle) {
-              dragModeRef.current =
-                scriptType === "top" ? "resize-script-top" : "resize-script-bottom";
-              dragStartRef.current = pos;
-              dragScriptFontStartRef.current = sd.fontSize || 20;
-              onSelectBubble(null);
-              onSelectChar(null);
-              selectedBubbleIdRef.current = null;
-              selectedCharIdRef.current = null;
-              onSelectScript?.(scriptType);
-              return;
-            } else {
-              if (
-                pos.x >= rect.bx &&
-                pos.x <= rect.bx + rect.bw &&
-                pos.y >= rect.by &&
-                pos.y <= rect.by + rect.bh
-              ) {
-                onSelectBubble(null);
-                onSelectChar(null);
-                selectedBubbleIdRef.current = null;
-                selectedCharIdRef.current = null;
-                if (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) {
-                  // 이미 선택된 상태 → 드래그로 이동 가능
-                  dragModeRef.current =
-                    scriptType === "top" ? "move-script-top" : "move-script-bottom";
-                  dragStartRef.current = pos;
-                  dragScriptStartRef.current = { x: sd.x ?? rect.bx, y: sd.y ?? rect.by };
-                } else {
-                  // 첫 클릭 → 선택만 (텍스트 편집 없음)
-                  setSelectedScriptPos(scriptType);
-                }
-                onSelectScript?.(scriptType);
-                return;
-              }
             }
           }
         }
@@ -1878,6 +1875,55 @@ function PanelCanvas({
           }
         }
 
+        // 스크립트 커서를 먼저 체크 (최상위 렌더링)
+        {
+          const cvs = canvasRef.current;
+          if (cvs) {
+            const sCtx = cvs.getContext("2d");
+            if (sCtx) {
+              let scriptHit = false;
+              for (const scriptType of ["top", "bottom"] as const) {
+                const sd = scriptType === "top" ? p.topScript : p.bottomScript;
+                if (sd && sd.text && sd.visible !== false) {
+                  const rect = getScriptRect(
+                    sCtx,
+                    sd,
+                    scriptType,
+                    CANVAS_W,
+                    CANVAS_H,
+                  );
+                  if (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) {
+                    const hs = 8;
+                    const corners = [
+                      { x: rect.bx - 2, y: rect.by - 2 },
+                      { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
+                      { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
+                      { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
+                    ];
+                    if (corners.some(c => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs)) {
+                      cvs.style.cursor = "nwse-resize";
+                      scriptHit = true;
+                      break;
+                    }
+                  }
+                  if (
+                    pos.x >= rect.bx &&
+                    pos.x <= rect.bx + rect.bw &&
+                    pos.y >= rect.by &&
+                    pos.y <= rect.by + rect.bh
+                  ) {
+                    cvs.style.cursor = "move";
+                    scriptHit = true;
+                    break;
+                  }
+                }
+              }
+              if (scriptHit) return;
+            }
+          }
+        }
+
+        // 캐릭터/말풍선 커서
         {
           const drawables: Array<
             | { type: "char"; z: number; ch: CharacterPlacement }
@@ -1909,49 +1955,6 @@ function PanelCanvas({
             }
           }
         }
-
-        {
-          const cvs = canvasRef.current;
-          if (cvs) {
-            const sCtx = cvs.getContext("2d");
-            if (sCtx) {
-              for (const scriptType of ["top", "bottom"] as const) {
-                const sd = scriptType === "top" ? p.topScript : p.bottomScript;
-                if (sd && sd.text) {
-                  const rect = getScriptRect(
-                    sCtx,
-                    sd,
-                    scriptType,
-                    CANVAS_W,
-                    CANVAS_H,
-                  );
-                  if (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) {
-                    const hs = 8;
-                    const corners = [
-                      { x: rect.bx - 2, y: rect.by - 2 },
-                      { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
-                      { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
-                      { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
-                    ];
-                    if (corners.some(c => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs)) {
-                      cvs.style.cursor = "nwse-resize";
-                      return;
-                    }
-                  }
-                  if (
-                    pos.x >= rect.bx &&
-                    pos.x <= rect.bx + rect.bw &&
-                    pos.y >= rect.by &&
-                    pos.y <= rect.by + rect.bh
-                  ) {
-                    cvs.style.cursor = (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) ? "move" : "pointer";
-                    return;
-                  }
-                }
-              }
-            }
-          }
-        }
         return;
       }
 
@@ -1974,10 +1977,12 @@ function PanelCanvas({
         const p = panelRef.current;
         const sd = mode === "resize-script-top" ? p.topScript : p.bottomScript;
         if (sd) {
-          const base = dragScriptFontStartRef.current;
-          const next = Math.max(8, Math.min(36, Math.round(base + dy / 2)));
+          const startW = dragScriptSizeStartRef.current.w;
+          const startH = dragScriptSizeStartRef.current.h;
+          const newW = Math.max(60, startW + dx);
+          const newH = Math.max(30, startH + dy);
           const key = mode === "resize-script-top" ? "topScript" : "bottomScript";
-          onUpdate({ ...p, [key]: { ...sd, fontSize: next } });
+          onUpdate({ ...p, [key]: { ...sd, width: newW, height: newH } });
         }
         return;
       }
@@ -2772,6 +2777,7 @@ function EditorPanel({
   isPro,
   mode = "image",
   bubbleTextareaRef,
+  forceRerender,
 }: {
   panel: PanelData;
   index: number;
@@ -2791,6 +2797,7 @@ function EditorPanel({
   isPro: boolean;
   mode?: "image" | "bubble" | "template";
   bubbleTextareaRef?: React.MutableRefObject<HTMLTextAreaElement | null>;
+  forceRerender?: () => void;
 }) {
   const [showCharPicker, setShowCharPicker] = useState(false);
   const isTemplateMode = mode === "template";
@@ -2927,29 +2934,32 @@ function EditorPanel({
   const addCharacter = async (gen: GenerationLight) => {
     const full = await fetchFullGeneration(gen.id);
     if (!full) return;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const maxDim = 150;
-      const s = Math.min(
-        maxDim / img.naturalWidth,
-        maxDim / img.naturalHeight,
-        1,
-      );
-      const newChar: CharacterPlacement = {
-        id: generateId(),
-        imageUrl: full.resultImageUrl,
-        x: CANVAS_W / 2,
-        y: CANVAS_H / 2,
-        scale: s,
-        imageEl: img,
-        zIndex: 0,
-      };
-      onUpdate({ ...panel, characters: [...panel.characters, newChar] });
-      setSelectedCharId(newChar.id);
-      setSelectedBubbleId(null);
-    };
-    img.src = full.resultImageUrl;
+    const url = full.resultImageUrl;
+    // 이미지를 먼저 로드한 후 캔버스에 추가 (로딩 중 표시 없이 즉시 표시)
+    const loadImg = (src: string, useCors: boolean): Promise<HTMLImageElement> =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        if (useCors) img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => reject();
+        img.src = src;
+      });
+    let img: HTMLImageElement;
+    try {
+      img = await loadImg(url, true);
+    } catch {
+      try { img = await loadImg(url, false); } catch { return; }
+    }
+    const maxDim = 150;
+    const s = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight, 1);
+    const charId = generateId();
+    const maxZ = panel.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0);
+    onUpdate({ ...panel, characters: [...panel.characters, {
+      id: charId, imageUrl: url, x: CANVAS_W / 2, y: CANVAS_H / 2,
+      scale: s, imageEl: img, zIndex: maxZ + 1,
+    }] });
+    setSelectedCharId(charId);
+    setSelectedBubbleId(null);
   };
 
   const removeCharacter = (id: string) => {
@@ -3133,6 +3143,15 @@ function EditorPanel({
     img.crossOrigin = "anonymous";
     img.onload = () => {
       onUpdate({ ...panel, backgroundImageUrl: full.resultImageUrl, backgroundImageEl: img });
+    };
+    img.onerror = () => {
+      // crossOrigin 제거 후 재시도
+      const retry = new Image();
+      retry.onload = () => {
+        onUpdate({ ...panel, backgroundImageUrl: full.resultImageUrl, backgroundImageEl: retry });
+      };
+      retry.onerror = () => console.warn("Background gallery image load failed");
+      retry.src = full.resultImageUrl;
     };
     img.src = full.resultImageUrl;
   };
@@ -3551,38 +3570,52 @@ export default function StoryPage() {
   );
 
   const rehydrateImages = useCallback((panels: PanelData[]) => {
+    const loadWithRetry = (
+      src: string,
+      onSuccess: (img: HTMLImageElement) => void,
+      label: string,
+    ) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => onSuccess(img);
+      img.onerror = () => {
+        // Retry without crossOrigin (fixes CORS / mixed-content failures)
+        const retry = new Image();
+        retry.onload = () => onSuccess(retry);
+        retry.onerror = () => console.warn(`${label} load failed:`, src.slice(0, 80));
+        retry.src = src;
+      };
+      img.src = src;
+    };
+
+    // 이미지 로드 후 새 패널 객체를 생성하여 PanelCanvas가 redraw하도록 강제
+    const forceNewPanelRefs = () => {
+      setPanelsRaw((cur) => cur.map(pp => ({ ...pp })));
+    };
+
     panels.forEach((p) => {
       p.characters.forEach((c) => {
         if (!c.imageEl && c.imageUrl) {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.onload = () => {
+          loadWithRetry(c.imageUrl, (img) => {
             c.imageEl = img;
-            setPanelsRaw((cur) => [...cur]);
-          };
-          img.src = c.imageUrl;
+            forceNewPanelRefs();
+          }, "Character image");
         }
       });
       p.bubbles.forEach((b) => {
         if (b.style === "image" && b.templateSrc && !b.templateImg) {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.onload = () => {
+          loadWithRetry(b.templateSrc, (img) => {
             b.templateImg = img;
-            setPanelsRaw((cur) => [...cur]);
-          };
-          img.src = b.templateSrc;
+            forceNewPanelRefs();
+          }, "Template image");
         }
       });
       // Rehydrate background image
       if (p.backgroundImageUrl && !p.backgroundImageEl) {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
+        loadWithRetry(p.backgroundImageUrl, (img) => {
           p.backgroundImageEl = img;
-          setPanelsRaw((cur) => [...cur]);
-        };
-        img.src = p.backgroundImageUrl;
+          forceNewPanelRefs();
+        }, "Background image");
       }
       // Rehydrate drawing layer images + backward-compatible opacity
       (p.drawingLayers || []).forEach((dl) => {
@@ -3591,8 +3624,9 @@ export default function StoryPage() {
           const img = new Image();
           img.onload = () => {
             dl.imageEl = img;
-            setPanelsRaw((cur) => [...cur]);
+            forceNewPanelRefs();
           };
+          img.onerror = () => console.warn("Drawing layer image load failed");
           img.src = dl.imageData;
         }
       });
@@ -4166,6 +4200,7 @@ export default function StoryPage() {
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/ai-prompt", {
         type: "background",
+        context: topic.trim() || instatoonScenePrompt.trim() || undefined,
       });
       return res.json() as Promise<{ prompt: string }>;
     },
@@ -5749,6 +5784,37 @@ export default function StoryPage() {
     });
   };
 
+  // 선택 해제 → 깨끗한 캔버스 캡처 → 선택 복원
+  const captureCleanCanvas = (callback: () => void) => {
+    const prevBubble = selectedBubbleId;
+    const prevChar = selectedCharId;
+    const prevScript = selectedScriptPosition;
+    const prevText = selectedTextId;
+    const prevLine = selectedLineId;
+    const prevShape = selectedShapeId;
+    const prevDrawing = selectedDrawingLayerId;
+    setSelectedBubbleId(null);
+    setSelectedCharId(null);
+    setSelectedScriptPosition(null);
+    setSelectedTextId(null);
+    setSelectedLineId(null);
+    setSelectedShapeId(null);
+    setSelectedDrawingLayerId(null);
+    // 2프레임 대기: React re-render + canvas redraw
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        callback();
+        setSelectedBubbleId(prevBubble);
+        setSelectedCharId(prevChar);
+        setSelectedScriptPosition(prevScript);
+        setSelectedTextId(prevText);
+        setSelectedLineId(prevLine);
+        setSelectedShapeId(prevShape);
+        setSelectedDrawingLayerId(prevDrawing);
+      });
+    });
+  };
+
   const downloadPanel = (idx: number) => {
     const p = panels[idx];
     if (!p) {
@@ -5761,7 +5827,6 @@ export default function StoryPage() {
       return;
     }
     try {
-      // Try direct toDataURL first
       const dataUrl = canvas.toDataURL("image/png");
       const link = document.createElement("a");
       link.download = `panel_${idx + 1}.png`;
@@ -5770,7 +5835,6 @@ export default function StoryPage() {
       link.click();
       document.body.removeChild(link);
     } catch (err: any) {
-      // Tainted canvas fallback: re-draw onto a clean canvas
       try {
         const cleanCanvas = document.createElement("canvas");
         cleanCanvas.width = canvas.width;
@@ -5788,7 +5852,6 @@ export default function StoryPage() {
           return;
         }
       } catch {}
-      // Final fallback: toBlob
       canvas.toBlob((blob) => {
         if (!blob) {
           toast({ title: "다운로드 실패", description: "이미지를 생성할 수 없습니다.", variant: "destructive" });
@@ -5808,16 +5871,16 @@ export default function StoryPage() {
 
   const downloadAll = () => {
     if (panels.length === 0) return;
-    panels.forEach((_, i) => {
-      setTimeout(() => downloadPanel(i), i * 300);
+    captureCleanCanvas(() => {
+      panels.forEach((_, i) => {
+        setTimeout(() => downloadPanel(i), i * 300);
+      });
     });
   };
 
   const DOWNLOAD_SIZES = [
-    { label: "Original (450×600)", w: 450, h: 600 },
-    { label: "2x (900×1200)", w: 900, h: 1200 },
-    { label: "Instagram Story (1080×1920)", w: 1080, h: 1920 },
-    { label: "Instagram Post (1080×1080)", w: 1080, h: 1080 },
+    { label: "Original (540×675)", w: 540, h: 675 },
+    { label: "2x (1080×1350)", w: 1080, h: 1350 },
   ];
 
   const downloadPanelSized = (idx: number, targetW: number, targetH: number) => {
@@ -5868,15 +5931,19 @@ export default function StoryPage() {
 
   const downloadAllSized = (w: number, h: number) => {
     if (panels.length === 0) return;
-    panels.forEach((_, i) => {
-      setTimeout(() => downloadPanelSized(i, w, h), i * 300);
+    captureCleanCanvas(() => {
+      panels.forEach((_, i) => {
+        setTimeout(() => downloadPanelSized(i, w, h), i * 300);
+      });
     });
   };
 
   const downloadAllSvg = () => {
     if (panels.length === 0) return;
-    panels.forEach((_, i) => {
-      setTimeout(() => downloadPanelSvg(i), i * 300);
+    captureCleanCanvas(() => {
+      panels.forEach((_, i) => {
+        setTimeout(() => downloadPanelSvg(i), i * 300);
+      });
     });
   };
 
@@ -6104,6 +6171,9 @@ export default function StoryPage() {
           x: c.x,
           y: c.y,
           scale: c.scale,
+          rotation: c.rotation ?? 0,
+          flipX: c.flipX ?? false,
+          zIndex: c.zIndex ?? 0,
         })),
         drawingLayers: (p.drawingLayers || []).map((dl) => ({
           id: dl.id,
@@ -6182,25 +6252,45 @@ export default function StoryPage() {
   const urlParams = new URLSearchParams(searchString);
   const loadProjectId = urlParams.get("projectId");
 
-  const { data: loadedProject } = useQuery<any>({
+  const { data: loadedProject, error: loadProjectError, isError: isLoadProjectError } = useQuery<any>({
     queryKey: ["/api/bubble-projects", loadProjectId],
     enabled: isAuthenticated && !!loadProjectId,
   });
 
-  const projectLoadedRef = useRef(false);
+  // Show error toast when project fetch fails
   useEffect(() => {
-    if (loadedProject && !projectLoadedRef.current) {
-      projectLoadedRef.current = true;
+    if (isLoadProjectError && loadProjectError) {
+      console.error("Project load API error:", loadProjectError);
+      toast({ title: "프로젝트 불러오기 실패", description: String(loadProjectError.message || ""), variant: "destructive" });
+    }
+  }, [isLoadProjectError, loadProjectError]);
+
+  const projectLoadedRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (loadedProject && projectLoadedRef.current !== loadedProject.id) {
+      projectLoadedRef.current = loadedProject.id;
       setCurrentProjectId(loadedProject.id);
       setProjectName(loadedProject.name);
+
+      // 프로젝트 로딩 시 선택 상태 초기화
+      setSelectedBubbleId(null);
+      setSelectedCharId(null);
+      setSelectedTextId(null);
+      setSelectedLineId(null);
+      setSelectedShapeId(null);
+      setSelectedDrawingLayerId(null);
+      setSelectedScriptPosition(null);
+
       try {
-        const data = JSON.parse(loadedProject.canvasData);
+        const data = typeof loadedProject.canvasData === "string"
+          ? JSON.parse(loadedProject.canvasData)
+          : loadedProject.canvasData;
         if (data.topic) setTopic(data.topic);
         if (data.panels && Array.isArray(data.panels)) {
           const restoredPanels: PanelData[] = data.panels.map((p: any) => ({
             id: p.id || generateId(),
-            topScript: p.topScript || null,
-            bottomScript: p.bottomScript || null,
+            topScript: p.topScript ?? null,
+            bottomScript: p.bottomScript ?? null,
             backgroundColor: p.backgroundColor || "#ffffff",
             backgroundImageUrl: p.backgroundImageUrl || undefined,
             backgroundImageEl: null,
@@ -6220,11 +6310,17 @@ export default function StoryPage() {
             lineElements: p.lineElements || [],
             shapeElements: p.shapeElements || [],
           }));
-          rehydrateImages(restoredPanels);
           setPanelsRaw(restoredPanels);
           setActivePanelIndex(0);
+          // rehydrateImages는 상태 설정 후 실행 (이미지 로드 콜백이 최신 상태 참조)
+          requestAnimationFrame(() => {
+            rehydrateImages(restoredPanels);
+          });
+        } else {
+          console.warn("Project canvasData has no panels:", Object.keys(data));
         }
       } catch (e) {
+        console.error("Project canvasData parse error:", e);
         toast({ title: "프로젝트 로드 실패", variant: "destructive" });
       }
     }
@@ -6499,7 +6595,7 @@ export default function StoryPage() {
                       </div>
 
                       <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
-                        무료 3회 이후부터는 스토리 AI 생성마다 크레딧이 사용돼요.
+                        인스타툰 자동화 생성 · 프롬프트 자동 작성: 각 10 크레딧 소모
                       </p>
 
                       <div className="grid grid-cols-1 gap-2 mt-3">
@@ -6516,33 +6612,37 @@ export default function StoryPage() {
                           variant={aiMode === "instatoonFull" ? "default" : "outline"}
                           size="sm"
                           className="justify-start"
-                          onClick={() => setAiMode("instatoonFull")}
+                          onClick={() => {
+                            if (!isPro) { toast({ title: "Pro 전용 기능", description: "인스타툰 자동화 생성은 Pro 멤버십 전용입니다.", variant: "destructive" }); return; }
+                            setAiMode("instatoonFull");
+                          }}
                         >
                           <Wand2 className="h-4 w-4 mr-2" />
                           인스타툰 자동화 생성
+                          {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                         </Button>
                         <Button
                           variant={aiMode === "instatoonPrompt" ? "default" : "outline"}
                           size="sm"
                           className="justify-start"
-                          onClick={() => setAiMode("instatoonPrompt")}
+                          onClick={() => {
+                            if (!isPro) { toast({ title: "Pro 전용 기능", description: "인스타툰 프롬프트 자동 작성은 Pro 멤버십 전용입니다.", variant: "destructive" }); return; }
+                            setAiMode("instatoonPrompt");
+                          }}
                         >
                           <Wand2 className="h-4 w-4 mr-2" />
                           인스타툰 프롬프트 자동 작성
+                          {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="justify-start opacity-60"
-                          onClick={() => {
-                            toast({
-                              title: "준비중이에요",
-                              description: "자동화툰 멀티컷 생성 기능은 현재 준비중입니다. 조금만 기다려주세요!",
-                            });
-                          }}
+                          className="justify-start opacity-50 cursor-not-allowed"
+                          disabled
                         >
                           <Wand2 className="h-4 w-4 mr-2" />
-                          자동화툰 멀티컷 생성 (준비중)
+                          자동화툰 멀티컷 생성
+                          <span className="ml-auto text-[10px] text-muted-foreground">준비중</span>
                         </Button>
                       </div>
 
@@ -7273,6 +7373,7 @@ export default function StoryPage() {
                         creatorTier={usageData?.creatorTier ?? 0}
                         isPro={isPro}
                         mode="image"
+                        forceRerender={() => setPanelsRaw((cur) => cur.map(pp => ({ ...pp })))}
                       />
                     </>
                   )}
@@ -7584,23 +7685,15 @@ export default function StoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
                       <DropdownMenuLabel className="text-[11px]">PNG 다운로드</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => guard(() => downloadPanelSized(activePanelIndex, 450, 600))}>
-                        <span className="text-xs">Original (450×600)</span>
+                      <DropdownMenuItem onClick={() => guard(() => captureCleanCanvas(() => downloadPanelSized(activePanelIndex, 540, 675)))}>
+                        <span className="text-xs">Original (540×675)</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 900, 1200))}>
-                        <span className="text-xs">2x (900×1200)</span>
-                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 1080, 1920))}>
-                        <span className="text-xs">Instagram Story (1080×1920)</span>
-                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, 1080, 1080))}>
-                        <span className="text-xs">Instagram Post (1080×1080)</span>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => captureCleanCanvas(() => downloadPanelSized(activePanelIndex, 1080, 1350)))}>
+                        <span className="text-xs">Instagram 2x (1080×1350)</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSvg(activePanelIndex))}>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => captureCleanCanvas(() => downloadPanelSvg(activePanelIndex)))}>
                         <span className="text-xs">SVG</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
@@ -7620,19 +7713,11 @@ export default function StoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
                       <DropdownMenuLabel className="text-[11px]">PNG 전체 다운로드</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => guard(() => downloadAllSized(450, 600))}>
-                        <span className="text-xs">Original (450×600)</span>
+                      <DropdownMenuItem onClick={() => guard(() => downloadAllSized(540, 675))}>
+                        <span className="text-xs">Original (540×675)</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(900, 1200))}>
-                        <span className="text-xs">2x (900×1200)</span>
-                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1920))}>
-                        <span className="text-xs">Instagram Story (1080×1920)</span>
-                        {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1080))}>
-                        <span className="text-xs">Instagram Post (1080×1080)</span>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1350))}>
+                        <span className="text-xs">Instagram 2x (1080×1350)</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -7646,7 +7731,7 @@ export default function StoryPage() {
                   <Button size="sm" onClick={() => guard(() => setShowSaveModal(true))} className="gap-1 h-7 text-xs px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
                     <Save className="h-3 w-3" />
                     저장
-                    {isPro && <Crown className="h-2.5 w-2.5 ml-0.5" />}
+                    {!isPro && <Crown className="h-2.5 w-2.5 ml-0.5 text-yellow-300" />}
                   </Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setLocation("/edits")} title="내 편집" data-testid="button-story-my-edits">
                     <FolderOpen className="h-3.5 w-3.5" />
@@ -8020,8 +8105,8 @@ export default function StoryPage() {
                           >
                             <DrawingCanvas
                               ref={drawingCanvasRef}
-                              width={450}
-                              height={600}
+                              width={CANVAS_W}
+                              height={CANVAS_H}
                               toolState={drawingToolState}
                               className="rounded-md"
                               drawingLayers={panel.drawingLayers || []}
@@ -8041,7 +8126,7 @@ export default function StoryPage() {
                                 setSelectedToolItem("select");
                               }}
                               onRequestTextInput={(x, y) => {
-                                setTextInputPos({ x: (x / 450) * 100, y: (y / 600) * 100 });
+                                setTextInputPos({ x: (x / CANVAS_W) * 100, y: (y / CANVAS_H) * 100 });
                                 setTextInputValue("");
                               }}
                               onStrokeEnd={() => setDrawingLayerSelected(true)}
@@ -8076,8 +8161,8 @@ export default function StoryPage() {
                             onMouseDown={(e) => {
                               if (overlayContextMenu) setOverlayContextMenu(null);
                               const rect = e.currentTarget.getBoundingClientRect();
-                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
-                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+                              const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
+                              const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
 
                               const HANDLE_HIT = 10;
 
@@ -8299,7 +8384,7 @@ export default function StoryPage() {
                                   }
                                 } else if (item.type === "drawing") {
                                   const dl = item.dl;
-                                  const dlHit = hitTestDrawingLayers([dl], canvasX, canvasY, 450, 600);
+                                  const dlHit = hitTestDrawingLayers([dl], canvasX, canvasY, CANVAS_W, CANVAS_H);
                                   if (dlHit) {
                                     clearSelections(); setSelectedDrawingLayerId(dl.id);
                                     handleElementDragStart("drawing", dl.id, canvasX, canvasY, panel);
@@ -8336,8 +8421,8 @@ export default function StoryPage() {
                             }}
                             onMouseMove={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
-                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
-                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+                              const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
+                              const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
 
                               // 1) Rubber band drag
                               if (rubberBandRef.current?.active) {
@@ -8468,8 +8553,8 @@ export default function StoryPage() {
                             }}
                             onDoubleClick={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
-                              const canvasX = ((e.clientX - rect.left) / rect.width) * 450;
-                              const canvasY = ((e.clientY - rect.top) / rect.height) * 600;
+                              const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
+                              const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
 
                               // Double-click on text element to edit
                               const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
@@ -8608,10 +8693,10 @@ export default function StoryPage() {
                           <div
                             style={{
                               position: "absolute",
-                              left: `${(rubberBandRect.x / 450) * 100}%`,
-                              top: `${(rubberBandRect.y / 600) * 100}%`,
-                              width: `${(rubberBandRect.w / 450) * 100}%`,
-                              height: `${(rubberBandRect.h / 600) * 100}%`,
+                              left: `${(rubberBandRect.x / CANVAS_W) * 100}%`,
+                              top: `${(rubberBandRect.y / CANVAS_H) * 100}%`,
+                              width: `${(rubberBandRect.w / CANVAS_W) * 100}%`,
+                              height: `${(rubberBandRect.h / CANVAS_H) * 100}%`,
                               border: `1.5px dashed ${HANDLE_COLOR}`,
                               background: "rgba(59,130,246,0.08)",
                               pointerEvents: "none",
@@ -8656,10 +8741,10 @@ export default function StoryPage() {
                                   key={`multi-sel-${key}`}
                                   style={{
                                     position: "absolute",
-                                    left: `${(bb.x / 450) * 100}%`,
-                                    top: `${(bb.y / 600) * 100}%`,
-                                    width: `${(bb.w / 450) * 100}%`,
-                                    height: `${(bb.h / 600) * 100}%`,
+                                    left: `${(bb.x / CANVAS_W) * 100}%`,
+                                    top: `${(bb.y / CANVAS_H) * 100}%`,
+                                    width: `${(bb.w / CANVAS_W) * 100}%`,
+                                    height: `${(bb.h / CANVAS_H) * 100}%`,
                                     border: `1.5px solid ${HANDLE_COLOR}`,
                                     pointerEvents: "none",
                                     zIndex: 24,
@@ -8672,10 +8757,10 @@ export default function StoryPage() {
                                 <div
                                   style={{
                                     position: "absolute",
-                                    left: `${((gMinX - 3) / 450) * 100}%`,
-                                    top: `${((gMinY - 3) / 600) * 100}%`,
-                                    width: `${((gMaxX - gMinX + 6) / 450) * 100}%`,
-                                    height: `${((gMaxY - gMinY + 6) / 600) * 100}%`,
+                                    left: `${((gMinX - 3) / CANVAS_W) * 100}%`,
+                                    top: `${((gMinY - 3) / CANVAS_H) * 100}%`,
+                                    width: `${((gMaxX - gMinX + 6) / CANVAS_W) * 100}%`,
+                                    height: `${((gMaxY - gMinY + 6) / CANVAS_H) * 100}%`,
                                     border: `1.5px dashed ${HANDLE_COLOR}`,
                                     pointerEvents: "none",
                                     zIndex: 24,
@@ -8695,10 +8780,10 @@ export default function StoryPage() {
                             <div
                               style={{
                                 position: "absolute",
-                                left: `${(te.x / 450) * 100}%`,
-                                top: `${(te.y / 600) * 100}%`,
-                                width: `${(te.width / 450) * 100}%`,
-                                minHeight: `${(te.height / 600) * 100}%`,
+                                left: `${(te.x / CANVAS_W) * 100}%`,
+                                top: `${(te.y / CANVAS_H) * 100}%`,
+                                width: `${(te.width / CANVAS_W) * 100}%`,
+                                minHeight: `${(te.height / CANVAS_H) * 100}%`,
                                 zIndex: 30,
                               }}
                             >
@@ -8757,11 +8842,11 @@ export default function StoryPage() {
                           const tCtx = testCanvas.getContext("2d", { willReadFrequently: true });
                           if (!tCtx) return null;
                           tCtx.drawImage(layer.imageEl, dlX, dlY, dlW, dlH);
-                          const imgData = tCtx.getImageData(0, 0, 450, 600);
-                          let minX = 450, minY = 600, maxX = 0, maxY = 0;
-                          for (let py = 0; py < 600; py++) {
-                            for (let px = 0; px < 450; px++) {
-                              if (imgData.data[(py * 450 + px) * 4 + 3] > 10) {
+                          const imgData = tCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+                          let minX = CANVAS_W, minY = CANVAS_H, maxX = 0, maxY = 0;
+                          for (let py = 0; py < CANVAS_H; py++) {
+                            for (let px = 0; px < CANVAS_W; px++) {
+                              if (imgData.data[(py * CANVAS_W + px) * 4 + 3] > 10) {
                                 if (px < minX) minX = px;
                                 if (px > maxX) maxX = px;
                                 if (py < minY) minY = py;
@@ -8771,10 +8856,10 @@ export default function StoryPage() {
                           }
                           if (maxX <= minX || maxY <= minY) return null;
                           const pad = 4;
-                          const bLeft = ((minX - pad) / 450) * 100;
-                          const bTop = ((minY - pad) / 600) * 100;
-                          const bW = ((maxX - minX + pad * 2) / 450) * 100;
-                          const bH = ((maxY - minY + pad * 2) / 600) * 100;
+                          const bLeft = ((minX - pad) / CANVAS_W) * 100;
+                          const bTop = ((minY - pad) / CANVAS_H) * 100;
+                          const bW = ((maxX - minX + pad * 2) / CANVAS_W) * 100;
+                          const bH = ((maxY - minY + pad * 2) / CANVAS_H) * 100;
                           return (
                             <>
                               <div style={{
@@ -8805,12 +8890,12 @@ export default function StoryPage() {
                                   const canvasEl = parentEl?.querySelector("canvas");
                                   if (!canvasEl) return;
                                   const rect = canvasEl.getBoundingClientRect();
-                                  const cx = ((e.clientX - rect.left) / rect.width) * 450;
-                                  const cy = ((e.clientY - rect.top) / rect.height) * 600;
+                                  const cx = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
+                                  const cy = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
                                   handleElementDragStart("drawing", layer.id, cx, cy, panel, mode);
                                   const onMove = (me: MouseEvent) => {
-                                    const mx = ((me.clientX - rect.left) / rect.width) * 450;
-                                    const my = ((me.clientY - rect.top) / rect.height) * 600;
+                                    const mx = ((me.clientX - rect.left) / rect.width) * CANVAS_W;
+                                    const my = ((me.clientY - rect.top) / rect.height) * CANVAS_H;
                                     handleElementDragMove(mx, my, i);
                                   };
                                   const onUp = () => {

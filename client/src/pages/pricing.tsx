@@ -138,10 +138,10 @@ export default function PricingPage() {
       name: "무료",
       price: "₩0",
       period: "영구 무료",
-      description: "가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧",
+      description: "가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧",
       icon: Sparkles,
       features: [
-        { text: "가입 시 50 크레딧 즉시 지급", included: true },
+        { text: "가입 시 20 크레딧 즉시 지급", included: true },
         { text: "매월 10 크레딧 자동 충전", included: true },
         { text: "매일 출석 보너스 5 크레딧", included: true },
         { text: "3가지 스타일 (심플 라인)", included: true },
@@ -360,10 +360,39 @@ export default function PricingPage() {
       )}
 
       <div className="mt-12 text-center text-sm text-muted-foreground">
-        <p>무료 플랜은 가입 시 50 크레딧 + 매월 10 크레딧 + 매일 출석 보너스 5 크레딧을 제공합니다.</p>
+        <p>무료 플랜은 가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 보너스 5 크레딧을 제공합니다.</p>
         <p className="mt-1">
           Pro 멤버십은 포즈/배경 생성, 말풍선·스토리 에디터, 채팅 이미지 메이커, AI 광고주 매칭 등을 포함합니다.
         </p>
+      </div>
+
+      {/* 크레딧 소모 안내 */}
+      <div className="max-w-3xl mx-auto mt-12">
+        <Card className="rounded-2xl border px-8 py-7 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
+          <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-white">기능별 크레딧 소모 안내</h3>
+          <div className="space-y-2.5 text-sm">
+            <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-700 dark:text-slate-200">캐릭터 생성</span>
+              <Badge variant="secondary" className="text-xs">2 크레딧</Badge>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-700 dark:text-slate-200">포즈/표정 변형</span>
+              <Badge variant="secondary" className="text-xs">5 크레딧</Badge>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-700 dark:text-slate-200">배경/아이템 생성</span>
+              <Badge variant="secondary" className="text-xs">5 크레딧</Badge>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-700 dark:text-slate-200">Story 인스타툰 자동화 생성</span>
+              <Badge variant="secondary" className="text-xs">10 크레딧</Badge>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-slate-700 dark:text-slate-200">Story 인스타툰 프롬프트 자동 작성</span>
+              <Badge variant="secondary" className="text-xs">10 크레딧</Badge>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* PG Method Selection Dialog */}

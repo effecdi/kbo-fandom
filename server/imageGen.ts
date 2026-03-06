@@ -1,5 +1,6 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import sharp from "sharp";
+import path from "path";
 import type { Character } from "@shared/schema";
 
 // 한국어 프롬프트를 영어로 번역하는 함수
@@ -159,6 +160,60 @@ function getStyleConfig(style: string) {
 }
 
 const noTextRule = `CRITICAL TEXT PROHIBITION: Do NOT include ANY text, letters, words, labels, captions, watermarks, or writing of ANY kind in the image - this includes Korean (한글/Hangul), English, Japanese, Chinese, or any other language. NO characters, NO letters, NO words, NO numbers, NO symbols that look like text. The image must contain ONLY the visual illustration with absolutely ZERO text or text-like elements. Any attempt to render non-Latin scripts like Korean will result in garbled, broken characters - so do NOT attempt it under any circumstances.`;
+
+/**
+ * 무료 사용자 이미지에 OLLI 로고 워터마크를 삽입.
+ * 로고를 이미지 너비의 30%로 리사이즈, opacity 0.7, 중앙 하단 배치.
+ */
+export async function applyWatermark(dataUrl: string): Promise<string> {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return dataUrl;
+
+  try {
+    const imgBuf = Buffer.from(match[2], "base64");
+    const imgMeta = await sharp(imgBuf).metadata();
+    const imgWidth = imgMeta.width || 800;
+    const imgHeight = imgMeta.height || 1200;
+
+    const logoPath = path.resolve(__dirname, "..", "attached_assets", "logo.png");
+    const logoSize = Math.round(imgWidth * 0.3);
+
+    // 로고 리사이즈 + opacity 0.7 적용
+    const resizedLogo = await sharp(logoPath)
+      .resize(logoSize, logoSize, { fit: "inside" })
+      .toBuffer();
+
+    const { data: logoRaw, info: logoInfo } = await sharp(resizedLogo)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const logoPixels = Buffer.from(logoRaw);
+    for (let i = 3; i < logoPixels.length; i += 4) {
+      logoPixels[i] = Math.round(logoPixels[i] * 0.7);
+    }
+
+    const opaqueLogoBuf = await sharp(logoPixels, {
+      raw: { width: logoInfo.width, height: logoInfo.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
+
+    // 중앙 하단 (하단에서 5% 여백)
+    const left = Math.round((imgWidth - logoInfo.width) / 2);
+    const top = Math.round(imgHeight - logoInfo.height - imgHeight * 0.05);
+
+    const result = await sharp(imgBuf)
+      .composite([{ input: opaqueLogoBuf, left, top }])
+      .png()
+      .toBuffer();
+
+    return `data:image/png;base64,${result.toString("base64")}`;
+  } catch (error) {
+    console.warn("Watermark application failed, returning original:", error);
+    return dataUrl;
+  }
+}
 
 /**
  * base64 data URL 이미지를 200×200 JPEG 썸네일로 변환.

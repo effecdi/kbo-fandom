@@ -375,11 +375,14 @@ export default function BackgroundPage() {
               </>
             )}
           </Button>
+          {!isPro && (
+            <p className="mt-1.5 text-xs text-muted-foreground text-center">1회 생성 시 5 크레딧 소모</p>
+          )}
               {!isPro && isOutOfCredits && (
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <p className="text-xs text-muted-foreground">오늘의 무료 생성 3회를 모두 사용했습니다.</p>
+                  <p className="text-xs text-muted-foreground">크레딧이 부족합니다.</p>
                   <Button size="sm" variant="secondary" asChild>
-                    <a href="/pricing">Pro 업그레이드</a>
+                    <a href="/pricing">크레딧 충전</a>
                   </Button>
                 </div>
               )}

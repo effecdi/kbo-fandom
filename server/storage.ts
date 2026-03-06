@@ -34,7 +34,7 @@ export interface IStorage {
   createGeneration(data: InsertGeneration): Promise<Generation>;
 
   getUserCredits(userId: string): Promise<UserCredits>;
-  deductCredit(userId: string): Promise<boolean>;
+  deductCredit(userId: string, amount?: number): Promise<boolean>;
   ensureUserCredits(userId: string): Promise<UserCredits>;
   deductBubbleUse(userId: string): Promise<boolean>;
   deductStoryUse(userId: string): Promise<boolean>;
@@ -318,13 +318,13 @@ export class DatabaseStorage implements IStorage {
 
     try {
       const [created] = await db.insert(userCredits)
-        .values({ userId, credits: 50, tier: "free" })
+        .values({ userId, credits: 20, tier: "free" })
         .returning();
       return created;
     } catch {
       // Fallback: if insert fails with new default, try legacy
       const [created] = await db.insert(userCredits)
-        .values({ userId, credits: 50, tier: "free" } as any)
+        .values({ userId, credits: 20, tier: "free" } as any)
         .returning();
       return { ...created, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
     }
@@ -334,25 +334,38 @@ export class DatabaseStorage implements IStorage {
     return this.ensureUserCredits(userId);
   }
 
-  async deductCredit(userId: string): Promise<boolean> {
+  async deductCredit(userId: string, amount: number = 1): Promise<boolean> {
     const credits = await this.ensureUserCredits(userId);
     if (credits.tier === "pro") return true;
 
     const db = this.getDb();
+    let remaining = amount;
+
     // Deduct daily bonus credits first, then regular credits
     if (credits.dailyBonusCredits > 0) {
       try {
+        const bonusDeduct = Math.min(remaining, credits.dailyBonusCredits);
         await db.update(userCredits)
-          .set({ dailyBonusCredits: credits.dailyBonusCredits - 1 })
+          .set({ dailyBonusCredits: credits.dailyBonusCredits - bonusDeduct })
           .where(eq(userCredits.userId, userId));
-        return true;
+        remaining -= bonusDeduct;
+        if (remaining <= 0) return true;
+        // Re-fetch after bonus deduction for accurate regular credits
+        const updated = await this.ensureUserCredits(userId);
+        if (updated.credits >= remaining) {
+          await db.update(userCredits)
+            .set({ credits: updated.credits - remaining })
+            .where(eq(userCredits.userId, userId));
+          return true;
+        }
+        return false;
       } catch {
         // daily_bonus_credits column may not exist yet, fall through to regular credits
       }
     }
-    if (credits.credits > 0) {
+    if (credits.credits >= remaining) {
       await db.update(userCredits)
-        .set({ credits: credits.credits - 1 })
+        .set({ credits: credits.credits - remaining })
         .where(eq(userCredits.userId, userId));
       return true;
     }

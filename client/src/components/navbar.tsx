@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/theme-provider";
 import {
   Sparkles, Image, LayoutGrid, CreditCard, Moon, Sun, LogOut, Home,
-  Wand2, MessageCircle, Target, Eye, ChevronDown, FileText, Paintbrush, Briefcase, MessageSquare, Trees, BookOpen, FolderOpen,
+  Wand2, MessageCircle, Target, Eye, ChevronDown, FileText, Paintbrush, Briefcase, MessageSquare, Trees, BookOpen, FolderOpen, Crown,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import logoImg from "@assets/logo.png";
 
@@ -17,12 +18,14 @@ interface NavGroup {
   icon: any;
   paths: string[];
   items: { path: string; label: string; icon: any }[];
+  proOnly?: boolean;
 }
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [location] = useLocation();
+  const { toast } = useToast();
 
   const { data: credits } = useQuery<{ credits: number; dailyBonusCredits: number; tier: string }>({
     queryKey: ["/api/usage"],
@@ -45,6 +48,7 @@ export function Navbar() {
       label: "Tools",
       icon: Paintbrush,
       paths: ["/chat", "/effects", "/bubble", "/story", "/edits"],
+      proOnly: true,
       items: [
         { path: "/story", label: "Story Editor", icon: BookOpen },
         { path: "/chat", label: "Chat Maker", icon: MessageCircle },
@@ -57,6 +61,7 @@ export function Navbar() {
       label: "Business",
       icon: Briefcase,
       paths: ["/ad-match", "/media-kit"],
+      proOnly: true,
       items: [
         { path: "/ad-match", label: "Ad Match AI", icon: Target },
         { path: "/media-kit", label: "Media Kit", icon: FileText },
@@ -64,6 +69,7 @@ export function Navbar() {
     },
   ];
 
+  const isPro = credits?.tier === "pro";
   const isGroupActive = (group: NavGroup) => group.paths.includes(location);
 
   return (
@@ -102,19 +108,35 @@ export function Navbar() {
                     <ChevronDown className="h-3 w-3 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-44">
-                  {group.items.map((item) => (
-                    <DropdownMenuItem key={item.path} asChild>
-                      <Link
-                        href={item.path}
-                        className="cursor-pointer"
-                        data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+                <DropdownMenuContent align="start" className="w-48">
+                  {group.items.map((item) => {
+                    const locked = group.proOnly && !isPro;
+                    return locked ? (
+                      <DropdownMenuItem
+                        key={item.path}
+                        className="cursor-pointer opacity-70"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toast({ title: "Pro 전용 기능", description: `${item.label}은(는) Pro 멤버십 전용입니다.`, variant: "destructive" });
+                        }}
                       >
                         <item.icon className="mr-2 h-4 w-4" />
                         {item.label}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
+                        <Crown className="h-3 w-3 ml-auto text-yellow-500" />
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem key={item.path} asChild>
+                        <Link
+                          href={item.path}
+                          className="cursor-pointer"
+                          data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+                        >
+                          <item.icon className="mr-2 h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuContent>
               </DropdownMenu>
             ))}

@@ -77,7 +77,7 @@ export default function BubblePage() {
   const canvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
 
   const [pages, setPages] = useState<PageData[]>([
-    { id: generateId(), bubbles: [], characters: [], canvasSize: { width: 522, height: 695 } }
+    { id: generateId(), bubbles: [], characters: [], canvasSize: { width: 540, height: 675 } }
   ]);
   const [activePageIndex, setActivePageIndex] = useState(0);
   const activePage = pages[activePageIndex];
@@ -383,7 +383,7 @@ export default function BubblePage() {
       id: generateId(),
       bubbles: [],
       characters: [],
-      canvasSize: { width: 522, height: 695 },
+      canvasSize: { width: 540, height: 675 },
     };
     setPages(prev => [...prev, newPage]);
     setActivePageIndex(pages.length); // Select new page
@@ -448,13 +448,20 @@ export default function BubblePage() {
     reader.readAsDataURL(file);
   };
 
+  const resizeCanvas = (srcCanvas: HTMLCanvasElement, w: number, h: number): string => {
+    const offscreen = document.createElement("canvas");
+    offscreen.width = w;
+    offscreen.height = h;
+    const ctx = offscreen.getContext("2d");
+    if (!ctx) return srcCanvas.toDataURL("image/png");
+    ctx.drawImage(srcCanvas, 0, 0, w, h);
+    return offscreen.toDataURL("image/png");
+  };
+
   const handleDownload = () => {
     const canvas = canvasRefs.current.get(activePage.id);
     if (!canvas) return;
-
-    // Temporary canvas to render high quality?
-    // Or just download current
-    const dataUrl = canvas.toDataURL("image/png");
+    const dataUrl = resizeCanvas(canvas, 1080, 1350);
     const link = document.createElement("a");
     link.download = `bubble-page-${activePageIndex + 1}.png`;
     link.href = dataUrl;
@@ -465,7 +472,7 @@ export default function BubblePage() {
     pages.forEach((page, index) => {
       const canvas = canvasRefs.current.get(page.id);
       if (!canvas) return;
-      const dataUrl = canvas.toDataURL("image/png");
+      const dataUrl = resizeCanvas(canvas, 1080, 1350);
       const link = document.createElement("a");
       link.download = `bubble-page-${index + 1}.png`;
       link.href = dataUrl;
@@ -478,14 +485,22 @@ export default function BubblePage() {
     enabled: isAuthenticated && !!loadProjectId,
   });
 
-  const projectLoadedRef = useRef(false);
+  const projectLoadedRef = useRef<number | null>(null);
   useEffect(() => {
-    if (loadedProject && !projectLoadedRef.current) {
-      projectLoadedRef.current = true;
+    if (loadedProject && projectLoadedRef.current !== loadedProject.id) {
+      projectLoadedRef.current = loadedProject.id;
       setCurrentProjectId(loadedProject.id);
       setProjectName(loadedProject.name);
+
+      // 이미지 로드 후 새 페이지 객체 생성하여 캔버스 redraw 강제
+      const forceNewPageRefs = () => {
+        setPages(cur => cur.map(pp => ({ ...pp })));
+      };
+
       try {
-        const data = JSON.parse(loadedProject.canvasData);
+        const data = typeof loadedProject.canvasData === "string"
+          ? JSON.parse(loadedProject.canvasData)
+          : loadedProject.canvasData;
         if (data.pages) {
           const restoredPages = data.pages.map((p: PageData) => ({
             ...p,
@@ -493,7 +508,7 @@ export default function BubblePage() {
               if (b.templateSrc && !b.templateImg) {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
-                img.onload = () => setPages(cur => [...cur]);
+                img.onload = () => forceNewPageRefs();
                 img.src = b.templateSrc;
                 return { ...b, templateImg: img };
               }
@@ -503,7 +518,7 @@ export default function BubblePage() {
               if (c.imageUrl && !c.imgElement) {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
-                img.onload = () => setPages(cur => [...cur]);
+                img.onload = () => forceNewPageRefs();
                 img.src = c.imageUrl;
                 return { ...c, imgElement: img };
               }
@@ -512,7 +527,7 @@ export default function BubblePage() {
             imageElement: p.imageDataUrl ? (() => {
               const img = new Image();
               img.crossOrigin = "anonymous";
-              img.onload = () => setPages(cur => [...cur]);
+              img.onload = () => forceNewPageRefs();
               img.src = p.imageDataUrl;
               return img;
             })() : undefined
@@ -525,7 +540,7 @@ export default function BubblePage() {
               if (b.templateSrc) {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
-                img.onload = () => setPages(cur => [...cur]);
+                img.onload = () => forceNewPageRefs();
                 img.src = b.templateSrc;
                 return { ...b, templateImg: img };
               }
@@ -535,18 +550,18 @@ export default function BubblePage() {
               if (c.imageUrl) {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
-                img.onload = () => setPages(cur => [...cur]);
+                img.onload = () => forceNewPageRefs();
                 img.src = c.imageUrl;
                 return { ...c, imgElement: img };
               }
               return c;
             }),
-            canvasSize: data.canvasSize || { width: 522, height: 695 },
+            canvasSize: data.canvasSize || { width: 540, height: 675 },
             imageDataUrl: data.imageDataUrl,
             imageElement: data.imageDataUrl ? (() => {
               const img = new Image();
               img.crossOrigin = "anonymous";
-              img.onload = () => setPages(cur => [...cur]);
+              img.onload = () => forceNewPageRefs();
               img.src = data.imageDataUrl;
               return img;
             })() : undefined

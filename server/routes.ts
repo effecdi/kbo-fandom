@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
-import { generateCharacterImage, generatePoseImage, generateWithBackground, removeWhiteBackground, generateThumbnail } from "./imageGen";
+import { generateCharacterImage, generatePoseImage, generateWithBackground, removeWhiteBackground, generateThumbnail, applyWatermark } from "./imageGen";
 import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown } from "./aiText";
 import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema } from "@shared/schema";
 import axios from "axios";
@@ -74,12 +74,15 @@ export async function registerRoutes(
         return res.status(403).json({ message: "이 스타일은 Pro 멤버십 전용입니다. 심플 라인, 미니멀, 낙서풍 스타일은 무료로 사용 가능합니다." });
       }
 
-      const canGenerate = await storage.deductCredit(userId);
+      const canGenerate = await storage.deductCredit(userId, 2);
       if (!canGenerate) {
-        return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 캐릭터 생성에는 2 크레딧이 필요합니다." });
       }
 
-      const imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
+      let imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
+      if (credits.tier !== "pro") {
+        imageDataUrl = await applyWatermark(imageDataUrl);
+      }
 
       const character = await storage.createCharacter({
         userId,
@@ -97,7 +100,7 @@ export async function registerRoutes(
           prompt,
           resultImageUrl: imageDataUrl,
           thumbnailUrl: thumbnailUrl || null,
-          creditsUsed: 1,
+          creditsUsed: 2,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
@@ -133,12 +136,16 @@ export async function registerRoutes(
         characters.push(character);
       }
 
-      const canGenerate = await storage.deductCredit(userId);
+      const canGenerate = await storage.deductCredit(userId, 5);
       if (!canGenerate) {
-        return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 포즈/표정 생성에는 5 크레딧이 필요합니다." });
       }
 
-      const imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
+      let imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        imageDataUrl = await applyWatermark(imageDataUrl);
+      }
 
       try {
         const thumbnailUrl = await generateThumbnail(imageDataUrl);
@@ -150,7 +157,7 @@ export async function registerRoutes(
           referenceImageUrl: referenceImageData || null,
           resultImageUrl: imageDataUrl,
           thumbnailUrl: thumbnailUrl || null,
-          creditsUsed: 1,
+          creditsUsed: 5,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
@@ -186,12 +193,16 @@ export async function registerRoutes(
         }
       }
 
-      const canGenerate = await storage.deductCredit(userId);
+      const canGenerate = await storage.deductCredit(userId, 5);
       if (!canGenerate) {
-        return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 배경/아이템 생성에는 5 크레딧이 필요합니다." });
       }
 
-      const imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);
+      let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        imageDataUrl = await applyWatermark(imageDataUrl);
+      }
 
       // 이미지 생성 성공 — DB 저장은 비차단으로 처리 (thumbnail_url 컬럼 미존재 등에 대비)
       const fullPrompt = itemsPrompt
@@ -208,7 +219,7 @@ export async function registerRoutes(
           referenceImageUrl: null,
           resultImageUrl: imageDataUrl,
           thumbnailUrl: thumbnailUrl || null,
-          creditsUsed: 1,
+          creditsUsed: 5,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
@@ -568,9 +579,9 @@ export async function registerRoutes(
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
 
-      const canUseStory = await storage.deductCredit(userId);
+      const canUseStory = await storage.deductCredit(userId, 10);
       if (!canUseStory) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 자동화 생성에는 10 크레딧이 필요합니다." });
       }
 
       const result = await generateStoryScripts(parsed.data);
@@ -612,10 +623,10 @@ export async function registerRoutes(
         return res.status(400).json({ message: "캔버스 수(1~14), 컷/캔버스(1~4)를 올바르게 입력해주세요." });
       }
 
-      // 1 크레딧 차감
-      const ok = await storage.deductCredit(userId);
+      // 10 크레딧 차감
+      const ok = await storage.deductCredit(userId, 10);
       if (!ok) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 프롬프트 작성에는 10 크레딧이 필요합니다." });
       }
 
       const totalCuts = cc * cpc;
