@@ -231,7 +231,7 @@ export async function generateStoryScripts(data: {
     ? `\n■ 유저가 지정한 장면 힌트 (반드시 자막/대사에 반영하세요):\n${contextLines.join("\n")}\n`
     : "";
 
-  const prompt = `당신은 한국에서 팔로워 50만 이상의 인기 인스타툰 작가입니다. 실제 인스타그램에 올라가는 인스타툰 자막과 대사를 작성합니다.
+  const prompt = `당신은 한국 팔로워 50만 인기 인스타툰 작가입니다. 실제 인스타그램에 올라가는 인스타툰 자막과 대사를 작성합니다.
 
 ■ 주제 분석 (가장 중요!):
 주제: "${data.topic}"
@@ -241,46 +241,62 @@ export async function generateStoryScripts(data: {
 
 컷 수: ${data.panelCount}
 ${contextBlock}
-■ 자연스러운 한국어 작법 (핵심):
-- 실제 사람이 SNS에 올릴 법한 말투로 쓰세요. AI가 쓴 티가 나면 안 됩니다.
-- 설명적이거나 딱딱한 문체 금지. "~하였다", "~입니다" 같은 서술체 금지.
-- 실제 대화처럼: 줄임말, 감탄사, 말 끊김, 반복, 물음표 남발 OK.
-- 좋은 예: "아니 이게 왜...", "하... 또야", "엥?", "이거 실화?", "나만 그런 거 아니지?"
-- 나쁜 예: "오늘도 즐거운 하루입니다", "그래서 행복해졌습니다", "이것은 참으로 놀라운 일이었다"
-- 자막은 독자가 '아 맞아 나도ㅋㅋ' 하고 공감할 수 있어야 합니다.
+■ 진짜 사람이 쓴 것 같은 한국어 (핵심 중의 핵심):
+인스타툰은 독자가 "아 이거 나야ㅋㅋ" 하고 공감하거나, "ㅋㅋㅋㅋ" 웃거나, "아... 맞는 말이네" 찔리거나, "와 이게 뭐야" 빠져드는 콘텐츠입니다.
+- 감정을 과장하고 솔직하게: "하... 또야", "아니 진짜ㅋㅋ", "어... 이게 아닌데", "(동공 지진)"
+- 독백과 내면의 목소리: "나... 똥손이었네...", "괜찮아 괜찮아 (안 괜찮음)"
+- 실제 대화체: 줄임말, 감탄사, 말 끊김, 의성어, 이모티콘 느낌 OK
+- 문장 끝에 "(두근두근)", "(멘붕)", "(현실 부정)" 같은 감정 태그도 좋음
+- 서술체/설명체 절대 금지: "~하였다", "~입니다", "~해요" 금지
+- 광고체 금지: "함께하면 즐거워요", "행복한 하루가 되세요"
 
 ■ 구조 규칙:
-- top: 상단 나레이션/상황 자막 (3~12자, 짧을수록 좋음). 없으면 "".
-- bottom: 하단 독백/감정/부연 자막 (3~12자). 없으면 "".
+- top: 상단 나레이션/상황 자막. 시간, 장소, 상황 설명, 독백. 5~40자. 없으면 "".
+- bottom: 하단 부연/감정/반전 자막. 5~40자. 없으면 "".
 - top과 bottom 둘 다 쓸 필요 없으면 하나만 쓰고 다른 건 "". 여백이 중요.
 - bubbles: 말풍선 배열.
   ★ 대부분 패널은 말풍선 0~1개. 대화 장면만 최대 2개. 3개 이상 절대 금지.
   ★ ${data.panelCount}컷 전체에서 말풍선 총 개수는 ${Math.max(data.panelCount, Math.ceil(data.panelCount * 0.7))}개 이하.
   ★ 나레이션만으로 충분한 컷은 bubbles를 빈 배열 [].
-- bubble style: "handwritten"(감성/독백), "linedrawing"(일반 대화), "wobbly"(놀람/강조)
+  ★ 말풍선 대사는 5~40자. 캐릭터의 성격과 감정이 묻어나야 함.
+- bubble style: "handwritten"(감성/독백/혼잣말), "linedrawing"(일반 대화), "wobbly"(놀람/강조/충격)
 - position: "top-left", "top-right", "bottom-left", "bottom-right", "center" 중 택1.
 
 ■ 스토리 구조 (${data.panelCount}컷):
-${data.panelCount <= 4 ? `1컷: 일상적 상황 설정 (공감 포인트)
-2컷: 사건 발생 또는 기대감
-${data.panelCount >= 3 ? `3컷: 갈등 심화 또는 예상 밖 전개` : ""}
-${data.panelCount >= 4 ? `4컷: 펀치라인 (웃음/공감/찔림 중 하나)` : `마지막 컷: 펀치라인`}` : `도입(1~2컷) → 전개(중간) → 반전/펀치라인(마지막 컷)
-마지막 컷이 가장 중요. "ㅋㅋㅋ" 나올 만한 반전 or "아 맞아..." 공감.`}
+${data.panelCount <= 4 ? `1컷: 상황 설정 — 캐릭터 소개, 배경 설명, 공감 포인트
+2컷: 기대감 또는 행동 시작 — 동기 부여, "이거 해볼까?" 순간
+${data.panelCount >= 3 ? `3컷: 현실의 벽 또는 예상 밖 전개 — 갈등, 멘붕, 반전` : ""}
+${data.panelCount >= 4 ? `4컷: 펀치라인 — 웃음/공감/찔림/감동 중 하나로 마무리` : `마지막 컷: 펀치라인`}` : `도입(1~2컷) → 전개(중간) → 위기/갈등 → 반전/펀치라인(마지막 컷)
+각 컷마다 감정의 온도가 달라야 합니다. 단조로운 진행 금지.
+마지막 컷이 가장 중요. 독자가 스크린샷 찍고 싶은 컷이어야 합니다.`}
 
-■ 참고 예시 (주제: "월요일 아침"):
-{"panels":[{"top":"월요병 시작","bottom":"","bubbles":[]},{"top":"","bottom":"","bubbles":[{"text":"5분만...","style":"handwritten","position":"center"}]},{"top":"알람 7번째","bottom":"","bubbles":[{"text":"아 진짜!!","style":"wobbly","position":"top-right"}]},{"top":"","bottom":"결국 지각","bubbles":[]}]}
+■ 참고 예시 (주제: "답답해서 직접 만든 9년 차 디자이너의 AI 인스타툰 생존기", 7컷):
+{"panels":[
+{"top":"","bottom":"","bubbles":[{"text":"디자인? 코딩? 훗, 까이꺼 다 할 수 있지!","style":"linedrawing","position":"top-right"}]},
+{"top":"작년 12월 프로젝트 종료!","bottom":"결혼 3개월 차 새댁에게 찾아온 달콤한 잉여 시간.","bubbles":[{"text":"좋아, 남는 시간에 나도 요즘 대세라는 인스타툰이나 그려볼까? (두근두근)","style":"handwritten","position":"bottom-right"}]},
+{"top":"...는 무슨.","bottom":"","bubbles":[{"text":"잠깐, 팔이 어떻게 꺾이는 거지? 우는 표정은 어떻게 그려?! (동공 지진)","style":"wobbly","position":"top-right"}]},
+{"top":"","bottom":"웹디자인 9년 짬바가 무색하게, 일러스트 앞에서는 한없이 작아지는 나.","bubbles":[{"text":"나... 디자인만 할 줄 아는 똥손이었네...","style":"handwritten","position":"center"}]},
+{"top":"포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.","bottom":"","bubbles":[{"text":"아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!","style":"wobbly","position":"center"}]},
+{"top":"","bottom":"그래서 답답해서 직접 만들었습니다. 인스타툰 자동화 메이커!","bubbles":[{"text":"내가 못 그리면 AI가 그리게 하겠어! 가자, 올리!","style":"linedrawing","position":"top-right"}]},
+{"top":"9년 차 디자이너의 험난한 인스타툰 도전기!","bottom":"","bubbles":[{"text":"AI 멱살 잡고 연재하는 썰, 앞으로 기대해 주세요! (팔로우 꾸욱-)","style":"handwritten","position":"center"}]}
+]}
 
-■ 참고 예시 (주제: "다이어트 중 야식"):
-{"panels":[{"top":"다이어트 3일차","bottom":"의지 충만","bubbles":[]},{"top":"밤 11시","bottom":"","bubbles":[{"text":"배고프다...","style":"handwritten","position":"center"}]},{"top":"","bottom":"","bubbles":[{"text":"치킨 한 조각만","style":"linedrawing","position":"top-left"}]},{"top":"","bottom":"한 마리 완식","bubbles":[]}]}
+■ 참고 예시 (주제: "다이어트 중 야식의 유혹", 4컷):
+{"panels":[
+{"top":"다이어트 3일 차. 의지 충만.","bottom":"","bubbles":[{"text":"이번엔 진짜야. 여름까지 -5kg 간다!","style":"linedrawing","position":"top-right"}]},
+{"top":"밤 11시. 배에서 꼬르륵.","bottom":"","bubbles":[{"text":"...참아. 물 마시면 돼. 물이면 충분해.","style":"handwritten","position":"center"}]},
+{"top":"","bottom":"","bubbles":[{"text":"치킨은 단백질이니까 다이어트 식품 아닌가? (합리화 시작)","style":"wobbly","position":"center"}]},
+{"top":"","bottom":"결국 양념 반 후라이드 반. 콜라는 제로니까 괜찮아. (안 괜찮음)","bubbles":[]}
+]}
 
-${data.panelCount !== 4 ? `위 예시는 4컷 기준이니, ${data.panelCount}컷에 맞게 조절하세요.\n` : ""}다음 JSON만 출력 (설명 없이):
+${data.panelCount !== 4 && data.panelCount !== 7 ? `위 예시를 참고하되, ${data.panelCount}컷에 맞게 조절하세요.\n` : ""}다음 JSON만 출력 (설명 없이):
 {"panels":[{"top":"","bottom":"","bubbles":[{"text":"","style":"handwritten","position":"top-right"}]}]}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
-      temperature: 0.85,
+      temperature: 0.95,
     },
   });
 
@@ -423,7 +439,7 @@ async function generateSceneChunk(
     ? `\n■ 이전 장면 요약 (이어서 작성하세요):\n${prevSummary}\n`
     : "";
 
-  const prompt = `당신은 한국에서 팔로워 50만 이상의 인기 인스타툰 작가이자 스토리보드 전문가입니다.
+  const prompt = `당신은 한국 팔로워 50만 인기 인스타툰 작가이자 스토리보드 전문가입니다.
 
 ■ 주제/스토리 (가장 중요! 모든 컷이 이 주제와 직접 연결되어야 함):
 스토리: "${storyPrompt}"
@@ -436,26 +452,32 @@ ${prevContext}
 → 모든 장면이 "${storyPrompt}" 주제에서 벗어나면 절대 안 됩니다.
 → 주제와 무관한 내용, 뜬금없는 전개 금지.
 
-■ 장면 묘사 (sceneDescription):
-- 반드시 영어로 작성 (이미지 AI용)
-- 배경, 캐릭터 행동, 구도, 표정을 구체적으로 ("${storyPrompt}" 관련 장면만!)
-- "simple line art, webtoon style" 키워드 포함
-- 좋은 예: "A girl looking at phone with shocked expression in her bedroom, simple line art, webtoon style"
-- 나쁜 예: "A character standing, simple line art, webtoon style" (너무 모호, 주제 무관)
+■ 장면 묘사 (sceneDescription) — 영어, 이미지 AI용:
+- 구체적이고 시각적으로 묘사: 캐릭터의 표정, 포즈, 행동, 배경, 소품을 모두 포함
+- 감정이 눈에 보이게: "sweating heavily, looking panicked with wide eyes" / "confident smile, pushing up glasses"
+- 구도 지정: "Close up", "full body", "from behind" 등
+- "simple line art, flat pastel colors" 키워드 포함
+- 좋은 예: "A 30s female character with wavy brown hair, sitting at desk holding graphic tablet pen, sweating heavily, looking panicked with wide eyes, struggling, simple line art, flat pastel colors"
+- 나쁜 예: "A character standing, simple line art" (너무 모호)
 
-■ 한국어 텍스트:
-- narrativeText: 나레이션 (3~15자, 없으면 "")
-- bubbleText: 대사 (3~12자, 없으면 "")
-- 사람이 쓴 것처럼 자연스럽게. AI 티 금지.
-- 좋은 예: "하필 그 순간", "아 왜ㅠ", "이거 실화?", "나만 이래?"
-- 나쁜 예: "행복한 하루였습니다" (서술체), "함께하면 즐거워요" (광고체)
+■ 한국어 텍스트 — 진짜 사람이 쓴 것처럼:
+- narrativeText: 상황 설명, 시간, 독백, 감정 부연 (5~40자). 없으면 "".
+  좋은 예: "프리랜서 디자이너 겸 퍼블리셔 9년 차.", "포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.", "...는 무슨."
+- bubbleText: 캐릭터 대사 (5~40자). 성격과 감정이 묻어나야 함. 없으면 "".
+  좋은 예: "디자인? 코딩? 훗, 까이꺼 다 할 수 있지!", "나... 디자인만 할 줄 아는 똥손이었네...", "아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!"
+- 감정 태그 활용: "(두근두근)", "(동공 지진)", "(멘붕)", "(현실 부정)"
+- 서술체/광고체 절대 금지. SNS에 올릴 법한 말투로.
+- AI가 쓴 티 나면 실패.
 
-■ 참고 예시 (4컷 기준):
+■ 참고 예시 (주제: "답답해서 직접 만든 9년 차 디자이너의 AI 인스타툰 생존기", 7컷):
 {"scenes":[
-{"sceneDescription":"A cute cat wearing apron standing behind coffee counter, simple line art, webtoon style","narrativeText":"출근 1일차","bubbleText":""},
-{"sceneDescription":"Cat spilling milk everywhere trying to make latte art, simple line art, webtoon style","narrativeText":"","bubbleText":"어... 이게 아닌데"},
-{"sceneDescription":"Customer confused at cup with cat paw print in latte, simple line art, webtoon style","narrativeText":"","bubbleText":"이게 라떼아트?"},
-{"sceneDescription":"Cat sitting proudly next to 'paw print latte' sign with long customer line, simple line art, webtoon style","narrativeText":"대박 터짐","bubbleText":""}
+{"sceneDescription":"A 30s female character with wavy brown hair and round glasses, sitting at modern desk with multiple monitors, rapidly typing on keyboard, smiling confidently, professional freelancer vibe, simple line art, flat pastel colors","narrativeText":"프리랜서 디자이너 겸 퍼블리셔 9년 차.","bubbleText":"디자인? 코딩? 훗, 까이꺼 다 할 수 있지!"},
+{"sceneDescription":"A 30s female character lying comfortably on cozy living room sofa, eating tangerine, looking relaxed and happy, dreaming face, simple line art, flat pastel colors","narrativeText":"작년 12월 프로젝트 종료! 결혼 3개월 차 새댁에게 찾아온 달콤한 잉여 시간.","bubbleText":"좋아, 남는 시간에 나도 요즘 대세라는 인스타툰이나 그려볼까? (두근두근)"},
+{"sceneDescription":"A 30s female character sitting at desk holding graphic tablet pen, sweating heavily, looking panicked with wide eyes, struggling, simple line art, flat pastel colors","narrativeText":"...는 무슨.","bubbleText":"잠깐, 팔이 어떻게 꺾이는 거지? 우는 표정은 어떻게 그려?! (동공 지진)"},
+{"sceneDescription":"Close up of a 30s female character looking devastated, half-closed eyes, holding her head, slumped posture, tablet showing terrible stick figure sketch, simple line art, flat pastel colors","narrativeText":"웹디자인 9년 짬바가 무색하게, 일러스트 앞에서는 한없이 작아지는 나.","bubbleText":"나... 디자인만 할 줄 아는 똥손이었네..."},
+{"sceneDescription":"Close up of female character with sharp shining eyes, intense focus, pushing up glasses with one finger, glowing lightbulb above head, simple line art, flat pastel colors","narrativeText":"포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.","bubbleText":"아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!"},
+{"sceneDescription":"Female character typing furiously on keyboard with sparks flying, mad scientist grin, coding screens in background, cute robot bear mascot popping out beside her, simple line art, flat pastel colors","narrativeText":"그래서 답답해서 직접 만들었습니다. 인스타툰 자동화 메이커!","bubbleText":"내가 못 그리면 AI가 그리게 하겠어! 가자, 올리!"},
+{"sceneDescription":"Female character standing confidently waving hand toward viewer, cute robot bear mascot floating and waving beside her, bright clean studio background, simple line art, flat pastel colors","narrativeText":"9년 차 디자이너의 험난한 인스타툰 도전기!","bubbleText":"AI 멱살 잡고 연재하는 썰, 앞으로 기대해 주세요! (팔로우 꾸욱-)"}
 ]}
 
 "${storyPrompt}" 주제에 맞는 ${chunkCuts}컷을 JSON으로만 출력:
@@ -465,7 +487,7 @@ ${prevContext}
     model: "gemini-2.5-flash",
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
-      temperature: 0.85,
+      temperature: 0.95,
     },
   });
 
