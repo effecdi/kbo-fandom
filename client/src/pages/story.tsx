@@ -3570,6 +3570,7 @@ export default function StoryPage() {
   );
 
   const rehydrateImages = useCallback((panels: PanelData[]) => {
+    // Load image with CORS retry fallback + immutable state update
     const loadWithRetry = (
       src: string,
       onSuccess: (img: HTMLImageElement) => void,
@@ -3588,46 +3589,71 @@ export default function StoryPage() {
       img.src = src;
     };
 
-    // 이미지 로드 후 새 패널 객체를 생성하여 PanelCanvas가 redraw하도록 강제
-    const forceNewPanelRefs = () => {
-      setPanelsRaw((cur) => cur.map(pp => ({ ...pp })));
-    };
-
     panels.forEach((p) => {
+      const panelId = p.id;
       p.characters.forEach((c) => {
         if (!c.imageEl && c.imageUrl) {
+          const charId = c.id;
           loadWithRetry(c.imageUrl, (img) => {
-            c.imageEl = img;
-            forceNewPanelRefs();
+            setPanelsRaw((cur) => cur.map(panel => {
+              if (panel.id !== panelId) return panel;
+              const hasMatch = panel.characters.some(ch => ch.id === charId && !ch.imageEl);
+              if (!hasMatch) return panel;
+              return {
+                ...panel,
+                characters: panel.characters.map(ch =>
+                  ch.id === charId && !ch.imageEl ? { ...ch, imageEl: img } : ch
+                ),
+              };
+            }));
           }, "Character image");
         }
       });
       p.bubbles.forEach((b) => {
         if (b.style === "image" && b.templateSrc && !b.templateImg) {
+          const bubbleId = b.id;
           loadWithRetry(b.templateSrc, (img) => {
-            b.templateImg = img;
-            forceNewPanelRefs();
+            setPanelsRaw((cur) => cur.map(panel => {
+              if (panel.id !== panelId) return panel;
+              const hasMatch = panel.bubbles.some(bb => bb.id === bubbleId && !bb.templateImg);
+              if (!hasMatch) return panel;
+              return {
+                ...panel,
+                bubbles: panel.bubbles.map(bb =>
+                  bb.id === bubbleId && !bb.templateImg ? { ...bb, templateImg: img } : bb
+                ),
+              };
+            }));
           }, "Template image");
         }
       });
       // Rehydrate background image
       if (p.backgroundImageUrl && !p.backgroundImageEl) {
         loadWithRetry(p.backgroundImageUrl, (img) => {
-          p.backgroundImageEl = img;
-          forceNewPanelRefs();
+          setPanelsRaw((cur) => cur.map(panel => {
+            if (panel.id !== panelId || panel.backgroundImageEl) return panel;
+            return { ...panel, backgroundImageEl: img };
+          }));
         }, "Background image");
       }
       // Rehydrate drawing layer images + backward-compatible opacity
       (p.drawingLayers || []).forEach((dl) => {
         if (dl.opacity === undefined || dl.opacity === null) dl.opacity = 1;
         if (dl.imageData && !dl.imageEl) {
-          const img = new Image();
-          img.onload = () => {
-            dl.imageEl = img;
-            forceNewPanelRefs();
-          };
-          img.onerror = () => console.warn("Drawing layer image load failed");
-          img.src = dl.imageData;
+          const dlId = dl.id;
+          loadWithRetry(dl.imageData, (img) => {
+            setPanelsRaw((cur) => cur.map(panel => {
+              if (panel.id !== panelId) return panel;
+              const hasMatch = (panel.drawingLayers || []).some(d => d.id === dlId && !d.imageEl);
+              if (!hasMatch) return panel;
+              return {
+                ...panel,
+                drawingLayers: (panel.drawingLayers || []).map(d =>
+                  d.id === dlId && !d.imageEl ? { ...d, imageEl: img } : d
+                ),
+              };
+            }));
+          }, "Drawing layer image");
         }
       });
     });
