@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
+import { useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,8 @@ import {
 } from "lucide-react";
 import type { Generation, TrendingAccount } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
+import { InstagramConnect } from "@/components/instagram-connect";
+import { useToast } from "@/hooks/use-toast";
 
 interface UsageData {
   credits: number;
@@ -299,6 +302,21 @@ export default function DashboardPage() {
   });
 
   const [showTierGuide, setShowTierGuide] = useState(false);
+  const { toast } = useToast();
+  const search = useSearch();
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    if (params.get("instagram_connected") === "true") {
+      toast({ title: "Instagram 연결 완료!", description: "Instagram 계정이 성공적으로 연결되었습니다." });
+      window.history.replaceState({}, "", "/dashboard");
+    }
+    const igError = params.get("instagram_error");
+    if (igError) {
+      toast({ title: "Instagram 연결 실패", description: decodeURIComponent(igError), variant: "destructive" });
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [search, toast]);
 
   if (!isAuthenticated) {
     return (
@@ -542,6 +560,8 @@ export default function DashboardPage() {
               </div>
             )}
           </Card>
+
+          <InstagramConnect />
 
           {usage?.tier !== "pro" && (
             <Link href="/pricing">

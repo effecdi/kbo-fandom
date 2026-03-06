@@ -95,8 +95,10 @@ import "@/components/drawing-tools-panel.scss";
 import { FlowStepper } from "@/components/flow-stepper";
 import { AutoWebtoonPanel } from "@/components/auto-webtoon-panel";
 import { EditorOnboarding } from "@/components/editor-onboarding";
+import { InstagramPublishDialog } from "@/components/instagram-publish-dialog";
 import { getFlowState, clearFlowState } from "@/lib/flow";
 import type { StoryPanelScript, Generation, GenerationLight } from "@shared/schema";
+import { Instagram } from "lucide-react";
 import ReactFlow, { Background, Controls, type Node, type NodeChange, applyNodeChanges } from "reactflow";
 import {
   ContextMenu,
@@ -3493,6 +3495,7 @@ export default function StoryPage() {
   const [activePanelIndex, setActivePanelIndex] = useState(0);
   const [fontsReady, setFontsReady] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showInstagramPublish, setShowInstagramPublish] = useState(false);
   const [posePrompt, setPosePrompt] = useState("");
   const [expressionPrompt, setExpressionPrompt] = useState("");
   const [itemPrompt, setItemPrompt] = useState("");
@@ -4900,6 +4903,20 @@ export default function StoryPage() {
     linkedStarts?: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>;
   } | null>(null);
 
+  // Drag state for script (top/bottom) movement/resize from overlay
+  const dragScriptOverlayRef = useRef<{
+    position: "top" | "bottom";
+    mode: "move" | "resize";
+    startMouseX: number;
+    startMouseY: number;
+    startX: number;
+    startY: number;
+    startFontSize: number;
+    startW: number;
+    startH: number;
+    panelIdx: number;
+  } | null>(null);
+
   const handleElementDragStart = useCallback((
     type: "text" | "line" | "drawing" | "shape" | "char" | "bubble",
     id: string,
@@ -5906,6 +5923,20 @@ export default function StoryPage() {
       toast({ title: "다운로드 실패", description: "이미지를 생성할 수 없습니다.", variant: "destructive" });
     }
   };
+
+  const capturePanelForInstagram = useCallback(async (idx: number): Promise<string> => {
+    const p = panels[idx];
+    if (!p) throw new Error("패널을 찾을 수 없습니다.");
+    const srcCanvas = panelCanvasRefs.current.get(p.id);
+    if (!srcCanvas) throw new Error("캔버스를 찾을 수 없습니다.");
+    const offscreen = document.createElement("canvas");
+    offscreen.width = 1080;
+    offscreen.height = 1350;
+    const ctx = offscreen.getContext("2d");
+    if (!ctx) throw new Error("Canvas context 생성 실패");
+    ctx.drawImage(srcCanvas, 0, 0, 1080, 1350);
+    return offscreen.toDataURL("image/png");
+  }, [panels]);
 
   const downloadPanelSvg = (idx: number) => {
     const p = panels[idx];
@@ -7733,6 +7764,17 @@ export default function StoryPage() {
                     저장
                     {!isPro && <Crown className="h-2.5 w-2.5 ml-0.5 text-yellow-300" />}
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1 h-7 text-xs px-2"
+                    onClick={() => guard(() => setShowInstagramPublish(true))}
+                    title="Instagram에 게시"
+                    data-testid="button-instagram-publish"
+                  >
+                    <Instagram className="h-3 w-3" />
+                    게시
+                  </Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setLocation("/edits")} title="내 편집" data-testid="button-story-my-edits">
                     <FolderOpen className="h-3.5 w-3.5" />
                   </Button>
@@ -8309,6 +8351,81 @@ export default function StoryPage() {
                                 }
                               }
 
+                              // --- 1.8) Script (top/bottom) hit detection — rendered on top of all layers ---
+                              {
+                                const cvs = panelCanvasRefs.current.get(panel.id);
+                                const sCtx = cvs?.getContext("2d");
+                                if (sCtx) {
+                                  const clearAllSel = () => {
+                                    setSelectedShapeId(null); setSelectedTextId(null); setSelectedLineId(null);
+                                    setSelectedDrawingLayerId(null); setSelectedCharId(null); setSelectedBubbleId(null);
+                                    setSelectedScriptPosition(null); setCanvasMultiSelected(new Set());
+                                  };
+                                  for (const scriptType of ["top", "bottom"] as const) {
+                                    const sd = scriptType === "top" ? panel.topScript : panel.bottomScript;
+                                    if (sd && sd.text && sd.visible !== false) {
+                                      const sRect = getScriptRect(sCtx, sd, scriptType, CANVAS_W, CANVAS_H);
+                                      const hs = 8;
+                                      const corners = [
+                                        { x: sRect.bx - 2, y: sRect.by - 2 },
+                                        { x: sRect.bx + sRect.bw + 2, y: sRect.by - 2 },
+                                        { x: sRect.bx - 2, y: sRect.by + sRect.bh + 2 },
+                                        { x: sRect.bx + sRect.bw + 2, y: sRect.by + sRect.bh + 2 },
+                                      ];
+                                      const isSelected = selectedScriptPosition === scriptType;
+                                      const nearHandle = isSelected && corners.some(
+                                        (c) => Math.abs(canvasX - c.x) <= hs && Math.abs(canvasY - c.y) <= hs
+                                      );
+                                      if (nearHandle) {
+                                        clearAllSel();
+                                        setSelectedScriptPosition(scriptType);
+                                        setActiveLeftTab("elements");
+                                        setElementsSubTab("script");
+                                        setActiveScriptSection(scriptType);
+                                        dragScriptOverlayRef.current = {
+                                          position: scriptType,
+                                          mode: "resize",
+                                          startMouseX: canvasX,
+                                          startMouseY: canvasY,
+                                          startX: sd.x ?? sRect.bx,
+                                          startY: sd.y ?? sRect.by,
+                                          startFontSize: sd.fontSize || 20,
+                                          startW: sRect.bw,
+                                          startH: sRect.bh,
+                                          panelIdx: i,
+                                        };
+                                        return;
+                                      }
+                                      if (
+                                        canvasX >= sRect.bx &&
+                                        canvasX <= sRect.bx + sRect.bw &&
+                                        canvasY >= sRect.by &&
+                                        canvasY <= sRect.by + sRect.bh
+                                      ) {
+                                        clearAllSel();
+                                        setSelectedScriptPosition(scriptType);
+                                        setActiveLeftTab("elements");
+                                        setElementsSubTab("script");
+                                        setActiveScriptSection(scriptType);
+                                        dragScriptOverlayRef.current = {
+                                          position: scriptType,
+                                          mode: "move",
+                                          startMouseX: canvasX,
+                                          startMouseY: canvasY,
+                                          startX: sd.x ?? sRect.bx,
+                                          startY: sd.y ?? sRect.by,
+                                          startFontSize: sd.fontSize || 20,
+                                          startW: sRect.bw,
+                                          startH: sRect.bh,
+                                          panelIdx: i,
+                                        };
+                                        return;
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+
                               // --- 2) Unified hit-test: ALL elements sorted by z-index (highest first) ---
                               type HitItem =
                                 | { type: "shape"; z: number; se: (typeof panel.shapeElements extends (infer U)[] | undefined ? U : never) }
@@ -8331,6 +8448,7 @@ export default function StoryPage() {
                               const clearSelections = () => {
                                 setSelectedShapeId(null); setSelectedTextId(null); setSelectedLineId(null);
                                 setSelectedDrawingLayerId(null); setSelectedCharId(null); setSelectedBubbleId(null);
+                                setSelectedScriptPosition(null);
                                 setCanvasMultiSelected(new Set());
                               };
 
@@ -8473,6 +8591,33 @@ export default function StoryPage() {
                                 return;
                               }
 
+                              // 2.5) Script drag from overlay
+                              if (dragScriptOverlayRef.current) {
+                                const ds = dragScriptOverlayRef.current;
+                                const dx = canvasX - ds.startMouseX;
+                                const dy = canvasY - ds.startMouseY;
+                                const p = panels[ds.panelIdx];
+                                if (!p) return;
+                                const key = ds.position === "top" ? "topScript" : "bottomScript";
+                                const sd = p[key];
+                                if (!sd) return;
+                                if (ds.mode === "move") {
+                                  updatePanel(ds.panelIdx, {
+                                    ...p,
+                                    [key]: { ...sd, x: ds.startX + dx, y: ds.startY + dy },
+                                  });
+                                } else {
+                                  // Resize — scale font size proportionally
+                                  const scaleFactor = Math.max(0.3, (ds.startW + dx) / ds.startW);
+                                  const newFontSize = Math.round(Math.max(8, Math.min(80, ds.startFontSize * scaleFactor)));
+                                  updatePanel(ds.panelIdx, {
+                                    ...p,
+                                    [key]: { ...sd, fontSize: newFontSize, width: Math.max(40, ds.startW + dx), height: Math.max(20, ds.startH + dy) },
+                                  });
+                                }
+                                return;
+                              }
+
                               // 3) Single element drag (existing)
                               if (!dragElementRef.current) return;
                               handleElementDragMove(canvasX, canvasY, i);
@@ -8538,6 +8683,12 @@ export default function StoryPage() {
                                 return;
                               }
 
+                              // 2.5) Script drag end
+                              if (dragScriptOverlayRef.current) {
+                                dragScriptOverlayRef.current = null;
+                                return;
+                              }
+
                               // 3) Single element drag end (existing)
                               handleElementDragEnd();
                             }}
@@ -8548,6 +8699,9 @@ export default function StoryPage() {
                               }
                               if (multiDragRef.current) {
                                 multiDragRef.current = null;
+                              }
+                              if (dragScriptOverlayRef.current) {
+                                dragScriptOverlayRef.current = null;
                               }
                               if (dragElementRef.current) handleElementDragEnd();
                             }}
@@ -10012,6 +10166,28 @@ export default function StoryPage() {
                 )}
               </DialogContent>
             </Dialog>
+          <InstagramPublishDialog
+            open={showInstagramPublish}
+            onOpenChange={setShowInstagramPublish}
+            panels={panels.map((p, i) => {
+              const canvas = panelCanvasRefs.current.get(p.id);
+              let thumbnail = "";
+              if (canvas) {
+                try {
+                  const thumb = document.createElement("canvas");
+                  thumb.width = 120;
+                  thumb.height = 150;
+                  const tCtx = thumb.getContext("2d");
+                  if (tCtx) {
+                    tCtx.drawImage(canvas, 0, 0, 120, 150);
+                    thumbnail = thumb.toDataURL("image/png", 0.6);
+                  }
+                } catch {}
+              }
+              return { id: p.id, index: i, thumbnail };
+            })}
+            onCapturePanel={capturePanelForInstagram}
+          />
           {/* ── Story-level Template Picker Popup ── */}
           {showStoryTemplatePicker && activePanel && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStoryTemplatePicker(false)} data-testid="modal-story-template-picker-elements">

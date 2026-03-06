@@ -658,3 +658,115 @@ Make the background and items in the same simple, cute drawing style as the char
   }
   throw lastError || new Error("Failed to generate background after retries");
 }
+
+/**
+ * 자동 웹툰 전용 장면 이미지 생성.
+ * 기존 generateWithBackground와 달리:
+ * 1) sceneDescription을 장면 묘사의 핵심으로 강조
+ * 2) 스토리 주제(storyContext)를 전달하여 주제 일관성 유지
+ * 3) 캐릭터 이미지가 있어도 "장면" 중심 생성
+ */
+export async function generateWebtoonScene(
+  sceneDescription: string,
+  storyContext: string,
+  sourceImageDataList?: string[],
+): Promise<string> {
+  const parts: any[] = [];
+  const images = sourceImageDataList ?? [];
+  const hasImages = images.length > 0;
+
+  // sceneDescription은 이미 영어 → 번역 불필요
+  // storyContext는 한국어일 수 있으므로 번역
+  const translatedContext = await translateToEnglish(storyContext, ai);
+
+  if (hasImages) {
+    parts.push({
+      text: `You are illustrating a scene for a Korean Instagram webtoon (instatoon) comic strip.
+
+${noTextRule}
+
+STORY CONTEXT (the entire comic is about this topic — every scene must relate to it):
+"${translatedContext}"
+
+SCENE TO ILLUSTRATE (this is the MOST important part — draw exactly this):
+${sceneDescription}
+
+RULES:
+- Draw EXACTLY the scene described above. Do NOT deviate from it.
+- The scene must clearly relate to the story context "${translatedContext}"
+- Use the reference character image(s) below — keep the character(s) looking the same
+- Place the character(s) INTO the scene described above, with appropriate poses and expressions
+- Draw background and environment matching the scene description
+- Style: simple line art, thick outlines, flat colors, cute Korean instatoon style
+- 3:4 portrait aspect ratio
+
+Do NOT add any text, letters, or writing of any kind to the image.`
+    });
+  } else {
+    parts.push({
+      text: `You are illustrating a scene for a Korean Instagram webtoon (instatoon) comic strip.
+
+${noTextRule}
+
+STORY CONTEXT (the entire comic is about this topic — every scene must relate to it):
+"${translatedContext}"
+
+SCENE TO ILLUSTRATE (this is the MOST important part — draw exactly this):
+${sceneDescription}
+
+RULES:
+- Draw EXACTLY the scene described above. Do NOT deviate from it.
+- The scene must clearly relate to the story context "${translatedContext}"
+- Include character(s) appropriate for the scene with clear poses and expressions
+- Style: simple line art, thick outlines, flat colors, cute Korean instatoon style
+- 3:4 portrait aspect ratio
+
+Do NOT add any text, letters, or writing of any kind to the image.`
+    });
+  }
+
+  for (const src of images) {
+    const match = src.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+    }
+  }
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: parts,
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+          imageConfig: { aspectRatio: "3:4" },
+        },
+      });
+
+      const promptFeedback = (response as any).promptFeedback;
+      if (promptFeedback?.blockReason) {
+        throw new Error(`Prompt blocked: ${promptFeedback.blockReason}`);
+      }
+
+      const candidate = response.candidates?.[0];
+      if (!candidate) {
+        throw new Error("No candidates in response");
+      }
+
+      const imagePart = candidate?.content?.parts?.find((part: any) => part.inlineData);
+      if (!imagePart?.inlineData?.data) {
+        const reason = candidate.finishReason ? ` (finishReason: ${candidate.finishReason})` : "";
+        throw new Error(`Failed to generate scene image${reason}`);
+      }
+
+      const mimeType = imagePart.inlineData.mimeType || "image/png";
+      return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+    } catch (err: any) {
+      lastError = err;
+      console.error(`Webtoon scene generation attempt ${attempt + 1} failed:`, err?.message || err);
+      if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  throw lastError || new Error("Failed to generate webtoon scene after retries");
+}

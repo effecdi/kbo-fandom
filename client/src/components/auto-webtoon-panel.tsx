@@ -318,7 +318,7 @@ export function AutoWebtoonPanel({
     setStep(3);
 
     const results = [...initial];
-    const BATCH_SIZE = 3;
+    const BATCH_SIZE = 5;
 
     for (let batchStart = 0; batchStart < total; batchStart += BATCH_SIZE) {
       const batchEnd = Math.min(batchStart + BATCH_SIZE, total);
@@ -332,13 +332,17 @@ export function AutoWebtoonPanel({
       const promises = batchIndices.map(async (idx) => {
         const scene = scenes[idx];
         const styleKeyword = ART_STYLES[selectedStyle]?.promptKeyword || "";
-        const scenePrompt = [styleKeyword, scene.sceneDescription].filter(Boolean).join(", ");
+        // 스타일 키워드를 sceneDescription에 추가 (중복 "simple line art, webtoon style" 제거)
+        const cleanDesc = scene.sceneDescription.replace(/,?\s*simple line art,?\s*webtoon style/gi, "").trim();
+        const sceneDesc = [styleKeyword, cleanDesc].filter(Boolean).join(", ");
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
-          const res = await apiRequest("POST", "/api/generate-background", {
+          // 자동 웹툰 전용 API 사용 (스토리 주제 컨텍스트 전달)
+          const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
+            sceneDescription: sceneDesc,
+            storyContext: storyPrompt,
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
-            backgroundPrompt: scenePrompt,
           });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");
@@ -378,19 +382,21 @@ export function AutoWebtoonPanel({
     }
     setCutResults([...results]);
 
-    const BATCH_SIZE = 3;
+    const BATCH_SIZE = 5;
     for (let i = 0; i < failedIndices.length; i += BATCH_SIZE) {
       const batch = failedIndices.slice(i, i + BATCH_SIZE);
       const promises = batch.map(async (idx) => {
         const scene = scenes[idx];
         const styleKeyword = ART_STYLES[selectedStyle]?.promptKeyword || "";
-        const scenePrompt = [styleKeyword, scene.sceneDescription].filter(Boolean).join(", ");
+        const cleanDesc = scene.sceneDescription.replace(/,?\s*simple line art,?\s*webtoon style/gi, "").trim();
+        const sceneDesc = [styleKeyword, cleanDesc].filter(Boolean).join(", ");
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
-          const res = await apiRequest("POST", "/api/generate-background", {
+          const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
+            sceneDescription: sceneDesc,
+            storyContext: storyPrompt,
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
-            backgroundPrompt: scenePrompt,
           });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");
@@ -466,20 +472,45 @@ export function AutoWebtoonPanel({
         }
       }
 
+      // Use narrativeText: single-cut → topScript, multi-cut → combine first scene's narrativeText as top, last as bottom
       let topScript = null;
-      if (cutsPerCanvas === 1 && scenes[cutStart]?.narrativeText) {
-        topScript = {
-          text: scenes[cutStart].narrativeText,
-          style: "default",
-          color: "#000000",
-          visible: true,
-        };
+      let bottomScript = null;
+      if (cutsPerCanvas === 1) {
+        if (scenes[cutStart]?.narrativeText) {
+          topScript = {
+            text: scenes[cutStart].narrativeText,
+            style: "default",
+            color: "#000000",
+            visible: true,
+          };
+        }
+      } else {
+        // Multi-cut: first scene's narrativeText → topScript, last scene's → bottomScript
+        const firstScene = scenes[cutStart];
+        const lastIdx = Math.min(cutStart + cutsPerCanvas - 1, scenes.length - 1);
+        const lastScene = scenes[lastIdx];
+        if (firstScene?.narrativeText) {
+          topScript = {
+            text: firstScene.narrativeText,
+            style: "default",
+            color: "#000000",
+            visible: true,
+          };
+        }
+        if (lastScene?.narrativeText && lastIdx !== cutStart) {
+          bottomScript = {
+            text: lastScene.narrativeText,
+            style: "default",
+            color: "#000000",
+            visible: true,
+          };
+        }
       }
 
       panels.push({
         id: Math.random().toString(36).slice(2, 10),
         topScript,
-        bottomScript: null,
+        bottomScript,
         bubbles,
         characters,
         textElements: [],

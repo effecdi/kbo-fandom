@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/theme-provider";
 import {
   Sparkles, Image, LayoutGrid, CreditCard, Moon, Sun, LogOut, Home,
-  Wand2, MessageCircle, Target, Eye, ChevronDown, FileText, Paintbrush, Briefcase, MessageSquare, Trees, BookOpen, FolderOpen,
+  Wand2, MessageCircle, Target, Eye, ChevronDown, FileText, Paintbrush, Briefcase, MessageSquare, Trees, BookOpen, FolderOpen, HelpCircle,
 } from "lucide-react";
+import { useTour } from "@/components/spotlight-tour";
 import { useQuery } from "@tanstack/react-query";
 import logoImg from "@assets/logo.png";
 
@@ -22,6 +23,7 @@ interface NavGroup {
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { startTour } = useTour();
   const [location] = useLocation();
 
   const { data: credits } = useQuery<{ credits: number; dailyBonusCredits: number; tier: string }>({
@@ -154,6 +156,16 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={startTour}
+            data-testid="button-guide"
+            title="사용 가이드"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
 
           <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme-toggle">
             {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}

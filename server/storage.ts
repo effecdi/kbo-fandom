@@ -1,14 +1,17 @@
 import {
   users, type UpsertUser,
   characters, generations, userCredits, trendingAccounts, bubbleProjects, payments,
+  instagramConnections, instagramPublishLog,
   type Character, type InsertCharacter,
   type Generation, type InsertGeneration,
   type UserCredits, type TrendingAccount, type InsertTrendingAccount,
   type CreatorProfile, type BubbleProject, type InsertBubbleProject,
   type Payment, type InsertPayment,
+  type InstagramConnection, type InsertInstagramConnection,
+  type InstagramPublishLog, type InsertInstagramPublishLog,
 } from "@shared/schema";
 import { requireDb } from "./db";
-import { eq, desc, sql, and, asc, inArray } from "drizzle-orm";
+import { eq, desc, sql, and, asc, inArray, gte } from "drizzle-orm";
 
 function isNewDayKST(lastDate: Date | null): boolean {
   if (!lastDate) return true;
@@ -64,6 +67,16 @@ export interface IStorage {
   getBubbleProject(id: number, userId: string): Promise<BubbleProject | undefined>;
   updateBubbleProject(id: number, userId: string, data: Partial<Pick<BubbleProject, "name" | "thumbnailUrl" | "canvasData">>): Promise<BubbleProject | undefined>;
   deleteBubbleProject(id: number, userId: string): Promise<boolean>;
+
+  // Instagram
+  getInstagramConnection(userId: string): Promise<InstagramConnection | undefined>;
+  upsertInstagramConnection(data: InsertInstagramConnection): Promise<InstagramConnection>;
+  deleteInstagramConnection(userId: string): Promise<boolean>;
+  updateInstagramToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  createInstagramPublishLog(data: InsertInstagramPublishLog): Promise<InstagramPublishLog>;
+  updateInstagramPublishLog(id: number, data: Partial<Pick<InstagramPublishLog, "igMediaId" | "status" | "errorMessage">>): Promise<void>;
+  getInstagramPublishLogs(userId: string, limit: number): Promise<InstagramPublishLog[]>;
+  getPublishCountLast24h(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -550,6 +563,77 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(bubbleProjects)
       .where(and(eq(bubbleProjects.id, id), eq(bubbleProjects.userId, userId)));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // ── Instagram ──
+
+  async getInstagramConnection(userId: string): Promise<InstagramConnection | undefined> {
+    const db = this.getDb();
+    const [row] = await db.select().from(instagramConnections)
+      .where(eq(instagramConnections.userId, userId));
+    return row || undefined;
+  }
+
+  async upsertInstagramConnection(data: InsertInstagramConnection): Promise<InstagramConnection> {
+    const db = this.getDb();
+    const existing = await this.getInstagramConnection(data.userId);
+    if (existing) {
+      const [updated] = await db.update(instagramConnections)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(instagramConnections.userId, data.userId))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(instagramConnections).values(data).returning();
+    return created;
+  }
+
+  async deleteInstagramConnection(userId: string): Promise<boolean> {
+    const db = this.getDb();
+    const result = await db.delete(instagramConnections)
+      .where(eq(instagramConnections.userId, userId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async updateInstagramToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    const db = this.getDb();
+    await db.update(instagramConnections)
+      .set({ accessToken: token, tokenExpiresAt: expiresAt, updatedAt: new Date() })
+      .where(eq(instagramConnections.userId, userId));
+  }
+
+  async createInstagramPublishLog(data: InsertInstagramPublishLog): Promise<InstagramPublishLog> {
+    const db = this.getDb();
+    const [log] = await db.insert(instagramPublishLog).values(data).returning();
+    return log;
+  }
+
+  async updateInstagramPublishLog(id: number, data: Partial<Pick<InstagramPublishLog, "igMediaId" | "status" | "errorMessage">>): Promise<void> {
+    const db = this.getDb();
+    await db.update(instagramPublishLog)
+      .set(data)
+      .where(eq(instagramPublishLog.id, id));
+  }
+
+  async getInstagramPublishLogs(userId: string, limit: number): Promise<InstagramPublishLog[]> {
+    const db = this.getDb();
+    return db.select().from(instagramPublishLog)
+      .where(eq(instagramPublishLog.userId, userId))
+      .orderBy(desc(instagramPublishLog.createdAt))
+      .limit(limit);
+  }
+
+  async getPublishCountLast24h(userId: string): Promise<number> {
+    const db = this.getDb();
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [result] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(instagramPublishLog)
+      .where(and(
+        eq(instagramPublishLog.userId, userId),
+        eq(instagramPublishLog.status, "published"),
+        gte(instagramPublishLog.createdAt, since),
+      ));
+    return result?.count ?? 0;
   }
 }
 
