@@ -797,7 +797,7 @@ export default function BubblePage() {
 
       <div className="flex flex-1 overflow-hidden" data-testid="bubble-canvas-area">
         {/* Main Canvas Area - Scrollable List */}
-        <div className="flex-1 overflow-y-auto bg-muted/20 dark:bg-muted/10 p-8">
+        <div className="flex-1 overflow-y-auto bg-muted/20 dark:bg-muted/10 px-8 pb-8 pt-[5rem]">
           <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-8 pb-32">
             {pages.map((page, i) => (
               <ContextMenu key={page.id}>
