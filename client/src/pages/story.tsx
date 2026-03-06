@@ -920,6 +920,7 @@ function PanelCanvas({
   onSelectScript,
   externalEditScriptPosition,
   onEditScriptPositionChange,
+  externalSelectedScriptPosition,
   isGenerating,
 }: {
   panel: PanelData;
@@ -942,6 +943,7 @@ function PanelCanvas({
   onSelectScript?: (position: "top" | "bottom" | null) => void;
   externalEditScriptPosition?: "top" | "bottom" | null;
   onEditScriptPositionChange?: (position: "top" | "bottom" | null) => void;
+  externalSelectedScriptPosition?: "top" | "bottom" | null;
   isGenerating?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -994,6 +996,13 @@ function PanelCanvas({
       onEditScriptPositionChange?.(null);
     }
   }, [externalEditScriptPosition, onEditScriptPositionChange, onSelectScript]);
+  // Sync parent's script selection → PanelCanvas internal state
+  useEffect(() => {
+    if (externalSelectedScriptPosition === null && selectedScriptPos !== null) {
+      setSelectedScriptPos(null);
+      setEditingScriptPos(null);
+    }
+  }, [externalSelectedScriptPosition]);
   useEffect(() => {
     selectedCharIdRef.current = selectedCharId;
   }, [selectedCharId]);
@@ -5814,6 +5823,26 @@ export default function StoryPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [panels, activePanelIndex, selectedTextId, selectedLineId, selectedShapeId, selectedDrawingLayerId, selectedBubbleId, selectedCharId, canvasMultiSelected, updatePanel]);
 
+  // Start inline script editing when typing while script is selected
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!selectedScriptPosition) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "Escape" || e.key === "Delete" || e.key === "Backspace" ||
+          e.key === "Tab" || e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta" ||
+          e.key.startsWith("Arrow") || e.key.startsWith("F") || e.key === "Enter") return;
+      // Printable character typed → start inline editing on canvas
+      if (e.key.length === 1) {
+        e.preventDefault();
+        setEditingScriptPositionForCanvas(selectedScriptPosition);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [selectedScriptPosition]);
+
   const toggleLeftTab = (tab: LeftTab) => {
     if (!isAuthenticated) {
       setShowLoginDialog(true);
@@ -7879,7 +7908,19 @@ export default function StoryPage() {
                             setSelectedDrawingLayerId(null);
                           }
                         }}
-                        onClick={() => setActivePanelIndex(i)}
+                        onClick={() => {
+                          if (activePanelIndex !== i) {
+                            setSelectedScriptPosition(null);
+                            setEditingScriptPositionForCanvas(null);
+                            setSelectedBubbleId(null);
+                            setSelectedCharId(null);
+                            setSelectedTextId(null);
+                            setSelectedLineId(null);
+                            setSelectedShapeId(null);
+                            setSelectedDrawingLayerId(null);
+                          }
+                          setActivePanelIndex(i);
+                        }}
                         className={`relative shadow-lg transition-all ${activePanelIndex === i ? "ring-4 ring-primary ring-offset-2" : "opacity-90 hover:opacity-100"}`}
                       >
                         <div className="absolute -left-12 top-0 flex flex-col gap-2">
@@ -7889,7 +7930,8 @@ export default function StoryPage() {
                         </div>
                         <button
                           type="button"
-                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-red-500 shadow hover:bg-white z-10"
+                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-red-500 shadow hover:bg-white"
+                          style={{ zIndex: 25 }}
                           onClick={(e) => {
                             e.stopPropagation();
                             removePanel(i);
@@ -8186,14 +8228,12 @@ export default function StoryPage() {
                               setSelectedShapeId(null);
                               setSelectedDrawingLayerId(null);
                               setActivePanelIndex(i);
-                              // 설정 패널로 자동 전환
-                              setActiveLeftTab("elements");
-                              setElementsSubTab("script");
                               setActiveScriptSection(pos);
                             }
                           }}
                           externalEditScriptPosition={activePanelIndex === i ? editingScriptPositionForCanvas : null}
                           onEditScriptPositionChange={setEditingScriptPositionForCanvas}
+                          externalSelectedScriptPosition={activePanelIndex === i ? selectedScriptPosition : null}
                           isGenerating={
                             instatoonImageMutation.isPending && (
                               instatoonImageMutation.variables?.scope === "all" ||
@@ -8449,8 +8489,6 @@ export default function StoryPage() {
                                       if (nearHandle) {
                                         clearAllSel();
                                         setSelectedScriptPosition(scriptType);
-                                        setActiveLeftTab("elements");
-                                        setElementsSubTab("script");
                                         setActiveScriptSection(scriptType);
                                         dragScriptOverlayRef.current = {
                                           position: scriptType,
@@ -8474,8 +8512,6 @@ export default function StoryPage() {
                                       ) {
                                         clearAllSel();
                                         setSelectedScriptPosition(scriptType);
-                                        setActiveLeftTab("elements");
-                                        setElementsSubTab("script");
                                         setActiveScriptSection(scriptType);
                                         dragScriptOverlayRef.current = {
                                           position: scriptType,
@@ -8779,6 +8815,29 @@ export default function StoryPage() {
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
+
+                              // Double-click on script to edit
+                              {
+                                const cvs = panelCanvasRefs.current.get(panel.id);
+                                const sCtx = cvs?.getContext("2d");
+                                if (sCtx) {
+                                  for (const scriptType of ["top", "bottom"] as const) {
+                                    const sd = scriptType === "top" ? panel.topScript : panel.bottomScript;
+                                    if (sd && sd.text !== undefined && sd.visible !== false) {
+                                      const sRect = getScriptRect(sCtx, sd, scriptType, CANVAS_W, CANVAS_H);
+                                      if (
+                                        canvasX >= sRect.bx && canvasX <= sRect.bx + sRect.bw &&
+                                        canvasY >= sRect.by && canvasY <= sRect.by + sRect.bh
+                                      ) {
+                                        setSelectedScriptPosition(scriptType);
+                                        setActiveScriptSection(scriptType);
+                                        setEditingScriptPositionForCanvas(scriptType);
+                                        return;
+                                      }
+                                    }
+                                  }
+                                }
+                              }
 
                               // Double-click on text element to edit
                               const textEls = [...(panel.textElements || [])].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
@@ -9907,6 +9966,117 @@ export default function StoryPage() {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Compact script editor — shown when script is selected regardless of left tab */}
+                    {selectedScriptPosition && (() => {
+                      const scriptKey = selectedScriptPosition === "top" ? "topScript" : "bottomScript";
+                      const sd = activePanel[scriptKey];
+                      if (!sd) return null;
+                      const isTop = selectedScriptPosition === "top";
+                      return (
+                        <div className="p-2 border-b border-border space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="secondary" className={`text-[10px] shrink-0 ${isTop ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-400" : "bg-sky-400/20 text-sky-700 dark:text-sky-400"}`}>
+                              {isTop ? "상단" : "하단"}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground">자막 편집</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-5 w-5 ml-auto"
+                              title="자막 삭제"
+                              onClick={() => {
+                                updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: null });
+                                setSelectedScriptPosition(null);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <Textarea
+                            value={sd.text}
+                            onChange={(e) => {
+                              updatePanel(activePanelIndex, {
+                                ...activePanel,
+                                [scriptKey]: { ...sd, text: e.target.value },
+                              });
+                            }}
+                            placeholder={isTop ? "상단 스크립트..." : "하단 스크립트..."}
+                            className="text-sm min-h-[60px] resize-none"
+                          />
+                          <div className="flex gap-1 flex-wrap">
+                            {SCRIPT_STYLE_OPTIONS.map((opt) => (
+                              <button
+                                key={opt.value}
+                                onClick={() => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, style: opt.value } })}
+                                className={`px-2 py-0.5 text-[10px] rounded-lg transition-colors ${sd.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex gap-1 flex-wrap items-center">
+                            <span className="text-[10px] text-muted-foreground mr-0.5">색상</span>
+                            {SCRIPT_COLOR_OPTIONS.map((c) => (
+                              <button
+                                key={c.value}
+                                onClick={() => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, color: c.value } })}
+                                className={`w-4 h-4 rounded-full border-2 transition-transform ${sd.color === c.value ? "border-foreground scale-110" : "border-transparent"}`}
+                                style={{ backgroundColor: c.bg }}
+                                title={c.label}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground shrink-0">크기</span>
+                            <Slider
+                              min={8} max={36} step={1}
+                              value={[sd.fontSize || 20]}
+                              onValueChange={([v]) => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, fontSize: v } })}
+                              className="flex-1"
+                            />
+                            <span className="text-[10px] text-muted-foreground w-5 text-right">{sd.fontSize || 20}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground shrink-0">글꼴</span>
+                            <Select
+                              value={sd.fontKey || "default"}
+                              onValueChange={(v) => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, fontKey: v } })}
+                            >
+                              <SelectTrigger className="h-6 text-[10px] flex-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableFonts.map((f) => (
+                                  <SelectItem key={f.value} value={f.value} className="text-[10px]">
+                                    <span style={{ fontFamily: f.family }}>{f.label}</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-1 flex-wrap items-center">
+                            <span className="text-[10px] text-muted-foreground mr-0.5">글자색</span>
+                            {SCRIPT_TEXT_COLORS.map((c) => (
+                              <button
+                                key={c.value || "auto"}
+                                onClick={() => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, textColor: c.value } })}
+                                className={`w-4 h-4 rounded-full border-2 transition-transform ${(sd.textColor || "") === c.value ? "border-foreground scale-110" : "border-transparent"}`}
+                                style={{ backgroundColor: c.hex || "transparent", backgroundImage: c.hex ? undefined : "linear-gradient(135deg, #ccc 25%, transparent 25%, transparent 50%, #ccc 50%, #ccc 75%, transparent 75%)", backgroundSize: c.hex ? undefined : "6px 6px" }}
+                                title={c.label}
+                              />
+                            ))}
+                            <button
+                              onClick={() => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, bold: !(sd.bold !== false) } })}
+                              className={`px-1.5 py-0.5 text-[10px] rounded-lg transition-colors font-bold ${sd.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                            >
+                              B
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     <div className="flex-1 overflow-hidden">
                   <LayerListPanel
                     items={rightLayerItems}
@@ -9927,8 +10097,6 @@ export default function StoryPage() {
                     onSelectScript={(position) => {
                       setSelectedScriptPosition(position);
                       if (position) {
-                        setActiveLeftTab("elements");
-                        setElementsSubTab("script");
                         setActiveScriptSection(position);
                       }
                     }}
