@@ -81,7 +81,7 @@ export async function registerRoutes(
 
       const canGenerate = await storage.deductCredit(userId, 2);
       if (!canGenerate) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 캐릭터 생성에는 2 크레딧이 필요합니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
@@ -143,7 +143,7 @@ export async function registerRoutes(
 
       const canGenerate = await storage.deductCredit(userId, 5);
       if (!canGenerate) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 포즈/표정 생성에는 5 크레딧이 필요합니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
@@ -200,7 +200,7 @@ export async function registerRoutes(
 
       const canGenerate = await storage.deductCredit(userId, 5);
       if (!canGenerate) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 배경/아이템 생성에는 5 크레딧이 필요합니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);

@@ -78,7 +78,7 @@ export default function TermsPage() {
               <ul className="list-disc pl-6 space-y-1 mt-1">
                 <li><strong>Pro 구독:</strong> 월 29,900원 (무제한 생성)</li>
                 <li><strong>크레딧 구매:</strong> 50크레딧 / 4,900원</li>
-                <li><strong>무료 플랜:</strong> 가입 시 50크레딧 + 매월 30크레딧 + 일일 보너스</li>
+                <li><strong>무료 플랜:</strong> 가입 시 20크레딧 + 매월 10크레딧 + 매일 출석 5크레딧</li>
               </ul>
             </li>
             <li>결제는 카카오페이, 토스페이먼츠 등 회사가 지정한 결제 수단을 통해 이루어집니다.</li>
