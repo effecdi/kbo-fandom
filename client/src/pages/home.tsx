@@ -784,7 +784,7 @@ export default function HomePage() {
                 <div className="mb-2">
                   <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black tracking-tight">₩19,900</span>
+                    <span className="text-4xl font-black tracking-tight">₩29,900</span>
                     <span className="text-sm text-primary-foreground/70">/월</span>
                   </div>
                   <p className="mt-2 text-xs text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
