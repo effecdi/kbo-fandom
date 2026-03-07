@@ -81,7 +81,7 @@ export async function registerRoutes(
 
       const canGenerate = await storage.deductCredit(userId);
       if (!canGenerate) {
-        return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       const imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
@@ -140,7 +140,7 @@ export async function registerRoutes(
 
       const canGenerate = await storage.deductCredit(userId);
       if (!canGenerate) {
-        return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       const imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
@@ -193,7 +193,7 @@ export async function registerRoutes(
 
       const canGenerate = await storage.deductCredit(userId);
       if (!canGenerate) {
-        return res.status(403).json({ message: "이번 달의 무료 생성 횟수를 모두 사용했습니다. 다음 달에 다시 시도해주세요." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       const imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);

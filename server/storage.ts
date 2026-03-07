@@ -291,7 +291,9 @@ export class DatabaseStorage implements IStorage {
         updates.bubbleUsesToday = 0;
         updates.storyUsesToday = 0;
         updates.lastResetAt = now;
-        if (existing.tier === "free") {
+        if (existing.tier === "pro") {
+          updates.credits = 200;
+        } else {
           updates.credits = 10;
         }
       }
@@ -331,13 +333,13 @@ export class DatabaseStorage implements IStorage {
 
     try {
       const [created] = await db.insert(userCredits)
-        .values({ userId, credits: 50, tier: "free" })
+        .values({ userId, credits: 20, tier: "free" })
         .returning();
       return created;
     } catch {
       // Fallback: if insert fails with new default, try legacy
       const [created] = await db.insert(userCredits)
-        .values({ userId, credits: 50, tier: "free" } as any)
+        .values({ userId, credits: 20, tier: "free" } as any)
         .returning();
       return { ...created, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
     }
@@ -349,7 +351,6 @@ export class DatabaseStorage implements IStorage {
 
   async deductCredit(userId: string): Promise<boolean> {
     const credits = await this.ensureUserCredits(userId);
-    if (credits.tier === "pro") return true;
 
     const db = this.getDb();
     // Deduct daily bonus credits first, then regular credits
@@ -397,8 +398,12 @@ export class DatabaseStorage implements IStorage {
   async updateUserTier(userId: string, tier: string): Promise<UserCredits> {
     await this.ensureUserCredits(userId);
     const db = this.getDb();
+    const updates: any = { tier };
+    if (tier === "pro") {
+      updates.credits = 200;
+    }
     const [updated] = await db.update(userCredits)
-      .set({ tier })
+      .set(updates)
       .where(eq(userCredits.userId, userId))
       .returning();
     return updated;

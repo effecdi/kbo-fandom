@@ -6697,12 +6697,13 @@ export default function StoryPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="justify-start opacity-50 cursor-not-allowed"
-                          disabled
+                          className="justify-start"
+                          onClick={() => {
+                            setAiMode("autoWebtoon");
+                          }}
                         >
                           <Wand2 className="h-4 w-4 mr-2" />
                           자동화툰 멀티컷 생성
-                          <span className="ml-auto text-[10px] text-muted-foreground">준비중</span>
                         </Button>
                       </div>
 
