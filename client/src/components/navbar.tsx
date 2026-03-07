@@ -164,7 +164,7 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Badge variant="secondary" data-testid="badge-credits" className="gap-1 bg-primary/10 text-primary border-primary/20 cursor-pointer">
                   <Sparkles className="h-3 w-3" />
-                  {credits.tier === "pro" ? "Unlimited" : `${(credits.credits ?? 0) + (credits.dailyBonusCredits ?? 0)} credits`}
+                  {`${(credits.credits ?? 0) + (credits.dailyBonusCredits ?? 0)} credits`}
                   <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
                 </Badge>
               </DropdownMenuTrigger>

@@ -76,7 +76,7 @@ export default function TermsPage() {
             <li>서비스의 기본 이용은 무료이며, 일부 기능은 크레딧 또는 Pro 구독이 필요합니다.</li>
             <li>유료 서비스의 요금 및 결제 방법은 서비스 내 요금 안내 페이지에 별도로 게시합니다.
               <ul className="list-disc pl-6 space-y-1 mt-1">
-                <li><strong>Pro 구독:</strong> 월 19,900원 (무제한 생성)</li>
+                <li><strong>Pro 구독:</strong> 월 29,900원 (무제한 생성)</li>
                 <li><strong>크레딧 구매:</strong> 50크레딧 / 4,900원</li>
                 <li><strong>무료 플랜:</strong> 가입 시 50크레딧 + 매월 30크레딧 + 일일 보너스</li>
               </ul>

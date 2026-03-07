@@ -74,7 +74,7 @@ export default function PricingPage() {
 
     const productType = pendingProductType;
     const merchantUid = `${productType}_${Date.now()}`;
-    const amount = productType === "pro" ? 19900 : 4900;
+    const amount = productType === "pro" ? 29900 : 4900;
     const name = productType === "pro" ? "OLLI Pro 멤버십 (월간)" : "OLLI 크레딧 50개";
 
     window.IMP.init(import.meta.env.VITE_PORTONE_MERCHANT_ID || "imp00000000");
@@ -157,7 +157,7 @@ export default function PricingPage() {
     },
     {
       name: "Pro",
-      price: "₩19,900",
+      price: "₩29,900",
       period: "/월",
       description: "본격적인 크리에이터를 위한 플랜",
       icon: Zap,

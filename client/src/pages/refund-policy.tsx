@@ -23,7 +23,7 @@ export default function RefundPolicyPage() {
           <h2 className="text-xl font-semibold mt-8 mb-3">제1조 (적용 범위)</h2>
           <p>본 환불 정책은 회사가 제공하는 다음 유료 상품에 적용됩니다.</p>
           <ul className="list-disc pl-6 space-y-1 mt-2">
-            <li><strong>Pro 구독:</strong> 월 19,900원 (무제한 AI 이미지 생성)</li>
+            <li><strong>Pro 구독:</strong> 월 29,900원 (무제한 AI 이미지 생성)</li>
             <li><strong>크레딧 구매:</strong> 50크레딧 / 4,900원</li>
           </ul>
         </section>

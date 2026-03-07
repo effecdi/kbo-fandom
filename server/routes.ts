@@ -15,7 +15,7 @@ import {
 
 // Product prices (must match client-side pricing)
 const PRODUCT_PRICES = {
-  pro: 19900,
+  pro: 29900,
   credits: 4900,
 } as const;
 
