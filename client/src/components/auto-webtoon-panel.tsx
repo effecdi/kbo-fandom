@@ -318,7 +318,7 @@ export function AutoWebtoonPanel({
     setStep(3);
 
     const results = [...initial];
-    const BATCH_SIZE = 5;
+    const BATCH_SIZE = 3;
 
     for (let batchStart = 0; batchStart < total; batchStart += BATCH_SIZE) {
       const batchEnd = Math.min(batchStart + BATCH_SIZE, total);
@@ -382,7 +382,7 @@ export function AutoWebtoonPanel({
     }
     setCutResults([...results]);
 
-    const BATCH_SIZE = 5;
+    const BATCH_SIZE = 3;
     for (let i = 0; i < failedIndices.length; i += BATCH_SIZE) {
       const batch = failedIndices.slice(i, i + BATCH_SIZE);
       const promises = batch.map(async (idx) => {
@@ -414,8 +414,18 @@ export function AutoWebtoonPanel({
   };
 
   // Build panels and apply to editor
-  const applyToEditor = () => {
+  const applyToEditor = async () => {
     const panels: GeneratedPanelData[] = [];
+
+    // Helper: load image and return HTMLImageElement with natural dimensions
+    const loadImage = (url: string): Promise<HTMLImageElement> =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+      });
 
     for (let canvasIdx = 0; canvasIdx < canvasCount; canvasIdx++) {
       const cutStart = canvasIdx * cutsPerCanvas;
@@ -428,15 +438,27 @@ export function AutoWebtoonPanel({
         const r = cutResults[cutStart + ci];
         if (r.status === "done" && r.imageUrl) {
           const region = regions[ci];
+          // Pre-load image to calculate proper scale to fit within cut region
+          let scale = 1;
+          let imageEl: HTMLImageElement | null = null;
+          try {
+            imageEl = await loadImage(r.imageUrl);
+            scale = Math.min(
+              region.width / imageEl.naturalWidth,
+              region.height / imageEl.naturalHeight,
+            );
+          } catch {
+            scale = Math.min(region.width / 1024, region.height / 1024);
+          }
           characters.push({
             id: Math.random().toString(36).slice(2, 10),
             imageUrl: r.imageUrl,
             x: region.x + region.width / 2,
             y: region.y + region.height / 2,
-            scale: 1,
+            scale,
             width: region.width,
             height: region.height,
-            imageEl: null,
+            imageEl,
             zIndex: ci,
           });
         }
