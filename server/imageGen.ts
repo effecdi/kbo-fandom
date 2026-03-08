@@ -571,11 +571,13 @@ export async function generateWithBackground(
   sourceImageDataList: string[] | undefined,
   backgroundPrompt: string,
   itemsPrompt?: string,
-  noBackground?: boolean
+  noBackground?: boolean,
+  aspectRatio?: string
 ): Promise<string> {
   // 한국어 프롬프트를 영어로 번역
   const translatedBgPrompt = await translateToEnglish(backgroundPrompt, ai);
   const translatedItemsPrompt = itemsPrompt ? await translateToEnglish(itemsPrompt, ai) : undefined;
+  const arInstruction = aspectRatio || "3:4 portrait";
 
   const parts: any[] = [];
   const images = sourceImageDataList ?? [];
@@ -607,7 +609,7 @@ CRITICAL RULES:
 Scene action: ${translatedBgPrompt}
 ${itemsInstruction}
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+IMPORTANT: Generate the image in ${arInstruction} aspect ratio. The image MUST completely fill the canvas in this exact ratio.
 IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
 
 Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
@@ -631,7 +633,7 @@ CRITICAL RULES:
 Scene action: ${translatedBgPrompt}
 ${itemsInstruction}
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+IMPORTANT: Generate the image in ${arInstruction} aspect ratio. The image MUST completely fill the canvas in this exact ratio.
 IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
 
 Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
@@ -654,7 +656,7 @@ CRITICAL RULES:
 Scene action: ${translatedBgPrompt}
 ${itemsInstruction}
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+IMPORTANT: Generate the image in ${arInstruction} aspect ratio. The image MUST completely fill the canvas in this exact ratio.
 IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
 
 Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`

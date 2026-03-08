@@ -329,6 +329,7 @@ export function AutoWebtoonPanel({
       }
       setCutResults([...results]);
 
+      const regions = getCutRegions(cutsPerCanvas);
       const promises = batchIndices.map(async (idx) => {
         const scene = scenes[idx];
         const styleKeyword = ART_STYLES[selectedStyle]?.promptKeyword || "";
@@ -336,12 +337,21 @@ export function AutoWebtoonPanel({
         const cleanDesc = scene.sceneDescription.replace(/,?\s*simple line art,?\s*webtoon style/gi, "").trim();
         const sceneDesc = [styleKeyword, cleanDesc].filter(Boolean).join(", ");
 
+        // 컷 영역의 실제 비율 계산
+        const cutIdx = idx % cutsPerCanvas;
+        const region = regions[cutIdx];
+        const isLandscape = region.width > region.height;
+        const ratio = isLandscape
+          ? `${Math.round(region.width / region.height * 10) / 10}:1 landscape`
+          : `${Math.round(region.height / region.width * 10) / 10}:1 portrait`;
+
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
           const res = await apiRequest("POST", "/api/generate-background", {
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
             backgroundPrompt: sceneDesc,
             noBackground: true,
+            aspectRatio: ratio,
           });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");
@@ -391,11 +401,19 @@ export function AutoWebtoonPanel({
     const BATCH_SIZE = 3;
     for (let i = 0; i < failedIndices.length; i += BATCH_SIZE) {
       const batch = failedIndices.slice(i, i + BATCH_SIZE);
+      const regions = getCutRegions(cutsPerCanvas);
       const promises = batch.map(async (idx) => {
         const scene = scenes[idx];
         const styleKeyword = ART_STYLES[selectedStyle]?.promptKeyword || "";
         const cleanDesc = scene.sceneDescription.replace(/,?\s*simple line art,?\s*webtoon style/gi, "").trim();
         const sceneDesc = [styleKeyword, cleanDesc].filter(Boolean).join(", ");
+
+        const cutIdx = idx % cutsPerCanvas;
+        const region = regions[cutIdx];
+        const isLandscape = region.width > region.height;
+        const ratio = isLandscape
+          ? `${Math.round(region.width / region.height * 10) / 10}:1 landscape`
+          : `${Math.round(region.height / region.width * 10) / 10}:1 portrait`;
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
@@ -403,6 +421,7 @@ export function AutoWebtoonPanel({
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
             backgroundPrompt: sceneDesc,
             noBackground: true,
+            aspectRatio: ratio,
           });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");

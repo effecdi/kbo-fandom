@@ -5,8 +5,8 @@
 
 const CANVAS_W = 450;
 const CANVAS_H = 600;
-const PAD = 20;       // 캔버스 가장자리 여백
-const GAP = 8;        // 컷 사이 간격
+const PAD = 12;       // 캔버스 가장자리 여백
+const GAP = 12;       // 컷 사이 간격
 const BORDER_W = 3;   // 컷 보더 두께
 
 export interface CutRegion {
@@ -19,8 +19,8 @@ export interface CutRegion {
 /**
  * 캔버스 내 컷 영역 배열 반환 (12px padding, 12px gap)
  *   1컷: 전체 (패딩 포함)
- *   2컷: 상/하 분할
- *   3컷: 상단 좌/우 + 하단 전체
+ *   2컷: 2×1 그리드 (상/하 균등)
+ *   3컷: 2×2 그리드 (좌상, 우상, 좌하) — 모든 셀 동일 크기
  *   4컷: 2×2 그리드
  */
 export function getCutRegions(cutsPerCanvas: number): CutRegion[] {
@@ -31,20 +31,19 @@ export function getCutRegions(cutsPerCanvas: number): CutRegion[] {
     case 1:
       return [{ x: PAD, y: PAD, width: contentW, height: contentH }];
     case 2: {
-      const h = (contentH - GAP) / 2;
+      const rowH = (contentH - GAP) / 2;
       return [
-        { x: PAD, y: PAD, width: contentW, height: h },
-        { x: PAD, y: PAD + h + GAP, width: contentW, height: h },
+        { x: PAD, y: PAD, width: contentW, height: rowH },
+        { x: PAD, y: PAD + rowH + GAP, width: contentW, height: rowH },
       ];
     }
     case 3: {
-      const topH = Math.round((contentH - GAP) * 0.45);
-      const botH = contentH - GAP - topH;
       const colW = (contentW - GAP) / 2;
+      const rowH = (contentH - GAP) / 2;
       return [
-        { x: PAD, y: PAD, width: colW, height: topH },
-        { x: PAD + colW + GAP, y: PAD, width: colW, height: topH },
-        { x: PAD, y: PAD + topH + GAP, width: contentW, height: botH },
+        { x: PAD, y: PAD, width: colW, height: rowH },
+        { x: PAD + colW + GAP, y: PAD, width: colW, height: rowH },
+        { x: PAD, y: PAD + rowH + GAP, width: contentW, height: rowH },
       ];
     }
     case 4: {

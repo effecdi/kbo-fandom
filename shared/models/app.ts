@@ -105,6 +105,7 @@ export const generateBackgroundSchema = z.object({
   itemsPrompt: z.string().optional(),
   characterIds: z.array(z.number()).optional(),
   noBackground: z.boolean().optional(),
+  aspectRatio: z.string().optional(),
 });
 
 export const removeBackgroundSchema = z.object({

@@ -865,8 +865,10 @@ function getElementBoundingBox(
     return { x: el.x, y: el.y, w: el.width, h: el.height };
   }
   if (type === "char") {
-    const cw = el.imageEl ? el.imageEl.naturalWidth * el.scale : 80;
-    const ch = el.imageEl ? el.imageEl.naturalHeight * el.scale : 80;
+    const rawW = el.imageEl ? el.imageEl.naturalWidth * el.scale : 80;
+    const rawH = el.imageEl ? el.imageEl.naturalHeight * el.scale : 80;
+    const cw = (el.width && el.height && (rawW > el.width + 1 || rawH > el.height + 1)) ? el.width : rawW;
+    const ch = (el.width && el.height && (rawW > el.width + 1 || rawH > el.height + 1)) ? el.height : rawH;
     return { x: el.x - cw / 2, y: el.y - ch / 2, w: cw, h: ch };
   }
   if (type === "text") {
@@ -1402,31 +1404,40 @@ function PanelCanvas({
         if (ch.imageEl instanceof HTMLImageElement) {
           const w = ch.imageEl.naturalWidth * ch.scale;
           const h = ch.imageEl.naturalHeight * ch.scale;
+          const hasClip = ch.width && ch.height && (w > ch.width + 1 || h > ch.height + 1);
           ctx.save();
+          if (hasClip) {
+            // Clip to the cut region so cover-fit images don't overflow
+            ctx.beginPath();
+            ctx.rect(ch.x - ch.width! / 2, ch.y - ch.height! / 2, ch.width!, ch.height!);
+            ctx.clip();
+          }
           ctx.translate(ch.x, ch.y);
           ctx.rotate(ch.rotation || 0);
           if (ch.flipX) ctx.scale(-1, 1);
           ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
           ctx.restore();
 
-          // Selection indicator for selected character
+          // Selection indicator for selected character — use clip dimensions if available
+          const displayW = hasClip ? ch.width! : w;
+          const displayH = hasClip ? ch.height! : h;
           if (ch.id === selectedCharIdRef.current) {
-            const cx = ch.x - w / 2;
-            const cy = ch.y - h / 2;
+            const cx = ch.x - displayW / 2;
+            const cy = ch.y - displayH / 2;
             ctx.save();
             ctx.globalAlpha = 1;
             ctx.strokeStyle = HANDLE_COLOR;
             ctx.lineWidth = 1.5;
             ctx.setLineDash([5, 4]);
-            ctx.strokeRect(cx - 3, cy - 3, w + 6, h + 6);
+            ctx.strokeRect(cx - 3, cy - 3, displayW + 6, displayH + 6);
             ctx.setLineDash([]);
 
             const handleSize = 8;
             const corners = [
               { x: cx - handleSize / 2, y: cy - handleSize / 2 },
-              { x: cx + w - handleSize / 2, y: cy - handleSize / 2 },
-              { x: cx - handleSize / 2, y: cy + h - handleSize / 2 },
-              { x: cx + w - handleSize / 2, y: cy + h - handleSize / 2 },
+              { x: cx + displayW - handleSize / 2, y: cy - handleSize / 2 },
+              { x: cx - handleSize / 2, y: cy + displayH - handleSize / 2 },
+              { x: cx + displayW - handleSize / 2, y: cy + displayH - handleSize / 2 },
             ];
             corners.forEach((c) => {
               ctx.beginPath();
