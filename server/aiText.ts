@@ -453,12 +453,15 @@ ${prevContext}
 → 주제와 무관한 내용, 뜬금없는 전개 금지.
 
 ■ 장면 묘사 (sceneDescription) — 영어, 이미지 AI용:
-- 구체적이고 시각적으로 묘사: 캐릭터의 표정, 포즈, 행동, 배경, 소품을 모두 포함
+- 캐릭터의 행동, 표정, 포즈만 구체적으로 묘사
+- 배경/환경/장소/가구/방 묘사를 절대 포함하지 마세요 (배경은 별도 처리됨)
+- "simple line art, webtoon style, white background, no background" 키워드 반드시 포함
+- 캐릭터 외형 설명을 모든 컷에서 동일하게 유지 (일관성 중요)
 - 감정이 눈에 보이게: "sweating heavily, looking panicked with wide eyes" / "confident smile, pushing up glasses"
 - 구도 지정: "Close up", "full body", "from behind" 등
-- "simple line art, flat pastel colors" 키워드 포함
-- 좋은 예: "A 30s female character with wavy brown hair, sitting at desk holding graphic tablet pen, sweating heavily, looking panicked with wide eyes, struggling, simple line art, flat pastel colors"
-- 나쁜 예: "A character standing, simple line art" (너무 모호)
+- 좋은 예: "A 30s female character with wavy brown hair and round glasses, holding graphic tablet pen, sweating heavily, looking panicked with wide eyes, simple line art, webtoon style, white background, no background"
+- 나쁜 예: "A character standing in a modern office, simple line art" (배경 묘사 포함 — 금지)
+- 모든 컷에서 캐릭터 외형(색상, 의상, 특징)을 동일하게 설명하여 일관성 유지
 
 ■ 한국어 텍스트 — 진짜 사람이 쓴 것처럼:
 - narrativeText: 상황 설명, 시간, 독백, 감정 부연 (5~40자). 없으면 "".

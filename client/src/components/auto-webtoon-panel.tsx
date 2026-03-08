@@ -338,11 +338,10 @@ export function AutoWebtoonPanel({
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
-          // 자동 웹툰 전용 API 사용 (스토리 주제 컨텍스트 전달)
-          const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
-            sceneDescription: sceneDesc,
-            storyContext: storyPrompt,
+          const res = await apiRequest("POST", "/api/generate-background", {
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
+            backgroundPrompt: sceneDesc,
+            noBackground: true,
           });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");
@@ -400,10 +399,10 @@ export function AutoWebtoonPanel({
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
-          const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
-            sceneDescription: sceneDesc,
-            storyContext: storyPrompt,
+          const res = await apiRequest("POST", "/api/generate-background", {
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
+            backgroundPrompt: sceneDesc,
+            noBackground: true,
           });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");

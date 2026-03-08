@@ -570,7 +570,8 @@ Keep the character identical to the reference. Only change the pose. Single char
 export async function generateWithBackground(
   sourceImageDataList: string[] | undefined,
   backgroundPrompt: string,
-  itemsPrompt?: string
+  itemsPrompt?: string,
+  noBackground?: boolean
 ): Promise<string> {
   // 한국어 프롬프트를 영어로 번역
   const translatedBgPrompt = await translateToEnglish(backgroundPrompt, ai);
@@ -585,7 +586,81 @@ export async function generateWithBackground(
     ? `Also add these items/props around or with the characters: ${translatedItemsPrompt}.`
     : "";
 
-  if (!hasImages) {
+  // 자동화툰 멀티컷용: 배경 없이 캐릭터/아이템만 생성
+  if (noBackground) {
+    if (!hasImages) {
+      parts.push({
+        text: `Generate a character illustration for the following scene description.
+
+${noTextRule}
+
+CRITICAL RULES:
+- Do NOT draw any background, scenery, room, furniture, or environment
+- The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
+- Draw ONLY the characters and essential props/items they are holding or interacting with
+- Draw in a very simple, cute Korean Instagram webtoon (instatoon) style
+- Use thick clean outlines and minimal flat colors
+- Keep the same consistent art style across all images
+- Characters should be drawn large, filling most of the image area
+- Center the characters in the image
+
+Scene action: ${translatedBgPrompt}
+${itemsInstruction}
+
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
+
+Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
+      });
+    } else if (isMulti) {
+      parts.push({
+        text: `Take these ${images.length} character images and draw them together performing the described action.
+
+${noTextRule}
+
+CRITICAL RULES:
+- Keep each character looking EXACTLY the same as their reference - same style, same features, same colors, same proportions
+- Do NOT draw any background, scenery, room, furniture, or environment
+- The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
+- Draw ONLY the characters and essential props/items they are holding or interacting with
+- All ${images.length} characters should appear together
+- Characters should be drawn large, filling most of the image area
+- Keep the overall style ultra-simple and cute with thick clean outlines and flat colors
+- Maintain consistent style across all generated images
+
+Scene action: ${translatedBgPrompt}
+${itemsInstruction}
+
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
+
+Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
+      });
+    } else {
+      parts.push({
+        text: `Take this character image and draw the character performing the described action.
+
+${noTextRule}
+
+CRITICAL RULES:
+- Keep the character looking EXACTLY the same - same style, same features, same colors, same proportions
+- Do NOT draw any background, scenery, room, furniture, or environment
+- The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
+- Draw ONLY the character and essential props/items they are holding or interacting with
+- The character should be drawn large, filling most of the image area
+- Keep the overall style ultra-simple and cute with thick clean outlines and flat colors
+- Maintain consistent style across all generated images
+
+Scene action: ${translatedBgPrompt}
+${itemsInstruction}
+
+IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
+
+Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
+      });
+    }
+  } else if (!hasImages) {
     // 캐릭터 이미지 없이 배경/장면만 생성
     parts.push({
       text: `Generate an illustration for the following scene.

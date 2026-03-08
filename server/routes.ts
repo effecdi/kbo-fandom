@@ -183,7 +183,7 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
-      const { sourceImageDataList, backgroundPrompt, itemsPrompt, characterIds } = parsed.data;
+      const { sourceImageDataList, backgroundPrompt, itemsPrompt, characterIds, noBackground } = parsed.data;
 
       // 모든 캐릭터 소유권 검증
       if (characterIds && characterIds.length > 0) {
@@ -203,7 +203,7 @@ export async function registerRoutes(
         return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
-      let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt);
+      let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt, noBackground);
       const credits = await storage.getUserCredits(userId);
       if (credits.tier !== "pro") {
         imageDataUrl = await applyWatermark(imageDataUrl);

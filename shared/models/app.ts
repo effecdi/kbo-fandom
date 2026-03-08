@@ -104,6 +104,7 @@ export const generateBackgroundSchema = z.object({
   backgroundPrompt: z.string().min(3, "Background description must be at least 3 characters"),
   itemsPrompt: z.string().optional(),
   characterIds: z.array(z.number()).optional(),
+  noBackground: z.boolean().optional(),
 });
 
 export const removeBackgroundSchema = z.object({
