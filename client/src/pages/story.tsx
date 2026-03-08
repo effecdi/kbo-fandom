@@ -362,7 +362,7 @@ function createBubble(
   canvasW: number,
   canvasH: number,
   text = "",
-  style: BubbleStyle = "handwritten",
+  style: BubbleStyle = "linedrawing",
 ): SpeechBubble {
   return {
     id: generateId(),
@@ -3933,7 +3933,7 @@ export default function StoryPage() {
               CANVAS_W,
               CANVAS_H,
               b.text,
-              (b.style as BubbleStyle) || "handwritten",
+              (b.style as BubbleStyle) || "linedrawing",
             );
             const coords = getBubblePosition(b.position, bi);
             let tailDirection: "top" | "bottom" | "left" | "right" = "bottom";
