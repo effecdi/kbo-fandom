@@ -362,7 +362,14 @@ export function AutoWebtoonPanel({
       await Promise.allSettled(promises);
       setCutResults([...results]);
 
-      if (results.some((r) => r.error?.includes("403"))) break;
+      if (results.some((r) => r.error?.includes("403"))) {
+        toast({
+          title: "크레딧 부족",
+          description: "크레딧이 부족합니다. 크레딧을 충전해주세요.",
+          variant: "destructive",
+        });
+        break;
+      }
     }
 
     setIsGenerating(false);
@@ -407,6 +414,15 @@ export function AutoWebtoonPanel({
       });
       await Promise.allSettled(promises);
       setCutResults([...results]);
+
+      if (results.some((r) => r.error?.includes("403"))) {
+        toast({
+          title: "크레딧 부족",
+          description: "크레딧이 부족합니다. 크레딧을 충전해주세요.",
+          variant: "destructive",
+        });
+        break;
+      }
     }
 
     setIsGenerating(false);
