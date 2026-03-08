@@ -9934,59 +9934,15 @@ export default function StoryPage() {
                       isPro={isPro}
                     />
                   )}
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel defaultSize={50} minSize={20}>
-                  <div className="h-full flex flex-col">
-                    {/* Add buttons - Bubble 화면과 동일 */}
-                    <div className="p-2 border-b border-border">
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                          onClick={() => guard(() => {
-                            setElementsSubTab("bubble");
-                            setActiveLeftTab("elements");
-                          })}
-                        >
-                          <MessageSquare className="h-3 w-3" />
-                          말풍선
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                          onClick={() => guard(() => {
-                            setActiveLeftTab("image");
-                          })}
-                        >
-                          <ImagePlus className="h-3 w-3" />
-                          캐릭터
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
-                          onClick={() => guard(() => {
-                            setElementsSubTab("template");
-                            setActiveLeftTab("elements");
-                          })}
-                        >
-                          <Type className="h-3 w-3" />
-                          템플릿
-                        </Button>
-                      </div>
-                    </div>
 
                     {/* Compact script editor — shown when script is selected regardless of left tab */}
-                    {selectedScriptPosition && (() => {
+                    {selectedScriptPosition && !(activeLeftTab === "elements" && elementsSubTab === "script") && (() => {
                       const scriptKey = selectedScriptPosition === "top" ? "topScript" : "bottomScript";
                       const sd = activePanel[scriptKey];
                       if (!sd) return null;
                       const isTop = selectedScriptPosition === "top";
                       return (
-                        <div className="p-2 border-b border-border space-y-1.5">
+                        <div className="p-2 border-t border-border space-y-1.5 overflow-y-auto">
                           <div className="flex items-center gap-1.5">
                             <Badge variant="secondary" className={`text-[10px] shrink-0 ${isTop ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-400" : "bg-sky-400/20 text-sky-700 dark:text-sky-400"}`}>
                               {isTop ? "상단" : "하단"}
@@ -10088,6 +10044,50 @@ export default function StoryPage() {
                         </div>
                       );
                     })()}
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={50} minSize={20}>
+                  <div className="h-full flex flex-col">
+                    {/* Add buttons - Bubble 화면과 동일 */}
+                    <div className="p-2 border-b border-border">
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          onClick={() => guard(() => {
+                            setElementsSubTab("bubble");
+                            setActiveLeftTab("elements");
+                          })}
+                        >
+                          <MessageSquare className="h-3 w-3" />
+                          말풍선
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          onClick={() => guard(() => {
+                            setActiveLeftTab("image");
+                          })}
+                        >
+                          <ImagePlus className="h-3 w-3" />
+                          캐릭터
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          onClick={() => guard(() => {
+                            setElementsSubTab("template");
+                            setActiveLeftTab("elements");
+                          })}
+                        >
+                          <Type className="h-3 w-3" />
+                          템플릿
+                        </Button>
+                      </div>
+                    </div>
 
                     <div className="flex-1 overflow-hidden">
                   <LayerListPanel
