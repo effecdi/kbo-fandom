@@ -438,17 +438,17 @@ export function AutoWebtoonPanel({
         const r = cutResults[cutStart + ci];
         if (r.status === "done" && r.imageUrl) {
           const region = regions[ci];
-          // Pre-load image to calculate proper scale to fit within cut region
+          // Pre-load image to calculate proper scale to fill cut region (cover)
           let scale = 1;
           let imageEl: HTMLImageElement | null = null;
           try {
             imageEl = await loadImage(r.imageUrl);
-            scale = Math.min(
+            scale = Math.max(
               region.width / imageEl.naturalWidth,
               region.height / imageEl.naturalHeight,
             );
           } catch {
-            scale = Math.min(region.width / 1024, region.height / 1024);
+            scale = Math.max(region.width / 1024, region.height / 1024);
           }
           characters.push({
             id: Math.random().toString(36).slice(2, 10),
@@ -494,45 +494,10 @@ export function AutoWebtoonPanel({
         }
       }
 
-      // Use narrativeText: single-cut → topScript, multi-cut → combine first scene's narrativeText as top, last as bottom
-      let topScript = null;
-      let bottomScript = null;
-      if (cutsPerCanvas === 1) {
-        if (scenes[cutStart]?.narrativeText) {
-          topScript = {
-            text: scenes[cutStart].narrativeText,
-            style: "default",
-            color: "#000000",
-            visible: true,
-          };
-        }
-      } else {
-        // Multi-cut: first scene's narrativeText → topScript, last scene's → bottomScript
-        const firstScene = scenes[cutStart];
-        const lastIdx = Math.min(cutStart + cutsPerCanvas - 1, scenes.length - 1);
-        const lastScene = scenes[lastIdx];
-        if (firstScene?.narrativeText) {
-          topScript = {
-            text: firstScene.narrativeText,
-            style: "default",
-            color: "#000000",
-            visible: true,
-          };
-        }
-        if (lastScene?.narrativeText && lastIdx !== cutStart) {
-          bottomScript = {
-            text: lastScene.narrativeText,
-            style: "default",
-            color: "#000000",
-            visible: true,
-          };
-        }
-      }
-
       panels.push({
         id: Math.random().toString(36).slice(2, 10),
-        topScript,
-        bottomScript,
+        topScript: null,
+        bottomScript: null,
         bubbles,
         characters,
         textElements: [],

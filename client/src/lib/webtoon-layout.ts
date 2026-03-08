@@ -5,8 +5,8 @@
 
 const CANVAS_W = 450;
 const CANVAS_H = 600;
-const PAD = 12;       // 캔버스 가장자리 패딩
-const GAP = 12;       // 컷 사이 간격
+const PAD = 0;        // 캔버스 가장자리 패딩 없음 (전체 캔버스 사용)
+const GAP = 8;        // 컷 사이 간격
 const BORDER_W = 3;   // 컷 보더 두께
 
 export interface CutRegion {
