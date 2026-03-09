@@ -452,35 +452,54 @@ ${prevContext}
 → 모든 장면이 "${storyPrompt}" 주제에서 벗어나면 절대 안 됩니다.
 → 주제와 무관한 내용, 뜬금없는 전개 금지.
 
-■ 장면 묘사 (sceneDescription) — 영어, 이미지 AI용:
+■ 장면 묘사 (sceneDescription) — 한국어:
 - 캐릭터의 행동, 표정, 포즈만 구체적으로 묘사
 - 배경/환경/장소/가구/방 묘사를 절대 포함하지 마세요 (배경은 별도 처리됨)
-- "simple line art, webtoon style, white background, no background" 키워드 반드시 포함
-- 캐릭터 외형 설명을 모든 컷에서 동일하게 유지 (일관성 중요)
-- 감정이 눈에 보이게: "sweating heavily, looking panicked with wide eyes" / "confident smile, pushing up glasses"
-- 구도 지정: "Close up", "full body", "from behind" 등
-- 좋은 예: "A 30s female character with wavy brown hair and round glasses, holding graphic tablet pen, sweating heavily, looking panicked with wide eyes, simple line art, webtoon style, white background, no background"
-- 나쁜 예: "A character standing in a modern office, simple line art" (배경 묘사 포함 — 금지)
-- 모든 컷에서 캐릭터 외형(색상, 의상, 특징)을 동일하게 설명하여 일관성 유지
+- ★★★ 캐릭터 외형(머리색, 머리 스타일, 옷, 안경 등)을 sceneDescription에 절대 쓰지 마세요! 외형은 레퍼런스 이미지에서 가져옵니다. 행동/표정/포즈/구도만 쓰세요.
+- 좋은 예: "캐릭터, 그래픽 태블릿 펜을 들고 땀을 뻘뻘 흘리며 눈이 휘둥그레진 표정"
+- 나쁜 예: "30대 여성, 갈색 웨이브 머리에 둥근 안경을 쓴 캐릭터" (외형 묘사 포함 — 금지!)
+- 나쁜 예: "캐릭터가 모던한 사무실에 서있다" (배경 묘사 포함 — 금지)
+- 감정이 눈에 보이게: "땀을 뻘뻘 흘리며 눈이 휘둥그레진 표정" / "자신감 넘치는 미소로 안경을 밀어 올리며"
+- 구도 지정: "클로즈업", "전신", "뒷모습" 등
+- 각 컷이 주제 "${storyPrompt}"와 어떻게 연결되는지 명확해야 합니다
+
+■ 핸드폰/SNS 장면 연출 (매우 중요!):
+주제에 카카오톡, 인스타그램, 문자, DM, SNS, 메신저, 핸드폰 사용 등이 포함되면:
+- 해당 컷의 sceneDescription에 반드시 "핸드폰 화면이 크게 보이는 구도" 또는 "핸드폰을 들고 화면을 보여주는 구도"를 포함
+- 핵심 메시지/대화 내용이 중요한 컷은: "핸드폰 화면 클로즈업, 채팅창에 메시지가 보이는 구도" 처럼 화면만 보여주기
+- 캐릭터가 핸드폰을 보는 장면은: "캐릭터가 핸드폰을 들고 화면을 보며 [표정] 표정, 핸드폰 화면이 함께 보이는 구도"
+- 예시: "여성 캐릭터, 침대에 엎드려 핸드폰을 들고 채팅창을 보며 설레는 미소, 핸드폰 화면에 하트 이모지 채팅이 보임"
+- 예시: "핸드폰 화면 클로즈업, 인스타그램 DM 알림이 떠있는 화면, 하트 반응과 메시지가 보임"
+- 예시: "캐릭터 옆에 핸드폰 화면이 크게 떠있는 구도, 카카오톡 채팅방에 읽씹당한 메시지가 보임"
 
 ■ 한국어 텍스트 — 진짜 사람이 쓴 것처럼:
 - narrativeText: 상황 설명, 시간, 독백, 감정 부연 (5~40자). 없으면 "".
   좋은 예: "프리랜서 디자이너 겸 퍼블리셔 9년 차.", "포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.", "...는 무슨."
-- bubbleText: 캐릭터 대사 (5~40자). 성격과 감정이 묻어나야 함. 없으면 "".
+- bubbleText: 캐릭터 대사 (5~40자). 반드시 모든 컷에 대사를 넣으세요! 빈 문자열 "" 금지!
+  성격과 감정이 묻어나야 함. 캐릭터가 말하거나, 생각하거나, 독백하는 내용을 반드시 작성.
+  핸드폰 화면 클로즈업 컷이라도 캐릭터 반응 대사를 넣으세요.
   좋은 예: "디자인? 코딩? 훗, 까이꺼 다 할 수 있지!", "나... 디자인만 할 줄 아는 똥손이었네...", "아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!"
-- 감정 태그 활용: "(두근두근)", "(동공 지진)", "(멘붕)", "(현실 부정)"
+- 괄호 감정 태그 절대 금지: "(두근두근)", "(동공 지진)", "(멘붕)", "(흐믓)" 같은 괄호 표현을 대사에 넣지 마세요
 - 서술체/광고체 절대 금지. SNS에 올릴 법한 말투로.
 - AI가 쓴 티 나면 실패.
 
 ■ 참고 예시 (주제: "답답해서 직접 만든 9년 차 디자이너의 AI 인스타툰 생존기", 7컷):
 {"scenes":[
-{"sceneDescription":"A 30s female character with wavy brown hair and round glasses, sitting at modern desk with multiple monitors, rapidly typing on keyboard, smiling confidently, professional freelancer vibe, simple line art, flat pastel colors","narrativeText":"프리랜서 디자이너 겸 퍼블리셔 9년 차.","bubbleText":"디자인? 코딩? 훗, 까이꺼 다 할 수 있지!"},
-{"sceneDescription":"A 30s female character lying comfortably on cozy living room sofa, eating tangerine, looking relaxed and happy, dreaming face, simple line art, flat pastel colors","narrativeText":"작년 12월 프로젝트 종료! 결혼 3개월 차 새댁에게 찾아온 달콤한 잉여 시간.","bubbleText":"좋아, 남는 시간에 나도 요즘 대세라는 인스타툰이나 그려볼까? (두근두근)"},
-{"sceneDescription":"A 30s female character sitting at desk holding graphic tablet pen, sweating heavily, looking panicked with wide eyes, struggling, simple line art, flat pastel colors","narrativeText":"...는 무슨.","bubbleText":"잠깐, 팔이 어떻게 꺾이는 거지? 우는 표정은 어떻게 그려?! (동공 지진)"},
-{"sceneDescription":"Close up of a 30s female character looking devastated, half-closed eyes, holding her head, slumped posture, tablet showing terrible stick figure sketch, simple line art, flat pastel colors","narrativeText":"웹디자인 9년 짬바가 무색하게, 일러스트 앞에서는 한없이 작아지는 나.","bubbleText":"나... 디자인만 할 줄 아는 똥손이었네..."},
-{"sceneDescription":"Close up of female character with sharp shining eyes, intense focus, pushing up glasses with one finger, glowing lightbulb above head, simple line art, flat pastel colors","narrativeText":"포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.","bubbleText":"아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!"},
-{"sceneDescription":"Female character typing furiously on keyboard with sparks flying, mad scientist grin, coding screens in background, cute robot bear mascot popping out beside her, simple line art, flat pastel colors","narrativeText":"그래서 답답해서 직접 만들었습니다. 인스타툰 자동화 메이커!","bubbleText":"내가 못 그리면 AI가 그리게 하겠어! 가자, 올리!"},
-{"sceneDescription":"Female character standing confidently waving hand toward viewer, cute robot bear mascot floating and waving beside her, bright clean studio background, simple line art, flat pastel colors","narrativeText":"9년 차 디자이너의 험난한 인스타툰 도전기!","bubbleText":"AI 멱살 잡고 연재하는 썰, 앞으로 기대해 주세요! (팔로우 꾸욱-)"}
+{"sceneDescription":"30대 여성 캐릭터, 갈색 웨이브 머리에 둥근 안경, 모니터 여러 대 앞에서 자신감 넘치는 미소로 빠르게 타이핑하는 모습","narrativeText":"프리랜서 디자이너 겸 퍼블리셔 9년 차.","bubbleText":"디자인? 코딩? 훗, 까이꺼 다 할 수 있지!"},
+{"sceneDescription":"30대 여성 캐릭터, 소파에 편하게 누워 귤을 먹으며 행복한 표정, 몽글몽글한 눈빛","narrativeText":"작년 12월 프로젝트 종료! 결혼 3개월 차 새댁에게 찾아온 달콤한 잉여 시간.","bubbleText":"좋아, 남는 시간에 나도 요즘 대세라는 인스타툰이나 그려볼까?"},
+{"sceneDescription":"30대 여성 캐릭터, 책상에 앉아 그래픽 태블릿 펜을 들고 땀을 뻘뻘 흘리며 눈이 휘둥그레진 당황한 표정","narrativeText":"...는 무슨.","bubbleText":"잠깐, 팔이 어떻게 꺾이는 거지? 우는 표정은 어떻게 그려?!"},
+{"sceneDescription":"30대 여성 캐릭터 클로즈업, 반쯤 감긴 눈, 머리를 감싸 쥐고 축 처진 자세, 절망적인 표정","narrativeText":"웹디자인 9년 짬바가 무색하게, 일러스트 앞에서는 한없이 작아지는 나.","bubbleText":"나... 디자인만 할 줄 아는 똥손이었네..."},
+{"sceneDescription":"여성 캐릭터 클로즈업, 날카롭게 빛나는 눈, 강렬한 집중력, 한 손가락으로 안경을 밀어 올리며, 머리 위에 빛나는 전구","narrativeText":"포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.","bubbleText":"아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!"},
+{"sceneDescription":"여성 캐릭터, 키보드를 미친 듯이 타이핑, 매드 사이언티스트 같은 활짝 웃는 표정, 옆에 귀여운 로봇 곰 마스코트가 튀어나옴","narrativeText":"그래서 답답해서 직접 만들었습니다. 인스타툰 자동화 메이커!","bubbleText":"내가 못 그리면 AI가 그리게 하겠어! 가자, 올리!"},
+{"sceneDescription":"여성 캐릭터, 자신감 넘치게 서서 손을 흔드는 모습, 옆에 귀여운 로봇 곰 마스코트가 함께 손 흔듦","narrativeText":"9년 차 디자이너의 험난한 인스타툰 도전기!","bubbleText":"AI 멱살 잡고 연재하는 썰, 앞으로 기대해 주세요!"}
+]}
+
+■ 참고 예시 (주제: "짝사랑 상대한테 카톡 답장 기다리는 중", 4컷):
+{"scenes":[
+{"sceneDescription":"20대 여성 캐릭터, 긴 생머리, 핸드폰을 양손으로 꽉 쥐고 화면을 노려보는 모습, 눈이 초롱초롱, 기대감 가득한 표정","narrativeText":"용기 내서 보낸 카톡, 3분 전.","bubbleText":"읽었으려나...?"},
+{"sceneDescription":"핸드폰 화면 클로즈업, 카카오톡 채팅방 화면, '읽음 1' 표시가 보이는 내 메시지, 상대방 답장은 아직 없음","narrativeText":"읽음 1... 근데 답장은?","bubbleText":"제발 답장 좀...!"},
+{"sceneDescription":"여성 캐릭터, 핸드폰을 들고 화면을 보며 멘붕 표정, 눈이 하얗게 비어있음, 입이 벌어진 충격 표정, 옆에 핸드폰 화면이 크게 보이며 '읽씹' 상태","narrativeText":"읽고 20분째 답장 없음.","bubbleText":"아 읽씹이야 이거...?!"},
+{"sceneDescription":"여성 캐릭터, 이불 속에 파묻혀 핸드폰을 꼭 안고 눈만 빼꼼 내밀고 있는 모습, 핸드폰 화면에 알림 하나 떠있음","narrativeText":"","bubbleText":"그냥 바쁜 거겠지... 응 바쁜 거야 분명..."}
 ]}
 
 "${storyPrompt}" 주제에 맞는 ${chunkCuts}컷을 JSON으로만 출력:
@@ -490,7 +509,7 @@ ${prevContext}
     model: "gemini-2.5-flash",
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
-      temperature: 0.95,
+      temperature: 0.75,
     },
   });
 
@@ -504,17 +523,28 @@ ${prevContext}
   const cleanedText = textPart.text.replace(/```json|```/g, '').trim();
   const result = JSON.parse(cleanedText);
 
-  // 장면 수 보정
+  // 장면 수 보정 + 괄호 감정 태그 제거 + bubbleText 보장
   if (result.scenes) {
+    for (const scene of result.scenes) {
+      if (scene.bubbleText) {
+        scene.bubbleText = scene.bubbleText.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+      }
+      if (scene.narrativeText) {
+        scene.narrativeText = scene.narrativeText.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+      }
+      // bubbleText가 빈 경우 narrativeText로 대체하여 말풍선 보장
+      if (!scene.bubbleText && scene.narrativeText) {
+        scene.bubbleText = scene.narrativeText;
+      }
+    }
     while (result.scenes.length > chunkCuts) {
       result.scenes.pop();
     }
     while (result.scenes.length < chunkCuts) {
-      // 주제 기반 패딩 (generic 이미지 방지)
       result.scenes.push({
-        sceneDescription: `scene related to "${storyPrompt}", character reacting in relevant setting, simple line art, webtoon style`,
+        sceneDescription: `"${storyPrompt}" 주제와 관련된 캐릭터 장면`,
         narrativeText: "",
-        bubbleText: "",
+        bubbleText: "...",
       });
     }
   }

@@ -3,8 +3,8 @@
  * 캔버스(450×600) 내에서 컷 수에 따른 영역 계산 + 울퉁불퉁 컷 보더 생성
  */
 
-const CANVAS_W = 450;
-const CANVAS_H = 600;
+const CANVAS_W = 540;
+const CANVAS_H = 675;
 const PAD = 12;       // 캔버스 가장자리 여백
 const GAP = 12;       // 컷 사이 간격
 const BORDER_W = 3;   // 컷 보더 두께

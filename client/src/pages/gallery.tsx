@@ -39,6 +39,7 @@ export default function GalleryPage() {
     isFetchingNextPage,
   } = useInfiniteQuery<GalleryPage>({
     queryKey: ["/api/gallery", filter],
+    refetchOnMount: "always",
     queryFn: async ({ pageParam }) => {
       const offset = pageParam as number;
       const headers = await getAuthHeaders();

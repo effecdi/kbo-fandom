@@ -375,7 +375,7 @@ function createBubble(
     style,
     tailStyle: "short",
     tailDirection: "bottom",
-    tailBaseSpread: 8,
+    tailBaseSpread: 20,
     tailLength: undefined,
     tailCurve: 0.5,
     tailJitter: 1,
@@ -909,6 +909,7 @@ function PanelCanvas({
   selectedCharId,
   onSelectChar,
   selectedShapeId,
+  selectedTextId,
   canvasRef: externalCanvasRef,
   zoom,
   fontsReady,
@@ -932,6 +933,7 @@ function PanelCanvas({
   selectedCharId: string | null;
   onSelectChar: (id: string | null) => void;
   selectedShapeId?: string | null;
+  selectedTextId?: string | null;
   canvasRef?: (el: HTMLCanvasElement | null) => void;
   zoom?: number;
   fontsReady?: boolean;
@@ -1221,13 +1223,15 @@ function PanelCanvas({
           }
         }
 
-        // Selection box
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = HANDLE_COLOR;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 3]);
-        ctx.strokeRect(te.x - 2, te.y - 2, te.width + 4, te.height + 4);
-        ctx.setLineDash([]);
+        // Selection box (선택된 경우에만)
+        if (selectedTextId === te.id) {
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = HANDLE_COLOR;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]);
+          ctx.strokeRect(te.x - 2, te.y - 2, te.width + 4, te.height + 4);
+          ctx.setLineDash([]);
+        }
         ctx.restore();
       } else if (d.type === "line") {
         const le = d.le;
@@ -1534,7 +1538,7 @@ function PanelCanvas({
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, redraw, fontsReady, hideDrawingLayers, isGenerating]);
+  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, selectedTextId, redraw, fontsReady, hideDrawingLayers, isGenerating]);
 
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -3532,6 +3536,11 @@ export default function StoryPage() {
   const skipHistoryRef = useRef(false);
   const MAX_HISTORY = 50;
 
+  // Abort controllers for generation cancellation
+  const instatoonAbortRef = useRef<AbortController | null>(null);
+  const generateAbortRef = useRef<AbortController | null>(null);
+  const promptAbortRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -3855,6 +3864,8 @@ export default function StoryPage() {
     { items: GenerationLight[]; total: number; hasMore: boolean }
   >({
     queryKey: ["/api/gallery", galleryLimit],
+    refetchOnMount: "always",
+    staleTime: 0,
     queryFn: async () => {
       const authHeaders: Record<string, string> = {};
       const { supabase: sb } = await import("@/lib/supabase");
@@ -3901,6 +3912,8 @@ export default function StoryPage() {
 
   const generateMutation = useMutation({
     mutationFn: async (variables: { mode: "basic" | "full"; scope: "current" | "all" }) => {
+      const ac = new AbortController();
+      generateAbortRef.current = ac;
       const isCurrent = variables.scope === "current";
       const body: any = {
         topic,
@@ -3917,7 +3930,7 @@ export default function StoryPage() {
         }
         if (autoRefImages.length > 0) body.referenceImageUrl = autoRefImages[0].url;
       }
-      const res = await apiRequest("POST", "/api/story-scripts", body);
+      const res = await apiRequest("POST", "/api/story-scripts", body, { signal: ac.signal });
       const result = await res.json() as { panels: StoryPanelScript[] };
       return { ...result, scope: variables.scope, targetIndex: activePanelIndex };
     },
@@ -4003,7 +4016,12 @@ export default function StoryPage() {
         });
       }
     },
+    onSettled: () => { generateAbortRef.current = null; },
     onError: (error: any) => {
+      if (error?.name === "AbortError" || error?.message === "The user aborted a request.") {
+        toast({ title: "스크립트 생성 취소됨" });
+        return;
+      }
       if (isUnauthorizedError(error)) {
         setShowLoginDialog(true);
         return;
@@ -4027,6 +4045,8 @@ export default function StoryPage() {
 
   const instatoonImageMutation = useMutation({
     mutationFn: async (variables?: { scope?: "current" | "all" }) => {
+      const ac = new AbortController();
+      instatoonAbortRef.current = ac;
       const scope = variables?.scope ?? "all";
       const currentPanels = panels;
       const currentRefImages = autoRefImages.map(img => img.url);
@@ -4042,17 +4062,14 @@ export default function StoryPage() {
       const results: { panelId: string; imageUrl: string }[] = [];
       const errors: string[] = [];
       for (const i of targetIndices) {
-        // Use scene-first prompt: pose/action described FIRST forces the AI to
-        // re-compose the full scene with the new character action, not just add a background
+        if (ac.signal.aborted) break;
+
         let scenePrompt: string;
         let finalItems: string | undefined;
 
         if (instatoonScenePrompt.trim()) {
-          // instatoonPrompt mode: the scene prompt is already the full description
-          // Order: [style] [pose] [scene] for maximum consistency
           const poseStr = [posePrompt.trim(), expressionPrompt.trim()].filter(Boolean).join(", ");
           const sceneParts: string[] = [];
-          // Inject art style first
           const styleKey2 = detectedStyle && detectedStyle !== "auto" ? detectedStyle : null;
           if (styleKey2 && ART_STYLES[styleKey2]) sceneParts.push(ART_STYLES[styleKey2].promptKeyword);
           if (poseStr) sceneParts.push(poseStr);
@@ -4060,7 +4077,6 @@ export default function StoryPage() {
           if (i > 0) sceneParts.push(`scene ${i + 1}`);
           scenePrompt = sceneParts.join(", ");
         } else {
-          // instatoonFull mode: build scene-first prompt with character action first
           const built = buildScenePrompt(
             topic.trim(),
             posePrompt.trim(),
@@ -4078,14 +4094,15 @@ export default function StoryPage() {
             sourceImageDataList: currentRefImages,
             backgroundPrompt: scenePrompt,
             itemsPrompt: finalItems,
-          });
+            skipGallery: true,
+          }, { signal: ac.signal });
           const data = await res.json() as { imageUrl: string };
           if (!data.imageUrl) throw new Error("이미지 생성 결과가 없습니다.");
           results.push({ panelId: currentPanels[i].id, imageUrl: data.imageUrl });
         } catch (err: any) {
+          if (err?.name === "AbortError") throw err;
           console.error(`Panel ${i + 1} image generation failed:`, err?.message || err);
           errors.push(`패널 ${i + 1}: ${err?.message || "실패"}`);
-          // 크레딧 부족 등 치명적 에러는 루프 중단
           if (/^403/.test(err?.message)) break;
         }
       }
@@ -4094,60 +4111,54 @@ export default function StoryPage() {
       }
       return results;
     },
-    onSuccess: (results) => {
+    onSuccess: async (results) => {
       // Pre-build stable charId map
       const charIds: Record<string, string> = {};
       results.forEach(({ panelId }) => { charIds[panelId] = generateId(); });
 
-      // Add as CharacterPlacement at canvas-fill scale (so it looks full but is editable)
+      // Load all images first, then add to panels in one setPanels call
+      const loadImage = (url: string, withCors: boolean): Promise<HTMLImageElement> =>
+        new Promise((resolve, reject) => {
+          const img = new Image();
+          if (withCors) img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = () => {
+            if (withCors) loadImage(url, false).then(resolve).catch(reject);
+            else reject(new Error("Image load failed"));
+          };
+          img.src = url;
+        });
+
+      const loadedImages: Record<string, { img: HTMLImageElement; coverScale: number }> = {};
+      await Promise.all(
+        results.map(async ({ panelId, imageUrl }) => {
+          try {
+            const img = await loadImage(imageUrl, true);
+            const coverScale = Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight);
+            loadedImages[panelId] = { img, coverScale };
+          } catch {}
+        })
+      );
+
+      // Add characters with loaded imageEl in one setPanels call
       setPanels((prev) =>
         prev.map((p) => {
           const result = results.find((r) => r.panelId === p.id);
           if (!result) return p;
           const cid = charIds[result.panelId];
-          const placeholder: CharacterPlacement = {
+          const loaded = loadedImages[result.panelId];
+          const char: CharacterPlacement = {
             id: cid,
             imageUrl: result.imageUrl,
             x: CANVAS_W / 2,
             y: CANVAS_H / 2,
-            scale: 1,          // will be updated to canvas-fill scale when imageEl loads
-            imageEl: null,
+            scale: loaded?.coverScale ?? 1,
+            imageEl: loaded?.img ?? null,
             zIndex: 0,
           };
-          return { ...p, characters: [placeholder, ...p.characters] };
+          return { ...p, characters: [char, ...p.characters] };
         })
       );
-
-      // Load imageEl and update scale to fill canvas
-      results.forEach(({ panelId, imageUrl }) => {
-        const cid = charIds[panelId];
-        const tryLoad = (withCors: boolean) => {
-          const img = new Image();
-          if (withCors) img.crossOrigin = "anonymous";
-          img.onload = () => {
-            // Scale to cover the full canvas (same as backgroundImage cover logic)
-            const coverScale = Math.max(
-              CANVAS_W / img.naturalWidth,
-              CANVAS_H / img.naturalHeight,
-            );
-            setPanelsNoHistory((prev) =>
-              prev.map((p) =>
-                p.id === panelId
-                  ? {
-                      ...p,
-                      characters: p.characters.map((c) =>
-                        c.id === cid ? { ...c, scale: coverScale, imageEl: img } : c
-                      ),
-                    }
-                  : p,
-              ),
-            );
-          };
-          img.onerror = () => { if (withCors) tryLoad(false); };
-          img.src = imageUrl;
-        };
-        tryLoad(true);
-      });
 
       // Auto-select the first result so user can see edit handles immediately
       const firstResult = results[0];
@@ -4161,7 +4172,12 @@ export default function StoryPage() {
         description: `${results.length}개 패널에 이미지가 생성됐습니다. 클릭해서 위치·크기를 조정하세요.`,
       });
     },
+    onSettled: () => { instatoonAbortRef.current = null; },
     onError: (error: any) => {
+      if (error?.name === "AbortError" || error?.message === "The user aborted a request.") {
+        toast({ title: "이미지 생성 취소됨" });
+        return;
+      }
       if (isUnauthorizedError(error)) {
         setShowLoginDialog(true);
         return;
@@ -4209,15 +4225,15 @@ export default function StoryPage() {
 
   const posePromptMutation = useMutation({
     mutationFn: async () => {
-      // Pass topic context so AI generates a scene-appropriate action description
+      const ac = new AbortController();
+      promptAbortRef.current = ac;
       const res = await apiRequest("POST", "/api/ai-prompt", {
         type: "pose",
         context: topic.trim() || instatoonScenePrompt.trim() || undefined,
-      });
+      }, { signal: ac.signal });
       return res.json() as Promise<{ prompt: string }>;
     },
     onSuccess: (data) => {
-      // Split into pose vs expression if AI returned JSON
       let pose = data.prompt;
       let expr = "";
       try {
@@ -4232,7 +4248,12 @@ export default function StoryPage() {
         description: "AI가 제안한 포즈/표정을 적용했습니다.",
       });
     },
+    onSettled: () => { promptAbortRef.current = null; },
     onError: (error: any) => {
+      if (error?.name === "AbortError" || error?.message === "The user aborted a request.") {
+        toast({ title: "프롬프트 생성 취소됨" });
+        return;
+      }
       if (isUnauthorizedError(error)) {
         setShowLoginDialog(true);
         return;
@@ -4247,10 +4268,12 @@ export default function StoryPage() {
 
   const backgroundPromptMutation = useMutation({
     mutationFn: async () => {
+      const ac = new AbortController();
+      promptAbortRef.current = ac;
       const res = await apiRequest("POST", "/api/ai-prompt", {
         type: "background",
         context: topic.trim() || instatoonScenePrompt.trim() || undefined,
-      });
+      }, { signal: ac.signal });
       return res.json() as Promise<{ prompt: string }>;
     },
     onSuccess: (data) => {
@@ -4306,7 +4329,12 @@ export default function StoryPage() {
         });
       }
     },
+    onSettled: () => { promptAbortRef.current = null; },
     onError: (error: any) => {
+      if (error?.name === "AbortError" || error?.message === "The user aborted a request.") {
+        toast({ title: "프롬프트 생성 취소됨" });
+        return;
+      }
       if (isUnauthorizedError(error)) {
         setShowLoginDialog(true);
         return;
@@ -4326,10 +4354,12 @@ export default function StoryPage() {
 
   const instatoonPromptMutation = useMutation({
     mutationFn: async () => {
+      const ac = new AbortController();
+      promptAbortRef.current = ac;
       const res = await apiRequest("POST", "/api/ai-prompt", {
         type: "background",
         referenceImageUrl: promptRefImageUrl ?? undefined,
-      });
+      }, { signal: ac.signal });
       const data = (await res.json()) as { prompt: string };
       return data.prompt;
     },
@@ -4383,7 +4413,12 @@ export default function StoryPage() {
         });
       }
     },
+    onSettled: () => { promptAbortRef.current = null; },
     onError: (error: any) => {
+      if (error?.name === "AbortError" || error?.message === "The user aborted a request.") {
+        toast({ title: "프롬프트 생성 취소됨" });
+        return;
+      }
       if (isUnauthorizedError(error)) {
         setShowLoginDialog(true);
         return;
@@ -4462,32 +4497,27 @@ export default function StoryPage() {
     const charIdMap: Record<string, string> = {};
     ids.forEach(pid => { charIdMap[pid] = generateId(); });
 
-    // Add canvas-fill placeholder characters immediately (loading state)
-    setPanels((prev) =>
-      prev.map((p) => {
-        if (!ids.includes(p.id)) return p;
-        const cid = charIdMap[p.id];
-        const placeholder: CharacterPlacement = {
-          id: cid,
-          imageUrl: "",      // will be set when API responds
-          x: CANVAS_W / 2,
-          y: CANVAS_H / 2,
-          scale: 1,
-          imageEl: null,
-          zIndex: 0,
+    const loadImage = (url: string, withCors: boolean): Promise<HTMLImageElement> =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        if (withCors) img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          if (withCors) loadImage(url, false).then(resolve).catch(reject);
+          else reject(new Error("Image load failed"));
         };
-        return { ...p, characters: [placeholder, ...p.characters] };
-      })
-    );
+        img.src = url;
+      });
 
-    // Generate images in parallel
+    // Generate images in parallel and collect results
     let successCount = 0;
+    const generated: { panelId: string; imageUrl: string; img: HTMLImageElement; coverScale: number }[] = [];
+    const failedPanelIds: string[] = [];
+
     const tasks = ids.map(async (panelId, i) => {
       const cid = charIdMap[panelId];
       if (!cid) return;
 
-      // Use scene-first prompt: character action is described FIRST so the AI
-      // re-composes the full scene including pose, not just adds a background
       const { backgroundPrompt: scenePrompt, itemsPrompt: sceneItems } = buildScenePrompt(
         promptParts.topic,
         promptParts.pose,
@@ -4507,62 +4537,43 @@ export default function StoryPage() {
         const imageUrl = data.imageUrl;
         if (!imageUrl) return;
 
-        // Update placeholder with real imageUrl
-        setPanels((prev) =>
-          prev.map((p) =>
-            p.id === panelId
-              ? { ...p, characters: p.characters.map((c) => c.id === cid ? { ...c, imageUrl } : c) }
-              : p
-          )
-        );
-
-        // Load imageEl and set canvas-fill scale
-        await new Promise<void>((resolve) => {
-          const tryLoad = (withCors: boolean) => {
-            const img = new Image();
-            if (withCors) img.crossOrigin = "anonymous";
-            img.onload = () => {
-              const coverScale = Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight);
-              setPanelsNoHistory((prev) =>
-                prev.map((p) =>
-                  p.id === panelId
-                    ? {
-                        ...p,
-                        characters: p.characters.map((c) =>
-                          c.id === cid ? { ...c, scale: coverScale, imageEl: img } : c
-                        ),
-                      }
-                    : p
-                )
-              );
-              successCount++;
-              resolve();
-            };
-            img.onerror = () => {
-              if (withCors) tryLoad(false);
-              else resolve();
-            };
-            img.src = imageUrl;
-          };
-          tryLoad(true);
-        });
+        // Load image and compute scale
+        const img = await loadImage(imageUrl, true);
+        const coverScale = Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight);
+        generated.push({ panelId, imageUrl, img, coverScale });
+        successCount++;
       } catch (err: any) {
         if (/^403/.test(err?.message || '')) {
           setAiLimitOpen(true);
           toast({ title: "크레딧 부족", description: "크레딧을 전부 사용했어요. 충전해주세요.", variant: "destructive" });
         }
-        // Remove failed placeholder
-        setPanels((prev) =>
-          prev.map((p) =>
-            p.id === panelId
-              ? { ...p, characters: p.characters.filter((c) => c.id !== cid) }
-              : p
-          )
-        );
+        failedPanelIds.push(panelId);
       }
     });
 
     await Promise.all(tasks);
+
+    // Add all successfully generated characters in one setPanels call
+    if (generated.length > 0) {
+      setPanels((prev) =>
+        prev.map((p) => {
+          const gen = generated.find((g) => g.panelId === p.id);
+          if (!gen) return p;
+          const cid = charIdMap[gen.panelId];
+          const char: CharacterPlacement = {
+            id: cid,
+            imageUrl: gen.imageUrl,
+            x: CANVAS_W / 2,
+            y: CANVAS_H / 2,
+            scale: gen.coverScale,
+            imageEl: gen.img,
+            zIndex: 0,
+          };
+          return { ...p, characters: [char, ...p.characters] };
+        })
+      );
+    }
+
     return successCount;
   };
 
@@ -6813,40 +6824,44 @@ export default function StoryPage() {
                             </Button>
                           </div>
 
-                          <div className="flex gap-2">
+                          {generateMutation.isPending ? (
                             <Button
-                              className="flex-1"
+                              className="w-full"
                               size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                generateMutation.mutate({ mode: "basic", scope: "current" });
-                              }}
-                              disabled={!topic.trim() || generateMutation.isPending}
+                              variant="destructive"
+                              onClick={() => generateAbortRef.current?.abort()}
                             >
-                              {generateMutation.isPending ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-1.5" />
-                              ) : (
-                                <Wand2 className="h-4 w-4 mr-1.5" />
-                              )}
-                              선택 컷 생성
+                              <X className="h-4 w-4 mr-1.5" />
+                              생성 취소
                             </Button>
-                            <Button
-                              className="flex-1"
-                              size="sm"
-                              onClick={() => {
-                                generateMutation.mutate({ mode: "basic", scope: "all" });
-                              }}
-                              disabled={!topic.trim() || generateMutation.isPending}
-                              data-testid="button-generate-scripts"
-                            >
-                              {generateMutation.isPending ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-1.5" />
-                              ) : (
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button
+                                className="flex-1"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  generateMutation.mutate({ mode: "basic", scope: "current" });
+                                }}
+                                disabled={!topic.trim()}
+                              >
                                 <Wand2 className="h-4 w-4 mr-1.5" />
-                              )}
-                              전체 생성 ({panels.length}컷)
-                            </Button>
-                          </div>
+                                선택 컷 생성
+                              </Button>
+                              <Button
+                                className="flex-1"
+                                size="sm"
+                                onClick={() => {
+                                  generateMutation.mutate({ mode: "basic", scope: "all" });
+                                }}
+                                disabled={!topic.trim()}
+                                data-testid="button-generate-scripts"
+                              >
+                                <Wand2 className="h-4 w-4 mr-1.5" />
+                                전체 생성 ({panels.length}컷)
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -7094,12 +7109,11 @@ export default function StoryPage() {
                               </span>
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => posePromptMutation.mutate()}
-                                disabled={posePromptMutation.isPending}
+                                variant={posePromptMutation.isPending ? "destructive" : "outline"}
+                                onClick={() => posePromptMutation.isPending ? promptAbortRef.current?.abort() : posePromptMutation.mutate()}
                               >
                                 {posePromptMutation.isPending ? (
-                                  <div className="h-3 w-3 animate-spin rounded-full border border-primary border-t-transparent" />
+                                  <span className="text-[11px]">취소</span>
                                 ) : (
                                   <span className="text-[11px]">AI 추천</span>
                                 )}
@@ -7135,12 +7149,11 @@ export default function StoryPage() {
                               </span>
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => backgroundPromptMutation.mutate()}
-                                disabled={backgroundPromptMutation.isPending}
+                                variant={backgroundPromptMutation.isPending ? "destructive" : "outline"}
+                                onClick={() => backgroundPromptMutation.isPending ? promptAbortRef.current?.abort() : backgroundPromptMutation.mutate()}
                               >
                                 {backgroundPromptMutation.isPending ? (
-                                  <div className="h-3 w-3 animate-spin rounded-full border border-primary border-t-transparent" />
+                                  <span className="text-[11px]">취소</span>
                                 ) : (
                                   <span className="text-[11px]">AI 추천</span>
                                 )}
@@ -7170,75 +7183,64 @@ export default function StoryPage() {
                             </p>
                           )}
 
-                          <div className="flex gap-2">
+                          {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
                             <Button
-                              className="flex-1"
+                              className="w-full"
                               size="sm"
-                              variant="outline"
+                              variant="destructive"
                               onClick={() => {
-                                if (autoRefImages.length === 0) {
-                                  toast({
-                                    title: "기준 이미지 필요",
-                                    description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                generateMutation.mutate({ mode: "full", scope: "current" });
-                                instatoonImageMutation.mutate({ scope: "current" });
+                                generateAbortRef.current?.abort();
+                                instatoonAbortRef.current?.abort();
                               }}
-                              disabled={
-                                !topic.trim() ||
-                                generateMutation.isPending ||
-                                instatoonImageMutation.isPending
-                              }
                             >
-                              {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
-                                <>
-                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-1.5" />
-                                  생성 중...
-                                </>
-                              ) : (
-                                <>
-                                  <Wand2 className="h-4 w-4 mr-1.5" />
-                                  선택 컷 생성
-                                </>
-                              )}
+                              <X className="h-4 w-4 mr-1.5" />
+                              생성 취소
                             </Button>
-                            <Button
-                              className="flex-1"
-                              size="sm"
-                              onClick={() => {
-                                if (autoRefImages.length === 0) {
-                                  toast({
-                                    title: "기준 이미지 필요",
-                                    description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                generateMutation.mutate({ mode: "full", scope: "all" });
-                                instatoonImageMutation.mutate({ scope: "all" });
-                              }}
-                              disabled={
-                                !topic.trim() ||
-                                generateMutation.isPending ||
-                                instatoonImageMutation.isPending
-                              }
-                            >
-                              {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
-                                <>
-                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-1.5" />
-                                  {instatoonImageMutation.isPending ? "변환 중..." : "생성 중..."}
-                                </>
-                              ) : (
-                                <>
-                                  <Wand2 className="h-4 w-4 mr-1.5" />
-                                  전체 생성 ({panels.length}컷)
-                                </>
-                              )}
-                            </Button>
-                          </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button
+                                className="flex-1"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (autoRefImages.length === 0) {
+                                    toast({
+                                      title: "기준 이미지 필요",
+                                      description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
+                                  generateMutation.mutate({ mode: "full", scope: "current" });
+                                  instatoonImageMutation.mutate({ scope: "current" });
+                                }}
+                                disabled={!topic.trim()}
+                              >
+                                <Wand2 className="h-4 w-4 mr-1.5" />
+                                선택 컷 생성
+                              </Button>
+                              <Button
+                                className="flex-1"
+                                size="sm"
+                                onClick={() => {
+                                  if (autoRefImages.length === 0) {
+                                    toast({
+                                      title: "기준 이미지 필요",
+                                      description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
+                                  generateMutation.mutate({ mode: "full", scope: "all" });
+                                  instatoonImageMutation.mutate({ scope: "all" });
+                                }}
+                                disabled={!topic.trim()}
+                              >
+                                <Wand2 className="h-4 w-4 mr-1.5" />
+                                전체 생성 ({panels.length}컷)
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -7420,21 +7422,28 @@ export default function StoryPage() {
                             </div>
                           </div>
 
-                          <Button
-                            className="w-full"
-                            size="sm"
-                            onClick={() => instatoonPromptMutation.mutate()}
-                            disabled={instatoonPromptMutation.isPending}
-                          >
-                            {instatoonPromptMutation.isPending ? (
-                              <div className="h-4 w-4 animate-spin rounded-full border border-primary-foreground border-t-transparent mr-2" />
-                            ) : (
+                          {instatoonPromptMutation.isPending ? (
+                            <Button
+                              className="w-full"
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => promptAbortRef.current?.abort()}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              생성 취소
+                            </Button>
+                          ) : (
+                            <Button
+                              className="w-full"
+                              size="sm"
+                              onClick={() => instatoonPromptMutation.mutate()}
+                            >
                               <Wand2 className="h-4 w-4 mr-2" />
-                            )}
-                            {(posePrompt.trim() || expressionPrompt.trim())
-                              ? "배경/아이템 자동 완성"
-                              : "전체 프롬프트 자동 작성"}
-                          </Button>
+                              {(posePrompt.trim() || expressionPrompt.trim())
+                                ? "배경/아이템 자동 완성"
+                                : "전체 프롬프트 자동 작성"}
+                            </Button>
+                          )}
                         </div>
                       )}
 
@@ -7827,15 +7836,15 @@ export default function StoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
                       <DropdownMenuLabel className="text-[11px]">PNG 다운로드</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => guard(() => captureCleanCanvas(() => downloadPanelSized(activePanelIndex, 540, 675)))}>
+                      <DropdownMenuItem onClick={() => guard(() => withCleanCanvas(() => downloadPanelSized(activePanelIndex, 540, 675)))}>
                         <span className="text-xs">Original (540×675)</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => captureCleanCanvas(() => downloadPanelSized(activePanelIndex, 1080, 1350)))}>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => withCleanCanvas(() => downloadPanelSized(activePanelIndex, 1080, 1350)))}>
                         <span className="text-xs">Instagram 2x (1080×1350)</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => captureCleanCanvas(() => downloadPanelSvg(activePanelIndex)))}>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => withCleanCanvas(() => downloadPanelSvg(activePanelIndex)))}>
                         <span className="text-xs">SVG</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
@@ -7903,6 +7912,8 @@ export default function StoryPage() {
                 if (e.target === e.currentTarget) {
                   setSelectedBubbleId(null);
                   setSelectedCharId(null);
+                  setSelectedTextId(null);
+                  setSelectedLineId(null);
                   setSelectedShapeId(null);
                   setSelectedDrawingLayerId(null);
                 }
@@ -7917,6 +7928,8 @@ export default function StoryPage() {
                           if (e.target === e.currentTarget) {
                             setSelectedBubbleId(null);
                             setSelectedCharId(null);
+                            setSelectedTextId(null);
+                            setSelectedLineId(null);
                             setSelectedDrawingLayerId(null);
                           }
                         }}
@@ -8186,6 +8199,7 @@ export default function StoryPage() {
                           onUpdate={(updated) => updatePanel(i, updated)}
                           selectedBubbleId={activePanelIndex === i ? selectedBubbleId : null}
                           selectedShapeId={activePanelIndex === i ? selectedShapeId : null}
+                          selectedTextId={activePanelIndex === i ? selectedTextId : null}
                           onSelectBubble={(id) => {
                             setSelectedBubbleId(id);
                             setSelectedCharId(null);
@@ -8287,7 +8301,6 @@ export default function StoryPage() {
                                   return next;
                                 });
                                 setSelectedDrawingLayerId(newLayer.id);
-                                setSelectedToolItem("select");
                               }}
                               onRequestTextInput={(x, y) => {
                                 setTextInputPos({ x: (x / CANVAS_W) * 100, y: (y / CANVAS_H) * 100 });

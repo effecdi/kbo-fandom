@@ -805,36 +805,62 @@ export async function generateWebtoonScene(
   sceneDescription: string,
   storyContext: string,
   sourceImageDataList?: string[],
+  aspectRatio?: string,
 ): Promise<string> {
   const parts: any[] = [];
   const images = sourceImageDataList ?? [];
   const hasImages = images.length > 0;
 
-  // sceneDescription은 이미 영어 → 번역 불필요
-  // storyContext는 한국어일 수 있으므로 번역
+  // Gemini 지원 비율: "1:1", "3:4", "4:3", "9:16", "16:9"
+  // 전달된 값이 유효한지 확인, 아니면 "3:4" 기본값
+  const validRatios = ["1:1", "3:4", "4:3", "9:16", "16:9"];
+  const geminiAspectRatio = (aspectRatio && validRatios.includes(aspectRatio)) ? aspectRatio : "3:4";
+  const isLandscape = ["4:3", "16:9"].includes(geminiAspectRatio);
+  const ratioLabel = isLandscape ? `${geminiAspectRatio} landscape` : `${geminiAspectRatio} portrait`;
+
+  // sceneDescription, storyContext 모두 한국어일 수 있으므로 번역
+  const translatedScene = await translateToEnglish(sceneDescription, ai);
   const translatedContext = await translateToEnglish(storyContext, ai);
 
   if (hasImages) {
+    // Gemini multimodal best practice: 레퍼런스 이미지를 텍스트보다 앞에 배치
+    for (const src of images) {
+      const match = src.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+      }
+    }
+
     parts.push({
       text: `You are illustrating a scene for a Korean Instagram webtoon (instatoon) comic strip.
 
 ${noTextRule}
 
-STORY CONTEXT (the entire comic is about this topic — every scene must relate to it):
+CHARACTER REFERENCE (MOST IMPORTANT — the images above are the GROUND TRUTH):
+- The reference images above show the EXACT character(s) you MUST draw.
+- COPY the EXACT same character: same face shape, same hairstyle, same hair color, same outfit, same proportions, same accessories.
+- Do NOT invent new character designs. ONLY draw the character(s) from the reference images.
+- Ignore any text descriptions of character appearance (hair color, clothing, etc.) — use ONLY the reference images for how the character looks.
+- The character must be immediately recognizable as the same person across all scenes.
+
+STORY CONTEXT (EVERY scene must directly illustrate this story — do NOT deviate):
 "${translatedContext}"
 
-SCENE TO ILLUSTRATE (this is the MOST important part — draw exactly this):
-${sceneDescription}
+SCENE TO ILLUSTRATE (draw exactly this action/pose/expression):
+${translatedScene}
 
-RULES:
-- Draw EXACTLY the scene described above. Do NOT deviate from it.
+CRITICAL RULES:
+- Draw EXACTLY the scene described above using the EXACT character from the reference images.
 - The scene must clearly relate to the story context "${translatedContext}"
-- Use the reference character image(s) below — keep the character(s) looking the same
-- Place the character(s) INTO the scene described above, with appropriate poses and expressions
-- Draw background and environment matching the scene description
+- Do NOT draw any background, scenery, room, furniture, walls, floors, or environment
+- The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
+- Draw ONLY the characters and essential props/items they are holding or interacting with
+- If the scene involves a phone/smartphone, draw the phone screen clearly visible with UI elements
+- Characters should be drawn large, filling most of the image area
+- ${ratioLabel} aspect ratio — the image must completely fill the canvas in this exact ratio
 - Style: simple line art, thick outlines, flat colors, cute Korean instatoon style
-- 3:4 portrait aspect ratio
 
+IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
 Do NOT add any text, letters, or writing of any kind to the image.`
     });
   } else {
@@ -847,35 +873,44 @@ STORY CONTEXT (the entire comic is about this topic — every scene must relate 
 "${translatedContext}"
 
 SCENE TO ILLUSTRATE (this is the MOST important part — draw exactly this):
-${sceneDescription}
+${translatedScene}
 
-RULES:
+CRITICAL RULES:
 - Draw EXACTLY the scene described above. Do NOT deviate from it.
 - The scene must clearly relate to the story context "${translatedContext}"
 - Include character(s) appropriate for the scene with clear poses and expressions
+- Do NOT draw any background, scenery, room, furniture, walls, floors, or environment
+- The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
+- Draw ONLY the characters and essential props/items they are holding or interacting with
+- If the scene involves a phone/smartphone, draw the phone screen clearly visible with UI elements
+- Characters should be drawn large, filling most of the image area
+- ${ratioLabel} aspect ratio — the image must completely fill the canvas in this exact ratio
 - Style: simple line art, thick outlines, flat colors, cute Korean instatoon style
-- 3:4 portrait aspect ratio
 
+IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
 Do NOT add any text, letters, or writing of any kind to the image.`
     });
   }
 
-  for (const src of images) {
-    const match = src.match(/^data:([^;]+);base64,(.+)$/);
-    if (match) {
-      parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+  // hasImages일 때는 이미 위에서 이미지를 텍스트 앞에 추가했으므로 스킵
+  if (!hasImages) {
+    for (const src of images) {
+      const match = src.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+      }
     }
   }
 
   let lastError: Error | null = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
         contents: parts,
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
-          imageConfig: { aspectRatio: "3:4" },
+          imageConfig: { aspectRatio: geminiAspectRatio as any },
         },
       });
 
@@ -900,7 +935,7 @@ Do NOT add any text, letters, or writing of any kind to the image.`
     } catch (err: any) {
       lastError = err;
       console.error(`Webtoon scene generation attempt ${attempt + 1} failed:`, err?.message || err);
-      if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 1500));
     }
   }
   throw lastError || new Error("Failed to generate webtoon scene after retries");

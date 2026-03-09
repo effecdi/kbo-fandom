@@ -79,9 +79,11 @@ export async function registerRoutes(
         return res.status(403).json({ message: "이 스타일은 Pro 멤버십 전용입니다. 심플 라인, 미니멀, 낙서풍 스타일은 무료로 사용 가능합니다." });
       }
 
-      const canGenerate = await storage.deductCredit(userId, 2);
-      if (!canGenerate) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 2);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+        }
       }
 
       let imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
@@ -96,20 +98,24 @@ export async function registerRoutes(
         imageUrl: imageDataUrl,
       });
 
+      let thumbnailUrl: string | null = null;
       try {
-        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        thumbnailUrl = await generateThumbnail(imageDataUrl) || null;
+      } catch { /* thumbnail is optional */ }
+
+      try {
         await storage.createGeneration({
           userId,
           characterId: character.id,
           type: "character",
           prompt,
           resultImageUrl: imageDataUrl,
-          thumbnailUrl: thumbnailUrl || null,
+          thumbnailUrl,
           creditsUsed: 2,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
-        console.error("Character generation DB save failed (image still returned):", dbError?.message);
+        console.error("Character generation DB save failed:", dbError?.message);
       }
 
       res.json({ characterId: character.id, imageUrl: imageDataUrl });
@@ -141,19 +147,25 @@ export async function registerRoutes(
         characters.push(character);
       }
 
-      const canGenerate = await storage.deductCredit(userId, 5);
-      if (!canGenerate) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 5);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+        }
       }
 
       let imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
-      const credits = await storage.getUserCredits(userId);
       if (credits.tier !== "pro") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 
+      let poseThumbUrl: string | null = null;
       try {
-        const thumbnailUrl = await generateThumbnail(imageDataUrl);
+        poseThumbUrl = await generateThumbnail(imageDataUrl) || null;
+      } catch { /* thumbnail is optional */ }
+
+      try {
         await storage.createGeneration({
           userId,
           characterId: characterIds[0],
@@ -161,12 +173,12 @@ export async function registerRoutes(
           prompt,
           referenceImageUrl: referenceImageData || null,
           resultImageUrl: imageDataUrl,
-          thumbnailUrl: thumbnailUrl || null,
+          thumbnailUrl: poseThumbUrl,
           creditsUsed: 5,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
-        console.error("Pose generation DB save failed (image still returned):", dbError?.message);
+        console.error("Pose generation DB save failed:", dbError?.message);
       }
 
       res.json({ imageUrl: imageDataUrl });
@@ -184,6 +196,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
       }
       const { sourceImageDataList, backgroundPrompt, itemsPrompt, characterIds, noBackground, aspectRatio } = parsed.data;
+      const skipGallery = req.body.skipGallery === true;
 
       // 모든 캐릭터 소유권 검증
       if (characterIds && characterIds.length > 0) {
@@ -198,38 +211,45 @@ export async function registerRoutes(
         }
       }
 
-      const canGenerate = await storage.deductCredit(userId, 5);
-      if (!canGenerate) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 5);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+        }
       }
 
       let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt, noBackground, aspectRatio);
-      const credits = await storage.getUserCredits(userId);
       if (credits.tier !== "pro") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 
-      // 이미지 생성 성공 — DB 저장은 비차단으로 처리 (thumbnail_url 컬럼 미존재 등에 대비)
-      const fullPrompt = itemsPrompt
-        ? `Background: ${backgroundPrompt}, Items: ${itemsPrompt}`
-        : `Background: ${backgroundPrompt}`;
+      if (!skipGallery) {
+        const fullPrompt = itemsPrompt
+          ? `Background: ${backgroundPrompt}, Items: ${itemsPrompt}`
+          : `Background: ${backgroundPrompt}`;
 
-      try {
-        const thumbnailUrl = await generateThumbnail(imageDataUrl);
-        await storage.createGeneration({
-          userId,
-          characterId: characterIds?.[0] || null,
-          type: "background",
-          prompt: fullPrompt,
-          referenceImageUrl: null,
-          resultImageUrl: imageDataUrl,
-          thumbnailUrl: thumbnailUrl || null,
-          creditsUsed: 5,
-        });
-        await storage.incrementTotalGenerations(userId);
-      } catch (dbError: any) {
-        console.error("Background generation DB save failed (image still returned):", dbError?.message);
+        let bgThumbUrl: string | null = null;
+        try {
+          bgThumbUrl = await generateThumbnail(imageDataUrl) || null;
+        } catch { /* thumbnail is optional */ }
+
+        try {
+          await storage.createGeneration({
+            userId,
+            characterId: characterIds?.[0] || null,
+            type: "background",
+            prompt: fullPrompt,
+            referenceImageUrl: null,
+            resultImageUrl: imageDataUrl,
+            thumbnailUrl: bgThumbUrl,
+            creditsUsed: 5,
+          });
+        } catch (dbError: any) {
+          console.error("Background generation DB save failed:", dbError?.message);
+        }
       }
+      await storage.incrementTotalGenerations(userId);
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
@@ -652,40 +672,29 @@ export async function registerRoutes(
   app.post("/api/auto-webtoon/generate-scene", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const { sceneDescription, storyContext, sourceImageDataList } = req.body;
+      const { sceneDescription, storyContext, sourceImageDataList, aspectRatio } = req.body;
 
       if (!sceneDescription || typeof sceneDescription !== "string") {
         return res.status(400).json({ message: "sceneDescription is required" });
       }
 
-      const canGenerate = await storage.deductCredit(userId);
-      if (!canGenerate) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
+        }
       }
 
       const imageDataUrl = await generateWebtoonScene(
         sceneDescription,
         storyContext || "",
         sourceImageDataList,
+        aspectRatio,
       );
 
-      // DB 저장 (비차단)
-      try {
-        const thumbnailUrl = await generateThumbnail(imageDataUrl);
-        await storage.createGeneration({
-          userId,
-          characterId: null,
-          type: "background",
-          prompt: `Scene: ${sceneDescription}`,
-          referenceImageUrl: null,
-          resultImageUrl: imageDataUrl,
-          thumbnailUrl: thumbnailUrl || null,
-          creditsUsed: 1,
-        });
-        await storage.incrementTotalGenerations(userId);
-      } catch (dbError: any) {
-        console.error("Scene generation DB save failed:", dbError?.message);
-      }
+      // story에서 생성된 이미지는 갤러리에 저장하지 않음
+      await storage.incrementTotalGenerations(userId);
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {

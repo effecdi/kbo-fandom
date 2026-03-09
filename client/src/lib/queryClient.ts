@@ -21,6 +21,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  options?: { signal?: AbortSignal },
 ): Promise<Response> {
   const authHeaders = await getAuthHeaders();
   const res = await fetch(url, {
@@ -30,6 +31,7 @@ export async function apiRequest(
       ...(data ? { "Content-Type": "application/json" } : {}),
     },
     body: data ? JSON.stringify(data) : undefined,
+    signal: options?.signal,
   });
 
   await throwIfResNotOk(res);

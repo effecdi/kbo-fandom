@@ -57,8 +57,8 @@ const ART_STYLES: Record<string, { label: string; promptKeyword: string }> = {
   "cute-animal":  { label: "귀여운 동물",    promptKeyword: "cute chibi animal style, round shapes, pastel color, kawaii cartoon" },
 };
 
-const CANVAS_W = 450;
-const CANVAS_H = 600;
+const CANVAS_W = 540;
+const CANVAS_H = 675;
 
 // ---- Layout Preview (외부 정의: 리렌더 방지) ----
 
@@ -169,6 +169,8 @@ export function AutoWebtoonPanel({
   // Step 3 state
   const [cutResults, setCutResults] = useState<CutResult[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const cancelledRef = useRef(false);
 
   // Usage data
   const { data: usage } = useQuery<{
@@ -180,9 +182,12 @@ export function AutoWebtoonPanel({
     enabled: isAuthenticated,
   });
 
-  // Gallery data for picker
+  // Gallery data for picker — 열릴 때마다 항상 최신 데이터 fetch
+  const [galleryPickerKey, setGalleryPickerKey] = useState(0);
   const { data: galleryPickerRaw, isLoading: galleryPickerLoading } = useQuery<{ items: GenerationLight[] }>({
-    queryKey: ["/api/gallery", 100],
+    queryKey: ["/api/gallery", "picker", galleryPickerKey],
+    staleTime: 0,
+    gcTime: 0,
     queryFn: async () => {
       const authHeaders = await getAuthHeaders();
       const res = await fetch(`/api/gallery?limit=100&offset=0`, { headers: authHeaders });
@@ -191,7 +196,7 @@ export function AutoWebtoonPanel({
     },
     enabled: isAuthenticated && showGalleryPicker,
   });
-  const galleryPickerData = galleryPickerRaw?.items ?? externalGalleryData;
+  const galleryPickerData = galleryPickerRaw?.items ?? [];
   const isGalleryLoading = showGalleryPicker ? galleryPickerLoading : externalGalleryLoading;
 
   // Cost
@@ -273,33 +278,72 @@ export function AutoWebtoonPanel({
       // 4개 제한
       if (prev.length >= 4) return prev;
 
-      // 추가 - 이미지를 base64로 변환 (비동기이므로 먼저 URL로 추가 후 나중에 교체)
+      // 추가 - thumbnailUrl 또는 resultImageUrl 사용 (light 쿼리에서 thumbnailUrl 있으면 resultImageUrl이 null)
+      const imageSource = gen.resultImageUrl || gen.thumbnailUrl || "";
       const newChar: SelectedCharacter = {
         id: String(gen.id),
         name: gen.prompt?.slice(0, 20) || "캐릭터",
-        imageUrl: gen.resultImageUrl!,
-        imageDataUrl: gen.resultImageUrl!, // fallback, will try to convert
+        imageUrl: imageSource,
+        imageDataUrl: imageSource, // fallback, will try to convert or fetch full image
       };
 
-      // 비동기 base64 변환 시도
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext("2d")!;
-          ctx.drawImage(img, 0, 0);
-          const dataUrl = canvas.toDataURL("image/png");
-          setSelectedCharacters((cur) =>
-            cur.map((c) => c.id === String(gen.id) ? { ...c, imageDataUrl: dataUrl } : c)
-          );
-        } catch {
-          // CORS 실패시 URL 그대로 사용
-        }
-      };
-      img.src = gen.resultImageUrl!;
+      // thumbnailUrl만 있는 경우 full 이미지를 /api/gallery/:id 에서 가져오기
+      if (!gen.resultImageUrl && gen.thumbnailUrl) {
+        (async () => {
+          try {
+            const { getAuthHeaders } = await import("@/lib/supabase");
+            const headers = await getAuthHeaders();
+            const resp = await fetch(`/api/gallery/${gen.id}`, { headers });
+            if (resp.ok) {
+              const full = await resp.json();
+              if (full.resultImageUrl) {
+                // full 이미지로 base64 변환
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                  try {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    const ctx = canvas.getContext("2d")!;
+                    ctx.drawImage(img, 0, 0);
+                    const dataUrl = canvas.toDataURL("image/png");
+                    setSelectedCharacters((cur) =>
+                      cur.map((c) => c.id === String(gen.id) ? { ...c, imageUrl: full.resultImageUrl, imageDataUrl: dataUrl } : c)
+                    );
+                  } catch {
+                    setSelectedCharacters((cur) =>
+                      cur.map((c) => c.id === String(gen.id) ? { ...c, imageUrl: full.resultImageUrl, imageDataUrl: full.resultImageUrl } : c)
+                    );
+                  }
+                };
+                img.src = full.resultImageUrl;
+                return;
+              }
+            }
+          } catch { /* fallback to thumbnail */ }
+        })();
+      } else if (imageSource) {
+        // resultImageUrl이 있는 경우 기존 로직대로 base64 변환
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext("2d")!;
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL("image/png");
+            setSelectedCharacters((cur) =>
+              cur.map((c) => c.id === String(gen.id) ? { ...c, imageDataUrl: dataUrl } : c)
+            );
+          } catch {
+            // CORS 실패시 URL 그대로 사용
+          }
+        };
+        img.src = imageSource;
+      }
 
       return [...prev, newChar];
     });
@@ -309,8 +353,21 @@ export function AutoWebtoonPanel({
     setSelectedCharacters((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
+  // 컷 영역 비율 → Gemini 지원 비율 매핑
+  const getGeminiAspectRatio = (width: number, height: number): string => {
+    const ratio = width / height;
+    if (ratio > 1.5) return "16:9";
+    if (ratio > 1.1) return "4:3";
+    if (ratio > 0.9) return "1:1";
+    if (ratio > 0.6) return "3:4";
+    return "9:16";
+  };
+
   // ---- Generation ----
   const startGeneration = async () => {
+    const ac = new AbortController();
+    abortRef.current = ac;
+    cancelledRef.current = false;
     const total = scenes.length;
     const initial: CutResult[] = scenes.map((_, i) => ({ index: i, status: "pending" as CutStatus }));
     setCutResults(initial);
@@ -321,6 +378,8 @@ export function AutoWebtoonPanel({
     const BATCH_SIZE = 3;
 
     for (let batchStart = 0; batchStart < total; batchStart += BATCH_SIZE) {
+      if (cancelledRef.current) break;
+
       const batchEnd = Math.min(batchStart + BATCH_SIZE, total);
       const batchIndices = Array.from({ length: batchEnd - batchStart }, (_, i) => batchStart + i);
 
@@ -331,32 +390,36 @@ export function AutoWebtoonPanel({
 
       const regions = getCutRegions(cutsPerCanvas);
       const promises = batchIndices.map(async (idx) => {
+        if (cancelledRef.current) {
+          results[idx] = { ...results[idx], status: "pending" };
+          return;
+        }
         const scene = scenes[idx];
         const styleKeyword = ART_STYLES[selectedStyle]?.promptKeyword || "";
-        // 스타일 키워드를 sceneDescription에 추가 (중복 "simple line art, webtoon style" 제거)
         const cleanDesc = scene.sceneDescription.replace(/,?\s*simple line art,?\s*webtoon style/gi, "").trim();
-        const sceneDesc = [styleKeyword, cleanDesc].filter(Boolean).join(", ");
+        const storyPrefix = storyPrompt ? `[Story: ${storyPrompt}] ` : "";
+        const sceneDesc = [styleKeyword, `${storyPrefix}${cleanDesc}`].filter(Boolean).join(", ");
 
-        // 컷 영역의 실제 비율 계산
         const cutIdx = idx % cutsPerCanvas;
         const region = regions[cutIdx];
-        const isLandscape = region.width > region.height;
-        const ratio = isLandscape
-          ? `${Math.round(region.width / region.height * 10) / 10}:1 landscape`
-          : `${Math.round(region.height / region.width * 10) / 10}:1 portrait`;
+        const geminiRatio = getGeminiAspectRatio(region.width, region.height);
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
-          const res = await apiRequest("POST", "/api/generate-background", {
+          const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
+            sceneDescription: sceneDesc,
+            storyContext: storyPrompt,
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
-            backgroundPrompt: sceneDesc,
-            noBackground: true,
-            aspectRatio: ratio,
-          });
+            aspectRatio: geminiRatio,
+          }, { signal: ac.signal });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");
           results[idx] = { index: idx, status: "done", imageUrl: data.imageUrl };
         } catch (err: any) {
+          if (err?.name === "AbortError") {
+            results[idx] = { ...results[idx], status: "pending" };
+            return;
+          }
           results[idx] = { index: idx, status: "failed", error: err.message };
           if (/403/.test(err.message)) {
             for (let j = idx + 1; j < total; j++) {
@@ -382,7 +445,12 @@ export function AutoWebtoonPanel({
     }
 
     setIsGenerating(false);
+    abortRef.current = null;
+    if (cancelledRef.current) {
+      toast({ title: "생성 취소됨", description: "완료된 이미지는 유지됩니다." });
+    }
     queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/gallery"] });
   };
 
   // Retry failed
@@ -390,6 +458,9 @@ export function AutoWebtoonPanel({
     const failedIndices = cutResults.filter((r) => r.status === "failed").map((r) => r.index);
     if (failedIndices.length === 0) return;
 
+    const ac = new AbortController();
+    abortRef.current = ac;
+    cancelledRef.current = false;
     setIsGenerating(true);
     const results = [...cutResults];
 
@@ -400,33 +471,41 @@ export function AutoWebtoonPanel({
 
     const BATCH_SIZE = 3;
     for (let i = 0; i < failedIndices.length; i += BATCH_SIZE) {
+      if (cancelledRef.current) break;
+
       const batch = failedIndices.slice(i, i + BATCH_SIZE);
       const regions = getCutRegions(cutsPerCanvas);
       const promises = batch.map(async (idx) => {
+        if (cancelledRef.current) {
+          results[idx] = { ...results[idx], status: "failed" };
+          return;
+        }
         const scene = scenes[idx];
         const styleKeyword = ART_STYLES[selectedStyle]?.promptKeyword || "";
         const cleanDesc = scene.sceneDescription.replace(/,?\s*simple line art,?\s*webtoon style/gi, "").trim();
-        const sceneDesc = [styleKeyword, cleanDesc].filter(Boolean).join(", ");
+        const storyPrefix = storyPrompt ? `[Story: ${storyPrompt}] ` : "";
+        const sceneDesc = [styleKeyword, `${storyPrefix}${cleanDesc}`].filter(Boolean).join(", ");
 
         const cutIdx = idx % cutsPerCanvas;
         const region = regions[cutIdx];
-        const isLandscape = region.width > region.height;
-        const ratio = isLandscape
-          ? `${Math.round(region.width / region.height * 10) / 10}:1 landscape`
-          : `${Math.round(region.height / region.width * 10) / 10}:1 portrait`;
+        const geminiRatio = getGeminiAspectRatio(region.width, region.height);
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
-          const res = await apiRequest("POST", "/api/generate-background", {
+          const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
+            sceneDescription: sceneDesc,
+            storyContext: storyPrompt,
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
-            backgroundPrompt: sceneDesc,
-            noBackground: true,
-            aspectRatio: ratio,
-          });
+            aspectRatio: geminiRatio,
+          }, { signal: ac.signal });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");
           results[idx] = { index: idx, status: "done", imageUrl: data.imageUrl };
         } catch (err: any) {
+          if (err?.name === "AbortError") {
+            results[idx] = { ...results[idx], status: "failed" };
+            return;
+          }
           results[idx] = { index: idx, status: "failed", error: err.message };
         }
       });
@@ -444,7 +523,12 @@ export function AutoWebtoonPanel({
     }
 
     setIsGenerating(false);
+    abortRef.current = null;
+    if (cancelledRef.current) {
+      toast({ title: "재시도 취소됨", description: "완료된 이미지는 유지됩니다." });
+    }
     queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/gallery"] });
   };
 
   // Build panels and apply to editor
@@ -499,10 +583,13 @@ export function AutoWebtoonPanel({
       }
 
       const bubbles: any[] = [];
+      const textElements: any[] = [];
       for (let ci = 0; ci < cutsPerCanvas && cutStart + ci < cutEnd; ci++) {
         const scene = scenes[cutStart + ci];
-        if (scene?.bubbleText) {
-          const region = regions[ci];
+        const region = regions[ci];
+        // 말풍선: bubbleText 또는 narrativeText 중 하나라도 있으면 생성
+        const bubbleContent = scene?.bubbleText || scene?.narrativeText || "";
+        if (bubbleContent) {
           bubbles.push({
             id: Math.random().toString(36).slice(2, 10),
             seed: Math.floor(Math.random() * 1000000),
@@ -510,11 +597,11 @@ export function AutoWebtoonPanel({
             y: region.y + region.height / 2 - 30,
             width: 140,
             height: 60,
-            text: scene.bubbleText,
-            style: "handwritten",
+            text: bubbleContent,
+            style: "linedrawing",
             tailStyle: "short",
             tailDirection: "bottom",
-            tailBaseSpread: 8,
+            tailBaseSpread: 20,
             tailCurve: 0.5,
             tailJitter: 1,
             dotsScale: 1,
@@ -526,6 +613,23 @@ export function AutoWebtoonPanel({
             zIndex: 10 + ci,
           });
         }
+        // 나레이션: bubbleText와 별도로 narrativeText가 있으면 텍스트 요소로 추가
+        if (scene?.narrativeText && scene?.bubbleText) {
+          textElements.push({
+            id: Math.random().toString(36).slice(2, 10),
+            text: scene.narrativeText,
+            x: region.x + 8,
+            y: region.y + 8,
+            width: region.width - 16,
+            height: 30,
+            fontSize: 12,
+            fontFamily: "default",
+            color: "#333333",
+            textAlign: "left",
+            opacity: 1,
+            zIndex: 20 + ci,
+          });
+        }
       }
 
       panels.push({
@@ -534,7 +638,7 @@ export function AutoWebtoonPanel({
         bottomScript: null,
         bubbles,
         characters,
-        textElements: [],
+        textElements,
         lineElements: dividers,
         shapeElements: [],
         backgroundColor: "#ffffff",
@@ -642,7 +746,7 @@ export function AutoWebtoonPanel({
             variant="outline"
             size="sm"
             className="h-7 text-xs"
-            onClick={(e) => { e.stopPropagation(); setShowGalleryPicker(true); }}
+            onClick={(e) => { e.stopPropagation(); setGalleryPickerKey(k => k + 1); setShowGalleryPicker(true); }}
             disabled={selectedCharacters.length >= 4}
           >
             <FolderOpen className="h-3 w-3 mr-1" />
@@ -761,7 +865,7 @@ export function AutoWebtoonPanel({
             <>
               <div className="grid grid-cols-4 gap-2">
                 {galleryPickerData
-                  .filter((g) => g.resultImageUrl)
+                  .filter((g) => g.resultImageUrl || g.thumbnailUrl)
                   .map((gen) => {
                     const isSelected = selectedCharacters.some((c) => c.id === String(gen.id));
                     const isFull = selectedCharacters.length >= 4 && !isSelected;
@@ -965,6 +1069,21 @@ export function AutoWebtoonPanel({
 
         {/* Actions */}
         <div className="space-y-1.5">
+          {isGenerating && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="w-full h-7 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                cancelledRef.current = true;
+                abortRef.current?.abort();
+              }}
+            >
+              <X className="h-3 w-3 mr-1" /> 생성 취소
+            </Button>
+          )}
           {failedCount > 0 && !isGenerating && (
             <Button
               type="button"
@@ -991,6 +1110,7 @@ export function AutoWebtoonPanel({
             variant="outline"
             size="sm"
             className="w-full h-7 text-xs"
+            disabled={isGenerating}
             onClick={(e) => { e.stopPropagation(); setStep(1); setCutResults([]); }}
           >
             처음부터 다시
