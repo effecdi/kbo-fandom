@@ -141,9 +141,9 @@ export default function OnboardingPage() {
               {/* Business Card */}
               <button
                 onClick={() => handleUserTypeSelect("business")}
-                className="group relative bg-primary/5 rounded-2xl p-8 hover:shadow-2xl transition-all border-2 border-transparent hover:border-primary text-left"
+                className="group relative bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/50 dark:to-blue-950/50 rounded-2xl p-8 hover:shadow-2xl transition-all border-2 border-transparent hover:border-indigo-600 text-left"
               >
-                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Building2 className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
@@ -154,18 +154,18 @@ export default function OnboardingPage() {
                   필요시 인스타툰 작가와 협업하고 싶어요
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-sm font-semibold">
                     <Sparkles className="w-3 h-3" /> 마스코트 생성
                   </span>
-                  <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-semibold">
                     <Palette className="w-3 h-3" /> 콘텐츠 제작
                   </span>
-                  <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-sm font-semibold">
                     <Users className="w-3 h-3" /> 작가 협업
                   </span>
                 </div>
                 <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowRight className="w-6 h-6 text-primary" />
+                  <ArrowRight className="w-6 h-6 text-indigo-600" />
                 </div>
               </button>
             </div>
@@ -238,8 +238,8 @@ export default function OnboardingPage() {
                 <button
                   key={item.id}
                   onClick={() => { setPurpose(item.id); setStep(3); }}
-                  className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-primary hover:shadow-lg ${
-                    purpose === item.id ? "border-primary bg-primary/5" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-indigo-600 hover:shadow-lg ${
+                    purpose === item.id ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -251,7 +251,7 @@ export default function OnboardingPage() {
             </div>
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)} className="border-2">이전</Button>
-              <Button onClick={() => setStep(3)}>
+              <Button onClick={() => setStep(3)} className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
                 다음 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -319,8 +319,8 @@ export default function OnboardingPage() {
                 <button
                   key={item.id}
                   onClick={() => { setBrandSize(item.id); setStep(4); }}
-                  className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-primary hover:shadow-lg ${
-                    brandSize === item.id ? "border-primary bg-primary/5" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-indigo-600 hover:shadow-lg ${
+                    brandSize === item.id ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -332,7 +332,7 @@ export default function OnboardingPage() {
             </div>
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(2)} className="border-2">이전</Button>
-              <Button onClick={() => setStep(4)}>
+              <Button onClick={() => setStep(3)} className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
                 다음 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -393,22 +393,22 @@ export default function OnboardingPage() {
 
             {userType === "business" && (
               <div className="grid md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-primary/5 rounded-xl p-6">
-                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+                <div className="bg-indigo-50 dark:bg-indigo-950/50 rounded-xl p-6">
+                  <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Sparkles className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="font-bold text-gray-900 dark:text-white mb-2">마스코트 생성</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">1분만에 브랜드 자산 완성</p>
                 </div>
-                <div className="bg-primary/5 rounded-xl p-6">
-                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+                <div className="bg-blue-50 dark:bg-blue-950/50 rounded-xl p-6">
+                  <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Palette className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="font-bold text-gray-900 dark:text-white mb-2">콘텐츠 제작</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">직접 만들고 관리</p>
                 </div>
-                <div className="bg-primary/5 rounded-xl p-6">
-                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+                <div className="bg-indigo-50 dark:bg-indigo-950/50 rounded-xl p-6">
+                  <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Users className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="font-bold text-gray-900 dark:text-white mb-2">작가 협업</h3>
@@ -424,7 +424,7 @@ export default function OnboardingPage() {
                 className={`${
                   userType === "creator"
                     ? "bg-gradient-to-r from-purple-600 to-pink-600"
-                    : ""
+                    : "bg-gradient-to-r from-indigo-600 to-blue-600"
                 } text-white text-lg px-12 py-6`}
               >
                 <Sparkles className="w-5 h-5 mr-2" />
