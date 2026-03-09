@@ -4277,22 +4277,25 @@ export default function StoryPage() {
       return res.json() as Promise<{ prompt: string }>;
     },
     onSuccess: (data) => {
-      let bg = data.prompt;
-      let items = "";
+      let aiBg = data.prompt;
+      let aiItems = "";
       try {
         const parsed = JSON.parse(data.prompt);
         if (parsed && typeof parsed === "object") {
           if (typeof parsed.background === "string" && parsed.background) {
-            bg = parsed.background;
+            aiBg = parsed.background;
           }
           if (typeof parsed.items === "string") {
-            items = parsed.items;
+            aiItems = parsed.items;
           }
         }
       } catch {
       }
-      setBackgroundPrompt(bg);
-      setItemPrompt(items);
+      // 사용자가 직접 입력한 값 우선, 비어있으면 AI 생성 값으로 채움
+      const finalBg = backgroundPrompt.trim() || aiBg;
+      const finalItems = itemPrompt.trim() || aiItems;
+      if (!backgroundPrompt.trim()) setBackgroundPrompt(aiBg);
+      if (!itemPrompt.trim()) setItemPrompt(aiItems);
 
       // Auto-generate character image if reference image is available
       // backgroundPromptMutation is used in instatoonFull flow (autoRefImages)
@@ -4306,10 +4309,11 @@ export default function StoryPage() {
         // panels state is always current in onSuccess (TanStack Query uses latest closure)
         const currentPanelIds = panels.map(p => p.id);
         generateAndAddCharacterImages(refImgs, {
-          bg,
-          items,
+          bg: finalBg,
+          items: finalItems,
           pose: posePrompt,
           expression: expressionPrompt,
+          topic: topic.trim() || undefined,
         }, currentPanelIds).then((count) => {
           toast({
             title: "캐릭터 이미지 추가 완료",
@@ -4353,48 +4357,60 @@ export default function StoryPage() {
   });
 
   const instatoonPromptMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (variables?: { scope?: "current" | "all" }) => {
       const ac = new AbortController();
       promptAbortRef.current = ac;
+      const scope = variables?.scope ?? "all";
       const res = await apiRequest("POST", "/api/ai-prompt", {
         type: "background",
         referenceImageUrl: promptRefImageUrl ?? undefined,
       }, { signal: ac.signal });
       const data = (await res.json()) as { prompt: string };
-      return data.prompt;
+      return { prompt: data.prompt, scope };
     },
-    onSuccess: (rawPrompt) => {
-      let scene = rawPrompt;
-      let parsedBg = "";
-      let parsedItems = "";
+    onSuccess: ({ prompt: rawPrompt, scope }) => {
+      let aiBg = "";
+      let aiItems = "";
       try {
         const parsed = JSON.parse(rawPrompt);
         if (parsed && typeof parsed === "object") {
           const bg = (parsed as any).background;
           const items = (parsed as any).items;
-          if (typeof bg === "string" && bg) {
-            parsedBg = bg;
-            scene = typeof items === "string" && items ? `${bg} / ${items}` : bg;
-          }
-          if (typeof items === "string" && items) parsedItems = items;
+          if (typeof bg === "string" && bg) aiBg = bg;
+          if (typeof items === "string" && items) aiItems = items;
         }
       } catch {}
-      setInstatoonScenePrompt(scene);
+
+      // 사용자가 직접 입력한 값 우선, 비어있으면 AI 생성 값으로 채움
+      const finalBg = backgroundPrompt.trim() || aiBg;
+      const finalItems = itemPrompt.trim() || aiItems;
+      // UI 필드도 업데이트 (사용자가 비운 경우에만)
+      if (!backgroundPrompt.trim() && aiBg) setBackgroundPrompt(aiBg);
+      if (!itemPrompt.trim() && aiItems) setItemPrompt(aiItems);
+
+      const scene = [finalBg, finalItems].filter(Boolean).join(" / ");
+      setInstatoonScenePrompt(scene || rawPrompt);
 
       // If a reference character image is provided, auto-generate and place on canvas
       const refImgs2 = autoRefImages.length > 0 ? autoRefImages.map(i => i.url) : promptRefImageUrl ? [promptRefImageUrl] : [];
       if (refImgs2.length > 0) {
+        const isCurrent = scope === "current";
+        const targetPanelIds = isCurrent
+          ? [panels[activePanelIndex]?.id].filter(Boolean)
+          : panels.map(p => p.id);
         toast({
-          title: "프롬프트 완성 — 이미지 생성 시작",
-          description: "캐릭터 이미지를 생성해 캔버스에 추가합니다...",
+          title: isCurrent ? "선택 컷 — 이미지 생성 시작" : "전체 — 이미지 생성 시작",
+          description: isCurrent
+            ? "선택된 패널에 캐릭터 이미지를 생성합니다..."
+            : "캐릭터 이미지를 생성해 캔버스에 추가합니다...",
         });
-        const currentPanelIds2 = panels.map(p => p.id);
         generateAndAddCharacterImages(refImgs2, {
-          bg: parsedBg || scene,
-          items: parsedItems,
+          bg: finalBg || scene,
+          items: finalItems,
           pose: posePrompt,
           expression: expressionPrompt,
-        }, currentPanelIds2).then((count) => {
+          topic: topic.trim() || undefined,
+        }, targetPanelIds).then((count) => {
           toast({
             title: "캐릭터 이미지 추가 완료",
             description: `${count}개 패널에 캐릭터가 추가됐습니다. 캔버스에서 위치·크기를 조정하세요.`,
@@ -6603,7 +6619,7 @@ export default function StoryPage() {
             element: '[data-testid="button-left-tab-ai"]',
             popover: {
               title: "AI 프롬프트 (자동 생성)",
-              description: "주제를 입력하고 AI가 자막/말풍선을 자동 생성합니다.\n\n• 인스타툰 자동화 생성: 캐릭터 기준 이미지 + 주제로 이미지까지 한번에\n• 인스타툰 프롬프트 자동 작성: 포즈/표정/배경 프롬프트 자동 생성\n• 자동화툰 멀티컷: 여러 장면을 한번에 생성",
+              description: "주제를 입력하고 AI가 자막/말풍선을 자동 생성합니다.\n\n• 인스타툰 자동화 생성: 캐릭터 기준 이미지 + 주제로 이미지까지 한번에\n• 인스타툰 이미지 생성: 포즈/표정/배경 프롬프트 자동 생성\n• 자동화툰 멀티컷: 여러 장면을 한번에 생성",
               side: "right",
             },
           },
@@ -6778,16 +6794,16 @@ export default function StoryPage() {
                           size="sm"
                           className="justify-start"
                           onClick={() => {
-                            if (!isPro) { toast({ title: "Pro 전용 기능", description: "인스타툰 프롬프트 자동 작성은 Pro 멤버십 전용입니다.", variant: "destructive" }); return; }
+                            if (!isPro) { toast({ title: "Pro 전용 기능", description: "인스타툰 이미지 생성은 Pro 멤버십 전용입니다.", variant: "destructive" }); return; }
                             setAiMode("instatoonPrompt");
                           }}
                         >
                           <Wand2 className="h-4 w-4 mr-2" />
-                          인스타툰 프롬프트 자동 작성
+                          인스타툰 이미지 생성
                           {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                         </Button>
                         <Button
-                          variant="outline"
+                          variant={aiMode === "autoWebtoon" ? "default" : "outline"}
                           size="sm"
                           className="justify-start"
                           onClick={() => {
@@ -7149,15 +7165,25 @@ export default function StoryPage() {
                               </span>
                               <Button
                                 size="sm"
-                                variant={backgroundPromptMutation.isPending ? "destructive" : "outline"}
-                                onClick={() => backgroundPromptMutation.isPending ? promptAbortRef.current?.abort() : backgroundPromptMutation.mutate()}
+                                variant="outline"
+                                disabled={backgroundPromptMutation.isPending}
+                                onClick={() => backgroundPromptMutation.mutate()}
                               >
                                 {backgroundPromptMutation.isPending ? (
-                                  <span className="text-[11px]">취소</span>
+                                  <span className="text-[11px] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />생성 중</span>
                                 ) : (
                                   <span className="text-[11px]">AI 추천</span>
                                 )}
                               </Button>
+                              {backgroundPromptMutation.isPending && (
+                                <button
+                                  type="button"
+                                  className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                                  onClick={() => promptAbortRef.current?.abort()}
+                                >
+                                  취소
+                                </button>
+                              )}
                             </div>
                             <div className="grid grid-cols-1 gap-2">
                               <Textarea
@@ -7423,26 +7449,41 @@ export default function StoryPage() {
                           </div>
 
                           {instatoonPromptMutation.isPending ? (
-                            <Button
-                              className="w-full"
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => promptAbortRef.current?.abort()}
-                            >
-                              <X className="h-4 w-4 mr-2" />
-                              생성 취소
-                            </Button>
+                            <div className="space-y-1">
+                              <Button className="w-full" size="sm" disabled>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                {instatoonPromptMutation.variables?.scope === "current"
+                                  ? "선택 컷 생성 중..."
+                                  : "전체 생성 중..."}
+                              </Button>
+                              <button
+                                type="button"
+                                className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors py-1"
+                                onClick={() => promptAbortRef.current?.abort()}
+                              >
+                                취소
+                              </button>
+                            </div>
                           ) : (
-                            <Button
-                              className="w-full"
-                              size="sm"
-                              onClick={() => instatoonPromptMutation.mutate()}
-                            >
-                              <Wand2 className="h-4 w-4 mr-2" />
-                              {(posePrompt.trim() || expressionPrompt.trim())
-                                ? "배경/아이템 자동 완성"
-                                : "전체 프롬프트 자동 작성"}
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                className="flex-1"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => instatoonPromptMutation.mutate({ scope: "current" })}
+                              >
+                                <Wand2 className="h-4 w-4 mr-1.5" />
+                                선택 컷 생성
+                              </Button>
+                              <Button
+                                className="flex-1"
+                                size="sm"
+                                onClick={() => instatoonPromptMutation.mutate({ scope: "all" })}
+                              >
+                                <Wand2 className="h-4 w-4 mr-1.5" />
+                                전체 생성 ({panels.length}컷)
+                              </Button>
+                            </div>
                           )}
                         </div>
                       )}

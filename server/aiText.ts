@@ -397,7 +397,7 @@ export async function generateWebtoonSceneBreakdown(data: {
   for (const chunk of chunks) {
     // 이전 장면 요약을 다음 청크에 전달 → 일관성 유지
     const prevSummary = allScenes.length > 0
-      ? allScenes.slice(-2).map((s, i) => `컷${allScenes.length - 1 + i}: ${s.sceneDescription.slice(0, 60)}`).join("; ")
+      ? allScenes.slice(-2).map((s, i) => `컷${allScenes.length - 1 + i}: ${s.sceneDescription.slice(0, 200)}`).join("; ")
       : "";
 
     const result = await generateSceneChunk(
@@ -436,7 +436,7 @@ async function generateSceneChunk(
   }[role];
 
   const prevContext = prevSummary
-    ? `\n■ 이전 장면 요약 (이어서 작성하세요):\n${prevSummary}\n`
+    ? `\n■ 이전 장면 요약 (이어서 작성하세요):\n${prevSummary}\n→ 각 장면은 이전 장면에서 자연스럽게 이어져야 합니다. 캐릭터의 행동과 감정이 연속적으로 전환되도록 하세요.\n`
     : "";
 
   const prompt = `당신은 한국 팔로워 50만 인기 인스타툰 작가이자 스토리보드 전문가입니다.

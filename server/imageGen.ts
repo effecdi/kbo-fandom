@@ -806,6 +806,9 @@ export async function generateWebtoonScene(
   storyContext: string,
   sourceImageDataList?: string[],
   aspectRatio?: string,
+  sceneIndex?: number,
+  totalScenes?: number,
+  previousSceneDescription?: string,
 ): Promise<string> {
   const parts: any[] = [];
   const images = sourceImageDataList ?? [];
@@ -821,6 +824,22 @@ export async function generateWebtoonScene(
   // sceneDescription, storyContext 모두 한국어일 수 있으므로 번역
   const translatedScene = await translateToEnglish(sceneDescription, ai);
   const translatedContext = await translateToEnglish(storyContext, ai);
+
+  // 장면 위치 및 이전 장면 컨텍스트 블록 생성
+  let scenePositionBlock = "";
+  if (sceneIndex !== undefined && totalScenes !== undefined && totalScenes > 1) {
+    const pos = sceneIndex + 1; // 1-based
+    let arcLabel = "MIDDLE";
+    if (pos === 1) arcLabel = "OPENING";
+    else if (pos <= Math.ceil(totalScenes * 0.25)) arcLabel = "EARLY";
+    else if (pos === totalScenes) arcLabel = "FINAL";
+    else if (pos >= totalScenes - 1) arcLabel = "CLIMAX";
+    scenePositionBlock += `\nSCENE POSITION: Scene ${pos} of ${totalScenes} (${arcLabel})\n`;
+  }
+  if (previousSceneDescription) {
+    const translatedPrev = await translateToEnglish(previousSceneDescription, ai);
+    scenePositionBlock += `PREVIOUS SCENE: ${translatedPrev}\nThis scene must flow naturally from the previous scene — maintain continuity in character poses, emotions, and story progression.\n`;
+  }
 
   if (hasImages) {
     // Gemini multimodal best practice: 레퍼런스 이미지를 텍스트보다 앞에 배치
@@ -845,7 +864,7 @@ CHARACTER REFERENCE (MOST IMPORTANT — the images above are the GROUND TRUTH):
 
 STORY CONTEXT (EVERY scene must directly illustrate this story — do NOT deviate):
 "${translatedContext}"
-
+${scenePositionBlock}
 SCENE TO ILLUSTRATE (draw exactly this action/pose/expression):
 ${translatedScene}
 
@@ -871,7 +890,7 @@ ${noTextRule}
 
 STORY CONTEXT (the entire comic is about this topic — every scene must relate to it):
 "${translatedContext}"
-
+${scenePositionBlock}
 SCENE TO ILLUSTRATE (this is the MOST important part — draw exactly this):
 ${translatedScene}
 

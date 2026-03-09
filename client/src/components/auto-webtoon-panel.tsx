@@ -411,6 +411,9 @@ export function AutoWebtoonPanel({
             storyContext: storyPrompt,
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
             aspectRatio: geminiRatio,
+            sceneIndex: idx,
+            totalScenes: scenes.length,
+            previousSceneDescription: idx > 0 ? scenes[idx - 1]?.sceneDescription : undefined,
           }, { signal: ac.signal });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");
@@ -497,6 +500,9 @@ export function AutoWebtoonPanel({
             storyContext: storyPrompt,
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
             aspectRatio: geminiRatio,
+            sceneIndex: idx,
+            totalScenes: scenes.length,
+            previousSceneDescription: idx > 0 ? scenes[idx - 1]?.sceneDescription : undefined,
           }, { signal: ac.signal });
           const data = (await res.json()) as { imageUrl: string };
           if (!data.imageUrl) throw new Error("No image");

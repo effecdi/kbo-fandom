@@ -672,7 +672,7 @@ export async function registerRoutes(
   app.post("/api/auto-webtoon/generate-scene", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const { sceneDescription, storyContext, sourceImageDataList, aspectRatio } = req.body;
+      const { sceneDescription, storyContext, sourceImageDataList, aspectRatio, sceneIndex, totalScenes, previousSceneDescription } = req.body;
 
       if (!sceneDescription || typeof sceneDescription !== "string") {
         return res.status(400).json({ message: "sceneDescription is required" });
@@ -691,6 +691,9 @@ export async function registerRoutes(
         storyContext || "",
         sourceImageDataList,
         aspectRatio,
+        sceneIndex,
+        totalScenes,
+        previousSceneDescription,
       );
 
       // story에서 생성된 이미지는 갤러리에 저장하지 않음
