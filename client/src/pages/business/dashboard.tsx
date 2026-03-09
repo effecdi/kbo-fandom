@@ -13,17 +13,18 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
 export default function BusinessDashboardPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <DashboardLayout>
       {/* Welcome Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-black text-foreground mb-2">
-          안녕하세요, 기업 담당자님! 👋
+          안녕하세요, 담당자님! 👋
         </h1>
         <p className="text-muted-foreground">
-          오늘도 브랜드를 성장시켜볼까요?
+          브랜드/공공 마스코트 관리와 작가 협업을 시작하세요
         </p>
       </div>
 
@@ -37,6 +38,18 @@ export default function BusinessDashboardPage() {
             <span className="text-2xl font-black text-foreground">5</span>
           </div>
           <p className="text-sm font-semibold text-muted-foreground">보유 마스코트</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">승인됨 3 · 검토중 2</p>
+        </div>
+
+        <div className="bg-card rounded-2xl p-6 border hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/50 rounded-xl flex items-center justify-center">
+              <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <span className="text-2xl font-black text-foreground">2</span>
+          </div>
+          <p className="text-sm font-semibold text-muted-foreground">승인 대기 중</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">내부 검토 필요</p>
         </div>
 
         <div className="bg-card rounded-2xl p-6 border hover:shadow-lg transition-shadow">
@@ -47,6 +60,7 @@ export default function BusinessDashboardPage() {
             <span className="text-2xl font-black text-foreground">3</span>
           </div>
           <p className="text-sm font-semibold text-muted-foreground">진행 중 캠페인</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">활발히 진행 중</p>
         </div>
 
         <div className="bg-card rounded-2xl p-6 border hover:shadow-lg transition-shadow">
@@ -57,16 +71,7 @@ export default function BusinessDashboardPage() {
             <span className="text-2xl font-black text-foreground">12</span>
           </div>
           <p className="text-sm font-semibold text-muted-foreground">비교 중 작가</p>
-        </div>
-
-        <div className="bg-card rounded-2xl p-6 border hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-xl flex items-center justify-center">
-              <MessageSquare className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-            <span className="text-2xl font-black text-foreground">7</span>
-          </div>
-          <p className="text-sm font-semibold text-muted-foreground">답변 대기 제안</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">협업 검토 중</p>
         </div>
       </div>
 
@@ -87,29 +92,35 @@ export default function BusinessDashboardPage() {
                 </button>
               </Link>
 
-              <button className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-purple-300">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4">
-                  <Palette className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-bold text-foreground mb-1">콘텐츠 제작하기</h3>
-                <p className="text-sm text-muted-foreground">직접 만들어보기</p>
-              </button>
+              <Link href="/story">
+                <button className="w-full p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-purple-300">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4">
+                    <Palette className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-bold text-foreground mb-1">콘텐츠 제작하기</h3>
+                  <p className="text-sm text-muted-foreground">스토리 에디터로 제작</p>
+                </button>
+              </Link>
 
-              <button className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/50 dark:to-cyan-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-blue-300">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4">
-                  <Target className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-bold text-foreground mb-1">새 캠페인 만들기</h3>
-                <p className="text-sm text-muted-foreground">작가 협업 시작</p>
-              </button>
+              <Link href="/ad-match">
+                <button className="w-full p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/50 dark:to-cyan-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-blue-300">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4">
+                    <Target className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-bold text-foreground mb-1">새 캠페인 만들기</h3>
+                  <p className="text-sm text-muted-foreground">작가 협업 시작</p>
+                </button>
+              </Link>
 
-              <button className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-green-300">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-bold text-foreground mb-1">작가 탐색하기</h3>
-                <p className="text-sm text-muted-foreground">최적의 작가 찾기</p>
-              </button>
+              <Link href="/feed">
+                <button className="w-full p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-green-300">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-bold text-foreground mb-1">작가 탐색하기</h3>
+                  <p className="text-sm text-muted-foreground">최적의 작가 찾기</p>
+                </button>
+              </Link>
             </div>
           </div>
 
@@ -183,7 +194,7 @@ export default function BusinessDashboardPage() {
           <div className="bg-card rounded-2xl p-6 border">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-foreground">추천 작가</h2>
-              <span className="text-xs font-semibold text-primary">TODAY</span>
+              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">TODAY</span>
             </div>
             <div className="space-y-4">
               {[
@@ -293,6 +304,6 @@ export default function BusinessDashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,9 +6,12 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SpotlightTourProvider } from "@/components/spotlight-tour";
 import { Navbar } from "@/components/navbar";
 import { useAuth } from "@/hooks/use-auth";
+import { UserRoleProvider, useUserRole } from "@/hooks/use-user-role";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
 import HomePage from "@/pages/home";
+import OnboardingPage from "@/pages/onboarding";
+import BusinessDashboardPage from "@/pages/business/dashboard";
 import CreatePage from "@/pages/create";
 import CreateInstatoonPage from "@/pages/create-instatoon";
 import PosePage from "@/pages/pose";
@@ -32,6 +35,19 @@ import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
 import RefundPolicyPage from "@/pages/refund-policy";
 
+function HomeRoute() {
+  const { isAuthenticated } = useAuth();
+  const { role } = useUserRole();
+
+  // role이 설정되어 있으면 (인증 여부 무관) 역할별 홈 표시
+  if (role === "business") return <BusinessDashboardPage />;
+  if (role === "creator") return <HomePage />;
+  // 인증됐지만 역할 미선택 → 온보딩
+  if (isAuthenticated) return <OnboardingPage />;
+  // 미인증 + 역할 없음 → 랜딩
+  return <LandingPage />;
+}
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -48,8 +64,10 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={isAuthenticated ? HomePage : LandingPage} />
+      <Route path="/" component={HomeRoute} />
       <Route path="/home" component={LandingPage} />
+      <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/business/dashboard" component={BusinessDashboardPage} />
       <Route path="/create" component={CreatePage} />
       <Route path="/create-instatoon" component={CreateInstatoonPage} />
       <Route path="/pose" component={PosePage} />
@@ -77,17 +95,32 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const { role } = useUserRole();
+  const [location] = useLocation();
+
+  // 비즈니스 대시보드에서는 DashboardLayout 사용 → Navbar 숨김
+  const isBusinessDashboard = role === "business" &&
+    (location === "/" || location.startsWith("/business"));
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {!isBusinessDashboard && <Navbar />}
+      <Router />
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <SpotlightTourProvider>
-            <div className="min-h-screen bg-background text-foreground">
-              <Navbar />
-              <Router />
-            </div>
-          </SpotlightTourProvider>
+          <UserRoleProvider>
+            <SpotlightTourProvider>
+              <AppContent />
+            </SpotlightTourProvider>
+          </UserRoleProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
