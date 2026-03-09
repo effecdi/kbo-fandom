@@ -2,6 +2,7 @@ import {
   users, type UpsertUser,
   characters, generations, userCredits, trendingAccounts, bubbleProjects, payments,
   instagramConnections, instagramPublishLog,
+  feedPosts, likes, follows,
   type Character, type InsertCharacter,
   type Generation, type InsertGeneration,
   type UserCredits, type TrendingAccount, type InsertTrendingAccount,
@@ -9,6 +10,7 @@ import {
   type Payment, type InsertPayment,
   type InstagramConnection, type InsertInstagramConnection,
   type InstagramPublishLog, type InsertInstagramPublishLog,
+  type FeedPost, type FeedPostWithAuthor, type UserPublicProfile, type PopularCreator,
 } from "@shared/schema";
 import { requireDb } from "./db";
 import { eq, desc, sql, and, asc, inArray, gte } from "drizzle-orm";
@@ -77,6 +79,27 @@ export interface IStorage {
   updateInstagramPublishLog(id: number, data: Partial<Pick<InstagramPublishLog, "igMediaId" | "status" | "errorMessage">>): Promise<void>;
   getInstagramPublishLogs(userId: string, limit: number): Promise<InstagramPublishLog[]>;
   getPublishCountLast24h(userId: string): Promise<number>;
+
+  // Feed
+  createFeedPost(data: { userId: string; type: string; title: string; description?: string; imageUrl: string; thumbnailUrl?: string; sourceId?: number }): Promise<FeedPost>;
+  getFeedPosts(opts: { limit: number; offset: number; sort: string; viewerId?: string; followingOnly?: boolean }): Promise<{ items: FeedPostWithAuthor[]; total: number }>;
+  getFeedPost(id: number, viewerId?: string): Promise<FeedPostWithAuthor | undefined>;
+  deleteFeedPost(id: number, userId: string): Promise<boolean>;
+
+  // Likes
+  likePost(userId: string, postId: number): Promise<boolean>;
+  unlikePost(userId: string, postId: number): Promise<boolean>;
+
+  // Follows
+  followUser(followerId: string, followingId: string): Promise<boolean>;
+  unfollowUser(followerId: string, followingId: string): Promise<boolean>;
+
+  // Profile
+  getUserPublicProfile(userId: string, viewerId?: string): Promise<UserPublicProfile | undefined>;
+  getUserFeedPosts(userId: string, limit: number, offset: number): Promise<{ items: FeedPostWithAuthor[]; total: number }>;
+
+  // Popular creators
+  getPopularCreators(limit: number): Promise<PopularCreator[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -652,6 +675,322 @@ export class DatabaseStorage implements IStorage {
         gte(instagramPublishLog.createdAt, since),
       ));
     return result?.count ?? 0;
+  }
+
+  // ── Feed ──
+
+  async createFeedPost(data: { userId: string; type: string; title: string; description?: string; imageUrl: string; thumbnailUrl?: string; sourceId?: number }): Promise<FeedPost> {
+    const db = this.getDb();
+    const [post] = await db.insert(feedPosts).values({
+      userId: data.userId,
+      type: data.type,
+      title: data.title,
+      description: data.description || null,
+      imageUrl: data.imageUrl,
+      thumbnailUrl: data.thumbnailUrl || null,
+      sourceId: data.sourceId || null,
+    }).returning();
+    return post;
+  }
+
+  async getFeedPosts(opts: { limit: number; offset: number; sort: string; viewerId?: string; followingOnly?: boolean }): Promise<{ items: FeedPostWithAuthor[]; total: number }> {
+    const db = this.getDb();
+    const { limit, offset, sort, viewerId, followingOnly } = opts;
+
+    let whereClause = sql`1=1`;
+    if (followingOnly && viewerId) {
+      whereClause = sql`${feedPosts.userId} IN (SELECT ${follows.followingId} FROM ${follows} WHERE ${follows.followerId} = ${viewerId})`;
+    }
+
+    const orderBy = sort === "popular"
+      ? desc(feedPosts.likeCount)
+      : desc(feedPosts.createdAt);
+
+    const rows = await db.select({
+      id: feedPosts.id,
+      userId: feedPosts.userId,
+      type: feedPosts.type,
+      title: feedPosts.title,
+      description: feedPosts.description,
+      imageUrl: feedPosts.imageUrl,
+      thumbnailUrl: feedPosts.thumbnailUrl,
+      sourceId: feedPosts.sourceId,
+      likeCount: feedPosts.likeCount,
+      viewCount: feedPosts.viewCount,
+      createdAt: feedPosts.createdAt,
+      authorName: userCredits.authorName,
+      authorProfileImageUrl: users.profileImageUrl,
+      authorGenre: userCredits.genre,
+    })
+      .from(feedPosts)
+      .leftJoin(users, eq(feedPosts.userId, users.id))
+      .leftJoin(userCredits, eq(feedPosts.userId, userCredits.userId))
+      .where(whereClause)
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset);
+
+    const [countResult] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(feedPosts)
+      .where(whereClause);
+
+    // Check if viewer liked each post
+    let likedPostIds = new Set<number>();
+    if (viewerId && rows.length > 0) {
+      const postIds = rows.map((r: any) => r.id);
+      const likedRows = await db.select({ postId: likes.postId })
+        .from(likes)
+        .where(and(eq(likes.userId, viewerId), inArray(likes.postId, postIds)));
+      likedPostIds = new Set(likedRows.map((r: any) => r.postId));
+    }
+
+    const items: FeedPostWithAuthor[] = rows.map((r: any) => ({
+      ...r,
+      authorName: r.authorName ?? null,
+      authorProfileImageUrl: r.authorProfileImageUrl ?? null,
+      authorGenre: r.authorGenre ?? null,
+      isLiked: likedPostIds.has(r.id),
+    }));
+
+    return { items, total: countResult?.count ?? 0 };
+  }
+
+  async getFeedPost(id: number, viewerId?: string): Promise<FeedPostWithAuthor | undefined> {
+    const db = this.getDb();
+    const [row] = await db.select({
+      id: feedPosts.id,
+      userId: feedPosts.userId,
+      type: feedPosts.type,
+      title: feedPosts.title,
+      description: feedPosts.description,
+      imageUrl: feedPosts.imageUrl,
+      thumbnailUrl: feedPosts.thumbnailUrl,
+      sourceId: feedPosts.sourceId,
+      likeCount: feedPosts.likeCount,
+      viewCount: feedPosts.viewCount,
+      createdAt: feedPosts.createdAt,
+      authorName: userCredits.authorName,
+      authorProfileImageUrl: users.profileImageUrl,
+      authorGenre: userCredits.genre,
+    })
+      .from(feedPosts)
+      .leftJoin(users, eq(feedPosts.userId, users.id))
+      .leftJoin(userCredits, eq(feedPosts.userId, userCredits.userId))
+      .where(eq(feedPosts.id, id));
+
+    if (!row) return undefined;
+
+    let isLiked = false;
+    if (viewerId) {
+      const [liked] = await db.select({ id: likes.id })
+        .from(likes)
+        .where(and(eq(likes.userId, viewerId), eq(likes.postId, id)));
+      isLiked = !!liked;
+    }
+
+    // Increment view count
+    await db.update(feedPosts)
+      .set({ viewCount: sql`${feedPosts.viewCount} + 1` })
+      .where(eq(feedPosts.id, id));
+
+    return {
+      ...row,
+      authorName: row.authorName ?? null,
+      authorProfileImageUrl: row.authorProfileImageUrl ?? null,
+      authorGenre: row.authorGenre ?? null,
+      isLiked,
+    };
+  }
+
+  async deleteFeedPost(id: number, userId: string): Promise<boolean> {
+    const db = this.getDb();
+    const result = await db.delete(feedPosts)
+      .where(and(eq(feedPosts.id, id), eq(feedPosts.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ── Likes ──
+
+  async likePost(userId: string, postId: number): Promise<boolean> {
+    const db = this.getDb();
+    try {
+      await db.insert(likes).values({ userId, postId });
+      await db.update(feedPosts)
+        .set({ likeCount: sql`${feedPosts.likeCount} + 1` })
+        .where(eq(feedPosts.id, postId));
+      return true;
+    } catch (e: any) {
+      if (e?.code === "23505") return false; // Already liked
+      throw e;
+    }
+  }
+
+  async unlikePost(userId: string, postId: number): Promise<boolean> {
+    const db = this.getDb();
+    const result = await db.delete(likes)
+      .where(and(eq(likes.userId, userId), eq(likes.postId, postId)));
+    if ((result.rowCount ?? 0) > 0) {
+      await db.update(feedPosts)
+        .set({ likeCount: sql`GREATEST(${feedPosts.likeCount} - 1, 0)` })
+        .where(eq(feedPosts.id, postId));
+      return true;
+    }
+    return false;
+  }
+
+  // ── Follows ──
+
+  async followUser(followerId: string, followingId: string): Promise<boolean> {
+    if (followerId === followingId) return false;
+    const db = this.getDb();
+    try {
+      await db.insert(follows).values({ followerId, followingId });
+      return true;
+    } catch (e: any) {
+      if (e?.code === "23505") return false; // Already following
+      throw e;
+    }
+  }
+
+  async unfollowUser(followerId: string, followingId: string): Promise<boolean> {
+    const db = this.getDb();
+    const result = await db.delete(follows)
+      .where(and(eq(follows.followerId, followerId), eq(follows.followingId, followingId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ── Profile ──
+
+  async getUserPublicProfile(userId: string, viewerId?: string): Promise<UserPublicProfile | undefined> {
+    const db = this.getDb();
+    const [user] = await db.select({
+      id: users.id,
+      firstName: users.firstName,
+      profileImageUrl: users.profileImageUrl,
+    }).from(users).where(eq(users.id, userId));
+
+    if (!user) return undefined;
+
+    const [credits] = await db.select({
+      authorName: userCredits.authorName,
+      genre: userCredits.genre,
+    }).from(userCredits).where(eq(userCredits.userId, userId));
+
+    const [followerResult] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(follows).where(eq(follows.followingId, userId));
+    const [followingResult] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(follows).where(eq(follows.followerId, userId));
+    const [postResult] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(feedPosts).where(eq(feedPosts.userId, userId));
+    const [likesResult] = await db.select({ total: sql<number>`COALESCE(SUM(${feedPosts.likeCount}), 0)::int` })
+      .from(feedPosts).where(eq(feedPosts.userId, userId));
+
+    let isFollowing = false;
+    if (viewerId && viewerId !== userId) {
+      const [f] = await db.select({ id: follows.id })
+        .from(follows)
+        .where(and(eq(follows.followerId, viewerId), eq(follows.followingId, userId)));
+      isFollowing = !!f;
+    }
+
+    return {
+      id: user.id,
+      firstName: user.firstName ?? null,
+      profileImageUrl: user.profileImageUrl ?? null,
+      authorName: credits?.authorName ?? null,
+      genre: credits?.genre ?? null,
+      followerCount: followerResult?.count ?? 0,
+      followingCount: followingResult?.count ?? 0,
+      totalLikesReceived: likesResult?.total ?? 0,
+      postCount: postResult?.count ?? 0,
+      isFollowing,
+    };
+  }
+
+  async getUserFeedPosts(userId: string, limit: number, offset: number): Promise<{ items: FeedPostWithAuthor[]; total: number }> {
+    const db = this.getDb();
+    const rows = await db.select({
+      id: feedPosts.id,
+      userId: feedPosts.userId,
+      type: feedPosts.type,
+      title: feedPosts.title,
+      description: feedPosts.description,
+      imageUrl: feedPosts.imageUrl,
+      thumbnailUrl: feedPosts.thumbnailUrl,
+      sourceId: feedPosts.sourceId,
+      likeCount: feedPosts.likeCount,
+      viewCount: feedPosts.viewCount,
+      createdAt: feedPosts.createdAt,
+      authorName: userCredits.authorName,
+      authorProfileImageUrl: users.profileImageUrl,
+      authorGenre: userCredits.genre,
+    })
+      .from(feedPosts)
+      .leftJoin(users, eq(feedPosts.userId, users.id))
+      .leftJoin(userCredits, eq(feedPosts.userId, userCredits.userId))
+      .where(eq(feedPosts.userId, userId))
+      .orderBy(desc(feedPosts.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [countResult] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(feedPosts)
+      .where(eq(feedPosts.userId, userId));
+
+    const items: FeedPostWithAuthor[] = rows.map((r: any) => ({
+      ...r,
+      authorName: r.authorName ?? null,
+      authorProfileImageUrl: r.authorProfileImageUrl ?? null,
+      authorGenre: r.authorGenre ?? null,
+    }));
+
+    return { items, total: countResult?.count ?? 0 };
+  }
+
+  // ── Popular Creators ──
+
+  async getPopularCreators(limit: number): Promise<PopularCreator[]> {
+    const db = this.getDb();
+    const rows = await db.select({
+      id: users.id,
+      firstName: users.firstName,
+      profileImageUrl: users.profileImageUrl,
+      authorName: userCredits.authorName,
+      genre: userCredits.genre,
+      totalLikes: sql<number>`COALESCE(SUM(${feedPosts.likeCount}), 0)::int`,
+      postCount: sql<number>`COUNT(${feedPosts.id})::int`,
+    })
+      .from(users)
+      .innerJoin(userCredits, eq(users.id, userCredits.userId))
+      .leftJoin(feedPosts, eq(users.id, feedPosts.userId))
+      .groupBy(users.id, users.firstName, users.profileImageUrl, userCredits.authorName, userCredits.genre)
+      .having(sql`COUNT(${feedPosts.id}) > 0 OR EXISTS (SELECT 1 FROM ${follows} WHERE ${follows.followingId} = ${users.id})`)
+      .orderBy(sql`COALESCE(SUM(${feedPosts.likeCount}), 0) DESC`)
+      .limit(limit);
+
+    // Get follower counts
+    const userIds = rows.map((r: any) => r.id);
+    if (userIds.length === 0) return [];
+
+    const followerCounts = await db.select({
+      followingId: follows.followingId,
+      count: sql<number>`count(*)::int`,
+    })
+      .from(follows)
+      .where(inArray(follows.followingId, userIds))
+      .groupBy(follows.followingId);
+
+    const followerMap = new Map(followerCounts.map((r: any) => [r.followingId, r.count]));
+
+    return rows.map((r: any) => ({
+      id: r.id,
+      firstName: r.firstName ?? null,
+      profileImageUrl: r.profileImageUrl ?? null,
+      authorName: r.authorName ?? null,
+      genre: r.genre ?? null,
+      followerCount: followerMap.get(r.id) ?? 0,
+      totalLikes: r.totalLikes,
+    }));
   }
 }
 

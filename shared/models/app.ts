@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./auth";
@@ -247,3 +247,79 @@ export type InstagramConnection = typeof instagramConnections.$inferSelect;
 export type InsertInstagramConnection = z.infer<typeof insertInstagramConnectionSchema>;
 export type InstagramPublishLog = typeof instagramPublishLog.$inferSelect;
 export type InsertInstagramPublishLog = z.infer<typeof insertInstagramPublishLogSchema>;
+
+// ── Social Feed System ──
+
+export const feedPosts = pgTable("feed_posts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: text("type").notNull(), // "image" | "project"
+  title: text("title").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  sourceId: integer("source_id"),
+  likeCount: integer("like_count").notNull().default(0),
+  viewCount: integer("view_count").notNull().default(0),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const likes = pgTable("likes", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  postId: integer("post_id").notNull().references(() => feedPosts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => ({
+  uniqueLike: uniqueIndex("unique_like").on(table.userId, table.postId),
+}));
+
+export const follows = pgTable("follows", {
+  id: serial("id").primaryKey(),
+  followerId: varchar("follower_id").notNull().references(() => users.id),
+  followingId: varchar("following_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => ({
+  uniqueFollow: uniqueIndex("unique_follow").on(table.followerId, table.followingId),
+}));
+
+export const publishToFeedSchema = z.object({
+  type: z.enum(["image", "project"]),
+  title: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  sourceId: z.number().int().positive(),
+});
+
+export type FeedPost = typeof feedPosts.$inferSelect;
+export type InsertFeedPost = typeof feedPosts.$inferInsert;
+export type Like = typeof likes.$inferSelect;
+export type Follow = typeof follows.$inferSelect;
+
+export interface FeedPostWithAuthor extends FeedPost {
+  authorName: string | null;
+  authorProfileImageUrl: string | null;
+  authorGenre: string | null;
+  isLiked?: boolean;
+}
+
+export interface UserPublicProfile {
+  id: string;
+  firstName: string | null;
+  profileImageUrl: string | null;
+  authorName: string | null;
+  genre: string | null;
+  followerCount: number;
+  followingCount: number;
+  totalLikesReceived: number;
+  postCount: number;
+  isFollowing?: boolean;
+}
+
+export interface PopularCreator {
+  id: string;
+  firstName: string | null;
+  profileImageUrl: string | null;
+  authorName: string | null;
+  genre: string | null;
+  followerCount: number;
+  totalLikes: number;
+}

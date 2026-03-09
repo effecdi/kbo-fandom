@@ -120,6 +120,7 @@ import {
   FloatingSettingsModal,
   ShapeContextToolbar,
   ScriptContextToolbar,
+  CharContextToolbar,
   CanvasBgToolbar,
   CANVAS_BG_COLORS,
   createTextElement,
@@ -963,6 +964,7 @@ function PanelCanvas({
   const selectedBubbleIdRef = useRef(selectedBubbleId);
   const selectedCharIdRef = useRef(selectedCharId);
   const selectedShapeIdRef = useRef(selectedShapeId);
+  const selectedTextIdRef = useRef(selectedTextId);
   const panelRef = useRef(panel);
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
   const editingBubbleIdRef = useRef<string | null>(null);
@@ -1013,6 +1015,9 @@ function PanelCanvas({
   useEffect(() => {
     selectedShapeIdRef.current = selectedShapeId;
   }, [selectedShapeId]);
+  useEffect(() => {
+    selectedTextIdRef.current = selectedTextId;
+  }, [selectedTextId]);
   useEffect(() => {
     panelRef.current = panel;
   }, [panel]);
@@ -1127,6 +1132,9 @@ function PanelCanvas({
       }
     }
 
+    // Deferred selection indicators: drawn AFTER mask clip is restored
+    const deferredSelections: (() => void)[] = [];
+
     drawables.forEach((d) => {
       // Skip invisible elements
       const isHidden =
@@ -1223,14 +1231,40 @@ function PanelCanvas({
           }
         }
 
-        // Selection box (선택된 경우에만)
-        if (selectedTextId === te.id) {
-          ctx.globalAlpha = 1;
-          ctx.strokeStyle = HANDLE_COLOR;
-          ctx.lineWidth = 1;
-          ctx.setLineDash([4, 3]);
-          ctx.strokeRect(te.x - 2, te.y - 2, te.width + 4, te.height + 4);
-          ctx.setLineDash([]);
+        // Selection box + resize handles (선택된 경우에만)
+        if (selectedTextIdRef.current === te.id) {
+          const drawTextSelection = () => {
+            ctx.save();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = HANDLE_COLOR;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 3]);
+            ctx.strokeRect(te.x - 3, te.y - 3, te.width + 6, te.height + 6);
+            ctx.setLineDash([]);
+            // Resize handles
+            const hs = 8;
+            const textHandles = [
+              { x: te.x - hs / 2, y: te.y - hs / 2 },
+              { x: te.x + te.width - hs / 2, y: te.y - hs / 2 },
+              { x: te.x - hs / 2, y: te.y + te.height - hs / 2 },
+              { x: te.x + te.width - hs / 2, y: te.y + te.height - hs / 2 },
+              { x: te.x + te.width / 2 - hs / 2, y: te.y - hs / 2 },
+              { x: te.x + te.width / 2 - hs / 2, y: te.y + te.height - hs / 2 },
+              { x: te.x - hs / 2, y: te.y + te.height / 2 - hs / 2 },
+              { x: te.x + te.width - hs / 2, y: te.y + te.height / 2 - hs / 2 },
+            ];
+            textHandles.forEach((c) => {
+              ctx.beginPath();
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(c.x, c.y, hs, hs);
+              ctx.strokeStyle = HANDLE_COLOR;
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(c.x, c.y, hs, hs);
+            });
+            ctx.restore();
+          };
+          if (maskShape) deferredSelections.push(drawTextSelection);
+          else drawTextSelection();
         }
         ctx.restore();
       } else if (d.type === "line") {
@@ -1297,46 +1331,47 @@ function PanelCanvas({
         const se = d.se;
 
         if (se.maskEnabled) {
-          // Mask shape: draw dashed outline to show mask boundary
-          ctx.save();
-          ctx.globalAlpha = 0.5;
-          ctx.strokeStyle = HANDLE_COLOR;
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([4, 4]);
-          buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.restore();
-
-          // Selection indicator for mask shape
+          // Mask shape: only show dashed boundary + handles when selected
           if (se.id === selectedShapeIdRef.current) {
-            ctx.save();
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = HANDLE_COLOR;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([5, 4]);
-            ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
-            ctx.setLineDash([]);
-            const hs = 8;
-            const handles = [
-              { x: se.x - hs / 2, y: se.y - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y - hs / 2 },
-              { x: se.x - hs / 2, y: se.y + se.height - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y + se.height - hs / 2 },
-              { x: se.x + se.width / 2 - hs / 2, y: se.y - hs / 2 },
-              { x: se.x + se.width / 2 - hs / 2, y: se.y + se.height - hs / 2 },
-              { x: se.x - hs / 2, y: se.y + se.height / 2 - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y + se.height / 2 - hs / 2 },
-            ];
-            handles.forEach((c) => {
-              ctx.beginPath();
-              ctx.fillStyle = "#ffffff";
-              ctx.fillRect(c.x, c.y, hs, hs);
+            deferredSelections.push(() => {
+              ctx.save();
+              ctx.globalAlpha = 0.5;
               ctx.strokeStyle = HANDLE_COLOR;
               ctx.lineWidth = 1.5;
-              ctx.strokeRect(c.x, c.y, hs, hs);
+              ctx.setLineDash([4, 4]);
+              buildShapePath(ctx, se.shapeType, se.x, se.y, se.width, se.height);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.restore();
+
+              ctx.save();
+              ctx.globalAlpha = 1;
+              ctx.strokeStyle = HANDLE_COLOR;
+              ctx.lineWidth = 1.5;
+              ctx.setLineDash([5, 4]);
+              ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
+              ctx.setLineDash([]);
+              const hs = 8;
+              const handles = [
+                { x: se.x - hs / 2, y: se.y - hs / 2 },
+                { x: se.x + se.width - hs / 2, y: se.y - hs / 2 },
+                { x: se.x - hs / 2, y: se.y + se.height - hs / 2 },
+                { x: se.x + se.width - hs / 2, y: se.y + se.height - hs / 2 },
+                { x: se.x + se.width / 2 - hs / 2, y: se.y - hs / 2 },
+                { x: se.x + se.width / 2 - hs / 2, y: se.y + se.height - hs / 2 },
+                { x: se.x - hs / 2, y: se.y + se.height / 2 - hs / 2 },
+                { x: se.x + se.width - hs / 2, y: se.y + se.height / 2 - hs / 2 },
+              ];
+              handles.forEach((c) => {
+                ctx.beginPath();
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(c.x, c.y, hs, hs);
+                ctx.strokeStyle = HANDLE_COLOR;
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(c.x, c.y, hs, hs);
+              });
+              ctx.restore();
             });
-            ctx.restore();
           }
         } else {
           // Normal shape rendering
@@ -1426,32 +1461,36 @@ function PanelCanvas({
           const displayW = hasClip ? ch.width! : w;
           const displayH = hasClip ? ch.height! : h;
           if (ch.id === selectedCharIdRef.current) {
-            const cx = ch.x - displayW / 2;
-            const cy = ch.y - displayH / 2;
-            ctx.save();
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = HANDLE_COLOR;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([5, 4]);
-            ctx.strokeRect(cx - 3, cy - 3, displayW + 6, displayH + 6);
-            ctx.setLineDash([]);
-
-            const handleSize = 8;
-            const corners = [
-              { x: cx - handleSize / 2, y: cy - handleSize / 2 },
-              { x: cx + displayW - handleSize / 2, y: cy - handleSize / 2 },
-              { x: cx - handleSize / 2, y: cy + displayH - handleSize / 2 },
-              { x: cx + displayW - handleSize / 2, y: cy + displayH - handleSize / 2 },
-            ];
-            corners.forEach((c) => {
-              ctx.beginPath();
-              ctx.fillStyle = "#ffffff";
-              ctx.fillRect(c.x, c.y, handleSize, handleSize);
+            const drawCharSelection = () => {
+              const cx = ch.x - displayW / 2;
+              const cy = ch.y - displayH / 2;
+              ctx.save();
+              ctx.globalAlpha = 1;
               ctx.strokeStyle = HANDLE_COLOR;
               ctx.lineWidth = 1.5;
-              ctx.strokeRect(c.x, c.y, handleSize, handleSize);
-            });
-            ctx.restore();
+              ctx.setLineDash([5, 4]);
+              ctx.strokeRect(cx - 3, cy - 3, displayW + 6, displayH + 6);
+              ctx.setLineDash([]);
+
+              const handleSize = 8;
+              const corners = [
+                { x: cx - handleSize / 2, y: cy - handleSize / 2 },
+                { x: cx + displayW - handleSize / 2, y: cy - handleSize / 2 },
+                { x: cx - handleSize / 2, y: cy + displayH - handleSize / 2 },
+                { x: cx + displayW - handleSize / 2, y: cy + displayH - handleSize / 2 },
+              ];
+              corners.forEach((c) => {
+                ctx.beginPath();
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(c.x, c.y, handleSize, handleSize);
+                ctx.strokeStyle = HANDLE_COLOR;
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(c.x, c.y, handleSize, handleSize);
+              });
+              ctx.restore();
+            };
+            if (maskShape) deferredSelections.push(drawCharSelection);
+            else drawCharSelection();
           }
         } else if (ch.imageUrl) {
           // Show loading placeholder while imageEl is loading
@@ -1500,6 +1539,9 @@ function PanelCanvas({
         ctx.restore();
       }
     });
+
+    // Draw deferred selection indicators (outside mask clip regions)
+    deferredSelections.forEach(fn => fn());
 
     if (p.topScript && p.topScript.visible !== false)
       drawScriptOverlay(ctx, p.topScript, "top", CANVAS_W, CANVAS_H, selectedScriptPos === "top" || editingScriptPos === "top");
@@ -4764,6 +4806,9 @@ export default function StoryPage() {
   const [editingBubbleIdForOverlay, setEditingBubbleIdForOverlay] = useState<string | null>(null);
   const [editingScriptPositionForCanvas, setEditingScriptPositionForCanvas] = useState<"top" | "bottom" | null>(null);
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
+  const [showCharRegenPanel, setShowCharRegenPanel] = useState(false);
+  const [charRegenPrompt, setCharRegenPrompt] = useState("");
+  const [charRegenLoading, setCharRegenLoading] = useState(false);
   const [selectedDrawingLayerId, setSelectedDrawingLayerId] = useState<string | null>(null);
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
   const bubbleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -4804,6 +4849,50 @@ export default function StoryPage() {
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
   const [showShapeSettings, setShowShapeSettings] = useState(false);
   const [selectedShapeType, setSelectedShapeType] = useState<ShapeType>("rectangle");
+
+  // ─── Character regeneration ─────────────────────────────────────────
+  const regenerateCharImage = useCallback(async (charId: string, panelIdx: number, prompt: string, mode: "prompt" | "variation") => {
+    const p = panels[panelIdx];
+    if (!p) return;
+    const char = p.characters.find(c => c.id === charId);
+    if (!char || !char.imageUrl) return;
+
+    setCharRegenLoading(true);
+    try {
+      const bgPrompt = mode === "prompt"
+        ? prompt
+        : "same character in a completely different dynamic pose and expression";
+      const res = await apiRequest("POST", "/api/generate-background", {
+        sourceImageDataList: [char.imageUrl],
+        backgroundPrompt: bgPrompt,
+      });
+      const data = await res.json();
+      if (data.imageUrl) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          setPanels(prev => prev.map((pan, idx) => {
+            if (idx !== panelIdx) return pan;
+            return {
+              ...pan,
+              characters: pan.characters.map(c =>
+                c.id === charId ? { ...c, imageUrl: data.imageUrl, imageEl: img } : c
+              ),
+            };
+          }));
+          setCharRegenLoading(false);
+          setShowCharRegenPanel(false);
+          setCharRegenPrompt("");
+        };
+        img.onerror = () => setCharRegenLoading(false);
+        img.src = data.imageUrl;
+      } else {
+        setCharRegenLoading(false);
+      }
+    } catch {
+      setCharRegenLoading(false);
+    }
+  }, [panels, setPanels]);
 
   // ─── Multi-select state ────────────────────────────────────────────
   const [canvasMultiSelected, setCanvasMultiSelected] = useState<Set<string>>(new Set());
@@ -5038,6 +5127,9 @@ export default function StoryPage() {
           startMouseX: mouseX,
           startMouseY: mouseY,
           startPositions: [{ x: te.x, y: te.y }],
+          resizeMode,
+          startW: te.width,
+          startH: te.height,
         };
       }
     } else if (type === "line") {
@@ -5174,6 +5266,24 @@ export default function StoryPage() {
     } else if (drag.type === "text") {
       const newTexts = (p.textElements || []).map(te => {
         if (te.id !== drag.id) return te;
+        if (drag.resizeMode) {
+          const startX = drag.startPositions[0].x;
+          const startY = drag.startPositions[0].y;
+          const startW = drag.startW ?? te.width;
+          const startH = drag.startH ?? te.height;
+          let newX = startX, newY = startY, newW = startW, newH = startH;
+          switch (drag.resizeMode) {
+            case "br": newW = Math.max(40, startW + dx); newH = Math.max(20, startH + dy); break;
+            case "bl": newX = startX + dx; newW = Math.max(40, startW - dx); newH = Math.max(20, startH + dy); break;
+            case "tr": newY = startY + dy; newW = Math.max(40, startW + dx); newH = Math.max(20, startH - dy); break;
+            case "tl": newX = startX + dx; newY = startY + dy; newW = Math.max(40, startW - dx); newH = Math.max(20, startH - dy); break;
+            case "r": newW = Math.max(40, startW + dx); break;
+            case "l": newX = startX + dx; newW = Math.max(40, startW - dx); break;
+            case "b": newH = Math.max(20, startH + dy); break;
+            case "t": newY = startY + dy; newH = Math.max(20, startH - dy); break;
+          }
+          return { ...te, x: newX, y: newY, width: newW, height: newH };
+        }
         return { ...te, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
       updatePanel(panelIdx, { ...p, textElements: newTexts });
@@ -5903,6 +6013,7 @@ export default function StoryPage() {
     const prevLine = selectedLineId;
     const prevShape = selectedShapeId;
     const prevDrawing = selectedDrawingLayerId;
+    const prevMulti = new Set(canvasMultiSelected);
     setSelectedBubbleId(null);
     setSelectedCharId(null);
     setSelectedScriptPosition(null);
@@ -5910,17 +6021,22 @@ export default function StoryPage() {
     setSelectedLineId(null);
     setSelectedShapeId(null);
     setSelectedDrawingLayerId(null);
+    setCanvasMultiSelected(new Set());
+    // Use triple rAF + setTimeout to ensure React re-render, effects, and canvas redraw complete
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        try { fn(); } finally {
-          setSelectedBubbleId(prevBubble);
-          setSelectedCharId(prevChar);
-          setSelectedScriptPosition(prevScript);
-          setSelectedTextId(prevText);
-          setSelectedLineId(prevLine);
-          setSelectedShapeId(prevShape);
-          setSelectedDrawingLayerId(prevDrawing);
-        }
+        setTimeout(() => {
+          try { fn(); } finally {
+            setSelectedBubbleId(prevBubble);
+            setSelectedCharId(prevChar);
+            setSelectedScriptPosition(prevScript);
+            setSelectedTextId(prevText);
+            setSelectedLineId(prevLine);
+            setSelectedShapeId(prevShape);
+            setSelectedDrawingLayerId(prevDrawing);
+            setCanvasMultiSelected(prevMulti);
+          }
+        }, 50);
       });
     });
   };
@@ -6025,19 +6141,54 @@ export default function StoryPage() {
     });
   };
 
-  const capturePanelForInstagram = useCallback(async (idx: number): Promise<string> => {
-    const p = panels[idx];
-    if (!p) throw new Error("패널을 찾을 수 없습니다.");
-    const srcCanvas = panelCanvasRefs.current.get(p.id);
-    if (!srcCanvas) throw new Error("캔버스를 찾을 수 없습니다.");
-    const offscreen = document.createElement("canvas");
-    offscreen.width = 1080;
-    offscreen.height = 1350;
-    const ctx = offscreen.getContext("2d");
-    if (!ctx) throw new Error("Canvas context 생성 실패");
-    ctx.drawImage(srcCanvas, 0, 0, 1080, 1350);
-    return offscreen.toDataURL("image/png");
-  }, [panels]);
+  const capturePanelForInstagram = useCallback((idx: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const p = panels[idx];
+      if (!p) { reject(new Error("패널을 찾을 수 없습니다.")); return; }
+      const srcCanvas = panelCanvasRefs.current.get(p.id);
+      if (!srcCanvas) { reject(new Error("캔버스를 찾을 수 없습니다.")); return; }
+      // Clear selections before capture
+      const prevBubble = selectedBubbleId;
+      const prevChar = selectedCharId;
+      const prevScript = selectedScriptPosition;
+      const prevText = selectedTextId;
+      const prevLine = selectedLineId;
+      const prevShape = selectedShapeId;
+      const prevDrawing = selectedDrawingLayerId;
+      setSelectedBubbleId(null);
+      setSelectedCharId(null);
+      setSelectedScriptPosition(null);
+      setSelectedTextId(null);
+      setSelectedLineId(null);
+      setSelectedShapeId(null);
+      setSelectedDrawingLayerId(null);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            try {
+              const offscreen = document.createElement("canvas");
+              offscreen.width = 1080;
+              offscreen.height = 1350;
+              const ctx = offscreen.getContext("2d");
+              if (!ctx) { reject(new Error("Canvas context 생성 실패")); return; }
+              ctx.drawImage(srcCanvas, 0, 0, 1080, 1350);
+              resolve(offscreen.toDataURL("image/png"));
+            } catch (err) {
+              reject(err);
+            } finally {
+              setSelectedBubbleId(prevBubble);
+              setSelectedCharId(prevChar);
+              setSelectedScriptPosition(prevScript);
+              setSelectedTextId(prevText);
+              setSelectedLineId(prevLine);
+              setSelectedShapeId(prevShape);
+              setSelectedDrawingLayerId(prevDrawing);
+            }
+          }, 50);
+        });
+      });
+    });
+  }, [panels, selectedBubbleId, selectedCharId, selectedScriptPosition, selectedTextId, selectedLineId, selectedShapeId, selectedDrawingLayerId]);
 
   const downloadPanelSvg = (idx: number) => {
     const p = panels[idx];
@@ -8168,6 +8319,88 @@ export default function StoryPage() {
                           </>
                           );
                         })()}
+                        {/* Character context toolbar */}
+                        {activePanelIndex === i && selectedCharId && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedDrawingLayerId && (() => {
+                          const selChar = panel.characters.find(c => c.id === selectedCharId);
+                          if (!selChar) return null;
+                          return (
+                            <>
+                              <div className="context-toolbar-wrapper" style={{ position: "absolute", top: -52, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+                                <CharContextToolbar
+                                  onFlipX={() => {
+                                    updatePanel(i, {
+                                      ...panel,
+                                      characters: panel.characters.map(c =>
+                                        c.id === selectedCharId ? { ...c, flipX: !c.flipX } : c
+                                      ),
+                                    });
+                                  }}
+                                  onDelete={() => {
+                                    updatePanel(i, {
+                                      ...panel,
+                                      characters: panel.characters.filter(c => c.id !== selectedCharId),
+                                    });
+                                    setSelectedCharId(null);
+                                    setShowCharRegenPanel(false);
+                                  }}
+                                  onRegenerate={() => setShowCharRegenPanel(v => !v)}
+                                  showRegenPanel={showCharRegenPanel}
+                                />
+                              </div>
+                              {showCharRegenPanel && (
+                                <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                                  <div className="floating-settings-modal" style={{ minWidth: 280, padding: 12 }}>
+                                    <div className="floating-settings-modal__header">
+                                      <span className="floating-settings-modal__title">AI 재생성</span>
+                                      <button className="floating-settings-modal__close" onClick={() => setShowCharRegenPanel(false)}>
+                                        <X className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                    <textarea
+                                      value={charRegenPrompt}
+                                      onChange={(e) => setCharRegenPrompt(e.target.value)}
+                                      placeholder="원하는 장면을 설명하세요..."
+                                      disabled={charRegenLoading}
+                                      style={{
+                                        width: "100%", minHeight: 60, resize: "vertical",
+                                        padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
+                                        fontSize: 13, fontFamily: "inherit", marginBottom: 8,
+                                        background: "hsl(var(--background))", color: "hsl(var(--foreground))",
+                                      }}
+                                    />
+                                    <div style={{ display: "flex", gap: 6 }}>
+                                      <button
+                                        disabled={charRegenLoading || !charRegenPrompt.trim()}
+                                        onClick={() => regenerateCharImage(selectedCharId, i, charRegenPrompt.trim(), "prompt")}
+                                        style={{
+                                          flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                          background: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
+                                          color: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
+                                          border: "none", cursor: charRegenLoading || !charRegenPrompt.trim() ? "not-allowed" : "pointer",
+                                        }}
+                                      >
+                                        {charRegenLoading ? "생성 중..." : "프롬프트로 재생성"}
+                                      </button>
+                                      <button
+                                        disabled={charRegenLoading}
+                                        onClick={() => regenerateCharImage(selectedCharId, i, "", "variation")}
+                                        style={{
+                                          flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                          background: charRegenLoading ? "hsl(var(--muted))" : "hsl(var(--secondary))",
+                                          color: charRegenLoading ? "hsl(var(--muted-foreground))" : "hsl(var(--secondary-foreground))",
+                                          border: "none", cursor: charRegenLoading ? "not-allowed" : "pointer",
+                                        }}
+                                      >
+                                        {charRegenLoading ? "생성 중..." : "다른 포즈/표정"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+
                         {/* Bubble context toolbar */}
                         {activePanelIndex === i && selectedBubbleId && !selectedTextElement && !selectedLineElement && !selectedShapeElement && !selectedDrawingLayerId && (() => {
                           const selBubble = panel.bubbles.find(b => b.id === selectedBubbleId);
@@ -8269,6 +8502,7 @@ export default function StoryPage() {
                             setSelectedScriptPosition(null);
                             setActivePanelIndex(i);
                             setShowBubbleSettings(false);
+                            if (!id) { setShowCharRegenPanel(false); setCharRegenPrompt(""); }
                             // Auto-switch to image tab when character is clicked on canvas
                             if (id) setActiveLeftTab("image");
                           }}
@@ -8401,6 +8635,27 @@ export default function StoryPage() {
                                   for (const h of shapeHandles) {
                                     if (Math.abs(canvasX - h.cx) <= HANDLE_HIT && Math.abs(canvasY - h.cy) <= HANDLE_HIT) {
                                       handleElementDragStart("shape", selShape.id, canvasX, canvasY, panel, h.mode);
+                                      return;
+                                    }
+                                  }
+                                }
+                              }
+                              if (selectedTextId) {
+                                const selText = (panel.textElements || []).find(t => t.id === selectedTextId);
+                                if (selText) {
+                                  const textHandles: { mode: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r"; cx: number; cy: number }[] = [
+                                    { mode: "tl", cx: selText.x, cy: selText.y },
+                                    { mode: "tr", cx: selText.x + selText.width, cy: selText.y },
+                                    { mode: "bl", cx: selText.x, cy: selText.y + selText.height },
+                                    { mode: "br", cx: selText.x + selText.width, cy: selText.y + selText.height },
+                                    { mode: "t", cx: selText.x + selText.width / 2, cy: selText.y },
+                                    { mode: "b", cx: selText.x + selText.width / 2, cy: selText.y + selText.height },
+                                    { mode: "l", cx: selText.x, cy: selText.y + selText.height / 2 },
+                                    { mode: "r", cx: selText.x + selText.width, cy: selText.y + selText.height / 2 },
+                                  ];
+                                  for (const h of textHandles) {
+                                    if (Math.abs(canvasX - h.cx) <= HANDLE_HIT && Math.abs(canvasY - h.cy) <= HANDLE_HIT) {
+                                      handleElementDragStart("text", selText.id, canvasX, canvasY, panel, h.mode);
                                       return;
                                     }
                                   }

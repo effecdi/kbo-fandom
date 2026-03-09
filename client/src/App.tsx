@@ -27,6 +27,7 @@ import AuthCallbackPage from "@/pages/auth-callback";
 import DashboardPage from "@/pages/dashboard";
 import PaymentsPage from "@/pages/payments";
 import AutoWebtoonPage from "@/pages/auto-webtoon";
+import FeedPage from "@/pages/feed";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
 import RefundPolicyPage from "@/pages/refund-policy";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/background" component={BackgroundPage} />
       <Route path="/story" component={StoryPage} />
       <Route path="/auto-webtoon" component={AutoWebtoonPage} />
+      <Route path="/feed" component={FeedPage} />
       <Route path="/edits" component={EditsPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/pricing" component={PricingPage} />

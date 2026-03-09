@@ -51,6 +51,7 @@ import {
   ArrowDown,
   ChevronsUp,
   ChevronsDown,
+  FlipHorizontal2,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -1421,7 +1422,7 @@ export interface ScriptToolbarData {
   bold?: boolean;
 }
 
-const SCRIPT_FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 36];
+const SCRIPT_FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80];
 
 const SCRIPT_STYLES = [
   { value: "filled", label: "채움" },
@@ -1625,6 +1626,51 @@ export function ScriptContextToolbar({ script, onChange, canAllFonts = true }: S
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Character Context Toolbar ──────────────────────────────────────────────
+
+interface CharToolbarProps {
+  onFlipX: () => void;
+  onDelete: () => void;
+  onRegenerate: () => void;
+  showRegenPanel: boolean;
+}
+
+export function CharContextToolbar({ onFlipX, onDelete, onRegenerate, showRegenPanel }: CharToolbarProps) {
+  return (
+    <div className="context-toolbar context-toolbar--char">
+      {/* Flip horizontal */}
+      <button
+        className="context-toolbar__btn"
+        onClick={onFlipX}
+        title="좌우 반전"
+      >
+        <FlipHorizontal2 className="h-4 w-4" />
+      </button>
+
+      <div className="context-toolbar__divider" />
+
+      {/* AI Regenerate */}
+      <button
+        className={`context-toolbar__btn ${showRegenPanel ? "context-toolbar__btn--active" : ""}`}
+        onClick={onRegenerate}
+        title="AI 재생성"
+      >
+        <Sparkles className="h-4 w-4" />
+      </button>
+
+      {/* Delete */}
+      <button
+        className="context-toolbar__btn"
+        onClick={onDelete}
+        title="삭제"
+        style={{ color: "hsl(var(--destructive))" }}
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
     </div>
   );
 }

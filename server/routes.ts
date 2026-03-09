@@ -2,9 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
+import { supabase } from "./supabaseClient";
 import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, generateThumbnail, applyWatermark } from "./imageGen";
 import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown } from "./aiText";
-import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, instagramPublishSchema } from "@shared/schema";
+import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
 import {
@@ -1052,6 +1053,202 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Instagram publish history error:", error);
       res.status(500).json({ message: "게시 이력 조회에 실패했습니다." });
+    }
+  });
+
+  // ── Social Feed System ──
+
+  // Helper: optional auth (extracts userId if token present, but doesn't require it)
+  async function optionalAuth(req: AuthRequest): Promise<string | undefined> {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) return undefined;
+    try {
+      const token = authHeader.split(" ")[1];
+      const { data, error } = await supabase.auth.getUser(token);
+      if (error || !data.user) return undefined;
+      return data.user.id;
+    } catch {
+      return undefined;
+    }
+  }
+
+  // GET /api/feed - Feed list
+  app.get("/api/feed", async (req: AuthRequest, res) => {
+    try {
+      const viewerId = await optionalAuth(req);
+      const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 20, 1), 50);
+      const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
+      const sort = req.query.sort === "popular" ? "popular" : "recent";
+      const followingOnly = req.query.filter === "following" && !!viewerId;
+
+      const result = await storage.getFeedPosts({ limit, offset, sort, viewerId, followingOnly });
+      res.json(result);
+    } catch (error: any) {
+      console.error("Feed list error:", error);
+      res.status(500).json({ message: "피드를 불러오는데 실패했습니다." });
+    }
+  });
+
+  // POST /api/feed - Publish to feed
+  app.post("/api/feed", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const parsed = publishToFeedSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || "잘못된 입력입니다." });
+      }
+
+      const { type, title, description, sourceId } = parsed.data;
+
+      // Get the source image
+      let imageUrl: string;
+      let thumbnailUrl: string | undefined;
+
+      if (type === "image") {
+        const gen = await storage.getGenerationById(sourceId, userId);
+        if (!gen) return res.status(404).json({ message: "갤러리 이미지를 찾을 수 없습니다." });
+        imageUrl = gen.resultImageUrl;
+        thumbnailUrl = gen.thumbnailUrl || undefined;
+      } else {
+        const project = await storage.getBubbleProject(sourceId, userId);
+        if (!project) return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+        imageUrl = project.thumbnailUrl || "";
+        if (!imageUrl) return res.status(400).json({ message: "프로젝트에 썸네일이 없습니다." });
+      }
+
+      const post = await storage.createFeedPost({
+        userId,
+        type,
+        title,
+        description,
+        imageUrl,
+        thumbnailUrl,
+        sourceId,
+      });
+
+      res.json(post);
+    } catch (error: any) {
+      console.error("Feed publish error:", error);
+      res.status(500).json({ message: error.message || "게시에 실패했습니다." });
+    }
+  });
+
+  // GET /api/feed/:id - Post detail
+  app.get("/api/feed/:id", async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const viewerId = await optionalAuth(req);
+      const post = await storage.getFeedPost(id, viewerId);
+      if (!post) return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+      res.json(post);
+    } catch (error: any) {
+      console.error("Feed post detail error:", error);
+      res.status(500).json({ message: "게시물을 불러오는데 실패했습니다." });
+    }
+  });
+
+  // DELETE /api/feed/:id - Delete own post
+  app.delete("/api/feed/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const deleted = await storage.deleteFeedPost(id, req.userId!);
+      if (!deleted) return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Feed delete error:", error);
+      res.status(500).json({ message: "삭제에 실패했습니다." });
+    }
+  });
+
+  // POST /api/feed/:id/like - Like post
+  app.post("/api/feed/:id/like", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const postId = parseInt(String(req.params.id));
+      if (isNaN(postId)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      await storage.likePost(req.userId!, postId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Like error:", error);
+      res.status(500).json({ message: "좋아요에 실패했습니다." });
+    }
+  });
+
+  // DELETE /api/feed/:id/like - Unlike post
+  app.delete("/api/feed/:id/like", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const postId = parseInt(String(req.params.id));
+      if (isNaN(postId)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      await storage.unlikePost(req.userId!, postId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Unlike error:", error);
+      res.status(500).json({ message: "좋아요 취소에 실패했습니다." });
+    }
+  });
+
+  // POST /api/users/:id/follow - Follow user
+  app.post("/api/users/:id/follow", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const followingId = String(req.params.id);
+      if (followingId === req.userId) return res.status(400).json({ message: "자신을 팔로우할 수 없습니다." });
+      await storage.followUser(req.userId!, followingId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Follow error:", error);
+      res.status(500).json({ message: "팔로우에 실패했습니다." });
+    }
+  });
+
+  // DELETE /api/users/:id/follow - Unfollow user
+  app.delete("/api/users/:id/follow", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const followingId = String(req.params.id);
+      await storage.unfollowUser(req.userId!, followingId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Unfollow error:", error);
+      res.status(500).json({ message: "언팔로우에 실패했습니다." });
+    }
+  });
+
+  // GET /api/users/:id/profile - Public profile
+  app.get("/api/users/:id/profile", async (req: AuthRequest, res) => {
+    try {
+      const userId = String(req.params.id);
+      const viewerId = await optionalAuth(req);
+      const profile = await storage.getUserPublicProfile(userId, viewerId);
+      if (!profile) return res.status(404).json({ message: "유저를 찾을 수 없습니다." });
+      res.json(profile);
+    } catch (error: any) {
+      console.error("User profile error:", error);
+      res.status(500).json({ message: "프로필을 불러오는데 실패했습니다." });
+    }
+  });
+
+  // GET /api/users/:id/posts - User's posts
+  app.get("/api/users/:id/posts", async (req: AuthRequest, res) => {
+    try {
+      const userId = String(req.params.id);
+      const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 20, 1), 50);
+      const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
+      const result = await storage.getUserFeedPosts(userId, limit, offset);
+      res.json(result);
+    } catch (error: any) {
+      console.error("User posts error:", error);
+      res.status(500).json({ message: "게시물을 불러오는데 실패했습니다." });
+    }
+  });
+
+  // GET /api/popular-creators - Popular creators ranking
+  app.get("/api/popular-creators", async (_req, res) => {
+    try {
+      const creators = await storage.getPopularCreators(10);
+      res.json(creators);
+    } catch (error: any) {
+      console.error("Popular creators error:", error);
+      res.json([]);
     }
   });
 

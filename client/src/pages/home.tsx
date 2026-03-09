@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
   Wand2,
@@ -21,7 +21,6 @@ import {
   Paintbrush,
   TrendingUp,
   Heart,
-  ExternalLink,
   PenTool,
   Image,
   Trophy,
@@ -42,7 +41,7 @@ import {
   X,
   HelpCircle,
 } from "lucide-react";
-import type { Generation, TrendingAccount } from "@shared/schema";
+import type { Generation, PopularCreator } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
 import { useTour } from "@/components/spotlight-tour";
 
@@ -113,19 +112,6 @@ function getXpProgress(totalGenerations: number) {
   };
 }
 
-function formatNumber(num: number): string {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 10000) return `${(num / 10000).toFixed(1)}만`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
-}
-
-const GENRE_CATEGORY_MAP: Record<string, string[]> = {
-  daily: ["일상", "라이프", "에세이", "일상툰"],
-  gag: ["개그", "코미디", "유머", "병맛"],
-  romance: ["로맨스", "연애", "감성", "사랑"],
-  fantasy: ["판타지", "판타지/SF", "액션", "모험"],
-};
 
 function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);
@@ -260,40 +246,6 @@ function RankMedal({ rank }: { rank: number }) {
   );
 }
 
-function TrendingRow({ account }: { account: TrendingAccount }) {
-  return (
-    <div
-      className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover-elevate"
-      data-testid={`row-trending-${account.rankType}-${account.rank}`}
-    >
-      <RankMedal rank={account.rank} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-sm truncate">{account.displayName}</span>
-          <Badge variant="secondary" className="text-[10px] shrink-0">{account.category}</Badge>
-        </div>
-        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-          <span className="text-xs text-muted-foreground">@{account.handle}</span>
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Heart className="h-3 w-3" />
-            {formatNumber(account.followers)}
-          </span>
-        </div>
-      </div>
-      <a
-        href={`https://instagram.com/${account.handle}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="shrink-0"
-        data-testid={`link-instagram-${account.handle}`}
-      >
-        <Button variant="ghost" size="icon" data-testid={`button-instagram-${account.handle}`}>
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Button>
-      </a>
-    </div>
-  );
-}
 
 const TOOL_SECTIONS = [
   {
@@ -331,12 +283,8 @@ export default function HomePage() {
   const { data: recentGenerations } = useQuery<Generation[]>({
     queryKey: ["/api/gallery"],
   });
-  const { data: trending } = useQuery<{
-    latest: TrendingAccount[];
-    mostViewed: TrendingAccount[];
-    realtime: TrendingAccount[];
-  }>({
-    queryKey: ["/api/trending"],
+  const { data: popularCreators } = useQuery<PopularCreator[]>({
+    queryKey: ["/api/popular-creators"],
   });
 
   const { startTour } = useTour();
@@ -367,23 +315,7 @@ export default function HomePage() {
   const userGenre = usage?.genre;
   const genreLabel = GENRES.find(g => g.value === userGenre)?.label;
 
-  const personalizedRanking = (() => {
-    if (!trending || !userGenre) return trending?.realtime?.slice(0, 3) || [];
-    const matchCategories = GENRE_CATEGORY_MAP[userGenre] || [];
-    const allAccounts = [
-      ...(trending.realtime || []),
-      ...(trending.latest || []),
-      ...(trending.mostViewed || []),
-    ];
-    const matched = allAccounts.filter(a =>
-      matchCategories.some(cat =>
-        a.category.includes(cat) || cat.includes(a.category)
-      )
-    );
-    const unique = Array.from(new Map(matched.map(a => [a.handle, a])).values());
-    if (unique.length > 0) return unique.slice(0, 3);
-    return (trending.realtime || []).slice(0, 3);
-  })();
+  const topCreators = (popularCreators || []).slice(0, 5);
 
   const recent = recentGenerations?.slice(0, 4) || [];
 
@@ -628,21 +560,49 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h2 className="text-base font-bold leading-tight" data-testid="text-ranking-title">
-                    {genreLabel ? `${genreLabel} 인기 크리에이터` : "인기 크리에이터"}
+                    인기 크리에이터
                   </h2>
                   <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
-                    {genreLabel ? `${genreLabel} 장르 맞춤 랭킹` : "지금 가장 인기 있는 작가"}
+                    팔로워 & 좋아요 기반 랭킹
                   </p>
                 </div>
               </div>
-              {personalizedRanking.length === 0 ? (
+              {topCreators.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">
                   아직 랭킹 데이터가 없어요
                 </p>
               ) : (
                 <div className="space-y-0.5">
-                  {personalizedRanking.map((account, idx) => (
-                    <TrendingRow key={account.handle} account={{ ...account, rank: idx + 1 }} />
+                  {topCreators.map((creator, idx) => (
+                    <div
+                      key={creator.id}
+                      className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover-elevate"
+                    >
+                      <RankMedal rank={idx + 1} />
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-xs">
+                          {(creator.authorName || creator.firstName || "U").charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-sm truncate">
+                            {creator.authorName || creator.firstName || "유저"}
+                          </span>
+                          {creator.genre && (
+                            <Badge variant="secondary" className="text-[10px] shrink-0">
+                              {creator.genre === "daily" ? "일상" : creator.genre === "gag" ? "개그" : creator.genre === "romance" ? "로맨스" : creator.genre === "fantasy" ? "판타지" : creator.genre}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Heart className="h-3 w-3" />
+                            {creator.followerCount} 팔로워
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

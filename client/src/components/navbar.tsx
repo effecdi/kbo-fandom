@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/theme-provider";
 import {
   Sparkles, Image, LayoutGrid, CreditCard, Moon, Sun, LogOut, Home,
-  Wand2, MessageCircle, Target, Eye, ChevronDown, FileText, Paintbrush, Briefcase, MessageSquare, Trees, BookOpen, FolderOpen, Crown, HelpCircle,
+  Wand2, MessageCircle, Target, Eye, ChevronDown, FileText, Paintbrush, Briefcase, MessageSquare, Trees, BookOpen, FolderOpen, Crown, HelpCircle, Rss,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTour } from "@/components/spotlight-tour";
@@ -142,6 +142,18 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ))}
+
+            <Link href="/feed">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`gap-1.5 ${location === "/feed" ? "bg-primary/10 text-primary" : ""}`}
+                data-testid="link-feed"
+              >
+                <Rss className="h-4 w-4" />
+                <span className="hidden sm:inline">Feed</span>
+              </Button>
+            </Link>
 
             <Link href="/pricing">
               <Button
