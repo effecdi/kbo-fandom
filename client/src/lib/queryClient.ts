@@ -1,7 +1,10 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 
+const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
+
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (AUTH_BYPASS) return { Authorization: "Bearer dev-bypass-token" };
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (token) {

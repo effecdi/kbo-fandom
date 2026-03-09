@@ -354,15 +354,18 @@ export class DatabaseStorage implements IStorage {
       return existing;
     }
 
+    const isDevBypass = process.env.AUTH_BYPASS === "true";
+    const defaultTier = isDevBypass ? "pro" : "free";
+    const defaultCredits = isDevBypass ? 999999 : 20;
     try {
       const [created] = await db.insert(userCredits)
-        .values({ userId, credits: 20, tier: "free" })
+        .values({ userId, credits: defaultCredits, tier: defaultTier })
         .returning();
       return created;
     } catch {
       // Fallback: if insert fails with new default, try legacy
       const [created] = await db.insert(userCredits)
-        .values({ userId, credits: 20, tier: "free" } as any)
+        .values({ userId, credits: defaultCredits, tier: defaultTier } as any)
         .returning();
       return { ...created, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
     }

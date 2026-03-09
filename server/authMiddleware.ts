@@ -7,7 +7,33 @@ export interface AuthRequest extends Request {
   supabaseUser?: any;
 }
 
+const DEV_USER_ID = "dev-bypass-user-0001";
+const DEV_USER = {
+  id: DEV_USER_ID,
+  email: "dev@olli.local",
+  user_metadata: {
+    full_name: "Dev User",
+    avatar_url: "",
+  },
+};
+
+const isAuthBypassed = process.env.AUTH_BYPASS === "true";
+
 export async function isAuthenticated(req: AuthRequest, res: Response, next: NextFunction) {
+  // Dev bypass mode — skip all auth, use fixed dev user
+  if (isAuthBypassed) {
+    req.userId = DEV_USER_ID;
+    req.supabaseUser = DEV_USER;
+    await storage.ensureUser({
+      id: DEV_USER_ID,
+      email: DEV_USER.email,
+      firstName: "Dev",
+      lastName: "User",
+      profileImageUrl: null,
+    });
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Unauthorized" });

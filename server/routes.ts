@@ -1060,6 +1060,7 @@ export async function registerRoutes(
 
   // Helper: optional auth (extracts userId if token present, but doesn't require it)
   async function optionalAuth(req: AuthRequest): Promise<string | undefined> {
+    if (process.env.AUTH_BYPASS === "true") return "dev-bypass-user-0001";
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) return undefined;
     try {

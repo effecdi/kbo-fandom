@@ -10,6 +10,16 @@ export interface AuthUser {
   profileImageUrl: string | null;
 }
 
+const AUTH_BYPASS = import.meta.env.VITE_AUTH_BYPASS === "true";
+
+const DEV_USER: AuthUser = {
+  id: "dev-bypass-user-0001",
+  email: "dev@olli.local",
+  firstName: "Dev",
+  lastName: "User",
+  profileImageUrl: null,
+};
+
 function sessionToUser(user: any): AuthUser {
   return {
     id: user.id,
@@ -21,37 +31,33 @@ function sessionToUser(user: any): AuthUser {
 }
 
 async function fetchUser(): Promise<AuthUser | null> {
-  // BUG FIX 1: After OAuth redirect, Supabase stores session in URL hash (#access_token=...).
-  // getSession() must be called to let Supabase parse and store it.
-  // We explicitly call getSession() (not getCachedSession) every time.
+  if (AUTH_BYPASS) return DEV_USER;
+
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error || !session?.user) return null;
   return sessionToUser(session.user);
 }
 
 export function getAccessToken(): Promise<string | null> {
+  if (AUTH_BYPASS) return Promise.resolve("dev-bypass-token");
   return supabase.auth.getSession().then(({ data }) => data.session?.access_token || null);
 }
 
 export function useAuth() {
   const queryClient = useQueryClient();
-  // Track whether we've done the initial OAuth hash parse
   const initialized = useRef(false);
 
   const { data: user, isLoading } = useQuery<AuthUser | null>({
     queryKey: ["auth-user"],
     queryFn: fetchUser,
     retry: false,
-    // BUG FIX 1: Was 5 minutes — cached null after OAuth callback prevented re-auth.
-    // Set to 0 so the query always reflects current session state.
-    staleTime: 0,
-    // Don't show stale null while re-fetching
+    staleTime: AUTH_BYPASS ? Infinity : 0,
     placeholderData: undefined,
   });
 
   useEffect(() => {
-    // BUG FIX 1: Force a fresh user fetch on mount so OAuth callback hash is processed.
-    // This covers the case where user lands on "/" after Kakao redirect.
+    if (AUTH_BYPASS) return;
+
     if (!initialized.current) {
       initialized.current = true;
       queryClient.invalidateQueries({ queryKey: ["auth-user"] });
@@ -63,7 +69,6 @@ export function useAuth() {
       } else {
         queryClient.setQueryData(["auth-user"], null);
       }
-      // Refresh usage data whenever auth changes
       queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
     });
 
@@ -72,18 +77,20 @@ export function useAuth() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      if (AUTH_BYPASS) return;
       await supabase.auth.signOut();
     },
     onSuccess: () => {
+      if (AUTH_BYPASS) return;
       queryClient.setQueryData(["auth-user"], null);
       queryClient.clear();
     },
   });
 
   return {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
+    user: AUTH_BYPASS ? DEV_USER : user,
+    isLoading: AUTH_BYPASS ? false : isLoading,
+    isAuthenticated: AUTH_BYPASS ? true : !!user,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
   };
