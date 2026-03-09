@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +18,11 @@ export function FeedPostCard({ post, onAuthorClick, onPostClick }: FeedPostCardP
   const queryClient = useQueryClient();
   const [liked, setLiked] = useState(post.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+
+  useEffect(() => {
+    setLiked(post.isLiked ?? false);
+    setLikeCount(post.likeCount);
+  }, [post.isLiked, post.likeCount]);
 
   const likeMutation = useMutation({
     mutationFn: async () => {
