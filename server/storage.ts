@@ -375,6 +375,9 @@ export class DatabaseStorage implements IStorage {
   async deductCredit(userId: string, amount: number = 1): Promise<boolean> {
     const credits = await this.ensureUserCredits(userId);
 
+    // Pro 티어는 크레딧 무제한 (차감 없이 통과)
+    if (credits.tier === "pro") return true;
+
     const db = this.getDb();
     let remaining = amount;
 
