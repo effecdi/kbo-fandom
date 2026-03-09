@@ -159,7 +159,7 @@ function getStyleConfig(style: string) {
   return defaultStyle;
 }
 
-const noTextRule = `CRITICAL TEXT PROHIBITION: Do NOT include ANY text, letters, words, labels, captions, watermarks, or writing of ANY kind in the image - this includes Korean (한글/Hangul), English, Japanese, Chinese, or any other language. NO characters, NO letters, NO words, NO numbers, NO symbols that look like text. The image must contain ONLY the visual illustration with absolutely ZERO text or text-like elements. Any attempt to render non-Latin scripts like Korean will result in garbled, broken characters - so do NOT attempt it under any circumstances.`;
+const noTextRule = `CRITICAL TEXT & SPEECH BUBBLE PROHIBITION: Do NOT include ANY text, letters, words, labels, captions, watermarks, or writing of ANY kind in the image - this includes Korean (한글/Hangul), English, Japanese, Chinese, or any other language. NO characters, NO letters, NO words, NO numbers, NO symbols that look like text. Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, text containers, or balloon shapes. The image must contain ONLY the visual illustration with absolutely ZERO text, text-like elements, or bubble shapes. Any attempt to render non-Latin scripts like Korean will result in garbled, broken characters - so do NOT attempt it under any circumstances.`;
 
 /**
  * 무료 사용자 이미지에 OLLI 로고 워터마크를 삽입.
@@ -870,17 +870,18 @@ ${translatedScene}
 
 CRITICAL RULES:
 - Draw EXACTLY the scene described above using the EXACT character from the reference images.
-- The scene must clearly relate to the story context "${translatedContext}"
+- The scene MUST DIRECTLY illustrate the story topic: "${translatedContext}" — every visual element must connect to this topic
 - Do NOT draw any background, scenery, room, furniture, walls, floors, or environment
 - The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
 - Draw ONLY the characters and essential props/items they are holding or interacting with
+- Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, or text containers — speech bubbles are added separately
 - If the scene involves a phone/smartphone, draw the phone screen clearly visible with UI elements
 - Characters should be drawn large, filling most of the image area
 - ${ratioLabel} aspect ratio — the image must completely fill the canvas in this exact ratio
 - Style: simple line art, thick outlines, flat colors, cute Korean instatoon style
 
 IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
-Do NOT add any text, letters, or writing of any kind to the image.`
+Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind to the image. Speech bubbles will be overlaid separately.`
     });
   } else {
     parts.push({
@@ -896,18 +897,19 @@ ${translatedScene}
 
 CRITICAL RULES:
 - Draw EXACTLY the scene described above. Do NOT deviate from it.
-- The scene must clearly relate to the story context "${translatedContext}"
+- The scene MUST DIRECTLY illustrate the story topic: "${translatedContext}" — every visual element must connect to this topic
 - Include character(s) appropriate for the scene with clear poses and expressions
 - Do NOT draw any background, scenery, room, furniture, walls, floors, or environment
 - The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
 - Draw ONLY the characters and essential props/items they are holding or interacting with
+- Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, or text containers — speech bubbles are added separately
 - If the scene involves a phone/smartphone, draw the phone screen clearly visible with UI elements
 - Characters should be drawn large, filling most of the image area
 - ${ratioLabel} aspect ratio — the image must completely fill the canvas in this exact ratio
 - Style: simple line art, thick outlines, flat colors, cute Korean instatoon style
 
 IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
-Do NOT add any text, letters, or writing of any kind to the image.`
+Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind to the image. Speech bubbles will be overlaid separately.`
     });
   }
 
