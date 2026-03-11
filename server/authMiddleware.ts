@@ -25,9 +25,12 @@ interface SupabaseJwtPayload {
 
 async function verifyLocal(token: string): Promise<{ userId: string; payload: SupabaseJwtPayload }> {
   const decoded = jwt.verify(token, config.supabaseJwtSecret, {
-    algorithms: ["HS256"],
-    issuer: `${config.supabaseUrl}/auth/v1`,
+    algorithms: ["HS256", "HS384", "HS512"],
   }) as SupabaseJwtPayload;
+
+  if (!decoded.sub) {
+    throw new Error("JWT missing sub claim");
+  }
 
   return { userId: decoded.sub, payload: decoded };
 }
