@@ -60,11 +60,20 @@ export async function isAuthenticated(req: AuthRequest, res: Response, next: Nex
 
   const token = authHeader.split(" ")[1];
   try {
-    const useLocalVerify = !!config.supabaseJwtSecret;
-    const { userId, payload } = useLocalVerify
-      ? await verifyLocal(token)
-      : await verifyRemote(token);
+    let result: { userId: string; payload: SupabaseJwtPayload };
 
+    if (config.supabaseJwtSecret) {
+      try {
+        result = await verifyLocal(token);
+      } catch (localErr) {
+        logger.warn("Local JWT verify failed, falling back to remote", localErr);
+        result = await verifyRemote(token);
+      }
+    } else {
+      result = await verifyRemote(token);
+    }
+
+    const { userId, payload } = result;
     req.userId = userId;
     req.supabaseUser = payload;
 
