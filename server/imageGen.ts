@@ -2,6 +2,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import sharp from "sharp";
 import path from "path";
 import type { Character } from "@shared/schema";
+import { logger } from "./logger";
 
 // 한국어 프롬프트를 영어로 번역하는 함수
 // AI 이미지 생성 모델은 한글 텍스트를 정확히 렌더링할 수 없으므로
@@ -27,7 +28,7 @@ Text: ${text}`
     const translatedText = candidate?.content?.parts?.find((part: any) => part.text)?.text?.trim();
     return translatedText || text;
   } catch (error) {
-    console.warn("Translation failed, using original text:", error);
+    logger.warn("Translation failed, using original text", error);
     return text;
   }
 }
@@ -37,7 +38,7 @@ let ai: GoogleGenAI;
 try {
   if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("⚠️  Gemini API 키가 설정되지 않았습니다. 이미지 생성 기능이 동작하지 않습니다.");
+      logger.warn("Gemini API 키 미설정 — 이미지 생성 비활성화");
       // 더미 클라이언트 생성 (실제 사용 시 에러 발생)
       ai = new GoogleGenAI({
         apiKey: "dummy-key",
@@ -60,7 +61,7 @@ try {
   }
 } catch (error) {
   if (process.env.NODE_ENV === "development") {
-    console.warn("⚠️  Gemini 클라이언트 생성 실패:", error);
+    logger.warn("Gemini 클라이언트 생성 실패", error);
     ai = new GoogleGenAI({
       apiKey: "dummy-key",
       httpOptions: {
@@ -210,7 +211,7 @@ export async function applyWatermark(dataUrl: string): Promise<string> {
 
     return `data:image/png;base64,${result.toString("base64")}`;
   } catch (error) {
-    console.warn("Watermark application failed, returning original:", error);
+    logger.warn("Watermark application failed, returning original", error);
     return dataUrl;
   }
 }
@@ -231,7 +232,7 @@ export async function generateThumbnail(dataUrl: string, maxSize = 200): Promise
       .toBuffer();
     return `data:image/jpeg;base64,${thumbBuf.toString("base64")}`;
   } catch (error) {
-    console.warn("Thumbnail generation failed, skipping:", error);
+    logger.warn("Thumbnail generation failed, skipping", error);
     return "";
   }
 }
@@ -768,7 +769,7 @@ Make the background and items in the same simple, cute drawing style as the char
       // finishReason 확인 (IMAGE_SAFETY, SAFETY 등)
       const finishReason = candidate.finishReason;
       if (finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
-        console.warn("Background generation finishReason:", finishReason);
+        logger.warn("Background generation finishReason", finishReason);
       }
 
       const bgImagePart = candidate?.content?.parts?.find(
@@ -784,7 +785,7 @@ Make the background and items in the same simple, cute drawing style as the char
       return `data:${bgMimeType};base64,${bgImagePart.inlineData.data}`;
     } catch (err: any) {
       lastError = err;
-      console.error(`Background generation attempt ${attempt + 1} failed:`, err?.message || err);
+      logger.error(`Background generation attempt ${attempt + 1} failed`, err);
       if (attempt === 0) {
         // 첫 시도 실패 시 짧은 대기 후 재시도
         await new Promise(r => setTimeout(r, 1000));
@@ -955,7 +956,7 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any 
       return `data:${mimeType};base64,${imagePart.inlineData.data}`;
     } catch (err: any) {
       lastError = err;
-      console.error(`Webtoon scene generation attempt ${attempt + 1} failed:`, err?.message || err);
+      logger.error(`Webtoon scene generation attempt ${attempt + 1} failed`, err);
       if (attempt < 2) await new Promise(r => setTimeout(r, 1500));
     }
   }

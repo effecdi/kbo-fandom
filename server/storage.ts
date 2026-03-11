@@ -100,6 +100,9 @@ export interface IStorage {
 
   // Popular creators
   getPopularCreators(limit: number): Promise<PopularCreator[]>;
+
+  // Account deletion
+  deleteAccount(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -310,7 +313,18 @@ export class DatabaseStorage implements IStorage {
 
       const updates: any = {};
 
-      if (isNewMonth) {
+      // Pro 구독 만료 체크 — proExpiresAt이 설정되어 있고 현재 시각이 지났으면 free로 전환
+      try {
+        if (existing.tier === "pro" && existing.proExpiresAt && new Date(existing.proExpiresAt) <= now) {
+          updates.tier = "free";
+          updates.credits = 10;
+          updates.proExpiresAt = null;
+        }
+      } catch {
+        // proExpiresAt column not available yet
+      }
+
+      if (isNewMonth && !updates.tier) {
         updates.bubbleUsesToday = 0;
         updates.storyUsesToday = 0;
         updates.lastResetAt = now;
@@ -319,6 +333,10 @@ export class DatabaseStorage implements IStorage {
         } else {
           updates.credits = 10;
         }
+      } else if (isNewMonth) {
+        updates.bubbleUsesToday = 0;
+        updates.storyUsesToday = 0;
+        updates.lastResetAt = now;
       }
 
       // Daily bonus check (KST) — only if column exists
@@ -461,13 +479,31 @@ export class DatabaseStorage implements IStorage {
   async cancelPro(userId: string): Promise<UserCredits> {
     await this.ensureUserCredits(userId);
     const db = this.getDb();
+
+    // 최근 Pro 결제일 조회 → 만료일 계산 (결제일 + 1개월)
+    const recentPayments = await db.select()
+      .from(payments)
+      .where(and(eq(payments.userId, userId), eq(payments.productType, "pro"), eq(payments.status, "paid")))
+      .orderBy(desc(payments.createdAt))
+      .limit(1);
+
+    let expiresAt: Date;
+    if (recentPayments.length > 0) {
+      expiresAt = new Date(recentPayments[0].createdAt);
+      expiresAt.setMonth(expiresAt.getMonth() + 1);
+    } else {
+      // 결제 기록이 없으면 즉시 만료 (테스트/수동 부여 등)
+      expiresAt = new Date();
+    }
+
     try {
       const [updated] = await db.update(userCredits)
-        .set({ tier: "free", credits: 10 })
+        .set({ proExpiresAt: expiresAt })
         .where(eq(userCredits.userId, userId))
         .returning();
       return updated;
     } catch {
+      // proExpiresAt 컬럼이 없는 경우 즉시 해지 폴백
       const [updated] = await db.update(userCredits)
         .set({ tier: "free", credits: 10 } as any)
         .where(eq(userCredits.userId, userId))
@@ -994,6 +1030,56 @@ export class DatabaseStorage implements IStorage {
       followerCount: followerMap.get(r.id) ?? 0,
       totalLikes: r.totalLikes,
     }));
+  }
+
+  // ── Account Deletion ──
+
+  async deleteAccount(userId: string): Promise<void> {
+    const db = this.getDb();
+
+    // FK 의존 순서에 따라 삭제 (자식 → 부모)
+    // 1. likes (userId 기준 + 유저 게시물에 달린 좋아요)
+    const userPostIds = await db.select({ id: feedPosts.id })
+      .from(feedPosts).where(eq(feedPosts.userId, userId));
+    if (userPostIds.length > 0) {
+      await db.delete(likes)
+        .where(inArray(likes.postId, userPostIds.map(p => p.id)));
+    }
+    await db.delete(likes).where(eq(likes.userId, userId));
+
+    // 2. follows (팔로워/팔로잉 양쪽)
+    await db.delete(follows).where(eq(follows.followerId, userId));
+    await db.delete(follows).where(eq(follows.followingId, userId));
+
+    // 3. feed posts
+    await db.delete(feedPosts).where(eq(feedPosts.userId, userId));
+
+    // 4. instagram
+    await db.delete(instagramPublishLog).where(eq(instagramPublishLog.userId, userId));
+    await db.delete(instagramConnections).where(eq(instagramConnections.userId, userId));
+
+    // 5. bubble projects
+    await db.delete(bubbleProjects).where(eq(bubbleProjects.userId, userId));
+
+    // 6. generations → characters (generations가 characters FK 참조)
+    await db.delete(generations).where(eq(generations.userId, userId));
+    await db.delete(characters).where(eq(characters.userId, userId));
+
+    // 7. payments — 전자상거래법 5년 보관 의무로 삭제하지 않음
+
+    // 8. user credits
+    await db.delete(userCredits).where(eq(userCredits.userId, userId));
+
+    // 9. users 테이블 — 개인정보 익명화 (결제 기록 FK 유지를 위해 행은 보존)
+    await db.update(users)
+      .set({
+        email: null,
+        firstName: null,
+        lastName: null,
+        profileImageUrl: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
   }
 }
 

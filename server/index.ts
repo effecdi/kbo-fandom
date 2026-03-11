@@ -1,10 +1,60 @@
 import express, { type Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { logger } from "./logger";
 
 const app = express();
 const httpServer = createServer(app);
+
+// --- Security middleware ---
+app.use(
+  helmet({
+    contentSecurityPolicy: false,   // Vite dev / inline scripts 허용
+    crossOriginEmbedderPolicy: false,
+  }),
+);
+
+const allowedOrigins = process.env.CLIENT_ORIGIN
+  ? process.env.CLIENT_ORIGIN.split(",")
+  : undefined; // undefined = 모든 origin 허용 (dev)
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  }),
+);
+
+// API 전체 rate limit: 15분에 300회
+app.use(
+  "/api",
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+  }),
+);
+
+// AI 생성 엔드포인트 강화 rate limit: 1분에 10회
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "AI 생성 요청이 너무 많습니다. 1분 후 다시 시도해주세요." },
+});
+app.use("/api/generate-character", aiLimiter);
+app.use("/api/generate-pose", aiLimiter);
+app.use("/api/generate-background", aiLimiter);
+app.use("/api/remove-background", aiLimiter);
+app.use("/api/story-scripts", aiLimiter);
+app.use("/api/auto-webtoon", aiLimiter);
 
 app.use(
   express.json({
@@ -61,9 +111,9 @@ app.use((req, res, next) => {
   try {
     await registerRoutes(httpServer, app);
   } catch (error: any) {
-    console.error("⚠️  라우트 등록 중 오류 발생:", error.message);
+    logger.error("라우트 등록 중 오류 발생", error);
     if (!process.env.DATABASE_URL && process.env.NODE_ENV === "development") {
-      console.warn("   데이터베이스가 없어도 헬스체크는 동작합니다.");
+      logger.warn("데이터베이스가 없어도 헬스체크는 동작합니다.");
     } else {
       throw error;
     }
@@ -71,13 +121,18 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
 
-    console.error("Internal Server Error:", err);
+    logger.error("Internal Server Error", err);
 
     if (res.headersSent) {
       return next(err);
     }
+
+    // 프로덕션에서는 500 에러의 상세 메시지를 숨김
+    const message =
+      process.env.NODE_ENV === "production" && status >= 500
+        ? "서버 내부 오류가 발생했습니다."
+        : err.message || "Internal Server Error";
 
     return res.status(status).json({ message });
   });

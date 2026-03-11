@@ -90,8 +90,8 @@ export default function TermsPage() {
           <h2 className="text-xl font-semibold mt-8 mb-3">제7조 (Pro 구독의 해지)</h2>
           <ol className="list-decimal pl-6 space-y-1">
             <li>Pro 구독 이용자는 언제든지 서비스 내 요금제 페이지에서 구독을 해지할 수 있습니다.</li>
-            <li>구독 해지 시 무료 플랜으로 전환되며, 30크레딧이 지급됩니다.</li>
-            <li>환불에 관한 사항은 별도의 환불 정책을 따릅니다.</li>
+            <li>구독 해지 시 현재 결제 주기 만료일까지 Pro 혜택이 유지된 후 무료 플랜으로 전환되며, 10크레딧이 지급됩니다.</li>
+            <li>해지를 요청하면 즉시 해지되는 것이 아니라 결제 주기 만료일까지 Pro 혜택이 유지됩니다. 환불에 관한 사항은 별도의 환불 정책을 따릅니다.</li>
           </ol>
         </section>
 

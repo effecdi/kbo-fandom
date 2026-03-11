@@ -1,11 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
+import { logger } from "./logger";
 
 // 개발 모드에서 API 키가 없으면 더미 클라이언트 생성
 let ai: GoogleGenAI;
 try {
   if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("⚠️  Gemini API 키가 설정되지 않았습니다. AI 텍스트 생성 기능이 동작하지 않습니다.");
+      logger.warn("Gemini API 키 미설정 — AI 텍스트 생성 비활성화");
       // 더미 클라이언트 생성 (실제 사용 시 에러 발생)
       ai = new GoogleGenAI({
         apiKey: "dummy-key",
@@ -28,7 +29,7 @@ try {
   }
 } catch (error) {
   if (process.env.NODE_ENV === "development") {
-    console.warn("⚠️  Gemini 클라이언트 생성 실패:", error);
+    logger.warn("Gemini 클라이언트 생성 실패", error);
     ai = new GoogleGenAI({
       apiKey: "dummy-key",
       httpOptions: {

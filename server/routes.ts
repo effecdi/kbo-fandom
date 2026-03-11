@@ -8,17 +8,25 @@ import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, sug
 import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
+import { logger } from "./logger";
 import {
   getOAuthUrl, exchangeCodeForToken, getInstagramBusinessAccount,
   refreshLongLivedToken, encryptToken, decryptToken,
   uploadImageToStorage, publishSingleImage, publishCarousel, publishStory,
 } from "./instagramService";
 
-// Product prices (must match client-side pricing)
+// 상품 정보 — 가격 + 크레딧 지급량을 서버 단일 소스로 관리
 const PRODUCT_PRICES = {
   pro: 29900,
   credits: 4900,
 } as const;
+
+const PRODUCT_CREDITS: Record<keyof typeof PRODUCT_PRICES, number> = {
+  pro: 0,       // Pro는 무제한이므로 크레딧 지급 없음
+  credits: 50,  // 4,900원 = 50크레딧
+};
+
+const VALID_PRODUCT_TYPES = Object.keys(PRODUCT_PRICES) as Array<keyof typeof PRODUCT_PRICES>;
 
 async function getPortoneAccessToken(): Promise<string> {
   const response = await axios.post("https://api.iamport.kr/users/getToken", {
@@ -32,6 +40,16 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // 공개: 가격 정보를 서버에서 제공 (클라이언트 하드코딩 방지)
+  app.get("/api/pricing", (_req, res) => {
+    res.json({
+      products: {
+        pro: { amount: PRODUCT_PRICES.pro, name: "OLLI Pro 멤버십 (월간)" },
+        credits: { amount: PRODUCT_PRICES.credits, name: "OLLI 크레딧 50개" },
+      },
+    });
+  });
 
   app.get("/api/auth/user", isAuthenticated, async (req: AuthRequest, res) => {
     try {
@@ -60,8 +78,8 @@ export async function registerRoutes(
         profileImageUrl,
       });
     } catch (error) {
-      console.error("User sync error:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+      logger.error("User sync error", error);
+      res.status(500).json({ message: "사용자 정보 조회에 실패했습니다." });
     }
   });
 
@@ -70,7 +88,7 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = generateCharacterSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { prompt, style, sourceImageData } = parsed.data;
 
@@ -116,13 +134,13 @@ export async function registerRoutes(
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
-        console.error("Character generation DB save failed:", dbError?.message);
+        logger.error("Character generation DB save failed", dbError);
       }
 
       res.json({ characterId: character.id, imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Character generation error:", error);
-      res.status(500).json({ message: error.message || "Failed to generate character" });
+      logger.error("Character generation error", error);
+      res.status(500).json({ message: "캐릭터 생성에 실패했습니다." });
     }
   });
 
@@ -131,7 +149,7 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = generatePoseSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { characterIds, prompt, referenceImageData } = parsed.data;
 
@@ -140,10 +158,10 @@ export async function registerRoutes(
       for (const cid of characterIds) {
         const character = await storage.getCharacter(cid);
         if (!character) {
-          return res.status(404).json({ message: `Character ${cid} not found` });
+          return res.status(404).json({ message: "캐릭터를 찾을 수 없습니다." });
         }
         if (character.userId !== userId) {
-          return res.status(403).json({ message: "Access denied" });
+          return res.status(403).json({ message: "접근 권한이 없습니다." });
         }
         characters.push(character);
       }
@@ -179,13 +197,13 @@ export async function registerRoutes(
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
-        console.error("Pose generation DB save failed:", dbError?.message);
+        logger.error("Pose generation DB save failed", dbError);
       }
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Pose generation error:", error);
-      res.status(500).json({ message: error.message || "Failed to generate pose" });
+      logger.error("Pose generation error", error);
+      res.status(500).json({ message: "포즈 생성에 실패했습니다." });
     }
   });
 
@@ -194,7 +212,7 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = generateBackgroundSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { sourceImageDataList, backgroundPrompt, itemsPrompt, characterIds, noBackground, aspectRatio } = parsed.data;
       const skipGallery = req.body.skipGallery === true;
@@ -204,10 +222,10 @@ export async function registerRoutes(
         for (const cid of characterIds) {
           const character = await storage.getCharacter(cid);
           if (!character) {
-            return res.status(404).json({ message: `Character ${cid} not found` });
+            return res.status(404).json({ message: "캐릭터를 찾을 수 없습니다." });
           }
           if (character.userId !== userId) {
-            return res.status(403).json({ message: "Access denied" });
+            return res.status(403).json({ message: "접근 권한이 없습니다." });
           }
         }
       }
@@ -247,15 +265,15 @@ export async function registerRoutes(
             creditsUsed: 5,
           });
         } catch (dbError: any) {
-          console.error("Background generation DB save failed:", dbError?.message);
+          logger.error("Background generation DB save failed", dbError);
         }
       }
       await storage.incrementTotalGenerations(userId);
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Background generation error:", error);
-      res.status(500).json({ message: error.message || "Failed to generate background" });
+      logger.error("Background generation error", error);
+      res.status(500).json({ message: "배경 생성에 실패했습니다." });
     }
   });
 
@@ -264,7 +282,7 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = removeBackgroundSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { sourceImageData } = parsed.data;
 
@@ -277,8 +295,8 @@ export async function registerRoutes(
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Remove background error:", error);
-      res.status(500).json({ message: error.message || "Failed to remove background" });
+      logger.error("Remove background error", error);
+      res.status(500).json({ message: "배경 제거에 실패했습니다." });
     }
   });
 
@@ -287,46 +305,56 @@ export async function registerRoutes(
       const userId = req.userId!;
       const credits = await storage.getUserCredits(userId);
       if (credits.tier !== "pro") {
-        return res.status(403).json({ message: "Pro membership required to use Advertiser Matching AI" });
+        return res.status(403).json({ message: "광고 매칭 AI는 Pro 멤버십 전용 기능입니다." });
       }
 
       const parsed = adMatchSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
 
       const result = await analyzeAdMatch(parsed.data);
       res.json(result);
     } catch (error: any) {
-      console.error("Ad match error:", error);
-      res.status(500).json({ message: error.message || "Failed to analyze ad match" });
+      logger.error("Ad match error", error);
+      res.status(500).json({ message: "광고 매칭 분석에 실패했습니다." });
     }
   });
 
   app.post("/api/ai-prompt", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      const userId = req.userId!;
       const { type, context } = req.body;
       if (!type || !["character", "pose", "background"].includes(type)) {
-        return res.status(400).json({ message: "Invalid type" });
+        return res.status(400).json({ message: "잘못된 타입입니다." });
+      }
+      const canUse = await storage.deductCredit(userId, 1);
+      if (!canUse) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
       }
       const result = await generateAIPrompt(type, context);
       res.json({ prompt: result });
     } catch (error: any) {
-      res.status(500).json({ message: error.message || "Failed to generate AI prompt" });
+      res.status(500).json({ message: "AI 프롬프트 생성에 실패했습니다." });
     }
   });
 
   app.post("/api/enhance-bio", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      const userId = req.userId!;
       const { bio, profileName, category, followers, engagement } = req.body;
       if (!bio || typeof bio !== "string" || bio.trim().length < 3) {
-        return res.status(400).json({ message: "Please write at least a short description to enhance." });
+        return res.status(400).json({ message: "소개글을 3자 이상 입력해주세요." });
+      }
+      const canUse = await storage.deductCredit(userId, 1);
+      if (!canUse) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
       }
       const enhanced = await enhanceBio({ bio, profileName, category, followers, engagement });
       res.json({ enhancedBio: enhanced });
     } catch (error: any) {
-      console.error("Bio enhance error:", error);
-      res.status(500).json({ message: error.message || "Failed to enhance bio" });
+      logger.error("Bio enhance error", error);
+      res.status(500).json({ message: "소개글 개선에 실패했습니다." });
     }
   });
 
@@ -336,7 +364,7 @@ export async function registerRoutes(
       const chars = await storage.getCharactersByUser(userId);
       res.json(chars);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch characters" });
+      res.status(500).json({ message: "캐릭터 목록 조회에 실패했습니다." });
     }
   });
 
@@ -345,18 +373,18 @@ export async function registerRoutes(
       const userId = req.userId!;
       const id = parseInt(String(req.params.id));
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid character ID" });
+        return res.status(400).json({ message: "잘못된 캐릭터 ID입니다." });
       }
       const character = await storage.getCharacter(id);
       if (!character) {
-        return res.status(404).json({ message: "Character not found" });
+        return res.status(404).json({ message: "캐릭터를 찾을 수 없습니다." });
       }
       if (character.userId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
       }
       res.json(character);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch character" });
+      res.status(500).json({ message: "캐릭터 조회에 실패했습니다." });
     }
   });
 
@@ -387,7 +415,7 @@ export async function registerRoutes(
         res.json(items);
       }
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch gallery" });
+      res.status(500).json({ message: "갤러리 조회에 실패했습니다." });
     }
   });
 
@@ -400,7 +428,7 @@ export async function registerRoutes(
       if (!gen) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
       res.json(gen);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch gallery item" });
+      res.status(500).json({ message: "갤러리 항목 조회에 실패했습니다." });
     }
   });
 
@@ -427,7 +455,7 @@ export async function registerRoutes(
         creatorTier,
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch usage" });
+      res.status(500).json({ message: "사용량 조회에 실패했습니다." });
     }
   });
 
@@ -436,12 +464,12 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = creatorProfileSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const updated = await storage.updateCreatorProfile(userId, parsed.data);
       res.json({ authorName: updated.authorName, genre: updated.genre });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update profile" });
+      res.status(500).json({ message: "프로필 업데이트에 실패했습니다." });
     }
   });
 
@@ -450,7 +478,7 @@ export async function registerRoutes(
       const data = await storage.getAllTrending();
       res.json(data);
     } catch (error: any) {
-      console.error("Trending fetch error:", error);
+      logger.error("Trending fetch error", error);
       res.json({
         latest: [],
         mostViewed: [],
@@ -464,66 +492,69 @@ export async function registerRoutes(
       const userId = req.userId!;
       const { imp_uid, merchant_uid, product_type } = req.body;
 
-      if (!imp_uid || !merchant_uid) {
-        return res.status(400).json({ message: "imp_uid와 merchant_uid가 필요합니다." });
+      // 1. 필수 필드 검증
+      if (!imp_uid || typeof imp_uid !== "string" || !merchant_uid || typeof merchant_uid !== "string") {
+        return res.status(400).json({ message: "잘못된 결제 요청입니다." });
       }
 
+      // 2. product_type 화이트리스트 검증
+      const resolvedProductType = (product_type || "credits") as string;
+      if (!VALID_PRODUCT_TYPES.includes(resolvedProductType as keyof typeof PRODUCT_PRICES)) {
+        return res.status(400).json({ message: "유효하지 않은 상품 타입입니다." });
+      }
+      const productKey = resolvedProductType as keyof typeof PRODUCT_PRICES;
+
+      // 3. 멱등성: 이미 처리된 결제인지 확인
       const existingPayment = await storage.getPaymentByImpUid(imp_uid);
       if (existingPayment) {
         return res.status(409).json({ message: "이미 처리된 결제입니다." });
       }
 
+      // 4. PortOne API로 실제 결제 데이터 검증 (서버 ↔ 서버)
       const accessToken = await getPortoneAccessToken();
       const paymentResponse = await axios.get(`https://api.iamport.kr/payments/${imp_uid}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       const paymentData = paymentResponse.data.response;
-      if (paymentData.status !== "paid") {
+      if (!paymentData || paymentData.status !== "paid") {
         return res.status(400).json({ message: "결제가 완료되지 않았습니다." });
       }
 
-      const amount = paymentData.amount;
-      let resolvedProductType = (product_type || "credits") as keyof typeof PRODUCT_PRICES;
-
-      // 금액 검증: 실제 결제 금액과 상품 가격이 일치하는지 확인
-      const expectedAmount = PRODUCT_PRICES[resolvedProductType];
-      if (!expectedAmount) {
-        return res.status(400).json({ message: "유효하지 않은 상품 타입입니다." });
-      }
-
-      if (amount !== expectedAmount) {
-        console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${amount} for product ${resolvedProductType}`);
-        return res.status(400).json({
-          message: `결제 금액이 일치하지 않습니다. 예상: ${expectedAmount}원, 실제: ${amount}원`
-        });
-      }
-
-      // merchant_uid에서 product_type 추출하여 이중 검증
-      const merchantProductType = merchant_uid.split("_")[0];
-      if (merchantProductType !== resolvedProductType) {
+      // 5. PortOne이 반환한 merchant_uid와 클라이언트가 보낸 것 일치 확인
+      if (paymentData.merchant_uid !== merchant_uid) {
         return res.status(400).json({ message: "주문 정보가 일치하지 않습니다." });
       }
 
-      let creditsToAdd = 0;
-      if (resolvedProductType === "pro") {
-        await storage.updateUserTier(userId, "pro");
-        creditsToAdd = 0;
-      } else {
-        // 크레딧: 4900원 = 50크레딧
-        creditsToAdd = 50;
-        if (creditsToAdd > 0) {
-          await storage.addCredits(userId, creditsToAdd);
-        }
+      // 6. 금액 검증: PortOne 실결제 금액 vs 서버 상품 가격
+      const amount = paymentData.amount;
+      const expectedAmount = PRODUCT_PRICES[productKey];
+      if (amount !== expectedAmount) {
+        return res.status(400).json({ message: "결제 금액이 일치하지 않습니다. 관리자에게 문의하세요." });
       }
 
+      // 7. merchant_uid에서 product_type 추출하여 이중 검증
+      const merchantProductType = merchant_uid.split("_")[0];
+      if (merchantProductType !== productKey) {
+        return res.status(400).json({ message: "주문 정보가 일치하지 않습니다." });
+      }
+
+      // 8. 상품 처리 (서버 상수 기반)
+      const creditsToAdd = PRODUCT_CREDITS[productKey];
+      if (productKey === "pro") {
+        await storage.updateUserTier(userId, "pro");
+      } else if (creditsToAdd > 0) {
+        await storage.addCredits(userId, creditsToAdd);
+      }
+
+      // 9. 결제 기록 저장
       await storage.createPayment({
         userId,
         impUid: imp_uid,
         merchantUid: merchant_uid,
         amount,
         status: "paid",
-        productType: resolvedProductType,
+        productType: productKey,
         creditsAdded: creditsToAdd,
       });
 
@@ -531,11 +562,11 @@ export async function registerRoutes(
         success: true,
         amount,
         creditsAdded: creditsToAdd,
-        productType: resolvedProductType,
+        productType: productKey,
       });
     } catch (error: any) {
-      console.error("Payment verification error:", error);
-      res.status(500).json({ message: error.message || "결제 검증에 실패했습니다." });
+      logger.error("Payment verification error", error);
+      res.status(500).json({ message: "결제 검증에 실패했습니다." });
     }
   });
 
@@ -543,9 +574,11 @@ export async function registerRoutes(
     try {
       const userId = req.userId!;
       const payments = await storage.getPaymentsByUser(userId);
-      res.json(payments);
+      // 클라이언트에 불필요한 내부 필드(impUid, merchantUid, userId) 제거
+      const sanitized = payments.map(({ impUid, merchantUid, userId: _uid, ...safe }) => safe);
+      res.json(sanitized);
     } catch (error: any) {
-      console.error("Get payments error:", error);
+      logger.error("Get payments error", error);
       res.status(500).json({ message: "결제 내역 조회에 실패했습니다." });
     }
   });
@@ -558,42 +591,77 @@ export async function registerRoutes(
         return res.status(400).json({ message: "현재 Pro 멤버십이 아닙니다." });
       }
       const updated = await storage.cancelPro(userId);
-      res.json({ success: true, tier: updated.tier, credits: updated.credits });
+      res.json({
+        success: true,
+        tier: updated.tier,
+        credits: updated.credits,
+        proExpiresAt: updated.proExpiresAt,
+      });
     } catch (error: any) {
-      console.error("Cancel pro error:", error);
+      logger.error("Cancel pro error", error);
       res.status(500).json({ message: "멤버십 해지에 실패했습니다." });
     }
   });
 
+  // ── 회원 탈퇴 ──
+  app.post("/api/delete-account", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      await storage.deleteAccount(userId);
+
+      // Supabase Auth 에서도 사용자 삭제 (재로그인 방지)
+      try {
+        await supabase.auth.admin.deleteUser(userId);
+      } catch (e) {
+        // service_role 키가 없는 환경에서는 실패할 수 있음 — 데이터 삭제는 이미 완료
+        logger.warn("Supabase auth user deletion failed (data already deleted)", e);
+      }
+
+      logger.info(`Account deleted: ${userId}`);
+      res.json({ success: true, message: "회원 탈퇴가 완료되었습니다." });
+    } catch (error: any) {
+      logger.error("Delete account error", error);
+      res.status(500).json({ message: "회원 탈퇴에 실패했습니다. 고객센터로 문의해주세요." });
+    }
+  });
+
   // PortOne 웹훅 엔드포인트 (결제 상태 변경 알림)
-  // 인증 없이 접근 가능하지만, imp_uid로 검증하여 중복 처리 방지
+  // 인증 없이 접근 가능 — PortOne API로 imp_uid를 서버 간 검증하여 위조 방지
   app.post("/api/payment/webhook", async (req, res) => {
     try {
-      const { imp_uid, status, merchant_uid } = req.body;
+      const { imp_uid, status: webhookStatus, merchant_uid } = req.body;
 
-      if (!imp_uid) {
-        return res.status(400).json({ message: "imp_uid가 필요합니다." });
+      if (!imp_uid || typeof imp_uid !== "string") {
+        return res.status(400).json({ message: "잘못된 요청입니다." });
       }
 
       // 이미 처리된 결제인지 확인
       const existingPayment = await storage.getPaymentByImpUid(imp_uid);
       if (existingPayment) {
-        // 이미 처리된 경우 상태만 업데이트 (중복 처리 방지)
-        if (existingPayment.status !== status) {
-          await storage.updatePaymentStatus(existingPayment.id, status);
+        if (existingPayment.status !== webhookStatus) {
+          // PortOne API로 실제 상태를 검증한 후에만 업데이트
+          try {
+            const accessToken = await getPortoneAccessToken();
+            const verifyRes = await axios.get(
+              `https://api.iamport.kr/payments/${imp_uid}`,
+              { headers: { Authorization: `Bearer ${accessToken}` } },
+            );
+            const verified = verifyRes.data.response;
+            if (verified && verified.status !== existingPayment.status) {
+              await storage.updatePaymentStatus(existingPayment.id, verified.status);
+            }
+          } catch {
+            // 검증 실패 시 웹훅 데이터만으로는 업데이트하지 않음
+          }
         }
-        return res.json({ success: true, message: "이미 처리된 결제입니다." });
+        return res.json({ success: true });
       }
 
-      // 웹훅은 알림용이므로, 실제 결제 처리는 /api/payment/complete에서 처리
-      // 여기서는 로깅만 수행
-      console.log(`[PortOne Webhook] Payment status update: imp_uid=${imp_uid}, status=${status}, merchant_uid=${merchant_uid}`);
-
-      res.json({ success: true, message: "웹훅 수신 완료" });
+      res.json({ success: true });
     } catch (error: any) {
-      console.error("PortOne webhook error:", error);
+      logger.error("PortOne webhook error", error);
       // 웹훅 실패 시에도 200을 반환하여 PortOne이 재시도하지 않도록 함
-      res.status(200).json({ success: false, message: error.message });
+      res.status(200).json({ success: false });
     }
   });
 
@@ -602,7 +670,7 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = storyScriptSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
 
       const canUseStory = await storage.deductCredit(userId, 10);
@@ -614,23 +682,27 @@ export async function registerRoutes(
       await storage.incrementTotalGenerations(userId);
       res.json(result);
     } catch (error: any) {
-      console.error("Story script generation error:", error);
-      res.status(500).json({ message: error.message || "스크립트 생성에 실패했습니다" });
+      logger.error("Story script generation error", error);
+      res.status(500).json({ message: "스크립트 생성에 실패했습니다." });
     }
   });
 
   app.post("/api/story-topic-suggest", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      const userId = req.userId!;
       const parsed = topicSuggestSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
-
+      const canUse = await storage.deductCredit(userId, 1);
+      if (!canUse) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
+      }
       const topics = await suggestStoryTopics(parsed.data.genre);
       res.json({ topics });
     } catch (error: any) {
-      console.error("Topic suggestion error:", error);
-      res.status(500).json({ message: error.message || "주제 추천에 실패했습니다" });
+      logger.error("Topic suggestion error", error);
+      res.status(500).json({ message: "주제 추천에 실패했습니다." });
     }
   });
 
@@ -664,8 +736,8 @@ export async function registerRoutes(
 
       res.json(result);
     } catch (error: any) {
-      console.error("Auto-webtoon breakdown error:", error);
-      res.status(500).json({ message: error.message || "장면 분해에 실패했습니다." });
+      logger.error("Auto-webtoon breakdown error", error);
+      res.status(500).json({ message: "장면 분해에 실패했습니다." });
     }
   });
 
@@ -676,7 +748,7 @@ export async function registerRoutes(
       const { sceneDescription, storyContext, sourceImageDataList, aspectRatio, sceneIndex, totalScenes, previousSceneDescription } = req.body;
 
       if (!sceneDescription || typeof sceneDescription !== "string") {
-        return res.status(400).json({ message: "sceneDescription is required" });
+        return res.status(400).json({ message: "장면 설명이 필요합니다." });
       }
 
       const credits = await storage.getUserCredits(userId);
@@ -702,8 +774,8 @@ export async function registerRoutes(
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Auto-webtoon scene generation error:", error);
-      res.status(500).json({ message: error.message || "장면 이미지 생성에 실패했습니다." });
+      logger.error("Auto-webtoon scene generation error", error);
+      res.status(500).json({ message: "장면 이미지 생성에 실패했습니다." });
     }
   });
 
@@ -727,8 +799,8 @@ export async function registerRoutes(
       });
       res.json(project);
     } catch (error: any) {
-      console.error("Create bubble project error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 저장에 실패했습니다." });
+      logger.error("Create bubble project error", error);
+      res.status(500).json({ message: "프로젝트 저장에 실패했습니다." });
     }
   });
 
@@ -738,8 +810,8 @@ export async function registerRoutes(
       const projects = await storage.getBubbleProjectsByUser(userId);
       res.json(projects);
     } catch (error: any) {
-      console.error("List bubble projects error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 목록 조회에 실패했습니다." });
+      logger.error("List bubble projects error", error);
+      res.status(500).json({ message: "프로젝트 목록 조회에 실패했습니다." });
     }
   });
 
@@ -752,8 +824,8 @@ export async function registerRoutes(
       if (!project) return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
       res.json(project);
     } catch (error: any) {
-      console.error("Get bubble project error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 조회에 실패했습니다." });
+      logger.error("Get bubble project error", error);
+      res.status(500).json({ message: "프로젝트 조회에 실패했습니다." });
     }
   });
 
@@ -770,8 +842,8 @@ export async function registerRoutes(
       if (!updated) return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
       res.json(updated);
     } catch (error: any) {
-      console.error("Update bubble project error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 업데이트에 실패했습니다." });
+      logger.error("Update bubble project error", error);
+      res.status(500).json({ message: "프로젝트 업데이트에 실패했습니다." });
     }
   });
 
@@ -787,8 +859,8 @@ export async function registerRoutes(
       const count = await storage.deleteGenerationsBulk(numIds, userId);
       res.json({ success: true, deleted: count });
     } catch (error: any) {
-      console.error("Bulk delete gallery error:", error);
-      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+      logger.error("Bulk delete gallery error", error);
+      res.status(500).json({ message: "삭제에 실패했습니다." });
     }
   });
 
@@ -799,8 +871,8 @@ export async function registerRoutes(
       const count = await storage.deleteAllGenerations(userId);
       res.json({ success: true, deleted: count });
     } catch (error: any) {
-      console.error("Delete all gallery error:", error);
-      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+      logger.error("Delete all gallery error", error);
+      res.status(500).json({ message: "삭제에 실패했습니다." });
     }
   });
 
@@ -811,13 +883,13 @@ export async function registerRoutes(
       if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
       const deleted = await storage.deleteGeneration(id, userId);
       if (!deleted) {
-        console.warn(`Gallery delete failed: id=${id}, userId=${userId} — not found or not owned`);
+        logger.warn("Gallery delete failed: item not found or not owned");
         return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
       }
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Delete gallery item error:", error);
-      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+      logger.error("Delete gallery item error", error);
+      res.status(500).json({ message: "삭제에 실패했습니다." });
     }
   });
 
@@ -830,8 +902,8 @@ export async function registerRoutes(
       if (!deleted) return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Delete bubble project error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 삭제에 실패했습니다." });
+      logger.error("Delete bubble project error", error);
+      res.status(500).json({ message: "프로젝트 삭제에 실패했습니다." });
     }
   });
 
@@ -846,8 +918,8 @@ export async function registerRoutes(
       const url = getOAuthUrl(req.userId!);
       res.json({ url });
     } catch (error: any) {
-      console.error("Instagram connect error:", error);
-      res.status(500).json({ message: error.message || "Instagram 연결 URL 생성에 실패했습니다." });
+      logger.error("Instagram connect error", error);
+      res.status(500).json({ message: "Instagram 연결에 실패했습니다." });
     }
   });
 
@@ -882,8 +954,8 @@ export async function registerRoutes(
 
       res.redirect("/dashboard?instagram_connected=true");
     } catch (error: any) {
-      console.error("Instagram callback error:", error);
-      res.redirect(`/dashboard?instagram_error=${encodeURIComponent(error.message || "연결 실패")}`);
+      logger.error("Instagram callback error", error);
+      res.redirect("/dashboard?instagram_error=연결에 실패했습니다");
     }
   });
 
@@ -916,7 +988,7 @@ export async function registerRoutes(
         connectedAt: conn.connectedAt,
       });
     } catch (error: any) {
-      console.error("Instagram status error:", error);
+      logger.error("Instagram status error", error);
       res.status(500).json({ message: "Instagram 상태 조회에 실패했습니다." });
     }
   });
@@ -927,7 +999,7 @@ export async function registerRoutes(
       await storage.deleteInstagramConnection(req.userId!);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Instagram disconnect error:", error);
+      logger.error("Instagram disconnect error", error);
       res.status(500).json({ message: "Instagram 연결 해제에 실패했습니다." });
     }
   });
@@ -945,8 +1017,8 @@ export async function registerRoutes(
 
       res.json({ success: true, tokenExpiresAt: refreshed.expiresAt });
     } catch (error: any) {
-      console.error("Instagram refresh token error:", error);
-      res.status(500).json({ message: error.message || "토큰 갱신에 실패했습니다." });
+      logger.error("Instagram refresh token error", error);
+      res.status(500).json({ message: "토큰 갱신에 실패했습니다." });
     }
   });
 
@@ -1038,9 +1110,8 @@ export async function registerRoutes(
         throw publishError;
       }
     } catch (error: any) {
-      console.error("Instagram publish error:", error);
-      const msg = error.response?.data?.error?.message || error.message || "게시에 실패했습니다.";
-      res.status(500).json({ message: msg });
+      logger.error("Instagram publish error", error);
+      res.status(500).json({ message: "Instagram 게시에 실패했습니다." });
     }
   });
 
@@ -1051,7 +1122,7 @@ export async function registerRoutes(
       const logs = await storage.getInstagramPublishLogs(req.userId!, limit);
       res.json(logs);
     } catch (error: any) {
-      console.error("Instagram publish history error:", error);
+      logger.error("Instagram publish history error", error);
       res.status(500).json({ message: "게시 이력 조회에 실패했습니다." });
     }
   });
@@ -1084,7 +1155,7 @@ export async function registerRoutes(
       const result = await storage.getFeedPosts({ limit, offset, sort, viewerId, followingOnly });
       res.json(result);
     } catch (error: any) {
-      console.error("Feed list error:", error);
+      logger.error("Feed list error", error);
       res.status(500).json({ message: "피드를 불러오는데 실패했습니다." });
     }
   });
@@ -1128,8 +1199,8 @@ export async function registerRoutes(
 
       res.json(post);
     } catch (error: any) {
-      console.error("Feed publish error:", error);
-      res.status(500).json({ message: error.message || "게시에 실패했습니다." });
+      logger.error("Feed publish error", error);
+      res.status(500).json({ message: "게시에 실패했습니다." });
     }
   });
 
@@ -1143,7 +1214,7 @@ export async function registerRoutes(
       if (!post) return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
       res.json(post);
     } catch (error: any) {
-      console.error("Feed post detail error:", error);
+      logger.error("Feed post detail error", error);
       res.status(500).json({ message: "게시물을 불러오는데 실패했습니다." });
     }
   });
@@ -1157,7 +1228,7 @@ export async function registerRoutes(
       if (!deleted) return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Feed delete error:", error);
+      logger.error("Feed delete error", error);
       res.status(500).json({ message: "삭제에 실패했습니다." });
     }
   });
@@ -1170,7 +1241,7 @@ export async function registerRoutes(
       await storage.likePost(req.userId!, postId);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Like error:", error);
+      logger.error("Like error", error);
       res.status(500).json({ message: "좋아요에 실패했습니다." });
     }
   });
@@ -1183,7 +1254,7 @@ export async function registerRoutes(
       await storage.unlikePost(req.userId!, postId);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Unlike error:", error);
+      logger.error("Unlike error", error);
       res.status(500).json({ message: "좋아요 취소에 실패했습니다." });
     }
   });
@@ -1196,7 +1267,7 @@ export async function registerRoutes(
       await storage.followUser(req.userId!, followingId);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Follow error:", error);
+      logger.error("Follow error", error);
       res.status(500).json({ message: "팔로우에 실패했습니다." });
     }
   });
@@ -1208,7 +1279,7 @@ export async function registerRoutes(
       await storage.unfollowUser(req.userId!, followingId);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Unfollow error:", error);
+      logger.error("Unfollow error", error);
       res.status(500).json({ message: "언팔로우에 실패했습니다." });
     }
   });
@@ -1222,7 +1293,7 @@ export async function registerRoutes(
       if (!profile) return res.status(404).json({ message: "유저를 찾을 수 없습니다." });
       res.json(profile);
     } catch (error: any) {
-      console.error("User profile error:", error);
+      logger.error("User profile error", error);
       res.status(500).json({ message: "프로필을 불러오는데 실패했습니다." });
     }
   });
@@ -1236,7 +1307,7 @@ export async function registerRoutes(
       const result = await storage.getUserFeedPosts(userId, limit, offset);
       res.json(result);
     } catch (error: any) {
-      console.error("User posts error:", error);
+      logger.error("User posts error", error);
       res.status(500).json({ message: "게시물을 불러오는데 실패했습니다." });
     }
   });
@@ -1247,7 +1318,7 @@ export async function registerRoutes(
       const creators = await storage.getPopularCreators(10);
       res.json(creators);
     } catch (error: any) {
-      console.error("Popular creators error:", error);
+      logger.error("Popular creators error", error);
       res.json([]);
     }
   });

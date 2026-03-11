@@ -155,7 +155,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-semibold mt-8 mb-3">제10조 (AI 생성 콘텐츠 관련)</h2>
           <ul className="list-disc pl-6 space-y-1">
-            <li>이용자가 입력한 프롬프트(텍스트)는 AI 이미지 생성 목적으로만 사용되며, 생성 완료 후 서버에 별도 저장하지 않습니다.</li>
+            <li>이용자가 입력한 프롬프트(텍스트)는 생성 기록 관리를 위해 저장되며, 이용자가 삭제 요청 시 삭제됩니다.</li>
             <li>생성된 이미지는 이용자의 계정에 저장되며, 이용자가 삭제를 요청할 경우 즉시 삭제됩니다.</li>
             <li>AI 모델 학습에 이용자의 입력 데이터를 사용하지 않습니다.</li>
           </ul>

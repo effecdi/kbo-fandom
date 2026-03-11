@@ -44,6 +44,13 @@ export default function PricingPage() {
     enabled: isAuthenticated,
   });
 
+  // 서버에서 가격 정보를 가져옴 (클라이언트 하드코딩 방지)
+  const { data: pricingData } = useQuery<{
+    products: { pro: { amount: number; name: string }; credits: { amount: number; name: string } };
+  }>({
+    queryKey: ["/api/pricing"],
+  });
+
   useEffect(() => {
     if (!document.getElementById("iamport-sdk")) {
       const script = document.createElement("script");
@@ -73,9 +80,14 @@ export default function PricingPage() {
     }
 
     const productType = pendingProductType;
+    const product = pricingData?.products?.[productType];
+    if (!product) {
+      toast({ title: "가격 정보 로딩 중", description: "잠시 후 다시 시도해주세요.", variant: "destructive" });
+      return;
+    }
     const merchantUid = `${productType}_${Date.now()}`;
-    const amount = productType === "pro" ? 29900 : 4900;
-    const name = productType === "pro" ? "OLLI Pro 멤버십 (월간)" : "OLLI 크레딧 50개";
+    const amount = product.amount;
+    const name = product.name;
 
     window.IMP.init(import.meta.env.VITE_PORTONE_MERCHANT_ID || "imp00000000");
 
@@ -118,14 +130,19 @@ export default function PricingPage() {
         setPendingProductType(null);
       }
     );
-  }, [pendingProductType, isAuthenticated, user, toast]);
+  }, [pendingProductType, isAuthenticated, user, toast, pricingData]);
 
   const handleCancelPro = useCallback(async () => {
     setIsCancelling(true);
     try {
-      await apiRequest("POST", "/api/cancel-pro", {});
+      const res = await apiRequest("POST", "/api/cancel-pro", {});
+      const data = await res.json();
       queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
-      toast({ title: "멤버십 해지 완료", description: "무료 플랜으로 전환되었습니다. 10 크레딧이 지급되었습니다." });
+      const expiresAt = data.proExpiresAt ? new Date(data.proExpiresAt).toLocaleDateString("ko-KR") : null;
+      const desc = expiresAt
+        ? `${expiresAt}까지 Pro 혜택이 유지되며, 이후 무료 플랜으로 전환됩니다.`
+        : "무료 플랜으로 전환되었습니다. 10 크레딧이 지급되었습니다.";
+      toast({ title: "멤버십 해지 예약 완료", description: desc });
     } catch (error: any) {
       toast({ title: "해지 실패", description: error.message || "관리자에게 문의하세요.", variant: "destructive" });
     } finally {
@@ -157,7 +174,7 @@ export default function PricingPage() {
     },
     {
       name: "Pro",
-      price: "₩29,900",
+      price: pricingData ? `₩${pricingData.products.pro.amount.toLocaleString("ko-KR")}` : "₩29,900",
       period: "/월",
       description: "본격적인 크리에이터를 위한 플랜",
       icon: Zap,
@@ -323,7 +340,7 @@ export default function PricingPage() {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <div className="text-2xl font-black text-primary">₩4,900</div>
+              <div className="text-2xl font-black text-primary">₩{pricingData ? pricingData.products.credits.amount.toLocaleString("ko-KR") : "4,900"}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
             </div>
           </div>
@@ -344,8 +361,8 @@ export default function PricingPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Pro 멤버십을 해지하시겠습니까?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  해지하면 무료 플랜으로 전환되며, 무제한 생성 등 Pro 혜택을 더 이상 이용할 수 없습니다.
-                  무료 플랜 전환 시 10 크레딧이 지급됩니다.
+                  해지를 요청하면 현재 결제 주기 만료일까지 Pro 혜택이 유지된 후 무료 플랜으로 전환됩니다.
+                  전환 시 10 크레딧이 지급됩니다.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

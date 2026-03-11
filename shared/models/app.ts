@@ -39,6 +39,7 @@ export const userCredits = pgTable("user_credits", {
   dailyBonusCredits: integer("daily_bonus_credits").notNull().default(0),
   lastDailyBonusAt: timestamp("last_daily_bonus_at"),
   lastResetAt: timestamp("last_reset_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  proExpiresAt: timestamp("pro_expires_at"),
 });
 
 export const payments = pgTable("payments", {
