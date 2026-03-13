@@ -10357,7 +10357,7 @@ export default function StoryPage() {
                           placeholder="새 폴더 이름"
                           value={newFolderName}
                           onChange={(e) => setNewFolderName(e.target.value)}
-                          className="flex-1"
+                          className="flex-1 h-8"
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && newFolderName.trim()) {
                               setCreatingFolder(true);

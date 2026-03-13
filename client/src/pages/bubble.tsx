@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/context-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Download, Plus, Trash2, MessageCircle, ArrowRight, Type, Move, Maximize2, ImagePlus, X, Loader2, Layers, ChevronUp, ChevronDown, Save, Minimize2, ZoomIn, ZoomOut, FolderOpen, Share2, Crown, Lightbulb, Copy, FilePlus, Wand2 } from "lucide-react";
+import { Upload, Download, Plus, Trash2, MessageCircle, ArrowRight, Type, Move, Maximize2, ImagePlus, X, Loader2, Layers, ChevronUp, ChevronDown, Save, Minimize2, ZoomIn, ZoomOut, FolderOpen, Share2, Crown, Lightbulb, Copy, FilePlus, Wand2, FolderPlus } from "lucide-react";
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { LeaveEditorDialog } from "@/components/leave-editor-dialog";
@@ -95,6 +95,10 @@ export default function BubblePage() {
   const [projectName, setProjectName] = useState("");
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
   const [savingProject, setSavingProject] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [showNewFolderInput, setShowNewFolderInput] = useState(false);
 
   const [zoom, setZoom] = useState(100);
   const [removingBg, setRemovingBg] = useState(false);
@@ -119,6 +123,29 @@ export default function BubblePage() {
 
   const isPro = usage?.tier === "pro";
   const canAllFonts = isPro || (usage?.creatorTier ?? 0) >= 3;
+
+  const { data: projectFolders = [] } = useQuery<{ id: number; name: string }[]>({
+    queryKey: ["/api/project-folders"],
+    enabled: isAuthenticated,
+  });
+
+  const createFolderMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const res = await apiRequest("POST", "/api/project-folders", { name });
+      return res.json();
+    },
+    onSuccess: (folder: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-folders"] });
+      setSelectedFolderId(folder.id);
+      setNewFolderName("");
+      setShowNewFolderInput(false);
+      setCreatingFolder(false);
+    },
+    onError: (err: any) => {
+      toast({ title: "폴더 생성 실패", description: err.message, variant: "destructive" });
+      setCreatingFolder(false);
+    },
+  });
   const availableFonts = canAllFonts ? KOREAN_FONTS : KOREAN_FONTS.slice(0, 3);
 
   const showBackButton = from === "story";
@@ -491,6 +518,7 @@ export default function BubblePage() {
       projectLoadedRef.current = loadedProject.id;
       setCurrentProjectId(loadedProject.id);
       setProjectName(loadedProject.name);
+      setSelectedFolderId(loadedProject.folderId ?? null);
 
       // 이미지 로드 후 새 페이지 객체 생성하여 캔버스 redraw 강제
       const forceNewPageRefs = () => {
@@ -1160,28 +1188,119 @@ export default function BubblePage() {
       </Dialog>
 
       <Dialog open={showSaveModal} onOpenChange={setShowSaveModal}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>프로젝트 명 저장</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>프로젝트 이름</Label>
-              <Input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="나의 웹툰" />
-            </div>
-            <Button className="w-full" onClick={() => {
-              // Save logic
-              const saveData = {
-                pages: pages.map(p => ({
-                  ...p,
-                  bubbles: p.bubbles.map(b => ({ ...b, templateImg: undefined })), // stripping non-serializable
-                  characters: p.characters.map(c => ({ ...c, imgElement: undefined })),
-                  imageElement: undefined
-                })),
-                version: 2
-              };
-              // apiRequest call ...
-              toast({ title: "저장되었습니다 (Mock)" });
-              setShowSaveModal(false);
-            }}>저장</Button>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="text-base">말풍선 프로젝트 저장</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="프로젝트 이름"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+            />
+            <Select
+              value={selectedFolderId ? String(selectedFolderId) : "none"}
+              onValueChange={(v) => setSelectedFolderId(v === "none" ? null : Number(v))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="폴더 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">폴더 없음</SelectItem>
+                {projectFolders.map((f) => (
+                  <SelectItem key={f.id} value={String(f.id)}>{f.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {showNewFolderInput ? (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="새 폴더 이름"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  className="flex-1 h-8"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newFolderName.trim()) {
+                      setCreatingFolder(true);
+                      createFolderMutation.mutate(newFolderName.trim());
+                    }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={creatingFolder || !newFolderName.trim()}
+                  onClick={() => {
+                    setCreatingFolder(true);
+                    createFolderMutation.mutate(newFolderName.trim());
+                  }}
+                >
+                  {creatingFolder ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "추가"}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setShowNewFolderInput(false); setNewFolderName(""); }}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-1.5"
+                onClick={() => setShowNewFolderInput(true)}
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+                새 폴더 만들기
+              </Button>
+            )}
+            <Button
+              className="w-full gap-1.5"
+              disabled={savingProject || !projectName.trim()}
+              onClick={async () => {
+                if (!projectName.trim()) return;
+                setSavingProject(true);
+                try {
+                  const saveData = {
+                    pages: pages.map(p => ({
+                      ...p,
+                      bubbles: p.bubbles.map(b => ({ ...b, templateImg: undefined })),
+                      characters: p.characters.map(c => ({ ...c, imgElement: undefined })),
+                      imageElement: undefined,
+                    })),
+                    version: 2,
+                  };
+                  const canvasData = JSON.stringify(saveData);
+                  if (currentProjectId) {
+                    await apiRequest("PATCH", `/api/bubble-projects/${currentProjectId}`, {
+                      name: projectName.trim(),
+                      canvasData,
+                      folderId: selectedFolderId,
+                    });
+                  } else {
+                    const res = await apiRequest("POST", "/api/bubble-projects", {
+                      name: projectName.trim(),
+                      canvasData,
+                      editorType: "bubble",
+                      folderId: selectedFolderId,
+                    });
+                    const newProject = await res.json();
+                    setCurrentProjectId(newProject.id);
+                  }
+                  queryClient.invalidateQueries({ queryKey: ["/api/bubble-projects"] });
+                  toast({ title: "저장 완료", description: "프로젝트가 저장되었습니다." });
+                  setShowSaveModal(false);
+                } catch (e: any) {
+                  toast({ title: "저장 실패", description: e.message || "프로젝트를 저장할 수 없습니다.", variant: "destructive" });
+                } finally {
+                  setSavingProject(false);
+                }
+              }}
+            >
+              {savingProject ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              {currentProjectId ? "업데이트" : "저장하기"}
+            </Button>
+            {currentProjectId && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                기존 프로젝트를 덮어씁니다
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>
