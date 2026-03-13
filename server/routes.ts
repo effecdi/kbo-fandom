@@ -4,8 +4,8 @@ import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
 import { supabase } from "./supabaseClient";
 import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, generateThumbnail, applyWatermark } from "./imageGen";
-import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown } from "./aiText";
-import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
+import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown, analyzeCharacterImage } from "./aiText";
+import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, updateProjectFolderSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
 import { logger } from "./logger";
@@ -318,6 +318,31 @@ export async function registerRoutes(
     } catch (error: any) {
       logger.error("Ad match error", error);
       res.status(500).json({ message: "광고 매칭 분석에 실패했습니다." });
+    }
+  });
+
+  app.post("/api/analyze-character", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const { imageUrl } = req.body;
+      if (!imageUrl || typeof imageUrl !== "string") {
+        return res.status(400).json({ message: "imageUrl이 필요합니다." });
+      }
+
+      let dataUrl = imageUrl;
+
+      // https URL인 경우 fetch해서 base64 변환
+      if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+        const resp = await axios.get(imageUrl, { responseType: "arraybuffer", timeout: 10000 });
+        const contentType = resp.headers["content-type"] || "image/png";
+        const base64 = Buffer.from(resp.data).toString("base64");
+        dataUrl = `data:${contentType};base64,${base64}`;
+      }
+
+      const names = await analyzeCharacterImage(dataUrl);
+      res.json({ names });
+    } catch (error: any) {
+      logger.error("Character analysis error", error);
+      res.status(500).json({ message: "캐릭터 분석에 실패했습니다.", names: ["캐릭터"] });
     }
   });
 
@@ -779,6 +804,79 @@ export async function registerRoutes(
     }
   });
 
+  // ── Project Folders ──
+
+  app.post("/api/project-folders", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { name } = req.body;
+      if (!name || typeof name !== "string" || !name.trim()) {
+        return res.status(400).json({ message: "폴더 이름을 입력해주세요." });
+      }
+      const folder = await storage.createProjectFolder({ userId, name: name.trim() });
+      res.json(folder);
+    } catch (error: any) {
+      logger.error("Create project folder error", error);
+      res.status(500).json({ message: "폴더 생성에 실패했습니다." });
+    }
+  });
+
+  app.get("/api/project-folders", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const folders = await storage.getProjectFoldersByUser(userId);
+      res.json(folders);
+    } catch (error: any) {
+      logger.error("List project folders error", error);
+      res.status(500).json({ message: "폴더 목록 조회에 실패했습니다." });
+    }
+  });
+
+  app.patch("/api/project-folders/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 폴더 ID입니다." });
+      const parsed = updateProjectFolderSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || "잘못된 입력입니다." });
+      }
+      const updated = await storage.updateProjectFolder(id, userId, parsed.data);
+      if (!updated) return res.status(404).json({ message: "폴더를 찾을 수 없습니다." });
+      res.json(updated);
+    } catch (error: any) {
+      logger.error("Update project folder error", error);
+      res.status(500).json({ message: "폴더 업데이트에 실패했습니다." });
+    }
+  });
+
+  app.delete("/api/project-folders/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 폴더 ID입니다." });
+      const deleted = await storage.deleteProjectFolder(id, userId);
+      if (!deleted) return res.status(404).json({ message: "폴더를 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error("Delete project folder error", error);
+      res.status(500).json({ message: "폴더 삭제에 실패했습니다." });
+    }
+  });
+
+  app.get("/api/project-folders/:id/projects", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 폴더 ID입니다." });
+      const projects = await storage.getBubbleProjectsByFolder(id, userId);
+      res.json(projects);
+    } catch (error: any) {
+      logger.error("Get folder projects error", error);
+      res.status(500).json({ message: "폴더 프로젝트 조회에 실패했습니다." });
+    }
+  });
+
   app.post("/api/bubble-projects", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
@@ -786,7 +884,7 @@ export async function registerRoutes(
       if (!canUseBubble) {
         return res.status(403).json({ message: "이번 달의 말풍선 편집기 무료 사용 횟수(3회)를 모두 사용했습니다." });
       }
-      const { name, thumbnailUrl, canvasData, editorType } = req.body;
+      const { name, thumbnailUrl, canvasData, editorType, folderId } = req.body;
       if (!name || !canvasData) {
         return res.status(400).json({ message: "이름과 캔버스 데이터가 필요합니다." });
       }
@@ -796,6 +894,7 @@ export async function registerRoutes(
         thumbnailUrl: thumbnailUrl || null,
         canvasData,
         editorType: editorType || "bubble",
+        folderId: folderId || null,
       });
       res.json(project);
     } catch (error: any) {

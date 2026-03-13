@@ -1,6 +1,7 @@
 import {
   users, type UpsertUser,
   characters, generations, userCredits, trendingAccounts, bubbleProjects, payments,
+  projectFolders,
   instagramConnections, instagramPublishLog,
   feedPosts, likes, follows,
   type Character, type InsertCharacter,
@@ -8,12 +9,13 @@ import {
   type UserCredits, type TrendingAccount, type InsertTrendingAccount,
   type CreatorProfile, type BubbleProject, type InsertBubbleProject,
   type Payment, type InsertPayment,
+  type ProjectFolder, type InsertProjectFolder,
   type InstagramConnection, type InsertInstagramConnection,
   type InstagramPublishLog, type InsertInstagramPublishLog,
   type FeedPost, type FeedPostWithAuthor, type UserPublicProfile, type PopularCreator,
 } from "@shared/schema";
 import { requireDb } from "./db";
-import { eq, desc, sql, and, asc, inArray, gte } from "drizzle-orm";
+import { eq, desc, sql, and, asc, inArray, gte, isNull } from "drizzle-orm";
 
 function isNewDayKST(lastDate: Date | null): boolean {
   if (!lastDate) return true;
@@ -64,10 +66,17 @@ export interface IStorage {
   deleteGenerationsBulk(ids: number[], userId: string): Promise<number>;
   deleteAllGenerations(userId: string): Promise<number>;
 
+  // Project Folders
+  createProjectFolder(data: InsertProjectFolder): Promise<ProjectFolder>;
+  getProjectFoldersByUser(userId: string): Promise<ProjectFolder[]>;
+  updateProjectFolder(id: number, userId: string, data: { name?: string }): Promise<ProjectFolder | undefined>;
+  deleteProjectFolder(id: number, userId: string): Promise<boolean>;
+  getBubbleProjectsByFolder(folderId: number, userId: string): Promise<BubbleProject[]>;
+
   createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject>;
   getBubbleProjectsByUser(userId: string): Promise<BubbleProject[]>;
   getBubbleProject(id: number, userId: string): Promise<BubbleProject | undefined>;
-  updateBubbleProject(id: number, userId: string, data: Partial<Pick<BubbleProject, "name" | "thumbnailUrl" | "canvasData">>): Promise<BubbleProject | undefined>;
+  updateBubbleProject(id: number, userId: string, data: Partial<Pick<BubbleProject, "name" | "thumbnailUrl" | "canvasData" | "folderId">>): Promise<BubbleProject | undefined>;
   deleteBubbleProject(id: number, userId: string): Promise<boolean>;
 
   // Instagram
@@ -609,6 +618,48 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount ?? 0;
   }
 
+  // ── Project Folders ──
+
+  async createProjectFolder(data: InsertProjectFolder): Promise<ProjectFolder> {
+    const db = this.getDb();
+    const [folder] = await db.insert(projectFolders).values(data).returning();
+    return folder;
+  }
+
+  async getProjectFoldersByUser(userId: string): Promise<ProjectFolder[]> {
+    const db = this.getDb();
+    return db.select().from(projectFolders)
+      .where(eq(projectFolders.userId, userId))
+      .orderBy(desc(projectFolders.updatedAt));
+  }
+
+  async updateProjectFolder(id: number, userId: string, data: { name?: string }): Promise<ProjectFolder | undefined> {
+    const db = this.getDb();
+    const [updated] = await db.update(projectFolders)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(projectFolders.id, id), eq(projectFolders.userId, userId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteProjectFolder(id: number, userId: string): Promise<boolean> {
+    const db = this.getDb();
+    // Set folderId to null for projects in this folder (preserve projects)
+    await db.update(bubbleProjects)
+      .set({ folderId: null })
+      .where(and(eq(bubbleProjects.folderId, id), eq(bubbleProjects.userId, userId)));
+    const result = await db.delete(projectFolders)
+      .where(and(eq(projectFolders.id, id), eq(projectFolders.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getBubbleProjectsByFolder(folderId: number, userId: string): Promise<BubbleProject[]> {
+    const db = this.getDb();
+    return db.select().from(bubbleProjects)
+      .where(and(eq(bubbleProjects.folderId, folderId), eq(bubbleProjects.userId, userId)))
+      .orderBy(asc(bubbleProjects.createdAt));
+  }
+
   async createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject> {
     const db = this.getDb();
     const [project] = await db.insert(bubbleProjects).values(data).returning();
@@ -629,7 +680,7 @@ export class DatabaseStorage implements IStorage {
     return project || undefined;
   }
 
-  async updateBubbleProject(id: number, userId: string, data: Partial<Pick<BubbleProject, "name" | "thumbnailUrl" | "canvasData">>): Promise<BubbleProject | undefined> {
+  async updateBubbleProject(id: number, userId: string, data: Partial<Pick<BubbleProject, "name" | "thumbnailUrl" | "canvasData" | "folderId">>): Promise<BubbleProject | undefined> {
     const db = this.getDb();
     const [updated] = await db.update(bubbleProjects)
       .set({ ...data, updatedAt: new Date() })
@@ -1058,8 +1109,9 @@ export class DatabaseStorage implements IStorage {
     await db.delete(instagramPublishLog).where(eq(instagramPublishLog.userId, userId));
     await db.delete(instagramConnections).where(eq(instagramConnections.userId, userId));
 
-    // 5. bubble projects
+    // 5. bubble projects & project folders
     await db.delete(bubbleProjects).where(eq(bubbleProjects.userId, userId));
+    await db.delete(projectFolders).where(eq(projectFolders.userId, userId));
 
     // 6. generations → characters (generations가 characters FK 참조)
     await db.delete(generations).where(eq(generations.userId, userId));

@@ -13,9 +13,11 @@ export interface CharacterPlacement {
   height?: number;
   rotation?: number;
   flipX?: boolean;
+  flipY?: boolean;
   imageEl: HTMLImageElement | null;
   zIndex?: number;
   locked?: boolean;
+  name?: string;
 }
 
 export interface ScriptData {

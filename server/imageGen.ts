@@ -241,7 +241,7 @@ export async function generateThumbnail(dataUrl: string, maxSize = 200): Promise
  * 이미지 가장자리에서 flood-fill하여 배경 흰색만 투명으로 변환.
  * 캐릭터 내부의 흰색(눈, 옷 등)은 보존됨.
  */
-export async function removeWhiteBackground(dataUrl: string): Promise<string> {
+export async function removeWhiteBackground(dataUrl: string, bgThreshold = 235): Promise<string> {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (!match) return dataUrl;
 
@@ -253,7 +253,7 @@ export async function removeWhiteBackground(dataUrl: string): Promise<string> {
 
   const pixels = Buffer.from(raw);
   const { width, height } = info;
-  const threshold = 235;
+  const threshold = bgThreshold;
 
   const isWhite = (idx: number) => {
     return pixels[idx] >= threshold && pixels[idx + 1] >= threshold && pixels[idx + 2] >= threshold;
@@ -953,7 +953,9 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any 
       }
 
       const mimeType = imagePart.inlineData.mimeType || "image/png";
-      return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+      const rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+      // 생성된 이미지의 회색/흰색 배경을 투명으로 변환 (threshold 210으로 연한 회색도 제거)
+      return await removeWhiteBackground(rawDataUrl, 210);
     } catch (err: any) {
       lastError = err;
       logger.error(`Webtoon scene generation attempt ${attempt + 1} failed`, err);

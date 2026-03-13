@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, serial, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial, uniqueIndex, foreignKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./auth";
@@ -161,6 +161,14 @@ export interface StoryScriptResponse {
 
 export type CreatorProfile = z.infer<typeof creatorProfileSchema>;
 
+export const projectFolders = pgTable("project_folders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 export const bubbleProjects = pgTable("bubble_projects", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -168,8 +176,19 @@ export const bubbleProjects = pgTable("bubble_projects", {
   thumbnailUrl: text("thumbnail_url"),
   canvasData: text("canvas_data").notNull(),
   editorType: text("editor_type").notNull().default("bubble"),
+  folderId: integer("folder_id").references(() => projectFolders.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertProjectFolderSchema = createInsertSchema(projectFolders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateProjectFolderSchema = z.object({
+  name: z.string().min(1).optional(),
 });
 
 export const insertBubbleProjectSchema = createInsertSchema(bubbleProjects).omit({
@@ -182,10 +201,13 @@ export const updateBubbleProjectSchema = z.object({
   name: z.string().min(1).optional(),
   thumbnailUrl: z.string().optional(),
   canvasData: z.string().optional(),
+  folderId: z.number().int().positive().nullable().optional(),
 });
 
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type ProjectFolder = typeof projectFolders.$inferSelect;
+export type InsertProjectFolder = z.infer<typeof insertProjectFolderSchema>;
 export type BubbleProject = typeof bubbleProjects.$inferSelect;
 export type InsertBubbleProject = z.infer<typeof insertBubbleProjectSchema>;
 

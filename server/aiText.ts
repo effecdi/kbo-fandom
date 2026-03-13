@@ -42,6 +42,52 @@ try {
   }
 }
 
+export async function analyzeCharacterImage(imageUrl: string): Promise<string[]> {
+  // base64 data URL에서 mimeType과 data 추출
+  const match = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) {
+    throw new Error("Invalid image data URL");
+  }
+
+  const parts: any[] = [
+    {
+      inlineData: {
+        mimeType: match[1],
+        data: match[2],
+      },
+    },
+    {
+      text: `이 이미지에 있는 캐릭터를 분석하여 각 캐릭터에 짧은 한국어 이름/설명을 붙여주세요.
+예시: "안경 쓴 여자", "고양이", "남자아이", "로봇"
+캐릭터가 하나면 1개, 여러 명이면 각각 따로 이름을 붙여주세요.
+다음 JSON 배열만 출력 (설명 없이):
+["이름1", "이름2"]`,
+    },
+  ];
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [{ role: "user", parts }],
+    config: { temperature: 0.3 },
+  });
+
+  const candidate = response.candidates?.[0];
+  const textPart = candidate?.content?.parts?.find((part: any) => part.text);
+
+  if (!textPart?.text) {
+    throw new Error("Failed to analyze character image");
+  }
+
+  const cleanedText = textPart.text.replace(/```json|```/g, "").trim();
+  const names = JSON.parse(cleanedText);
+
+  if (!Array.isArray(names) || names.length === 0) {
+    return ["캐릭터"];
+  }
+
+  return names.map((n: any) => String(n).slice(0, 30));
+}
+
 export async function generateAIPrompt(type: "character" | "pose" | "background", context?: string): Promise<string> {
   const prompts: Record<string, string> = {
     character: `인스타툰 캐릭터 설명을 10~20자로 아주 짧게 1개 생성해줘.
@@ -356,7 +402,8 @@ ${genreHint}
 export interface WebtoonScene {
   sceneDescription: string;   // 영어 - 이미지 생성용
   narrativeText: string;      // 한국어 - 나레이션 자막
-  bubbleText: string;         // 한국어 - 말풍선 대사 (없으면 빈 문자열)
+  bubbleText: string;         // 한국어 - 레거시 호환 (빈 문자열)
+  bubbles: Array<{ text: string; style?: string; position?: string }>;
 }
 
 export async function generateWebtoonSceneBreakdown(data: {
@@ -414,6 +461,7 @@ export async function generateWebtoonSceneBreakdown(data: {
       sceneDescription: `scene related to "${data.storyPrompt}", character in relevant setting, simple line art, webtoon style`,
       narrativeText: "",
       bubbleText: "",
+      bubbles: [],
     });
   }
 
@@ -479,39 +527,42 @@ ${prevContext}
 ■ 한국어 텍스트 — 진짜 사람이 쓴 것처럼:
 - narrativeText: 상황 설명, 시간, 독백, 감정 부연 (5~40자). 없으면 "".
   좋은 예: "프리랜서 디자이너 겸 퍼블리셔 9년 차.", "포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.", "...는 무슨."
-- bubbleText: 캐릭터 대사 (5~40자). ★ 절대로 빈 문자열 "" 금지! 모든 컷에 반드시 대사를 넣으세요! ★
-  성격과 감정이 묻어나야 함. 캐릭터가 말하거나, 생각하거나, 독백하는 내용을 반드시 작성.
-  핸드폰 화면 클로즈업 컷이라도 캐릭터 반응 대사를 넣으세요.
-  ★ bubbleText는 narrativeText와 반드시 다른 내용이어야 합니다. 같은 내용 복사 금지!
-  ★ bubbleText는 "${storyPrompt}" 주제와 직접 관련된 대사여야 합니다.
-  좋은 예: "디자인? 코딩? 훗, 까이꺼 다 할 수 있지!", "나... 디자인만 할 줄 아는 똥손이었네...", "아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!"
+- bubbles: 말풍선 배열. 각 말풍선은 {text, style, position} 객체.
+  ★ 대부분 컷은 말풍선 0~1개. 대화 장면만 최대 2개. 3개 이상 절대 금지.
+  ★ ${totalCuts}컷 전체에서 말풍선 총 개수는 ${Math.max(totalCuts, Math.ceil(totalCuts * 0.7))}개 이하.
+  ★ 나레이션만으로 충분한 컷은 bubbles를 빈 배열 [].
+  ★ 말풍선 대사(text)는 5~40자. 캐릭터의 성격과 감정이 묻어나야 함.
+  ★ 말풍선 대사는 narrativeText와 반드시 다른 내용이어야 합니다. 같은 내용 복사 금지!
+  ★ 말풍선 대사는 "${storyPrompt}" 주제와 직접 관련된 대사여야 합니다.
+- bubble style: "handwritten"(감성/독백/혼잣말), "linedrawing"(일반 대화), "wobbly"(놀람/강조/충격)
+- position: "top-left", "top-right", "bottom-left", "bottom-right", "center" 중 택1.
 - 괄호 감정 태그 절대 금지: "(두근두근)", "(동공 지진)", "(멘붕)", "(흐믓)" 같은 괄호 표현을 대사에 넣지 마세요
 - 서술체/광고체 절대 금지. SNS에 올릴 법한 말투로.
 - AI가 쓴 티 나면 실패.
 
-★ 중요: 이미지에는 말풍선이 그려지지 않습니다. bubbleText와 narrativeText는 이미지 위에 별도로 오버레이됩니다. 따라서 반드시 텍스트를 충실하게 작성해주세요!
+★ 중요: 이미지에는 말풍선이 그려지지 않습니다. bubbles와 narrativeText는 이미지 위에 별도로 오버레이됩니다. 따라서 반드시 텍스트를 충실하게 작성해주세요!
 
 ■ 참고 예시 (주제: "답답해서 직접 만든 9년 차 디자이너의 AI 인스타툰 생존기", 7컷):
 {"scenes":[
-{"sceneDescription":"30대 여성 캐릭터, 갈색 웨이브 머리에 둥근 안경, 모니터 여러 대 앞에서 자신감 넘치는 미소로 빠르게 타이핑하는 모습","narrativeText":"프리랜서 디자이너 겸 퍼블리셔 9년 차.","bubbleText":"디자인? 코딩? 훗, 까이꺼 다 할 수 있지!"},
-{"sceneDescription":"30대 여성 캐릭터, 소파에 편하게 누워 귤을 먹으며 행복한 표정, 몽글몽글한 눈빛","narrativeText":"작년 12월 프로젝트 종료! 결혼 3개월 차 새댁에게 찾아온 달콤한 잉여 시간.","bubbleText":"좋아, 남는 시간에 나도 요즘 대세라는 인스타툰이나 그려볼까?"},
-{"sceneDescription":"30대 여성 캐릭터, 책상에 앉아 그래픽 태블릿 펜을 들고 땀을 뻘뻘 흘리며 눈이 휘둥그레진 당황한 표정","narrativeText":"...는 무슨.","bubbleText":"잠깐, 팔이 어떻게 꺾이는 거지? 우는 표정은 어떻게 그려?!"},
-{"sceneDescription":"30대 여성 캐릭터 클로즈업, 반쯤 감긴 눈, 머리를 감싸 쥐고 축 처진 자세, 절망적인 표정","narrativeText":"웹디자인 9년 짬바가 무색하게, 일러스트 앞에서는 한없이 작아지는 나.","bubbleText":"나... 디자인만 할 줄 아는 똥손이었네..."},
-{"sceneDescription":"여성 캐릭터 클로즈업, 날카롭게 빛나는 눈, 강렬한 집중력, 한 손가락으로 안경을 밀어 올리며, 머리 위에 빛나는 전구","narrativeText":"포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.","bubbleText":"아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!"},
-{"sceneDescription":"여성 캐릭터, 키보드를 미친 듯이 타이핑, 매드 사이언티스트 같은 활짝 웃는 표정, 옆에 귀여운 로봇 곰 마스코트가 튀어나옴","narrativeText":"그래서 답답해서 직접 만들었습니다. 인스타툰 자동화 메이커!","bubbleText":"내가 못 그리면 AI가 그리게 하겠어! 가자, 올리!"},
-{"sceneDescription":"여성 캐릭터, 자신감 넘치게 서서 손을 흔드는 모습, 옆에 귀여운 로봇 곰 마스코트가 함께 손 흔듦","narrativeText":"9년 차 디자이너의 험난한 인스타툰 도전기!","bubbleText":"AI 멱살 잡고 연재하는 썰, 앞으로 기대해 주세요!"}
+{"sceneDescription":"30대 여성 캐릭터, 갈색 웨이브 머리에 둥근 안경, 모니터 여러 대 앞에서 자신감 넘치는 미소로 빠르게 타이핑하는 모습","narrativeText":"프리랜서 디자이너 겸 퍼블리셔 9년 차.","bubbles":[{"text":"디자인? 코딩? 훗, 까이꺼 다 할 수 있지!","style":"linedrawing","position":"top-right"}]},
+{"sceneDescription":"30대 여성 캐릭터, 소파에 편하게 누워 귤을 먹으며 행복한 표정, 몽글몽글한 눈빛","narrativeText":"작년 12월 프로젝트 종료! 결혼 3개월 차 새댁에게 찾아온 달콤한 잉여 시간.","bubbles":[{"text":"좋아, 남는 시간에 나도 요즘 대세라는 인스타툰이나 그려볼까?","style":"handwritten","position":"bottom-right"}]},
+{"sceneDescription":"30대 여성 캐릭터, 책상에 앉아 그래픽 태블릿 펜을 들고 땀을 뻘뻘 흘리며 눈이 휘둥그레진 당황한 표정","narrativeText":"...는 무슨.","bubbles":[{"text":"잠깐, 팔이 어떻게 꺾이는 거지? 우는 표정은 어떻게 그려?!","style":"wobbly","position":"top-right"}]},
+{"sceneDescription":"30대 여성 캐릭터 클로즈업, 반쯤 감긴 눈, 머리를 감싸 쥐고 축 처진 자세, 절망적인 표정","narrativeText":"웹디자인 9년 짬바가 무색하게, 일러스트 앞에서는 한없이 작아지는 나.","bubbles":[{"text":"나... 디자인만 할 줄 아는 똥손이었네...","style":"handwritten","position":"center"}]},
+{"sceneDescription":"여성 캐릭터 클로즈업, 날카롭게 빛나는 눈, 강렬한 집중력, 한 손가락으로 안경을 밀어 올리며, 머리 위에 빛나는 전구","narrativeText":"포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.","bubbles":[{"text":"아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!","style":"wobbly","position":"center"}]},
+{"sceneDescription":"여성 캐릭터, 키보드를 미친 듯이 타이핑, 매드 사이언티스트 같은 활짝 웃는 표정, 옆에 귀여운 로봇 곰 마스코트가 튀어나옴","narrativeText":"그래서 답답해서 직접 만들었습니다. 인스타툰 자동화 메이커!","bubbles":[{"text":"내가 못 그리면 AI가 그리게 하겠어! 가자, 올리!","style":"linedrawing","position":"top-right"}]},
+{"sceneDescription":"여성 캐릭터, 자신감 넘치게 서서 손을 흔드는 모습, 옆에 귀여운 로봇 곰 마스코트가 함께 손 흔듦","narrativeText":"9년 차 디자이너의 험난한 인스타툰 도전기!","bubbles":[{"text":"AI 멱살 잡고 연재하는 썰, 앞으로 기대해 주세요!","style":"handwritten","position":"center"}]}
 ]}
 
 ■ 참고 예시 (주제: "짝사랑 상대한테 카톡 답장 기다리는 중", 4컷):
 {"scenes":[
-{"sceneDescription":"20대 여성 캐릭터, 긴 생머리, 핸드폰을 양손으로 꽉 쥐고 화면을 노려보는 모습, 눈이 초롱초롱, 기대감 가득한 표정","narrativeText":"용기 내서 보낸 카톡, 3분 전.","bubbleText":"읽었으려나...?"},
-{"sceneDescription":"핸드폰 화면 클로즈업, 카카오톡 채팅방 화면, '읽음 1' 표시가 보이는 내 메시지, 상대방 답장은 아직 없음","narrativeText":"읽음 1... 근데 답장은?","bubbleText":"제발 답장 좀...!"},
-{"sceneDescription":"여성 캐릭터, 핸드폰을 들고 화면을 보며 멘붕 표정, 눈이 하얗게 비어있음, 입이 벌어진 충격 표정, 옆에 핸드폰 화면이 크게 보이며 '읽씹' 상태","narrativeText":"읽고 20분째 답장 없음.","bubbleText":"아 읽씹이야 이거...?!"},
-{"sceneDescription":"여성 캐릭터, 이불 속에 파묻혀 핸드폰을 꼭 안고 눈만 빼꼼 내밀고 있는 모습, 핸드폰 화면에 알림 하나 떠있음","narrativeText":"","bubbleText":"그냥 바쁜 거겠지... 응 바쁜 거야 분명..."}
+{"sceneDescription":"20대 여성 캐릭터, 긴 생머리, 핸드폰을 양손으로 꽉 쥐고 화면을 노려보는 모습, 눈이 초롱초롱, 기대감 가득한 표정","narrativeText":"용기 내서 보낸 카톡, 3분 전.","bubbles":[{"text":"읽었으려나...?","style":"handwritten","position":"top-right"}]},
+{"sceneDescription":"핸드폰 화면 클로즈업, 카카오톡 채팅방 화면, '읽음 1' 표시가 보이는 내 메시지, 상대방 답장은 아직 없음","narrativeText":"읽음 1... 근데 답장은?","bubbles":[{"text":"제발 답장 좀...!","style":"linedrawing","position":"center"}]},
+{"sceneDescription":"여성 캐릭터, 핸드폰을 들고 화면을 보며 멘붕 표정, 눈이 하얗게 비어있음, 입이 벌어진 충격 표정, 옆에 핸드폰 화면이 크게 보이며 '읽씹' 상태","narrativeText":"읽고 20분째 답장 없음.","bubbles":[{"text":"아 읽씹이야 이거...?!","style":"wobbly","position":"center"}]},
+{"sceneDescription":"여성 캐릭터, 이불 속에 파묻혀 핸드폰을 꼭 안고 눈만 빼꼼 내밀고 있는 모습, 핸드폰 화면에 알림 하나 떠있음","narrativeText":"","bubbles":[{"text":"그냥 바쁜 거겠지... 응 바쁜 거야 분명...","style":"handwritten","position":"bottom-right"}]}
 ]}
 
 "${storyPrompt}" 주제에 맞는 ${chunkCuts}컷을 JSON으로만 출력:
-{"scenes":[{"sceneDescription":"...","narrativeText":"...","bubbleText":"..."}]}`;
+{"scenes":[{"sceneDescription":"...","narrativeText":"...","bubbles":[{"text":"...","style":"handwritten","position":"top-right"}]}]}`;
 
   let response: any;
   try {
@@ -540,19 +591,28 @@ ${prevContext}
   const cleanedText = textPart.text.replace(/```json|```/g, '').trim();
   const result = JSON.parse(cleanedText);
 
-  // 장면 수 보정 + 괄호 감정 태그 제거 + bubbleText 보장
+  // 장면 수 보정 + 괄호 감정 태그 제거 + bubbles 배열 정규화
   if (result.scenes) {
     for (const scene of result.scenes) {
-      if (scene.bubbleText) {
-        scene.bubbleText = scene.bubbleText.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
-      }
       if (scene.narrativeText) {
         scene.narrativeText = scene.narrativeText.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
       }
-      // bubbleText가 빈 경우 narrativeText로 대체하여 말풍선 보장
-      if (!scene.bubbleText && scene.narrativeText) {
-        scene.bubbleText = scene.narrativeText;
+      // bubbles 배열 정규화 (레거시 bubbleText → bubbles 변환)
+      if (!Array.isArray(scene.bubbles)) {
+        if (scene.bubbleText) {
+          scene.bubbles = [{ text: scene.bubbleText.replace(/\s*\([^)]*\)\s*/g, ' ').trim(), style: "linedrawing", position: "center" }];
+        } else {
+          scene.bubbles = [];
+        }
       }
+      // 괄호 감정 태그 제거 + max 2 bubbles 제한
+      scene.bubbles = scene.bubbles.slice(0, 2).map((b: any) => ({
+        text: (b.text || "").replace(/\s*\([^)]*\)\s*/g, ' ').trim(),
+        style: b.style || "linedrawing",
+        position: b.position || "center",
+      })).filter((b: any) => b.text);
+      // 레거시 호환: bubbleText는 첫 번째 bubble text
+      scene.bubbleText = scene.bubbles[0]?.text || "";
     }
     while (result.scenes.length > chunkCuts) {
       result.scenes.pop();
@@ -561,7 +621,8 @@ ${prevContext}
       result.scenes.push({
         sceneDescription: `"${storyPrompt}" 주제와 관련된 캐릭터 장면`,
         narrativeText: "",
-        bubbleText: "...",
+        bubbleText: "",
+        bubbles: [],
       });
     }
   }

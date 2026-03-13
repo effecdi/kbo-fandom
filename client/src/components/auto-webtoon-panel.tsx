@@ -20,8 +20,15 @@ import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { getCutRegions, buildDividerLines } from "@/lib/webtoon-layout";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Wand2, ArrowLeft, Loader2, Check, X, RefreshCw,
-  Upload, FolderOpen, Sparkles, ImageIcon, ArrowRight,
+  Upload, FolderOpen, Sparkles, ImageIcon, ArrowRight, Plus, Trash2,
 } from "lucide-react";
 import type { GenerationLight } from "@shared/schema";
 import { supabase } from "@/lib/supabase";
@@ -31,7 +38,8 @@ import { supabase } from "@/lib/supabase";
 interface WebtoonScene {
   sceneDescription: string;
   narrativeText: string;
-  bubbleText: string;
+  bubbleText: string; // legacy compat
+  bubbles: Array<{ text: string; style?: string; position?: string }>;
 }
 
 interface SelectedCharacter {
@@ -250,18 +258,26 @@ export function AutoWebtoonPanel({
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result as string;
+      const charId = Math.random().toString(36).slice(2, 10);
+      const fallbackName = file.name.replace(/\.[^/.]+$/, "");
       setSelectedCharacters((prev) => {
         if (prev.length >= 4) return prev;
         return [
           ...prev,
-          {
-            id: Math.random().toString(36).slice(2, 10),
-            name: file.name.replace(/\.[^/.]+$/, ""),
-            imageUrl: dataUrl,
-            imageDataUrl: dataUrl,
-          },
+          { id: charId, name: fallbackName, imageUrl: dataUrl, imageDataUrl: dataUrl },
         ];
       });
+      // AI 캐릭터 이름 분석 (백그라운드)
+      apiRequest("POST", "/api/analyze-character", { imageUrl: dataUrl })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.names?.[0]) {
+            setSelectedCharacters((prev) =>
+              prev.map((c) => c.id === charId ? { ...c, name: data.names[0] } : c)
+            );
+          }
+        })
+        .catch(() => { /* 분석 실패 시 기존 이름 유지 */ });
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -280,12 +296,27 @@ export function AutoWebtoonPanel({
 
       // 추가 - thumbnailUrl 또는 resultImageUrl 사용 (light 쿼리에서 thumbnailUrl 있으면 resultImageUrl이 null)
       const imageSource = gen.resultImageUrl || gen.thumbnailUrl || "";
+      const charId = String(gen.id);
       const newChar: SelectedCharacter = {
-        id: String(gen.id),
+        id: charId,
         name: gen.prompt?.slice(0, 20) || "캐릭터",
         imageUrl: imageSource,
         imageDataUrl: imageSource, // fallback, will try to convert or fetch full image
       };
+
+      // AI 캐릭터 이름 분석 (백그라운드)
+      if (imageSource) {
+        apiRequest("POST", "/api/analyze-character", { imageUrl: imageSource })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.names?.[0]) {
+              setSelectedCharacters((cur) =>
+                cur.map((c) => c.id === charId ? { ...c, name: data.names[0] } : c)
+              );
+            }
+          })
+          .catch(() => { /* 분석 실패 시 기존 이름 유지 */ });
+      }
 
       // thumbnailUrl만 있는 경우 full 이미지를 /api/gallery/:id 에서 가져오기
       if (!gen.resultImageUrl && gen.thumbnailUrl) {
@@ -590,23 +621,44 @@ export function AutoWebtoonPanel({
 
       const bubbles: any[] = [];
       const textElements: any[] = [];
+
+      // Position → 컷 영역 내 좌표 변환
+      const getBubblePos = (position: string | undefined, region: { x: number; y: number; width: number; height: number }, index: number) => {
+        const pos = position || (index % 2 === 0 ? "top-left" : "bottom-right");
+        switch (pos) {
+          case "top-left": return { x: region.x + region.width * 0.08, y: region.y + region.height * 0.1 };
+          case "top-right": return { x: region.x + region.width * 0.5, y: region.y + region.height * 0.1 };
+          case "bottom-left": return { x: region.x + region.width * 0.08, y: region.y + region.height * 0.55 };
+          case "bottom-right": return { x: region.x + region.width * 0.5, y: region.y + region.height * 0.55 };
+          case "center": return { x: region.x + region.width * 0.3, y: region.y + region.height * 0.3 };
+          default: return { x: region.x + region.width * 0.25, y: region.y + region.height * 0.15 };
+        }
+      };
+
       for (let ci = 0; ci < cutsPerCanvas && cutStart + ci < cutEnd; ci++) {
         const scene = scenes[cutStart + ci];
         const region = regions[ci];
-        // 말풍선: bubbleText 또는 narrativeText 중 하나라도 있으면 생성
-        const bubbleContent = scene?.bubbleText || scene?.narrativeText || "";
-        if (bubbleContent) {
+        const sceneBubbles = scene?.bubbles || [];
+
+        // bubbles 배열에서 말풍선 생성
+        for (let bi = 0; bi < sceneBubbles.length; bi++) {
+          const b = sceneBubbles[bi];
+          if (!b.text) continue;
+          const coords = getBubblePos(b.position, region, bi);
+          let tailDirection = "bottom";
+          if (b.position?.includes("top")) tailDirection = "bottom";
+          if (b.position?.includes("bottom")) tailDirection = "top";
           bubbles.push({
             id: Math.random().toString(36).slice(2, 10),
             seed: Math.floor(Math.random() * 1000000),
-            x: region.x + region.width / 2 - 70,
-            y: region.y + region.height / 2 - 30,
+            x: coords.x,
+            y: coords.y,
             width: 140,
             height: 60,
-            text: bubbleContent,
-            style: "linedrawing",
+            text: b.text,
+            style: b.style || "linedrawing",
             tailStyle: "short",
-            tailDirection: "bottom",
+            tailDirection,
             tailBaseSpread: 20,
             tailCurve: 0.5,
             tailJitter: 1,
@@ -616,11 +668,11 @@ export function AutoWebtoonPanel({
             wobble: 5,
             fontSize: 15,
             fontKey: "default",
-            zIndex: 10 + ci,
+            zIndex: 10 + ci * 2 + bi,
           });
         }
-        // 나레이션: bubbleText와 별도로 narrativeText가 있으면 텍스트 요소로 추가
-        if (scene?.narrativeText && scene?.bubbleText) {
+        // 나레이션: narrativeText가 있으면 텍스트 요소로 추가
+        if (scene?.narrativeText) {
           textElements.push({
             id: Math.random().toString(36).slice(2, 10),
             text: scene.narrativeText,
@@ -963,30 +1015,103 @@ export function AutoWebtoonPanel({
                       placeholder="장면 묘사 (English)"
                       onMouseDown={(e) => e.stopPropagation()}
                     />
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input
-                        value={scene.narrativeText}
-                        onChange={(e) => {
+                    <Input
+                      value={scene.narrativeText}
+                      onChange={(e) => {
+                        const updated = [...scenes];
+                        updated[idx] = { ...scene, narrativeText: e.target.value };
+                        setScenes(updated);
+                      }}
+                      placeholder="나레이션"
+                      className="text-xs h-7"
+                      onMouseDown={(e) => e.stopPropagation()}
+                    />
+                    {/* Bubbles editor */}
+                    {(scene.bubbles || []).map((bubble, bi) => (
+                      <div key={bi} className="flex gap-1 items-center">
+                        <Input
+                          value={bubble.text}
+                          onChange={(e) => {
+                            const updated = [...scenes];
+                            const newBubbles = [...(scene.bubbles || [])];
+                            newBubbles[bi] = { ...bubble, text: e.target.value };
+                            updated[idx] = { ...scene, bubbles: newBubbles, bubbleText: newBubbles[0]?.text || "" };
+                            setScenes(updated);
+                          }}
+                          placeholder="대사"
+                          className="text-xs h-7 flex-1"
+                          onMouseDown={(e) => e.stopPropagation()}
+                        />
+                        <Select
+                          value={bubble.style || "linedrawing"}
+                          onValueChange={(v) => {
+                            const updated = [...scenes];
+                            const newBubbles = [...(scene.bubbles || [])];
+                            newBubbles[bi] = { ...bubble, style: v };
+                            updated[idx] = { ...scene, bubbles: newBubbles };
+                            setScenes(updated);
+                          }}
+                        >
+                          <SelectTrigger className="text-[10px] h-7 w-[72px] px-1.5" onMouseDown={(e) => e.stopPropagation()}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="linedrawing">일반</SelectItem>
+                            <SelectItem value="handwritten">감성</SelectItem>
+                            <SelectItem value="wobbly">충격</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={bubble.position || "center"}
+                          onValueChange={(v) => {
+                            const updated = [...scenes];
+                            const newBubbles = [...(scene.bubbles || [])];
+                            newBubbles[bi] = { ...bubble, position: v };
+                            updated[idx] = { ...scene, bubbles: newBubbles };
+                            setScenes(updated);
+                          }}
+                        >
+                          <SelectTrigger className="text-[10px] h-7 w-[56px] px-1.5" onMouseDown={(e) => e.stopPropagation()}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="top-left">↖</SelectItem>
+                            <SelectItem value="top-right">↗</SelectItem>
+                            <SelectItem value="center">⊙</SelectItem>
+                            <SelectItem value="bottom-left">↙</SelectItem>
+                            <SelectItem value="bottom-right">↘</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-destructive shrink-0"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={() => {
+                            const updated = [...scenes];
+                            const newBubbles = (scene.bubbles || []).filter((_, i) => i !== bi);
+                            updated[idx] = { ...scene, bubbles: newBubbles, bubbleText: newBubbles[0]?.text || "" };
+                            setScenes(updated);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {(scene.bubbles || []).length < 2 && (
+                      <button
+                        type="button"
+                        className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={() => {
                           const updated = [...scenes];
-                          updated[idx] = { ...scene, narrativeText: e.target.value };
+                          const newBubbles = [...(scene.bubbles || []), { text: "", style: "linedrawing", position: "center" }];
+                          updated[idx] = { ...scene, bubbles: newBubbles };
                           setScenes(updated);
                         }}
-                        placeholder="나레이션"
-                        className="text-xs h-7"
-                        onMouseDown={(e) => e.stopPropagation()}
-                      />
-                      <Input
-                        value={scene.bubbleText}
-                        onChange={(e) => {
-                          const updated = [...scenes];
-                          updated[idx] = { ...scene, bubbleText: e.target.value };
-                          setScenes(updated);
-                        }}
-                        placeholder="대사"
-                        className="text-xs h-7"
-                        onMouseDown={(e) => e.stopPropagation()}
-                      />
-                    </div>
+                      >
+                        <Plus className="h-3 w-3" /> 말풍선 추가
+                      </button>
+                    )}
                   </div>
                 </div>
               </Card>

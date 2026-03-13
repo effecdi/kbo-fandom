@@ -66,6 +66,7 @@ import {
   ChevronDown,
   UploadCloud,
   ImagePlus,
+  Check,
   CheckCircle2,
   Zap,
   Star,
@@ -90,6 +91,7 @@ import {
   Diamond,
   ArrowRight as ArrowRightIcon,
   Sparkles,
+  FolderPlus,
 } from "lucide-react";
 import DrawingCanvas, { type DrawingToolState, type DrawingCanvasHandle } from "@/components/drawing-canvas";
 import "@/components/drawing-tools-panel.scss";
@@ -1454,7 +1456,7 @@ function PanelCanvas({
           }
           ctx.translate(ch.x, ch.y);
           ctx.rotate(ch.rotation || 0);
-          if (ch.flipX) ctx.scale(-1, 1);
+          ctx.scale(ch.flipX ? -1 : 1, ch.flipY ? -1 : 1);
           ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
           ctx.restore();
 
@@ -1581,7 +1583,7 @@ function PanelCanvas({
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, selectedTextId, redraw, fontsReady, hideDrawingLayers, isGenerating]);
+  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, selectedTextId, editingBubbleId, redraw, fontsReady, hideDrawingLayers, isGenerating]);
 
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -2873,6 +2875,8 @@ function EditorPanel({
   const [showBubbleTemplatePicker, setShowBubbleTemplatePicker] = useState(isTemplateMode);
   const [templateCatIdx, setTemplateCatIdx] = useState(0);
   const [removingBg, setRemovingBg] = useState(false);
+  const [selectedGalleryIds, setSelectedGalleryIds] = useState<Set<number>>(new Set());
+  const [addingFromGallery, setAddingFromGallery] = useState(false);
   const { toast } = useToast();
 
   const canBubbleEdit = true;
@@ -3029,6 +3033,43 @@ function EditorPanel({
     }] });
     setSelectedCharId(charId);
     setSelectedBubbleId(null);
+
+    // 백그라운드에서 AI 캐릭터 이름 분석
+    apiRequest("POST", "/api/analyze-character", { imageUrl: url })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.names?.[0]) {
+          const p = panelRef.current;
+          onUpdate({
+            ...p,
+            characters: p.characters.map((c) =>
+              c.id === charId ? { ...c, name: data.names[0] } : c
+            ),
+          });
+        }
+      })
+      .catch(() => { /* 분석 실패 시 기본 이름 유지 */ });
+  };
+
+  const toggleGallerySelect = (genId: number) => {
+    setSelectedGalleryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(genId)) next.delete(genId);
+      else next.add(genId);
+      return next;
+    });
+  };
+
+  const addSelectedFromGallery = async () => {
+    if (selectedGalleryIds.size === 0) return;
+    setAddingFromGallery(true);
+    const ids = Array.from(selectedGalleryIds);
+    for (const genId of ids) {
+      const gen = galleryImages.find((g) => g.id === genId);
+      if (gen) await addCharacter(gen);
+    }
+    setSelectedGalleryIds(new Set());
+    setAddingFromGallery(false);
   };
 
   const removeCharacter = (id: string) => {
@@ -3050,7 +3091,7 @@ function EditorPanel({
           type: "char" as const,
           id: c.id,
           z: c.zIndex ?? 0,
-          label: "캐릭터",
+          label: c.name || "캐릭터",
           thumb: c.imageUrl,
         })),
         ...panel.bubbles.map((b, i) => ({
@@ -3412,25 +3453,62 @@ function EditorPanel({
             </p>
           ) : (
             <>
+              {selectedGalleryIds.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 gap-1.5"
+                    disabled={addingFromGallery}
+                    onClick={addSelectedFromGallery}
+                  >
+                    {addingFromGallery ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Plus className="h-3.5 w-3.5" />
+                    )}
+                    {addingFromGallery ? "추가 중..." : `선택한 ${selectedGalleryIds.size}장 추가`}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs px-2"
+                    onClick={() => setSelectedGalleryIds(new Set())}
+                  >
+                    취소
+                  </Button>
+                </div>
+              )}
               <div
                 className="grid grid-cols-3 gap-1.5 overflow-y-auto"
                 data-testid="character-picker-grid"
               >
-                {charImages.map((gen) => (
-                  <button
-                    key={gen.id}
-                    className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
-                    onClick={() => addCharacter(gen)}
-                    data-testid={`button-pick-character-${gen.id}`}
-                  >
-                    <img
-                      src={gen.thumbnailUrl || gen.resultImageUrl}
-                      alt={gen.prompt}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
+                {charImages.map((gen) => {
+                  const isSelected = selectedGalleryIds.has(gen.id);
+                  return (
+                    <button
+                      key={gen.id}
+                      className={`relative aspect-square rounded-md overflow-hidden border-2 cursor-pointer transition-all ${
+                        isSelected
+                          ? "border-primary ring-1 ring-primary/30"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                      onClick={() => toggleGallerySelect(gen.id)}
+                      data-testid={`button-pick-character-${gen.id}`}
+                    >
+                      <img
+                        src={gen.thumbnailUrl || gen.resultImageUrl}
+                        alt={gen.prompt}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                      {isSelected && (
+                        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               {galleryHasMore && (
                 <button
@@ -3562,6 +3640,7 @@ export default function StoryPage() {
   const [activePanelIndex, setActivePanelIndex] = useState(0);
   const [fontsReady, setFontsReady] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSavedConfirm, setShowSavedConfirm] = useState(false);
   const [showInstagramPublish, setShowInstagramPublish] = useState(false);
   const [posePrompt, setPosePrompt] = useState("");
   const [expressionPrompt, setExpressionPrompt] = useState("");
@@ -3573,6 +3652,10 @@ export default function StoryPage() {
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
   const [savingProject, setSavingProject] = useState(false);
   const [aiLimitOpen, setAiLimitOpen] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [showNewFolderInput, setShowNewFolderInput] = useState(false);
 
   const historyRef = useRef<PanelData[][]>([]);
   const futureRef = useRef<PanelData[][]>([]);
@@ -3895,6 +3978,29 @@ export default function StoryPage() {
 
   const { data: usageData } = useQuery<UsageData>({ queryKey: ["/api/usage"] });
   const maxPanels = usageData?.maxStoryPanels ?? 3;
+
+  const { data: projectFolders = [] } = useQuery<{ id: number; name: string }[]>({
+    queryKey: ["/api/project-folders"],
+    enabled: isAuthenticated,
+  });
+
+  const createFolderMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const res = await apiRequest("POST", "/api/project-folders", { name });
+      return res.json();
+    },
+    onSuccess: (folder: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-folders"] });
+      setSelectedFolderId(folder.id);
+      setNewFolderName("");
+      setShowNewFolderInput(false);
+      setCreatingFolder(false);
+    },
+    onError: (err: any) => {
+      toast({ title: "폴더 생성 실패", description: err.message, variant: "destructive" });
+      setCreatingFolder(false);
+    },
+  });
   useEffect(() => {
     if (typeof document === "undefined" || !document.fonts || typeof document.fonts.ready?.then !== "function") {
       setFontsReady(true);
@@ -6030,15 +6136,6 @@ export default function StoryPage() {
     setSelectedShapeId(null);
     setSelectedDrawingLayerId(null);
     setCanvasMultiSelected(new Set());
-    // Also clear refs immediately so redraw() won't draw selection outlines
-    const prevBubbleRef = selectedBubbleIdRef.current;
-    const prevCharRef = selectedCharIdRef.current;
-    const prevShapeRef = selectedShapeIdRef.current;
-    const prevTextRef = selectedTextIdRef.current;
-    selectedBubbleIdRef.current = null;
-    selectedCharIdRef.current = null;
-    selectedShapeIdRef.current = null;
-    selectedTextIdRef.current = null;
     // Use triple rAF + setTimeout to ensure React re-render, effects, and canvas redraw complete
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -6052,11 +6149,6 @@ export default function StoryPage() {
             setSelectedShapeId(prevShape);
             setSelectedDrawingLayerId(prevDrawing);
             setCanvasMultiSelected(prevMulti);
-            // Restore refs
-            selectedBubbleIdRef.current = prevBubbleRef;
-            selectedCharIdRef.current = prevCharRef;
-            selectedShapeIdRef.current = prevShapeRef;
-            selectedTextIdRef.current = prevTextRef;
           }
         }, 50);
       });
@@ -6305,7 +6397,7 @@ export default function StoryPage() {
       ctx.save();
       ctx.translate(ch.x, ch.y);
       ctx.rotate(ch.rotation || 0);
-      if (ch.flipX) ctx.scale(-1, 1);
+      ctx.scale(ch.flipX ? -1 : 1, ch.flipY ? -1 : 1);
       ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
       ctx.restore();
     } else if (item.type === "bubble") {
@@ -6514,7 +6606,9 @@ export default function StoryPage() {
           scale: c.scale,
           rotation: c.rotation ?? 0,
           flipX: c.flipX ?? false,
+          flipY: c.flipY ?? false,
           zIndex: c.zIndex ?? 0,
+          name: c.name,
         })),
         drawingLayers: (p.drawingLayers || []).map((dl) => ({
           id: dl.id,
@@ -6567,22 +6661,24 @@ export default function StoryPage() {
           name: projectName.trim(),
           canvasData,
           thumbnailUrl,
+          folderId: selectedFolderId,
         });
         queryClient.invalidateQueries({ queryKey: ["/api/bubble-projects"] });
-        toast({ title: "프로젝트 저장됨", description: `"${projectName.trim()}" 업데이트 완료` });
       } else {
         const res = await apiRequest("POST", "/api/bubble-projects", {
           name: projectName.trim(),
           canvasData,
           thumbnailUrl,
           editorType: "story",
+          folderId: selectedFolderId,
         });
         const newProject = await res.json();
         setCurrentProjectId(newProject.id);
         queryClient.invalidateQueries({ queryKey: ["/api/bubble-projects"] });
-        toast({ title: "프로젝트 저장됨", description: `"${projectName.trim()}" 생성 완료` });
       }
       setShowSaveModal(false);
+      setShowSavedConfirm(true);
+      setTimeout(() => setShowSavedConfirm(false), 1500);
     } catch (e: any) {
       toast({ title: "저장 실패", description: e.message || "프로젝트를 저장할 수 없습니다.", variant: "destructive" });
     } finally {
@@ -6612,6 +6708,7 @@ export default function StoryPage() {
       projectLoadedRef.current = loadedProject.id;
       setCurrentProjectId(loadedProject.id);
       setProjectName(loadedProject.name);
+      setSelectedFolderId(loadedProject.folderId ?? null);
 
       // 프로젝트 로딩 시 선택 상태 초기화
       setSelectedBubbleId(null);
@@ -6716,16 +6813,18 @@ export default function StoryPage() {
     }
     setRemovingBg(true);
     try {
-      const res = await apiRequest("POST", "/api/remove-background", { imageUrl: selChar.imageUrl });
+      const res = await apiRequest("POST", "/api/remove-background", { sourceImageData: selChar.imageUrl });
       const data = await res.json();
-      if (data.resultUrl) {
+      if (data.imageUrl) {
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = data.resultUrl;
-        updatePanel(activePanelIndex, {
-          ...activePanel,
-          characters: activePanel.characters.map(c => c.id === selChar.id ? { ...c, imageUrl: data.resultUrl, imgElement: img } : c),
-        });
+        img.src = data.imageUrl;
+        img.onload = () => {
+          updatePanel(activePanelIndex, {
+            ...activePanel,
+            characters: activePanel.characters.map(c => c.id === selChar.id ? { ...c, imageUrl: data.imageUrl, imageEl: img } : c),
+          });
+        };
         toast({ title: "배경 제거 완료" });
       }
     } catch (e) {
@@ -8921,7 +9020,7 @@ export default function StoryPage() {
               type: "char" as const,
               id: c.id,
               z: c.zIndex ?? 0,
-              label: "캐릭터",
+              label: c.name || "캐릭터",
               thumb: c.imageUrl,
               visible: c.visible,
               locked: c.locked,
@@ -9465,6 +9564,8 @@ export default function StoryPage() {
                           selectedChar={selChar ?? null}
                           selectedText={selText ?? null}
                           selectedLine={selLine ?? null}
+                          canvasWidth={CANVAS_W}
+                          canvasHeight={CANVAS_H}
                           onUpdateBubble={(id, updates) => {
                             updatePanel(activePanelIndex, {
                               ...activePanel,
@@ -9766,6 +9867,8 @@ export default function StoryPage() {
                       selectedChar={selChar ?? null}
                       selectedText={selText ?? null}
                       selectedLine={selLine ?? null}
+                      canvasWidth={CANVAS_W}
+                      canvasHeight={CANVAS_H}
                       onUpdateBubble={(id, updates) => {
                         updatePanel(activePanelIndex, {
                           ...activePanel,
@@ -10234,6 +10337,60 @@ export default function StoryPage() {
                       onChange={(e) => setProjectName(e.target.value)}
                       data-testid="input-story-project-name"
                     />
+                    <Select
+                      value={selectedFolderId ? String(selectedFolderId) : "none"}
+                      onValueChange={(v) => setSelectedFolderId(v === "none" ? null : Number(v))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="폴더 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">폴더 없음</SelectItem>
+                        {projectFolders.map((f) => (
+                          <SelectItem key={f.id} value={String(f.id)}>{f.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {showNewFolderInput ? (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="새 폴더 이름"
+                          value={newFolderName}
+                          onChange={(e) => setNewFolderName(e.target.value)}
+                          className="flex-1"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && newFolderName.trim()) {
+                              setCreatingFolder(true);
+                              createFolderMutation.mutate(newFolderName.trim());
+                            }
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={creatingFolder || !newFolderName.trim()}
+                          onClick={() => {
+                            setCreatingFolder(true);
+                            createFolderMutation.mutate(newFolderName.trim());
+                          }}
+                        >
+                          {creatingFolder ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "추가"}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setShowNewFolderInput(false); setNewFolderName(""); }}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-1.5"
+                        onClick={() => setShowNewFolderInput(true)}
+                      >
+                        <FolderPlus className="h-3.5 w-3.5" />
+                        새 폴더 만들기
+                      </Button>
+                    )}
                     <div className="space-y-2">
                       <Button
                         className="w-full gap-1.5"
@@ -10274,6 +10431,14 @@ export default function StoryPage() {
                 )}
               </DialogContent>
             </Dialog>
+            {showSavedConfirm && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 animate-in fade-in duration-200">
+                <div className="bg-background rounded-xl shadow-lg px-8 py-6 flex flex-col items-center gap-2 animate-in zoom-in-95 duration-200">
+                  <CheckCircle2 className="h-10 w-10 text-green-500" />
+                  <p className="text-sm font-medium">저장되었습니다</p>
+                </div>
+              </div>
+            )}
           <InstagramPublishDialog
             open={showInstagramPublish}
             onOpenChange={setShowInstagramPublish}
