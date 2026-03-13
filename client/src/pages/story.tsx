@@ -4867,10 +4867,12 @@ export default function StoryPage() {
     try {
       const bgPrompt = mode === "prompt"
         ? prompt
-        : "same character in a completely different dynamic pose and expression";
+        : "same character in a completely different dynamic pose and expression, keeping exact same art style and character features";
       const res = await apiRequest("POST", "/api/generate-background", {
         sourceImageDataList: [char.imageUrl],
         backgroundPrompt: bgPrompt,
+        noBackground: true,
+        skipGallery: true,
       });
       const data = await res.json();
       if (data.imageUrl) {
@@ -7783,8 +7785,7 @@ export default function StoryPage() {
                             setActivePanelIndex(i);
                             setShowBubbleSettings(false);
                             if (!id) { setShowCharRegenPanel(false); setCharRegenPrompt(""); }
-                            // Auto-switch to image tab when character is clicked on canvas
-                            if (id) setActiveLeftTab("image");
+                            // 캐릭터 선택 시 패널 자동 열림 제거
                           }}
                           canvasRef={(el) => {
                             if (el) panelCanvasRefs.current.set(panel.id, el);
