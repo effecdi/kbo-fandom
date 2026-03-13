@@ -513,19 +513,28 @@ ${prevContext}
 "${storyPrompt}" 주제에 맞는 ${chunkCuts}컷을 JSON으로만 출력:
 {"scenes":[{"sceneDescription":"...","narrativeText":"...","bubbleText":"..."}]}`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: {
-      temperature: 0.75,
-    },
-  });
+  let response: any;
+  try {
+    response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        temperature: 0.75,
+      },
+    });
+  } catch (apiErr: any) {
+    logger.error(`Gemini API call failed — ${apiErr.message || apiErr}`);
+    throw new Error(`Failed to generate webtoon scene breakdown (API error: ${apiErr.message})`);
+  }
 
   const candidate = response.candidates?.[0];
   const textPart = candidate?.content?.parts?.find((part: any) => part.text);
 
   if (!textPart?.text) {
-    throw new Error("Failed to generate webtoon scene breakdown");
+    const blockReason = candidate?.finishReason || "unknown";
+    const safetyRatings = JSON.stringify(candidate?.safetyRatings || []);
+    logger.error(`Gemini empty response — finishReason: ${blockReason}, safety: ${safetyRatings}, candidates: ${response.candidates?.length || 0}`);
+    throw new Error(`Failed to generate webtoon scene breakdown (reason: ${blockReason})`);
   }
 
   const cleanedText = textPart.text.replace(/```json|```/g, '').trim();
