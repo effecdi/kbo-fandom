@@ -10352,12 +10352,12 @@ export default function StoryPage() {
                       </SelectContent>
                     </Select>
                     {showNewFolderInput ? (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <Input
                           placeholder="새 폴더 이름"
                           value={newFolderName}
                           onChange={(e) => setNewFolderName(e.target.value)}
-                          className="flex-1 h-8"
+                          className="flex-1"
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && newFolderName.trim()) {
                               setCreatingFolder(true);
@@ -10366,8 +10366,8 @@ export default function StoryPage() {
                           }}
                         />
                         <Button
-                          size="sm"
                           variant="outline"
+                          className="h-9 px-3 text-xs shrink-0"
                           disabled={creatingFolder || !newFolderName.trim()}
                           onClick={() => {
                             setCreatingFolder(true);
@@ -10376,7 +10376,7 @@ export default function StoryPage() {
                         >
                           {creatingFolder ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "추가"}
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => { setShowNewFolderInput(false); setNewFolderName(""); }}>
+                        <Button variant="ghost" className="h-9 w-9 p-0 shrink-0" onClick={() => { setShowNewFolderInput(false); setNewFolderName(""); }}>
                           <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
