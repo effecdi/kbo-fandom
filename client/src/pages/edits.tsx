@@ -211,17 +211,6 @@ export default function EditsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {currentFolderId !== null && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-destructive hover:text-destructive"
-              onClick={() => setDeleteFolderConfirmId(currentFolderId)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              폴더 삭제
-            </Button>
-          )}
           {isPro && (
             <Badge variant="secondary" className="gap-1" data-testid="badge-pro-status">
               <Crown className="h-3 w-3" />
@@ -236,6 +225,17 @@ export default function EditsPage() {
             <BookOpen className="h-3.5 w-3.5" />
             스토리
           </Button>
+          {currentFolderId !== null && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-destructive hover:text-destructive"
+              onClick={() => setDeleteFolderConfirmId(currentFolderId)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              폴더 삭제
+            </Button>
+          )}
         </div>
       </div>
 
