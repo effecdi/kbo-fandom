@@ -2915,6 +2915,40 @@ export default function StoryPage() {
     }
   }, []);
 
+  // localStorage: restore autoRefImages on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("olli_instatoon_refchars");
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as Array<{ url: string; name: string }>;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setAutoRefImages(parsed);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // localStorage: save autoRefImages on change
+  useEffect(() => {
+    if (autoRefImages.length > 0) {
+      localStorage.setItem("olli_instatoon_refchars", JSON.stringify(autoRefImages));
+    } else {
+      localStorage.removeItem("olli_instatoon_refchars");
+    }
+  }, [autoRefImages]);
+
+  // localStorage: restore instatoonScenePrompt on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("olli_instatoon_scene");
+    if (saved) setInstatoonScenePrompt(saved);
+  }, []);
+
+  // localStorage: save instatoonScenePrompt on change
+  useEffect(() => {
+    if (instatoonScenePrompt) {
+      localStorage.setItem("olli_instatoon_scene", instatoonScenePrompt);
+    }
+  }, [instatoonScenePrompt]);
+
   const clonePanels = useCallback((src: PanelData[]): PanelData[] => {
     return src.map((p) => ({
       ...p,
@@ -3263,6 +3297,22 @@ export default function StoryPage() {
   });
   const galleryData = galleryRaw?.items ?? [];
   const galleryHasMore = galleryRaw?.hasMore ?? false;
+
+  // Character-only query for quick-select strips (캐릭터 전용)
+  const { data: characterStripRaw } = useQuery<{ items: GenerationLight[] }>({
+    queryKey: ["/api/gallery", "character-strip"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const authHeaders: Record<string, string> = {};
+      const { supabase: sb } = await import("@/lib/supabase");
+      const { data: sess } = await sb.auth.getSession();
+      if (sess.session?.access_token) authHeaders["Authorization"] = `Bearer ${sess.session.access_token}`;
+      const res = await fetch("/api/gallery?type=character&limit=12", { headers: authHeaders });
+      if (!res.ok) throw new Error("Failed to load character strip");
+      return res.json();
+    },
+  });
+  const characterStripData = characterStripRaw?.items ?? [];
 
   type CharacterFolderWithItems = CharacterFolder & { items: { generationId: number }[] };
   const { data: storyCharacterFolders = [] } = useQuery<CharacterFolderWithItems[]>({
@@ -4175,6 +4225,14 @@ export default function StoryPage() {
   const [showCharRegenPanel, setShowCharRegenPanel] = useState(false);
   const [charRegenPrompt, setCharRegenPrompt] = useState("");
   const [charRegenLoading, setCharRegenLoading] = useState(false);
+  // ─── Character inpaint (부분 수정) state ──────────────────────────
+  const [charInpaintMode, setCharInpaintMode] = useState(false);
+  const [charInpaintSelectionMode, setCharInpaintSelectionMode] = useState<SelectionMode>("brush");
+  const [charInpaintBrushSize, setCharInpaintBrushSize] = useState(30);
+  const [charInpaintPrompt, setCharInpaintPrompt] = useState("");
+  const [charInpaintLoading, setCharInpaintLoading] = useState(false);
+  const charInpaintSelectionRef = useRef<SelectionCanvasHandle | null>(null);
+  const [charRegenTab, setCharRegenTab] = useState<"full" | "inpaint">("full");
   const [selectedDrawingLayerId, setSelectedDrawingLayerId] = useState<string | null>(null);
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
   const bubbleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -4466,6 +4524,130 @@ export default function StoryPage() {
       setCharRegenLoading(false);
     }
   }, [panels, setPanels]);
+
+  // ─── Character inpaint (부분 수정) generate ─────────────────────────
+  const charInpaintGenerate = useCallback(async (charId: string, panelIdx: number, prompt: string) => {
+    const p = panels[panelIdx];
+    if (!p) return;
+    const char = p.characters.find(c => c.id === charId);
+    if (!char || !char.imageUrl || !char.imageEl) return;
+
+    const mask = charInpaintSelectionRef.current?.exportMask();
+    if (!mask) {
+      toast({ title: "수정할 영역을 먼저 선택해주세요", variant: "destructive" });
+      return;
+    }
+
+    setCharInpaintLoading(true);
+    try {
+      // Get character image as data URL
+      let charImageData: string;
+      if (char.imageUrl.startsWith("data:")) {
+        charImageData = char.imageUrl;
+      } else {
+        const tmpCanvas = document.createElement("canvas");
+        tmpCanvas.width = char.imageEl.naturalWidth;
+        tmpCanvas.height = char.imageEl.naturalHeight;
+        const tmpCtx = tmpCanvas.getContext("2d")!;
+        tmpCtx.drawImage(char.imageEl, 0, 0);
+        charImageData = tmpCanvas.toDataURL("image/png");
+      }
+
+      // If flipX, flip the mask horizontally
+      let finalMask = mask;
+      if (char.flipX) {
+        const flipCanvas = document.createElement("canvas");
+        const maskImg = await loadImage(mask);
+        flipCanvas.width = maskImg.naturalWidth;
+        flipCanvas.height = maskImg.naturalHeight;
+        const flipCtx = flipCanvas.getContext("2d")!;
+        flipCtx.translate(flipCanvas.width, 0);
+        flipCtx.scale(-1, 1);
+        flipCtx.drawImage(maskImg, 0, 0);
+        finalMask = flipCanvas.toDataURL("image/png");
+      }
+
+      const resp = await apiRequest("POST", "/api/generative-fill", {
+        imageData: charImageData,
+        maskData: finalMask,
+        prompt,
+      });
+      const data = await resp.json();
+      if (data.imageUrl) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          setPanels(prev => prev.map((pan, idx) => {
+            if (idx !== panelIdx) return pan;
+            return {
+              ...pan,
+              characters: pan.characters.map(c =>
+                c.id === charId ? { ...c, imageUrl: data.imageUrl, imageEl: img } : c
+              ),
+            };
+          }));
+          setCharInpaintLoading(false);
+          charInpaintSelectionRef.current?.clearSelection();
+          setCharInpaintPrompt("");
+          toast({ title: "부분 수정 완료" });
+          queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+        };
+        img.onerror = () => setCharInpaintLoading(false);
+        img.src = data.imageUrl;
+      } else {
+        setCharInpaintLoading(false);
+      }
+    } catch (err: any) {
+      toast({ title: "부분 수정 실패", description: err.message, variant: "destructive" });
+      setCharInpaintLoading(false);
+    }
+  }, [panels, setPanels, toast]);
+
+  // Helper: load image as promise
+  const loadImage = useCallback((src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }, []);
+
+  // Character inpaint: quick-select via object-select-at-point
+  const handleCharInpaintClickPoint = useCallback(async (clickX: number, clickY: number) => {
+    const p = panels[activePanelIndex];
+    if (!p || !selectedCharId) return;
+    const char = p.characters.find(c => c.id === selectedCharId);
+    if (!char || !char.imageUrl || !char.imageEl) return;
+
+    let charImageData: string;
+    if (char.imageUrl.startsWith("data:")) {
+      charImageData = char.imageUrl;
+    } else {
+      const tmpCanvas = document.createElement("canvas");
+      tmpCanvas.width = char.imageEl.naturalWidth;
+      tmpCanvas.height = char.imageEl.naturalHeight;
+      const tmpCtx = tmpCanvas.getContext("2d")!;
+      tmpCtx.drawImage(char.imageEl, 0, 0);
+      charImageData = tmpCanvas.toDataURL("image/png");
+    }
+
+    try {
+      const resp = await apiRequest("POST", "/api/object-select-at-point", {
+        imageData: charImageData,
+        clickX: Math.round(clickX),
+        clickY: Math.round(clickY),
+        imageWidth: char.imageEl.naturalWidth,
+        imageHeight: char.imageEl.naturalHeight,
+      });
+      const data = await resp.json();
+      if (data.maskData) {
+        charInpaintSelectionRef.current?.setMask(data.maskData);
+      }
+    } catch (err: any) {
+      toast({ title: "개체 선택 실패", description: err.message, variant: "destructive" });
+    }
+  }, [panels, activePanelIndex, selectedCharId, toast]);
 
   // ─── Multi-select state ────────────────────────────────────────────
   const [canvasMultiSelected, setCanvasMultiSelected] = useState<Set<string>>(new Set());
@@ -7739,58 +7921,206 @@ export default function StoryPage() {
                                     });
                                     setSelectedCharId(null);
                                     setShowCharRegenPanel(false);
+                                    setCharInpaintMode(false);
                                   }}
-                                  onRegenerate={() => setShowCharRegenPanel(v => !v)}
+                                  onRegenerate={() => { setShowCharRegenPanel(v => !v); setCharRegenTab("full"); }}
                                   showRegenPanel={showCharRegenPanel}
+                                  onInpaint={() => {
+                                    const next = !charInpaintMode;
+                                    setCharInpaintMode(next);
+                                    if (next) {
+                                      setShowCharRegenPanel(true);
+                                      setCharRegenTab("inpaint");
+                                    } else {
+                                      charInpaintSelectionRef.current?.clearSelection();
+                                    }
+                                  }}
+                                  showInpaintMode={charInpaintMode}
                                 />
                               </div>
                               {showCharRegenPanel && (
                                 <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
-                                  <div className="floating-settings-modal" style={{ minWidth: 280, padding: 12 }}>
+                                  <div className="floating-settings-modal" style={{ minWidth: 300, padding: 12 }}>
                                     <div className="floating-settings-modal__header">
                                       <span className="floating-settings-modal__title">AI 재생성</span>
-                                      <button className="floating-settings-modal__close" onClick={() => setShowCharRegenPanel(false)}>
+                                      <button className="floating-settings-modal__close" onClick={() => { setShowCharRegenPanel(false); setCharInpaintMode(false); charInpaintSelectionRef.current?.clearSelection(); }}>
                                         <X className="h-3.5 w-3.5" />
                                       </button>
                                     </div>
-                                    <textarea
-                                      value={charRegenPrompt}
-                                      onChange={(e) => setCharRegenPrompt(e.target.value)}
-                                      placeholder="원하는 장면을 설명하세요..."
-                                      disabled={charRegenLoading}
-                                      style={{
-                                        width: "100%", minHeight: 60, resize: "vertical",
-                                        padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
-                                        fontSize: 13, fontFamily: "inherit", marginBottom: 8,
-                                        background: "hsl(var(--background))", color: "hsl(var(--foreground))",
-                                      }}
-                                    />
-                                    <div style={{ display: "flex", gap: 6 }}>
+                                    {/* Tab buttons */}
+                                    <div style={{ display: "flex", gap: 0, marginBottom: 10, borderRadius: 6, overflow: "hidden", border: "1px solid hsl(var(--border))" }}>
                                       <button
-                                        disabled={charRegenLoading || !charRegenPrompt.trim()}
-                                        onClick={() => regenerateCharImage(selectedCharId, i, charRegenPrompt.trim(), "prompt")}
+                                        onClick={() => { setCharRegenTab("full"); setCharInpaintMode(false); charInpaintSelectionRef.current?.clearSelection(); }}
                                         style={{
-                                          flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                                          background: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
-                                          color: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
-                                          border: "none", cursor: charRegenLoading || !charRegenPrompt.trim() ? "not-allowed" : "pointer",
+                                          flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
+                                          background: charRegenTab === "full" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                          color: charRegenTab === "full" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
                                         }}
                                       >
-                                        {charRegenLoading ? "생성 중..." : "프롬프트로 재생성"}
+                                        전체 재생성
                                       </button>
                                       <button
-                                        disabled={charRegenLoading}
-                                        onClick={() => regenerateCharImage(selectedCharId, i, "", "variation")}
+                                        onClick={() => { setCharRegenTab("inpaint"); setCharInpaintMode(true); }}
                                         style={{
-                                          flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                                          background: charRegenLoading ? "hsl(var(--muted))" : "hsl(var(--secondary))",
-                                          color: charRegenLoading ? "hsl(var(--muted-foreground))" : "hsl(var(--secondary-foreground))",
-                                          border: "none", cursor: charRegenLoading ? "not-allowed" : "pointer",
+                                          flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
+                                          background: charRegenTab === "inpaint" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                          color: charRegenTab === "inpaint" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
                                         }}
                                       >
-                                        {charRegenLoading ? "생성 중..." : "다른 포즈/표정"}
+                                        부분 수정
                                       </button>
                                     </div>
+
+                                    {/* Full regeneration tab (existing) */}
+                                    {charRegenTab === "full" && (
+                                      <>
+                                        <textarea
+                                          value={charRegenPrompt}
+                                          onChange={(e) => setCharRegenPrompt(e.target.value)}
+                                          placeholder="원하는 장면을 설명하세요..."
+                                          disabled={charRegenLoading}
+                                          style={{
+                                            width: "100%", minHeight: 60, resize: "vertical",
+                                            padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
+                                            fontSize: 13, fontFamily: "inherit", marginBottom: 8,
+                                            background: "hsl(var(--background))", color: "hsl(var(--foreground))",
+                                          }}
+                                        />
+                                        <div style={{ display: "flex", gap: 6 }}>
+                                          <button
+                                            disabled={charRegenLoading || !charRegenPrompt.trim()}
+                                            onClick={() => regenerateCharImage(selectedCharId, i, charRegenPrompt.trim(), "prompt")}
+                                            style={{
+                                              flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                              background: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
+                                              color: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
+                                              border: "none", cursor: charRegenLoading || !charRegenPrompt.trim() ? "not-allowed" : "pointer",
+                                            }}
+                                          >
+                                            {charRegenLoading ? "생성 중..." : "프롬프트로 재생성"}
+                                          </button>
+                                          <button
+                                            disabled={charRegenLoading}
+                                            onClick={() => regenerateCharImage(selectedCharId, i, "", "variation")}
+                                            style={{
+                                              flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                              background: charRegenLoading ? "hsl(var(--muted))" : "hsl(var(--secondary))",
+                                              color: charRegenLoading ? "hsl(var(--muted-foreground))" : "hsl(var(--secondary-foreground))",
+                                              border: "none", cursor: charRegenLoading ? "not-allowed" : "pointer",
+                                            }}
+                                          >
+                                            {charRegenLoading ? "생성 중..." : "다른 포즈/표정"}
+                                          </button>
+                                        </div>
+                                      </>
+                                    )}
+
+                                    {/* Inpaint tab (new) */}
+                                    {charRegenTab === "inpaint" && (
+                                      <>
+                                        {/* Selection tool buttons */}
+                                        <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                                          <button
+                                            onClick={() => setCharInpaintSelectionMode("brush")}
+                                            style={{
+                                              flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                                              background: charInpaintSelectionMode === "brush" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                              color: charInpaintSelectionMode === "brush" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                            }}
+                                            title="브러시"
+                                          >
+                                            🖌️ 브러시
+                                          </button>
+                                          <button
+                                            onClick={() => setCharInpaintSelectionMode("lasso")}
+                                            style={{
+                                              flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                                              background: charInpaintSelectionMode === "lasso" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                              color: charInpaintSelectionMode === "lasso" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                            }}
+                                            title="올가미"
+                                          >
+                                            🔺 올가미
+                                          </button>
+                                          <button
+                                            onClick={() => setCharInpaintSelectionMode("click")}
+                                            style={{
+                                              flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                                              background: charInpaintSelectionMode === "click" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                              color: charInpaintSelectionMode === "click" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                            }}
+                                            title="빠른선택"
+                                          >
+                                            ✨ 빠른선택
+                                          </button>
+                                        </div>
+
+                                        {/* Brush size slider (only for brush mode) */}
+                                        {charInpaintSelectionMode === "brush" && (
+                                          <div style={{ marginBottom: 8 }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "hsl(var(--muted-foreground))", marginBottom: 4 }}>
+                                              <span>브러시 크기</span>
+                                              <span>{charInpaintBrushSize}px</span>
+                                            </div>
+                                            <Slider
+                                              min={5}
+                                              max={100}
+                                              step={1}
+                                              value={[charInpaintBrushSize]}
+                                              onValueChange={([v]) => setCharInpaintBrushSize(v)}
+                                              className="w-full"
+                                            />
+                                          </div>
+                                        )}
+
+                                        {/* Selection controls */}
+                                        <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                                          <button onClick={() => charInpaintSelectionRef.current?.expandSelection(3)} title="선택 확대"
+                                            style={{ flex: 1, padding: "4px 0", borderRadius: 6, fontSize: 11, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", color: "hsl(var(--foreground))", cursor: "pointer" }}>
+                                            <PlusCircle className="h-3.5 w-3.5 inline mr-1" />확대
+                                          </button>
+                                          <button onClick={() => charInpaintSelectionRef.current?.shrinkSelection(3)} title="선택 축소"
+                                            style={{ flex: 1, padding: "4px 0", borderRadius: 6, fontSize: 11, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", color: "hsl(var(--foreground))", cursor: "pointer" }}>
+                                            <MinusCircle className="h-3.5 w-3.5 inline mr-1" />축소
+                                          </button>
+                                          <button onClick={() => charInpaintSelectionRef.current?.clearSelection()} title="선택 초기화"
+                                            style={{ flex: 1, padding: "4px 0", borderRadius: 6, fontSize: 11, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", color: "hsl(var(--foreground))", cursor: "pointer" }}>
+                                            <RotateCcw className="h-3.5 w-3.5 inline mr-1" />초기화
+                                          </button>
+                                        </div>
+
+                                        {/* Prompt */}
+                                        <textarea
+                                          value={charInpaintPrompt}
+                                          onChange={(e) => setCharInpaintPrompt(e.target.value)}
+                                          placeholder="수정할 내용을 입력하세요..."
+                                          disabled={charInpaintLoading}
+                                          style={{
+                                            width: "100%", minHeight: 50, resize: "vertical",
+                                            padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
+                                            fontSize: 13, fontFamily: "inherit", marginBottom: 8,
+                                            background: "hsl(var(--background))", color: "hsl(var(--foreground))",
+                                          }}
+                                        />
+                                        <button
+                                          disabled={charInpaintLoading || !charInpaintPrompt.trim()}
+                                          onClick={() => charInpaintGenerate(selectedCharId!, i, charInpaintPrompt.trim())}
+                                          style={{
+                                            width: "100%", padding: "7px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                            background: charInpaintLoading || !charInpaintPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
+                                            color: charInpaintLoading || !charInpaintPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
+                                            border: "none", cursor: charInpaintLoading || !charInpaintPrompt.trim() ? "not-allowed" : "pointer",
+                                            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                                          }}
+                                        >
+                                          {charInpaintLoading ? (
+                                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> 수정 중...</>
+                                          ) : (
+                                            <><Sparkles className="h-3.5 w-3.5" /> 선택 영역 AI 수정</>
+                                          )}
+                                        </button>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -8030,6 +8360,48 @@ export default function StoryPage() {
                           </div>
                         )}
 
+                        {/* Character inpaint selection overlay — zIndex 26 to sit above generative fill (25) */}
+                        {charInpaintMode && selectedCharId && activePanelIndex === i && (() => {
+                          const inpaintChar = panel.characters.find(c => c.id === selectedCharId);
+                          if (!inpaintChar || !inpaintChar.imageEl) return null;
+                          const natW = inpaintChar.imageEl.naturalWidth;
+                          const natH = inpaintChar.imageEl.naturalHeight;
+                          const cw = natW * inpaintChar.scale;
+                          const chH = natH * inpaintChar.scale;
+                          const leftPct = ((inpaintChar.x - cw / 2) / CANVAS_W) * 100;
+                          const topPct = ((inpaintChar.y - chH / 2) / CANVAS_H) * 100;
+                          const widthPct = (cw / CANVAS_W) * 100;
+                          const heightPct = (chH / CANVAS_H) * 100;
+                          return (
+                            <div
+                              className="selection-canvas-wrapper selection-canvas-wrapper--active"
+                              style={{
+                                position: "absolute",
+                                left: `${leftPct}%`,
+                                top: `${topPct}%`,
+                                width: `${widthPct}%`,
+                                height: `${heightPct}%`,
+                                zIndex: 26,
+                                transform: inpaintChar.flipX ? "scaleX(-1)" : undefined,
+                              }}
+                            >
+                              <SelectionCanvas
+                                ref={charInpaintSelectionRef}
+                                width={natW}
+                                height={natH}
+                                mode={charInpaintSelectionMode}
+                                brushSize={charInpaintBrushSize}
+                                className="rounded-sm"
+                                onClickPoint={charInpaintSelectionMode === "click" ? handleCharInpaintClickPoint : undefined}
+                              />
+                              <div className="drawing-mode-indicator" style={{ background: "hsl(var(--primary) / 0.9)", transform: inpaintChar.flipX ? "scaleX(-1)" : undefined }}>
+                                <span className="drawing-mode-indicator__dot" />
+                                부분 수정
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         {/* Select-mode: click/drag/dblclick to interact with drawing/text/line layers */}
                         {(selectedToolItem === "select" || selectedToolItem === "text" || selectedToolItem === "line" || selectedToolItem === "shapes") && activePanelIndex === i && (
                           <div
@@ -8095,7 +8467,7 @@ export default function StoryPage() {
                                   }
                                 }
                               }
-                              if (selectedCharId) {
+                              if (selectedCharId && !charInpaintMode) {
                                 const selCh = panel.characters.find(c => c.id === selectedCharId);
                                 if (selCh && selCh.imageEl instanceof HTMLImageElement) {
                                   const cw = selCh.imageEl.naturalWidth * selCh.scale;
@@ -8328,6 +8700,8 @@ export default function StoryPage() {
                                 setSelectedDrawingLayerId(null); setSelectedCharId(null); setSelectedBubbleId(null);
                                 setSelectedScriptPosition(null);
                                 setCanvasMultiSelected(new Set());
+                                setCharInpaintMode(false);
+                                charInpaintSelectionRef.current?.clearSelection();
                               };
 
                               for (const item of allItems) {
@@ -8402,7 +8776,9 @@ export default function StoryPage() {
                                   if (canvasX >= ch.x - cw / 2 && canvasX <= ch.x + cw / 2 &&
                                       canvasY >= ch.y - chH / 2 && canvasY <= ch.y + chH / 2) {
                                     clearSelections(); setSelectedCharId(ch.id);
-                                    handleElementDragStart("char", ch.id, canvasX, canvasY, panel);
+                                    if (!charInpaintMode) {
+                                      handleElementDragStart("char", ch.id, canvasX, canvasY, panel);
+                                    }
                                     return;
                                   }
                                 }
@@ -9919,9 +10295,9 @@ export default function StoryPage() {
                             </div>
                             <p className="text-[11px] text-muted-foreground leading-relaxed">이 캐릭터 이미지를 기반으로 포즈·표정·배경이 자동 변형됩니다.</p>
                             <p className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1">🎨 이미지 업로드 시 그림 스타일을 자동 감지 → 배경·아이템도 같은 스타일로 생성됩니다</p>
-                            {/* Quick-select character strip */}
+                            {/* Quick-select character strip (캐릭터 전용 쿼리 사용) */}
                             {(() => {
-                              const charItems = (galleryData || []).filter((g: any) => g.characterName && (g.resultImageUrl || g.thumbnailUrl)).slice(0, 12);
+                              const charItems = characterStripData.filter((g: any) => g.characterName && (g.resultImageUrl || g.thumbnailUrl));
                               if (charItems.length === 0) return null;
                               return (
                                 <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
@@ -10077,9 +10453,9 @@ export default function StoryPage() {
                               <span className="text-xs font-semibold text-foreground">기준 캐릭터 이미지</span>
                               <span className="text-[10px] text-muted-foreground">(선택 — 있으면 더 정확해요)</span>
                             </div>
-                            {/* Quick-select character strip */}
+                            {/* Quick-select character strip (캐릭터 전용 쿼리 사용) */}
                             {(() => {
-                              const charItems = (galleryData || []).filter((g: any) => g.characterName && (g.resultImageUrl || g.thumbnailUrl)).slice(0, 12);
+                              const charItems = characterStripData.filter((g: any) => g.characterName && (g.resultImageUrl || g.thumbnailUrl));
                               if (charItems.length === 0) return null;
                               return (
                                 <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
@@ -10191,6 +10567,8 @@ export default function StoryPage() {
                           currentPanelCount={panels.length}
                           galleryData={galleryData}
                           galleryLoading={galleryLoading}
+                          canvasWidth={CANVAS_W}
+                          canvasHeight={CANVAS_H}
                           onPanelsGenerated={(newPanels) => {
                             const isDefaultEmpty = panels.length === 1 && panels[0].characters.length === 0 && panels[0].bubbles.length === 0 && !panels[0].backgroundImageUrl && (panels[0].textElements?.length ?? 0) === 0 && (panels[0].lineElements?.length ?? 0) === 0;
                             if (isDefaultEmpty) { const limited = (newPanels as any[]).slice(0, maxPanels); setActivePanelIndex(0); setPanels(limited as any); rehydrateImages(limited as any); } else { const available = maxPanels - panels.length; if (available <= 0) { toast({ title: `패널 ${maxPanels}개 제한`, description: "추가할 수 있는 패널이 없습니다.", variant: "destructive" }); return; } const toAdd = (newPanels as any[]).slice(0, available); const merged = [...panels, ...toAdd] as any; setActivePanelIndex(panels.length); setPanels(merged); rehydrateImages(toAdd as any); if (toAdd.length < newPanels.length) { toast({ title: `${toAdd.length}/${newPanels.length}개 패널만 추가됨`, description: `패널 최대 ${maxPanels}개 제한`, variant: "destructive" }); } }

@@ -1660,9 +1660,11 @@ interface CharToolbarProps {
   onDelete: () => void;
   onRegenerate: () => void;
   showRegenPanel: boolean;
+  onInpaint?: () => void;
+  showInpaintMode?: boolean;
 }
 
-export function CharContextToolbar({ onFlipX, onDelete, onRegenerate, showRegenPanel }: CharToolbarProps) {
+export function CharContextToolbar({ onFlipX, onDelete, onRegenerate, showRegenPanel, onInpaint, showInpaintMode }: CharToolbarProps) {
   return (
     <div className="context-toolbar context-toolbar--char">
       {/* Flip horizontal */}
@@ -1684,6 +1686,17 @@ export function CharContextToolbar({ onFlipX, onDelete, onRegenerate, showRegenP
       >
         <Sparkles className="h-4 w-4" />
       </button>
+
+      {/* Inpaint (부분 수정) */}
+      {onInpaint && (
+        <button
+          className={`context-toolbar__btn ${showInpaintMode ? "context-toolbar__btn--active" : ""}`}
+          onClick={onInpaint}
+          title="부분 수정"
+        >
+          <Paintbrush className="h-4 w-4" />
+        </button>
+      )}
 
       {/* Delete */}
       <button

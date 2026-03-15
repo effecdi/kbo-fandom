@@ -4,7 +4,7 @@
  * Step 2: 장면 편집 (AI 분해 결과 편집)
  * Step 3: 생성 진행 + 에디터 적용
  */
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -70,12 +70,13 @@ const CANVAS_H = 675;
 
 // ---- Layout Preview (외부 정의: 리렌더 방지) ----
 
-function LayoutPreview({ cuts, size = 40, layoutType = "default" }: { cuts: number; size?: number; layoutType?: CutLayoutType }) {
-  const regions = getCutRegions(cuts, layoutType);
-  const scaleX = size / CANVAS_W;
-  const scaleY = (size * 1.33) / CANVAS_H;
+function LayoutPreview({ cuts, size = 40, layoutType = "default", canvasW = CANVAS_W, canvasH = CANVAS_H }: { cuts: number; size?: number; layoutType?: CutLayoutType; canvasW?: number; canvasH?: number }) {
+  const regions = getCutRegions(cuts, layoutType, canvasW, canvasH);
+  const aspect = canvasH / canvasW;
+  const scaleX = size / canvasW;
+  const scaleY = (size * aspect) / canvasH;
   return (
-    <svg width={size} height={size * 1.33} className="border rounded bg-white dark:bg-zinc-800">
+    <svg width={size} height={size * aspect} className="border rounded bg-white dark:bg-zinc-800">
       {regions.map((r, i) => (
         <rect
           key={i}
@@ -133,6 +134,8 @@ export interface AutoWebtoonPanelProps {
   galleryLoading: boolean;
   onPanelsGenerated: (panels: GeneratedPanelData[]) => void;
   onClose: () => void;
+  canvasWidth?: number;
+  canvasHeight?: number;
 }
 
 // ---- Helper ----
@@ -155,7 +158,11 @@ export function AutoWebtoonPanel({
   galleryLoading: externalGalleryLoading,
   onPanelsGenerated,
   onClose,
+  canvasWidth: propCanvasW,
+  canvasHeight: propCanvasH,
 }: AutoWebtoonPanelProps) {
+  const effectiveCanvasW = propCanvasW ?? CANVAS_W;
+  const effectiveCanvasH = propCanvasH ?? CANVAS_H;
   const { toast } = useToast();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
 
@@ -192,6 +199,77 @@ export function AutoWebtoonPanel({
     queryKey: ["/api/usage"],
     enabled: isAuthenticated,
   });
+
+  // Character-only query for quick-select strip (캐릭터 전용)
+  const { data: characterStripRaw } = useQuery<{ items: GenerationLight[] }>({
+    queryKey: ["/api/gallery", "character-strip"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch("/api/gallery?type=character&limit=12", { headers: authHeaders });
+      if (!res.ok) throw new Error("Failed to load character strip");
+      return res.json();
+    },
+    enabled: isAuthenticated,
+  });
+  const characterStripData = characterStripRaw?.items ?? [];
+
+  // localStorage: restore storyPrompt on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("olli_autowebtoon_story");
+    if (saved) setStoryPrompt(saved);
+  }, []);
+
+  // localStorage: save storyPrompt on change
+  useEffect(() => {
+    if (storyPrompt) {
+      localStorage.setItem("olli_autowebtoon_story", storyPrompt);
+    }
+  }, [storyPrompt]);
+
+  // localStorage: restore selectedCharacters on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("olli_autowebtoon_chars");
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as Array<{ id: string; name: string; imageUrl: string }>;
+      if (!Array.isArray(parsed) || parsed.length === 0) return;
+      setSelectedCharacters(parsed.map(c => ({
+        id: c.id,
+        name: c.name,
+        imageUrl: c.imageUrl,
+        imageDataUrl: c.imageUrl, // will be resolved from URL
+      })));
+      // Convert URLs to data URLs in background
+      for (const c of parsed) {
+        if (!c.imageUrl) continue;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext("2d")!;
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL("image/png");
+            setSelectedCharacters(prev => prev.map(ch => ch.id === c.id ? { ...ch, imageDataUrl: dataUrl } : ch));
+          } catch { /* CORS fail — keep URL */ }
+        };
+        img.src = c.imageUrl;
+      }
+    } catch { /* ignore parse errors */ }
+  }, []);
+
+  // localStorage: save selectedCharacters on change
+  useEffect(() => {
+    if (selectedCharacters.length > 0) {
+      const toSave = selectedCharacters.map(c => ({ id: c.id, name: c.name, imageUrl: c.imageUrl }));
+      localStorage.setItem("olli_autowebtoon_chars", JSON.stringify(toSave));
+    } else {
+      localStorage.removeItem("olli_autowebtoon_chars");
+    }
+  }, [selectedCharacters]);
 
   // Gallery data for picker — 열릴 때마다 항상 최신 데이터 fetch
   const [galleryPickerKey, setGalleryPickerKey] = useState(0);
@@ -433,7 +511,7 @@ export function AutoWebtoonPanel({
       }
       setCutResults([...results]);
 
-      const regions = getCutRegions(cutsPerCanvas, cutLayoutType);
+      const regions = getCutRegions(cutsPerCanvas, cutLayoutType, effectiveCanvasW, effectiveCanvasH);
       const promises = batchIndices.map(async (idx) => {
         if (cancelledRef.current) {
           results[idx] = { ...results[idx], status: "pending" };
@@ -524,7 +602,7 @@ export function AutoWebtoonPanel({
       if (cancelledRef.current) break;
 
       const batch = failedIndices.slice(i, i + BATCH_SIZE);
-      const regions = getCutRegions(cutsPerCanvas, cutLayoutType);
+      const regions = getCutRegions(cutsPerCanvas, cutLayoutType, effectiveCanvasW, effectiveCanvasH);
       const promises = batch.map(async (idx) => {
         if (cancelledRef.current) {
           results[idx] = { ...results[idx], status: "failed" };
@@ -603,7 +681,7 @@ export function AutoWebtoonPanel({
     const storyPrefix = storyPrompt ? `[Story: ${storyPrompt}] ` : "";
     const sceneDesc = [styleKeyword, `${storyPrefix}${cleanDesc}`].filter(Boolean).join(", ");
 
-    const regions = getCutRegions(cutsPerCanvas, cutLayoutType);
+    const regions = getCutRegions(cutsPerCanvas, cutLayoutType, effectiveCanvasW, effectiveCanvasH);
     const cutIdx = idx % cutsPerCanvas;
     const region = regions[cutIdx];
     const geminiRatio = getGeminiAspectRatio(region.width, region.height);
@@ -656,8 +734,8 @@ export function AutoWebtoonPanel({
     for (let canvasIdx = 0; canvasIdx < canvasCount; canvasIdx++) {
       const cutStart = canvasIdx * cutsPerCanvas;
       const cutEnd = Math.min(cutStart + cutsPerCanvas, cutResults.length);
-      const regions = getCutRegions(cutsPerCanvas, cutLayoutType);
-      const dividers = buildDividerLines(cutsPerCanvas, cutLayoutType, cutBorderStyle);
+      const regions = getCutRegions(cutsPerCanvas, cutLayoutType, effectiveCanvasW, effectiveCanvasH);
+      const dividers = buildDividerLines(cutsPerCanvas, cutLayoutType, cutBorderStyle, undefined, effectiveCanvasW, effectiveCanvasH);
 
       const characters: any[] = [];
       for (let ci = 0; ci < cutsPerCanvas && cutStart + ci < cutEnd; ci++) {
@@ -857,7 +935,7 @@ export function AutoWebtoonPanel({
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCutsPerCanvas(n); if (n !== 4) setCutLayoutType("default"); }}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              <LayoutPreview cuts={n} size={32} layoutType={n === cutsPerCanvas ? cutLayoutType : "default"} />
+              <LayoutPreview cuts={n} size={32} layoutType={n === cutsPerCanvas ? cutLayoutType : "default"} canvasW={effectiveCanvasW} canvasH={effectiveCanvasH} />
               <span className="text-[10px] font-medium">{n}컷</span>
             </button>
           ))}
@@ -882,7 +960,7 @@ export function AutoWebtoonPanel({
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCutLayoutType("default"); }}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              <LayoutPreview cuts={cutsPerCanvas} size={32} layoutType="default" />
+              <LayoutPreview cuts={cutsPerCanvas} size={32} layoutType="default" canvasW={effectiveCanvasW} canvasH={effectiveCanvasH} />
               <span className="text-[10px] font-medium">기본</span>
             </button>
             <button
@@ -899,7 +977,7 @@ export function AutoWebtoonPanel({
               disabled={cutsPerCanvas !== 4}
               title={cutsPerCanvas !== 4 ? "4컷일 때만 사용 가능" : undefined}
             >
-              <LayoutPreview cuts={4} size={32} layoutType="square" />
+              <LayoutPreview cuts={4} size={32} layoutType="square" canvasW={effectiveCanvasW} canvasH={effectiveCanvasH} />
               <span className="text-[10px] font-medium">정사각형</span>
             </button>
           </div>
@@ -948,9 +1026,9 @@ export function AutoWebtoonPanel({
         <Label className="text-xs font-semibold">
           캐릭터 <span className="text-muted-foreground font-normal">(최대 4개, 선택사항)</span>
         </Label>
-        {/* Quick-select character strip */}
+        {/* Quick-select character strip (캐릭터 전용 쿼리 사용) */}
         {(() => {
-          const charItems = externalGalleryData.filter(g => g.characterName && (g.resultImageUrl || g.thumbnailUrl)).slice(0, 12);
+          const charItems = characterStripData.filter(g => g.characterName && (g.resultImageUrl || g.thumbnailUrl));
           if (charItems.length === 0) return null;
           return (
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
@@ -1166,7 +1244,7 @@ export function AutoWebtoonPanel({
           {Array.from({ length: canvasCount }, (_, ci) => (
             <div key={ci} className="flex-shrink-0 text-center">
               <div className="text-[10px] text-muted-foreground mb-0.5">C{ci + 1}</div>
-              <LayoutPreview cuts={cutsPerCanvas} size={36} layoutType={cutLayoutType} />
+              <LayoutPreview cuts={cutsPerCanvas} size={36} layoutType={cutLayoutType} canvasW={effectiveCanvasW} canvasH={effectiveCanvasH} />
             </div>
           ))}
         </div>

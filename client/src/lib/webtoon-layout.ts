@@ -3,8 +3,8 @@
  * 캔버스(450×600) 내에서 컷 수에 따른 영역 계산 + 울퉁불퉁 컷 보더 생성
  */
 
-const CANVAS_W = 540;
-const CANVAS_H = 675;
+const DEFAULT_CANVAS_W = 540;
+const DEFAULT_CANVAS_H = 675;
 const PAD = 40;       // 캔버스 가장자리 여백
 const GAP = 24;       // 컷 사이 간격
 const BORDER_W = 3;   // 컷 보더 두께
@@ -27,9 +27,11 @@ export interface CutRegion {
  *   4컷: 2×2 그리드
  *   layoutType "square" (4컷 전용): 각 컷을 정사각형으로 (세로 가운데 정렬)
  */
-export function getCutRegions(cutsPerCanvas: number, layoutType: CutLayoutType = "default"): CutRegion[] {
-  const contentW = CANVAS_W - PAD * 2;
-  const contentH = CANVAS_H - PAD * 2;
+export function getCutRegions(cutsPerCanvas: number, layoutType: CutLayoutType = "default", canvasW?: number, canvasH?: number): CutRegion[] {
+  const cw = canvasW ?? DEFAULT_CANVAS_W;
+  const ch = canvasH ?? DEFAULT_CANVAS_H;
+  const contentW = cw - PAD * 2;
+  const contentH = ch - PAD * 2;
 
   // Square layout — 4컷 전용
   if (layoutType === "square" && cutsPerCanvas === 4) {
@@ -185,6 +187,8 @@ export function buildDividerLines(
   layoutType: CutLayoutType = "default",
   borderStyle: CutBorderStyle = "wobbly",
   borderWidth?: number,
+  canvasW?: number,
+  canvasH?: number,
 ): Array<{
   id: string;
   lineType: "straight";
@@ -201,7 +205,7 @@ export function buildDividerLines(
 }> {
   if (cutsPerCanvas <= 1) return [];
 
-  const regions = getCutRegions(cutsPerCanvas, layoutType);
+  const regions = getCutRegions(cutsPerCanvas, layoutType, canvasW, canvasH);
 
   return regions.map((region, i) => {
     const pts = regenerateBorderPoints(
