@@ -736,7 +736,7 @@ export default function BubblePage() {
   }, []);
 
   return (
-    <div className="editor-page flex h-screen w-full flex-col bg-background">
+    <div className="editor-page flex h-screen w-full flex-col bg-background" data-lenis-prevent>
       {/* Top bar - Story 스타일과 통일 */}
       <header className="flex h-14 items-center border-b bg-background px-4" data-testid="bubble-toolbar">
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4">
@@ -1226,7 +1226,7 @@ export default function BubblePage() {
                 />
                 <Button
                   variant="outline"
-                  className="h-9 px-3 text-xs shrink-0"
+                  className="h-[3.125rem] px-3 text-xs shrink-0"
                   disabled={creatingFolder || !newFolderName.trim()}
                   onClick={() => {
                     setCreatingFolder(true);

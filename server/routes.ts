@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
 import { supabase } from "./supabaseClient";
-import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, generateThumbnail, applyWatermark } from "./imageGen";
+import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint } from "./imageGen";
 import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown, analyzeCharacterImage } from "./aiText";
 import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, updateProjectFolderSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
@@ -122,8 +122,9 @@ export async function registerRoutes(
         thumbnailUrl = await generateThumbnail(imageDataUrl) || null;
       } catch { /* thumbnail is optional */ }
 
+      let generation: any = null;
       try {
-        await storage.createGeneration({
+        generation = await storage.createGeneration({
           userId,
           characterId: character.id,
           type: "character",
@@ -135,6 +136,17 @@ export async function registerRoutes(
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
         logger.error("Character generation DB save failed", dbError);
+      }
+
+      // Fire-and-forget: detect character name from prompt and save
+      if (generation?.id && prompt) {
+        (async () => {
+          try {
+            // Simple name extraction from prompt: use first meaningful segment
+            const name = prompt.length <= 30 ? prompt : prompt.slice(0, 30);
+            await storage.updateGenerationName(generation.id, userId, name);
+          } catch { /* ignore */ }
+        })();
       }
 
       res.json({ characterId: character.id, imageUrl: imageDataUrl });
@@ -215,6 +227,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { sourceImageDataList, backgroundPrompt, itemsPrompt, characterIds, noBackground, aspectRatio } = parsed.data;
+      const characterNames: string[] | undefined = Array.isArray(req.body.characterNames) ? req.body.characterNames : undefined;
       const skipGallery = req.body.skipGallery === true;
 
       // 모든 캐릭터 소유권 검증
@@ -238,7 +251,7 @@ export async function registerRoutes(
         }
       }
 
-      let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt, noBackground, aspectRatio);
+      let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt, noBackground, aspectRatio, characterNames);
       if (credits.tier !== "pro") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
@@ -300,6 +313,200 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Generative Fill ─────────────────────────────────────────────────────
+  app.post("/api/generative-fill", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData, maskData, prompt } = req.body;
+      if (!imageData || !maskData || !prompt) {
+        return res.status(400).json({ message: "이미지, 마스크, 프롬프트가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 5);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+        }
+      }
+
+      let resultUrl = await generativeFillImage(imageData, maskData, prompt);
+      if (credits.tier !== "pro") {
+        resultUrl = await applyWatermark(resultUrl);
+      }
+
+      let thumbUrl: string | null = null;
+      try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
+
+      try {
+        await storage.createGeneration({
+          userId,
+          characterId: null,
+          type: "background",
+          prompt: `[Generative Fill] ${prompt}`,
+          resultImageUrl: resultUrl,
+          thumbnailUrl: thumbUrl,
+          creditsUsed: 5,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        logger.error("Generative fill DB save failed", dbError);
+      }
+
+      res.json({ imageUrl: resultUrl });
+    } catch (error: any) {
+      logger.error("Generative fill error", error);
+      res.status(500).json({ message: "생성형 채우기에 실패했습니다." });
+    }
+  });
+
+  // ─── Generative Expand ──────────────────────────────────────────────────
+  app.post("/api/generative-expand", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData, top, right, bottom, left, prompt } = req.body;
+      if (!imageData) {
+        return res.status(400).json({ message: "이미지가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 5);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+        }
+      }
+
+      let resultUrl = await generativeExpandImage(
+        imageData,
+        top || 0, right || 0, bottom || 0, left || 0,
+        prompt || ""
+      );
+      if (credits.tier !== "pro") {
+        resultUrl = await applyWatermark(resultUrl);
+      }
+
+      let thumbUrl: string | null = null;
+      try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
+
+      try {
+        await storage.createGeneration({
+          userId,
+          characterId: null,
+          type: "background",
+          prompt: `[Generative Expand] ${prompt || "auto"}`,
+          resultImageUrl: resultUrl,
+          thumbnailUrl: thumbUrl,
+          creditsUsed: 5,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        logger.error("Generative expand DB save failed", dbError);
+      }
+
+      res.json({ imageUrl: resultUrl });
+    } catch (error: any) {
+      logger.error("Generative expand error", error);
+      res.status(500).json({ message: "생성형 확장에 실패했습니다." });
+    }
+  });
+
+  // ─── Generative Upscale ─────────────────────────────────────────────────
+  app.post("/api/generative-upscale", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData, scale } = req.body;
+      if (!imageData) {
+        return res.status(400).json({ message: "이미지가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 3);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+        }
+      }
+
+      let resultUrl = await generativeUpscaleImage(imageData, scale || 2);
+      if (credits.tier !== "pro") {
+        resultUrl = await applyWatermark(resultUrl);
+      }
+
+      let thumbUrl: string | null = null;
+      try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
+
+      try {
+        await storage.createGeneration({
+          userId,
+          characterId: null,
+          type: "background",
+          prompt: `[Generative Upscale] ${scale || 2}x`,
+          resultImageUrl: resultUrl,
+          thumbnailUrl: thumbUrl,
+          creditsUsed: 3,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        logger.error("Generative upscale DB save failed", dbError);
+      }
+
+      res.json({ imageUrl: resultUrl });
+    } catch (error: any) {
+      logger.error("Generative upscale error", error);
+      res.status(500).json({ message: "업스케일에 실패했습니다." });
+    }
+  });
+
+  // ─── Object Segmentation ────────────────────────────────────────────────
+  app.post("/api/object-segment", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData } = req.body;
+      if (!imageData) {
+        return res.status(400).json({ message: "이미지가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 3);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+        }
+      }
+
+      const segments = await segmentObjects(imageData);
+      res.json({ segments });
+    } catch (error: any) {
+      logger.error("Object segmentation error", error);
+      res.status(500).json({ message: "개체 감지에 실패했습니다." });
+    }
+  });
+
+  app.post("/api/object-select-at-point", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData, clickX, clickY, imageWidth, imageHeight } = req.body;
+      if (!imageData || clickX === undefined || clickY === undefined) {
+        return res.status(400).json({ message: "이미지와 클릭 좌표가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 1);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다." });
+        }
+      }
+
+      const maskDataUrl = await selectObjectAtPoint(imageData, clickX, clickY, imageWidth || 540, imageHeight || 675);
+      res.json({ maskDataUrl });
+    } catch (error: any) {
+      logger.error("Object selection at point error", error);
+      res.status(500).json({ message: "개체 선택에 실패했습니다." });
+    }
+  });
+
   app.post("/api/ad-match", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
@@ -349,15 +556,18 @@ export async function registerRoutes(
   app.post("/api/ai-prompt", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const { type, context } = req.body;
-      if (!type || !["character", "pose", "background"].includes(type)) {
+      const { type, context, referenceImageUrl } = req.body;
+      if (!type || !["character", "pose", "background", "style-detect"].includes(type)) {
         return res.status(400).json({ message: "잘못된 타입입니다." });
       }
-      const canUse = await storage.deductCredit(userId, 1);
-      if (!canUse) {
-        return res.status(403).json({ message: "크레딧이 부족합니다." });
+      // style-detect is a free utility call (no credit deduction)
+      if (type !== "style-detect") {
+        const canUse = await storage.deductCredit(userId, 1);
+        if (!canUse) {
+          return res.status(403).json({ message: "크레딧이 부족합니다." });
+        }
       }
-      const result = await generateAIPrompt(type, context);
+      const result = await generateAIPrompt(type, context, referenceImageUrl);
       res.json({ prompt: result });
     } catch (error: any) {
       res.status(500).json({ message: "AI 프롬프트 생성에 실패했습니다." });
@@ -423,11 +633,22 @@ export async function registerRoutes(
         const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 24, 1), 100);
         const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
         const type = (req.query.type as string) || "all";
+        const folderId = req.query.folderId ? parseInt(String(req.query.folderId)) : undefined;
 
-        const [items, total] = await Promise.all([
-          storage.getGenerationsLight(userId, limit, offset, type),
-          storage.getGalleryCount(userId, type),
-        ]);
+        let items: any[];
+        let total: number;
+
+        if (folderId && !isNaN(folderId)) {
+          [items, total] = await Promise.all([
+            storage.getGenerationsByFolder(folderId, userId, limit, offset),
+            storage.getGenerationsByFolderCount(folderId, userId),
+          ]);
+        } else {
+          [items, total] = await Promise.all([
+            storage.getGenerationsLight(userId, limit, offset, type),
+            storage.getGalleryCount(userId, type),
+          ]);
+        }
 
         res.json({
           items,
@@ -989,6 +1210,169 @@ export async function registerRoutes(
     } catch (error: any) {
       logger.error("Delete gallery item error", error);
       res.status(500).json({ message: "삭제에 실패했습니다." });
+    }
+  });
+
+  // ── Character Name ──
+  app.patch("/api/gallery/:id/name", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const { name } = req.body;
+      if (typeof name !== "string" || name.length > 100) {
+        return res.status(400).json({ message: "이름은 100자 이하여야 합니다." });
+      }
+      const updated = await storage.updateGenerationName(id, userId, name);
+      if (!updated) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error("Update generation name error", error);
+      res.status(500).json({ message: "이름 변경에 실패했습니다." });
+    }
+  });
+
+  // ── Regenerate gallery character ──
+  app.post("/api/gallery/:id/regenerate", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+
+      const gen = await storage.getGenerationById(id, userId);
+      if (!gen) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+
+      const { prompt } = req.body;
+      if (prompt && (typeof prompt !== "string" || prompt.length > 500)) {
+        return res.status(400).json({ message: "프롬프트는 500자 이하여야 합니다." });
+      }
+
+      // Determine style from linked character or default
+      let style = "simple-line";
+      if (gen.characterId) {
+        const char = await storage.getCharacter(gen.characterId);
+        if (char) style = char.style;
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier !== "pro") {
+        const canGenerate = await storage.deductCredit(userId, 2);
+        if (!canGenerate) {
+          return res.status(403).json({ message: "크레딧이 부족합니다." });
+        }
+      }
+
+      // Use existing image as reference + optional prompt for modifications
+      const regenPrompt = prompt?.trim() || gen.prompt || "same character in a different pose and expression";
+      let imageDataUrl = await generateCharacterImage(regenPrompt, style, gen.resultImageUrl);
+      if (credits.tier !== "pro") {
+        imageDataUrl = await applyWatermark(imageDataUrl);
+      }
+
+      let thumbnailUrl: string | null = null;
+      try {
+        thumbnailUrl = await generateThumbnail(imageDataUrl) || null;
+      } catch { /* optional */ }
+
+      await storage.updateGenerationImage(id, userId, imageDataUrl, thumbnailUrl);
+      await storage.incrementTotalGenerations(userId);
+
+      res.json({ imageUrl: imageDataUrl, thumbnailUrl });
+    } catch (error: any) {
+      logger.error("Gallery regenerate error", error);
+      res.status(500).json({ message: "캐릭터 재생성에 실패했습니다." });
+    }
+  });
+
+  // ── Character Folders ──
+  app.post("/api/character-folders", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { name } = req.body;
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({ message: "폴더 이름을 입력해주세요." });
+      }
+      const folder = await storage.createCharacterFolder({ userId, name: name.trim() });
+      res.json(folder);
+    } catch (error: any) {
+      logger.error("Create character folder error", error);
+      res.status(500).json({ message: "폴더 생성에 실패했습니다." });
+    }
+  });
+
+  app.get("/api/character-folders", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const folders = await storage.getCharacterFoldersByUser(userId);
+      res.json(folders);
+    } catch (error: any) {
+      logger.error("Get character folders error", error);
+      res.status(500).json({ message: "폴더 목록 조회에 실패했습니다." });
+    }
+  });
+
+  app.patch("/api/character-folders/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const { name } = req.body;
+      if (!name || typeof name !== "string") {
+        return res.status(400).json({ message: "폴더 이름을 입력해주세요." });
+      }
+      const updated = await storage.updateCharacterFolder(id, userId, { name: name.trim() });
+      if (!updated) return res.status(404).json({ message: "폴더를 찾을 수 없습니다." });
+      res.json(updated);
+    } catch (error: any) {
+      logger.error("Update character folder error", error);
+      res.status(500).json({ message: "폴더 수정에 실패했습니다." });
+    }
+  });
+
+  app.delete("/api/character-folders/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const deleted = await storage.deleteCharacterFolder(id, userId);
+      if (!deleted) return res.status(404).json({ message: "폴더를 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error("Delete character folder error", error);
+      res.status(500).json({ message: "폴더 삭제에 실패했습니다." });
+    }
+  });
+
+  app.post("/api/character-folders/:id/items", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const folderId = parseInt(String(req.params.id));
+      if (isNaN(folderId)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const { generationIds } = req.body;
+      if (!Array.isArray(generationIds) || generationIds.length === 0) {
+        return res.status(400).json({ message: "추가할 항목을 선택해주세요." });
+      }
+      const numIds = generationIds.map((id: any) => parseInt(String(id))).filter((id: number) => !isNaN(id));
+      const added = await storage.addCharacterFolderItems(folderId, userId, numIds);
+      res.json({ success: true, added });
+    } catch (error: any) {
+      logger.error("Add character folder items error", error);
+      res.status(500).json({ message: "폴더에 추가하는데 실패했습니다." });
+    }
+  });
+
+  app.delete("/api/character-folders/:id/items/:generationId", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const folderId = parseInt(String(req.params.id));
+      const generationId = parseInt(String(req.params.generationId));
+      if (isNaN(folderId) || isNaN(generationId)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const removed = await storage.removeCharacterFolderItem(folderId, userId, generationId);
+      if (!removed) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error("Remove character folder item error", error);
+      res.status(500).json({ message: "폴더에서 제거하는데 실패했습니다." });
     }
   });
 

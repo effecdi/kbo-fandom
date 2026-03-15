@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo, startTransition } from "react";
+import { regenerateBorderPoints } from "@/lib/webtoon-layout";
 import { useSearch } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -92,15 +93,27 @@ import {
   ArrowRight as ArrowRightIcon,
   Sparkles,
   FolderPlus,
+  Paintbrush,
+  Maximize,
+  ZoomIn as ZoomInIcon,
+  CircleDot,
+  PlusCircle,
+  MinusCircle,
+  Scaling,
+  ScanSearch,
+  Palette,
+  MousePointerClick,
 } from "lucide-react";
 import DrawingCanvas, { type DrawingToolState, type DrawingCanvasHandle } from "@/components/drawing-canvas";
+import SelectionCanvas, { type SelectionCanvasHandle, type SelectionMode } from "@/components/selection-canvas";
+import ExpandCanvas from "@/components/expand-canvas";
 import "@/components/drawing-tools-panel.scss";
 import { FlowStepper } from "@/components/flow-stepper";
 import { AutoWebtoonPanel } from "@/components/auto-webtoon-panel";
 import { EditorOnboarding } from "@/components/editor-onboarding";
 import { InstagramPublishDialog } from "@/components/instagram-publish-dialog";
 import { getFlowState, clearFlowState } from "@/lib/flow";
-import type { StoryPanelScript, Generation, GenerationLight } from "@shared/schema";
+import type { StoryPanelScript, Generation, GenerationLight, CharacterFolder } from "@shared/schema";
 import { Instagram } from "lucide-react";
 import ReactFlow, { Background, Controls, type Node, type NodeChange, applyNodeChanges } from "reactflow";
 import {
@@ -148,32 +161,6 @@ const BUBBLE_TEMPLATE_CATEGORIES: TemplateCategory[] = [
 ];
 
 type ScriptStyle = "filled" | "box" | "handwritten-box" | "no-bg" | "no-border";
-type DragMode =
-  | null
-  | "move"
-  | "resize-br"
-  | "resize-bl"
-  | "resize-tr"
-  | "resize-tl"
-  | "resize-r"
-  | "resize-l"
-  | "resize-t"
-  | "resize-b"
-  | "move-char"
-  | "resize-char-tl"
-  | "resize-char-tr"
-  | "resize-char-bl"
-  | "resize-char-br"
-  | "rotate-char"
-  | "move-script-top"
-  | "move-script-bottom"
-  | "resize-script-top"
-  | "resize-script-bottom"
-  | "move-tail"
-  | "tail-ctrl1"
-  | "tail-ctrl2"
-  | "tail-ctrl3"
-  | "tail-ctrl4";
 
 const SCRIPT_STYLE_OPTIONS: { value: ScriptStyle; label: string }[] = [
   { value: "filled", label: "채움" },
@@ -298,6 +285,8 @@ interface CharacterPlacement {
   zIndex?: number;
   locked?: boolean;
   visible?: boolean;
+  name?: string;
+  generationId?: number;
 }
 
 interface ScriptData {
@@ -902,8 +891,43 @@ function rectsIntersect(a: BBox, b: BBox): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
+// ─── HSL color utilities ─────────────────────────────────────────────────
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    else if (max === g) h = ((b - r) / d + 2) / 6;
+    else h = ((r - g) / d + 4) / 6;
+  }
+  return [h, s, l];
+}
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  if (s === 0) { const v = Math.round(l * 255); return [v, v, v]; }
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  return [
+    Math.round(hue2rgb(p, q, h + 1/3) * 255),
+    Math.round(hue2rgb(p, q, h) * 255),
+    Math.round(hue2rgb(p, q, h - 1/3) * 255),
+  ];
+}
+
 const CANVAS_W = 540;
-const CANVAS_H = 675;
+let CANVAS_H = 675;
+type CanvasRatio = "3:4" | "1:1";
 
 function PanelCanvas({
   panel,
@@ -929,6 +953,7 @@ function PanelCanvas({
   onEditScriptPositionChange,
   externalSelectedScriptPosition,
   isGenerating,
+  canvasH,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -953,17 +978,11 @@ function PanelCanvas({
   onEditScriptPositionChange?: (position: "top" | "bottom" | null) => void;
   externalSelectedScriptPosition?: "top" | "bottom" | null;
   isGenerating?: boolean;
+  canvasH?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
-  const dragModeRef = useRef<DragMode>(null);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-  const dragBubbleStartRef = useRef({ x: 0, y: 0, w: 0, h: 0 });
-  const dragCharStartRef = useRef({ x: 0, y: 0, scale: 1 });
-  const dragScriptStartRef = useRef({ x: 0, y: 0 });
-  const dragScriptFontStartRef = useRef(20);
-  const dragScriptSizeStartRef = useRef({ w: 0, h: 0 });
   const selectedBubbleIdRef = useRef(selectedBubbleId);
   const selectedCharIdRef = useRef(selectedCharId);
   const selectedShapeIdRef = useRef(selectedShapeId);
@@ -1234,41 +1253,7 @@ function PanelCanvas({
           }
         }
 
-        // Selection box + resize handles (선택된 경우에만)
-        if (selectedTextIdRef.current === te.id) {
-          const drawTextSelection = () => {
-            ctx.save();
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = HANDLE_COLOR;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 3]);
-            ctx.strokeRect(te.x - 3, te.y - 3, te.width + 6, te.height + 6);
-            ctx.setLineDash([]);
-            // Resize handles
-            const hs = 8;
-            const textHandles = [
-              { x: te.x - hs / 2, y: te.y - hs / 2 },
-              { x: te.x + te.width - hs / 2, y: te.y - hs / 2 },
-              { x: te.x - hs / 2, y: te.y + te.height - hs / 2 },
-              { x: te.x + te.width - hs / 2, y: te.y + te.height - hs / 2 },
-              { x: te.x + te.width / 2 - hs / 2, y: te.y - hs / 2 },
-              { x: te.x + te.width / 2 - hs / 2, y: te.y + te.height - hs / 2 },
-              { x: te.x - hs / 2, y: te.y + te.height / 2 - hs / 2 },
-              { x: te.x + te.width - hs / 2, y: te.y + te.height / 2 - hs / 2 },
-            ];
-            textHandles.forEach((c) => {
-              ctx.beginPath();
-              ctx.fillStyle = "#ffffff";
-              ctx.fillRect(c.x, c.y, hs, hs);
-              ctx.strokeStyle = HANDLE_COLOR;
-              ctx.lineWidth = 1.5;
-              ctx.strokeRect(c.x, c.y, hs, hs);
-            });
-            ctx.restore();
-          };
-          if (maskShape) deferredSelections.push(drawTextSelection);
-          else drawTextSelection();
-        }
+        // Selection indicator is rendered by HTML overlay (circle handles)
         ctx.restore();
       } else if (d.type === "line") {
         const le = d.le;
@@ -1276,8 +1261,13 @@ function PanelCanvas({
         ctx.globalAlpha = le.opacity;
         ctx.strokeStyle = le.color;
         ctx.lineWidth = le.strokeWidth;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
+        if ((le as any).borderStyle === "simple") {
+          ctx.lineCap = "square";
+          ctx.lineJoin = "miter";
+        } else {
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+        }
 
         // Dash pattern
         if (le.dashPattern === "dashed") ctx.setLineDash([8, 4]);
@@ -1393,38 +1383,7 @@ function PanelCanvas({
           }
 
           // Selection indicator — always drawn for selected shape
-          if (se.id === selectedShapeIdRef.current) {
-            ctx.beginPath();
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = HANDLE_COLOR;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([5, 4]);
-            ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
-            ctx.setLineDash([]);
-
-            // Resize handles: 4 corners + 4 edges = 8 handles
-            const hs = 8;
-            const handles = [
-              // corners
-              { x: se.x - hs / 2, y: se.y - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y - hs / 2 },
-              { x: se.x - hs / 2, y: se.y + se.height - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y + se.height - hs / 2 },
-              // edges
-              { x: se.x + se.width / 2 - hs / 2, y: se.y - hs / 2 },
-              { x: se.x + se.width / 2 - hs / 2, y: se.y + se.height - hs / 2 },
-              { x: se.x - hs / 2, y: se.y + se.height / 2 - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y + se.height / 2 - hs / 2 },
-            ];
-            handles.forEach((c) => {
-              ctx.beginPath();
-              ctx.fillStyle = "#ffffff";
-              ctx.fillRect(c.x, c.y, hs, hs);
-              ctx.strokeStyle = HANDLE_COLOR;
-              ctx.lineWidth = 1.5;
-              ctx.strokeRect(c.x, c.y, hs, hs);
-            });
-          }
+          // Selection indicator is rendered by HTML overlay (circle handles)
 
           ctx.restore();
         }
@@ -1463,38 +1422,7 @@ function PanelCanvas({
           // Selection indicator for selected character — use clip dimensions if available
           const displayW = hasClip ? ch.width! : w;
           const displayH = hasClip ? ch.height! : h;
-          if (ch.id === selectedCharIdRef.current) {
-            const drawCharSelection = () => {
-              const cx = ch.x - displayW / 2;
-              const cy = ch.y - displayH / 2;
-              ctx.save();
-              ctx.globalAlpha = 1;
-              ctx.strokeStyle = HANDLE_COLOR;
-              ctx.lineWidth = 1.5;
-              ctx.setLineDash([5, 4]);
-              ctx.strokeRect(cx - 3, cy - 3, displayW + 6, displayH + 6);
-              ctx.setLineDash([]);
-
-              const handleSize = 8;
-              const corners = [
-                { x: cx - handleSize / 2, y: cy - handleSize / 2 },
-                { x: cx + displayW - handleSize / 2, y: cy - handleSize / 2 },
-                { x: cx - handleSize / 2, y: cy + displayH - handleSize / 2 },
-                { x: cx + displayW - handleSize / 2, y: cy + displayH - handleSize / 2 },
-              ];
-              corners.forEach((c) => {
-                ctx.beginPath();
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(c.x, c.y, handleSize, handleSize);
-                ctx.strokeStyle = HANDLE_COLOR;
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(c.x, c.y, handleSize, handleSize);
-              });
-              ctx.restore();
-            };
-            if (maskShape) deferredSelections.push(drawCharSelection);
-            else drawCharSelection();
-          }
+          // Selection indicator is rendered by HTML overlay (circle handles)
         } else if (ch.imageUrl) {
           // Show loading placeholder while imageEl is loading
           const ph = 80;
@@ -1583,65 +1511,7 @@ function PanelCanvas({
 
   useEffect(() => {
     redraw();
-  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, selectedTextId, editingBubbleId, redraw, fontsReady, hideDrawingLayers, isGenerating]);
-
-  const getCanvasPos = useCallback((clientX: number, clientY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: (clientX - rect.left) * (CANVAS_W / rect.width),
-      y: (clientY - rect.top) * (CANVAS_H / rect.height),
-    };
-  }, []);
-
-  const getHandleAtPos = useCallback(
-    (x: number, y: number, b: SpeechBubble): DragMode => {
-      const hs = 10;
-
-      if (b.tailStyle !== "none") {
-        const geo = getTailGeometry(b);
-        if (Math.abs(x - geo.tipX) < hs && Math.abs(y - geo.tipY) < hs) {
-          return "move-tail";
-        }
-        const baseMidX = (geo.baseAx + geo.baseBx) / 2;
-        const baseMidY = (geo.baseAy + geo.baseBy) / 2;
-        const pull = 0.5 + (b.tailCurve ?? 0.5) * 0.45;
-        const tipPull = 0.3;
-
-        const cp1x = b.tailCtrl1X ?? (geo.baseAx + (baseMidX - geo.baseAx) * pull);
-        const cp1y = b.tailCtrl1Y ?? (geo.baseAy + (baseMidY - geo.baseAy) * pull);
-        const cp2x = b.tailCtrl2X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
-        const cp2y = b.tailCtrl2Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
-        const cp3x = b.tailCtrl3X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
-        const cp3y = b.tailCtrl3Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
-        const cp4x = b.tailCtrl4X ?? (geo.baseBx + (baseMidX - geo.baseBx) * pull);
-        const cp4y = b.tailCtrl4Y ?? (geo.baseBy + (baseMidY - geo.baseBy) * pull);
-
-        const hitRadius = 12;
-        if (Math.hypot(x - cp1x, y - cp1y) < hitRadius) return "tail-ctrl1";
-        if (Math.hypot(x - cp2x, y - cp2y) < hitRadius) return "tail-ctrl2";
-        if (Math.hypot(x - cp3x, y - cp3y) < hitRadius) return "tail-ctrl3";
-        if (Math.hypot(x - cp4x, y - cp4y) < hitRadius) return "tail-ctrl4";
-      }
-
-      const handles: { mode: DragMode; hx: number; hy: number }[] = [
-        { mode: "resize-tl", hx: b.x - 4, hy: b.y - 4 },
-        { mode: "resize-t", hx: b.x + b.width / 2, hy: b.y - 4 },
-        { mode: "resize-tr", hx: b.x + b.width + 4, hy: b.y - 4 },
-        { mode: "resize-r", hx: b.x + b.width + 4, hy: b.y + b.height / 2 },
-        { mode: "resize-br", hx: b.x + b.width + 4, hy: b.y + b.height + 4 },
-        { mode: "resize-b", hx: b.x + b.width / 2, hy: b.y + b.height + 4 },
-        { mode: "resize-bl", hx: b.x - 4, hy: b.y + b.height + 4 },
-        { mode: "resize-l", hx: b.x - 4, hy: b.y + b.height / 2 },
-      ];
-      for (const h of handles) {
-        if (Math.abs(x - h.hx) < hs && Math.abs(y - h.hy) < hs) return h.mode;
-      }
-      return null;
-    },
-    [],
-  );
+  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, selectedTextId, editingBubbleId, redraw, fontsReady, hideDrawingLayers, isGenerating, canvasH]);
 
   const updateBubbleInPanel = useCallback(
     (bubbleId: string, updates: Partial<SpeechBubble>) => {
@@ -1663,573 +1533,6 @@ function PanelCanvas({
       onUpdate({ ...p, characters: newChars });
     },
     [onUpdate],
-  );
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<HTMLCanvasElement>) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      canvas.setPointerCapture(e.pointerId);
-      const pos = getCanvasPos(e.clientX, e.clientY);
-      const p = panelRef.current;
-      const sid = selectedBubbleIdRef.current;
-      if (sid) {
-        const selB = p.bubbles.find((b) => b.id === sid);
-        if (selB && !selB.locked) {
-          const handle = getHandleAtPos(pos.x, pos.y, selB);
-          if (handle) {
-            dragModeRef.current = handle;
-            dragStartRef.current = pos;
-            dragBubbleStartRef.current = {
-              x: selB.x,
-              y: selB.y,
-              w: selB.width,
-              h: selB.height,
-            };
-            return;
-          }
-        }
-      }
-
-      const selCid = selectedCharIdRef.current;
-      if (selCid) {
-        const selCh = p.characters.find((c) => c.id === selCid);
-        if (selCh && !selCh.locked) {
-          const cw = selCh.imageEl ? selCh.imageEl.naturalWidth * selCh.scale : 80;
-          const ch2 = selCh.imageEl ? selCh.imageEl.naturalHeight * selCh.scale : 80;
-          const cx = selCh.x - cw / 2;
-          const cy = selCh.y - ch2 / 2;
-          // Larger handle hit zone for full-canvas images
-          const hs = Math.max(18, Math.min(40, cw * 0.08));
-          const charHandles: { mode: DragMode; hx: number; hy: number }[] = [
-            { mode: "resize-char-tl", hx: cx, hy: cy },
-            { mode: "resize-char-tr", hx: cx + cw, hy: cy },
-            { mode: "resize-char-bl", hx: cx, hy: cy + ch2 },
-            { mode: "resize-char-br", hx: cx + cw, hy: cy + ch2 },
-          ];
-          for (const handle of charHandles) {
-            if (
-              Math.abs(pos.x - handle.hx) < hs &&
-              Math.abs(pos.y - handle.hy) < hs
-            ) {
-              dragModeRef.current = handle.mode;
-              dragStartRef.current = pos;
-              dragCharStartRef.current = {
-                x: selCh.x,
-                y: selCh.y,
-                scale: selCh.scale,
-              };
-              return;
-            }
-          }
-          const rx = selCh.x;
-          const ry = cy - 18;
-          if (Math.hypot(pos.x - rx, pos.y - ry) <= 10) {
-            dragModeRef.current = "rotate-char";
-            dragStartRef.current = pos;
-            dragCharStartRef.current = {
-              x: selCh.x,
-              y: selCh.y,
-              scale: selCh.scale,
-              rotation: selCh.rotation || 0,
-              angleStart: Math.atan2(pos.y - selCh.y, pos.x - selCh.x),
-            } as any;
-            return;
-          }
-        }
-      }
-
-      // 스크립트(상/하단)는 캔버스 최상위에 렌더링되므로 히트 감지도 가장 먼저 처리
-      const scriptCtx = canvas.getContext("2d");
-      if (scriptCtx) {
-        for (const scriptType of ["top", "bottom"] as const) {
-          const sd = scriptType === "top" ? p.topScript : p.bottomScript;
-          if (sd && sd.text && sd.visible !== false) {
-            const rect = getScriptRect(
-              scriptCtx,
-              sd,
-              scriptType,
-              CANVAS_W,
-              CANVAS_H,
-            );
-            const hs = 8;
-            const corners = [
-              { x: rect.bx - 2, y: rect.by - 2 },
-              { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
-              { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
-              { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
-            ];
-            const nearHandle = (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) && corners.some(
-              (c) => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs
-            );
-            if (nearHandle) {
-              dragModeRef.current =
-                scriptType === "top" ? "resize-script-top" : "resize-script-bottom";
-              dragStartRef.current = pos;
-              dragScriptFontStartRef.current = sd.fontSize || 20;
-              dragScriptSizeStartRef.current = { w: rect.bw, h: rect.bh };
-              onSelectBubble(null);
-              onSelectChar(null);
-              selectedBubbleIdRef.current = null;
-              selectedCharIdRef.current = null;
-              onSelectScript?.(scriptType);
-              return;
-            } else if (
-              pos.x >= rect.bx &&
-              pos.x <= rect.bx + rect.bw &&
-              pos.y >= rect.by &&
-              pos.y <= rect.by + rect.bh
-            ) {
-              onSelectBubble(null);
-              onSelectChar(null);
-              selectedBubbleIdRef.current = null;
-              selectedCharIdRef.current = null;
-              // 클릭 즉시 선택 + 드래그 이동 가능 (말풍선과 동일)
-              setSelectedScriptPos(scriptType);
-              dragModeRef.current =
-                scriptType === "top" ? "move-script-top" : "move-script-bottom";
-              dragStartRef.current = pos;
-              dragScriptStartRef.current = { x: sd.x ?? rect.bx, y: sd.y ?? rect.by };
-              onSelectScript?.(scriptType);
-              return;
-            }
-          }
-        }
-      }
-
-      // 캐릭터 + 말풍선 히트 감지 (z-order 역순)
-      {
-        const drawables: Array<
-          | { type: "char"; z: number; ch: CharacterPlacement }
-          | { type: "bubble"; z: number; b: SpeechBubble }
-        > = [
-            ...p.characters.map((ch) => ({ type: "char" as const, z: ch.zIndex ?? 0, ch })),
-            ...p.bubbles.map((b) => ({ type: "bubble" as const, z: b.zIndex ?? 10, b })),
-          ];
-        drawables.sort((a, b) => a.z - b.z);
-        for (let i = drawables.length - 1; i >= 0; i--) {
-          const d = drawables[i];
-          if (d.type === "bubble") {
-            const b = d.b;
-            if (pos.x >= b.x && pos.x <= b.x + b.width && pos.y >= b.y && pos.y <= b.y + b.height) {
-              if (selectedBubbleIdRef.current === b.id) {
-                const charUnderneath = p.characters.find(ch => {
-                  if (!ch.imageEl) return false;
-                  const cw = ch.imageEl.naturalWidth * ch.scale;
-                  const ch2 = ch.imageEl.naturalHeight * ch.scale;
-                  return pos.x >= ch.x - cw/2 && pos.x <= ch.x + cw/2 &&
-                         pos.y >= ch.y - ch2/2 && pos.y <= ch.y + ch2/2;
-                });
-                if (charUnderneath) {
-                  onSelectChar(charUnderneath.id);
-                  onSelectBubble(null);
-                  selectedCharIdRef.current = charUnderneath.id;
-                  selectedBubbleIdRef.current = null;
-                  onSelectScript?.(null);
-                  setSelectedScriptPos(null);
-                  setEditingScriptPos(null);
-                  dragModeRef.current = "move-char";
-                  dragStartRef.current = pos;
-                  dragCharStartRef.current = { x: charUnderneath.x, y: charUnderneath.y, scale: charUnderneath.scale };
-                  return;
-                }
-              }
-              onSelectBubble(b.id);
-              onSelectChar(null);
-              selectedBubbleIdRef.current = b.id;
-              selectedCharIdRef.current = null;
-              onSelectScript?.(null);
-              setSelectedScriptPos(null);
-              setEditingScriptPos(null);
-              if (editingBubbleIdRef.current && editingBubbleIdRef.current !== b.id) {
-                setEditingBubbleId(null);
-              }
-              dragModeRef.current = "move";
-              dragStartRef.current = pos;
-              dragBubbleStartRef.current = { x: b.x, y: b.y, w: b.width, h: b.height };
-              return;
-            }
-          } else if (d.type === "char") {
-            const ch = d.ch;
-            const naturalW = ch.imageEl && ch.imageEl.naturalWidth ? ch.imageEl.naturalWidth * ch.scale : 80;
-            const naturalH = ch.imageEl && ch.imageEl.naturalHeight ? ch.imageEl.naturalHeight * ch.scale : 80;
-            const cw2 = Math.min(naturalW, CANVAS_W * 2);
-            const ch2h = Math.min(naturalH, CANVAS_H * 2);
-            if (
-              pos.x >= ch.x - cw2 / 2 &&
-              pos.x <= ch.x + cw2 / 2 &&
-              pos.y >= ch.y - ch2h / 2 &&
-              pos.y <= ch.y + ch2h / 2
-            ) {
-              onSelectChar(ch.id);
-              onSelectBubble(null);
-              selectedBubbleIdRef.current = null;
-              selectedCharIdRef.current = ch.id;
-              setEditingBubbleId(null);
-              setSelectedScriptPos(null);
-              setEditingScriptPos(null);
-              onSelectScript?.(null);
-              dragStartRef.current = pos;
-              dragCharStartRef.current = { x: ch.x, y: ch.y, scale: ch.scale };
-              const isFullCanvas = naturalW >= CANVAS_W * 0.8;
-              const cxL = ch.x - cw2 / 2;
-              const cyT = ch.y - ch2h / 2;
-              const cornerHitZone = isFullCanvas ? 36 : 20;
-              const inOff = isFullCanvas ? 20 : 0;
-              const corners2: { mode: DragMode; hx: number; hy: number }[] = [
-                { mode: "resize-char-tl", hx: cxL + inOff, hy: cyT + inOff },
-                { mode: "resize-char-tr", hx: cxL + cw2 - inOff, hy: cyT + inOff },
-                { mode: "resize-char-bl", hx: cxL + inOff, hy: cyT + ch2h - inOff },
-                { mode: "resize-char-br", hx: cxL + cw2 - inOff, hy: cyT + ch2h - inOff },
-              ];
-              let foundCorner = false;
-              for (const corner of corners2) {
-                if (Math.abs(pos.x - corner.hx) < cornerHitZone && Math.abs(pos.y - corner.hy) < cornerHitZone) {
-                  dragModeRef.current = corner.mode;
-                  foundCorner = true;
-                  break;
-                }
-              }
-              if (!foundCorner) dragModeRef.current = "move-char";
-              return;
-            }
-          }
-        }
-      }
-
-      onSelectBubble(null);
-      onSelectChar(null);
-      selectedBubbleIdRef.current = null;
-      selectedCharIdRef.current = null;
-      setEditingBubbleId(null);
-      setEditingScriptPos(null);
-      setSelectedScriptPos(null);
-      onSelectScript?.(null);
-    },
-    [getCanvasPos, getHandleAtPos, onSelectBubble, onSelectChar],
-  );
-
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent<HTMLCanvasElement>) => {
-      const pos = getCanvasPos(e.clientX, e.clientY);
-      const mode = dragModeRef.current;
-
-      if (!mode) {
-        const canvas = canvasRef.current;
-        if (canvas) canvas.style.cursor = "default";
-        const p = panelRef.current;
-
-        const scid = selectedCharIdRef.current;
-        if (scid) {
-          const sch = p.characters.find((c) => c.id === scid);
-          if (sch) {
-            const cw = sch.imageEl ? sch.imageEl.naturalWidth * sch.scale : 80;
-            const ch2 = sch.imageEl ? sch.imageEl.naturalHeight * sch.scale : 80;
-            const cx = sch.x - cw / 2;
-            const cy = sch.y - ch2 / 2;
-            const hs = 12;
-            const charCorners = [
-              { hx: cx, hy: cy, cur: "nwse-resize" },
-              { hx: cx + cw, hy: cy, cur: "nesw-resize" },
-              { hx: cx, hy: cy + ch2, cur: "nesw-resize" },
-              { hx: cx + cw, hy: cy + ch2, cur: "nwse-resize" },
-            ];
-            for (const hc of charCorners) {
-              if (
-                Math.abs(pos.x - hc.hx) < hs &&
-                Math.abs(pos.y - hc.hy) < hs
-              ) {
-                if (canvas) canvas.style.cursor = hc.cur;
-                return;
-              }
-            }
-          }
-        }
-
-        // 스크립트 커서를 먼저 체크 (최상위 렌더링)
-        {
-          const cvs = canvasRef.current;
-          if (cvs) {
-            const sCtx = cvs.getContext("2d");
-            if (sCtx) {
-              let scriptHit = false;
-              for (const scriptType of ["top", "bottom"] as const) {
-                const sd = scriptType === "top" ? p.topScript : p.bottomScript;
-                if (sd && sd.text && sd.visible !== false) {
-                  const rect = getScriptRect(
-                    sCtx,
-                    sd,
-                    scriptType,
-                    CANVAS_W,
-                    CANVAS_H,
-                  );
-                  if (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) {
-                    const hs = 8;
-                    const corners = [
-                      { x: rect.bx - 2, y: rect.by - 2 },
-                      { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
-                      { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
-                      { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
-                    ];
-                    if (corners.some(c => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs)) {
-                      cvs.style.cursor = "nwse-resize";
-                      scriptHit = true;
-                      break;
-                    }
-                  }
-                  if (
-                    pos.x >= rect.bx &&
-                    pos.x <= rect.bx + rect.bw &&
-                    pos.y >= rect.by &&
-                    pos.y <= rect.by + rect.bh
-                  ) {
-                    cvs.style.cursor = "move";
-                    scriptHit = true;
-                    break;
-                  }
-                }
-              }
-              if (scriptHit) return;
-            }
-          }
-        }
-
-        // 캐릭터/말풍선 커서
-        {
-          const drawables: Array<
-            | { type: "char"; z: number; ch: CharacterPlacement }
-            | { type: "bubble"; z: number; b: SpeechBubble }
-          > = [
-              ...p.characters.map((ch) => ({ type: "char" as const, z: ch.zIndex ?? 0, ch })),
-              ...p.bubbles.map((b) => ({ type: "bubble" as const, z: b.zIndex ?? 10, b })),
-            ];
-          drawables.sort((a, b) => a.z - b.z);
-          for (let i = drawables.length - 1; i >= 0; i--) {
-            const d = drawables[i];
-            if (d.type === "bubble") {
-              const b = d.b;
-              if (pos.x >= b.x && pos.x <= b.x + b.width && pos.y >= b.y && pos.y <= b.y + b.height) {
-                if (canvas) canvas.style.cursor = "move";
-                return;
-              }
-            } else if (d.type === "char") {
-              const ch = d.ch;
-              const naturalW = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
-              const naturalH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
-              const cw2 = Math.min(naturalW, CANVAS_W * 2);
-              const ch2h = Math.min(naturalH, CANVAS_H * 2);
-              if (pos.x >= ch.x - cw2 / 2 && pos.x <= ch.x + cw2 / 2 &&
-                  pos.y >= ch.y - ch2h / 2 && pos.y <= ch.y + ch2h / 2) {
-                if (canvas) canvas.style.cursor = "move";
-                return;
-              }
-            }
-          }
-        }
-        return;
-      }
-
-      const dx = pos.x - dragStartRef.current.x;
-      const dy = pos.y - dragStartRef.current.y;
-
-      if (mode === "move-script-top" || mode === "move-script-bottom") {
-        const p = panelRef.current;
-        const sd = mode === "move-script-top" ? p.topScript : p.bottomScript;
-        if (sd) {
-          const newX = dragScriptStartRef.current.x + dx;
-          const newY = dragScriptStartRef.current.y + dy;
-          const key = mode === "move-script-top" ? "topScript" : "bottomScript";
-          onUpdate({ ...p, [key]: { ...sd, x: newX, y: newY } });
-        }
-        return;
-      }
-
-      if (mode === "resize-script-top" || mode === "resize-script-bottom") {
-        const p = panelRef.current;
-        const sd = mode === "resize-script-top" ? p.topScript : p.bottomScript;
-        if (sd) {
-          const startW = dragScriptSizeStartRef.current.w;
-          const startH = dragScriptSizeStartRef.current.h;
-          const newW = Math.max(60, startW + dx);
-          const newH = Math.max(30, startH + dy);
-          const key = mode === "resize-script-top" ? "topScript" : "bottomScript";
-          onUpdate({ ...p, [key]: { ...sd, width: newW, height: newH } });
-        }
-        return;
-      }
-
-      if (mode === "move-char") {
-        const cid = selectedCharIdRef.current;
-        if (cid) {
-          updateCharInPanel(cid, {
-            x: dragCharStartRef.current.x + dx,
-            y: dragCharStartRef.current.y + dy,
-          });
-        }
-        return;
-      }
-
-      if (mode === "rotate-char") {
-        const cid = selectedCharIdRef.current;
-        if (cid) {
-          const p = panelRef.current;
-          const ch = p.characters.find((c) => c.id === cid);
-          if (ch) {
-            const currentAngle = Math.atan2(pos.y - ch.y, pos.x - ch.x);
-            const startAngle = (dragCharStartRef.current as any).angleStart ?? 0;
-            const baseRotation = (dragCharStartRef.current as any).rotation ?? (ch.rotation || 0);
-            const nextRotation = baseRotation + (currentAngle - startAngle);
-            updateCharInPanel(cid, { rotation: nextRotation });
-          }
-        }
-        return;
-      }
-
-      if (mode?.startsWith("resize-char")) {
-        const cid = selectedCharIdRef.current;
-        if (cid) {
-          const p = panelRef.current;
-          const ch = p.characters.find((c) => c.id === cid);
-          if (ch) {
-            const origW = ch.imageEl
-              ? ch.imageEl.naturalWidth * dragCharStartRef.current.scale
-              : 80 * dragCharStartRef.current.scale;
-            const origH = ch.imageEl
-              ? ch.imageEl.naturalHeight * dragCharStartRef.current.scale
-              : 80 * dragCharStartRef.current.scale;
-            let newW = origW;
-            let newH = origH;
-            if (mode === "resize-char-br") {
-              newW = origW + dx;
-              newH = origH + dy;
-            } else if (mode === "resize-char-bl") {
-              newW = origW - dx;
-              newH = origH + dy;
-            } else if (mode === "resize-char-tr") {
-              newW = origW + dx;
-              newH = origH - dy;
-            } else if (mode === "resize-char-tl") {
-              newW = origW - dx;
-              newH = origH - dy;
-            }
-            const avgRatio = (newW / origW + newH / origH) / 2;
-            const newScale = Math.max(
-              0.05,
-              Math.min(5, dragCharStartRef.current.scale * avgRatio),
-            );
-            updateCharInPanel(cid, { scale: newScale });
-          }
-        }
-        return;
-      }
-
-
-      const sid = selectedBubbleIdRef.current;
-      if (!sid) return;
-      const bs = dragBubbleStartRef.current;
-      const minSize = 40;
-
-      if (mode === "tail-ctrl1") {
-        updateBubbleInPanel(sid, { tailCtrl1X: pos.x, tailCtrl1Y: pos.y });
-      } else if (mode === "tail-ctrl2") {
-        updateBubbleInPanel(sid, { tailCtrl2X: pos.x, tailCtrl2Y: pos.y });
-      } else if (mode === "tail-ctrl3") {
-        updateBubbleInPanel(sid, { tailCtrl3X: pos.x, tailCtrl3Y: pos.y });
-      } else if (mode === "tail-ctrl4") {
-        updateBubbleInPanel(sid, { tailCtrl4X: pos.x, tailCtrl4Y: pos.y });
-      } else if (mode === "move-tail") {
-        updateBubbleInPanel(sid, { tailTipX: pos.x, tailTipY: pos.y });
-      } else if (mode === "move") {
-        updateBubbleInPanel(sid, { x: bs.x + dx, y: bs.y + dy });
-      } else if (mode === "resize-br") {
-        updateBubbleInPanel(sid, {
-          width: Math.max(minSize, bs.w + dx),
-          height: Math.max(minSize, bs.h + dy),
-        });
-      } else if (mode === "resize-bl") {
-        const newW = Math.max(minSize, bs.w - dx);
-        updateBubbleInPanel(sid, {
-          x: bs.x + bs.w - newW,
-          width: newW,
-          height: Math.max(minSize, bs.h + dy),
-        });
-      } else if (mode === "resize-tr") {
-        const newH = Math.max(minSize, bs.h - dy);
-        updateBubbleInPanel(sid, {
-          y: bs.y + bs.h - newH,
-          width: Math.max(minSize, bs.w + dx),
-          height: newH,
-        });
-      } else if (mode === "resize-tl") {
-        const newW = Math.max(minSize, bs.w - dx);
-        const newH = Math.max(minSize, bs.h - dy);
-        updateBubbleInPanel(sid, {
-          x: bs.x + bs.w - newW,
-          y: bs.y + bs.h - newH,
-          width: newW,
-          height: newH,
-        });
-      } else if (mode === "resize-r") {
-        updateBubbleInPanel(sid, { width: Math.max(minSize, bs.w + dx) });
-      } else if (mode === "resize-l") {
-        const newW = Math.max(minSize, bs.w - dx);
-        updateBubbleInPanel(sid, { x: bs.x + bs.w - newW, width: newW });
-      } else if (mode === "resize-b") {
-        updateBubbleInPanel(sid, { height: Math.max(minSize, bs.h + dy) });
-      } else if (mode === "resize-t") {
-        const newH = Math.max(minSize, bs.h - dy);
-        updateBubbleInPanel(sid, { y: bs.y + bs.h - newH, height: newH });
-      }
-    },
-    [getCanvasPos, updateBubbleInPanel, updateCharInPanel],
-  );
-
-  const handlePointerUp = useCallback(() => {
-    dragModeRef.current = null;
-  }, []);
-
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const pos = getCanvasPos(e.clientX, e.clientY);
-      const p = panelRef.current;
-      // Check scripts first (they render on top)
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          for (const scriptType of ["top", "bottom"] as const) {
-            const sd = scriptType === "top" ? p.topScript : p.bottomScript;
-            if (sd && sd.text !== undefined && sd.visible !== false) {
-              const rect = getScriptRect(ctx, sd, scriptType, CANVAS_W, CANVAS_H);
-              if (
-                pos.x >= rect.bx &&
-                pos.x <= rect.bx + rect.bw &&
-                pos.y >= rect.by &&
-                pos.y <= rect.by + rect.bh
-              ) {
-                setEditingScriptPos(scriptType);
-                onSelectScript?.(scriptType);
-                return;
-              }
-            }
-          }
-        }
-      }
-      for (let i = p.bubbles.length - 1; i >= 0; i--) {
-        const b = p.bubbles[i];
-        if (
-          pos.x >= b.x &&
-          pos.x <= b.x + b.width &&
-          pos.y >= b.y &&
-          pos.y <= b.y + b.height
-        ) {
-          onSelectBubble(b.id);
-          setEditingBubbleId(b.id);
-          return;
-        }
-      }
-    },
-    [getCanvasPos, onSelectBubble, onSelectScript],
   );
 
   const hasZoom = zoom !== undefined;
@@ -2571,126 +1874,8 @@ function PanelCanvas({
                 }
             }
             className="rounded-md border border-border"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-            onDoubleClick={handleDoubleClick}
             data-testid="panel-canvas"
           />
-
-          {/* SVG handle overlay — rendered outside canvas so handles are visible beyond canvas bounds */}
-          {(() => {
-            const canvas = canvasRef.current;
-            if (!canvas) return null;
-            const rect = canvas.getBoundingClientRect();
-            const wrapRect = canvasWrapperRef.current?.getBoundingClientRect();
-            if (!wrapRect) return null;
-            const scaleX = rect.width / CANVAS_W;
-            const scaleY = rect.height / CANVAS_H;
-            const offsetX = rect.left - wrapRect.left;
-            const offsetY = rect.top - wrapRect.top;
-
-            const toSvgX = (cx: number) => offsetX + cx * scaleX;
-            const toSvgY = (cy: number) => offsetY + cy * scaleY;
-
-            const selBubble = selectedBubbleId ? panel.bubbles.find(b => b.id === selectedBubbleId) : null;
-            const selChar = selectedCharId ? panel.characters.find(c => c.id === selectedCharId) : null;
-
-            const HANDLE_R = 5;
-
-            const handles: { x: number; y: number; cursor: string; mode: string }[] = [];
-
-            if (selBubble) {
-              const b = selBubble;
-              handles.push(
-                { x: toSvgX(b.x - 4), y: toSvgY(b.y - 4), cursor: "nwse-resize", mode: "resize-tl" },
-                { x: toSvgX(b.x + b.width / 2), y: toSvgY(b.y - 4), cursor: "ns-resize", mode: "resize-t" },
-                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y - 4), cursor: "nesw-resize", mode: "resize-tr" },
-                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y + b.height / 2), cursor: "ew-resize", mode: "resize-r" },
-                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y + b.height + 4), cursor: "nwse-resize", mode: "resize-br" },
-                { x: toSvgX(b.x + b.width / 2), y: toSvgY(b.y + b.height + 4), cursor: "ns-resize", mode: "resize-b" },
-                { x: toSvgX(b.x - 4), y: toSvgY(b.y + b.height + 4), cursor: "nesw-resize", mode: "resize-bl" },
-                { x: toSvgX(b.x - 4), y: toSvgY(b.y + b.height / 2), cursor: "ew-resize", mode: "resize-l" },
-              );
-            }
-
-            if (selChar) {
-              const cw = selChar.imageEl ? selChar.imageEl.naturalWidth * selChar.scale : 80;
-              const ch2 = selChar.imageEl ? selChar.imageEl.naturalHeight * selChar.scale : 80;
-              const cx = selChar.x - cw / 2;
-              const cy = selChar.y - ch2 / 2;
-              // Offset handles slightly inward for full-canvas images (corners may be off-screen)
-              const hOff = cw > CANVAS_W * 0.8 ? 8 : 4;
-              handles.push(
-                { x: toSvgX(cx + hOff), y: toSvgY(cy + hOff), cursor: "nwse-resize", mode: "resize-char-tl" },
-                { x: toSvgX(cx + cw - hOff), y: toSvgY(cy + hOff), cursor: "nesw-resize", mode: "resize-char-tr" },
-                { x: toSvgX(cx + hOff), y: toSvgY(cy + ch2 - hOff), cursor: "nesw-resize", mode: "resize-char-bl" },
-                { x: toSvgX(cx + cw - hOff), y: toSvgY(cy + ch2 - hOff), cursor: "nwse-resize", mode: "resize-char-br" },
-              );
-            }
-
-            if (handles.length === 0) return null;
-
-            return (
-              <svg
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  overflow: "visible",
-                  pointerEvents: "none",
-                  zIndex: 10,
-                }}
-              >
-                {/* Selection dashed box */}
-                {selBubble && (() => {
-                  const b = selBubble;
-                  const x1 = toSvgX(b.x - 4), y1 = toSvgY(b.y - 4);
-                  const x2 = toSvgX(b.x + b.width + 4), y2 = toSvgY(b.y + b.height + 4);
-                  return <rect x={x1} y={y1} width={x2 - x1} height={y2 - y1} fill="none" stroke={HANDLE_COLOR} strokeWidth="1.5" strokeDasharray="5,3" />;
-                })()}
-                {selChar && (() => {
-                  const cw = selChar.imageEl ? selChar.imageEl.naturalWidth * selChar.scale : 80;
-                  const ch2 = selChar.imageEl ? selChar.imageEl.naturalHeight * selChar.scale : 80;
-                  const x1 = toSvgX(selChar.x - cw / 2 - 4), y1 = toSvgY(selChar.y - ch2 / 2 - 4);
-                  const x2 = toSvgX(selChar.x + cw / 2 + 4), y2 = toSvgY(selChar.y + ch2 / 2 + 4);
-                  return <rect x={x1} y={y1} width={x2 - x1} height={y2 - y1} fill="none" stroke={HANDLE_COLOR} strokeWidth="1.5" strokeDasharray="5,3" />;
-                })()}
-                {/* Handle circles — onPointerDown initiates drag via canvas capture */}
-                {handles.map((h, i) => (
-                  <circle
-                    key={i}
-                    cx={h.x}
-                    cy={h.y}
-                    r={HANDLE_R + 2}
-                    fill="white"
-                    stroke={HANDLE_COLOR}
-                    strokeWidth="1.8"
-                    style={{ pointerEvents: "all", cursor: h.cursor }}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      const canvas = canvasRef.current;
-                      if (!canvas) return;
-                      canvas.setPointerCapture(e.pointerId);
-                      const pos = getCanvasPos(e.clientX, e.clientY);
-                      dragModeRef.current = h.mode as DragMode;
-                      dragStartRef.current = pos;
-                      const sB = selectedBubbleId ? panel.bubbles.find(b2 => b2.id === selectedBubbleId) : null;
-                      const sC = selectedCharId ? panel.characters.find(c2 => c2.id === selectedCharId) : null;
-                      if (sB) {
-                        dragBubbleStartRef.current = { x: sB.x, y: sB.y, w: sB.width, h: sB.height };
-                      } else if (sC) {
-                        dragCharStartRef.current = { x: sC.x, y: sC.y, scale: sC.scale };
-                      }
-                    }}
-                  />
-                ))}
-              </svg>
-            );
-          })()}
 
           {/* Inline text editing overlay for bubbles */}
           {editingBubbleId && (() => {
@@ -2849,6 +2034,9 @@ function EditorPanel({
   mode = "image",
   bubbleTextareaRef,
   forceRerender,
+  characterFolders = [],
+  activeGalleryFolderId = null,
+  setActiveGalleryFolderId,
 }: {
   panel: PanelData;
   index: number;
@@ -2869,6 +2057,9 @@ function EditorPanel({
   mode?: "image" | "bubble" | "template";
   bubbleTextareaRef?: React.MutableRefObject<HTMLTextAreaElement | null>;
   forceRerender?: () => void;
+  characterFolders?: { id: number; name: string; items: { generationId: number }[] }[];
+  activeGalleryFolderId?: number | null;
+  setActiveGalleryFolderId?: (id: number | null) => void;
 }) {
   const [showCharPicker, setShowCharPicker] = useState(false);
   const isTemplateMode = mode === "template";
@@ -3204,15 +2395,13 @@ function EditorPanel({
         if (typeof src !== "string") return;
         const img = new Image();
         img.onload = () => {
-          // Scale to fit within 65% of canvas height or 70% of canvas width
-          const maxH = CANVAS_H * 0.65;
-          const maxW = CANVAS_W * 0.70;
-          const s = Math.min(maxH / img.naturalHeight, maxW / img.naturalWidth, 1);
+          // Scale to fill canvas (cover scaling)
+          const s = Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight);
           const newChar: CharacterPlacement = {
             id: generateId(),
             imageUrl: src,
             x: CANVAS_W / 2,
-            y: Math.round(CANVAS_H * 0.5),
+            y: CANVAS_H / 2,
             scale: s,
             imageEl: img,
             zIndex: 0,
@@ -3440,86 +2629,122 @@ function EditorPanel({
             />
           </div>
 
-          {galleryLoading ? (
-            <div className="flex justify-center py-4">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : charImages.length === 0 ? (
-            <p
-              className="text-sm text-muted-foreground py-4 text-center"
-              data-testid="text-no-characters"
-            >
-              생성된 이미지가 없습니다. 먼저 캐릭터나 배경을 만들어주세요.
-            </p>
-          ) : (
-            <>
+          {/* 갤러리에서 선택 섹션 */}
+          <div className="space-y-2 rounded-lg border border-border p-2.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">갤러리에서 선택</Label>
               {selectedGalleryIds.size > 0 && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    className="flex-1 gap-1.5"
-                    disabled={addingFromGallery}
-                    onClick={addSelectedFromGallery}
-                  >
-                    {addingFromGallery ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Plus className="h-3.5 w-3.5" />
-                    )}
-                    {addingFromGallery ? "추가 중..." : `선택한 ${selectedGalleryIds.size}장 추가`}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-xs px-2"
-                    onClick={() => setSelectedGalleryIds(new Set())}
-                  >
-                    취소
-                  </Button>
-                </div>
+                <span className="text-[10px] text-primary font-medium">{selectedGalleryIds.size}개 선택됨</span>
               )}
-              <div
-                className="grid grid-cols-3 gap-1.5 overflow-y-auto"
-                data-testid="character-picker-grid"
-              >
-                {charImages.map((gen) => {
-                  const isSelected = selectedGalleryIds.has(gen.id);
-                  return (
-                    <button
-                      key={gen.id}
-                      className={`relative aspect-square rounded-md overflow-hidden border-2 cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-primary ring-1 ring-primary/30"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => toggleGallerySelect(gen.id)}
-                      data-testid={`button-pick-character-${gen.id}`}
-                    >
-                      <img
-                        src={gen.thumbnailUrl || gen.resultImageUrl}
-                        alt={gen.prompt}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                      {isSelected && (
-                        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              {galleryHasMore && (
+            </div>
+
+            {/* 폴더 필터 탭 */}
+            {setActiveGalleryFolderId && (
+              <div className="flex flex-wrap gap-1">
                 <button
-                  className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={onLoadMoreGallery}
+                  className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors font-medium ${activeGalleryFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}
+                  onClick={() => setActiveGalleryFolderId(null)}
                 >
-                  더 보기
+                  전체
                 </button>
-              )}
-            </>
-          )}
+                {characterFolders.map(f => (
+                  <button
+                    key={f.id}
+                    className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors font-medium ${activeGalleryFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}
+                    onClick={() => setActiveGalleryFolderId(f.id)}
+                  >
+                    {f.name} ({f.items.length})
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {galleryLoading ? (
+              <div className="flex justify-center py-4">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : charImages.length === 0 ? (
+              <p
+                className="text-xs text-muted-foreground py-3 text-center"
+                data-testid="text-no-characters"
+              >
+                {activeGalleryFolderId ? "이 폴더에 이미지가 없습니다." : "생성된 이미지가 없습니다. 먼저 캐릭터나 배경을 만들어주세요."}
+              </p>
+            ) : (
+              <>
+                {selectedGalleryIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-1.5"
+                      disabled={addingFromGallery}
+                      onClick={addSelectedFromGallery}
+                    >
+                      {addingFromGallery ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Plus className="h-3.5 w-3.5" />
+                      )}
+                      {addingFromGallery ? "추가 중..." : `선택한 ${selectedGalleryIds.size}장 추가`}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs px-2"
+                      onClick={() => setSelectedGalleryIds(new Set())}
+                    >
+                      취소
+                    </Button>
+                  </div>
+                )}
+                <div
+                  className="grid grid-cols-3 gap-1.5 max-h-[240px] overflow-y-auto"
+                  data-testid="character-picker-grid"
+                >
+                  {charImages.map((gen) => {
+                    const isSelected = selectedGalleryIds.has(gen.id);
+                    return (
+                      <button
+                        key={gen.id}
+                        className={`relative aspect-square rounded-md overflow-hidden border-2 cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-primary ring-1 ring-primary/30"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                        onClick={() => toggleGallerySelect(gen.id)}
+                        data-testid={`button-pick-character-${gen.id}`}
+                      >
+                        <img
+                          src={gen.thumbnailUrl || gen.resultImageUrl}
+                          alt={gen.prompt}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                        />
+                        {gen.characterName && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5">
+                            <span className="text-[9px] text-white truncate block">{gen.characterName}</span>
+                          </div>
+                        )}
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {galleryHasMore && (
+                  <button
+                    className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={onLoadMoreGallery}
+                  >
+                    더 보기
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -3656,6 +2881,7 @@ export default function StoryPage() {
   const [newFolderName, setNewFolderName] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
+  const [canvasRatio, setCanvasRatio] = useState<CanvasRatio>("3:4");
 
   const historyRef = useRef<PanelData[][]>([]);
   const futureRef = useRef<PanelData[][]>([]);
@@ -3666,6 +2892,9 @@ export default function StoryPage() {
   const instatoonAbortRef = useRef<AbortController | null>(null);
   const generateAbortRef = useRef<AbortController | null>(null);
   const promptAbortRef = useRef<AbortController | null>(null);
+
+  // Sync CANVAS_H immediately on every render so canvas uses correct size
+  CANVAS_H = canvasRatio === "3:4" ? 675 : 540;
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -4014,10 +3243,11 @@ export default function StoryPage() {
   }, []);
 
   const [galleryLimit, setGalleryLimit] = useState(30);
+  const [activeGalleryFolderId, setActiveGalleryFolderId] = useState<number | null>(null);
   const { data: galleryRaw, isLoading: galleryLoading } = useQuery<
     { items: GenerationLight[]; total: number; hasMore: boolean }
   >({
-    queryKey: ["/api/gallery", galleryLimit],
+    queryKey: ["/api/gallery", galleryLimit, activeGalleryFolderId],
     refetchOnMount: "always",
     staleTime: 0,
     queryFn: async () => {
@@ -4025,13 +3255,19 @@ export default function StoryPage() {
       const { supabase: sb } = await import("@/lib/supabase");
       const { data: sess } = await sb.auth.getSession();
       if (sess.session?.access_token) authHeaders["Authorization"] = `Bearer ${sess.session.access_token}`;
-      const res = await fetch(`/api/gallery?limit=${galleryLimit}&offset=0`, { headers: authHeaders });
+      const folderParam = activeGalleryFolderId ? `&folderId=${activeGalleryFolderId}` : "";
+      const res = await fetch(`/api/gallery?limit=${galleryLimit}&offset=0${folderParam}`, { headers: authHeaders });
       if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
       return res.json();
     },
   });
   const galleryData = galleryRaw?.items ?? [];
   const galleryHasMore = galleryRaw?.hasMore ?? false;
+
+  type CharacterFolderWithItems = CharacterFolder & { items: { generationId: number }[] };
+  const { data: storyCharacterFolders = [] } = useQuery<CharacterFolderWithItems[]>({
+    queryKey: ["/api/character-folders"],
+  });
 
   const fetchFullGeneration = useCallback(async (id: number): Promise<Generation | null> => {
     try {
@@ -4073,6 +3309,9 @@ export default function StoryPage() {
         topic,
         panelCount: isCurrent ? 1 : panels.length,
       };
+      // 캐릭터 이름이 있으면 스토리 생성에 반영
+      const charNames = autoRefImages.map(img => img.name).filter(Boolean);
+      if (charNames.length > 0) body.characterNames = charNames;
       if (variables.mode === "full") {
         if (instatoonScenePrompt.trim()) {
           body.backgroundPrompt = instatoonScenePrompt.trim();
@@ -4213,6 +3452,10 @@ export default function StoryPage() {
         ? [activePanelIndex]
         : currentPanels.map((_, i) => i);
 
+      // 캐릭터 이름을 장면 프롬프트에 포함
+      const charNameCtx = autoRefImages.map(img => img.name).filter(Boolean);
+      const charNamePrefix = charNameCtx.length > 0 ? `characters: ${charNameCtx.join(", ")}. ` : "";
+
       const results: { panelId: string; imageUrl: string }[] = [];
       const errors: string[] = [];
       for (const i of targetIndices) {
@@ -4226,6 +3469,7 @@ export default function StoryPage() {
           const sceneParts: string[] = [];
           const styleKey2 = detectedStyle && detectedStyle !== "auto" ? detectedStyle : null;
           if (styleKey2 && ART_STYLES[styleKey2]) sceneParts.push(ART_STYLES[styleKey2].promptKeyword);
+          if (charNamePrefix) sceneParts.push(charNamePrefix.trim());
           if (poseStr) sceneParts.push(poseStr);
           sceneParts.push(instatoonScenePrompt.trim());
           if (i > 0) sceneParts.push(`scene ${i + 1}`);
@@ -4239,7 +3483,7 @@ export default function StoryPage() {
             itemPrompt.trim(),
             i,
           );
-          scenePrompt = built.backgroundPrompt;
+          scenePrompt = charNamePrefix + built.backgroundPrompt;
           finalItems = built.itemsPrompt;
         }
 
@@ -4468,6 +3712,7 @@ export default function StoryPage() {
           pose: posePrompt,
           expression: expressionPrompt,
           topic: topic.trim() || undefined,
+          characterNames: autoRefImages.map(img => img.name).filter(Boolean),
         }, currentPanelIds).then((count) => {
           toast({
             title: "캐릭터 이미지 추가 완료",
@@ -4564,6 +3809,7 @@ export default function StoryPage() {
           pose: posePrompt,
           expression: expressionPrompt,
           topic: topic.trim() || undefined,
+          characterNames: autoRefImages.map(img => img.name).filter(Boolean),
         }, targetPanelIds).then((count) => {
           toast({
             title: "캐릭터 이미지 추가 완료",
@@ -4658,7 +3904,7 @@ export default function StoryPage() {
   // Helper: generate character images per panel and add as CharacterPlacements on canvas
   const generateAndAddCharacterImages = async (
     sourceImageUrls: string[],
-    promptParts: { bg?: string; items?: string; pose?: string; expression?: string; topic?: string },
+    promptParts: { bg?: string; items?: string; pose?: string; expression?: string; topic?: string; characterNames?: string[] },
     panelIds?: string[]
   ) => {
     const ids = panelIds ?? panels.map(p => p.id);
@@ -4696,12 +3942,15 @@ export default function StoryPage() {
         promptParts.items,
         i,
       );
+      // 캐릭터 이름을 장면 프롬프트에 포함
+      const charCtx = promptParts.characterNames?.length ? `characters: ${promptParts.characterNames.join(", ")}. ` : "";
 
       try {
         const res = await apiRequest("POST", "/api/generate-background", {
           sourceImageDataList: sourceImageUrls,
-          backgroundPrompt: scenePrompt,
+          backgroundPrompt: charCtx + scenePrompt,
           itemsPrompt: sceneItems,
+          characterNames: promptParts.characterNames,
         });
         const data = await res.json() as { imageUrl: string };
         const imageUrl = data.imageUrl;
@@ -4907,6 +4156,11 @@ export default function StoryPage() {
     setPanels((prev) => prev.map((p, i) => (i === idx ? updated : p)));
   };
 
+  // Update panel without pushing undo history (for continuous drag moves)
+  const updatePanelNoHistory = useCallback((idx: number, updated: PanelData) => {
+    setPanelsNoHistory((prev) => prev.map((p, i) => (i === idx ? updated : p)));
+  }, [setPanelsNoHistory]);
+
   const resetAll = () => {
     setPanels([createPanel()]);
     setActivePanelIndex(0);
@@ -4925,7 +4179,7 @@ export default function StoryPage() {
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
   const bubbleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  type LeftTab = "image" | "ai" | "elements" | "tools" | null;
+  type LeftTab = "image" | "ai" | "elements" | "tools" | "generative" | null;
   const [activeLeftTab, setActiveLeftTab] = useState<LeftTab>(null);
   type ElementsSubTab = "script" | "bubble" | "template";
   const [elementsSubTab, setElementsSubTab] = useState<ElementsSubTab>("script");
@@ -4945,6 +4199,211 @@ export default function StoryPage() {
     opacity: 1,
   });
   const drawingCanvasRef = useRef<DrawingCanvasHandle | null>(null);
+
+  // ─── Generative tool state ──────────────────────────────────────────────
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>("brush");
+  const [selectionBrushSize, setSelectionBrushSize] = useState(40);
+  const [genPrompt, setGenPrompt] = useState("");
+  const [genLoading, setGenLoading] = useState(false);
+  const selectionCanvasRef = useRef<SelectionCanvasHandle | null>(null);
+  type GenTool = "fill" | "expand" | "upscale" | "generate" | "object" | null;
+  const [selectedGenTool, setSelectedGenTool] = useState<GenTool>("fill");
+  const [expandTop, setExpandTop] = useState(0);
+  const [expandRight, setExpandRight] = useState(0);
+  const [expandBottom, setExpandBottom] = useState(0);
+  const [expandLeft, setExpandLeft] = useState(0);
+  const [selectedObjectColor, setSelectedObjectColor] = useState("#ef4444");
+  const [floodFillTolerance, setFloodFillTolerance] = useState(32);
+  type ObjectAction = "color" | "fill";
+  const [objectAction, setObjectAction] = useState<ObjectAction>("fill");
+  const isGenerativeMode = activeLeftTab === "generative" && (selectedGenTool === "fill" || selectedGenTool === "object");
+  const isExpandMode = activeLeftTab === "generative" && selectedGenTool === "expand";
+
+  // Helper: capture panel canvas at logical 540×675 (clean, no selection artifacts)
+  const capturePanelClean = useCallback((panelId: string): string | null => {
+    const canvas = panelCanvasRefs.current.get(panelId);
+    if (!canvas) return null;
+    // Render to an offscreen canvas at logical size to avoid DPR scaling
+    const off = document.createElement("canvas");
+    off.width = CANVAS_W;
+    off.height = CANVAS_H;
+    const ctx = off.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(canvas, 0, 0, CANVAS_W, CANVAS_H);
+    return off.toDataURL("image/png");
+  }, []);
+
+  // Client-side flood fill object selection: click a point → instant mask via BFS
+  const handleObjectSelectClick = useCallback((clickX: number, clickY: number) => {
+    if (!activePanel) return;
+    selectionCanvasRef.current?.floodFillAt(clickX, clickY, floodFillTolerance);
+  }, [activePanel, floodFillTolerance]);
+
+  // Helper: composite AI result with original using mask (only apply AI pixels where mask is white)
+  const compositeWithMask = useCallback((originalDataUrl: string, aiResultDataUrl: string, maskDataUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const origImg = new Image();
+      const aiImg = new Image();
+      const maskImg = new Image();
+      let loaded = 0;
+      const onLoad = () => {
+        loaded++;
+        if (loaded < 3) return;
+        try {
+          // Draw AI result onto a canvas
+          const aiCanvas = document.createElement("canvas");
+          aiCanvas.width = CANVAS_W;
+          aiCanvas.height = CANVAS_H;
+          const aiCtx = aiCanvas.getContext("2d")!;
+          aiCtx.drawImage(aiImg, 0, 0, CANVAS_W, CANVAS_H);
+          // Read mask pixels to determine which AI pixels to keep
+          const maskCanvas = document.createElement("canvas");
+          maskCanvas.width = CANVAS_W;
+          maskCanvas.height = CANVAS_H;
+          const mCtx = maskCanvas.getContext("2d")!;
+          mCtx.drawImage(maskImg, 0, 0, CANVAS_W, CANVAS_H);
+          const maskPixels = mCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+          // Set AI result alpha based on mask brightness (white=keep, black=discard)
+          const aiPixels = aiCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+          for (let i = 0; i < maskPixels.data.length; i += 4) {
+            const brightness = maskPixels.data[i]; // R channel (0=black, 255=white)
+            aiPixels.data[i + 3] = brightness > 128 ? 255 : 0;
+          }
+          aiCtx.putImageData(aiPixels, 0, 0);
+          // Composite: original as base + masked AI result on top
+          const off = document.createElement("canvas");
+          off.width = CANVAS_W;
+          off.height = CANVAS_H;
+          const ctx = off.getContext("2d")!;
+          ctx.drawImage(origImg, 0, 0, CANVAS_W, CANVAS_H);
+          ctx.drawImage(aiCanvas, 0, 0);
+          resolve(off.toDataURL("image/png"));
+        } catch (err) {
+          reject(err);
+        }
+      };
+      origImg.onload = onLoad;
+      aiImg.onload = onLoad;
+      maskImg.onload = onLoad;
+      origImg.onerror = reject;
+      aiImg.onerror = reject;
+      maskImg.onerror = reject;
+      origImg.src = originalDataUrl;
+      aiImg.src = aiResultDataUrl;
+      maskImg.src = maskDataUrl;
+    });
+  }, []);
+
+  // Helper: load data URL into panel as background image
+  const applyImageToPanel = useCallback((panelIdx: number, dataUrl: string) => {
+    const panel = panels[panelIdx];
+    if (!panel) return;
+    const img = new Image();
+    img.onload = () => {
+      updatePanel(panelIdx, { ...panel, backgroundImageUrl: dataUrl, backgroundImageEl: img });
+    };
+    img.src = dataUrl;
+  }, [panels, updatePanel]);
+
+  const WEBTOON_COLOR_PRESETS = [
+    "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6",
+    "#fca5a5", "#fdba74", "#fde047", "#86efac", "#93c5fd", "#c4b5fd",
+    "#fde8d4", "#f5d0b0", "#e8b88a", "#d4956b", "#b87449", "#8b5e3c",
+    "#1e293b", "#334155", "#6b7280", "#9ca3af", "#d1d5db", "#ffffff",
+    "#ec4899", "#f472b6", "#a78bfa", "#67e8f9", "#2dd4bf", "#a3e635",
+  ];
+
+  const applyColorToSelection = useCallback(async () => {
+    const mask = selectionCanvasRef.current?.exportMask();
+    if (!mask) {
+      toast({ title: "영역을 먼저 선택해주세요", variant: "destructive" });
+      return;
+    }
+    if (!activePanel) return;
+    const imageData = capturePanelClean(activePanel.id);
+    if (!imageData) return;
+
+    // Parse target color hex → HSL
+    const hexToRgb = (hex: string) => {
+      const h = hex.replace("#", "");
+      return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)] as [number, number, number];
+    };
+    const [tR, tG, tB] = hexToRgb(selectedObjectColor);
+    const [targetH, targetS] = rgbToHsl(tR, tG, tB);
+
+    // Load image and mask
+    const loadImg = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+
+    try {
+      setGenLoading(true);
+      const [imgEl, maskEl] = await Promise.all([loadImg(imageData), loadImg(mask)]);
+
+      const off = document.createElement("canvas");
+      off.width = CANVAS_W;
+      off.height = CANVAS_H;
+      const ctx = off.getContext("2d")!;
+
+      // Draw original image
+      ctx.drawImage(imgEl, 0, 0, CANVAS_W, CANVAS_H);
+      const imgData = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+
+      // Draw mask
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = CANVAS_W;
+      maskCanvas.height = CANVAS_H;
+      const maskCtx = maskCanvas.getContext("2d")!;
+      maskCtx.drawImage(maskEl, 0, 0, CANVAS_W, CANVAS_H);
+      const maskData = maskCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+
+      // Apply color: for white mask pixels, replace H/S while keeping L
+      const pixels = imgData.data;
+      const maskPx = maskData.data;
+      for (let i = 0; i < pixels.length; i += 4) {
+        const mBright = (maskPx[i] + maskPx[i + 1] + maskPx[i + 2]) / 3;
+        if (mBright < 128) continue; // not in mask
+
+        const [, , l] = rgbToHsl(pixels[i], pixels[i + 1], pixels[i + 2]);
+        if (l < 0.08 || l > 0.95) continue; // skip outlines and near-white
+
+        const [r, g, b] = hslToRgb(targetH, targetS, l);
+        pixels[i] = r;
+        pixels[i + 1] = g;
+        pixels[i + 2] = b;
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      const resultUrl = off.toDataURL("image/png");
+      // Flatten characters & drawing layers into the background
+      // (they are already baked into the captured image, so clearing them
+      //  prevents originals from rendering on top and hiding the color change)
+      const panel = panels[activePanelIndex];
+      if (panel) {
+        const img = new Image();
+        img.onload = () => {
+          updatePanel(activePanelIndex, {
+            ...panel,
+            backgroundImageUrl: resultUrl,
+            backgroundImageEl: img,
+            characters: [],
+            drawingLayers: [],
+          });
+        };
+        img.src = resultUrl;
+      }
+      selectionCanvasRef.current?.clearSelection();
+      toast({ title: "색상 변경 완료" });
+    } catch (err: any) {
+      toast({ title: "색상 변경 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setGenLoading(false);
+    }
+  }, [activePanel, activePanelIndex, selectedObjectColor, capturePanelClean, panels, updatePanel, toast]);
+
   const isDrawingMode = activeLeftTab === "tools" && selectedToolItem === "drawing";
   const isTextMode = activeLeftTab === "tools" && selectedToolItem === "text";
   const isLineMode = activeLeftTab === "tools" && selectedToolItem === "line";
@@ -5078,6 +4537,22 @@ export default function StoryPage() {
   const handleUpdateLineElement = useCallback((updated: CanvasLineElement) => {
     const p = panels[activePanelIndex];
     if (!p) return;
+    // borderStyle 변경 감지 → 포인트 재생성
+    const prev = (p.lineElements || []).find((l) => l.id === updated.id);
+    if (prev && (prev as any).borderStyle && (updated as any).borderStyle && (prev as any).borderStyle !== (updated as any).borderStyle) {
+      const pts = updated.points;
+      if (pts.length > 2) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const pt of pts) {
+          if (pt.x < minX) minX = pt.x;
+          if (pt.y < minY) minY = pt.y;
+          if (pt.x > maxX) maxX = pt.x;
+          if (pt.y > maxY) maxY = pt.y;
+        }
+        const newPts = regenerateBorderPoints(minX, minY, maxX - minX, maxY - minY, (updated as any).borderStyle);
+        updated = { ...updated, points: newPts };
+      }
+    }
     const newLines = (p.lineElements || []).map((l) => l.id === updated.id ? updated : l);
     updatePanel(activePanelIndex, { ...p, lineElements: newLines });
   }, [panels, activePanelIndex, updatePanel]);
@@ -5171,10 +4646,12 @@ export default function StoryPage() {
     startMouseX: number;
     startMouseY: number;
     startPositions: { x: number; y: number }[];
-    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4";
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4" | "rotate";
     startW?: number;
     startH?: number;
     startScale?: number;
+    startRotation?: number;
+    rotateAngleStart?: number;
     // For mask group movement: linked layer start positions
     linkedStarts?: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>;
   } | null>(null);
@@ -5199,8 +4676,15 @@ export default function StoryPage() {
     mouseX: number,
     mouseY: number,
     panel: PanelData,
-    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4",
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4" | "rotate",
   ) => {
+    // Push one undo snapshot at drag start
+    historyRef.current = [
+      ...historyRef.current.slice(-(MAX_HISTORY - 1)),
+      clonePanels(panels),
+    ];
+    futureRef.current = [];
+
     if (type === "bubble") {
       const b = panel.bubbles.find(bb => bb.id === id);
       if (b) {
@@ -5230,6 +4714,8 @@ export default function StoryPage() {
           startScale: ch.scale,
           startW: cw,
           startH: chH,
+          startRotation: ch.rotation || 0,
+          rotateAngleStart: resizeMode === "rotate" ? Math.atan2(mouseY - ch.y, mouseX - ch.x) : undefined,
         };
       }
     } else if (type === "text") {
@@ -5308,7 +4794,7 @@ export default function StoryPage() {
         };
       }
     }
-  }, []);
+  }, [panels]);
 
   const handleElementDragMove = useCallback((mouseX: number, mouseY: number, panelIdx: number) => {
     const drag = dragElementRef.current;
@@ -5330,7 +4816,7 @@ export default function StoryPage() {
           if (drag.resizeMode === "tail-ctrl4") return { ...b, tailCtrl4X: mouseX, tailCtrl4Y: mouseY };
           return b;
         });
-        updatePanel(panelIdx, { ...p, bubbles: newBubbles });
+        updatePanelNoHistory(panelIdx, { ...p, bubbles: newBubbles });
         return;
       }
       const newBubbles = p.bubbles.map(b => {
@@ -5355,28 +4841,31 @@ export default function StoryPage() {
         }
         return { ...b, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, bubbles: newBubbles });
+      updatePanelNoHistory(panelIdx, { ...p, bubbles: newBubbles });
     } else if (drag.type === "char") {
       const newChars = p.characters.map(ch => {
         if (ch.id !== drag.id) return ch;
+        if (drag.resizeMode === "rotate") {
+          const cx = drag.startPositions[0].x;
+          const cy = drag.startPositions[0].y;
+          const currentAngle = Math.atan2(mouseY - cy, mouseX - cx);
+          const startAngle = drag.rotateAngleStart ?? 0;
+          const baseRotation = drag.startRotation ?? (ch.rotation || 0);
+          return { ...ch, rotation: baseRotation + (currentAngle - startAngle) };
+        }
         if (drag.resizeMode) {
-          const origW = drag.startW ?? 80;
-          const origH = drag.startH ?? 80;
-          let newW = origW;
-          let newH = origH;
-          switch (drag.resizeMode) {
-            case "br": newW = origW + dx; newH = origH + dy; break;
-            case "bl": newW = origW - dx; newH = origH + dy; break;
-            case "tr": newW = origW + dx; newH = origH - dy; break;
-            case "tl": newW = origW - dx; newH = origH - dy; break;
-          }
-          const avgRatio = (newW / origW + newH / origH) / 2;
-          const newScale = Math.max(0.05, Math.min(5, (drag.startScale ?? ch.scale) * avgRatio));
+          // Smooth proportional scaling via distance from element center
+          const cx = drag.startPositions[0].x;
+          const cy = drag.startPositions[0].y;
+          const d0 = Math.max(1, Math.sqrt((drag.startMouseX - cx) ** 2 + (drag.startMouseY - cy) ** 2));
+          const d1 = Math.sqrt((mouseX - cx) ** 2 + (mouseY - cy) ** 2);
+          const ratio = d1 / d0;
+          const newScale = Math.max(0.05, Math.min(5, (drag.startScale ?? ch.scale) * ratio));
           return { ...ch, scale: newScale };
         }
         return { ...ch, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, characters: newChars });
+      updatePanelNoHistory(panelIdx, { ...p, characters: newChars });
     } else if (drag.type === "text") {
       const newTexts = (p.textElements || []).map(te => {
         if (te.id !== drag.id) return te;
@@ -5400,7 +4889,7 @@ export default function StoryPage() {
         }
         return { ...te, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, textElements: newTexts });
+      updatePanelNoHistory(panelIdx, { ...p, textElements: newTexts });
     } else if (drag.type === "line") {
       const newLines = (p.lineElements || []).map(le => {
         if (le.id !== drag.id) return le;
@@ -5412,7 +4901,7 @@ export default function StoryPage() {
           })),
         };
       });
-      updatePanel(panelIdx, { ...p, lineElements: newLines });
+      updatePanelNoHistory(panelIdx, { ...p, lineElements: newLines });
     } else if (drag.type === "drawing") {
       const newLayers = (p.drawingLayers || []).map(dl => {
         if (dl.id !== drag.id) return dl;
@@ -5448,7 +4937,7 @@ export default function StoryPage() {
         }
         return { ...dl, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, drawingLayers: newLayers });
+      updatePanelNoHistory(panelIdx, { ...p, drawingLayers: newLayers });
     } else if (drag.type === "shape") {
       const draggedShape = (p.shapeElements || []).find(se => se.id === drag.id);
       const newShapes = (p.shapeElements || []).map(se => {
@@ -5515,9 +5004,9 @@ export default function StoryPage() {
           return s && "points" in s ? { ...le, points: s.points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy })) } : le;
         });
       }
-      updatePanel(panelIdx, { ...p, ...updated });
+      updatePanelNoHistory(panelIdx, { ...p, ...updated });
     }
-  }, [panels, updatePanel]);
+  }, [panels, updatePanelNoHistory]);
 
   const handleElementDragEnd = useCallback(() => {
     dragElementRef.current = null;
@@ -6225,8 +5714,8 @@ export default function StoryPage() {
   };
 
   const DOWNLOAD_SIZES = [
-    { label: "Original (540×675)", w: 540, h: 675 },
-    { label: "2x (1080×1350)", w: 1080, h: 1350 },
+    { label: `Original (${CANVAS_W}×${CANVAS_H})`, w: CANVAS_W, h: CANVAS_H },
+    { label: `2x (${CANVAS_W * 2}×${CANVAS_H * 2})`, w: CANVAS_W * 2, h: CANVAS_H * 2 },
   ];
 
   const downloadPanelSized = (idx: number, targetW: number, targetH: number) => {
@@ -6281,11 +5770,11 @@ export default function StoryPage() {
           setTimeout(() => {
             try {
               const offscreen = document.createElement("canvas");
-              offscreen.width = 1080;
-              offscreen.height = 1350;
+              offscreen.width = CANVAS_W * 2;
+              offscreen.height = CANVAS_H * 2;
               const ctx = offscreen.getContext("2d");
               if (!ctx) { reject(new Error("Canvas context 생성 실패")); return; }
-              ctx.drawImage(srcCanvas, 0, 0, 1080, 1350);
+              ctx.drawImage(srcCanvas, 0, 0, CANVAS_W * 2, CANVAS_H * 2);
               resolve(offscreen.toDataURL("image/png"));
             } catch (err) {
               reject(err);
@@ -6587,6 +6076,11 @@ export default function StoryPage() {
   };
 
   const serializeStoryData = useCallback(() => {
+    // 참조 캐릭터 정보 저장 (인스타툰 기준 캐릭터)
+    const refCharacters = autoRefImages.map(img => ({
+      url: img.url,
+      name: img.name,
+    }));
     return JSON.stringify({
       panels: panels.map((p) => ({
         id: p.id,
@@ -6609,6 +6103,7 @@ export default function StoryPage() {
           flipY: c.flipY ?? false,
           zIndex: c.zIndex ?? 0,
           name: c.name,
+          generationId: c.generationId,
         })),
         drawingLayers: (p.drawingLayers || []).map((dl) => ({
           id: dl.id,
@@ -6624,8 +6119,9 @@ export default function StoryPage() {
         shapeElements: p.shapeElements || [],
       })),
       topic,
+      refCharacters: refCharacters.length > 0 ? refCharacters : undefined,
     });
-  }, [panels, topic]);
+  }, [panels, topic, autoRefImages]);
 
   const getStoryThumbnail = useCallback(() => {
     try {
@@ -6757,12 +6253,90 @@ export default function StoryPage() {
         } else {
           console.warn("Project canvasData has no panels:", Object.keys(data));
         }
+        // 참조 캐릭터 복원
+        if (data.refCharacters && Array.isArray(data.refCharacters)) {
+          setAutoRefImages(data.refCharacters.map((rc: any) => ({
+            url: rc.url || "",
+            name: rc.name || "캐릭터",
+          })).filter((rc: any) => rc.url));
+        }
       } catch (e) {
         console.error("Project canvasData parse error:", e);
         toast({ title: "프로젝트 로드 실패", variant: "destructive" });
       }
     }
   }, [loadedProject]);
+
+  // Flow에서 넘어온 이미지를 첫 패널에 자동 추가
+  const flowLoadedRef = useRef(false);
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get("flow") !== "1" || flowLoadedRef.current) return;
+    const flow = getFlowState();
+    if (!flow.lastPoseImageUrl) return;
+    flowLoadedRef.current = true;
+    const imageUrl = flow.lastPoseImageUrl;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const maxDim = 300;
+      const s = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight, 1);
+      const charId = generateId();
+      setPanelsRaw((prev) => {
+        const first = prev[0];
+        if (!first) return prev;
+        return [
+          {
+            ...first,
+            characters: [...first.characters, {
+              id: charId,
+              imageUrl,
+              x: CANVAS_W / 2,
+              y: CANVAS_H / 2,
+              scale: s,
+              imageEl: img,
+              zIndex: (first.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0)) + 1,
+            }],
+          },
+          ...prev.slice(1),
+        ];
+      });
+      setActivePanelIndex(0);
+      clearFlowState();
+    };
+    img.onerror = () => {
+      // CORS 실패 시 crossOrigin 없이 재시도
+      const img2 = new Image();
+      img2.onload = () => {
+        const maxDim = 300;
+        const s2 = Math.min(maxDim / img2.naturalWidth, maxDim / img2.naturalHeight, 1);
+        const charId2 = generateId();
+        setPanelsRaw((prev) => {
+          const first = prev[0];
+          if (!first) return prev;
+          return [
+            {
+              ...first,
+              characters: [...first.characters, {
+                id: charId2,
+                imageUrl,
+                x: CANVAS_W / 2,
+                y: CANVAS_H / 2,
+                scale: s2,
+                imageEl: img2,
+                zIndex: (first.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0)) + 1,
+              }],
+            },
+            ...prev.slice(1),
+          ];
+        });
+        setActivePanelIndex(0);
+        clearFlowState();
+      };
+      img2.src = imageUrl;
+    };
+    img.src = imageUrl;
+  }, [searchString]);
 
   const isPro = usageData?.tier === "pro";
   const canAllFontsStory = isPro || (usageData?.creatorTier ?? 0) >= 3;
@@ -6969,6 +6543,7 @@ export default function StoryPage() {
     { id: "ai", icon: Wand2, label: "AI 프롬프트" },
     { id: "tools", icon: Pen as any, label: "도구" },
     { id: "elements", icon: Boxes as any, label: "요소" },
+    { id: "generative", icon: Sparkles as any, label: "생성형" },
   ];
 
   // ─── Tool items for compact tools panel ─────────────────────────────
@@ -7003,22 +6578,22 @@ export default function StoryPage() {
   ];
 
   return (
-    <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative">
+    <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative" data-lenis-prevent>
       <EditorOnboarding editor="story" />
       <div
-        className="flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-background/80 border-r"
-        style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "50px" }}
+        className="left-icon-sidebar flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-background/80 border-r"
+        style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "50px", zIndex: 20 }}
         data-testid="left-icon-sidebar"
       >
         {LEFT_TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => toggleLeftTab(tab.id)}
-            className={`flex items-center justify-center rounded-full transition-colors w-[40px] h-[40px] pt-[10px] pb-[10px] ${activeLeftTab === tab.id ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover-elevate"}`}
+            className={`left-icon-sidebar__btn flex items-center justify-center rounded-full transition-colors w-[40px] h-[40px] pt-[10px] pb-[10px] ${activeLeftTab === tab.id ? "bg-primary/10 text-primary font-semibold left-icon-sidebar__btn--active" : "text-muted-foreground hover-elevate"}`}
             data-testid={`button-left-tab-${tab.id}`}
-            title={tab.label}
           >
             <tab.icon className="h-[18px] w-[18px]" />
+            <span className="left-icon-sidebar__label">{tab.label}</span>
           </button>
         ))}
       </div>
@@ -7026,10 +6601,10 @@ export default function StoryPage() {
       <div className="flex flex-1 h-full">
         {activeLeftTab && (
           <div
-            className={`h-full bg-background/80 overflow-y-auto border-r ${(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai") ? "w-auto" : "w-[320px]"}`}
+            className={`h-full bg-background/80 overflow-y-auto border-r ${(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai" || activeLeftTab === "generative") ? "w-auto" : "w-[320px]"}`}
             data-testid="left-panel-content"
           >
-            <div className={(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai") ? "" : "p-3 space-y-5"}>
+            <div className={(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai" || activeLeftTab === "generative") ? "" : "p-3 space-y-5"}>
                   {/* ─── Compact AI Panel ─────────────────────────── */}
                   {activeLeftTab === "ai" && (
                     <div className="tools-compact-panel">
@@ -7070,7 +6645,7 @@ export default function StoryPage() {
 
                   {activeLeftTab === "image" && activePanel && (
                     <>
-                      <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center justify-between gap-2 mb-2 sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-1">
                         <h3 className="text-sm font-semibold">이미지선택/업로드</h3>
                         <button
                           onClick={() => setActiveLeftTab(null)}
@@ -7098,6 +6673,9 @@ export default function StoryPage() {
                         isPro={isPro}
                         mode="image"
                         forceRerender={() => setPanelsRaw((cur) => cur.map(pp => ({ ...pp })))}
+                        characterFolders={storyCharacterFolders}
+                        activeGalleryFolderId={activeGalleryFolderId}
+                        setActiveGalleryFolderId={setActiveGalleryFolderId}
                       />
                     </>
                   )}
@@ -7364,6 +6942,438 @@ export default function StoryPage() {
                   </div>
                 )}
 
+                {/* ─── Compact Generative Panel ────────────────── */}
+                {activeLeftTab === "generative" && activePanel && (
+                  <div className="tools-compact-panel">
+                    {/* Main tool strip */}
+                    <div className="tools-compact-panel__strip">
+                      <button onClick={() => setActiveLeftTab(null)} className="tools-compact-panel__close-btn" title="닫기">
+                        <X className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedGenTool("fill")}
+                        className={`tools-compact-panel__tool-btn ${selectedGenTool === "fill" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                        title="생성형 채우기"
+                      >
+                        <Paintbrush className="h-5 w-5" style={selectedGenTool !== "fill" ? { color: "#8b5cf6" } : undefined} />
+                      </button>
+                      <button
+                        onClick={() => setSelectedGenTool("expand")}
+                        className={`tools-compact-panel__tool-btn ${selectedGenTool === "expand" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                        title="생성형 확장"
+                      >
+                        <Maximize className="h-5 w-5" style={selectedGenTool !== "expand" ? { color: "#3b82f6" } : undefined} />
+                      </button>
+                      <button
+                        onClick={() => setSelectedGenTool("upscale")}
+                        className={`tools-compact-panel__tool-btn ${selectedGenTool === "upscale" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                        title="생성형 업스케일"
+                      >
+                        <Scaling className="h-5 w-5" style={selectedGenTool !== "upscale" ? { color: "#10b981" } : undefined} />
+                      </button>
+                      <button
+                        onClick={() => { setSelectedGenTool("object"); setSelectionMode("click"); }}
+                        className={`tools-compact-panel__tool-btn ${selectedGenTool === "object" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                        title="개체 선택"
+                      >
+                        <ScanSearch className="h-5 w-5" style={selectedGenTool !== "object" ? { color: "#f59e0b" } : undefined} />
+                      </button>
+                    </div>
+
+                    {/* Sub-panel for fill: selection mode + prompt */}
+                    {selectedGenTool === "fill" && (
+                      <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 2 }}>선택 도구</span>
+                        <button onClick={() => setSelectionMode("brush")} className={`tools-compact-panel__tool-btn ${selectionMode === "brush" ? "tools-compact-panel__tool-btn--active" : ""}`} title="선택 브러시">
+                          <Paintbrush className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => setSelectionMode("lasso")} className={`tools-compact-panel__tool-btn ${selectionMode === "lasso" ? "tools-compact-panel__tool-btn--active" : ""}`} title="올가미">
+                          <Spline className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => setSelectionMode("rectangle")} className={`tools-compact-panel__tool-btn ${selectionMode === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`} title="사각형 선택">
+                          <Square className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => setSelectionMode("ellipse")} className={`tools-compact-panel__tool-btn ${selectionMode === "ellipse" ? "tools-compact-panel__tool-btn--active" : ""}`} title="원형 선택">
+                          <Circle className="h-4 w-4" />
+                        </button>
+
+                        {selectionMode === "brush" && (
+                          <div style={{ padding: "4px 8px", width: "100%" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))" }}>크기</span>
+                              <span style={{ fontSize: 10, fontWeight: 500, color: "hsl(var(--primary))" }}>{selectionBrushSize}px</span>
+                            </div>
+                            <Slider min={5} max={100} step={1} value={[selectionBrushSize]} onValueChange={([v]) => setSelectionBrushSize(v)} />
+                          </div>
+                        )}
+
+                        <div style={{ display: "flex", gap: 4, padding: "4px 4px 0" }}>
+                          <button onClick={() => selectionCanvasRef.current?.expandSelection(3)} className="tools-compact-panel__tool-btn" title="선택 확대" style={{ width: 36, height: 36 }}>
+                            <PlusCircle className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => selectionCanvasRef.current?.shrinkSelection(3)} className="tools-compact-panel__tool-btn" title="선택 축소" style={{ width: 36, height: 36 }}>
+                            <MinusCircle className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => selectionCanvasRef.current?.clearSelection()} className="tools-compact-panel__tool-btn" title="선택 초기화" style={{ width: 36, height: 36 }}>
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="generative-prompt-area" style={{ padding: "8px 4px", width: "100%" }}>
+                          <Textarea
+                            placeholder="채울 내용을 입력..."
+                            value={genPrompt}
+                            onChange={(e) => setGenPrompt(e.target.value)}
+                            rows={2}
+                            style={{ fontSize: 12, resize: "none", marginBottom: 6 }}
+                          />
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={genLoading || !genPrompt.trim()}
+                            onClick={async () => {
+                              const mask = selectionCanvasRef.current?.exportMask();
+                              if (!mask) {
+                                toast({ title: "영역을 먼저 선택해주세요", variant: "destructive" });
+                                return;
+                              }
+                              const imageData = capturePanelClean(activePanel.id);
+                              if (!imageData) return;
+                              setGenLoading(true);
+                              try {
+                                const resp = await apiRequest("POST", "/api/generative-fill", {
+                                  imageData, maskData: mask, prompt: genPrompt,
+                                });
+                                const data = await resp.json();
+                                if (data.imageUrl) {
+                                  const composited = await compositeWithMask(imageData, data.imageUrl, mask);
+                                  applyImageToPanel(activePanelIndex, composited);
+                                  selectionCanvasRef.current?.clearSelection();
+                                  setGenPrompt("");
+                                  toast({ title: "생성형 채우기 완료" });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+                                }
+                              } catch (err: any) {
+                                toast({ title: "생성형 채우기 실패", description: err.message, variant: "destructive" });
+                              } finally {
+                                setGenLoading(false);
+                              }
+                            }}
+                          >
+                            {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                            생성
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-panel for expand */}
+                    {selectedGenTool === "expand" && (
+                      <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 2 }}>생성형 확장</span>
+                        <div style={{ padding: "4px 8px", width: "100%", fontSize: 11, color: "hsl(var(--muted-foreground))" }}>
+                          캔버스 가장자리 핸들을 드래그하여 확장 영역을 지정하세요.
+                        </div>
+                        {(expandTop + expandRight + expandBottom + expandLeft > 0) && (
+                          <div style={{ padding: "2px 8px", width: "100%", display: "flex", flexWrap: "wrap", gap: 4, fontSize: 10 }}>
+                            {expandTop > 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">상 {expandTop}px</Badge>}
+                            {expandRight > 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">우 {expandRight}px</Badge>}
+                            {expandBottom > 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">하 {expandBottom}px</Badge>}
+                            {expandLeft > 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">좌 {expandLeft}px</Badge>}
+                          </div>
+                        )}
+                        <div style={{ padding: "2px 8px", width: "100%" }}>
+                          <button
+                            onClick={() => { setExpandTop(0); setExpandRight(0); setExpandBottom(0); setExpandLeft(0); }}
+                            className="tools-compact-panel__tool-btn"
+                            style={{ width: "100%", height: 32, fontSize: 11 }}
+                            title="초기화"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1" /> 초기화
+                          </button>
+                        </div>
+                        <div className="generative-prompt-area" style={{ padding: "8px 4px", width: "100%" }}>
+                          <Textarea
+                            placeholder="확장 영역 설명 (선택사항)..."
+                            value={genPrompt}
+                            onChange={(e) => setGenPrompt(e.target.value)}
+                            rows={2}
+                            style={{ fontSize: 12, resize: "none", marginBottom: 6 }}
+                          />
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={genLoading || (expandTop + expandRight + expandBottom + expandLeft === 0)}
+                            onClick={async () => {
+                              const imageData = capturePanelClean(activePanel.id);
+                              if (!imageData) return;
+                              setGenLoading(true);
+                              try {
+                                const resp = await apiRequest("POST", "/api/generative-expand", {
+                                  imageData, top: expandTop, right: expandRight, bottom: expandBottom, left: expandLeft, prompt: genPrompt,
+                                });
+                                const data = await resp.json();
+                                if (data.imageUrl) {
+                                  applyImageToPanel(activePanelIndex, data.imageUrl);
+                                  setExpandTop(0); setExpandRight(0); setExpandBottom(0); setExpandLeft(0);
+                                  toast({ title: "생성형 확장 완료" });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+                                }
+                              } catch (err: any) {
+                                toast({ title: "생성형 확장 실패", description: err.message, variant: "destructive" });
+                              } finally {
+                                setGenLoading(false);
+                              }
+                            }}
+                          >
+                            {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Maximize className="h-3.5 w-3.5 mr-1" />}
+                            확장
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-panel for upscale */}
+                    {selectedGenTool === "upscale" && (
+                      <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 4 }}>업스케일</span>
+                        <div style={{ padding: "4px 8px", width: "100%", fontSize: 11, color: "hsl(var(--muted-foreground))" }}>
+                          현재 패널 이미지를 2배 해상도로 업스케일합니다.
+                        </div>
+                        <div className="generative-prompt-area" style={{ padding: "8px 4px", width: "100%" }}>
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={genLoading}
+                            onClick={async () => {
+                              const imageData = capturePanelClean(activePanel.id);
+                              if (!imageData) return;
+                              setGenLoading(true);
+                              try {
+                                const resp = await apiRequest("POST", "/api/generative-upscale", {
+                                  imageData, scale: 2,
+                                });
+                                const data = await resp.json();
+                                if (data.imageUrl) {
+                                  applyImageToPanel(activePanelIndex, data.imageUrl);
+                                  toast({ title: "업스케일 완료 (2x)" });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+                                }
+                              } catch (err: any) {
+                                toast({ title: "업스케일 실패", description: err.message, variant: "destructive" });
+                              } finally {
+                                setGenLoading(false);
+                              }
+                            }}
+                          >
+                            {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Scaling className="h-3.5 w-3.5 mr-1" />}
+                            2x 업스케일
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-panel for object selection */}
+                    {selectedGenTool === "object" && (
+                      <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 2 }}>개체 선택</span>
+
+                        {/* Click-to-select info */}
+                        <div style={{ padding: "4px 8px", width: "100%", fontSize: 10, color: "hsl(var(--muted-foreground))", lineHeight: 1.4 }}>
+                          클릭하면 같은 색상 영역이 즉시 선택됩니다.
+                        </div>
+                        {/* Tolerance slider */}
+                        <div style={{ padding: "4px 8px", width: "100%" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+                            <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))" }}>허용 범위</span>
+                            <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", fontFamily: "monospace" }}>{floodFillTolerance}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={floodFillTolerance}
+                            onChange={(e) => setFloodFillTolerance(Number(e.target.value))}
+                            style={{ width: "100%", height: 4, cursor: "pointer" }}
+                          />
+                        </div>
+
+                        {/* Selection refinement tools */}
+                        <div style={{ display: "flex", gap: 4, padding: "4px 4px 0" }}>
+                          <button onClick={() => selectionCanvasRef.current?.expandSelection(3)} className="tools-compact-panel__tool-btn" title="선택 확대" style={{ width: 36, height: 36 }}>
+                            <PlusCircle className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => selectionCanvasRef.current?.shrinkSelection(3)} className="tools-compact-panel__tool-btn" title="선택 축소" style={{ width: 36, height: 36 }}>
+                            <MinusCircle className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => { selectionCanvasRef.current?.clearSelection(); }} className="tools-compact-panel__tool-btn" title="선택 초기화" style={{ width: 36, height: 36 }}>
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* Selection tools */}
+                        <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", padding: "4px 8px 0", width: "100%" }}>선택 도구</span>
+                        <div style={{ display: "flex", gap: 4, padding: "2px 4px", flexWrap: "wrap" }}>
+                          <button onClick={() => setSelectionMode("click")} className={`tools-compact-panel__tool-btn ${selectionMode === "click" ? "tools-compact-panel__tool-btn--active" : ""}`} title="클릭 선택 (마법봉)" style={{ width: 32, height: 32 }}>
+                            <MousePointerClick className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => setSelectionMode("brush")} className={`tools-compact-panel__tool-btn ${selectionMode === "brush" ? "tools-compact-panel__tool-btn--active" : ""}`} title="브러시" style={{ width: 32, height: 32 }}>
+                            <Paintbrush className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => setSelectionMode("lasso")} className={`tools-compact-panel__tool-btn ${selectionMode === "lasso" ? "tools-compact-panel__tool-btn--active" : ""}`} title="올가미" style={{ width: 32, height: 32 }}>
+                            <Spline className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => setSelectionMode("rectangle")} className={`tools-compact-panel__tool-btn ${selectionMode === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`} title="사각형" style={{ width: 32, height: 32 }}>
+                            <Square className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => setSelectionMode("ellipse")} className={`tools-compact-panel__tool-btn ${selectionMode === "ellipse" ? "tools-compact-panel__tool-btn--active" : ""}`} title="원형" style={{ width: 32, height: 32 }}>
+                            <Circle className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Action toggle: Color vs AI Fill */}
+                        <div style={{ display: "flex", gap: 4, padding: "8px 4px 4px", width: "100%" }}>
+                          <button
+                            onClick={() => setObjectAction("color")}
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
+                              padding: "6px 0",
+                              borderRadius: 6,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              border: objectAction === "color" ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                              background: objectAction === "color" ? "hsl(var(--primary) / 0.1)" : "hsl(var(--card))",
+                              color: objectAction === "color" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Palette className="h-3.5 w-3.5" /> 색상 변경
+                          </button>
+                          <button
+                            onClick={() => setObjectAction("fill")}
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
+                              padding: "6px 0",
+                              borderRadius: 6,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              border: objectAction === "fill" ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                              background: objectAction === "fill" ? "hsl(var(--primary) / 0.1)" : "hsl(var(--card))",
+                              color: objectAction === "fill" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Sparkles className="h-3.5 w-3.5" /> AI 생성
+                          </button>
+                        </div>
+
+                        {/* Color change mode */}
+                        {objectAction === "color" && (
+                          <div style={{ padding: "4px 4px 8px", width: "100%" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 3, marginBottom: 8 }}>
+                              {WEBTOON_COLOR_PRESETS.map((color) => (
+                                <button
+                                  key={color}
+                                  onClick={() => setSelectedObjectColor(color)}
+                                  style={{
+                                    width: "100%",
+                                    aspectRatio: "1",
+                                    borderRadius: 4,
+                                    background: color,
+                                    border: selectedObjectColor === color ? "2px solid hsl(var(--primary))" : color === "#ffffff" ? "1px solid hsl(var(--border))" : "1px solid transparent",
+                                    cursor: "pointer",
+                                    boxShadow: selectedObjectColor === color ? "0 0 0 1px hsl(var(--primary))" : "none",
+                                  }}
+                                  title={color}
+                                />
+                              ))}
+                            </div>
+                            <div style={{ display: "flex", gap: 4, alignItems: "center", marginBottom: 8 }}>
+                              <label style={{ position: "relative", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                                <Palette className="h-3.5 w-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
+                                <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))" }}>커스텀</span>
+                                <input
+                                  type="color"
+                                  value={selectedObjectColor}
+                                  onChange={(e) => setSelectedObjectColor(e.target.value)}
+                                  style={{ width: 24, height: 24, border: "none", padding: 0, cursor: "pointer", borderRadius: 4 }}
+                                />
+                              </label>
+                              <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", fontFamily: "monospace" }}>{selectedObjectColor}</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              disabled={genLoading}
+                              onClick={() => applyColorToSelection()}
+                            >
+                              {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Palette className="h-3.5 w-3.5 mr-1" />}
+                              색상 적용
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* AI generative fill mode */}
+                        {objectAction === "fill" && (
+                          <div className="generative-prompt-area" style={{ padding: "8px 4px", width: "100%" }}>
+                            <Textarea
+                              placeholder="채울 내용을 입력..."
+                              value={genPrompt}
+                              onChange={(e) => setGenPrompt(e.target.value)}
+                              rows={2}
+                              style={{ fontSize: 12, resize: "none", marginBottom: 6 }}
+                            />
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              disabled={genLoading || !genPrompt.trim()}
+                              onClick={async () => {
+                                const mask = selectionCanvasRef.current?.exportMask();
+                                if (!mask) {
+                                  toast({ title: "영역을 먼저 선택해주세요", variant: "destructive" });
+                                  return;
+                                }
+                                const imageData = capturePanelClean(activePanel!.id);
+                                if (!imageData) return;
+                                setGenLoading(true);
+                                try {
+                                  const resp = await apiRequest("POST", "/api/generative-fill", {
+                                    imageData, maskData: mask, prompt: genPrompt,
+                                  });
+                                  const data = await resp.json();
+                                  if (data.imageUrl) {
+                                    const composited = await compositeWithMask(imageData, data.imageUrl, mask);
+                                    applyImageToPanel(activePanelIndex, composited);
+                                    selectionCanvasRef.current?.clearSelection();
+                                    setGenPrompt("");
+                                    toast({ title: "생성형 채우기 완료" });
+                                    queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+                                  }
+                                } catch (err: any) {
+                                  toast({ title: "생성형 채우기 실패", description: err.message, variant: "destructive" });
+                                } finally {
+                                  setGenLoading(false);
+                                }
+                              }}
+                            >
+                              {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                              생성
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 </div>
               </div>
           )}
@@ -7409,15 +7419,18 @@ export default function StoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
                       <DropdownMenuLabel className="text-[11px]">PNG 다운로드</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => guard(() => withCleanCanvas(() => downloadPanelSized(activePanelIndex, 540, 675)))}>
-                        <span className="text-xs">Original (540×675)</span>
+                      <DropdownMenuItem onClick={() => guard(() => downloadPanelSized(activePanelIndex, CANVAS_W, CANVAS_H))}>
+
+                        <span className="text-xs">Original ({CANVAS_W}×{CANVAS_H})</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => withCleanCanvas(() => downloadPanelSized(activePanelIndex, 1080, 1350)))}>
-                        <span className="text-xs">Instagram 2x (1080×1350)</span>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, CANVAS_W * 2, CANVAS_H * 2))}>
+
+                        <span className="text-xs">Instagram 2x ({CANVAS_W * 2}×{CANVAS_H * 2})</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => withCleanCanvas(() => downloadPanelSvg(activePanelIndex)))}>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSvg(activePanelIndex))}>
+
                         <span className="text-xs">SVG</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
@@ -7437,11 +7450,11 @@ export default function StoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
                       <DropdownMenuLabel className="text-[11px]">PNG 전체 다운로드</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => guard(() => downloadAllSized(540, 675))}>
-                        <span className="text-xs">Original (540×675)</span>
+                      <DropdownMenuItem onClick={() => guard(() => downloadAllSized(CANVAS_W, CANVAS_H))}>
+                        <span className="text-xs">Original ({CANVAS_W}×{CANVAS_H})</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1350))}>
-                        <span className="text-xs">Instagram 2x (1080×1350)</span>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(CANVAS_W * 2, CANVAS_H * 2))}>
+                        <span className="text-xs">Instagram 2x ({CANVAS_W * 2}×{CANVAS_H * 2})</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -7482,13 +7495,16 @@ export default function StoryPage() {
               className={`flex-1 overflow-y-auto bg-muted/20 dark:bg-muted/10 ${zoom >= 200 ? "p-0" : "p-8"}`}
               data-testid="story-canvas-area"
               onMouseDown={(e) => {
-                if (e.target === e.currentTarget) {
+                const target = e.target as HTMLElement;
+                // 버튼, 입력, 캔버스 등 인터랙티브 요소가 아닌 빈 영역 클릭 시 선택 해제
+                if (!target.closest('canvas') && !target.closest('button') && !target.closest('input') && !target.closest('textarea') && !target.closest('svg') && !target.closest('[role="menuitem"]') && !target.closest('[data-radix-collection-item]')) {
                   setSelectedBubbleId(null);
                   setSelectedCharId(null);
                   setSelectedTextId(null);
                   setSelectedLineId(null);
                   setSelectedShapeId(null);
                   setSelectedDrawingLayerId(null);
+                  setSelectedScriptPosition(null);
                 }
               }}
             >
@@ -7921,6 +7937,7 @@ export default function StoryPage() {
                               (instatoonImageMutation.variables?.scope === "current" && activePanelIndex === i)
                             )
                           }
+                          canvasH={CANVAS_H}
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}
@@ -7970,15 +7987,51 @@ export default function StoryPage() {
                           </div>
                         )}
 
+                        {/* Generative expand overlay — drag edges to expand */}
+                        {isExpandMode && activePanelIndex === i && (
+                          <ExpandCanvas
+                            width={CANVAS_W}
+                            height={CANVAS_H}
+                            top={expandTop}
+                            right={expandRight}
+                            bottom={expandBottom}
+                            left={expandLeft}
+                            onExpand={(t, r, b, l) => { setExpandTop(t); setExpandRight(r); setExpandBottom(b); setExpandLeft(l); }}
+                          />
+                        )}
+
+                        {/* Generative selection overlay — zIndex 25 to sit above select-mode overlay (22) */}
+                        {isGenerativeMode && activePanelIndex === i && (
+                          <div
+                            className="selection-canvas-wrapper selection-canvas-wrapper--active"
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              width: "100%",
+                              height: "100%",
+                              zIndex: 25,
+                            }}
+                          >
+                            <SelectionCanvas
+                              ref={selectionCanvasRef}
+                              width={CANVAS_W}
+                              height={CANVAS_H}
+                              mode={selectionMode}
+                              brushSize={selectionBrushSize}
+                              className="rounded-md"
+                              onClickPoint={selectionMode === "click" ? handleObjectSelectClick : undefined}
+                              imageSource={panelCanvasRefs.current.get(panel.id) ?? null}
+                            />
+                            <div className="drawing-mode-indicator" style={{ background: "hsl(var(--primary) / 0.9)" }}>
+                              <span className="drawing-mode-indicator__dot" />
+                              {selectedGenTool === "object" ? "개체 선택" : "생성형 채우기"}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Select-mode: click/drag/dblclick to interact with drawing/text/line layers */}
                         {(selectedToolItem === "select" || selectedToolItem === "text" || selectedToolItem === "line" || selectedToolItem === "shapes") && activePanelIndex === i && (
-                          (panel.drawingLayers || []).length > 0 ||
-                          (panel.textElements || []).length > 0 ||
-                          (panel.lineElements || []).length > 0 ||
-                          (panel.shapeElements || []).length > 0 ||
-                          panel.bubbles.length > 0 ||
-                          panel.characters.length > 0
-                        ) && (
                           <div
                             style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: rubberBandRef.current?.active ? "crosshair" : multiDragRef.current ? "grabbing" : dragElementRef.current ? "grabbing" : "default" }}
                             onContextMenu={(e) => {
@@ -7991,6 +8044,7 @@ export default function StoryPage() {
                               }
                             }}
                             onMouseDown={(e) => {
+                              e.stopPropagation();
                               if (overlayContextMenu) setOverlayContextMenu(null);
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
@@ -8059,6 +8113,13 @@ export default function StoryPage() {
                                       handleElementDragStart("char", selCh.id, canvasX, canvasY, panel, corner.mode);
                                       return;
                                     }
+                                  }
+                                  // Rotate handle: top-center, 18px above character
+                                  const rotateHx = selCh.x;
+                                  const rotateHy = cy - 18;
+                                  if (Math.hypot(canvasX - rotateHx, canvasY - rotateHy) <= HANDLE_HIT) {
+                                    handleElementDragStart("char", selCh.id, canvasX, canvasY, panel, "rotate");
+                                    return;
                                   }
                                 }
                               }
@@ -8156,6 +8217,12 @@ export default function StoryPage() {
                                       else if (etype === "drawing") { const d = (p.drawingLayers || []).find(dd => dd.id === eid); if (d) starts.set(key, { x: d.x ?? 0, y: d.y ?? 0 }); }
                                       else if (etype === "shape") { const s = (p.shapeElements || []).find(ss => ss.id === eid); if (s) starts.set(key, { x: s.x, y: s.y }); }
                                     }
+                                    // Push one undo snapshot before multi-drag
+                                    historyRef.current = [
+                                      ...historyRef.current.slice(-(MAX_HISTORY - 1)),
+                                      clonePanels(panels),
+                                    ];
+                                    futureRef.current = [];
                                     multiDragRef.current = { startMouseX: canvasX, startMouseY: canvasY, panelIdx: i, startPositions: starts };
                                     return;
                                   }
@@ -8191,6 +8258,8 @@ export default function StoryPage() {
                                         clearAllSel();
                                         setSelectedScriptPosition(scriptType);
                                         setActiveScriptSection(scriptType);
+                                        historyRef.current = [...historyRef.current.slice(-(MAX_HISTORY - 1)), clonePanels(panels)];
+                                        futureRef.current = [];
                                         dragScriptOverlayRef.current = {
                                           position: scriptType,
                                           mode: "resize",
@@ -8214,6 +8283,8 @@ export default function StoryPage() {
                                         clearAllSel();
                                         setSelectedScriptPosition(scriptType);
                                         setActiveScriptSection(scriptType);
+                                        historyRef.current = [...historyRef.current.slice(-(MAX_HISTORY - 1)), clonePanels(panels)];
+                                        futureRef.current = [];
                                         dragScriptOverlayRef.current = {
                                           position: scriptType,
                                           mode: "move",
@@ -8394,7 +8465,7 @@ export default function StoryPage() {
                                   const s = md.startPositions.get(`shape:${se.id}`);
                                   return s && "x" in s ? { ...se, x: s.x + dx, y: s.y + dy } : se;
                                 });
-                                updatePanel(md.panelIdx, { ...p, ...updated });
+                                updatePanelNoHistory(md.panelIdx, { ...p, ...updated });
                                 return;
                               }
 
@@ -8409,7 +8480,7 @@ export default function StoryPage() {
                                 const sd = p[key];
                                 if (!sd) return;
                                 if (ds.mode === "move") {
-                                  updatePanel(ds.panelIdx, {
+                                  updatePanelNoHistory(ds.panelIdx, {
                                     ...p,
                                     [key]: { ...sd, x: ds.startX + dx, y: ds.startY + dy },
                                   });
@@ -8417,7 +8488,7 @@ export default function StoryPage() {
                                   // Resize — scale font size proportionally
                                   const scaleFactor = Math.max(0.3, (ds.startW + dx) / ds.startW);
                                   const newFontSize = Math.round(Math.max(8, Math.min(80, ds.startFontSize * scaleFactor)));
-                                  updatePanel(ds.panelIdx, {
+                                  updatePanelNoHistory(ds.panelIdx, {
                                     ...p,
                                     [key]: { ...sd, fontSize: newFontSize, width: Math.max(40, ds.startW + dx), height: Math.max(20, ds.startH + dy) },
                                   });
@@ -8441,62 +8512,60 @@ export default function StoryPage() {
                                 setRubberBandRect(null);
 
                                 // Only select if rubber band is large enough (avoid accidental clicks)
-                                if (rw < 4 && rh < 4) return;
+                                if (rw >= 4 || rh >= 4) {
+                                  const selRect: BBox = { x: rx, y: ry, w: rw, h: rh };
+                                  const p = panels[rb.panelIdx];
+                                  if (p) {
+                                    const newSel = new Set<string>();
 
-                                const selRect: BBox = { x: rx, y: ry, w: rw, h: rh };
-                                const p = panels[rb.panelIdx];
-                                if (!p) return;
-                                const newSel = new Set<string>();
+                                    for (const b of p.bubbles) {
+                                      if (b.locked || b.visible === false) continue;
+                                      const bb = getElementBoundingBox("bubble", b);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`bubble:${b.id}`);
+                                    }
+                                    for (const c of p.characters) {
+                                      if (c.locked || c.visible === false) continue;
+                                      const bb = getElementBoundingBox("char", c);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`char:${c.id}`);
+                                    }
+                                    for (const te of (p.textElements || [])) {
+                                      if (te.locked || te.visible === false) continue;
+                                      const bb = getElementBoundingBox("text", te);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`text:${te.id}`);
+                                    }
+                                    for (const le of (p.lineElements || [])) {
+                                      if (le.locked || le.visible === false) continue;
+                                      const bb = getElementBoundingBox("line", le);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`line:${le.id}`);
+                                    }
+                                    for (const dl of (p.drawingLayers || [])) {
+                                      if (!dl.visible || dl.locked) continue;
+                                      const bb = getElementBoundingBox("drawing", dl);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`drawing:${dl.id}`);
+                                    }
+                                    for (const se of (p.shapeElements || [])) {
+                                      if (se.locked || se.visible === false) continue;
+                                      if (se.maskEnabled) continue; // exclude mask shapes
+                                      const bb = getElementBoundingBox("shape", se);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`shape:${se.id}`);
+                                    }
 
-                                for (const b of p.bubbles) {
-                                  if (b.locked || b.visible === false) continue;
-                                  const bb = getElementBoundingBox("bubble", b);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`bubble:${b.id}`);
+                                    setCanvasMultiSelected(newSel);
+                                  }
                                 }
-                                for (const c of p.characters) {
-                                  if (c.locked || c.visible === false) continue;
-                                  const bb = getElementBoundingBox("char", c);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`char:${c.id}`);
-                                }
-                                for (const te of (p.textElements || [])) {
-                                  if (te.locked || te.visible === false) continue;
-                                  const bb = getElementBoundingBox("text", te);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`text:${te.id}`);
-                                }
-                                for (const le of (p.lineElements || [])) {
-                                  if (le.locked || le.visible === false) continue;
-                                  const bb = getElementBoundingBox("line", le);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`line:${le.id}`);
-                                }
-                                for (const dl of (p.drawingLayers || [])) {
-                                  if (!dl.visible || dl.locked) continue;
-                                  const bb = getElementBoundingBox("drawing", dl);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`drawing:${dl.id}`);
-                                }
-                                for (const se of (p.shapeElements || [])) {
-                                  if (se.locked || se.visible === false) continue;
-                                  if (se.maskEnabled) continue; // exclude mask shapes
-                                  const bb = getElementBoundingBox("shape", se);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`shape:${se.id}`);
-                                }
-
-                                setCanvasMultiSelected(newSel);
-                                return;
                               }
 
                               // 2) Multi-select group drag end
                               if (multiDragRef.current) {
                                 multiDragRef.current = null;
-                                return;
                               }
 
                               // 2.5) Script drag end
                               if (dragScriptOverlayRef.current) {
                                 dragScriptOverlayRef.current = null;
-                                return;
                               }
 
-                              // 3) Single element drag end (existing)
+                              // Always clear element drag state
                               handleElementDragEnd();
                             }}
                             onMouseLeave={() => {
@@ -8567,6 +8636,181 @@ export default function StoryPage() {
                             }}
                           />
                         )}
+
+                        {/* ─── Selection indicator overlay (dashed border + circle handles) ─── */}
+                        {activePanelIndex === i && (() => {
+                          const selChar = selectedCharId ? panel.characters.find(c => c.id === selectedCharId) : null;
+                          const selBubble = selectedBubbleId ? panel.bubbles.find(b => b.id === selectedBubbleId) : null;
+                          const selText = selectedTextId ? (panel.textElements || []).find((t: any) => t.id === selectedTextId) : null;
+                          const selShape = selectedShapeId ? (panel.shapeElements || []).find((s: any) => s.id === selectedShapeId) : null;
+                          const selDrawing = selectedDrawingLayerId ? (panel.drawingLayers || []).find((d: any) => d.id === selectedDrawingLayerId) : null;
+
+                          type SelBox = { x: number; y: number; w: number; h: number };
+                          let box: SelBox | null = null;
+                          let cornerHandles: { x: number; y: number; mode: string; cursor: string }[] = [];
+
+                          let showRotateHandle = false;
+                          let rotateHandlePos = { x: 0, y: 0 };
+
+                          if (selChar) {
+                            const cw = selChar.imageEl ? selChar.imageEl.naturalWidth * selChar.scale : 80;
+                            const chH = selChar.imageEl ? selChar.imageEl.naturalHeight * selChar.scale : 80;
+                            box = { x: selChar.x - cw / 2 - 3, y: selChar.y - chH / 2 - 3, w: cw + 6, h: chH + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                            ];
+                            showRotateHandle = true;
+                            rotateHandlePos = { x: selChar.x, y: selChar.y - chH / 2 - 18 };
+                          } else if (selBubble) {
+                            box = { x: selBubble.x - 3, y: selBubble.y - 3, w: selBubble.width + 6, h: selBubble.height + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x + box.w / 2, y: box.y, mode: "t", cursor: "ns-resize" },
+                              { x: box.x + box.w, y: box.y + box.h / 2, mode: "r", cursor: "ew-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                              { x: box.x + box.w / 2, y: box.y + box.h, mode: "b", cursor: "ns-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                              { x: box.x, y: box.y + box.h / 2, mode: "l", cursor: "ew-resize" },
+                            ];
+                          } else if (selText) {
+                            const te = selText as any;
+                            box = { x: te.x - 3, y: te.y - 3, w: te.width + 6, h: te.height + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x + box.w / 2, y: box.y, mode: "t", cursor: "ns-resize" },
+                              { x: box.x + box.w, y: box.y + box.h / 2, mode: "r", cursor: "ew-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                              { x: box.x + box.w / 2, y: box.y + box.h, mode: "b", cursor: "ns-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                              { x: box.x, y: box.y + box.h / 2, mode: "l", cursor: "ew-resize" },
+                            ];
+                          } else if (selShape && !(selShape as any).maskEnabled) {
+                            const se = selShape as any;
+                            box = { x: se.x - 3, y: se.y - 3, w: se.width + 6, h: se.height + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x + box.w / 2, y: box.y, mode: "t", cursor: "ns-resize" },
+                              { x: box.x + box.w, y: box.y + box.h / 2, mode: "r", cursor: "ew-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                              { x: box.x + box.w / 2, y: box.y + box.h, mode: "b", cursor: "ns-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                              { x: box.x, y: box.y + box.h / 2, mode: "l", cursor: "ew-resize" },
+                            ];
+                          } else if (selDrawing) {
+                            const dl = selDrawing as any;
+                            const dlX = dl.x ?? 0, dlY = dl.y ?? 0;
+                            const dlW = dl.width ?? CANVAS_W, dlH = dl.height ?? CANVAS_H;
+                            box = { x: dlX - 3, y: dlY - 3, w: dlW + 6, h: dlH + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                            ];
+                          }
+
+                          if (!box) return null;
+                          const HANDLE_R = 5;
+                          return (
+                            <>
+                              {/* Dashed selection border */}
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  left: `${(box.x / CANVAS_W) * 100}%`,
+                                  top: `${(box.y / CANVAS_H) * 100}%`,
+                                  width: `${(box.w / CANVAS_W) * 100}%`,
+                                  height: `${(box.h / CANVAS_H) * 100}%`,
+                                  border: `1.5px dashed ${HANDLE_COLOR}`,
+                                  pointerEvents: "none",
+                                  zIndex: 23,
+                                  boxSizing: "border-box",
+                                }}
+                              />
+                              {/* Resize circle handles */}
+                              {cornerHandles.map((h, idx) => (
+                                <div
+                                  key={`sel-handle-${idx}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: `${(h.x / CANVAS_W) * 100}%`,
+                                    top: `${(h.y / CANVAS_H) * 100}%`,
+                                    width: HANDLE_R * 2 + 2,
+                                    height: HANDLE_R * 2 + 2,
+                                    transform: "translate(-50%, -50%)",
+                                    borderRadius: "50%",
+                                    background: "white",
+                                    border: `1.8px solid ${HANDLE_COLOR}`,
+                                    cursor: h.cursor,
+                                    pointerEvents: "auto",
+                                    zIndex: 24,
+                                    boxSizing: "border-box",
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.parentElement!.getBoundingClientRect();
+                                    const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
+                                    const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
+                                    const elType = selChar ? "char" : selBubble ? "bubble" : selText ? "text" : selShape ? "shape" : "drawing";
+                                    const elId = selChar?.id || selectedBubbleId || selectedTextId || selectedShapeId || selectedDrawingLayerId || "";
+                                    handleElementDragStart(elType as any, elId, canvasX, canvasY, panel, h.mode as any);
+                                  }}
+                                  onMouseUp={() => handleElementDragEnd()}
+                                />
+                              ))}
+                              {/* Rotate handle for characters */}
+                              {showRotateHandle && (
+                                <>
+                                  {/* Connector line from top center to rotate handle */}
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      left: `${(rotateHandlePos.x / CANVAS_W) * 100}%`,
+                                      top: `${((rotateHandlePos.y + 18) / CANVAS_H) * 100}%`,
+                                      width: 1.5,
+                                      height: `${(18 / CANVAS_H) * 100}%`,
+                                      background: HANDLE_COLOR,
+                                      transform: "translateX(-50%)",
+                                      pointerEvents: "none",
+                                      zIndex: 23,
+                                    }}
+                                  />
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      left: `${(rotateHandlePos.x / CANVAS_W) * 100}%`,
+                                      top: `${(rotateHandlePos.y / CANVAS_H) * 100}%`,
+                                      width: HANDLE_R * 2 + 2,
+                                      height: HANDLE_R * 2 + 2,
+                                      transform: "translate(-50%, -50%)",
+                                      borderRadius: "50%",
+                                      background: "white",
+                                      border: `1.8px solid ${HANDLE_COLOR}`,
+                                      cursor: "grab",
+                                      pointerEvents: "auto",
+                                      zIndex: 24,
+                                      boxSizing: "border-box",
+                                    }}
+                                    onMouseDown={(e) => {
+                                      e.stopPropagation();
+                                      const rect = e.currentTarget.parentElement!.getBoundingClientRect();
+                                      const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
+                                      const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
+                                      handleElementDragStart("char", selChar!.id, canvasX, canvasY, panel, "rotate");
+                                    }}
+                                    onMouseUp={() => handleElementDragEnd()}
+                                  />
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         {/* Canvas overlay context menu */}
                         {activePanelIndex === i && overlayContextMenu && (() => {
@@ -8986,6 +9230,21 @@ export default function StoryPage() {
             >
               <Maximize className="h-3.5 w-3.5" />
             </Button>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-1 bg-muted rounded-md p-0.5">
+              <button
+                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${canvasRatio === "3:4" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setCanvasRatio("3:4")}
+              >
+                3:4
+              </button>
+              <button
+                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${canvasRatio === "1:1" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setCanvasRatio("1:1")}
+              >
+                1:1
+              </button>
+            </div>
           </div>
         </div>
 
@@ -9660,6 +9919,39 @@ export default function StoryPage() {
                             </div>
                             <p className="text-[11px] text-muted-foreground leading-relaxed">이 캐릭터 이미지를 기반으로 포즈·표정·배경이 자동 변형됩니다.</p>
                             <p className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1">🎨 이미지 업로드 시 그림 스타일을 자동 감지 → 배경·아이템도 같은 스타일로 생성됩니다</p>
+                            {/* Quick-select character strip */}
+                            {(() => {
+                              const charItems = (galleryData || []).filter((g: any) => g.characterName && (g.resultImageUrl || g.thumbnailUrl)).slice(0, 12);
+                              if (charItems.length === 0) return null;
+                              return (
+                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                                  {charItems.map((gen: any) => {
+                                    const isSelected = autoRefImages.some(img => img.url === gen.resultImageUrl);
+                                    return (
+                                      <button
+                                        key={gen.id}
+                                        type="button"
+                                        disabled={autoRefImages.length >= 4 && !isSelected}
+                                        onClick={async () => {
+                                          if (isSelected) { setAutoRefImages(prev => prev.filter(img => img.url !== gen.resultImageUrl)); return; }
+                                          if (autoRefImages.length >= 4) { toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" }); return; }
+                                          const full = await fetchFullGeneration(gen.id);
+                                          if (!full) return;
+                                          const imgName = gen.characterName || (gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
+                                          setAutoRefImages(prev => [...prev, { url: full.resultImageUrl, name: imgName }]);
+                                          if (autoRefImages.length === 0) { setDetectedStyle("auto"); detectArtStyle(full.resultImageUrl).finally(() => setIsDetectingStyle(false)); }
+                                        }}
+                                        className={`relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"} ${autoRefImages.length >= 4 && !isSelected ? "opacity-40" : ""}`}
+                                      >
+                                        <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.characterName || ""} loading="lazy" className="w-full h-full object-cover" />
+                                        {isSelected && <div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><CheckCircle2 className="h-3.5 w-3.5 text-primary drop-shadow" /></div>}
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[7px] px-0.5 truncate text-center">{gen.characterName}</div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })()}
                             {autoRefImages.length > 0 && (
                               <div className="flex flex-wrap gap-2">
                                 {autoRefImages.map((img, idx) => (
@@ -9699,13 +9991,21 @@ export default function StoryPage() {
                             {showAutoGalleryPicker && (
                               <div className="space-y-1.5">
                                 <p className="text-[11px] text-muted-foreground">생성된 이미지 선택 (최대 4개, 클릭으로 토글):</p>
+                                {storyCharacterFolders.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    <button className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeGalleryFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setActiveGalleryFolderId(null)}>전체</button>
+                                    {storyCharacterFolders.map(f => (
+                                      <button key={f.id} className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeGalleryFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setActiveGalleryFolderId(f.id)}>{f.name}</button>
+                                    ))}
+                                  </div>
+                                )}
                                 {galleryLoading ? (<div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>) : !galleryData?.length ? (<p className="text-[11px] text-muted-foreground text-center py-3">생성된 이미지가 없어요.<br />먼저 캐릭터를 만들어주세요.</p>) : (
                                   <>
                                     <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
                                       {galleryData.map((gen) => {
                                         const isSelected = autoRefImages.some(img => img.url === (gen.resultImageUrl));
                                         return (
-                                          <button key={gen.id} className={`relative aspect-square rounded-md overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`} onClick={async () => { if (isSelected) { setAutoRefImages(prev => prev.filter(img => img.url !== gen.resultImageUrl)); return; } if (autoRefImages.length >= 4) { toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" }); return; } const full = await fetchFullGeneration(gen.id); if (!full) return; const imgName = gen.prompt?.slice(0, 20) ?? "갤러리 이미지"; setAutoRefImages(prev => [...prev, { url: full.resultImageUrl, name: imgName }]); if (autoRefImages.length === 0) { setDetectedStyle("auto"); detectArtStyle(full.resultImageUrl).finally(() => setIsDetectingStyle(false)); } }}>
+                                          <button key={gen.id} className={`relative aspect-square rounded-md overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`} onClick={async () => { if (isSelected) { setAutoRefImages(prev => prev.filter(img => img.url !== gen.resultImageUrl)); return; } if (autoRefImages.length >= 4) { toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" }); return; } const full = await fetchFullGeneration(gen.id); if (!full) return; const imgName = gen.characterName || (gen.prompt?.slice(0, 20) ?? "갤러리 이미지"); setAutoRefImages(prev => [...prev, { url: full.resultImageUrl, name: imgName }]); if (autoRefImages.length === 0) { setDetectedStyle("auto"); detectArtStyle(full.resultImageUrl).finally(() => setIsDetectingStyle(false)); } }}>
                                             <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
                                             {isSelected && (<div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><CheckCircle2 className="h-5 w-5 text-primary drop-shadow" /></div>)}
                                           </button>
@@ -9777,6 +10077,37 @@ export default function StoryPage() {
                               <span className="text-xs font-semibold text-foreground">기준 캐릭터 이미지</span>
                               <span className="text-[10px] text-muted-foreground">(선택 — 있으면 더 정확해요)</span>
                             </div>
+                            {/* Quick-select character strip */}
+                            {(() => {
+                              const charItems = (galleryData || []).filter((g: any) => g.characterName && (g.resultImageUrl || g.thumbnailUrl)).slice(0, 12);
+                              if (charItems.length === 0) return null;
+                              return (
+                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                                  {charItems.map((gen: any) => {
+                                    const isActive = promptRefImageUrl === gen.resultImageUrl;
+                                    return (
+                                      <button
+                                        key={gen.id}
+                                        type="button"
+                                        onClick={async () => {
+                                          if (isActive) { setPromptRefImageUrl(null); setPromptRefImageName(""); return; }
+                                          const full = await fetchFullGeneration(gen.id);
+                                          if (!full) return;
+                                          setPromptRefImageUrl(full.resultImageUrl);
+                                          setPromptRefImageName(gen.characterName || (gen.prompt?.slice(0, 20) ?? "갤러리 이미지"));
+                                          setShowPromptGalleryPicker(false);
+                                        }}
+                                        className={`relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${isActive ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
+                                      >
+                                        <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.characterName || ""} loading="lazy" className="w-full h-full object-cover" />
+                                        {isActive && <div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><CheckCircle2 className="h-3.5 w-3.5 text-primary drop-shadow" /></div>}
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[7px] px-0.5 truncate text-center">{gen.characterName}</div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })()}
                             {promptRefImageUrl ? (
                               <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-2">
                                 <img src={promptRefImageUrl} alt="기준" className="h-10 w-10 rounded object-cover border border-border flex-shrink-0" />
@@ -9792,10 +10123,18 @@ export default function StoryPage() {
                             <input ref={promptRefInputRef} type="file" accept="image/*" className="hidden" onChange={handlePromptRefImageUpload} />
                             {showPromptGalleryPicker && (
                               <div className="space-y-1.5">
+                                {storyCharacterFolders.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    <button className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeGalleryFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setActiveGalleryFolderId(null)}>전체</button>
+                                    {storyCharacterFolders.map(f => (
+                                      <button key={f.id} className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeGalleryFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setActiveGalleryFolderId(f.id)}>{f.name}</button>
+                                    ))}
+                                  </div>
+                                )}
                                 {galleryLoading ? (<div className="flex justify-center py-3"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>) : !galleryData?.length ? (<p className="text-[11px] text-muted-foreground text-center py-2">생성된 이미지가 없어요.</p>) : (
                                   <>
                                     <div className="grid grid-cols-3 gap-1.5 max-h-[150px] overflow-y-auto">
-                                      {galleryData.map((gen) => (<button key={gen.id} className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors" onClick={async () => { const full = await fetchFullGeneration(gen.id); if (!full) return; setPromptRefImageUrl(full.resultImageUrl); setPromptRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지"); setShowPromptGalleryPicker(false); }}><img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" /></button>))}
+                                      {galleryData.map((gen) => (<button key={gen.id} className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors" onClick={async () => { const full = await fetchFullGeneration(gen.id); if (!full) return; setPromptRefImageUrl(full.resultImageUrl); setPromptRefImageName(gen.characterName || (gen.prompt?.slice(0, 20) ?? "갤러리 이미지")); setShowPromptGalleryPicker(false); }}><img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" /></button>))}
                                     </div>
                                     {galleryHasMore && (<button className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => setGalleryLimit((prev) => prev + 30)}>더 보기</button>)}
                                   </>
@@ -10367,7 +10706,7 @@ export default function StoryPage() {
                         />
                         <Button
                           variant="outline"
-                          className="h-9 px-3 text-xs shrink-0"
+                          className="h-[3.125rem] px-3 text-xs shrink-0"
                           disabled={creatingFolder || !newFolderName.trim()}
                           onClick={() => {
                             setCreatingFolder(true);

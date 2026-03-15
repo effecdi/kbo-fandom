@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
-import { getCutRegions, buildDividerLines } from "@/lib/webtoon-layout";
+import { getCutRegions, buildDividerLines, type CutLayoutType, type CutBorderStyle } from "@/lib/webtoon-layout";
 import {
   Select,
   SelectContent,
@@ -30,7 +30,7 @@ import {
   Wand2, ArrowLeft, Loader2, Check, X, RefreshCw,
   Upload, FolderOpen, Sparkles, ImageIcon, ArrowRight, Plus, Trash2,
 } from "lucide-react";
-import type { GenerationLight } from "@shared/schema";
+import type { GenerationLight, CharacterFolder } from "@shared/schema";
 import { supabase } from "@/lib/supabase";
 
 // ---- Types ----
@@ -70,8 +70,8 @@ const CANVAS_H = 675;
 
 // ---- Layout Preview (외부 정의: 리렌더 방지) ----
 
-function LayoutPreview({ cuts, size = 40 }: { cuts: number; size?: number }) {
-  const regions = getCutRegions(cuts);
+function LayoutPreview({ cuts, size = 40, layoutType = "default" }: { cuts: number; size?: number; layoutType?: CutLayoutType }) {
+  const regions = getCutRegions(cuts, layoutType);
   const scaleX = size / CANVAS_W;
   const scaleY = (size * 1.33) / CANVAS_H;
   return (
@@ -166,6 +166,8 @@ export function AutoWebtoonPanel({
   const [storyPrompt, setStoryPrompt] = useState("");
   const [canvasCount, setCanvasCount] = useState(Math.max(1, currentPanelCount));
   const [cutsPerCanvas, setCutsPerCanvas] = useState(4);
+  const [cutLayoutType, setCutLayoutType] = useState<CutLayoutType>("default");
+  const [cutBorderStyle, setCutBorderStyle] = useState<CutBorderStyle>("wobbly");
   const [selectedStyle, setSelectedStyle] = useState("simple-line");
   const [selectedCharacters, setSelectedCharacters] = useState<SelectedCharacter[]>([]);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
@@ -179,6 +181,7 @@ export function AutoWebtoonPanel({
   const [isGenerating, setIsGenerating] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const cancelledRef = useRef(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   // Usage data
   const { data: usage } = useQuery<{
@@ -192,13 +195,15 @@ export function AutoWebtoonPanel({
 
   // Gallery data for picker — 열릴 때마다 항상 최신 데이터 fetch
   const [galleryPickerKey, setGalleryPickerKey] = useState(0);
+  const [pickerFolderId, setPickerFolderId] = useState<number | null>(null);
   const { data: galleryPickerRaw, isLoading: galleryPickerLoading } = useQuery<{ items: GenerationLight[] }>({
-    queryKey: ["/api/gallery", "picker", galleryPickerKey],
+    queryKey: ["/api/gallery", "picker", galleryPickerKey, pickerFolderId],
     staleTime: 0,
     gcTime: 0,
     queryFn: async () => {
       const authHeaders = await getAuthHeaders();
-      const res = await fetch(`/api/gallery?limit=100&offset=0`, { headers: authHeaders });
+      const folderParam = pickerFolderId ? `&folderId=${pickerFolderId}` : "";
+      const res = await fetch(`/api/gallery?limit=100&offset=0${folderParam}`, { headers: authHeaders });
       if (!res.ok) throw new Error("Failed to load gallery");
       return res.json();
     },
@@ -206,6 +211,12 @@ export function AutoWebtoonPanel({
   });
   const galleryPickerData = galleryPickerRaw?.items ?? [];
   const isGalleryLoading = showGalleryPicker ? galleryPickerLoading : externalGalleryLoading;
+
+  type CharacterFolderWithItems = CharacterFolder & { items: { generationId: number }[] };
+  const { data: pickerCharacterFolders = [] } = useQuery<CharacterFolderWithItems[]>({
+    queryKey: ["/api/character-folders"],
+    enabled: isAuthenticated,
+  });
 
   // Cost
   const totalCuts = canvasCount * cutsPerCanvas;
@@ -297,15 +308,17 @@ export function AutoWebtoonPanel({
       // 추가 - thumbnailUrl 또는 resultImageUrl 사용 (light 쿼리에서 thumbnailUrl 있으면 resultImageUrl이 null)
       const imageSource = gen.resultImageUrl || gen.thumbnailUrl || "";
       const charId = String(gen.id);
+      // 저장된 캐릭터 이름 우선 사용, 없으면 프롬프트에서 추출
+      const savedName = gen.characterName || gen.prompt?.slice(0, 20) || "캐릭터";
       const newChar: SelectedCharacter = {
         id: charId,
-        name: gen.prompt?.slice(0, 20) || "캐릭터",
+        name: savedName,
         imageUrl: imageSource,
         imageDataUrl: imageSource, // fallback, will try to convert or fetch full image
       };
 
-      // AI 캐릭터 이름 분석 (백그라운드)
-      if (imageSource) {
+      // 저장된 이름이 없을 때만 AI 캐릭터 이름 분석 (백그라운드)
+      if (!gen.characterName && imageSource) {
         apiRequest("POST", "/api/analyze-character", { imageUrl: imageSource })
           .then((res) => res.json())
           .then((data) => {
@@ -403,6 +416,7 @@ export function AutoWebtoonPanel({
     const initial: CutResult[] = scenes.map((_, i) => ({ index: i, status: "pending" as CutStatus }));
     setCutResults(initial);
     setIsGenerating(true);
+    setPreviewIndex(null);
     setStep(3);
 
     const results = [...initial];
@@ -419,7 +433,7 @@ export function AutoWebtoonPanel({
       }
       setCutResults([...results]);
 
-      const regions = getCutRegions(cutsPerCanvas);
+      const regions = getCutRegions(cutsPerCanvas, cutLayoutType);
       const promises = batchIndices.map(async (idx) => {
         if (cancelledRef.current) {
           results[idx] = { ...results[idx], status: "pending" };
@@ -508,7 +522,7 @@ export function AutoWebtoonPanel({
       if (cancelledRef.current) break;
 
       const batch = failedIndices.slice(i, i + BATCH_SIZE);
-      const regions = getCutRegions(cutsPerCanvas);
+      const regions = getCutRegions(cutsPerCanvas, cutLayoutType);
       const promises = batch.map(async (idx) => {
         if (cancelledRef.current) {
           results[idx] = { ...results[idx], status: "failed" };
@@ -568,6 +582,57 @@ export function AutoWebtoonPanel({
     queryClient.invalidateQueries({ queryKey: ["/api/gallery"] });
   };
 
+  // Regenerate single cut
+  const regenerateSingle = async (idx: number) => {
+    const ac = new AbortController();
+    abortRef.current = ac;
+    cancelledRef.current = false;
+    setIsGenerating(true);
+
+    const results = [...cutResults];
+    results[idx] = { ...results[idx], status: "generating", error: undefined };
+    setCutResults([...results]);
+
+    const scene = scenes[idx];
+    const styleKeyword = ART_STYLES[selectedStyle]?.promptKeyword || "";
+    const cleanDesc = scene.sceneDescription.replace(/,?\s*simple line art,?\s*webtoon style/gi, "").trim();
+    const storyPrefix = storyPrompt ? `[Story: ${storyPrompt}] ` : "";
+    const sceneDesc = [styleKeyword, `${storyPrefix}${cleanDesc}`].filter(Boolean).join(", ");
+
+    const regions = getCutRegions(cutsPerCanvas, cutLayoutType);
+    const cutIdx = idx % cutsPerCanvas;
+    const region = regions[cutIdx];
+    const geminiRatio = getGeminiAspectRatio(region.width, region.height);
+
+    try {
+      const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
+      const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
+        sceneDescription: sceneDesc,
+        storyContext: storyPrompt,
+        sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
+        aspectRatio: geminiRatio,
+        sceneIndex: idx,
+        totalScenes: scenes.length,
+        previousSceneDescription: idx > 0 ? scenes[idx - 1]?.sceneDescription : undefined,
+      }, { signal: ac.signal });
+      const data = (await res.json()) as { imageUrl: string };
+      if (!data.imageUrl) throw new Error("No image");
+      results[idx] = { index: idx, status: "done", imageUrl: data.imageUrl };
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        results[idx] = { ...results[idx], status: "failed" };
+      } else {
+        results[idx] = { index: idx, status: "failed", error: err.message };
+      }
+    }
+
+    setCutResults([...results]);
+    setIsGenerating(false);
+    abortRef.current = null;
+    queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/gallery"] });
+  };
+
   // Build panels and apply to editor
   const applyToEditor = async () => {
     const panels: GeneratedPanelData[] = [];
@@ -585,8 +650,8 @@ export function AutoWebtoonPanel({
     for (let canvasIdx = 0; canvasIdx < canvasCount; canvasIdx++) {
       const cutStart = canvasIdx * cutsPerCanvas;
       const cutEnd = Math.min(cutStart + cutsPerCanvas, cutResults.length);
-      const regions = getCutRegions(cutsPerCanvas);
-      const dividers = buildDividerLines(cutsPerCanvas);
+      const regions = getCutRegions(cutsPerCanvas, cutLayoutType);
+      const dividers = buildDividerLines(cutsPerCanvas, cutLayoutType, cutBorderStyle);
 
       const characters: any[] = [];
       for (let ci = 0; ci < cutsPerCanvas && cutStart + ci < cutEnd; ci++) {
@@ -783,13 +848,92 @@ export function AutoWebtoonPanel({
                   ? "border-primary bg-primary/20 shadow-sm"
                   : "border-border hover:border-primary/50"
               }`}
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCutsPerCanvas(n); }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCutsPerCanvas(n); if (n !== 4) setCutLayoutType("default"); }}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              <LayoutPreview cuts={n} size={32} />
+              <LayoutPreview cuts={n} size={32} layoutType={n === cutsPerCanvas ? cutLayoutType : "default"} />
               <span className="text-[10px] font-medium">{n}컷</span>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Cut design - layout & border */}
+      <div className="space-y-1.5">
+        <Label className="text-xs font-semibold">컷 디자인</Label>
+
+        {/* Layout type */}
+        <div className="space-y-1">
+          <span className="text-[10px] text-muted-foreground">레이아웃</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg border-2 transition-colors cursor-pointer ${
+                cutLayoutType === "default"
+                  ? "border-primary bg-primary/20 shadow-sm"
+                  : "border-border hover:border-primary/50"
+              }`}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCutLayoutType("default"); }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <LayoutPreview cuts={cutsPerCanvas} size={32} layoutType="default" />
+              <span className="text-[10px] font-medium">기본</span>
+            </button>
+            <button
+              type="button"
+              className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg border-2 transition-colors ${
+                cutsPerCanvas !== 4
+                  ? "border-border opacity-40 cursor-not-allowed"
+                  : cutLayoutType === "square"
+                    ? "border-primary bg-primary/20 shadow-sm cursor-pointer"
+                    : "border-border hover:border-primary/50 cursor-pointer"
+              }`}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (cutsPerCanvas === 4) setCutLayoutType("square"); }}
+              onMouseDown={(e) => e.stopPropagation()}
+              disabled={cutsPerCanvas !== 4}
+              title={cutsPerCanvas !== 4 ? "4컷일 때만 사용 가능" : undefined}
+            >
+              <LayoutPreview cuts={4} size={32} layoutType="square" />
+              <span className="text-[10px] font-medium">정사각형</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Border style */}
+        <div className="space-y-1">
+          <span className="text-[10px] text-muted-foreground">보더 스타일</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border-2 transition-colors cursor-pointer text-[10px] font-medium ${
+                cutBorderStyle === "wobbly"
+                  ? "border-primary bg-primary/20 shadow-sm"
+                  : "border-border hover:border-primary/50"
+              }`}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCutBorderStyle("wobbly"); }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <svg width="24" height="12" viewBox="0 0 24 12" className="text-foreground">
+                <path d="M2,6 C4,3 6,9 8,6 C10,3 12,9 14,6 C16,3 18,9 20,6 C21,4 22,7 22,6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              꾹꾹체
+            </button>
+            <button
+              type="button"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border-2 transition-colors cursor-pointer text-[10px] font-medium ${
+                cutBorderStyle === "simple"
+                  ? "border-primary bg-primary/20 shadow-sm"
+                  : "border-border hover:border-primary/50"
+              }`}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCutBorderStyle("simple"); }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <svg width="24" height="12" viewBox="0 0 24 12" className="text-foreground">
+                <rect x="2" y="2" width="20" height="8" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+              심플라인
+            </button>
+          </div>
         </div>
       </div>
 
@@ -798,6 +942,31 @@ export function AutoWebtoonPanel({
         <Label className="text-xs font-semibold">
           캐릭터 <span className="text-muted-foreground font-normal">(최대 4개, 선택사항)</span>
         </Label>
+        {/* Quick-select character strip */}
+        {(() => {
+          const charItems = externalGalleryData.filter(g => g.characterName && (g.resultImageUrl || g.thumbnailUrl)).slice(0, 12);
+          if (charItems.length === 0) return null;
+          return (
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+              {charItems.map((gen) => {
+                const isSelected = selectedCharacters.some(c => c.id === String(gen.id));
+                return (
+                  <button
+                    key={gen.id}
+                    type="button"
+                    disabled={selectedCharacters.length >= 4 && !isSelected}
+                    onClick={() => handleGalleryToggle(gen)}
+                    className={`relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"} ${selectedCharacters.length >= 4 && !isSelected ? "opacity-40" : ""}`}
+                  >
+                    <img src={gen.thumbnailUrl || gen.resultImageUrl || ""} alt={gen.characterName || ""} className="w-full h-full object-cover" />
+                    {isSelected && <div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><Check className="h-3.5 w-3.5 text-primary drop-shadow" /></div>}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[7px] px-0.5 truncate text-center">{gen.characterName}</div>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
         <div className="flex gap-1.5">
           <Button
             type="button"
@@ -902,7 +1071,7 @@ export function AutoWebtoonPanel({
 
       {/* Gallery picker dialog - 멀티 선택 지원 */}
       <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-lenis-prevent>
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>갤러리에서 캐릭터 선택</span>
@@ -911,6 +1080,14 @@ export function AutoWebtoonPanel({
               </span>
             </DialogTitle>
           </DialogHeader>
+          {pickerCharacterFolders.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pb-2">
+              <button className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${pickerFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setPickerFolderId(null)}>전체</button>
+              {pickerCharacterFolders.map(f => (
+                <button key={f.id} className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${pickerFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setPickerFolderId(f.id)}>{f.name}</button>
+              ))}
+            </div>
+          )}
           {isGalleryLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -983,7 +1160,7 @@ export function AutoWebtoonPanel({
           {Array.from({ length: canvasCount }, (_, ci) => (
             <div key={ci} className="flex-shrink-0 text-center">
               <div className="text-[10px] text-muted-foreground mb-0.5">C{ci + 1}</div>
-              <LayoutPreview cuts={cutsPerCanvas} size={36} />
+              <LayoutPreview cuts={cutsPerCanvas} size={36} layoutType={cutLayoutType} />
             </div>
           ))}
         </div>
@@ -1170,10 +1347,15 @@ export function AutoWebtoonPanel({
           {cutResults.map((r, idx) => {
             const canvasIdx = Math.floor(idx / cutsPerCanvas);
             const cutIdx = idx % cutsPerCanvas;
+            const isSelected = previewIndex === idx;
             return (
-              <div
+              <button
                 key={idx}
-                className="aspect-[3/4] rounded border overflow-hidden bg-muted/30 relative"
+                type="button"
+                className={`aspect-[3/4] rounded border overflow-hidden bg-muted/30 relative cursor-pointer transition-all ${
+                  isSelected ? "ring-2 ring-primary border-primary" : "hover:ring-1 hover:ring-primary/50"
+                }`}
+                onClick={(e) => { e.stopPropagation(); setPreviewIndex(isSelected ? null : idx); }}
               >
                 {r.status === "done" && r.imageUrl ? (
                   <img src={r.imageUrl} alt="" className="w-full h-full object-cover" />
@@ -1193,10 +1375,80 @@ export function AutoWebtoonPanel({
                 <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[8px] px-0.5 rounded">
                   C{canvasIdx + 1}-{cutIdx + 1}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
+
+        {/* Preview + Regenerate */}
+        {previewIndex !== null && cutResults[previewIndex] && (() => {
+          const r = cutResults[previewIndex];
+          const canvasIdx = Math.floor(previewIndex / cutsPerCanvas);
+          const cutIdx = previewIndex % cutsPerCanvas;
+          return (
+            <Card className="p-3 space-y-2">
+              {/* Image preview */}
+              {r.status === "done" && r.imageUrl ? (
+                <img
+                  src={r.imageUrl}
+                  alt={`C${canvasIdx + 1}-${cutIdx + 1}`}
+                  className="w-full max-h-[40vh] object-contain rounded border bg-muted/20"
+                />
+              ) : r.status === "generating" ? (
+                <div className="w-full aspect-[3/4] max-h-[40vh] flex items-center justify-center rounded border bg-muted/20">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : r.status === "failed" ? (
+                <div className="w-full aspect-[3/4] max-h-[40vh] flex items-center justify-center rounded border bg-destructive/10">
+                  <div className="text-center">
+                    <X className="h-6 w-6 text-destructive mx-auto mb-1" />
+                    <span className="text-xs text-destructive">{r.error || "생성 실패"}</span>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Status badge */}
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  C{canvasIdx + 1}-{cutIdx + 1}
+                </Badge>
+                <Badge
+                  variant={r.status === "done" ? "default" : r.status === "failed" ? "destructive" : "secondary"}
+                  className="text-[10px] px-1.5 py-0"
+                >
+                  {r.status === "done" ? "완료" : r.status === "generating" ? "생성중" : r.status === "failed" ? "실패" : "대기"}
+                </Badge>
+              </div>
+
+              {/* Prompt textarea */}
+              <Textarea
+                value={scenes[previewIndex]?.sceneDescription || ""}
+                onChange={(e) => {
+                  const updated = [...scenes];
+                  updated[previewIndex] = { ...updated[previewIndex], sceneDescription: e.target.value };
+                  setScenes(updated);
+                }}
+                rows={3}
+                className="text-xs resize-none"
+                placeholder="프롬프트 수정"
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+
+              {/* Regenerate button */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full h-7 text-xs"
+                disabled={isGenerating}
+                onClick={(e) => { e.stopPropagation(); regenerateSingle(previewIndex); }}
+              >
+                <RefreshCw className={`h-3 w-3 mr-1 ${isGenerating && r.status === "generating" ? "animate-spin" : ""}`} />
+                이 컷만 재생성
+              </Button>
+            </Card>
+          );
+        })()}
 
         {/* Actions */}
         <div className="space-y-1.5">
@@ -1242,7 +1494,7 @@ export function AutoWebtoonPanel({
             size="sm"
             className="w-full h-7 text-xs"
             disabled={isGenerating}
-            onClick={(e) => { e.stopPropagation(); setStep(1); setCutResults([]); }}
+            onClick={(e) => { e.stopPropagation(); setStep(1); setCutResults([]); setPreviewIndex(null); }}
           >
             처음부터 다시
           </Button>

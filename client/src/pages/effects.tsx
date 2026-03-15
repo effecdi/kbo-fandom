@@ -12,7 +12,7 @@ import { Upload, Download, RotateCcw, Eye, ArrowRight, ArrowLeft } from "lucide-
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { FlowStepper } from "@/components/flow-stepper";
-import { getFlowState } from "@/lib/flow";
+import { getFlowState, setFlowState } from "@/lib/flow";
 
 type BlurType = "gaussian" | "motion" | "radial";
 
@@ -329,7 +329,15 @@ export default function EffectsPage() {
             <ArrowLeft className="h-4 w-4" /> 배경/아이템
           </Button>
           <div className="flex-1" />
-          <Button className="gap-2" onClick={() => navigate("/story?flow=1")} data-testid="button-flow-next">
+          <Button className="gap-2" onClick={() => {
+            // 현재 캔버스 이미지(블러 적용됨)를 FlowState에 저장
+            const canvas = canvasRef.current;
+            if (canvas) {
+              const dataUrl = canvas.toDataURL("image/png");
+              setFlowState({ lastPoseImageUrl: dataUrl });
+            }
+            navigate("/story?flow=1");
+          }} data-testid="button-flow-next">
             스토리 편집 <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

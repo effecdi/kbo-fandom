@@ -665,7 +665,7 @@ export default function AutoWebtoonPage() {
 
       {/* Gallery picker dialog */}
       <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto" data-lenis-prevent>
           <DialogHeader>
             <DialogTitle>갤러리에서 캐릭터 선택</DialogTitle>
           </DialogHeader>

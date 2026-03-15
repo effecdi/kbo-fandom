@@ -88,7 +88,41 @@ export async function analyzeCharacterImage(imageUrl: string): Promise<string[]>
   return names.map((n: any) => String(n).slice(0, 30));
 }
 
-export async function generateAIPrompt(type: "character" | "pose" | "background", context?: string): Promise<string> {
+export async function generateAIPrompt(type: "character" | "pose" | "background" | "style-detect", context?: string, referenceImageUrl?: string): Promise<string> {
+  // Handle style-detect with image analysis
+  if (type === "style-detect" && referenceImageUrl) {
+    const styleKeys = context || "";
+    const parts: any[] = [];
+
+    // Add image if it's a base64 data URL
+    if (referenceImageUrl.startsWith("data:image")) {
+      const base64Match = referenceImageUrl.match(/^data:image\/(png|jpeg|jpg|gif|webp);base64,(.+)$/);
+      if (base64Match) {
+        parts.push({
+          inlineData: {
+            mimeType: `image/${base64Match[1] === "jpg" ? "jpeg" : base64Match[1]}`,
+            data: base64Match[2],
+          },
+        });
+      }
+    }
+
+    parts.push({
+      text: `이 이미지의 그림 스타일을 분석해서 다음 스타일 키 중 가장 가까운 것을 하나만 골라주세요.
+스타일 키 목록: ${styleKeys}
+반드시 위 목록에 있는 키 중 하나만 그대로 출력해주세요. 다른 설명 없이 키 이름만 출력:`,
+    });
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts }],
+      config: { temperature: 0.2 },
+    });
+    const candidate = response.candidates?.[0];
+    const textPart = candidate?.content?.parts?.find((part: any) => part.text);
+    return textPart?.text?.trim() || "auto";
+  }
+
   const prompts: Record<string, string> = {
     character: `인스타툰 캐릭터 설명을 10~20자로 아주 짧게 1개 생성해줘.
 예시: "큰 안경 쓴 뚱뚱한 고양이", "베레모 쓴 곱슬머리 소녀", "망토 입은 아기 용"
@@ -265,11 +299,13 @@ export async function generateStoryScripts(data: {
   expressionPrompt?: string;
   itemPrompt?: string;
   backgroundPrompt?: string;
+  characterNames?: string[];
 }): Promise<{
   panels: Array<{ top: string; bottom: string; bubbles: Array<{ text: string; style?: string; position?: string }> }>;
 }> {
   // 유저가 입력한 포즈/표정/배경/아이템 프롬프트를 AI에게 전달
   const contextLines: string[] = [];
+  if (data.characterNames?.length) contextLines.push(`등장 캐릭터 이름: ${data.characterNames.join(", ")}`);
   if (data.posePrompt) contextLines.push(`캐릭터 포즈: ${data.posePrompt}`);
   if (data.expressionPrompt) contextLines.push(`캐릭터 표정: ${data.expressionPrompt}`);
   if (data.backgroundPrompt) contextLines.push(`배경 설정: ${data.backgroundPrompt}`);

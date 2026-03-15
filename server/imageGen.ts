@@ -122,18 +122,19 @@ const stylePrompts: Record<string, { keywords: string; instruction: string }> = 
 - The most stripped-down, bare-minimum character possible`,
   },
   "scribble": {
-    keywords: "scribble handwriting style comic, wiggly wobbly continuous pen lines, ballpoint pen scrawl drawing, scratchy energetic hand-drawn character, korean instagram webtoon instatoon scribble style, rough scribbly outlines like real handwriting, pen pressure variation, overlapping scratchy strokes, raw unfiltered doodle energy, hand-drawn on paper feel",
-    instruction: `Draw a character in authentic Korean instatoon SCRIBBLE style (구불구불 손글씨) - where the lines look like actual handwriting/scrawling with a pen. This style is characterized by WOBBLY, SCRIBBLY, CONTINUOUS pen strokes. Key requirements:
-- Lines must be genuinely WOBBLY and SCRIBBLY - like writing/scrawling with a ballpoint pen, NOT smooth digital lines
-- SCRATCHY, overlapping strokes are encouraged - real pen drawings have this quality where the artist goes over lines multiple times
-- The line quality should look like someone drawing with the same casual energy as writing a quick note
-- Pen pressure variation - some lines thicker, some thinner, naturally uneven
-- Simple character with expressive features - big emotions communicated through rough, energetic linework
-- Think of Korean instatoon artists who draw with a deliberately rough, scribbly, handwriting-like quality
-- The character should look like it was drawn in 30 seconds with a ballpoint pen on notebook paper
-- NOT clean, NOT smooth, NOT digital-looking - the beauty is in the raw, scribbly, handwritten quality
-- White or simple background
-- Lines can be slightly messy where they connect - this is authentic to the style`,
+    keywords: "super rough casually drawn SNS webtoon character, thick wobbly uneven marker outlines, korean instagram instatoon cute scribble style, hand-drawn on paper with felt-tip marker, deliberately crude childlike simple drawing, wiggly imperfect outlines like a kid drew it, flat simple coloring, chibi cute proportions, warm casual hand-drawn comic feel",
+    instruction: `Draw a character in a SUPER CASUALLY DRAWN Korean SNS webtoon style (구불구불 손글씨) - the kind of drawing that looks like someone doodled it in 10 seconds with a thick marker pen. This must look GENUINELY ROUGH and CRUDE - like a real person's casual doodle, NOT a professional illustration. Key requirements:
+- THICK WOBBLY OUTLINES drawn with a felt-tip marker or thick pen - lines must be UNEVEN, SHAKY, and IMPERFECT
+- The character must look like it was drawn by someone who is NOT a professional artist - deliberately crude and childlike
+- Think of popular Korean SNS webtoon artists who draw extremely rough cute characters for Instagram/social media comics
+- SIMPLE chibi proportions - big round head, small simple body, stubby limbs
+- Very simple facial features - dot eyes or simple curved line eyes, tiny nose (or no nose), simple mouth
+- Flat, simple coloring with basic colors - no gradients, no shading, no highlights
+- Lines should NOT connect perfectly - gaps and overlaps where outlines meet are GOOD
+- The overall impression should be "a cute doodle someone casually drew during a meeting"
+- Warm beige/cream or white background
+- NOT polished, NOT clean, NOT professional-looking - the charm is in how rough and crude it looks
+- Reference style: Korean instatoon accounts that draw with thick wobbly marker lines and cute simple characters`,
   },
   "ink-sketch": {
     keywords: "expressive ink brush sketch, loose dynamic brush pen drawing, bold ink strokes with natural variation, korean instagram webtoon instatoon ink style like leeyounghwan, brush pen illustration, dynamic flowing ink lines, quick confident brush strokes, monochrome ink character art, expressive hand-drawn ink comic, asian ink drawing style",
@@ -573,7 +574,8 @@ export async function generateWithBackground(
   backgroundPrompt: string,
   itemsPrompt?: string,
   noBackground?: boolean,
-  aspectRatio?: string
+  aspectRatio?: string,
+  characterNames?: string[]
 ): Promise<string> {
   // 한국어 프롬프트를 영어로 번역
   const translatedBgPrompt = await translateToEnglish(backgroundPrompt, ai);
@@ -684,24 +686,36 @@ IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be ta
 Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
     });
   } else if (isMulti) {
+    // Build character identity descriptions for the prompt
+    const charLabels = images.map((_, idx) => {
+      const name = characterNames?.[idx] || `Character ${idx + 1}`;
+      return `[${name}] = Reference image #${idx + 1} below`;
+    });
+    const charIdentityBlock = charLabels.join("\n");
+
     parts.push({
-      text: `Take these ${images.length} character images and place ALL characters together into a new scene with a background and optional items.
+      text: `You are given ${images.length} character reference images. Each image corresponds to a specific named character. You MUST maintain strict visual consistency for each character.
+
+CHARACTER IDENTITY MAP:
+${charIdentityBlock}
 
 ${noTextRule}
 
-IMPORTANT RULES:
-- Keep each character looking EXACTLY the same as their reference - same style, same features, same colors, same proportions
+CRITICAL RULES FOR CHARACTER CONSISTENCY:
+- Each character MUST look EXACTLY like their reference image - same face, hair, clothing, colors, body proportions, and art style
+- Do NOT swap or mix character appearances. ${characterNames?.length ? `"${characterNames[0]}" must look like reference image #1, "${characterNames[1] || ''}" must look like reference image #2, etc.` : ''}
+- If the scene description mentions a character by name, that character MUST match their specific reference image
 - All ${images.length} characters should appear together in the scene
 - The characters should be the main focus of the image
 - Draw the background in a style that matches the characters (simple, cute, instatoon style)
 - The background should complement the characters, not overwhelm them
 - Keep the overall style simple and cute, matching Korean Instagram webtoon (instatoon) aesthetics
-- The illustration MUST fill the ENTIRE image from edge to edge. There must be NO white borders, margins, or empty padding around the edges. The background color/scene must extend all the way to every edge of the image.
+- The illustration MUST fill the ENTIRE image from edge to edge. There must be NO white borders, margins, or empty padding around the edges.
 
 Background scene: ${translatedBgPrompt}
 ${itemsInstruction}
 
-IMPORTANT: Generate the image in 3:4 portrait aspect ratio. The image MUST be taller than wide.
+IMPORTANT: Generate the image in ${arInstruction} aspect ratio.
 
 Make the background and items in the same simple, cute drawing style as the characters. Keep thick outlines and flat colors. Do NOT write any text or words in the image. Do NOT render any Korean, Japanese, Chinese or other non-Latin characters.`
     });
@@ -728,9 +742,15 @@ Make the background and items in the same simple, cute drawing style as the char
     });
   }
 
-  for (const sourceImageData of images) {
+  for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
+    const sourceImageData = images[imgIdx];
     const match = sourceImageData.match(/^data:([^;]+);base64,(.+)$/);
     if (match) {
+      // Label each image with character name for identity mapping
+      if (isMulti && characterNames?.length) {
+        const name = characterNames[imgIdx] || `Character ${imgIdx + 1}`;
+        parts.push({ text: `Reference image #${imgIdx + 1} — this is [${name}]:` });
+      }
       parts.push({
         inlineData: {
           mimeType: match[1],
@@ -963,4 +983,296 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any 
     }
   }
   throw lastError || new Error("Failed to generate webtoon scene after retries");
+}
+
+// ─── Object Segmentation ────────────────────────────────────────────────────
+export async function segmentObjects(imageData: string): Promise<Array<{ label: string; maskDataUrl: string; type: "whole" | "part" }>> {
+  const imgMatch = imageData.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch) throw new Error("Invalid image data");
+
+  // Step 1: Analyze image with Gemini to identify objects
+  const analysisResponse = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [{
+      role: "user",
+      parts: [
+        { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+        {
+          text: `Analyze this image and identify:
+1. Whole objects/subjects (characters, people, items, background elements) — mark as type "whole"
+2. Parts of characters/objects (shirt, pants, face, hair, shoes, hat, accessories, bag, weapon, etc.) — mark as type "part"
+
+Return a JSON array with "label" (short Korean name), "description" (English description for mask generation), and "type" ("whole" or "part"). Maximum 10 items total. Focus on clearly identifiable objects and their distinct parts.
+
+Example response format:
+[{"label":"캐릭터","description":"the cartoon character in the center","type":"whole"},{"label":"셔츠","description":"the shirt worn by the character","type":"part"},{"label":"바지","description":"the pants worn by the character","type":"part"},{"label":"머리카락","description":"the hair of the character","type":"part"}]
+
+Return ONLY the JSON array, no other text.`
+        }
+      ]
+    }],
+  });
+
+  const analysisText = analysisResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.text)?.text?.trim();
+  if (!analysisText) throw new Error("Failed to analyze image objects");
+
+  let objects: Array<{ label: string; description: string; type: "whole" | "part" }>;
+  try {
+    // Extract JSON from response (handle potential markdown code blocks)
+    const jsonStr = analysisText.replace(/```json\s*|```\s*/g, "").trim();
+    objects = JSON.parse(jsonStr);
+    if (!Array.isArray(objects)) throw new Error("Not an array");
+    objects = objects.slice(0, 10);
+  } catch {
+    throw new Error("Failed to parse object analysis result");
+  }
+
+  // Step 2: Generate binary mask for each object
+  const results: Array<{ label: string; maskDataUrl: string; type: "whole" | "part" }> = [];
+
+  for (const obj of objects) {
+    try {
+      const maskResponse = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: [{
+          role: "user",
+          parts: [
+            { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+            {
+              text: `Generate a precise binary mask image for: ${obj.description}
+
+RULES:
+- The mask must be the EXACT same dimensions as the input image
+- ${obj.description} should be pure white (RGB 255,255,255)
+- Everything else should be pure black (RGB 0,0,0)
+- No gray values, no antialiasing, no gradients
+- Sharp, clean edges
+- Output ONLY the mask image`
+            }
+          ]
+        }],
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+        },
+      });
+
+      const maskPart = maskResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+      if (maskPart?.inlineData?.data) {
+        const mimeType = maskPart.inlineData.mimeType || "image/png";
+        results.push({
+          label: obj.label,
+          maskDataUrl: `data:${mimeType};base64,${maskPart.inlineData.data}`,
+          type: obj.type || "whole",
+        });
+      }
+    } catch (err) {
+      logger.warn(`Mask generation failed for object: ${obj.label}`, err);
+      // Skip failed objects, continue with others
+    }
+  }
+
+  if (results.length === 0) {
+    throw new Error("Failed to generate any object masks");
+  }
+
+  return results;
+}
+
+// ─── Point-based Object Selection (click to select) ─────────────────────────
+export async function selectObjectAtPoint(
+  imageData: string,
+  clickX: number,
+  clickY: number,
+  imageWidth: number,
+  imageHeight: number,
+): Promise<string> {
+  const imgMatch = imageData.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch) throw new Error("Invalid image data");
+
+  // Single-step: ask Gemini to generate a mask for the object at the click point
+  const maskResponse = await ai.models.generateContent({
+    model: "gemini-2.5-flash-image",
+    contents: [{
+      role: "user",
+      parts: [
+        { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+        {
+          text: `The user clicked at pixel coordinates (${clickX}, ${clickY}) on this ${imageWidth}x${imageHeight} image.
+
+Identify the object or region at that exact click point, then generate a binary mask image for that object/region.
+
+RULES:
+- The mask must be the EXACT same dimensions as the input image (${imageWidth}x${imageHeight})
+- The clicked object/region should be pure white (RGB 255,255,255)
+- Everything else should be pure black (RGB 0,0,0)
+- No gray values, no antialiasing, no gradients
+- Sharp, clean edges following the object boundary
+- If the click is on a character's specific body part (hair, shirt, skin, etc.), select that entire part
+- If the click is on a distinct object, select the entire object
+- Output ONLY the mask image`
+        }
+      ]
+    }],
+    config: {
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+    },
+  });
+
+  const maskPart = maskResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+  if (!maskPart?.inlineData?.data) {
+    throw new Error("Failed to generate object mask");
+  }
+
+  const mimeType = maskPart.inlineData.mimeType || "image/png";
+  return `data:${mimeType};base64,${maskPart.inlineData.data}`;
+}
+
+// ─── Generative Fill ────────────────────────────────────────────────────────
+export async function generativeFillImage(
+  imageData: string,
+  maskData: string,
+  prompt: string
+): Promise<string> {
+  const translatedPrompt = await translateToEnglish(prompt, ai);
+
+  const imgMatch = imageData.match(/^data:([^;]+);base64,(.+)$/);
+  const maskMatch = maskData.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !maskMatch) throw new Error("Invalid image or mask data");
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash-image",
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+          { inlineData: { mimeType: maskMatch[1], data: maskMatch[2] } },
+          {
+            text: `You are given an original image and a mask image. The mask has white regions indicating the area to modify and black regions to preserve.
+
+TASK: Modify ONLY the white (selected) regions of the original image according to this prompt: "${translatedPrompt}"
+
+RULES:
+- Keep all black (unselected) areas EXACTLY as they are in the original image
+- Fill the white areas naturally, blending seamlessly with the surrounding content
+- Match the art style, lighting, and perspective of the original image
+- ${noTextRule}`
+          },
+        ],
+      },
+    ],
+    config: {
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+    },
+  });
+
+  const candidate = response.candidates?.[0];
+  const imagePart = candidate?.content?.parts?.find((part: any) => part.inlineData);
+  if (!imagePart?.inlineData?.data) {
+    throw new Error("Failed to generate fill image");
+  }
+
+  const mimeType = imagePart.inlineData.mimeType || "image/png";
+  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+}
+
+// ─── Generative Expand ──────────────────────────────────────────────────────
+export async function generativeExpandImage(
+  imageData: string,
+  top: number,
+  right: number,
+  bottom: number,
+  left: number,
+  prompt: string
+): Promise<string> {
+  const match = imageData.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("Invalid image data");
+
+  const imgBuf = Buffer.from(match[2], "base64");
+  const meta = await sharp(imgBuf).metadata();
+  const origW = meta.width || 540;
+  const origH = meta.height || 675;
+
+  const newW = origW + left + right;
+  const newH = origH + top + bottom;
+
+  // Create expanded canvas with white padding
+  const expandedBuf = await sharp({
+    create: { width: newW, height: newH, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
+  })
+    .composite([{ input: imgBuf, top: top, left: left }])
+    .png()
+    .toBuffer();
+
+  // Create mask: white = padding (to fill), black = original image area
+  const maskBuf = await sharp({
+    create: { width: newW, height: newH, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
+  })
+    .composite([{
+      input: await sharp({
+        create: { width: origW, height: origH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 1 } },
+      }).png().toBuffer(),
+      top: top,
+      left: left,
+    }])
+    .png()
+    .toBuffer();
+
+  const expandedDataUrl = `data:image/png;base64,${expandedBuf.toString("base64")}`;
+  const maskDataUrl = `data:image/png;base64,${maskBuf.toString("base64")}`;
+
+  return generativeFillImage(expandedDataUrl, maskDataUrl, prompt || "Extend the image naturally, maintaining the same style and content");
+}
+
+// ─── Generative Upscale ─────────────────────────────────────────────────────
+export async function generativeUpscaleImage(
+  imageData: string,
+  scale: number = 2
+): Promise<string> {
+  const match = imageData.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("Invalid image data");
+
+  const imgBuf = Buffer.from(match[2], "base64");
+  const meta = await sharp(imgBuf).metadata();
+  const newW = Math.round((meta.width || 540) * scale);
+  const newH = Math.round((meta.height || 675) * scale);
+
+  // First upscale with sharp (bicubic)
+  const upscaledBuf = await sharp(imgBuf)
+    .resize(newW, newH, { kernel: sharp.kernel.lanczos3 })
+    .png()
+    .toBuffer();
+
+  const upscaledDataUrl = `data:image/png;base64,${upscaledBuf.toString("base64")}`;
+  const upMatch = upscaledDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!upMatch) throw new Error("Upscale preprocessing failed");
+
+  // Enhance with AI
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash-image",
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: upMatch[1], data: upMatch[2] } },
+          {
+            text: `Enhance this upscaled image. Sharpen details, reduce blur and artifacts while maintaining the original art style, colors, and composition exactly. Do NOT change the content, do NOT add or remove any elements. Only improve the quality and sharpness of existing details. ${noTextRule}`,
+          },
+        ],
+      },
+    ],
+    config: {
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+    },
+  });
+
+  const candidate = response.candidates?.[0];
+  const imagePart = candidate?.content?.parts?.find((part: any) => part.inlineData);
+  if (!imagePart?.inlineData?.data) {
+    // Fall back to sharp-only upscale if AI fails
+    return upscaledDataUrl;
+  }
+
+  const mimeType = imagePart.inlineData.mimeType || "image/png";
+  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
 }

@@ -22,6 +22,7 @@ export const generations = pgTable("generations", {
   referenceImageUrl: text("reference_image_url"),
   resultImageUrl: text("result_image_url").notNull(),
   thumbnailUrl: text("thumbnail_url"),
+  characterName: text("character_name"),
   creditsUsed: integer("credits_used").notNull().default(1),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -134,6 +135,7 @@ export const storyScriptSchema = z.object({
   expressionPrompt: z.string().optional(),
   itemPrompt: z.string().optional(),
   backgroundPrompt: z.string().optional(),
+  characterNames: z.array(z.string()).optional(),
 });
 
 export const topicSuggestSchema = z.object({
@@ -160,6 +162,31 @@ export interface StoryScriptResponse {
 }
 
 export type CreatorProfile = z.infer<typeof creatorProfileSchema>;
+
+// ── Character Folders ──
+
+export const characterFolders = pgTable("character_folders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const characterFolderItems = pgTable("character_folder_items", {
+  id: serial("id").primaryKey(),
+  folderId: integer("folder_id").notNull().references(() => characterFolders.id, { onDelete: "cascade" }),
+  generationId: integer("generation_id").notNull().references(() => generations.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => ({
+  uniqueFolderItem: uniqueIndex("unique_folder_item").on(table.folderId, table.generationId),
+}));
+
+export const insertCharacterFolderSchema = createInsertSchema(characterFolders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export const projectFolders = pgTable("project_folders", {
   id: serial("id").primaryKey(),
@@ -206,6 +233,9 @@ export const updateBubbleProjectSchema = z.object({
 
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type CharacterFolder = typeof characterFolders.$inferSelect;
+export type InsertCharacterFolder = z.infer<typeof insertCharacterFolderSchema>;
+export type CharacterFolderItem = typeof characterFolderItems.$inferSelect;
 export type ProjectFolder = typeof projectFolders.$inferSelect;
 export type InsertProjectFolder = z.infer<typeof insertProjectFolderSchema>;
 export type BubbleProject = typeof bubbleProjects.$inferSelect;
@@ -217,6 +247,7 @@ export type Generation = typeof generations.$inferSelect;
 export type GenerationLight = Omit<Generation, "referenceImageUrl"> & {
   resultImageUrl: string | null;
   referenceImageUrl?: undefined;
+  characterName?: string | null;
 };
 export type InsertGeneration = z.infer<typeof insertGenerationSchema>;
 export type UserCredits = typeof userCredits.$inferSelect;

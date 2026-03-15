@@ -2,6 +2,7 @@ import {
   users, type UpsertUser,
   characters, generations, userCredits, trendingAccounts, bubbleProjects, payments,
   projectFolders,
+  characterFolders, characterFolderItems,
   instagramConnections, instagramPublishLog,
   feedPosts, likes, follows,
   type Character, type InsertCharacter,
@@ -10,6 +11,7 @@ import {
   type CreatorProfile, type BubbleProject, type InsertBubbleProject,
   type Payment, type InsertPayment,
   type ProjectFolder, type InsertProjectFolder,
+  type CharacterFolder, type InsertCharacterFolder, type CharacterFolderItem,
   type InstagramConnection, type InsertInstagramConnection,
   type InstagramPublishLog, type InsertInstagramPublishLog,
   type FeedPost, type FeedPostWithAuthor, type UserPublicProfile, type PopularCreator,
@@ -65,6 +67,20 @@ export interface IStorage {
   deleteGeneration(id: number, userId: string): Promise<boolean>;
   deleteGenerationsBulk(ids: number[], userId: string): Promise<number>;
   deleteAllGenerations(userId: string): Promise<number>;
+
+  // Character name
+  updateGenerationName(id: number, userId: string, name: string): Promise<boolean>;
+  updateGenerationImage(id: number, userId: string, resultImageUrl: string, thumbnailUrl: string | null): Promise<boolean>;
+
+  // Character Folders
+  createCharacterFolder(data: InsertCharacterFolder): Promise<CharacterFolder>;
+  getCharacterFoldersByUser(userId: string): Promise<(CharacterFolder & { items: { generationId: number }[] })[]>;
+  updateCharacterFolder(id: number, userId: string, data: { name: string }): Promise<CharacterFolder | undefined>;
+  deleteCharacterFolder(id: number, userId: string): Promise<boolean>;
+  addCharacterFolderItems(folderId: number, userId: string, generationIds: number[]): Promise<number>;
+  removeCharacterFolderItem(folderId: number, userId: string, generationId: number): Promise<boolean>;
+  getGenerationsByFolder(folderId: number, userId: string, limit: number, offset: number): Promise<any[]>;
+  getGenerationsByFolderCount(folderId: number, userId: string): Promise<number>;
 
   // Project Folders
   createProjectFolder(data: InsertProjectFolder): Promise<ProjectFolder>;
@@ -190,7 +206,7 @@ export class DatabaseStorage implements IStorage {
       : eq(generations.userId, userId);
 
     try {
-      // Try with thumbnailUrl column (after migration)
+      // Try with thumbnailUrl + characterName columns
       const rows = await db.select({
         id: generations.id,
         userId: generations.userId,
@@ -198,6 +214,7 @@ export class DatabaseStorage implements IStorage {
         type: generations.type,
         prompt: generations.prompt,
         thumbnailUrl: generations.thumbnailUrl,
+        characterName: generations.characterName,
         resultImageUrl: sql<string>`CASE WHEN ${generations.thumbnailUrl} IS NOT NULL THEN NULL ELSE ${generations.resultImageUrl} END`,
         creditsUsed: generations.creditsUsed,
         createdAt: generations.createdAt,
@@ -208,22 +225,41 @@ export class DatabaseStorage implements IStorage {
         .offset(offset);
       return rows;
     } catch {
-      // Fallback: thumbnailUrl column doesn't exist yet
-      const rows = await db.select({
-        id: generations.id,
-        userId: generations.userId,
-        characterId: generations.characterId,
-        type: generations.type,
-        prompt: generations.prompt,
-        resultImageUrl: generations.resultImageUrl,
-        creditsUsed: generations.creditsUsed,
-        createdAt: generations.createdAt,
-      }).from(generations)
-        .where(conditions)
-        .orderBy(desc(generations.createdAt))
-        .limit(limit)
-        .offset(offset);
-      return rows.map((r: any) => ({ ...r, thumbnailUrl: null }));
+      // Fallback: characterName or thumbnailUrl column doesn't exist yet
+      try {
+        const rows = await db.select({
+          id: generations.id,
+          userId: generations.userId,
+          characterId: generations.characterId,
+          type: generations.type,
+          prompt: generations.prompt,
+          thumbnailUrl: generations.thumbnailUrl,
+          resultImageUrl: sql<string>`CASE WHEN ${generations.thumbnailUrl} IS NOT NULL THEN NULL ELSE ${generations.resultImageUrl} END`,
+          creditsUsed: generations.creditsUsed,
+          createdAt: generations.createdAt,
+        }).from(generations)
+          .where(conditions)
+          .orderBy(desc(generations.createdAt))
+          .limit(limit)
+          .offset(offset);
+        return rows.map((r: any) => ({ ...r, characterName: null }));
+      } catch {
+        const rows = await db.select({
+          id: generations.id,
+          userId: generations.userId,
+          characterId: generations.characterId,
+          type: generations.type,
+          prompt: generations.prompt,
+          resultImageUrl: generations.resultImageUrl,
+          creditsUsed: generations.creditsUsed,
+          createdAt: generations.createdAt,
+        }).from(generations)
+          .where(conditions)
+          .orderBy(desc(generations.createdAt))
+          .limit(limit)
+          .offset(offset);
+        return rows.map((r: any) => ({ ...r, thumbnailUrl: null, characterName: null }));
+      }
     }
   }
 
@@ -616,6 +652,202 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(generations)
       .where(eq(generations.userId, userId));
     return result.rowCount ?? 0;
+  }
+
+  // ── Character Name ──
+
+  async updateGenerationName(id: number, userId: string, name: string): Promise<boolean> {
+    const db = this.getDb();
+    try {
+      const result = await db.update(generations)
+        .set({ characterName: name })
+        .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+      return (result.rowCount ?? 0) > 0;
+    } catch (err: any) {
+      // characterName column might not exist yet — auto-create it
+      if (err?.message?.includes("character_name") || err?.code === "42703") {
+        try {
+          await db.execute(sql`ALTER TABLE generations ADD COLUMN IF NOT EXISTS character_name text`);
+          const result = await db.update(generations)
+            .set({ characterName: name })
+            .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+          return (result.rowCount ?? 0) > 0;
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    }
+  }
+
+  async updateGenerationImage(id: number, userId: string, resultImageUrl: string, thumbnailUrl: string | null): Promise<boolean> {
+    const db = this.getDb();
+    try {
+      const setData: any = { resultImageUrl };
+      if (thumbnailUrl !== null) setData.thumbnailUrl = thumbnailUrl;
+      const result = await db.update(generations)
+        .set(setData)
+        .where(and(eq(generations.id, id), eq(generations.userId, userId)));
+      return (result.rowCount ?? 0) > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  // ── Character Folders ──
+
+  async createCharacterFolder(data: InsertCharacterFolder): Promise<CharacterFolder> {
+    const db = this.getDb();
+    const [folder] = await db.insert(characterFolders).values(data).returning();
+    return folder;
+  }
+
+  async getCharacterFoldersByUser(userId: string): Promise<(CharacterFolder & { items: { generationId: number }[] })[]> {
+    const db = this.getDb();
+    const folders = await db.select().from(characterFolders)
+      .where(eq(characterFolders.userId, userId))
+      .orderBy(desc(characterFolders.updatedAt));
+
+    if (folders.length === 0) return [];
+
+    const folderIds = folders.map(f => f.id);
+    const items = await db.select({
+      folderId: characterFolderItems.folderId,
+      generationId: characterFolderItems.generationId,
+    }).from(characterFolderItems)
+      .where(inArray(characterFolderItems.folderId, folderIds));
+
+    const itemsByFolder = new Map<number, { generationId: number }[]>();
+    for (const item of items) {
+      if (!itemsByFolder.has(item.folderId)) itemsByFolder.set(item.folderId, []);
+      itemsByFolder.get(item.folderId)!.push({ generationId: item.generationId });
+    }
+
+    return folders.map(f => ({
+      ...f,
+      items: itemsByFolder.get(f.id) ?? [],
+    }));
+  }
+
+  async updateCharacterFolder(id: number, userId: string, data: { name: string }): Promise<CharacterFolder | undefined> {
+    const db = this.getDb();
+    const [updated] = await db.update(characterFolders)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(characterFolders.id, id), eq(characterFolders.userId, userId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteCharacterFolder(id: number, userId: string): Promise<boolean> {
+    const db = this.getDb();
+    // Items are cascade-deleted via FK
+    const result = await db.delete(characterFolders)
+      .where(and(eq(characterFolders.id, id), eq(characterFolders.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async addCharacterFolderItems(folderId: number, userId: string, generationIds: number[]): Promise<number> {
+    const db = this.getDb();
+    // Verify folder ownership
+    const [folder] = await db.select({ id: characterFolders.id })
+      .from(characterFolders)
+      .where(and(eq(characterFolders.id, folderId), eq(characterFolders.userId, userId)));
+    if (!folder) return 0;
+
+    let added = 0;
+    for (const gid of generationIds) {
+      try {
+        await db.insert(characterFolderItems).values({ folderId, generationId: gid });
+        added++;
+      } catch (e: any) {
+        if (e?.code === "23505") continue; // duplicate, skip
+        throw e;
+      }
+    }
+    return added;
+  }
+
+  async removeCharacterFolderItem(folderId: number, userId: string, generationId: number): Promise<boolean> {
+    const db = this.getDb();
+    // Verify folder ownership
+    const [folder] = await db.select({ id: characterFolders.id })
+      .from(characterFolders)
+      .where(and(eq(characterFolders.id, folderId), eq(characterFolders.userId, userId)));
+    if (!folder) return false;
+
+    const result = await db.delete(characterFolderItems)
+      .where(and(
+        eq(characterFolderItems.folderId, folderId),
+        eq(characterFolderItems.generationId, generationId),
+      ));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getGenerationsByFolder(folderId: number, userId: string, limit: number, offset: number): Promise<any[]> {
+    const db = this.getDb();
+    try {
+      const rows = await db.select({
+        id: generations.id,
+        userId: generations.userId,
+        characterId: generations.characterId,
+        type: generations.type,
+        prompt: generations.prompt,
+        thumbnailUrl: generations.thumbnailUrl,
+        characterName: generations.characterName,
+        resultImageUrl: sql<string>`CASE WHEN ${generations.thumbnailUrl} IS NOT NULL THEN NULL ELSE ${generations.resultImageUrl} END`,
+        creditsUsed: generations.creditsUsed,
+        createdAt: generations.createdAt,
+      }).from(generations)
+        .innerJoin(characterFolderItems, eq(generations.id, characterFolderItems.generationId))
+        .innerJoin(characterFolders, eq(characterFolderItems.folderId, characterFolders.id))
+        .where(and(
+          eq(characterFolderItems.folderId, folderId),
+          eq(characterFolders.userId, userId),
+        ))
+        .orderBy(desc(generations.createdAt))
+        .limit(limit)
+        .offset(offset);
+      return rows;
+    } catch {
+      // Fallback without characterName
+      try {
+        const rows = await db.select({
+          id: generations.id,
+          userId: generations.userId,
+          characterId: generations.characterId,
+          type: generations.type,
+          prompt: generations.prompt,
+          thumbnailUrl: generations.thumbnailUrl,
+          resultImageUrl: sql<string>`CASE WHEN ${generations.thumbnailUrl} IS NOT NULL THEN NULL ELSE ${generations.resultImageUrl} END`,
+          creditsUsed: generations.creditsUsed,
+          createdAt: generations.createdAt,
+        }).from(generations)
+          .innerJoin(characterFolderItems, eq(generations.id, characterFolderItems.generationId))
+          .innerJoin(characterFolders, eq(characterFolderItems.folderId, characterFolders.id))
+          .where(and(
+            eq(characterFolderItems.folderId, folderId),
+            eq(characterFolders.userId, userId),
+          ))
+          .orderBy(desc(generations.createdAt))
+          .limit(limit)
+          .offset(offset);
+        return rows.map((r: any) => ({ ...r, characterName: null }));
+      } catch {
+        return [];
+      }
+    }
+  }
+
+  async getGenerationsByFolderCount(folderId: number, userId: string): Promise<number> {
+    const db = this.getDb();
+    const [result] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(characterFolderItems)
+      .innerJoin(characterFolders, eq(characterFolderItems.folderId, characterFolders.id))
+      .where(and(
+        eq(characterFolderItems.folderId, folderId),
+        eq(characterFolders.userId, userId),
+      ));
+    return result?.count ?? 0;
   }
 
   // ── Project Folders ──
@@ -1109,9 +1341,12 @@ export class DatabaseStorage implements IStorage {
     await db.delete(instagramPublishLog).where(eq(instagramPublishLog.userId, userId));
     await db.delete(instagramConnections).where(eq(instagramConnections.userId, userId));
 
-    // 5. bubble projects & project folders
+    // 5. bubble projects & project folders & character folders
     await db.delete(bubbleProjects).where(eq(bubbleProjects.userId, userId));
     await db.delete(projectFolders).where(eq(projectFolders.userId, userId));
+    try {
+      await db.delete(characterFolders).where(eq(characterFolders.userId, userId));
+    } catch { /* table may not exist yet */ }
 
     // 6. generations → characters (generations가 characters FK 참조)
     await db.delete(generations).where(eq(generations.userId, userId));

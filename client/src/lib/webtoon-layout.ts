@@ -5,9 +5,12 @@
 
 const CANVAS_W = 540;
 const CANVAS_H = 675;
-const PAD = 12;       // 캔버스 가장자리 여백
-const GAP = 12;       // 컷 사이 간격
+const PAD = 40;       // 캔버스 가장자리 여백
+const GAP = 24;       // 컷 사이 간격
 const BORDER_W = 3;   // 컷 보더 두께
+
+export type CutLayoutType = "default" | "square";
+export type CutBorderStyle = "wobbly" | "simple";
 
 export interface CutRegion {
   x: number;
@@ -17,15 +20,31 @@ export interface CutRegion {
 }
 
 /**
- * 캔버스 내 컷 영역 배열 반환 (12px padding, 12px gap)
+ * 캔버스 내 컷 영역 배열 반환
  *   1컷: 전체 (패딩 포함)
  *   2컷: 2×1 그리드 (상/하 균등)
  *   3컷: 2×2 그리드 (좌상, 우상, 좌하) — 모든 셀 동일 크기
  *   4컷: 2×2 그리드
+ *   layoutType "square" (4컷 전용): 각 컷을 정사각형으로 (세로 가운데 정렬)
  */
-export function getCutRegions(cutsPerCanvas: number): CutRegion[] {
+export function getCutRegions(cutsPerCanvas: number, layoutType: CutLayoutType = "default"): CutRegion[] {
   const contentW = CANVAS_W - PAD * 2;
   const contentH = CANVAS_H - PAD * 2;
+
+  // Square layout — 4컷 전용
+  if (layoutType === "square" && cutsPerCanvas === 4) {
+    const colW = (contentW - GAP) / 2;
+    const rowH = (contentH - GAP) / 2;
+    const squareSize = Math.min(colW, rowH);
+    const offsetY = (contentH - squareSize * 2 - GAP) / 2;
+    const offsetX = (contentW - squareSize * 2 - GAP) / 2;
+    return [
+      { x: PAD + offsetX, y: PAD + offsetY, width: squareSize, height: squareSize },
+      { x: PAD + offsetX + squareSize + GAP, y: PAD + offsetY, width: squareSize, height: squareSize },
+      { x: PAD + offsetX, y: PAD + offsetY + squareSize + GAP, width: squareSize, height: squareSize },
+      { x: PAD + offsetX + squareSize + GAP, y: PAD + offsetY + squareSize + GAP, width: squareSize, height: squareSize },
+    ];
+  }
 
   switch (cutsPerCanvas) {
     case 1:
@@ -143,10 +162,30 @@ function wobblyRoundedRect(
 }
 
 /**
- * 각 컷 영역의 울퉁불퉁한 손글씨 스타일 보더 LineElement 배열 반환
+ * 보더 스타일에 따라 둥근 사각형 포인트 생성
+ * - wobbly: cornerR=8, wobble=1.8 (울퉁불퉁 손글씨)
+ * - simple: cornerR=4, wobble=0 (깔끔한 라운드 사각형)
+ */
+export function regenerateBorderPoints(
+  x: number, y: number, w: number, h: number,
+  borderStyle: CutBorderStyle, seed: number = 42,
+): { x: number; y: number }[] {
+  if (borderStyle === "simple") {
+    return wobblyRoundedRect(x, y, w, h, 4, 0, seed);
+  }
+  return wobblyRoundedRect(x, y, w, h, 8, 1.8, seed);
+}
+
+/**
+ * 각 컷 영역의 보더 LineElement 배열 반환
  * (story.tsx의 CanvasLineElement 호환)
  */
-export function buildDividerLines(cutsPerCanvas: number): Array<{
+export function buildDividerLines(
+  cutsPerCanvas: number,
+  layoutType: CutLayoutType = "default",
+  borderStyle: CutBorderStyle = "wobbly",
+  borderWidth?: number,
+): Array<{
   id: string;
   lineType: "straight";
   points: { x: number; y: number }[];
@@ -158,20 +197,16 @@ export function buildDividerLines(cutsPerCanvas: number): Array<{
   dashPattern: "solid";
   zIndex: number;
   visible: boolean;
+  borderStyle: CutBorderStyle;
 }> {
   if (cutsPerCanvas <= 1) return [];
 
-  const regions = getCutRegions(cutsPerCanvas);
+  const regions = getCutRegions(cutsPerCanvas, layoutType);
 
   return regions.map((region, i) => {
-    const pts = wobblyRoundedRect(
-      region.x,
-      region.y,
-      region.width,
-      region.height,
-      8,     // corner radius
-      1.8,   // wobble amount
-      42 + i * 137, // deterministic seed per cut
+    const pts = regenerateBorderPoints(
+      region.x, region.y, region.width, region.height,
+      borderStyle, 42 + i * 137,
     );
 
     return {
@@ -179,13 +214,14 @@ export function buildDividerLines(cutsPerCanvas: number): Array<{
       lineType: "straight" as const,
       points: pts,
       color: "#000000",
-      strokeWidth: BORDER_W,
+      strokeWidth: borderWidth ?? BORDER_W,
       opacity: 1,
       startArrow: false,
       endArrow: false,
       dashPattern: "solid" as const,
       zIndex: 100,
       visible: true,
+      borderStyle,
     };
   });
 }

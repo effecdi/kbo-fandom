@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SpotlightTourProvider } from "@/components/spotlight-tour";
 import { Navbar } from "@/components/navbar";
+import { ReactLenis } from "lenis/react";
 import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
@@ -79,18 +80,20 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <SpotlightTourProvider>
-            <div className="min-h-screen bg-background text-foreground">
-              <Navbar />
-              <Router />
-            </div>
-          </SpotlightTourProvider>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ReactLenis root options={{ lerp: 0.08, duration: 1.2, smoothWheel: true }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <TooltipProvider>
+            <SpotlightTourProvider>
+              <div className="min-h-screen bg-background text-foreground">
+                <Navbar />
+                <Router />
+              </div>
+            </SpotlightTourProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ReactLenis>
   );
 }
 

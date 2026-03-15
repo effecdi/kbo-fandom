@@ -19,12 +19,10 @@ import {
   MessageCircle,
   Target,
   Paintbrush,
-  TrendingUp,
   Heart,
   PenTool,
   Image,
   Trophy,
-  Medal,
   Star,
   ChevronRight,
   Layers,
@@ -41,7 +39,7 @@ import {
   X,
   HelpCircle,
 } from "lucide-react";
-import type { Generation, PopularCreator } from "@shared/schema";
+import type { Generation } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
 import { useTour } from "@/components/spotlight-tour";
 
@@ -235,17 +233,6 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-function RankMedal({ rank }: { rank: number }) {
-  if (rank === 1) return <Medal className="h-5 w-5 text-amber-500" />;
-  if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-  if (rank === 3) return <Medal className="h-5 w-5 text-amber-700 dark:text-amber-600" />;
-  return (
-    <span className="flex h-5 w-5 items-center justify-center text-xs font-bold text-muted-foreground">
-      {rank}
-    </span>
-  );
-}
-
 
 const TOOL_SECTIONS = [
   {
@@ -283,9 +270,6 @@ export default function HomePage() {
   const { data: recentGenerations } = useQuery<Generation[]>({
     queryKey: ["/api/gallery"],
   });
-  const { data: popularCreators } = useQuery<PopularCreator[]>({
-    queryKey: ["/api/popular-creators"],
-  });
 
   const { startTour } = useTour();
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -315,7 +299,6 @@ export default function HomePage() {
   const userGenre = usage?.genre;
   const genreLabel = GENRES.find(g => g.value === userGenre)?.label;
 
-  const topCreators = (popularCreators || []).slice(0, 5);
 
   const recent = recentGenerations?.slice(0, 4) || [];
 
@@ -553,61 +536,6 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-6">
-            <Card className="p-5" data-testid="card-ranking">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold leading-tight" data-testid="text-ranking-title">
-                    인기 크리에이터
-                  </h2>
-                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
-                    팔로워 & 좋아요 기반 랭킹
-                  </p>
-                </div>
-              </div>
-              {topCreators.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">
-                  아직 랭킹 데이터가 없어요
-                </p>
-              ) : (
-                <div className="space-y-0.5">
-                  {topCreators.map((creator, idx) => (
-                    <div
-                      key={creator.id}
-                      className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover-elevate"
-                    >
-                      <RankMedal rank={idx + 1} />
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                          {(creator.authorName || creator.firstName || "U").charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm truncate">
-                            {creator.authorName || creator.firstName || "유저"}
-                          </span>
-                          {creator.genre && (
-                            <Badge variant="secondary" className="text-[10px] shrink-0">
-                              {creator.genre === "daily" ? "일상" : creator.genre === "gag" ? "개그" : creator.genre === "romance" ? "로맨스" : creator.genre === "fantasy" ? "판타지" : creator.genre}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Heart className="h-3 w-3" />
-                            {creator.followerCount} 팔로워
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-
             {usage?.tier !== "pro" && (
               <Link href="/pricing">
                 <Card
