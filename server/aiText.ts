@@ -539,7 +539,7 @@ ${prevContext}
 → 주제와 무관한 내용, 뜬금없는 전개 금지.
 → 각 컷의 sceneDescription, narrativeText, bubbleText 모두 "${storyPrompt}" 주제와 직접 관련되어야 합니다.
 → 주제의 핵심 키워드가 각 컷에 반드시 반영되어야 합니다.
-→ ★ 스토리 제목("${storyPrompt}")과 캐릭터 이름은 전혀 다른 것입니다! 절대 혼동하지 마세요.${data.characterDescriptions?.length ? `\n→ 캐릭터 이름: ${data.characterDescriptions.join(", ")} — 이 이름을 sceneDescription에서 캐릭터를 가리킬 때 일관되게 사용하세요.` : ""}
+→ ★ 스토리 제목("${storyPrompt}")과 캐릭터 이름은 전혀 다른 것입니다! 절대 혼동하지 마세요.${charInfo ? `\n→ ${charInfo.trim()}` : ""}
 
 ■ 장면 묘사 (sceneDescription) — 한국어:
 - 캐릭터의 행동, 표정, 포즈만 구체적으로 묘사
