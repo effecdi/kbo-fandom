@@ -451,10 +451,12 @@ export function AutoWebtoonPanel({
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
+          const charNames = selectedCharacters.map((c) => c.name).filter(Boolean);
           const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
             sceneDescription: sceneDesc,
             storyContext: storyPrompt,
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
+            characterNames: charNames.length > 0 ? charNames : undefined,
             aspectRatio: geminiRatio,
             sceneIndex: idx,
             totalScenes: scenes.length,
@@ -540,10 +542,12 @@ export function AutoWebtoonPanel({
 
         try {
           const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
+          const charNames = selectedCharacters.map((c) => c.name).filter(Boolean);
           const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
             sceneDescription: sceneDesc,
             storyContext: storyPrompt,
             sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
+            characterNames: charNames.length > 0 ? charNames : undefined,
             aspectRatio: geminiRatio,
             sceneIndex: idx,
             totalScenes: scenes.length,
@@ -606,10 +610,12 @@ export function AutoWebtoonPanel({
 
     try {
       const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
+      const charNames = selectedCharacters.map((c) => c.name).filter(Boolean);
       const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
         sceneDescription: sceneDesc,
         storyContext: storyPrompt,
         sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
+        characterNames: charNames.length > 0 ? charNames : undefined,
         aspectRatio: geminiRatio,
         sceneIndex: idx,
         totalScenes: scenes.length,

@@ -830,6 +830,7 @@ export async function generateWebtoonScene(
   sceneIndex?: number,
   totalScenes?: number,
   previousSceneDescription?: string,
+  characterNames?: string[],
 ): Promise<string> {
   const parts: any[] = [];
   const images = sourceImageDataList ?? [];
@@ -862,26 +863,47 @@ export async function generateWebtoonScene(
     scenePositionBlock += `PREVIOUS SCENE: ${translatedPrev}\nThis scene must flow naturally from the previous scene — maintain continuity in character poses, emotions, and story progression.\n`;
   }
 
+  // Build character identity mapping
+  const hasCharNames = characterNames && characterNames.length > 0;
+  let charIdentityBlock = "";
+  if (hasImages && hasCharNames) {
+    const charLabels = images.map((_, idx) => {
+      const name = characterNames[idx] || `Character ${idx + 1}`;
+      return `[${name}] = Reference image #${idx + 1} below`;
+    });
+    charIdentityBlock = `\nCHARACTER IDENTITY MAP:\n${charLabels.join("\n")}\n`;
+  }
+
   if (hasImages) {
-    // Gemini multimodal best practice: 레퍼런스 이미지를 텍스트보다 앞에 배치
-    for (const src of images) {
+    // Gemini multimodal best practice: 레퍼런스 이미지를 텍스트보다 앞에 배치, 이름 라벨 포함
+    for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
+      const src = images[imgIdx];
       const match = src.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
+        if (hasCharNames) {
+          const name = characterNames[imgIdx] || `Character ${imgIdx + 1}`;
+          parts.push({ text: `Reference image #${imgIdx + 1} — this is [${name}]:` });
+        }
         parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
       }
     }
+
+    const charConsistencyRules = hasCharNames && images.length > 1
+      ? `\n- Do NOT swap or mix character appearances. ${characterNames.map((n, i) => `"${n}" must look like reference image #${i + 1}`).join(", ")}.
+- If the scene description mentions a character by name, that character MUST match their specific reference image.`
+      : "";
 
     parts.push({
       text: `You are illustrating a scene for a Korean Instagram webtoon (instatoon) comic strip.
 
 ${noTextRule}
-
+${charIdentityBlock}
 CHARACTER REFERENCE (MOST IMPORTANT — the images above are the GROUND TRUTH):
 - The reference images above show the EXACT character(s) you MUST draw.
 - COPY the EXACT same character: same face shape, same hairstyle, same hair color, same outfit, same proportions, same accessories.
 - Do NOT invent new character designs. ONLY draw the character(s) from the reference images.
 - Ignore any text descriptions of character appearance (hair color, clothing, etc.) — use ONLY the reference images for how the character looks.
-- The character must be immediately recognizable as the same person across all scenes.
+- The character must be immediately recognizable as the same person across all scenes.${charConsistencyRules}
 
 STORY CONTEXT (EVERY scene must directly illustrate this story — do NOT deviate):
 "${translatedContext}"

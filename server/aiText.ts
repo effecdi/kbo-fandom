@@ -448,7 +448,7 @@ export async function generateWebtoonSceneBreakdown(data: {
   characterDescriptions?: string[];
 }): Promise<{ scenes: WebtoonScene[] }> {
   const charInfo = data.characterDescriptions?.length
-    ? `\n등장 캐릭터: ${data.characterDescriptions.join(", ")}`
+    ? `\n등장 캐릭터 이름 (※ 이것은 캐릭터 고유 이름이며, 스토리 제목이 아닙니다): ${data.characterDescriptions.join(", ")}\n→ sceneDescription에서 캐릭터를 지칭할 때 반드시 위 이름을 사용하세요. 스토리 제목과 캐릭터 이름을 혼동하지 마세요.`
     : "";
 
   // 8컷 이하: 한 번에 생성, 9컷 이상: 청크 분할 생성 (주제 정확도 유지)
@@ -539,11 +539,13 @@ ${prevContext}
 → 주제와 무관한 내용, 뜬금없는 전개 금지.
 → 각 컷의 sceneDescription, narrativeText, bubbleText 모두 "${storyPrompt}" 주제와 직접 관련되어야 합니다.
 → 주제의 핵심 키워드가 각 컷에 반드시 반영되어야 합니다.
+→ ★ 스토리 제목("${storyPrompt}")과 캐릭터 이름은 전혀 다른 것입니다! 절대 혼동하지 마세요.${data.characterDescriptions?.length ? `\n→ 캐릭터 이름: ${data.characterDescriptions.join(", ")} — 이 이름을 sceneDescription에서 캐릭터를 가리킬 때 일관되게 사용하세요.` : ""}
 
 ■ 장면 묘사 (sceneDescription) — 한국어:
 - 캐릭터의 행동, 표정, 포즈만 구체적으로 묘사
 - 배경/환경/장소/가구/방 묘사를 절대 포함하지 마세요 (배경은 별도 처리됨)
 - ★★★ 캐릭터 외형(머리색, 머리 스타일, 옷, 안경 등)을 sceneDescription에 절대 쓰지 마세요! 외형은 레퍼런스 이미지에서 가져옵니다. 행동/표정/포즈/구도만 쓰세요.
+- ★★★ 캐릭터를 지칭할 때는 "캐릭터" 또는 등장인물의 고유 이름만 사용하세요. "30대 여성", "여자", "갈색 머리 캐릭터" 등 외형 기반 지칭 금지!
 - 좋은 예: "캐릭터, 그래픽 태블릿 펜을 들고 땀을 뻘뻘 흘리며 눈이 휘둥그레진 표정"
 - 나쁜 예: "30대 여성, 갈색 웨이브 머리에 둥근 안경을 쓴 캐릭터" (외형 묘사 포함 — 금지!)
 - 나쁜 예: "캐릭터가 모던한 사무실에 서있다" (배경 묘사 포함 — 금지)
@@ -579,22 +581,23 @@ ${prevContext}
 ★ 중요: 이미지에는 말풍선이 그려지지 않습니다. bubbles와 narrativeText는 이미지 위에 별도로 오버레이됩니다. 따라서 반드시 텍스트를 충실하게 작성해주세요!
 
 ■ 참고 예시 (주제: "답답해서 직접 만든 9년 차 디자이너의 AI 인스타툰 생존기", 7컷):
+★ 아래 예시에서 캐릭터 외형(머리색, 안경, 옷 등)이 없고, 행동/표정/포즈만 있는 점에 주목하세요!
 {"scenes":[
-{"sceneDescription":"30대 여성 캐릭터, 갈색 웨이브 머리에 둥근 안경, 모니터 여러 대 앞에서 자신감 넘치는 미소로 빠르게 타이핑하는 모습","narrativeText":"프리랜서 디자이너 겸 퍼블리셔 9년 차.","bubbles":[{"text":"디자인? 코딩? 훗, 까이꺼 다 할 수 있지!","style":"linedrawing","position":"top-right"}]},
-{"sceneDescription":"30대 여성 캐릭터, 소파에 편하게 누워 귤을 먹으며 행복한 표정, 몽글몽글한 눈빛","narrativeText":"작년 12월 프로젝트 종료! 결혼 3개월 차 새댁에게 찾아온 달콤한 잉여 시간.","bubbles":[{"text":"좋아, 남는 시간에 나도 요즘 대세라는 인스타툰이나 그려볼까?","style":"handwritten","position":"bottom-right"}]},
-{"sceneDescription":"30대 여성 캐릭터, 책상에 앉아 그래픽 태블릿 펜을 들고 땀을 뻘뻘 흘리며 눈이 휘둥그레진 당황한 표정","narrativeText":"...는 무슨.","bubbles":[{"text":"잠깐, 팔이 어떻게 꺾이는 거지? 우는 표정은 어떻게 그려?!","style":"wobbly","position":"top-right"}]},
-{"sceneDescription":"30대 여성 캐릭터 클로즈업, 반쯤 감긴 눈, 머리를 감싸 쥐고 축 처진 자세, 절망적인 표정","narrativeText":"웹디자인 9년 짬바가 무색하게, 일러스트 앞에서는 한없이 작아지는 나.","bubbles":[{"text":"나... 디자인만 할 줄 아는 똥손이었네...","style":"handwritten","position":"center"}]},
-{"sceneDescription":"여성 캐릭터 클로즈업, 날카롭게 빛나는 눈, 강렬한 집중력, 한 손가락으로 안경을 밀어 올리며, 머리 위에 빛나는 전구","narrativeText":"포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.","bubbles":[{"text":"아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!","style":"wobbly","position":"center"}]},
-{"sceneDescription":"여성 캐릭터, 키보드를 미친 듯이 타이핑, 매드 사이언티스트 같은 활짝 웃는 표정, 옆에 귀여운 로봇 곰 마스코트가 튀어나옴","narrativeText":"그래서 답답해서 직접 만들었습니다. 인스타툰 자동화 메이커!","bubbles":[{"text":"내가 못 그리면 AI가 그리게 하겠어! 가자, 올리!","style":"linedrawing","position":"top-right"}]},
-{"sceneDescription":"여성 캐릭터, 자신감 넘치게 서서 손을 흔드는 모습, 옆에 귀여운 로봇 곰 마스코트가 함께 손 흔듦","narrativeText":"9년 차 디자이너의 험난한 인스타툰 도전기!","bubbles":[{"text":"AI 멱살 잡고 연재하는 썰, 앞으로 기대해 주세요!","style":"handwritten","position":"center"}]}
+{"sceneDescription":"캐릭터, 모니터 여러 대 앞에서 자신감 넘치는 미소로 빠르게 타이핑하는 모습","narrativeText":"프리랜서 디자이너 겸 퍼블리셔 9년 차.","bubbles":[{"text":"디자인? 코딩? 훗, 까이꺼 다 할 수 있지!","style":"linedrawing","position":"top-right"}]},
+{"sceneDescription":"캐릭터, 소파에 편하게 누워 귤을 먹으며 행복한 표정, 몽글몽글한 눈빛","narrativeText":"작년 12월 프로젝트 종료! 결혼 3개월 차 새댁에게 찾아온 달콤한 잉여 시간.","bubbles":[{"text":"좋아, 남는 시간에 나도 요즘 대세라는 인스타툰이나 그려볼까?","style":"handwritten","position":"bottom-right"}]},
+{"sceneDescription":"캐릭터, 책상에 앉아 그래픽 태블릿 펜을 들고 땀을 뻘뻘 흘리며 눈이 휘둥그레진 당황한 표정","narrativeText":"...는 무슨.","bubbles":[{"text":"잠깐, 팔이 어떻게 꺾이는 거지? 우는 표정은 어떻게 그려?!","style":"wobbly","position":"top-right"}]},
+{"sceneDescription":"캐릭터 클로즈업, 반쯤 감긴 눈, 머리를 감싸 쥐고 축 처진 자세, 절망적인 표정","narrativeText":"웹디자인 9년 짬바가 무색하게, 일러스트 앞에서는 한없이 작아지는 나.","bubbles":[{"text":"나... 디자인만 할 줄 아는 똥손이었네...","style":"handwritten","position":"center"}]},
+{"sceneDescription":"캐릭터 클로즈업, 날카롭게 빛나는 눈, 강렬한 집중력, 머리 위에 빛나는 전구","narrativeText":"포기하려던 찰나, 퍼블리셔의 직업병이 도졌다.","bubbles":[{"text":"아니, 그리기 어려우면... 그냥 알아서 그려지게 만들면 되는 거 아냐?!","style":"wobbly","position":"center"}]},
+{"sceneDescription":"캐릭터, 키보드를 미친 듯이 타이핑, 매드 사이언티스트 같은 활짝 웃는 표정, 옆에 귀여운 로봇 곰 마스코트가 튀어나옴","narrativeText":"그래서 답답해서 직접 만들었습니다. 인스타툰 자동화 메이커!","bubbles":[{"text":"내가 못 그리면 AI가 그리게 하겠어! 가자, 올리!","style":"linedrawing","position":"top-right"}]},
+{"sceneDescription":"캐릭터, 자신감 넘치게 서서 손을 흔드는 모습, 옆에 귀여운 로봇 곰 마스코트가 함께 손 흔듦","narrativeText":"9년 차 디자이너의 험난한 인스타툰 도전기!","bubbles":[{"text":"AI 멱살 잡고 연재하는 썰, 앞으로 기대해 주세요!","style":"handwritten","position":"center"}]}
 ]}
 
 ■ 참고 예시 (주제: "짝사랑 상대한테 카톡 답장 기다리는 중", 4컷):
 {"scenes":[
-{"sceneDescription":"20대 여성 캐릭터, 긴 생머리, 핸드폰을 양손으로 꽉 쥐고 화면을 노려보는 모습, 눈이 초롱초롱, 기대감 가득한 표정","narrativeText":"용기 내서 보낸 카톡, 3분 전.","bubbles":[{"text":"읽었으려나...?","style":"handwritten","position":"top-right"}]},
+{"sceneDescription":"캐릭터, 핸드폰을 양손으로 꽉 쥐고 화면을 노려보는 모습, 눈이 초롱초롱, 기대감 가득한 표정","narrativeText":"용기 내서 보낸 카톡, 3분 전.","bubbles":[{"text":"읽었으려나...?","style":"handwritten","position":"top-right"}]},
 {"sceneDescription":"핸드폰 화면 클로즈업, 카카오톡 채팅방 화면, '읽음 1' 표시가 보이는 내 메시지, 상대방 답장은 아직 없음","narrativeText":"읽음 1... 근데 답장은?","bubbles":[{"text":"제발 답장 좀...!","style":"linedrawing","position":"center"}]},
-{"sceneDescription":"여성 캐릭터, 핸드폰을 들고 화면을 보며 멘붕 표정, 눈이 하얗게 비어있음, 입이 벌어진 충격 표정, 옆에 핸드폰 화면이 크게 보이며 '읽씹' 상태","narrativeText":"읽고 20분째 답장 없음.","bubbles":[{"text":"아 읽씹이야 이거...?!","style":"wobbly","position":"center"}]},
-{"sceneDescription":"여성 캐릭터, 이불 속에 파묻혀 핸드폰을 꼭 안고 눈만 빼꼼 내밀고 있는 모습, 핸드폰 화면에 알림 하나 떠있음","narrativeText":"","bubbles":[{"text":"그냥 바쁜 거겠지... 응 바쁜 거야 분명...","style":"handwritten","position":"bottom-right"}]}
+{"sceneDescription":"캐릭터, 핸드폰을 들고 화면을 보며 멘붕 표정, 눈이 하얗게 비어있음, 입이 벌어진 충격 표정, 옆에 핸드폰 화면이 크게 보이며 '읽씹' 상태","narrativeText":"읽고 20분째 답장 없음.","bubbles":[{"text":"아 읽씹이야 이거...?!","style":"wobbly","position":"center"}]},
+{"sceneDescription":"캐릭터, 이불 속에 파묻혀 핸드폰을 꼭 안고 눈만 빼꼼 내밀고 있는 모습, 핸드폰 화면에 알림 하나 떠있음","narrativeText":"","bubbles":[{"text":"그냥 바쁜 거겠지... 응 바쁜 거야 분명...","style":"handwritten","position":"bottom-right"}]}
 ]}
 
 "${storyPrompt}" 주제에 맞는 ${chunkCuts}컷을 JSON으로만 출력:
