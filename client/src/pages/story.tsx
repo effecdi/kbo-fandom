@@ -110,7 +110,9 @@ import ExpandCanvas from "@/components/expand-canvas";
 import "@/components/drawing-tools-panel.scss";
 import { FlowStepper } from "@/components/flow-stepper";
 import { AutoWebtoonPanel } from "@/components/auto-webtoon-panel";
+import { CharacterPicker, type CharacterImage } from "@/components/character-picker";
 import { EditorOnboarding } from "@/components/editor-onboarding";
+import { StoryGuidePanel } from "@/components/story-guide-panel";
 import { InstagramPublishDialog } from "@/components/instagram-publish-dialog";
 import { getFlowState, clearFlowState } from "@/lib/flow";
 import type { StoryPanelScript, Generation, GenerationLight, CharacterFolder } from "@shared/schema";
@@ -2850,17 +2852,12 @@ export default function StoryPage() {
   };
 
   // 인스타툰 자동화 생성용 - 기준 캐릭터 이미지 (복수, 최대 4개)
-  const [autoRefImages, setAutoRefImages] = useState<{ url: string; name: string }[]>([]);
-  const [showAutoGalleryPicker, setShowAutoGalleryPicker] = useState(false);
+  const [autoRefImages, setAutoRefImages] = useState<CharacterImage[]>([]);
   // Style detection for visual consistency
   const [detectedStyle, setDetectedStyle] = useState<string>("auto");    // auto | style key
   const [isDetectingStyle, setIsDetectingStyle] = useState(false);
   // 프롬프트 자동작성용 - 기준 캐릭터 이미지
-  const [promptRefImageUrl, setPromptRefImageUrl] = useState<string | null>(null);
-  const [promptRefImageName, setPromptRefImageName] = useState<string>("");
-  const [showPromptGalleryPicker, setShowPromptGalleryPicker] = useState(false);
-  const autoRefInputRef = useRef<HTMLInputElement>(null);
-  const promptRefInputRef = useRef<HTMLInputElement>(null);
+  const [promptRefImages, setPromptRefImages] = useState<CharacterImage[]>([]);
   const [panels, setPanelsRaw] = useState<PanelData[]>([createPanel()]);
   const [activePanelIndex, setActivePanelIndex] = useState(0);
   const [fontsReady, setFontsReady] = useState(false);
@@ -2914,27 +2911,6 @@ export default function StoryPage() {
       document.head.appendChild(style);
     }
   }, []);
-
-  // localStorage: restore autoRefImages on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("olli_instatoon_refchars");
-      if (!saved) return;
-      const parsed = JSON.parse(saved) as Array<{ url: string; name: string }>;
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setAutoRefImages(parsed);
-      }
-    } catch { /* ignore */ }
-  }, []);
-
-  // localStorage: save autoRefImages on change
-  useEffect(() => {
-    if (autoRefImages.length > 0) {
-      localStorage.setItem("olli_instatoon_refchars", JSON.stringify(autoRefImages));
-    } else {
-      localStorage.removeItem("olli_instatoon_refchars");
-    }
-  }, [autoRefImages]);
 
   // localStorage: restore instatoonScenePrompt on mount
   useEffect(() => {
@@ -3371,7 +3347,7 @@ export default function StoryPage() {
           if (itemPrompt.trim()) body.itemPrompt = itemPrompt.trim();
           if (backgroundPrompt.trim()) body.backgroundPrompt = backgroundPrompt.trim();
         }
-        if (autoRefImages.length > 0) body.referenceImageUrl = autoRefImages[0].url;
+        if (autoRefImages.length > 0) body.referenceImageUrl = autoRefImages[0].imageUrl;
       }
       const res = await apiRequest("POST", "/api/story-scripts", body, { signal: ac.signal });
       const result = await res.json() as { panels: StoryPanelScript[] };
@@ -3492,7 +3468,7 @@ export default function StoryPage() {
       instatoonAbortRef.current = ac;
       const scope = variables?.scope ?? "all";
       const currentPanels = panels;
-      const currentRefImages = autoRefImages.map(img => img.url);
+      const currentRefImages = autoRefImages.map(img => img.imageUrl);
       if (currentRefImages.length === 0) {
         throw new Error("먼저 기준 캐릭터 이미지를 선택해주세요.");
       }
@@ -3747,7 +3723,7 @@ export default function StoryPage() {
 
       // Auto-generate character image if reference image is available
       // backgroundPromptMutation is used in instatoonFull flow (autoRefImages)
-      const refImgs = autoRefImages.length > 0 ? autoRefImages.map(i => i.url) : promptRefImageUrl ? [promptRefImageUrl] : [];
+      const refImgs = autoRefImages.length > 0 ? autoRefImages.map(i => i.imageUrl) : promptRefImages[0]?.imageUrl ? [promptRefImages[0].imageUrl] : [];
       if (refImgs.length > 0) {
         toast({
           title: "배경/아이템 완성 — 이미지 생성 시작",
@@ -3812,7 +3788,7 @@ export default function StoryPage() {
       const scope = variables?.scope ?? "all";
       const res = await apiRequest("POST", "/api/ai-prompt", {
         type: "background",
-        referenceImageUrl: promptRefImageUrl ?? undefined,
+        referenceImageUrl: promptRefImages[0]?.imageUrl ?? undefined,
       }, { signal: ac.signal });
       const data = (await res.json()) as { prompt: string };
       return { prompt: data.prompt, scope };
@@ -3841,7 +3817,7 @@ export default function StoryPage() {
       setInstatoonScenePrompt(scene || rawPrompt);
 
       // If a reference character image is provided, auto-generate and place on canvas
-      const refImgs2 = autoRefImages.length > 0 ? autoRefImages.map(i => i.url) : promptRefImageUrl ? [promptRefImageUrl] : [];
+      const refImgs2 = autoRefImages.length > 0 ? autoRefImages.map(i => i.imageUrl) : promptRefImages[0]?.imageUrl ? [promptRefImages[0].imageUrl] : [];
       if (refImgs2.length > 0) {
         const isCurrent = scope === "current";
         const targetPanelIds = isCurrent
@@ -4083,44 +4059,6 @@ export default function StoryPage() {
   };
 
   // 이미지 파일 → base64 변환 후 state에 추가 (최대 4개)
-  const handleAutoRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (autoRefImages.length >= 4) {
-      toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      setAutoRefImages(prev => [...prev, { url: dataUrl, name: file.name }]);
-      // 스타일 감지는 첫 번째 이미지에서만 수행
-      if (autoRefImages.length === 0) {
-        setDetectedStyle("auto");
-        detectArtStyle(dataUrl).finally(() => setIsDetectingStyle(false));
-      }
-    };
-    reader.readAsDataURL(file);
-    // reset input so same file can be re-selected
-    e.target.value = "";
-  };
-
-  const handlePromptRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      setPromptRefImageUrl(dataUrl);
-      setPromptRefImageName(file.name);
-      setShowPromptGalleryPicker(false);
-      setDetectedStyle("auto");
-      // Auto-detect style for this image too
-      detectArtStyle(dataUrl).finally(() => setIsDetectingStyle(false));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const TIER_NAMES = ["입문 작가", "신인 작가", "인기 작가", "프로 연재러"];
   const TIER_PANEL_LIMITS = [3, 5, 8, 14];
 
@@ -4228,16 +4166,22 @@ export default function StoryPage() {
   // ─── Character inpaint (부분 수정) state ──────────────────────────
   const [charInpaintMode, setCharInpaintMode] = useState(false);
   const [charInpaintSelectionMode, setCharInpaintSelectionMode] = useState<SelectionMode>("brush");
+  const [charInpaintToolMode, setCharInpaintToolMode] = useState<"brush" | "lasso" | "quick" | "object">("brush");
   const [charInpaintBrushSize, setCharInpaintBrushSize] = useState(30);
   const [charInpaintPrompt, setCharInpaintPrompt] = useState("");
   const [charInpaintLoading, setCharInpaintLoading] = useState(false);
   const charInpaintSelectionRef = useRef<SelectionCanvasHandle | null>(null);
+  const [charInpaintImageCanvas, setCharInpaintImageCanvas] = useState<HTMLCanvasElement | null>(null);
   const [charRegenTab, setCharRegenTab] = useState<"full" | "inpaint">("full");
+  const [charInpaintAction, setCharInpaintAction] = useState<"fill" | "color">("fill");
+  // ─── AI 재생성 모달 드래그 state ─────────────────────────────────
+  const [charRegenDragPos, setCharRegenDragPos] = useState<{ x: number; y: number } | null>(null);
+  const charRegenDragRef = useRef<{ startMouseX: number; startMouseY: number; startX: number; startY: number } | null>(null);
   const [selectedDrawingLayerId, setSelectedDrawingLayerId] = useState<string | null>(null);
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
   const bubbleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  type LeftTab = "image" | "ai" | "elements" | "tools" | "generative" | null;
+  type LeftTab = "image" | "ai" | "elements" | "tools" | "generative" | "guide" | null;
   const [activeLeftTab, setActiveLeftTab] = useState<LeftTab>(null);
   type ElementsSubTab = "script" | "bubble" | "template";
   const [elementsSubTab, setElementsSubTab] = useState<ElementsSubTab>("script");
@@ -4613,41 +4557,163 @@ export default function StoryPage() {
     });
   }, []);
 
-  // Character inpaint: quick-select via object-select-at-point
-  const handleCharInpaintClickPoint = useCallback(async (clickX: number, clickY: number) => {
+  // Character inpaint: 빠른선택/개체선택 (local flood fill on character image)
+  const handleCharInpaintQuickSelect = useCallback((clickX: number, clickY: number) => {
+    charInpaintSelectionRef.current?.floodFillAt(clickX, clickY, floodFillTolerance);
+  }, [floodFillTolerance]);
+
+  // Character inpaint: 색상 변경 (apply color to selected area of character)
+  const applyColorToCharSelection = useCallback(async () => {
+    const mask = charInpaintSelectionRef.current?.exportMask();
+    if (!mask) {
+      toast({ title: "영역을 먼저 선택해주세요", variant: "destructive" });
+      return;
+    }
     const p = panels[activePanelIndex];
     if (!p || !selectedCharId) return;
     const char = p.characters.find(c => c.id === selectedCharId);
-    if (!char || !char.imageUrl || !char.imageEl) return;
+    if (!char?.imageEl) return;
 
-    let charImageData: string;
-    if (char.imageUrl.startsWith("data:")) {
-      charImageData = char.imageUrl;
-    } else {
-      const tmpCanvas = document.createElement("canvas");
-      tmpCanvas.width = char.imageEl.naturalWidth;
-      tmpCanvas.height = char.imageEl.naturalHeight;
-      const tmpCtx = tmpCanvas.getContext("2d")!;
-      tmpCtx.drawImage(char.imageEl, 0, 0);
-      charImageData = tmpCanvas.toDataURL("image/png");
-    }
+    const hexToRgb = (hex: string) => {
+      const h = hex.replace("#", "");
+      return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)] as [number, number, number];
+    };
+    const [tR, tG, tB] = hexToRgb(selectedObjectColor);
+    const [targetH, targetS] = rgbToHsl(tR, tG, tB);
+
+    const loadImg = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
 
     try {
-      const resp = await apiRequest("POST", "/api/object-select-at-point", {
-        imageData: charImageData,
-        clickX: Math.round(clickX),
-        clickY: Math.round(clickY),
-        imageWidth: char.imageEl.naturalWidth,
-        imageHeight: char.imageEl.naturalHeight,
-      });
-      const data = await resp.json();
-      if (data.maskData) {
-        charInpaintSelectionRef.current?.setMask(data.maskData);
+      const natW = char.imageEl.naturalWidth;
+      const natH = char.imageEl.naturalHeight;
+
+      // Use crossOrigin image to avoid tainted canvas
+      let srcImg = char.imageEl;
+      if (char.imageUrl && !char.imageUrl.startsWith("data:")) {
+        try {
+          const tmpCanvas = document.createElement("canvas");
+          tmpCanvas.width = 1; tmpCanvas.height = 1;
+          const tmpCtx = tmpCanvas.getContext("2d")!;
+          tmpCtx.drawImage(char.imageEl, 0, 0);
+          tmpCtx.getImageData(0, 0, 1, 1); // test taint
+        } catch {
+          // Tainted — reload with CORS
+          srcImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = char.imageUrl!;
+          });
+        }
       }
+
+      const charCanvas = document.createElement("canvas");
+      charCanvas.width = natW;
+      charCanvas.height = natH;
+      const charCtx = charCanvas.getContext("2d")!;
+      charCtx.drawImage(srcImg, 0, 0);
+      const imgData = charCtx.getImageData(0, 0, natW, natH);
+
+      const maskEl = await loadImg(mask);
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = natW;
+      maskCanvas.height = natH;
+      const maskCtx = maskCanvas.getContext("2d")!;
+      maskCtx.drawImage(maskEl, 0, 0, natW, natH);
+      const maskImgData = maskCtx.getImageData(0, 0, natW, natH);
+
+      const pixels = imgData.data;
+      const maskPx = maskImgData.data;
+      for (let idx = 0; idx < pixels.length; idx += 4) {
+        const mBright = (maskPx[idx] + maskPx[idx + 1] + maskPx[idx + 2]) / 3;
+        if (mBright < 128) continue;
+        const [, , l] = rgbToHsl(pixels[idx], pixels[idx + 1], pixels[idx + 2]);
+        if (l < 0.08 || l > 0.95) continue;
+        const [r, g, b] = hslToRgb(targetH, targetS, l);
+        pixels[idx] = r;
+        pixels[idx + 1] = g;
+        pixels[idx + 2] = b;
+      }
+
+      charCtx.putImageData(imgData, 0, 0);
+      const resultUrl = charCanvas.toDataURL("image/png");
+      const newImg = await loadImg(resultUrl);
+
+      updatePanel(activePanelIndex, {
+        ...p,
+        characters: p.characters.map(c =>
+          c.id === selectedCharId ? { ...c, imageUrl: resultUrl, imageEl: newImg } : c
+        ),
+      });
+
+      charInpaintSelectionRef.current?.clearSelection();
+      // Rebuild imageSource canvas with new image
+      const newCanvas = document.createElement("canvas");
+      newCanvas.width = natW;
+      newCanvas.height = natH;
+      newCanvas.getContext("2d")!.drawImage(newImg, 0, 0);
+      setCharInpaintImageCanvas(newCanvas);
+
+      toast({ title: "색상 변경 완료" });
     } catch (err: any) {
-      toast({ title: "개체 선택 실패", description: err.message, variant: "destructive" });
+      toast({ title: "색상 변경 실패", description: err.message, variant: "destructive" });
     }
-  }, [panels, activePanelIndex, selectedCharId, toast]);
+  }, [panels, activePanelIndex, selectedCharId, selectedObjectColor, updatePanel, toast]);
+
+  // Build character image canvas for flood fill imageSource
+  useEffect(() => {
+    if (!charInpaintMode || !selectedCharId) {
+      setCharInpaintImageCanvas(null);
+      return;
+    }
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const char = p.characters.find(c => c.id === selectedCharId);
+    if (!char?.imageEl) return;
+
+    const buildCanvas = (imgEl: HTMLImageElement) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(imgEl, 0, 0);
+      // Test if canvas is tainted
+      try {
+        ctx.getImageData(0, 0, 1, 1);
+        setCharInpaintImageCanvas(canvas);
+      } catch {
+        // Canvas tainted — reload with crossOrigin
+        const src = char.imageUrl || imgEl.src;
+        if (!src || src.startsWith("data:")) {
+          // data URL should never be tainted, fallback anyway
+          setCharInpaintImageCanvas(canvas);
+          return;
+        }
+        const corsImg = new Image();
+        corsImg.crossOrigin = "anonymous";
+        corsImg.onload = () => {
+          const c2 = document.createElement("canvas");
+          c2.width = corsImg.naturalWidth;
+          c2.height = corsImg.naturalHeight;
+          c2.getContext("2d")!.drawImage(corsImg, 0, 0);
+          setCharInpaintImageCanvas(c2);
+        };
+        corsImg.onerror = () => {
+          // Last resort: use tainted canvas (flood fill won't work, but brush/lasso will)
+          setCharInpaintImageCanvas(canvas);
+        };
+        corsImg.src = src;
+      }
+    };
+
+    buildCanvas(char.imageEl);
+  }, [charInpaintMode, selectedCharId, panels, activePanelIndex]);
 
   // ─── Multi-select state ────────────────────────────────────────────
   const [canvasMultiSelected, setCanvasMultiSelected] = useState<Set<string>>(new Set());
@@ -6260,7 +6326,7 @@ export default function StoryPage() {
   const serializeStoryData = useCallback(() => {
     // 참조 캐릭터 정보 저장 (인스타툰 기준 캐릭터)
     const refCharacters = autoRefImages.map(img => ({
-      url: img.url,
+      url: img.imageUrl,
       name: img.name,
     }));
     return JSON.stringify({
@@ -6438,9 +6504,10 @@ export default function StoryPage() {
         // 참조 캐릭터 복원
         if (data.refCharacters && Array.isArray(data.refCharacters)) {
           setAutoRefImages(data.refCharacters.map((rc: any) => ({
-            url: rc.url || "",
+            id: rc.id || rc.url?.slice(-16) || Math.random().toString(36).slice(2, 10),
+            imageUrl: rc.url || rc.imageUrl || "",
             name: rc.name || "캐릭터",
-          })).filter((rc: any) => rc.url));
+          })).filter((rc: any) => rc.imageUrl));
         }
       } catch (e) {
         console.error("Project canvasData parse error:", e);
@@ -6590,135 +6657,8 @@ export default function StoryPage() {
     }
   }, [selectedCharId, activePanel, activePanelIndex, updatePanel, isPro, toast]);
 
-  const startStoryTour = useCallback(() => {
-    const ensureDriver = () =>
-      new Promise<void>((resolve) => {
-        const hasDriver = (window as any)?.driver?.js?.driver;
-        if (hasDriver) {
-          resolve();
-          return;
-        }
-        const cssId = "driverjs-css";
-        if (!document.getElementById(cssId)) {
-          const link = document.createElement("link");
-          link.id = cssId;
-          link.rel = "stylesheet";
-          link.href = "https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css";
-          document.head.appendChild(link);
-        }
-        const scriptId = "driverjs-script";
-        if (!document.getElementById(scriptId)) {
-          const script = document.createElement("script");
-          script.id = scriptId;
-          script.src = "https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js";
-          script.onload = () => resolve();
-          document.body.appendChild(script);
-        } else {
-          resolve();
-        }
-      });
-    ensureDriver().then(() => {
-      const driver = (window as any).driver.js.driver;
-      const driverObj = driver({
-        overlayColor: "rgba(0,0,0,0.55)",
-        showProgress: true,
-        progressText: "{{current}} / {{total}}",
-        nextBtnText: "다음",
-        prevBtnText: "이전",
-        doneBtnText: "완료",
-        steps: [
-          {
-            element: '[data-testid="left-icon-sidebar"]',
-            popover: {
-              title: "좌측 탭 메뉴",
-              description: "4가지 탭으로 에디터 기능을 전환합니다.\n\n• 이미지 선택: 갤러리/업로드로 캐릭터 이미지 배치\n• AI 프롬프트: AI 자동 스크립트 & 이미지 생성\n• 도구: 드로잉, 선, 텍스트, 도형 도구\n• 요소: 자막, 말풍선, 템플릿 관리",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="button-left-tab-image"]',
-            popover: {
-              title: "이미지 선택/업로드",
-              description: "갤러리에서 캐릭터를 클릭하면 캔버스에 바로 배치됩니다. 파일을 직접 업로드하거나 배경 제거(Pro) 기능도 사용할 수 있어요.",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="button-left-tab-ai"]',
-            popover: {
-              title: "AI 프롬프트 (자동 생성)",
-              description: "주제를 입력하고 AI가 자막/말풍선을 자동 생성합니다.\n\n• 인스타툰 자동화 생성: 캐릭터 기준 이미지 + 주제로 이미지까지 한번에\n• 인스타툰 이미지 생성: 포즈/표정/배경 프롬프트 자동 생성\n• 자동화툰 멀티컷: 여러 장면을 한번에 생성",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="button-left-tab-tools"]',
-            popover: {
-              title: "도구 모음",
-              description: "• 선택: 요소 선택/이동/크기 조절\n• 드로잉: 펜, 마커, 형광펜으로 자유 드로잉\n• 선: 직선/곡선 추가, 화살표/점선 지원\n• 텍스트: 자유 위치 텍스트 추가\n• 도형: 사각형, 원, 삼각형, 별 등 + 마스크",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="button-left-tab-elements"]',
-            popover: {
-              title: "요소 관리",
-              description: "• 자막 설정: 상단/하단 자막 텍스트, 폰트, 색상, 배경 스타일 설정\n• 말풍선: 말풍선 추가 및 스타일/텍스트/꼬리 편집\n• 템플릿: 미리 디자인된 말풍선 템플릿 가져오기",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="canvas-toolbar"]',
-            popover: {
-              title: "상단 툴바",
-              description: "패널 추가(+), 좌우 이동, 실행 취소/다시 실행, 줌 조절을 할 수 있어요.",
-              side: "bottom",
-            },
-          },
-          {
-            element: '[data-testid="button-add-panel"]',
-            popover: {
-              title: "패널 추가",
-              description: "새 스토리 패널을 추가합니다. Pro 등급에 따라 최대 14개까지 가능해요.",
-              side: "bottom",
-            },
-          },
-          {
-            element: '[data-testid="story-canvas-area"]',
-            popover: {
-              title: "캔버스 영역",
-              description: "스토리 패널을 편집하는 메인 영역이에요.\n\n• 요소 클릭: 선택 → 우측에 설정 표시\n• 드래그: 위치 이동\n• 모서리 드래그: 크기 조절\n• 우클릭: 레이어 순서, 복제, 삭제 메뉴\n• 상/하단 자막 클릭: 바로 텍스트 편집",
-              side: "left",
-            },
-          },
-          {
-            element: '[data-testid="button-story-help"]',
-            popover: {
-              title: "도움말 (이 가이드)",
-              description: "언제든 이 버튼을 클릭하면 에디터 기능 가이드를 다시 볼 수 있어요.",
-              side: "bottom",
-            },
-          },
-          {
-            element: '[data-testid="button-download-panel"]',
-            popover: {
-              title: "다운로드",
-              description: "현재 패널 1장 또는 전체 패널을 하나의 세로 이미지로 다운로드할 수 있어요.",
-              side: "bottom",
-            },
-          },
-          {
-            element: '[data-testid="button-save-story-project"]',
-            popover: {
-              title: "프로젝트 저장 (Pro)",
-              description: "현재 작업을 프로젝트로 저장합니다. '내 편집' 페이지에서 언제든 불러올 수 있어요. Instagram 공유 기능도 지원합니다.",
-              side: "bottom",
-            },
-          },
-        ],
-      });
-      driverObj.drive();
-    });
+  const toggleGuidePanel = useCallback(() => {
+    setActiveLeftTab((prev) => (prev === "guide" ? null : "guide"));
   }, []);
   const LEFT_TABS: { id: LeftTab; icon: typeof Wand2; label: string }[] = [
     { id: "image", icon: ImageIcon as any, label: "이미지 선택" },
@@ -6761,7 +6701,7 @@ export default function StoryPage() {
 
   return (
     <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative" data-lenis-prevent>
-      <EditorOnboarding editor="story" />
+      <EditorOnboarding editor="story" onComplete={() => setActiveLeftTab("guide")} />
       <div
         className="left-icon-sidebar flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-background/80 border-r"
         style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "50px", zIndex: 20 }}
@@ -6783,10 +6723,21 @@ export default function StoryPage() {
       <div className="flex flex-1 h-full">
         {activeLeftTab && (
           <div
-            className={`h-full bg-background/80 overflow-y-auto border-r ${(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai" || activeLeftTab === "generative") ? "w-auto" : "w-[320px]"}`}
+            className={`h-full bg-background/80 overflow-y-auto border-r ${(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai" || activeLeftTab === "generative" || activeLeftTab === "guide") ? "w-auto" : "w-[320px]"}`}
             data-testid="left-panel-content"
           >
-            <div className={(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai" || activeLeftTab === "generative") ? "" : "p-3 space-y-5"}>
+            {/* ─── Guide Panel ─────────────────────────── */}
+            {activeLeftTab === "guide" && (
+              <StoryGuidePanel
+                onClose={() => setActiveLeftTab(null)}
+                onNavigateToTab={(tab, subTab) => {
+                  setActiveLeftTab(tab as LeftTab);
+                  if (tab === "ai" && subTab) setAiMode(subTab as any);
+                  if (tab === "elements" && subTab) setElementsSubTab(subTab as any);
+                }}
+              />
+            )}
+            <div className={(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai" || activeLeftTab === "generative") ? "" : (activeLeftTab === "guide" ? "hidden" : "p-3 space-y-5")}>
                   {/* ─── Compact AI Panel ─────────────────────────── */}
                   {activeLeftTab === "ai" && (
                     <div className="tools-compact-panel">
@@ -7590,7 +7541,7 @@ export default function StoryPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-wrap">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={startStoryTour} title="도움말" data-testid="button-story-help">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={toggleGuidePanel} title="도움말" data-testid="button-story-help">
                     <Lightbulb className="h-3.5 w-3.5" />
                   </Button>
                   <DropdownMenu>
@@ -7923,27 +7874,50 @@ export default function StoryPage() {
                                     setShowCharRegenPanel(false);
                                     setCharInpaintMode(false);
                                   }}
-                                  onRegenerate={() => { setShowCharRegenPanel(v => !v); setCharRegenTab("full"); }}
+                                  onRegenerate={() => { setShowCharRegenPanel(v => !v); setCharRegenTab("full"); setCharRegenDragPos(null); }}
                                   showRegenPanel={showCharRegenPanel}
-                                  onInpaint={() => {
-                                    const next = !charInpaintMode;
-                                    setCharInpaintMode(next);
-                                    if (next) {
-                                      setShowCharRegenPanel(true);
-                                      setCharRegenTab("inpaint");
-                                    } else {
-                                      charInpaintSelectionRef.current?.clearSelection();
-                                    }
-                                  }}
-                                  showInpaintMode={charInpaintMode}
                                 />
                               </div>
                               {showCharRegenPanel && (
-                                <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    ...(charRegenDragPos
+                                      ? { left: charRegenDragPos.x, top: charRegenDragPos.y, transform: "none" }
+                                      : { top: 8, left: "50%", transform: "translateX(-50%)" }),
+                                    zIndex: 55,
+                                  }}
+                                >
                                   <div className="floating-settings-modal" style={{ minWidth: 300, padding: 12 }}>
-                                    <div className="floating-settings-modal__header">
+                                    <div
+                                      className="floating-settings-modal__header"
+                                      style={{ cursor: "grab", userSelect: "none" }}
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        const modalEl = e.currentTarget.closest(".floating-settings-modal")?.parentElement;
+                                        if (!modalEl) return;
+                                        const rect = (modalEl as HTMLElement).getBoundingClientRect();
+                                        const parentRect = (modalEl as HTMLElement).offsetParent?.getBoundingClientRect() ?? rect;
+                                        const currentX = rect.left - parentRect.left;
+                                        const currentY = rect.top - parentRect.top;
+                                        charRegenDragRef.current = { startMouseX: e.clientX, startMouseY: e.clientY, startX: currentX, startY: currentY };
+                                        const onMove = (ev: MouseEvent) => {
+                                          if (!charRegenDragRef.current) return;
+                                          const dx = ev.clientX - charRegenDragRef.current.startMouseX;
+                                          const dy = ev.clientY - charRegenDragRef.current.startMouseY;
+                                          setCharRegenDragPos({ x: charRegenDragRef.current.startX + dx, y: charRegenDragRef.current.startY + dy });
+                                        };
+                                        const onUp = () => {
+                                          charRegenDragRef.current = null;
+                                          document.removeEventListener("mousemove", onMove);
+                                          document.removeEventListener("mouseup", onUp);
+                                        };
+                                        document.addEventListener("mousemove", onMove);
+                                        document.addEventListener("mouseup", onUp);
+                                      }}
+                                    >
                                       <span className="floating-settings-modal__title">AI 재생성</span>
-                                      <button className="floating-settings-modal__close" onClick={() => { setShowCharRegenPanel(false); setCharInpaintMode(false); charInpaintSelectionRef.current?.clearSelection(); }}>
+                                      <button className="floating-settings-modal__close" onClick={() => { setShowCharRegenPanel(false); setCharInpaintMode(false); charInpaintSelectionRef.current?.clearSelection(); setCharRegenDragPos(null); }}>
                                         <X className="h-3.5 w-3.5" />
                                       </button>
                                     </div>
@@ -8019,40 +7993,26 @@ export default function StoryPage() {
                                     {charRegenTab === "inpaint" && (
                                       <>
                                         {/* Selection tool buttons */}
-                                        <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-                                          <button
-                                            onClick={() => setCharInpaintSelectionMode("brush")}
-                                            style={{
-                                              flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
-                                              background: charInpaintSelectionMode === "brush" ? "hsl(var(--primary))" : "hsl(var(--muted))",
-                                              color: charInpaintSelectionMode === "brush" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-                                            }}
-                                            title="브러시"
-                                          >
-                                            🖌️ 브러시
-                                          </button>
-                                          <button
-                                            onClick={() => setCharInpaintSelectionMode("lasso")}
-                                            style={{
-                                              flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
-                                              background: charInpaintSelectionMode === "lasso" ? "hsl(var(--primary))" : "hsl(var(--muted))",
-                                              color: charInpaintSelectionMode === "lasso" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-                                            }}
-                                            title="올가미"
-                                          >
-                                            🔺 올가미
-                                          </button>
-                                          <button
-                                            onClick={() => setCharInpaintSelectionMode("click")}
-                                            style={{
-                                              flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
-                                              background: charInpaintSelectionMode === "click" ? "hsl(var(--primary))" : "hsl(var(--muted))",
-                                              color: charInpaintSelectionMode === "click" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-                                            }}
-                                            title="빠른선택"
-                                          >
-                                            ✨ 빠른선택
-                                          </button>
+                                        <div style={{ display: "flex", gap: 3, marginBottom: 8 }}>
+                                          {([
+                                            { key: "brush" as const, icon: "🖌️", label: "브러시", mode: "brush" as SelectionMode },
+                                            { key: "lasso" as const, icon: "🔺", label: "올가미", mode: "lasso" as SelectionMode },
+                                            { key: "quick" as const, icon: "✨", label: "빠른선택", mode: "click" as SelectionMode },
+                                            { key: "object" as const, icon: "🎯", label: "개체선택", mode: "click" as SelectionMode },
+                                          ] as const).map((tool) => (
+                                            <button
+                                              key={tool.key}
+                                              onClick={() => { setCharInpaintToolMode(tool.key); setCharInpaintSelectionMode(tool.mode); }}
+                                              style={{
+                                                flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 10, fontWeight: 600, border: "none", cursor: "pointer",
+                                                background: charInpaintToolMode === tool.key ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                                color: charInpaintToolMode === tool.key ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                              }}
+                                              title={tool.label}
+                                            >
+                                              {tool.icon} {tool.label}
+                                            </button>
+                                          ))}
                                         </div>
 
                                         {/* Brush size slider (only for brush mode) */}
@@ -8068,6 +8028,24 @@ export default function StoryPage() {
                                               step={1}
                                               value={[charInpaintBrushSize]}
                                               onValueChange={([v]) => setCharInpaintBrushSize(v)}
+                                              className="w-full"
+                                            />
+                                          </div>
+                                        )}
+
+                                        {/* Tolerance slider (for click-based modes: quick/object select) */}
+                                        {charInpaintSelectionMode === "click" && (
+                                          <div style={{ marginBottom: 8 }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "hsl(var(--muted-foreground))", marginBottom: 4 }}>
+                                              <span>허용 범위</span>
+                                              <span>{floodFillTolerance}</span>
+                                            </div>
+                                            <Slider
+                                              min={0}
+                                              max={100}
+                                              step={1}
+                                              value={[floodFillTolerance]}
+                                              onValueChange={([v]) => setFloodFillTolerance(v)}
                                               className="w-full"
                                             />
                                           </div>
@@ -8089,36 +8067,107 @@ export default function StoryPage() {
                                           </button>
                                         </div>
 
-                                        {/* Prompt */}
-                                        <textarea
-                                          value={charInpaintPrompt}
-                                          onChange={(e) => setCharInpaintPrompt(e.target.value)}
-                                          placeholder="수정할 내용을 입력하세요..."
-                                          disabled={charInpaintLoading}
-                                          style={{
-                                            width: "100%", minHeight: 50, resize: "vertical",
-                                            padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
-                                            fontSize: 13, fontFamily: "inherit", marginBottom: 8,
-                                            background: "hsl(var(--background))", color: "hsl(var(--foreground))",
-                                          }}
-                                        />
-                                        <button
-                                          disabled={charInpaintLoading || !charInpaintPrompt.trim()}
-                                          onClick={() => charInpaintGenerate(selectedCharId!, i, charInpaintPrompt.trim())}
-                                          style={{
-                                            width: "100%", padding: "7px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                                            background: charInpaintLoading || !charInpaintPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
-                                            color: charInpaintLoading || !charInpaintPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
-                                            border: "none", cursor: charInpaintLoading || !charInpaintPrompt.trim() ? "not-allowed" : "pointer",
-                                            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                                          }}
-                                        >
-                                          {charInpaintLoading ? (
-                                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> 수정 중...</>
-                                          ) : (
-                                            <><Sparkles className="h-3.5 w-3.5" /> 선택 영역 AI 수정</>
-                                          )}
-                                        </button>
+                                        {/* Action toggle: color change vs AI fill */}
+                                        <div style={{ display: "flex", gap: 0, marginBottom: 8, borderRadius: 6, overflow: "hidden", border: "1px solid hsl(var(--border))" }}>
+                                          <button
+                                            onClick={() => setCharInpaintAction("color")}
+                                            style={{
+                                              flex: 1, padding: "5px 0", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                                              background: charInpaintAction === "color" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                              color: charInpaintAction === "color" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                            }}
+                                          >
+                                            색상 변경
+                                          </button>
+                                          <button
+                                            onClick={() => setCharInpaintAction("fill")}
+                                            style={{
+                                              flex: 1, padding: "5px 0", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                                              background: charInpaintAction === "fill" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                              color: charInpaintAction === "fill" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                            }}
+                                          >
+                                            AI 수정
+                                          </button>
+                                        </div>
+
+                                        {/* Color change UI */}
+                                        {charInpaintAction === "color" && (
+                                          <div>
+                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4, marginBottom: 8 }}>
+                                              {[
+                                                "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6",
+                                                "#fca5a5", "#fdba74", "#fde047", "#86efac", "#93c5fd", "#c4b5fd",
+                                                "#fde8d4", "#f5d0b0", "#e8b88a", "#d4956b", "#b87449", "#8b5e3c",
+                                                "#1e293b", "#334155", "#6b7280", "#9ca3af", "#d1d5db", "#ffffff",
+                                              ].map((color) => (
+                                                <button
+                                                  key={color}
+                                                  onClick={() => setSelectedObjectColor(color)}
+                                                  style={{
+                                                    width: "100%", aspectRatio: "1", borderRadius: 6, border: selectedObjectColor === color ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                                                    background: color, cursor: "pointer",
+                                                  }}
+                                                />
+                                              ))}
+                                            </div>
+                                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
+                                              <input
+                                                type="color"
+                                                value={selectedObjectColor}
+                                                onChange={(e) => setSelectedObjectColor(e.target.value)}
+                                                style={{ width: 32, height: 32, border: "none", padding: 0, cursor: "pointer", borderRadius: 4 }}
+                                              />
+                                              <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))" }}>{selectedObjectColor}</span>
+                                            </div>
+                                            <button
+                                              onClick={applyColorToCharSelection}
+                                              style={{
+                                                width: "100%", padding: "7px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                                background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))",
+                                                border: "none", cursor: "pointer",
+                                                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                                              }}
+                                            >
+                                              <Paintbrush className="h-3.5 w-3.5" /> 색상 적용
+                                            </button>
+                                          </div>
+                                        )}
+
+                                        {/* AI fill UI */}
+                                        {charInpaintAction === "fill" && (
+                                          <div>
+                                            <textarea
+                                              value={charInpaintPrompt}
+                                              onChange={(e) => setCharInpaintPrompt(e.target.value)}
+                                              placeholder="수정할 내용을 입력하세요..."
+                                              disabled={charInpaintLoading}
+                                              style={{
+                                                width: "100%", minHeight: 50, resize: "vertical",
+                                                padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
+                                                fontSize: 13, fontFamily: "inherit", marginBottom: 8,
+                                                background: "hsl(var(--background))", color: "hsl(var(--foreground))",
+                                              }}
+                                            />
+                                            <button
+                                              disabled={charInpaintLoading || !charInpaintPrompt.trim()}
+                                              onClick={() => charInpaintGenerate(selectedCharId!, i, charInpaintPrompt.trim())}
+                                              style={{
+                                                width: "100%", padding: "7px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                                background: charInpaintLoading || !charInpaintPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
+                                                color: charInpaintLoading || !charInpaintPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
+                                                border: "none", cursor: charInpaintLoading || !charInpaintPrompt.trim() ? "not-allowed" : "pointer",
+                                                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                                              }}
+                                            >
+                                              {charInpaintLoading ? (
+                                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> 수정 중...</>
+                                              ) : (
+                                                <><Sparkles className="h-3.5 w-3.5" /> 선택 영역 AI 수정</>
+                                              )}
+                                            </button>
+                                          </div>
+                                        )}
                                       </>
                                     )}
                                   </div>
@@ -8392,7 +8441,12 @@ export default function StoryPage() {
                                 mode={charInpaintSelectionMode}
                                 brushSize={charInpaintBrushSize}
                                 className="rounded-sm"
-                                onClickPoint={charInpaintSelectionMode === "click" ? handleCharInpaintClickPoint : undefined}
+                                onClickPoint={
+                                  charInpaintSelectionMode === "click"
+                                    ? handleCharInpaintQuickSelect
+                                    : undefined
+                                }
+                                imageSource={charInpaintImageCanvas}
                               />
                               <div className="drawing-mode-indicator" style={{ background: "hsl(var(--primary) / 0.9)", transform: inpaintChar.flipX ? "scaleX(-1)" : undefined }}>
                                 <span className="drawing-mode-indicator__dot" />
@@ -10288,112 +10342,26 @@ export default function StoryPage() {
 
                       {aiMode === "instatoonFull" && (
                         <div className="space-y-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-foreground">① 기준 캐릭터 이미지</span>
-                              <span className="text-[10px] text-destructive font-medium">필수</span>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed">이 캐릭터 이미지를 기반으로 포즈·표정·배경이 자동 변형됩니다.</p>
-                            <p className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1">🎨 이미지 업로드 시 그림 스타일을 자동 감지 → 배경·아이템도 같은 스타일로 생성됩니다</p>
-                            {/* Quick-select character strip (캐릭터 전용 쿼리 사용) */}
-                            {(() => {
-                              const charItems = characterStripData.filter((g: any) => g.characterName && (g.resultImageUrl || g.thumbnailUrl));
-                              if (charItems.length === 0) return null;
-                              return (
-                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                                  {charItems.map((gen: any) => {
-                                    const isSelected = autoRefImages.some(img => img.url === gen.resultImageUrl);
-                                    return (
-                                      <button
-                                        key={gen.id}
-                                        type="button"
-                                        disabled={autoRefImages.length >= 4 && !isSelected}
-                                        onClick={async () => {
-                                          if (isSelected) { setAutoRefImages(prev => prev.filter(img => img.url !== gen.resultImageUrl)); return; }
-                                          if (autoRefImages.length >= 4) { toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" }); return; }
-                                          const full = await fetchFullGeneration(gen.id);
-                                          if (!full) return;
-                                          const imgName = gen.characterName || (gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
-                                          setAutoRefImages(prev => [...prev, { url: full.resultImageUrl, name: imgName }]);
-                                          if (autoRefImages.length === 0) { setDetectedStyle("auto"); detectArtStyle(full.resultImageUrl).finally(() => setIsDetectingStyle(false)); }
-                                        }}
-                                        className={`relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"} ${autoRefImages.length >= 4 && !isSelected ? "opacity-40" : ""}`}
-                                      >
-                                        <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.characterName || ""} loading="lazy" className="w-full h-full object-cover" />
-                                        {isSelected && <div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><CheckCircle2 className="h-3.5 w-3.5 text-primary drop-shadow" /></div>}
-                                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[7px] px-0.5 truncate text-center">{gen.characterName}</div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              );
-                            })()}
-                            {autoRefImages.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {autoRefImages.map((img, idx) => (
-                                  <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-muted">
-                                    <img src={img.url} alt={`캐릭터 ${idx + 1}`} className="w-full h-full object-cover" />
-                                    <button onClick={() => { const remaining = autoRefImages.filter((_, i) => i !== idx); setAutoRefImages(remaining); if (idx === 0 && remaining.length > 0) { setDetectedStyle("auto"); detectArtStyle(remaining[0].url).finally(() => setIsDetectingStyle(false)); } if (remaining.length === 0) setDetectedStyle("auto"); }} className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"><X className="h-2.5 w-2.5" /></button>
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] px-0.5 py-0.5 truncate text-center">{img.name?.slice(0, 8) || `캐릭터${idx + 1}`}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {autoRefImages.length < 4 && (
-                              <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => autoRefInputRef.current?.click()} className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground hover:border-primary/50 hover:bg-muted/70 transition-colors">
-                                  <UploadCloud className="h-5 w-5 text-muted-foreground/70" /><span className="text-[11px] font-medium">이미지 업로드</span><span className="text-[10px] opacity-70">JPG·PNG ({autoRefImages.length}/4)</span>
-                                </button>
-                                <button onClick={() => setShowAutoGalleryPicker((v) => !v)} className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-3 text-xs transition-colors ${showAutoGalleryPicker ? "border-primary bg-primary/5 text-primary" : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/70"}`}>
-                                  <ImagePlus className="h-5 w-5 opacity-70" /><span className="text-[11px] font-medium">갤러리에서</span><span className="text-[10px] opacity-70">생성 이미지 ({autoRefImages.length}/4)</span>
-                                </button>
-                              </div>
-                            )}
-                            <input ref={autoRefInputRef} type="file" accept="image/*" className="hidden" onChange={handleAutoRefImageUpload} />
-                            {autoRefImages.length > 0 && (
-                              <div className="space-y-1.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] font-semibold text-muted-foreground">그림 스타일</span>
-                                  {isDetectingStyle ? (<span className="text-[10px] text-blue-500 flex items-center gap-1"><div className="h-2.5 w-2.5 animate-spin rounded-full border border-blue-500 border-t-transparent" />분석 중...</span>) : detectedStyle !== "auto" ? (<span className="text-[10px] bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full px-2 py-0.5 font-medium">✓ {ART_STYLES[detectedStyle]?.label}</span>) : (<span className="text-[10px] text-muted-foreground">(직접 선택)</span>)}
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {Object.entries(ART_STYLES).filter(([k]) => k !== "auto").map(([key, s]) => (
-                                    <button key={key} onClick={() => setDetectedStyle(key)} title={s.description} className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${detectedStyle === key ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>{s.label}</button>
-                                  ))}
-                                </div>
-                                <p className="text-[9px] text-muted-foreground">선택한 스타일로 배경·아이템이 통일됩니다</p>
-                              </div>
-                            )}
-                            {showAutoGalleryPicker && (
-                              <div className="space-y-1.5">
-                                <p className="text-[11px] text-muted-foreground">생성된 이미지 선택 (최대 4개, 클릭으로 토글):</p>
-                                {storyCharacterFolders.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    <button className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeGalleryFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setActiveGalleryFolderId(null)}>전체</button>
-                                    {storyCharacterFolders.map(f => (
-                                      <button key={f.id} className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeGalleryFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setActiveGalleryFolderId(f.id)}>{f.name}</button>
-                                    ))}
-                                  </div>
-                                )}
-                                {galleryLoading ? (<div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>) : !galleryData?.length ? (<p className="text-[11px] text-muted-foreground text-center py-3">생성된 이미지가 없어요.<br />먼저 캐릭터를 만들어주세요.</p>) : (
-                                  <>
-                                    <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
-                                      {galleryData.map((gen) => {
-                                        const isSelected = autoRefImages.some(img => img.url === (gen.resultImageUrl));
-                                        return (
-                                          <button key={gen.id} className={`relative aspect-square rounded-md overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`} onClick={async () => { if (isSelected) { setAutoRefImages(prev => prev.filter(img => img.url !== gen.resultImageUrl)); return; } if (autoRefImages.length >= 4) { toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" }); return; } const full = await fetchFullGeneration(gen.id); if (!full) return; const imgName = gen.characterName || (gen.prompt?.slice(0, 20) ?? "갤러리 이미지"); setAutoRefImages(prev => [...prev, { url: full.resultImageUrl, name: imgName }]); if (autoRefImages.length === 0) { setDetectedStyle("auto"); detectArtStyle(full.resultImageUrl).finally(() => setIsDetectingStyle(false)); } }}>
-                                            <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
-                                            {isSelected && (<div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><CheckCircle2 className="h-5 w-5 text-primary drop-shadow" /></div>)}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                    {galleryHasMore && (<button className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => setGalleryLimit((prev) => prev + 30)}>더 보기</button>)}
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                          <CharacterPicker
+                            mode="multi"
+                            maxImages={4}
+                            required
+                            label="① 기준 캐릭터 이미지"
+                            description="이 캐릭터 이미지를 기반으로 포즈·표정·배경이 자동 변형됩니다."
+                            showStyleHint
+                            selectedImages={autoRefImages}
+                            onSelectedImagesChange={setAutoRefImages}
+                            characterStripData={characterStripData}
+                            galleryData={galleryData}
+                            galleryLoading={galleryLoading}
+                            galleryHasMore={galleryHasMore}
+                            characterFolders={storyCharacterFolders}
+                            activeGalleryFolderId={activeGalleryFolderId}
+                            onActiveGalleryFolderIdChange={setActiveGalleryFolderId}
+                            onLoadMoreGallery={() => setGalleryLimit(p => p + 30)}
+                            fetchFullGeneration={fetchFullGeneration}
+                            onFirstImageSelected={(img) => { setDetectedStyle("auto"); detectArtStyle(img.imageUrl).finally(() => setIsDetectingStyle(false)); }}
+                          />
                           <div className="space-y-1.5">
                             <span className="text-xs font-semibold text-foreground">② 인스타툰 주제</span>
                             <div className="flex gap-2">
@@ -10448,77 +10416,24 @@ export default function StoryPage() {
 
                       {aiMode === "instatoonPrompt" && (
                         <div className="space-y-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-foreground">기준 캐릭터 이미지</span>
-                              <span className="text-[10px] text-muted-foreground">(선택 — 있으면 더 정확해요)</span>
-                            </div>
-                            {/* Quick-select character strip (캐릭터 전용 쿼리 사용) */}
-                            {(() => {
-                              const charItems = characterStripData.filter((g: any) => g.characterName && (g.resultImageUrl || g.thumbnailUrl));
-                              if (charItems.length === 0) return null;
-                              return (
-                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                                  {charItems.map((gen: any) => {
-                                    const isActive = promptRefImageUrl === gen.resultImageUrl;
-                                    return (
-                                      <button
-                                        key={gen.id}
-                                        type="button"
-                                        onClick={async () => {
-                                          if (isActive) { setPromptRefImageUrl(null); setPromptRefImageName(""); return; }
-                                          const full = await fetchFullGeneration(gen.id);
-                                          if (!full) return;
-                                          setPromptRefImageUrl(full.resultImageUrl);
-                                          setPromptRefImageName(gen.characterName || (gen.prompt?.slice(0, 20) ?? "갤러리 이미지"));
-                                          setShowPromptGalleryPicker(false);
-                                        }}
-                                        className={`relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${isActive ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
-                                      >
-                                        <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.characterName || ""} loading="lazy" className="w-full h-full object-cover" />
-                                        {isActive && <div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><CheckCircle2 className="h-3.5 w-3.5 text-primary drop-shadow" /></div>}
-                                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[7px] px-0.5 truncate text-center">{gen.characterName}</div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              );
-                            })()}
-                            {promptRefImageUrl ? (
-                              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-2">
-                                <img src={promptRefImageUrl} alt="기준" className="h-10 w-10 rounded object-cover border border-border flex-shrink-0" />
-                                <div className="flex-1 min-w-0"><p className="text-[11px] font-medium truncate">{promptRefImageName || "선택된 이미지"}</p><p className="text-[10px] text-muted-foreground">이 캐릭터 기반으로 프롬프트 자동 작성</p></div>
-                                <button onClick={() => { setPromptRefImageUrl(null); setPromptRefImageName(""); }} className="text-muted-foreground hover:text-foreground flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
-                              </div>
-                            ) : (
-                              <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => promptRefInputRef.current?.click()} className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-2.5 text-xs text-muted-foreground hover:border-primary/50 hover:bg-muted/70 transition-colors"><UploadCloud className="h-4 w-4 opacity-70" /><span className="text-[11px]">이미지 업로드</span></button>
-                                <button onClick={() => setShowPromptGalleryPicker((v) => !v)} className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-2.5 text-xs transition-colors ${showPromptGalleryPicker ? "border-primary bg-primary/5 text-primary" : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/70"}`}><ImagePlus className="h-4 w-4 opacity-70" /><span className="text-[11px]">갤러리에서</span></button>
-                              </div>
-                            )}
-                            <input ref={promptRefInputRef} type="file" accept="image/*" className="hidden" onChange={handlePromptRefImageUpload} />
-                            {showPromptGalleryPicker && (
-                              <div className="space-y-1.5">
-                                {storyCharacterFolders.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    <button className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeGalleryFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setActiveGalleryFolderId(null)}>전체</button>
-                                    {storyCharacterFolders.map(f => (
-                                      <button key={f.id} className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeGalleryFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setActiveGalleryFolderId(f.id)}>{f.name}</button>
-                                    ))}
-                                  </div>
-                                )}
-                                {galleryLoading ? (<div className="flex justify-center py-3"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>) : !galleryData?.length ? (<p className="text-[11px] text-muted-foreground text-center py-2">생성된 이미지가 없어요.</p>) : (
-                                  <>
-                                    <div className="grid grid-cols-3 gap-1.5 max-h-[150px] overflow-y-auto">
-                                      {galleryData.map((gen) => (<button key={gen.id} className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors" onClick={async () => { const full = await fetchFullGeneration(gen.id); if (!full) return; setPromptRefImageUrl(full.resultImageUrl); setPromptRefImageName(gen.characterName || (gen.prompt?.slice(0, 20) ?? "갤러리 이미지")); setShowPromptGalleryPicker(false); }}><img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" /></button>))}
-                                    </div>
-                                    {galleryHasMore && (<button className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => setGalleryLimit((prev) => prev + 30)}>더 보기</button>)}
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          {(promptRefImageUrl || autoRefImages.length > 0) && (
+                          <CharacterPicker
+                            mode="single"
+                            label="기준 캐릭터 이미지"
+                            description="(선택 — 있으면 더 정확해요)"
+                            selectedImages={promptRefImages}
+                            onSelectedImagesChange={setPromptRefImages}
+                            characterStripData={characterStripData}
+                            galleryData={galleryData}
+                            galleryLoading={galleryLoading}
+                            galleryHasMore={galleryHasMore}
+                            characterFolders={storyCharacterFolders}
+                            activeGalleryFolderId={activeGalleryFolderId}
+                            onActiveGalleryFolderIdChange={setActiveGalleryFolderId}
+                            onLoadMoreGallery={() => setGalleryLimit(p => p + 30)}
+                            fetchFullGeneration={fetchFullGeneration}
+                            onFirstImageSelected={(img) => { setDetectedStyle("auto"); detectArtStyle(img.imageUrl).finally(() => setIsDetectingStyle(false)); }}
+                          />
+                          {(promptRefImages.length > 0 || autoRefImages.length > 0) && (
                             <div className="space-y-1.5 border border-border/60 rounded-lg p-2.5 bg-muted/30">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-[10px] font-semibold text-foreground">🎨 그림 스타일 통일</span>
@@ -10569,6 +10484,9 @@ export default function StoryPage() {
                           galleryLoading={galleryLoading}
                           canvasWidth={CANVAS_W}
                           canvasHeight={CANVAS_H}
+                          characterStripData={characterStripData}
+                          characterFolders={storyCharacterFolders}
+                          fetchFullGeneration={fetchFullGeneration}
                           onPanelsGenerated={(newPanels) => {
                             const isDefaultEmpty = panels.length === 1 && panels[0].characters.length === 0 && panels[0].bubbles.length === 0 && !panels[0].backgroundImageUrl && (panels[0].textElements?.length ?? 0) === 0 && (panels[0].lineElements?.length ?? 0) === 0;
                             if (isDefaultEmpty) { const limited = (newPanels as any[]).slice(0, maxPanels); setActivePanelIndex(0); setPanels(limited as any); rehydrateImages(limited as any); } else { const available = maxPanels - panels.length; if (available <= 0) { toast({ title: `패널 ${maxPanels}개 제한`, description: "추가할 수 있는 패널이 없습니다.", variant: "destructive" }); return; } const toAdd = (newPanels as any[]).slice(0, available); const merged = [...panels, ...toAdd] as any; setActivePanelIndex(panels.length); setPanels(merged); rehydrateImages(toAdd as any); if (toAdd.length < newPanels.length) { toast({ title: `${toAdd.length}/${newPanels.length}개 패널만 추가됨`, description: `패널 최대 ${maxPanels}개 제한`, variant: "destructive" }); } }

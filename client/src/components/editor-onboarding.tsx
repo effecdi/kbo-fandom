@@ -132,7 +132,7 @@ const BUBBLE_STEPS: OnboardingStep[] = [
 const ONBOARDING_KEY_STORY = "charagen_story_onboarding_seen_v2";
 const ONBOARDING_KEY_BUBBLE = "charagen_bubble_onboarding_seen_v2";
 
-export function EditorOnboarding({ editor }: { editor: "story" | "bubble" }) {
+export function EditorOnboarding({ editor, onComplete }: { editor: "story" | "bubble"; onComplete?: () => void }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const steps = editor === "story" ? STORY_STEPS : BUBBLE_STEPS;
@@ -149,6 +149,7 @@ export function EditorOnboarding({ editor }: { editor: "story" | "bubble" }) {
   const handleClose = () => {
     setOpen(false);
     localStorage.setItem(storageKey, "1");
+    onComplete?.();
   };
 
   const handleNext = () => {

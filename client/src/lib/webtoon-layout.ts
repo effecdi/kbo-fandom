@@ -5,7 +5,7 @@
 
 const DEFAULT_CANVAS_W = 540;
 const DEFAULT_CANVAS_H = 675;
-const PAD = 40;       // 캔버스 가장자리 여백
+const PAD = 24;       // 캔버스 가장자리 여백
 const GAP = 24;       // 컷 사이 간격
 const BORDER_W = 3;   // 컷 보더 두께
 

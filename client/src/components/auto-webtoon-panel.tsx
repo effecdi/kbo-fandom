@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLoginGuard } from "@/hooks/use-login-guard";
@@ -28,10 +27,11 @@ import {
 } from "@/components/ui/select";
 import {
   Wand2, ArrowLeft, Loader2, Check, X, RefreshCw,
-  Upload, FolderOpen, Sparkles, ImageIcon, ArrowRight, Plus, Trash2,
+  Sparkles, ImageIcon, ArrowRight, Plus, Trash2,
 } from "lucide-react";
 import type { GenerationLight, CharacterFolder } from "@shared/schema";
 import { supabase } from "@/lib/supabase";
+import { CharacterPicker, type CharacterImage } from "@/components/character-picker";
 
 // ---- Types ----
 
@@ -40,13 +40,6 @@ interface WebtoonScene {
   narrativeText: string;
   bubbleText: string; // legacy compat
   bubbles: Array<{ text: string; style?: string; position?: string }>;
-}
-
-interface SelectedCharacter {
-  id: string;
-  name: string;
-  imageUrl: string;
-  imageDataUrl: string;
 }
 
 type CutStatus = "pending" | "generating" | "done" | "failed";
@@ -125,6 +118,8 @@ export interface GeneratedPanelData {
 
 // ---- Props ----
 
+type CharacterFolderWithItems = CharacterFolder & { items: { generationId: number }[] };
+
 export interface AutoWebtoonPanelProps {
   isAuthenticated: boolean;
   isPro: boolean;
@@ -136,6 +131,9 @@ export interface AutoWebtoonPanelProps {
   onClose: () => void;
   canvasWidth?: number;
   canvasHeight?: number;
+  characterStripData?: any[];
+  characterFolders?: CharacterFolderWithItems[];
+  fetchFullGeneration?: (id: number) => Promise<any>;
 }
 
 // ---- Helper ----
@@ -160,6 +158,9 @@ export function AutoWebtoonPanel({
   onClose,
   canvasWidth: propCanvasW,
   canvasHeight: propCanvasH,
+  characterStripData: externalCharacterStripData,
+  characterFolders: externalCharacterFolders,
+  fetchFullGeneration: externalFetchFullGeneration,
 }: AutoWebtoonPanelProps) {
   const effectiveCanvasW = propCanvasW ?? CANVAS_W;
   const effectiveCanvasH = propCanvasH ?? CANVAS_H;
@@ -176,9 +177,8 @@ export function AutoWebtoonPanel({
   const [cutLayoutType, setCutLayoutType] = useState<CutLayoutType>("default");
   const [cutBorderStyle, setCutBorderStyle] = useState<CutBorderStyle>("wobbly");
   const [selectedStyle, setSelectedStyle] = useState("simple-line");
-  const [selectedCharacters, setSelectedCharacters] = useState<SelectedCharacter[]>([]);
-  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
-  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const [selectedCharacters, setSelectedCharacters] = useState<CharacterImage[]>([]);
+  const [activePickerFolderId, setActivePickerFolderId] = useState<number | null>(null);
 
   // Step 2 state
   const [scenes, setScenes] = useState<WebtoonScene[]>([]);
@@ -200,8 +200,8 @@ export function AutoWebtoonPanel({
     enabled: isAuthenticated,
   });
 
-  // Character-only query for quick-select strip (캐릭터 전용)
-  const { data: characterStripRaw } = useQuery<{ items: GenerationLight[] }>({
+  // Character strip data from parent (or fallback query)
+  const { data: fallbackCharacterStripRaw } = useQuery<{ items: GenerationLight[] }>({
     queryKey: ["/api/gallery", "character-strip"],
     staleTime: 30_000,
     queryFn: async () => {
@@ -210,9 +210,44 @@ export function AutoWebtoonPanel({
       if (!res.ok) throw new Error("Failed to load character strip");
       return res.json();
     },
+    enabled: isAuthenticated && !externalCharacterStripData,
+  });
+  const characterStripData = externalCharacterStripData ?? fallbackCharacterStripRaw?.items ?? [];
+
+  // Character folders from parent (or fallback query)
+  const { data: fallbackCharacterFolders = [] } = useQuery<CharacterFolderWithItems[]>({
+    queryKey: ["/api/character-folders"],
+    enabled: isAuthenticated && !externalCharacterFolders,
+  });
+  const characterFolders = externalCharacterFolders ?? fallbackCharacterFolders;
+
+  // Gallery data for picker — use external or own query
+  const [galleryPickerKey, setGalleryPickerKey] = useState(0);
+  const { data: galleryPickerRaw, isLoading: galleryPickerLoading } = useQuery<{ items: GenerationLight[]; hasMore?: boolean }>({
+    queryKey: ["/api/gallery", "picker", galleryPickerKey, activePickerFolderId],
+    staleTime: 0,
+    gcTime: 0,
+    queryFn: async () => {
+      const authHeaders = await getAuthHeaders();
+      const folderParam = activePickerFolderId ? `&folderId=${activePickerFolderId}` : "";
+      const res = await fetch(`/api/gallery?limit=100&offset=0${folderParam}`, { headers: authHeaders });
+      if (!res.ok) throw new Error("Failed to load gallery");
+      return res.json();
+    },
     enabled: isAuthenticated,
   });
-  const characterStripData = characterStripRaw?.items ?? [];
+  const galleryPickerData = galleryPickerRaw?.items ?? [];
+
+  // fetchFullGeneration from parent or fallback
+  const fetchFullGeneration = useCallback(async (id: number): Promise<any> => {
+    if (externalFetchFullGeneration) return externalFetchFullGeneration(id);
+    try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch(`/api/gallery/${id}`, { headers: authHeaders });
+      if (!res.ok) return null;
+      return res.json();
+    } catch { return null; }
+  }, [externalFetchFullGeneration]);
 
   // localStorage: restore storyPrompt on mount
   useEffect(() => {
@@ -226,75 +261,6 @@ export function AutoWebtoonPanel({
       localStorage.setItem("olli_autowebtoon_story", storyPrompt);
     }
   }, [storyPrompt]);
-
-  // localStorage: restore selectedCharacters on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("olli_autowebtoon_chars");
-      if (!saved) return;
-      const parsed = JSON.parse(saved) as Array<{ id: string; name: string; imageUrl: string }>;
-      if (!Array.isArray(parsed) || parsed.length === 0) return;
-      setSelectedCharacters(parsed.map(c => ({
-        id: c.id,
-        name: c.name,
-        imageUrl: c.imageUrl,
-        imageDataUrl: c.imageUrl, // will be resolved from URL
-      })));
-      // Convert URLs to data URLs in background
-      for (const c of parsed) {
-        if (!c.imageUrl) continue;
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          try {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            const ctx = canvas.getContext("2d")!;
-            ctx.drawImage(img, 0, 0);
-            const dataUrl = canvas.toDataURL("image/png");
-            setSelectedCharacters(prev => prev.map(ch => ch.id === c.id ? { ...ch, imageDataUrl: dataUrl } : ch));
-          } catch { /* CORS fail — keep URL */ }
-        };
-        img.src = c.imageUrl;
-      }
-    } catch { /* ignore parse errors */ }
-  }, []);
-
-  // localStorage: save selectedCharacters on change
-  useEffect(() => {
-    if (selectedCharacters.length > 0) {
-      const toSave = selectedCharacters.map(c => ({ id: c.id, name: c.name, imageUrl: c.imageUrl }));
-      localStorage.setItem("olli_autowebtoon_chars", JSON.stringify(toSave));
-    } else {
-      localStorage.removeItem("olli_autowebtoon_chars");
-    }
-  }, [selectedCharacters]);
-
-  // Gallery data for picker — 열릴 때마다 항상 최신 데이터 fetch
-  const [galleryPickerKey, setGalleryPickerKey] = useState(0);
-  const [pickerFolderId, setPickerFolderId] = useState<number | null>(null);
-  const { data: galleryPickerRaw, isLoading: galleryPickerLoading } = useQuery<{ items: GenerationLight[] }>({
-    queryKey: ["/api/gallery", "picker", galleryPickerKey, pickerFolderId],
-    staleTime: 0,
-    gcTime: 0,
-    queryFn: async () => {
-      const authHeaders = await getAuthHeaders();
-      const folderParam = pickerFolderId ? `&folderId=${pickerFolderId}` : "";
-      const res = await fetch(`/api/gallery?limit=100&offset=0${folderParam}`, { headers: authHeaders });
-      if (!res.ok) throw new Error("Failed to load gallery");
-      return res.json();
-    },
-    enabled: isAuthenticated && showGalleryPicker,
-  });
-  const galleryPickerData = galleryPickerRaw?.items ?? [];
-  const isGalleryLoading = showGalleryPicker ? galleryPickerLoading : externalGalleryLoading;
-
-  type CharacterFolderWithItems = CharacterFolder & { items: { generationId: number }[] };
-  const { data: pickerCharacterFolders = [] } = useQuery<CharacterFolderWithItems[]>({
-    queryKey: ["/api/character-folders"],
-    enabled: isAuthenticated,
-  });
 
   // Cost
   const totalCuts = canvasCount * cutsPerCanvas;
@@ -340,139 +306,11 @@ export function AutoWebtoonPanel({
     },
   });
 
-  // Image upload
-  const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      const charId = Math.random().toString(36).slice(2, 10);
-      const fallbackName = file.name.replace(/\.[^/.]+$/, "");
-      setSelectedCharacters((prev) => {
-        if (prev.length >= 4) return prev;
-        return [
-          ...prev,
-          { id: charId, name: fallbackName, imageUrl: dataUrl, imageDataUrl: dataUrl },
-        ];
-      });
-      // AI 캐릭터 이름 분석 (백그라운드)
-      apiRequest("POST", "/api/analyze-character", { imageUrl: dataUrl })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.names?.[0]) {
-            setSelectedCharacters((prev) =>
-              prev.map((c) => c.id === charId ? { ...c, name: data.names[0] } : c)
-            );
-          }
-        })
-        .catch(() => { /* 분석 실패 시 기존 이름 유지 */ });
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  }, []);
-
-  // Gallery pick - 다이얼로그 닫지 않고 토글 방식으로 여러개 선택
-  const handleGalleryToggle = useCallback((gen: GenerationLight) => {
-    setSelectedCharacters((prev) => {
-      const existIdx = prev.findIndex((c) => c.id === String(gen.id));
-      // 이미 선택됨 → 해제
-      if (existIdx >= 0) {
-        return prev.filter((_, i) => i !== existIdx);
-      }
-      // 4개 제한
-      if (prev.length >= 4) return prev;
-
-      // 추가 - thumbnailUrl 또는 resultImageUrl 사용 (light 쿼리에서 thumbnailUrl 있으면 resultImageUrl이 null)
-      const imageSource = gen.resultImageUrl || gen.thumbnailUrl || "";
-      const charId = String(gen.id);
-      // 저장된 캐릭터 이름 우선 사용, 없으면 프롬프트에서 추출
-      const savedName = gen.characterName || gen.prompt?.slice(0, 20) || "캐릭터";
-      const newChar: SelectedCharacter = {
-        id: charId,
-        name: savedName,
-        imageUrl: imageSource,
-        imageDataUrl: imageSource, // fallback, will try to convert or fetch full image
-      };
-
-      // 저장된 이름이 없을 때만 AI 캐릭터 이름 분석 (백그라운드)
-      if (!gen.characterName && imageSource) {
-        apiRequest("POST", "/api/analyze-character", { imageUrl: imageSource })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.names?.[0]) {
-              setSelectedCharacters((cur) =>
-                cur.map((c) => c.id === charId ? { ...c, name: data.names[0] } : c)
-              );
-            }
-          })
-          .catch(() => { /* 분석 실패 시 기존 이름 유지 */ });
-      }
-
-      // thumbnailUrl만 있는 경우 full 이미지를 /api/gallery/:id 에서 가져오기
-      if (!gen.resultImageUrl && gen.thumbnailUrl) {
-        (async () => {
-          try {
-            const { getAuthHeaders } = await import("@/lib/supabase");
-            const headers = await getAuthHeaders();
-            const resp = await fetch(`/api/gallery/${gen.id}`, { headers });
-            if (resp.ok) {
-              const full = await resp.json();
-              if (full.resultImageUrl) {
-                // full 이미지로 base64 변환
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.onload = () => {
-                  try {
-                    const canvas = document.createElement("canvas");
-                    canvas.width = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    const ctx = canvas.getContext("2d")!;
-                    ctx.drawImage(img, 0, 0);
-                    const dataUrl = canvas.toDataURL("image/png");
-                    setSelectedCharacters((cur) =>
-                      cur.map((c) => c.id === String(gen.id) ? { ...c, imageUrl: full.resultImageUrl, imageDataUrl: dataUrl } : c)
-                    );
-                  } catch {
-                    setSelectedCharacters((cur) =>
-                      cur.map((c) => c.id === String(gen.id) ? { ...c, imageUrl: full.resultImageUrl, imageDataUrl: full.resultImageUrl } : c)
-                    );
-                  }
-                };
-                img.src = full.resultImageUrl;
-                return;
-              }
-            }
-          } catch { /* fallback to thumbnail */ }
-        })();
-      } else if (imageSource) {
-        // resultImageUrl이 있는 경우 기존 로직대로 base64 변환
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          try {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            const ctx = canvas.getContext("2d")!;
-            ctx.drawImage(img, 0, 0);
-            const dataUrl = canvas.toDataURL("image/png");
-            setSelectedCharacters((cur) =>
-              cur.map((c) => c.id === String(gen.id) ? { ...c, imageDataUrl: dataUrl } : c)
-            );
-          } catch {
-            // CORS 실패시 URL 그대로 사용
-          }
-        };
-        img.src = imageSource;
-      }
-
-      return [...prev, newChar];
-    });
-  }, []);
-
-  const removeCharacter = useCallback((id: string) => {
-    setSelectedCharacters((prev) => prev.filter((c) => c.id !== id));
+  // Helper to update character name after AI analysis
+  const updateCharName = useCallback((charId: string, name: string) => {
+    setSelectedCharacters((prev) =>
+      prev.map((c) => c.id === charId ? { ...c, name } : c)
+    );
   }, []);
 
   // 컷 영역 비율 → Gemini 지원 비율 매핑
@@ -528,7 +366,7 @@ export function AutoWebtoonPanel({
         const geminiRatio = getGeminiAspectRatio(region.width, region.height);
 
         try {
-          const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
+          const sourceImages = selectedCharacters.map((c) => c.imageDataUrl || c.imageUrl);
           const charNames = selectedCharacters.map((c) => c.name).filter(Boolean);
           const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
             sceneDescription: sceneDesc,
@@ -619,7 +457,7 @@ export function AutoWebtoonPanel({
         const geminiRatio = getGeminiAspectRatio(region.width, region.height);
 
         try {
-          const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
+          const sourceImages = selectedCharacters.map((c) => c.imageDataUrl || c.imageUrl);
           const charNames = selectedCharacters.map((c) => c.name).filter(Boolean);
           const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
             sceneDescription: sceneDesc,
@@ -687,7 +525,7 @@ export function AutoWebtoonPanel({
     const geminiRatio = getGeminiAspectRatio(region.width, region.height);
 
     try {
-      const sourceImages = selectedCharacters.map((c) => c.imageDataUrl);
+      const sourceImages = selectedCharacters.map((c) => c.imageDataUrl || c.imageUrl);
       const charNames = selectedCharacters.map((c) => c.name).filter(Boolean);
       const res = await apiRequest("POST", "/api/auto-webtoon/generate-scene", {
         sceneDescription: sceneDesc,
@@ -1022,83 +860,29 @@ export function AutoWebtoonPanel({
       </div>
 
       {/* Character selection */}
-      <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">
-          캐릭터 <span className="text-muted-foreground font-normal">(최대 4개, 선택사항)</span>
-        </Label>
-        {/* Quick-select character strip (캐릭터 전용 쿼리 사용) */}
-        {(() => {
-          const charItems = characterStripData.filter(g => g.characterName && (g.resultImageUrl || g.thumbnailUrl));
-          if (charItems.length === 0) return null;
-          return (
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-              {charItems.map((gen) => {
-                const isSelected = selectedCharacters.some(c => c.id === String(gen.id));
-                return (
-                  <button
-                    key={gen.id}
-                    type="button"
-                    disabled={selectedCharacters.length >= 4 && !isSelected}
-                    onClick={() => handleGalleryToggle(gen)}
-                    className={`relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"} ${selectedCharacters.length >= 4 && !isSelected ? "opacity-40" : ""}`}
-                  >
-                    <img src={gen.thumbnailUrl || gen.resultImageUrl || ""} alt={gen.characterName || ""} className="w-full h-full object-cover" />
-                    {isSelected && <div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><Check className="h-3.5 w-3.5 text-primary drop-shadow" /></div>}
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[7px] px-0.5 truncate text-center">{gen.characterName}</div>
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })()}
-        <div className="flex gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={(e) => { e.stopPropagation(); setGalleryPickerKey(k => k + 1); setShowGalleryPicker(true); }}
-            disabled={selectedCharacters.length >= 4}
-          >
-            <FolderOpen className="h-3 w-3 mr-1" />
-            갤러리
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={(e) => { e.stopPropagation(); uploadInputRef.current?.click(); }}
-            disabled={selectedCharacters.length >= 4}
-          >
-            <Upload className="h-3 w-3 mr-1" />
-            업로드
-          </Button>
-          <input
-            ref={uploadInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleUpload}
-          />
-        </div>
-        {selectedCharacters.length > 0 && (
-          <div className="flex gap-1.5 flex-wrap">
-            {selectedCharacters.map((char) => (
-              <div key={char.id} className="relative group w-14 h-14 rounded-lg overflow-hidden border">
-                <img src={char.imageUrl} alt={char.name} className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); removeCharacter(char.id); }}
-                  className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <CharacterPicker
+        mode="multi"
+        maxImages={4}
+        label="캐릭터"
+        description="(최대 4개, 선택사항)"
+        galleryPickerVariant="dialog"
+        convertToDataUrl
+        selectedImages={selectedCharacters}
+        onSelectedImagesChange={setSelectedCharacters}
+        characterStripData={characterStripData}
+        galleryData={galleryPickerData}
+        galleryLoading={galleryPickerLoading}
+        characterFolders={characterFolders}
+        activeGalleryFolderId={activePickerFolderId}
+        onActiveGalleryFolderIdChange={setActivePickerFolderId}
+        fetchFullGeneration={fetchFullGeneration}
+        onImageUploaded={(img) => {
+          apiRequest("POST", "/api/analyze-character", { imageUrl: img.imageDataUrl || img.imageUrl })
+            .then(r => r.json())
+            .then(d => { if (d.names?.[0]) updateCharName(img.id, d.names[0]); })
+            .catch(() => {});
+        }}
+      />
 
       {/* Style */}
       <div className="space-y-1.5">
@@ -1153,82 +937,6 @@ export function AutoWebtoonPanel({
         </div>
       </Card>
 
-      {/* Gallery picker dialog - 멀티 선택 지원 */}
-      <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-lenis-prevent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>갤러리에서 캐릭터 선택</span>
-              <span className="text-xs font-normal text-muted-foreground">
-                {selectedCharacters.length}/4 선택됨
-              </span>
-            </DialogTitle>
-          </DialogHeader>
-          {pickerCharacterFolders.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pb-2">
-              <button className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${pickerFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setPickerFolderId(null)}>전체</button>
-              {pickerCharacterFolders.map(f => (
-                <button key={f.id} className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${pickerFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`} onClick={() => setPickerFolderId(f.id)}>{f.name}</button>
-              ))}
-            </div>
-          )}
-          {isGalleryLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : galleryPickerData.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8 text-sm">
-              갤러리가 비어있습니다.
-            </p>
-          ) : (
-            <>
-              <div className="grid grid-cols-4 gap-2">
-                {galleryPickerData
-                  .filter((g) => g.resultImageUrl || g.thumbnailUrl)
-                  .map((gen) => {
-                    const isSelected = selectedCharacters.some((c) => c.id === String(gen.id));
-                    const isFull = selectedCharacters.length >= 4 && !isSelected;
-                    return (
-                      <button
-                        key={gen.id}
-                        type="button"
-                        disabled={isFull}
-                        onClick={() => handleGalleryToggle(gen)}
-                        className={`relative rounded-lg overflow-hidden border-2 transition-all ${
-                          isSelected
-                            ? "border-primary ring-2 ring-primary/30"
-                            : isFull
-                              ? "border-transparent opacity-40 cursor-not-allowed"
-                              : "border-transparent hover:border-primary/50"
-                        }`}
-                      >
-                        <img
-                          src={gen.thumbnailUrl || gen.resultImageUrl!}
-                          alt=""
-                          className="w-full aspect-square object-cover"
-                        />
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                            <Check className="h-5 w-5 text-primary" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-              </div>
-              <div className="flex justify-end mt-3">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setShowGalleryPicker(false)}
-                >
-                  선택 완료 ({selectedCharacters.length}개)
-                </Button>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 

@@ -298,7 +298,14 @@ const SelectionCanvas = forwardRef<SelectionCanvasHandle, SelectionCanvasProps>(
       off.height = height;
       const offCtx = off.getContext("2d")!;
       offCtx.drawImage(imageSource, 0, 0, width, height);
-      const srcData = offCtx.getImageData(0, 0, width, height).data;
+      let srcData: Uint8ClampedArray;
+      try {
+        srcData = offCtx.getImageData(0, 0, width, height).data;
+      } catch {
+        // Canvas tainted — cannot read pixel data
+        console.warn("floodFillAt: canvas tainted, cannot read pixel data");
+        return;
+      }
 
       const total = width * height;
       const visited = new Uint8Array(total);
