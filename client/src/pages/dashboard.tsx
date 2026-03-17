@@ -28,11 +28,14 @@ import {
   Trophy,
   Star,
   Users,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import type { Generation, PopularCreator } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
 import { InstagramConnect } from "@/components/instagram-connect";
 import { useToast } from "@/hooks/use-toast";
+import { useTour } from "@/components/spotlight-tour";
 
 interface UsageData {
   credits: number;
@@ -253,8 +256,18 @@ export default function DashboardPage() {
   });
 
   const [showTierGuide, setShowTierGuide] = useState(false);
+  const [showTourBanner, setShowTourBanner] = useState(false);
   const { toast } = useToast();
+  const { startTour } = useTour();
   const search = useSearch();
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("olli_tour_completed")) {
+        setShowTourBanner(true);
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(search);
@@ -304,13 +317,138 @@ export default function DashboardPage() {
             오늘도 멋진 인스타툰을 만들어볼까요?
           </p>
         </div>
-        <Link href="/pricing">
-          <Avatar className="h-10 w-10 cursor-pointer" data-testid="avatar-profile">
-            <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
-              {(usage?.authorName || user?.firstName || "C").charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={startTour}
+            data-testid="button-start-guide"
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">사용 가이드</span>
+          </Button>
+          <Link href="/pricing">
+            <Avatar className="h-10 w-10 cursor-pointer" data-testid="avatar-profile">
+              <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                {(usage?.authorName || user?.firstName || "C").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+        </div>
+      </div>
+
+      {showTourBanner && (
+        <div
+          className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4"
+          data-testid="banner-tour"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <HelpCircle className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">처음이신가요?</p>
+              <p className="text-xs text-muted-foreground">
+                사용 가이드를 통해 주요 기능을 빠르게 둘러보세요.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              onClick={() => {
+                setShowTourBanner(false);
+                startTour();
+              }}
+            >
+              가이드 시작
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                setShowTourBanner(false);
+                try { localStorage.setItem("olli_tour_completed", "true"); } catch {}
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* OLLI 사용법 안내 */}
+      <div>
+        <h2 className="text-lg font-bold mb-4">OLLI 사용법</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Link href="/create">
+            <Card className="p-5 h-full hover-elevate cursor-pointer border-violet-200 dark:border-violet-800/40">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-sm">
+                  <Wand2 className="h-5 w-5 text-white" />
+                </div>
+                <Badge variant="secondary" className="text-[11px]">Step 1</Badge>
+              </div>
+              <h3 className="font-semibold text-sm mb-1">캐릭터 생성</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">텍스트로 나만의 AI 캐릭터를 만들어보세요.</p>
+              <div className="flex items-center gap-1 mt-3 text-xs text-primary font-medium">
+                시작하기 <ArrowRight className="h-3 w-3" />
+              </div>
+            </Card>
+          </Link>
+          <Link href="/pose">
+            <Card className="p-5 h-full hover-elevate cursor-pointer border-blue-200 dark:border-blue-800/40">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm">
+                  <Layers className="h-5 w-5 text-white" />
+                </div>
+                <Badge variant="secondary" className="text-[11px]">Step 2</Badge>
+              </div>
+              <h3 className="font-semibold text-sm mb-1">포즈/배경 꾸미기</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">다양한 포즈, 표정, 배경을 추가하세요.</p>
+              <div className="flex items-center gap-1 mt-3 text-xs text-primary font-medium">
+                시작하기 <ArrowRight className="h-3 w-3" />
+              </div>
+            </Card>
+          </Link>
+          {(usage?.tier === "pro" || usage?.tier === "premium") ? (
+            <Link href="/story">
+              <Card className="p-5 h-full hover-elevate cursor-pointer border-indigo-200 dark:border-indigo-800/40">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 shadow-sm">
+                    <BookOpen className="h-5 w-5 text-white" />
+                  </div>
+                  <Badge variant="secondary" className="text-[11px]">Step 3</Badge>
+                </div>
+                <h3 className="font-semibold text-sm mb-1">스토리 에디터로 완성</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">멀티패널 인스타툰을 제작하고 공유하세요.</p>
+                <div className="flex items-center gap-1 mt-3 text-xs text-primary font-medium">
+                  시작하기 <ArrowRight className="h-3 w-3" />
+                </div>
+              </Card>
+            </Link>
+          ) : (
+            <Card
+              className="p-5 h-full cursor-pointer border-indigo-200 dark:border-indigo-800/40 opacity-70"
+              onClick={() => toast({ title: "Pro 전용 기능", description: "스토리 에디터는 Pro 멤버십 전용입니다.", variant: "destructive" })}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 shadow-sm">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <Badge variant="secondary" className="text-[11px]">Step 3</Badge>
+                <Lock className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
+              </div>
+              <h3 className="font-semibold text-sm mb-1">스토리 에디터로 완성</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">멀티패널 인스타툰을 제작하고 공유하세요.</p>
+              <div className="flex items-center gap-1 mt-3 text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                Pro 전용 <Lock className="h-3 w-3" />
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -341,9 +479,9 @@ export default function DashboardPage() {
               <div className="text-right">
                 <div className="flex flex-col items-end gap-0.5">
                   <div className="flex items-center gap-2">
-                    {usage?.tier === "pro" ? (
+                    {(usage?.tier === "pro" || usage?.tier === "premium") ? (
                       <Badge variant="default" className="text-[11px]">
-                        Pro
+                        {usage?.tier === "premium" ? "Premium" : "Pro"}
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="text-[11px]">
@@ -351,7 +489,7 @@ export default function DashboardPage() {
                       </Badge>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {usage?.tier === "pro" ? "무제한" : `${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
+                      {`${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
                     </span>
                   </div>
                 </div>
@@ -532,7 +670,7 @@ export default function DashboardPage() {
 
           <InstagramConnect />
 
-          {usage?.tier !== "pro" && (
+          {(usage?.tier !== "pro" && usage?.tier !== "premium") && (
             <Link href="/pricing">
               <Card className="p-5 hover-elevate cursor-pointer bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20 border-primary/20">
                 <div className="flex items-center gap-3">

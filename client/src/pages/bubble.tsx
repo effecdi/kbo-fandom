@@ -121,7 +121,7 @@ export default function BubblePage() {
     enabled: isAuthenticated,
   });
 
-  const isPro = usage?.tier === "pro";
+  const isPro = usage?.tier === "pro" || usage?.tier === "premium";
   const canAllFonts = isPro || (usage?.creatorTier ?? 0) >= 3;
 
   const { data: projectFolders = [] } = useQuery<{ id: number; name: string }[]>({

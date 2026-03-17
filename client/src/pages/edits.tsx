@@ -62,7 +62,7 @@ export default function EditsPage() {
     enabled: isAuthenticated,
   });
 
-  const isPro = usage?.tier === "pro";
+  const isPro = usage?.tier === "pro" || usage?.tier === "premium";
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {

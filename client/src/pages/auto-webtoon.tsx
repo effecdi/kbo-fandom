@@ -111,7 +111,7 @@ export default function AutoWebtoonPage() {
   const imageCost = totalCuts;
   const totalCost = breakdownCost + imageCost;
   const availableCredits = (usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0);
-  const isPro = usage?.tier === "pro";
+  const isPro = usage?.tier === "pro" || usage?.tier === "premium";
   const hasEnoughCredits = isPro || availableCredits >= totalCost;
 
   // ---- Topic suggestion ----

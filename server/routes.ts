@@ -3,12 +3,17 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
 import { supabase } from "./supabaseClient";
-import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint } from "./imageGen";
+import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, removeBackgroundAI, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint } from "./imageGen";
 import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown, analyzeCharacterImage } from "./aiText";
 import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, updateProjectFolderSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
 import { logger } from "./logger";
+import {
+  SUBSCRIPTION_PLANS, getSubscriptionPlan, getMonthlyCreditsForPlan,
+  getBillingKeyInfo, payWithBillingKey, schedulePayment, cancelScheduledPayment,
+  getPaymentInfo, calculateFirstPeriod, calculateNextPeriod, generatePaymentId,
+} from "./subscription";
 import {
   getOAuthUrl, exchangeCodeForToken, getInstagramBusinessAccount,
   refreshLongLivedToken, encryptToken, decryptToken,
@@ -48,6 +53,29 @@ export async function registerRoutes(
         pro: { amount: PRODUCT_PRICES.pro, name: "OLLI Pro 멤버십 (월간)" },
         credits: { amount: PRODUCT_PRICES.credits, name: "OLLI 크레딧 50개" },
       },
+      // 구독 플랜 정보 (3티어)
+      plans: {
+        free: {
+          monthlyCredits: 30,
+          dailyBonus: 5,
+          priceUSD: { monthly: 0, yearly: 0 },
+          priceKRW: { monthly: 0, yearly: 0 },
+        },
+        pro: {
+          monthlyCredits: 3000,
+          dailyBonus: 0,
+          priceUSD: { monthly: 25, yearly: 255 },
+          priceKRW: { monthly: SUBSCRIPTION_PLANS.pro_monthly.amountKRW, yearly: SUBSCRIPTION_PLANS.pro_yearly.amountKRW },
+        },
+        premium: {
+          monthlyCredits: 20000,
+          dailyBonus: 0,
+          priceUSD: { monthly: 100, yearly: 1020 },
+          priceKRW: { monthly: SUBSCRIPTION_PLANS.premium_monthly.amountKRW, yearly: SUBSCRIPTION_PLANS.premium_yearly.amountKRW },
+        },
+      },
+      portoneV2StoreId: config.portoneV2StoreId,
+      portoneV2ChannelKey: config.portoneV2ChannelKey,
     });
   });
 
@@ -94,19 +122,17 @@ export async function registerRoutes(
 
       const FREE_STYLES = ["simple-line", "minimal", "doodle"];
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro" && !FREE_STYLES.includes(style)) {
-        return res.status(403).json({ message: "이 스타일은 Pro 멤버십 전용입니다. 심플 라인, 미니멀, 낙서풍 스타일은 무료로 사용 가능합니다." });
+      if (credits.tier === "free" && !FREE_STYLES.includes(style)) {
+        return res.status(403).json({ message: "이 스타일은 유료 멤버십 전용입니다. 심플 라인, 미니멀, 낙서풍 스타일은 무료로 사용 가능합니다." });
       }
 
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 2);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 10);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 
@@ -131,7 +157,7 @@ export async function registerRoutes(
           prompt,
           resultImageUrl: imageDataUrl,
           thumbnailUrl,
-          creditsUsed: 2,
+          creditsUsed: 10,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
@@ -179,15 +205,13 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 5);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 25);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 
@@ -205,7 +229,7 @@ export async function registerRoutes(
           referenceImageUrl: referenceImageData || null,
           resultImageUrl: imageDataUrl,
           thumbnailUrl: poseThumbUrl,
-          creditsUsed: 5,
+          creditsUsed: 25,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
@@ -244,15 +268,13 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 5);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 25);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt, noBackground, aspectRatio, characterNames);
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 
@@ -275,7 +297,7 @@ export async function registerRoutes(
             referenceImageUrl: null,
             resultImageUrl: imageDataUrl,
             thumbnailUrl: bgThumbUrl,
-            creditsUsed: 5,
+            creditsUsed: 25,
           });
         } catch (dbError: any) {
           logger.error("Background generation DB save failed", dbError);
@@ -299,12 +321,17 @@ export async function registerRoutes(
       }
       const { sourceImageData } = parsed.data;
 
-      const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        return res.status(403).json({ message: "배경 제거는 Pro 멤버십 전용 기능입니다." });
+      if (!sourceImageData.startsWith("data:")) {
+        return res.status(400).json({ message: "유효하지 않은 이미지 형식입니다." });
       }
 
-      const imageDataUrl = await removeWhiteBackground(sourceImageData);
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier === "free") {
+        return res.status(403).json({ message: "배경 제거는 유료 멤버십 전용 기능입니다." });
+      }
+
+      // AI 기반 배경 제거 사용 (모든 배경색 지원)
+      const imageDataUrl = await removeBackgroundAI(sourceImageData);
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
@@ -323,15 +350,13 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 5);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 25);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let resultUrl = await generativeFillImage(imageData, maskData, prompt);
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         resultUrl = await applyWatermark(resultUrl);
       }
 
@@ -346,7 +371,7 @@ export async function registerRoutes(
           prompt: `[Generative Fill] ${prompt}`,
           resultImageUrl: resultUrl,
           thumbnailUrl: thumbUrl,
-          creditsUsed: 5,
+          creditsUsed: 25,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
@@ -370,11 +395,9 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 5);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 25);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let resultUrl = await generativeExpandImage(
@@ -382,7 +405,7 @@ export async function registerRoutes(
         top || 0, right || 0, bottom || 0, left || 0,
         prompt || ""
       );
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         resultUrl = await applyWatermark(resultUrl);
       }
 
@@ -397,7 +420,7 @@ export async function registerRoutes(
           prompt: `[Generative Expand] ${prompt || "auto"}`,
           resultImageUrl: resultUrl,
           thumbnailUrl: thumbUrl,
-          creditsUsed: 5,
+          creditsUsed: 25,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
@@ -421,15 +444,13 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 3);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 15);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let resultUrl = await generativeUpscaleImage(imageData, scale || 2);
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         resultUrl = await applyWatermark(resultUrl);
       }
 
@@ -444,7 +465,7 @@ export async function registerRoutes(
           prompt: `[Generative Upscale] ${scale || 2}x`,
           resultImageUrl: resultUrl,
           thumbnailUrl: thumbUrl,
-          creditsUsed: 3,
+          creditsUsed: 15,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
@@ -468,11 +489,9 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 3);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 15);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       const segments = await segmentObjects(imageData);
@@ -492,11 +511,9 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 1);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 5);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
       }
 
       const maskDataUrl = await selectObjectAtPoint(imageData, clickX, clickY, imageWidth || 540, imageHeight || 675);
@@ -511,8 +528,8 @@ export async function registerRoutes(
     try {
       const userId = req.userId!;
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        return res.status(403).json({ message: "광고 매칭 AI는 Pro 멤버십 전용 기능입니다." });
+      if (credits.tier === "free") {
+        return res.status(403).json({ message: "광고 매칭 AI는 유료 멤버십 전용 기능입니다." });
       }
 
       const parsed = adMatchSchema.safeParse(req.body);
@@ -562,7 +579,7 @@ export async function registerRoutes(
       }
       // style-detect is a free utility call (no credit deduction)
       if (type !== "style-detect") {
-        const canUse = await storage.deductCredit(userId, 1);
+        const canUse = await storage.deductCredit(userId, 5);
         if (!canUse) {
           return res.status(403).json({ message: "크레딧이 부족합니다." });
         }
@@ -581,7 +598,7 @@ export async function registerRoutes(
       if (!bio || typeof bio !== "string" || bio.trim().length < 3) {
         return res.status(400).json({ message: "소개글을 3자 이상 입력해주세요." });
       }
-      const canUse = await storage.deductCredit(userId, 1);
+      const canUse = await storage.deductCredit(userId, 5);
       if (!canUse) {
         return res.status(403).json({ message: "크레딧이 부족합니다." });
       }
@@ -682,9 +699,16 @@ export async function registerRoutes(
     try {
       const userId = req.userId!;
       const credits = await storage.getUserCredits(userId);
-      const isPro = credits.tier === "pro";
-      const creatorTier = isPro ? 3 : 0;
+      const isPaid = credits.tier === "pro" || credits.tier === "premium";
+      const creatorTier = isPaid ? 3 : 0;
       const tierPanelLimits = [3, 5, 8, 14];
+
+      // 구독 정보 조회
+      let subscription: any = null;
+      try {
+        subscription = await storage.getSubscription(userId);
+      } catch { /* subscriptions table may not exist yet */ }
+
       res.json({
         credits: credits.credits,
         dailyBonusCredits: credits.dailyBonusCredits ?? 0,
@@ -692,13 +716,22 @@ export async function registerRoutes(
         authorName: credits.authorName,
         genre: credits.genre,
         totalGenerations: credits.totalGenerations,
-        dailyFreeCredits: isPro ? -1 : 30,
+        monthlyCreditsQuota: (credits as any).monthlyCreditsQuota ?? (isPaid ? 3000 : 30),
+        dailyFreeCredits: isPaid ? -1 : 30,
         bubbleUsesToday: credits.bubbleUsesToday,
         storyUsesToday: credits.storyUsesToday,
-        maxBubbleUses: isPro ? -1 : 3,
-        maxStoryUses: isPro ? -1 : 3,
+        maxBubbleUses: isPaid ? -1 : 3,
+        maxStoryUses: isPaid ? -1 : 3,
         maxStoryPanels: tierPanelLimits[creatorTier] ?? 3,
         creatorTier,
+        subscription: subscription ? {
+          plan: subscription.plan,
+          billingCycle: subscription.billingCycle,
+          status: subscription.status,
+          currentPeriodEnd: subscription.currentPeriodEnd,
+          nextPaymentAt: subscription.nextPaymentAt,
+          cancelledAt: subscription.cancelledAt,
+        } : null,
       });
     } catch (error) {
       res.status(500).json({ message: "사용량 조회에 실패했습니다." });
@@ -833,8 +866,8 @@ export async function registerRoutes(
     try {
       const userId = req.userId!;
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        return res.status(400).json({ message: "현재 Pro 멤버십이 아닙니다." });
+      if (credits.tier !== "pro" && credits.tier !== "premium") {
+        return res.status(400).json({ message: "현재 유료 멤버십이 아닙니다." });
       }
       const updated = await storage.cancelPro(userId);
       res.json({
@@ -846,6 +879,450 @@ export async function registerRoutes(
     } catch (error: any) {
       logger.error("Cancel pro error", error);
       res.status(500).json({ message: "멤버십 해지에 실패했습니다." });
+    }
+  });
+
+  // ── 구독 관리 (PortOne V2 빌링키) ──
+
+  // 빌링키 등록 → 첫 결제 → 구독 생성 → 다음 결제 예약
+  app.post("/api/subscription/billing-key", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { billingKey, plan, billingCycle } = req.body;
+
+      if (!billingKey || !plan || !billingCycle) {
+        return res.status(400).json({ message: "빌링키, 플랜, 결제 주기가 필요합니다." });
+      }
+
+      const planInfo = getSubscriptionPlan(plan, billingCycle);
+      if (!planInfo) {
+        return res.status(400).json({ message: "유효하지 않은 플랜입니다." });
+      }
+
+      // 기존 구독 확인
+      const existing = await storage.getSubscription(userId);
+      if (existing && existing.status === "active") {
+        return res.status(409).json({ message: "이미 활성 구독이 있습니다. 플랜 변경을 이용해주세요." });
+      }
+
+      // 빌링키 검증
+      try {
+        await getBillingKeyInfo(billingKey);
+      } catch (err: any) {
+        logger.error("Billing key verification failed", err);
+        return res.status(400).json({ message: "유효하지 않은 빌링키입니다." });
+      }
+
+      // 첫 결제 실행
+      const paymentId = generatePaymentId(plan, billingCycle, userId);
+      try {
+        await payWithBillingKey({
+          paymentId,
+          billingKey,
+          amount: planInfo.amountKRW,
+          currency: "KRW",
+          orderName: planInfo.label,
+          customerId: userId,
+        });
+      } catch (err: any) {
+        logger.error("First subscription payment failed", err);
+        return res.status(402).json({ message: "첫 결제에 실패했습니다. 카드 정보를 확인해주세요." });
+      }
+
+      // 기간 계산
+      const { start, end } = calculateFirstPeriod(billingCycle);
+
+      // 구독 생성
+      if (existing) {
+        await storage.updateSubscription(userId, {
+          plan,
+          billingCycle,
+          billingKey,
+          status: "active",
+          currentPeriodStart: start,
+          currentPeriodEnd: end,
+          nextPaymentAt: end,
+          cancelledAt: null,
+          cancelReason: null,
+          retryCount: 0,
+          lastRetryAt: null,
+        });
+      } else {
+        await storage.createSubscription({
+          userId,
+          plan,
+          billingCycle,
+          billingKey,
+          pgProvider: "tosspayments",
+          status: "active",
+          currentPeriodStart: start,
+          currentPeriodEnd: end,
+          nextPaymentAt: end,
+        });
+      }
+
+      // 유저 티어 업데이트 + 크레딧 지급
+      await storage.updateUserTier(userId, plan);
+
+      // 결제 기록 저장
+      await storage.createPayment({
+        userId,
+        impUid: paymentId,
+        merchantUid: paymentId,
+        amount: planInfo.amountKRW,
+        status: "paid",
+        productType: `${plan}_subscription`,
+        creditsAdded: planInfo.monthlyCredits,
+        subscriptionId: null,
+        billingCycle,
+        currency: "KRW",
+      });
+
+      // 다음 결제 예약
+      const nextPaymentId = generatePaymentId(plan, billingCycle, userId);
+      try {
+        await schedulePayment({
+          paymentId: nextPaymentId,
+          billingKey,
+          amount: planInfo.amountKRW,
+          currency: "KRW",
+          orderName: planInfo.label,
+          timeToPay: end,
+          customerId: userId,
+        });
+        await storage.updateSubscription(userId, { portoneScheduleId: nextPaymentId });
+      } catch (err: any) {
+        logger.warn("Failed to schedule next payment (subscription is still active)", err);
+      }
+
+      res.json({
+        success: true,
+        plan,
+        billingCycle,
+        currentPeriodEnd: end,
+        credits: planInfo.monthlyCredits,
+      });
+    } catch (error: any) {
+      logger.error("Subscription billing-key error", error);
+      res.status(500).json({ message: "구독 생성에 실패했습니다." });
+    }
+  });
+
+  // 현재 구독 상태 조회
+  app.get("/api/subscription", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const sub = await storage.getSubscription(userId);
+      if (!sub) {
+        return res.json({ subscription: null });
+      }
+      res.json({
+        subscription: {
+          plan: sub.plan,
+          billingCycle: sub.billingCycle,
+          status: sub.status,
+          currentPeriodStart: sub.currentPeriodStart,
+          currentPeriodEnd: sub.currentPeriodEnd,
+          nextPaymentAt: sub.nextPaymentAt,
+          cancelledAt: sub.cancelledAt,
+          cancelReason: sub.cancelReason,
+        },
+      });
+    } catch (error: any) {
+      logger.error("Get subscription error", error);
+      res.status(500).json({ message: "구독 조회에 실패했습니다." });
+    }
+  });
+
+  // 구독 취소 (기간 끝까지 유지)
+  app.post("/api/subscription/cancel", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { reason } = req.body;
+
+      const sub = await storage.getSubscription(userId);
+      if (!sub || sub.status !== "active") {
+        return res.status(400).json({ message: "활성 구독이 없습니다." });
+      }
+
+      // 예약된 다음 결제 취소
+      if (sub.portoneScheduleId) {
+        try {
+          await cancelScheduledPayment(sub.portoneScheduleId);
+        } catch (err: any) {
+          logger.warn("Failed to cancel scheduled payment", err);
+        }
+      }
+
+      // 구독 상태 업데이트 (기간 끝까지 유지)
+      await storage.updateSubscription(userId, {
+        status: "cancelled",
+        cancelledAt: new Date(),
+        cancelReason: reason || null,
+        portoneScheduleId: null,
+        nextPaymentAt: null,
+      });
+
+      // proExpiresAt 설정 (기간 만료 시 free로 전환)
+      const db = (storage as any).getDb();
+      const { userCredits } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+      await db.update(userCredits)
+        .set({ proExpiresAt: sub.currentPeriodEnd })
+        .where(eq(userCredits.userId, userId));
+
+      res.json({
+        success: true,
+        currentPeriodEnd: sub.currentPeriodEnd,
+        message: `${new Date(sub.currentPeriodEnd).toLocaleDateString("ko-KR")}까지 구독 혜택이 유지됩니다.`,
+      });
+    } catch (error: any) {
+      logger.error("Subscription cancel error", error);
+      res.status(500).json({ message: "구독 취소에 실패했습니다." });
+    }
+  });
+
+  // 플랜 변경 (업/다운그레이드)
+  app.post("/api/subscription/change-plan", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { plan, billingCycle } = req.body;
+
+      const sub = await storage.getSubscription(userId);
+      if (!sub || (sub.status !== "active" && sub.status !== "cancelled")) {
+        return res.status(400).json({ message: "활성 구독이 없습니다." });
+      }
+
+      const newPlan = getSubscriptionPlan(plan, billingCycle);
+      if (!newPlan) {
+        return res.status(400).json({ message: "유효하지 않은 플랜입니다." });
+      }
+
+      // 같은 플랜이면 무시
+      if (sub.plan === plan && sub.billingCycle === billingCycle && sub.status === "active") {
+        return res.status(400).json({ message: "현재와 동일한 플랜입니다." });
+      }
+
+      // 기존 예약 결제 취소
+      if (sub.portoneScheduleId) {
+        try {
+          await cancelScheduledPayment(sub.portoneScheduleId);
+        } catch { /* ignore */ }
+      }
+
+      // 즉시 새 플랜으로 결제
+      const paymentId = generatePaymentId(plan, billingCycle, userId);
+      try {
+        await payWithBillingKey({
+          paymentId,
+          billingKey: sub.billingKey,
+          amount: newPlan.amountKRW,
+          currency: "KRW",
+          orderName: `${newPlan.label} (플랜 변경)`,
+          customerId: userId,
+        });
+      } catch (err: any) {
+        logger.error("Plan change payment failed", err);
+        return res.status(402).json({ message: "결제에 실패했습니다." });
+      }
+
+      const { start, end } = calculateFirstPeriod(billingCycle);
+
+      // 구독 업데이트
+      await storage.updateSubscription(userId, {
+        plan,
+        billingCycle,
+        status: "active",
+        currentPeriodStart: start,
+        currentPeriodEnd: end,
+        nextPaymentAt: end,
+        cancelledAt: null,
+        cancelReason: null,
+        retryCount: 0,
+      });
+
+      // 티어 + 크레딧 업데이트
+      await storage.updateUserTier(userId, plan);
+
+      // 결제 기록
+      await storage.createPayment({
+        userId,
+        impUid: paymentId,
+        merchantUid: paymentId,
+        amount: newPlan.amountKRW,
+        status: "paid",
+        productType: `${plan}_subscription`,
+        creditsAdded: newPlan.monthlyCredits,
+        billingCycle,
+        currency: "KRW",
+      });
+
+      // 다음 결제 예약
+      const nextPaymentId = generatePaymentId(plan, billingCycle, userId);
+      try {
+        await schedulePayment({
+          paymentId: nextPaymentId,
+          billingKey: sub.billingKey,
+          amount: newPlan.amountKRW,
+          currency: "KRW",
+          orderName: newPlan.label,
+          timeToPay: end,
+          customerId: userId,
+        });
+        await storage.updateSubscription(userId, { portoneScheduleId: nextPaymentId });
+      } catch { /* ignore */ }
+
+      res.json({ success: true, plan, billingCycle, credits: newPlan.monthlyCredits });
+    } catch (error: any) {
+      logger.error("Subscription change-plan error", error);
+      res.status(500).json({ message: "플랜 변경에 실패했습니다." });
+    }
+  });
+
+  // PortOne V2 웹훅 (정기결제 결과)
+  app.post("/api/subscription/webhook", async (req, res) => {
+    try {
+      const { type, data } = req.body;
+      const paymentId = data?.paymentId;
+
+      if (!paymentId) {
+        return res.status(200).json({ success: true });
+      }
+
+      logger.info(`Subscription webhook received: ${type} for ${paymentId}`);
+
+      // paymentId에서 userId 추출: sub_plan_cycle_userId8_ts
+      const parts = paymentId.split("_");
+      if (parts.length < 5 || parts[0] !== "sub") {
+        return res.status(200).json({ success: true }); // 일반 결제 웹훅은 무시
+      }
+
+      // PortOne V2로 결제 상태 확인
+      let paymentInfo: any;
+      try {
+        paymentInfo = await getPaymentInfo(paymentId);
+      } catch (err: any) {
+        logger.error("Webhook: failed to verify payment", err);
+        return res.status(200).json({ success: false });
+      }
+
+      const status = paymentInfo?.status;
+
+      if (status === "PAID" && type === "Transaction.Paid") {
+        // 결제 성공 → 구독 갱신, 크레딧 리셋
+        // customerId 에서 userId 가져오기
+        const customerId = paymentInfo?.customer?.id;
+        if (!customerId) {
+          logger.error("Webhook: no customerId in payment");
+          return res.status(200).json({ success: false });
+        }
+
+        const sub = await storage.getSubscription(customerId);
+        if (!sub) {
+          return res.status(200).json({ success: true });
+        }
+
+        const planInfo = getSubscriptionPlan(sub.plan, sub.billingCycle);
+        if (!planInfo) {
+          return res.status(200).json({ success: true });
+        }
+
+        // 기간 갱신
+        const { start, end } = calculateNextPeriod(sub.currentPeriodEnd, sub.billingCycle);
+        await storage.updateSubscription(customerId, {
+          status: "active",
+          currentPeriodStart: start,
+          currentPeriodEnd: end,
+          nextPaymentAt: end,
+          retryCount: 0,
+          lastRetryAt: null,
+        });
+
+        // 크레딧 리셋
+        await storage.updateUserTier(customerId, sub.plan);
+
+        // 결제 기록
+        await storage.createPayment({
+          userId: customerId,
+          impUid: paymentId,
+          merchantUid: paymentId,
+          amount: planInfo.amountKRW,
+          status: "paid",
+          productType: `${sub.plan}_subscription`,
+          creditsAdded: planInfo.monthlyCredits,
+          billingCycle: sub.billingCycle,
+          currency: "KRW",
+        });
+
+        // 다음 결제 예약
+        const nextId = generatePaymentId(sub.plan, sub.billingCycle, customerId);
+        try {
+          await schedulePayment({
+            paymentId: nextId,
+            billingKey: sub.billingKey,
+            amount: planInfo.amountKRW,
+            currency: "KRW",
+            orderName: planInfo.label,
+            timeToPay: end,
+            customerId,
+          });
+          await storage.updateSubscription(customerId, { portoneScheduleId: nextId });
+        } catch { /* ignore */ }
+
+      } else if (status === "FAILED" && type === "Transaction.Failed") {
+        // 결제 실패 → 재시도 또는 past_due
+        const customerId = paymentInfo?.customer?.id;
+        if (!customerId) return res.status(200).json({ success: false });
+
+        const sub = await storage.getSubscription(customerId);
+        if (!sub) return res.status(200).json({ success: true });
+
+        const maxRetries = 3;
+        const retryIntervalDays = 3;
+
+        if (sub.retryCount < maxRetries) {
+          // 재시도 예약 (3일 후)
+          const retryDate = new Date();
+          retryDate.setDate(retryDate.getDate() + retryIntervalDays);
+
+          const planInfo = getSubscriptionPlan(sub.plan, sub.billingCycle);
+          if (planInfo) {
+            const retryPaymentId = generatePaymentId(sub.plan, sub.billingCycle, customerId);
+            try {
+              await schedulePayment({
+                paymentId: retryPaymentId,
+                billingKey: sub.billingKey,
+                amount: planInfo.amountKRW,
+                currency: "KRW",
+                orderName: `${planInfo.label} (재시도 ${sub.retryCount + 1}/${maxRetries})`,
+                timeToPay: retryDate,
+                customerId,
+              });
+            } catch { /* ignore */ }
+          }
+
+          await storage.updateSubscription(customerId, {
+            status: "past_due",
+            retryCount: sub.retryCount + 1,
+            lastRetryAt: new Date(),
+            portoneScheduleId: null,
+          });
+        } else {
+          // 최대 재시도 초과 → 만료
+          await storage.updateSubscription(customerId, {
+            status: "expired",
+            retryCount: sub.retryCount + 1,
+            lastRetryAt: new Date(),
+          });
+          // free로 전환
+          await storage.updateUserTier(customerId, "free");
+        }
+      }
+
+      res.status(200).json({ success: true });
+    } catch (error: any) {
+      logger.error("Subscription webhook error", error);
+      res.status(200).json({ success: false });
     }
   });
 
@@ -919,9 +1396,9 @@ export async function registerRoutes(
         return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
 
-      const canUseStory = await storage.deductCredit(userId, 10);
+      const canUseStory = await storage.deductCredit(userId, 50);
       if (!canUseStory) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 자동화 생성에는 10 크레딧이 필요합니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 자동화 생성에는 50 크레딧이 필요합니다." });
       }
 
       const result = await generateStoryScripts(parsed.data);
@@ -940,7 +1417,7 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
-      const canUse = await storage.deductCredit(userId, 1);
+      const canUse = await storage.deductCredit(userId, 5);
       if (!canUse) {
         return res.status(403).json({ message: "크레딧이 부족합니다." });
       }
@@ -967,10 +1444,10 @@ export async function registerRoutes(
         return res.status(400).json({ message: "캔버스 수(1~14), 컷/캔버스(1~4)를 올바르게 입력해주세요." });
       }
 
-      // 10 크레딧 차감
-      const ok = await storage.deductCredit(userId, 10);
+      // 50 크레딧 차감
+      const ok = await storage.deductCredit(userId, 50);
       if (!ok) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 프롬프트 작성에는 10 크레딧이 필요합니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 프롬프트 작성에는 50 크레딧이 필요합니다." });
       }
 
       const totalCuts = cc * cpc;
@@ -998,11 +1475,9 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 5);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
       }
 
       const imageDataUrl = await generateWebtoonScene(
@@ -1256,17 +1731,15 @@ export async function registerRoutes(
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 2);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 10);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
       }
 
       // Use existing image as reference + optional prompt for modifications
       const regenPrompt = prompt?.trim() || gen.prompt || "same character in a different pose and expression";
       let imageDataUrl = await generateCharacterImage(regenPrompt, style, gen.resultImageUrl);
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 

@@ -33,9 +33,20 @@ function loadFromStorage(): RecentCharacter[] {
 function saveToStorage(chars: RecentCharacter[]) {
   if (chars.length === 0) {
     localStorage.removeItem(STORAGE_KEY);
-  } else {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chars.slice(0, MAX_ITEMS)));
+    return;
   }
+  let items = chars.slice(0, MAX_ITEMS);
+  while (items.length > 0) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      return;
+    } catch {
+      // QuotaExceededError — drop the oldest entry and retry
+      items = items.slice(0, -1);
+    }
+  }
+  // Nothing fits — just remove the key
+  localStorage.removeItem(STORAGE_KEY);
 }
 
 /** Migrate old per-mode localStorage keys into unified recent characters. Run once on mount. */

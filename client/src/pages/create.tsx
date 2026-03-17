@@ -43,7 +43,7 @@ export default function CreatePage() {
   const queryClient = useQueryClient();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const { data: usage, isLoading: usageLoading } = useQuery<{ tier: string; credits: number }>({ queryKey: ["/api/usage"] });
-  const isPro = usage?.tier === "pro";
+  const isPro = usage?.tier === "pro" || usage?.tier === "premium";
   const isOutOfCredits = !usageLoading && !isPro && typeof usage?.credits === "number" && usage.credits <= 0;
   const [showStyleDialog, setShowStyleDialog] = useState(false);
 

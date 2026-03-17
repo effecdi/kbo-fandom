@@ -59,7 +59,7 @@ export default function CreateInstatoonPage() {
   const { data: usage } = useQuery<{ tier: string; credits: number; creatorTier: number; totalGenerations: number; creditsUsed?: number }>({
     queryKey: ["/api/usage"],
   });
-  const isPro = usage?.tier === "pro";
+  const isPro = usage?.tier === "pro" || usage?.tier === "premium";
   const isOutOfCredits = !isPro && (usage?.credits ?? 0) <= 0;
   const canAllFontsInstatoon = isPro || (usage?.creatorTier ?? 0) >= 3;
   const availableFonts = canAllFontsInstatoon ? KOREAN_FONTS : KOREAN_FONTS.slice(0, 3);

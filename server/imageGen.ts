@@ -314,6 +314,83 @@ export async function removeWhiteBackground(dataUrl: string, bgThreshold = 235):
   return `data:image/png;base64,${pngBuf.toString("base64")}`;
 }
 
+/**
+ * AI 기반 배경 제거: Gemini로 전경 마스크를 생성한 후 sharp으로 배경을 투명하게 처리
+ * removeWhiteBackground와 달리, 어떤 색상의 배경이든 제거 가능
+ */
+export async function removeBackgroundAI(dataUrl: string): Promise<string> {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("Invalid image data format");
+
+  const mimeType = match[1];
+  const base64Data = match[2];
+
+  // Step 1: Gemini에게 전경 마스크 생성 요청
+  const maskResponse = await ai.models.generateContent({
+    model: "gemini-2.5-flash-image",
+    contents: [{
+      role: "user",
+      parts: [
+        { inlineData: { mimeType, data: base64Data } },
+        {
+          text: `Generate a precise binary mask image for the foreground subject(s) in this image.
+
+RULES:
+- The mask must be the EXACT same dimensions as the input image
+- All foreground subjects (characters, people, objects) should be pure white (RGB 255,255,255)
+- The background should be pure black (RGB 0,0,0)
+- No gray values, no antialiasing, no gradients
+- Sharp, clean edges
+- Output ONLY the mask image`
+        }
+      ]
+    }],
+    config: {
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+    },
+  });
+
+  const maskPart = maskResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+  if (!maskPart?.inlineData?.data) {
+    throw new Error("AI mask generation failed");
+  }
+
+  // Step 2: 원본 이미지와 마스크를 sharp으로 합성
+  const origBuf = Buffer.from(base64Data, "base64");
+  const maskBuf = Buffer.from(maskPart.inlineData.data, "base64");
+
+  const origMeta = await sharp(origBuf).metadata();
+  const origW = origMeta.width!;
+  const origH = origMeta.height!;
+
+  // 원본 이미지를 RGBA raw로 변환
+  const { data: origRaw } = await sharp(origBuf)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  // 마스크를 원본과 같은 크기로 리사이즈 후 grayscale raw로 변환
+  const { data: maskRaw } = await sharp(maskBuf)
+    .resize(origW, origH, { fit: "fill" })
+    .grayscale()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  // 마스크를 알파 채널로 적용
+  const pixels = Buffer.from(origRaw);
+  for (let i = 0; i < origW * origH; i++) {
+    pixels[i * 4 + 3] = maskRaw[i]; // 마스크의 밝기를 알파로 사용
+  }
+
+  const resultBuf = await sharp(pixels, {
+    raw: { width: origW, height: origH, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+
+  return `data:image/png;base64,${resultBuf.toString("base64")}`;
+}
+
 export async function generateCharacterImage(prompt: string, style: string, sourceImageData?: string): Promise<string> {
   const config = getStyleConfig(style);
   const parts: any[] = [];

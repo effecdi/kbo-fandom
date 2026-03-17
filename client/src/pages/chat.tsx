@@ -52,7 +52,7 @@ export default function ChatPage() {
 
   const selectedCharacter = characters?.find((c: Character) => c.id === selectedCharId);
 
-  const isPro = credits?.tier === "pro";
+  const isPro = credits?.tier === "pro" || credits?.tier === "premium";
   const [limitOpen, setLimitOpen] = useState(false);
 
   const getDailyKey = (feature: string) => {

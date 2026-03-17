@@ -1,6 +1,7 @@
 import {
   users, type UpsertUser,
   characters, generations, userCredits, trendingAccounts, bubbleProjects, payments,
+  subscriptions,
   projectFolders,
   characterFolders, characterFolderItems,
   instagramConnections, instagramPublishLog,
@@ -10,6 +11,7 @@ import {
   type UserCredits, type TrendingAccount, type InsertTrendingAccount,
   type CreatorProfile, type BubbleProject, type InsertBubbleProject,
   type Payment, type InsertPayment,
+  type Subscription, type InsertSubscription,
   type ProjectFolder, type InsertProjectFolder,
   type CharacterFolder, type InsertCharacterFolder, type CharacterFolderItem,
   type InstagramConnection, type InsertInstagramConnection,
@@ -125,6 +127,12 @@ export interface IStorage {
 
   // Popular creators
   getPopularCreators(limit: number): Promise<PopularCreator[]>;
+
+  // Subscriptions
+  createSubscription(data: InsertSubscription): Promise<Subscription>;
+  getSubscription(userId: string): Promise<Subscription | undefined>;
+  updateSubscription(userId: string, data: Partial<Subscription>): Promise<Subscription | undefined>;
+  deleteSubscription(userId: string): Promise<boolean>;
 
   // Account deletion
   deleteAccount(userId: string): Promise<void>;
@@ -358,11 +366,12 @@ export class DatabaseStorage implements IStorage {
 
       const updates: any = {};
 
-      // Pro 구독 만료 체크 — proExpiresAt이 설정되어 있고 현재 시각이 지났으면 free로 전환
+      // Pro/Premium 구독 만료 체크 — proExpiresAt이 설정되어 있고 현재 시각이 지났으면 free로 전환
       try {
-        if (existing.tier === "pro" && existing.proExpiresAt && new Date(existing.proExpiresAt) <= now) {
+        if ((existing.tier === "pro" || existing.tier === "premium") && existing.proExpiresAt && new Date(existing.proExpiresAt) <= now) {
           updates.tier = "free";
-          updates.credits = 10;
+          updates.credits = 30;
+          updates.monthlyCreditsQuota = 30;
           updates.proExpiresAt = null;
         }
       } catch {
@@ -373,10 +382,13 @@ export class DatabaseStorage implements IStorage {
         updates.bubbleUsesToday = 0;
         updates.storyUsesToday = 0;
         updates.lastResetAt = now;
-        if (existing.tier === "pro") {
-          updates.credits = 200;
+        // 월 리셋: 티어별 크레딧 지급
+        if (existing.tier === "premium") {
+          updates.credits = 20000;
+        } else if (existing.tier === "pro") {
+          updates.credits = 3000;
         } else {
-          updates.credits = 10;
+          updates.credits = 30;
         }
       } else if (isNewMonth) {
         updates.bubbleUsesToday = 0;
@@ -384,9 +396,9 @@ export class DatabaseStorage implements IStorage {
         updates.lastResetAt = now;
       }
 
-      // Daily bonus check (KST) — only if column exists
+      // Daily bonus check (KST) — free 티어만 일 보너스 지급
       try {
-        if (isNewDayKST(existing.lastDailyBonusAt)) {
+        if (existing.tier === "free" && isNewDayKST(existing.lastDailyBonusAt)) {
           updates.dailyBonusCredits = 5;
           updates.lastDailyBonusAt = now;
         }
@@ -419,13 +431,13 @@ export class DatabaseStorage implements IStorage {
 
     try {
       const [created] = await db.insert(userCredits)
-        .values({ userId, credits: 20, tier: "free" })
+        .values({ userId, credits: 30, tier: "free", monthlyCreditsQuota: 30 })
         .returning();
       return created;
     } catch {
       // Fallback: if insert fails with new default, try legacy
       const [created] = await db.insert(userCredits)
-        .values({ userId, credits: 20, tier: "free" } as any)
+        .values({ userId, credits: 30, tier: "free" } as any)
         .returning();
       return { ...created, dailyBonusCredits: 0, lastDailyBonusAt: null } as UserCredits;
     }
@@ -436,73 +448,94 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deductCredit(userId: string, amount: number = 1): Promise<boolean> {
-    const credits = await this.ensureUserCredits(userId);
-
-    // Pro 티어는 크레딧 무제한 (차감 없이 통과)
-    if (credits.tier === "pro") return true;
+    await this.ensureUserCredits(userId);
 
     const db = this.getDb();
-    let remaining = amount;
 
-    // Deduct daily bonus credits first, then regular credits
-    if (credits.dailyBonusCredits > 0) {
-      try {
-        const bonusDeduct = Math.min(remaining, credits.dailyBonusCredits);
-        await db.update(userCredits)
-          .set({ dailyBonusCredits: credits.dailyBonusCredits - bonusDeduct })
-          .where(eq(userCredits.userId, userId));
-        remaining -= bonusDeduct;
-        if (remaining <= 0) return true;
-        // Re-fetch after bonus deduction for accurate regular credits
-        const updated = await this.ensureUserCredits(userId);
-        if (updated.credits >= remaining) {
-          await db.update(userCredits)
-            .set({ credits: updated.credits - remaining })
-            .where(eq(userCredits.userId, userId));
-          return true;
-        }
-        return false;
-      } catch {
-        // daily_bonus_credits column may not exist yet, fall through to regular credits
-      }
+    // 모든 티어가 크레딧 차감 방식으로 통일 (Pro 무제한 제거)
+    // Atomic deduction: daily bonus credits first, then regular credits
+    // Uses SQL-level conditions to prevent race conditions (double-spend)
+    try {
+      const result = await db.update(userCredits)
+        .set({
+          dailyBonusCredits: sql`GREATEST(0, daily_bonus_credits - LEAST(daily_bonus_credits, ${amount}))`,
+          credits: sql`GREATEST(0, credits - GREATEST(0, ${amount} - daily_bonus_credits))`,
+        })
+        .where(
+          and(
+            eq(userCredits.userId, userId),
+            sql`(daily_bonus_credits + credits) >= ${amount}`,
+          ),
+        )
+        .returning();
+      return result.length > 0;
+    } catch {
+      // daily_bonus_credits column may not exist yet, fallback to credits only
+      const result = await db.update(userCredits)
+        .set({
+          credits: sql`credits - ${amount}`,
+        })
+        .where(
+          and(
+            eq(userCredits.userId, userId),
+            sql`credits >= ${amount}`,
+          ),
+        )
+        .returning();
+      return result.length > 0;
     }
-    if (credits.credits >= remaining) {
-      await db.update(userCredits)
-        .set({ credits: credits.credits - remaining })
-        .where(eq(userCredits.userId, userId));
-      return true;
-    }
-    return false;
   }
 
   async deductBubbleUse(userId: string): Promise<boolean> {
     const credits = await this.ensureUserCredits(userId);
-    if (credits.tier === "pro") return true;
-    if (credits.bubbleUsesToday >= 3) return false;
+    // 유료 티어는 무제한
+    if (credits.tier === "pro" || credits.tier === "premium") return true;
+
+    // Atomic: only increment if under limit
     const db = this.getDb();
-    await db.update(userCredits)
-      .set({ bubbleUsesToday: credits.bubbleUsesToday + 1 })
-      .where(eq(userCredits.userId, userId));
-    return true;
+    const result = await db.update(userCredits)
+      .set({ bubbleUsesToday: sql`bubble_uses_today + 1` })
+      .where(
+        and(
+          eq(userCredits.userId, userId),
+          sql`bubble_uses_today < 3`,
+        ),
+      )
+      .returning();
+    return result.length > 0;
   }
 
   async deductStoryUse(userId: string): Promise<boolean> {
     const credits = await this.ensureUserCredits(userId);
-    if (credits.tier === "pro") return true;
-    if (credits.storyUsesToday >= 3) return false;
+    // 유료 티어는 무제한
+    if (credits.tier === "pro" || credits.tier === "premium") return true;
+
+    // Atomic: only increment if under limit
     const db = this.getDb();
-    await db.update(userCredits)
-      .set({ storyUsesToday: credits.storyUsesToday + 1 })
-      .where(eq(userCredits.userId, userId));
-    return true;
+    const result = await db.update(userCredits)
+      .set({ storyUsesToday: sql`story_uses_today + 1` })
+      .where(
+        and(
+          eq(userCredits.userId, userId),
+          sql`story_uses_today < 3`,
+        ),
+      )
+      .returning();
+    return result.length > 0;
   }
 
   async updateUserTier(userId: string, tier: string): Promise<UserCredits> {
     await this.ensureUserCredits(userId);
     const db = this.getDb();
     const updates: any = { tier };
-    if (tier === "pro") {
-      updates.credits = 200;
+    if (tier === "premium") {
+      updates.credits = 20000;
+      updates.monthlyCreditsQuota = 20000;
+    } else if (tier === "pro") {
+      updates.credits = 3000;
+      updates.monthlyCreditsQuota = 3000;
+    } else {
+      updates.monthlyCreditsQuota = 30;
     }
     const [updated] = await db.update(userCredits)
       .set(updates)
@@ -512,10 +545,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addCredits(userId: string, amount: number): Promise<UserCredits> {
-    const credits = await this.ensureUserCredits(userId);
+    await this.ensureUserCredits(userId);
     const db = this.getDb();
+    // Atomic: use SQL-level addition to prevent race conditions
     const [updated] = await db.update(userCredits)
-      .set({ credits: credits.credits + amount })
+      .set({ credits: sql`credits + ${amount}` })
       .where(eq(userCredits.userId, userId))
       .returning();
     return updated;
@@ -702,7 +736,7 @@ export class DatabaseStorage implements IStorage {
     return folder;
   }
 
-  async getCharacterFoldersByUser(userId: string): Promise<(CharacterFolder & { items: { generationId: number }[] })[]> {
+  async getCharacterFoldersByUser(userId: string): Promise<(CharacterFolder & { items: { generationId: number; thumbnailUrl?: string | null; characterName?: string | null; prompt?: string | null }[] })[]> {
     const db = this.getDb();
     const folders = await db.select().from(characterFolders)
       .where(eq(characterFolders.userId, userId))
@@ -714,13 +748,23 @@ export class DatabaseStorage implements IStorage {
     const items = await db.select({
       folderId: characterFolderItems.folderId,
       generationId: characterFolderItems.generationId,
+      thumbnailUrl: generations.thumbnailUrl,
+      resultImageUrl: generations.resultImageUrl,
+      characterName: generations.characterName,
+      prompt: generations.prompt,
     }).from(characterFolderItems)
+      .leftJoin(generations, eq(characterFolderItems.generationId, generations.id))
       .where(inArray(characterFolderItems.folderId, folderIds));
 
-    const itemsByFolder = new Map<number, { generationId: number }[]>();
+    const itemsByFolder = new Map<number, { generationId: number; thumbnailUrl?: string | null; characterName?: string | null; prompt?: string | null }[]>();
     for (const item of items) {
       if (!itemsByFolder.has(item.folderId)) itemsByFolder.set(item.folderId, []);
-      itemsByFolder.get(item.folderId)!.push({ generationId: item.generationId });
+      itemsByFolder.get(item.folderId)!.push({
+        generationId: item.generationId,
+        thumbnailUrl: item.thumbnailUrl || item.resultImageUrl,
+        characterName: item.characterName,
+        prompt: item.prompt,
+      });
     }
 
     return folders.map(f => ({
@@ -1315,6 +1359,39 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  // ── Subscriptions ──
+
+  async createSubscription(data: InsertSubscription): Promise<Subscription> {
+    const db = this.getDb();
+    const [sub] = await db.insert(subscriptions).values(data).returning();
+    return sub;
+  }
+
+  async getSubscription(userId: string): Promise<Subscription | undefined> {
+    const db = this.getDb();
+    try {
+      const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId));
+      return sub || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async updateSubscription(userId: string, data: Partial<Subscription>): Promise<Subscription | undefined> {
+    const db = this.getDb();
+    const [updated] = await db.update(subscriptions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(subscriptions.userId, userId))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteSubscription(userId: string): Promise<boolean> {
+    const db = this.getDb();
+    const result = await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
   // ── Account Deletion ──
 
   async deleteAccount(userId: string): Promise<void> {
@@ -1353,6 +1430,11 @@ export class DatabaseStorage implements IStorage {
     await db.delete(characters).where(eq(characters.userId, userId));
 
     // 7. payments — 전자상거래법 5년 보관 의무로 삭제하지 않음
+
+    // 7.5. subscriptions
+    try {
+      await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
+    } catch { /* table may not exist yet */ }
 
     // 8. user credits
     await db.delete(userCredits).where(eq(userCredits.userId, userId));

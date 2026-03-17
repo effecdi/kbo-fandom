@@ -50,7 +50,7 @@ export default function BackgroundPage() {
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
 
   const { data: usageData } = useQuery<{creatorTier: number; totalGenerations: number; tier: string; credits: number}>({ queryKey: ["/api/usage"] });
-  const isPro = usageData?.tier === "pro";
+  const isPro = usageData?.tier === "pro" || usageData?.tier === "premium";
   const isOutOfCredits = !isPro && (usageData?.credits ?? 0) <= 0;
 
   useEffect(() => {

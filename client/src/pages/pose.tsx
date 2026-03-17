@@ -60,7 +60,7 @@ export default function PosePage() {
   const { data: usageData } = useQuery<{ creatorTier: number; totalGenerations: number; tier: string; credits: number }>({
     queryKey: ["/api/usage"],
   });
-  const isPro = usageData?.tier === "pro";
+  const isPro = usageData?.tier === "pro" || usageData?.tier === "premium";
   const isOutOfCredits = !isPro && (usageData?.credits ?? 0) <= 0;
 
   // URL에서 전달된 characterId를 직접 fetch (gallery 캐시와 무관하게 즉시 표시)

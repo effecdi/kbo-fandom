@@ -7,6 +7,7 @@ export interface TourStep {
   videoUrl?: string;
   position: "top" | "bottom" | "left" | "right";
   spotlightPadding?: number;
+  proOnly?: boolean;
 }
 
 export const TOUR_STEPS: TourStep[] = [
@@ -128,7 +129,7 @@ export const TOUR_STEPS: TourStep[] = [
     spotlightPadding: 8,
   },
 
-  // === /story ===
+  // === /story (Pro only) ===
   {
     id: "story-sidebar",
     page: "/story",
@@ -139,6 +140,7 @@ export const TOUR_STEPS: TourStep[] = [
     videoUrl: "",
     position: "right",
     spotlightPadding: 6,
+    proOnly: true,
   },
   {
     id: "story-save",
@@ -150,5 +152,6 @@ export const TOUR_STEPS: TourStep[] = [
     videoUrl: "",
     position: "bottom",
     spotlightPadding: 6,
+    proOnly: true,
   },
 ];

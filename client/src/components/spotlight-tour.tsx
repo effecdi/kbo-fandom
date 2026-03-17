@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -13,6 +14,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { TOUR_STEPS, type TourStep } from "@/lib/tour-steps";
 import { ChevronLeft, ChevronRight, X, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 
 // ─── Context ──────────────────────────────────────────────
 
@@ -43,17 +46,28 @@ export function SpotlightTourProvider({ children }: { children: ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [, navigate] = useLocation();
+  const { isAuthenticated } = useAuth();
+  const { data: usage } = useQuery<{ tier: string }>({
+    queryKey: ["/api/usage"],
+    enabled: isAuthenticated,
+  });
 
-  const currentStep = isActive ? TOUR_STEPS[stepIndex] ?? null : null;
+  const isPro = usage?.tier === "pro" || usage?.tier === "premium";
+  const steps = useMemo(
+    () => TOUR_STEPS.filter((s) => !s.proOnly || isPro),
+    [isPro],
+  );
+
+  const currentStep = isActive ? steps[stepIndex] ?? null : null;
 
   const startTour = useCallback(() => {
     setStepIndex(0);
     setIsActive(true);
-    const firstStep = TOUR_STEPS[0];
+    const firstStep = steps[0];
     if (firstStep) {
       navigate(firstStep.page);
     }
-  }, [navigate]);
+  }, [navigate, steps]);
 
   const endTour = useCallback(() => {
     setIsActive(false);
@@ -65,32 +79,32 @@ export function SpotlightTourProvider({ children }: { children: ReactNode }) {
 
   const nextStep = useCallback(() => {
     const next = stepIndex + 1;
-    if (next >= TOUR_STEPS.length) {
+    if (next >= steps.length) {
       endTour();
       return;
     }
     setStepIndex(next);
-    const nextStepData = TOUR_STEPS[next];
-    if (nextStepData && nextStepData.page !== TOUR_STEPS[stepIndex]?.page) {
+    const nextStepData = steps[next];
+    if (nextStepData && nextStepData.page !== steps[stepIndex]?.page) {
       navigate(nextStepData.page);
     }
-  }, [stepIndex, navigate, endTour]);
+  }, [stepIndex, navigate, endTour, steps]);
 
   const prevStep = useCallback(() => {
     const prev = stepIndex - 1;
     if (prev < 0) return;
     setStepIndex(prev);
-    const prevStepData = TOUR_STEPS[prev];
-    if (prevStepData && prevStepData.page !== TOUR_STEPS[stepIndex]?.page) {
+    const prevStepData = steps[prev];
+    if (prevStepData && prevStepData.page !== steps[stepIndex]?.page) {
       navigate(prevStepData.page);
     }
-  }, [stepIndex, navigate]);
+  }, [stepIndex, navigate, steps]);
 
   const value: TourContextValue = {
     isActive,
     currentStepIndex: stepIndex,
     currentStep,
-    totalSteps: TOUR_STEPS.length,
+    totalSteps: steps.length,
     startTour,
     nextStep,
     prevStep,

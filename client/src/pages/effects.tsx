@@ -40,7 +40,7 @@ export default function EffectsPage() {
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   const { data: usageData } = useQuery<{creatorTier: number; totalGenerations: number; tier: string}>({ queryKey: ["/api/usage"] });
-  const isPro = usageData?.tier === "pro";
+  const isPro = usageData?.tier === "pro" || usageData?.tier === "premium";
 
   useEffect(() => {
     if (isFlow && !uploadedImage) {

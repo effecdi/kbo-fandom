@@ -128,7 +128,7 @@ export default function AdMatchPage() {
   });
   const [results, setResults] = useState<AdMatchResult | null>(null);
 
-  const isPro = credits?.tier === "pro";
+  const isPro = credits?.tier === "pro" || credits?.tier === "premium";
   const [limitOpen, setLimitOpen] = useState(false);
 
   const getDailyKey = (feature: string) => {

@@ -71,7 +71,7 @@ export function Navbar() {
     },
   ];
 
-  const isPro = credits?.tier === "pro";
+  const isPro = credits?.tier === "pro" || credits?.tier === "premium";
   const isGroupActive = (group: NavGroup) => group.paths.includes(location);
 
   return (
@@ -85,17 +85,6 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
-            <Link href="/home">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`gap-1.5 ${location === "/home" ? "bg-primary/10 text-primary" : ""}`}
-                data-testid="link-landing"
-              >
-                <Home className="h-4 w-4" />
-                <span className="hidden sm:inline">Home</span>
-              </Button>
-            </Link>
             {navGroups.map((group) => (
               <DropdownMenu key={group.label}>
                 <DropdownMenuTrigger asChild>
@@ -190,16 +179,6 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={startTour}
-            data-testid="button-guide"
-            title="사용 가이드"
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
 
           <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme-toggle">
             {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}

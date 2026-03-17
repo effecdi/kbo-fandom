@@ -21,7 +21,7 @@ interface GalleryPage {
   hasMore: boolean;
 }
 
-type CharacterFolderWithItems = CharacterFolder & { items: { generationId: number }[] };
+type CharacterFolderWithItems = CharacterFolder & { items: { generationId: number; thumbnailUrl?: string | null; characterName?: string | null; prompt?: string | null }[] };
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
@@ -719,19 +719,26 @@ export default function GalleryPage() {
                           <div style={{ overflow: "hidden" }}>
                             <div className="px-3 pb-3 space-y-1">
                               {folder.items.map((item) => {
-                                const info = genThumbnailMap.get(item.generationId);
+                                const thumbFromFolder = item.thumbnailUrl;
+                                const nameFromFolder = item.characterName;
+                                const promptFromFolder = item.prompt || "";
+                                // Fallback to genThumbnailMap for items that don't have embedded data yet
+                                const fallback = genThumbnailMap.get(item.generationId);
+                                const thumb = thumbFromFolder || fallback?.thumb;
+                                const name = nameFromFolder ?? fallback?.name;
+                                const prompt = promptFromFolder || fallback?.prompt || "";
                                 return (
                                   <div key={item.generationId} className="flex items-center gap-2.5 py-1">
                                     <div className="w-8 h-8 rounded-full overflow-hidden bg-muted shrink-0">
-                                      {info ? (
-                                        <img src={info.thumb} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                      {thumb ? (
+                                        <img src={thumb} alt="" className="w-full h-full object-cover" loading="lazy" />
                                       ) : (
                                         <div className="w-full h-full flex items-center justify-center">
                                           <ImageIcon className="h-3 w-3 text-muted-foreground" />
                                         </div>
                                       )}
                                     </div>
-                                    <FolderItemNameEditor genId={item.generationId} initialName={info?.name} prompt={info?.prompt || ""} />
+                                    <FolderItemNameEditor genId={item.generationId} initialName={name} prompt={prompt} />
                                     <button
                                       className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
                                       onClick={(e) => {

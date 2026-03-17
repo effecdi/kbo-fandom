@@ -23,6 +23,10 @@ export const config = {
   supabaseKey: process.env.SUPABASE_KEY || "",
   portoneApiKey: process.env.PORTONE_API_KEY || "",
   portoneApiSecret: process.env.PORTONE_API_SECRET || "",
+  // PortOne V2 (정기결제/빌링키)
+  portoneV2ApiSecret: process.env.PORTONE_V2_API_SECRET || "",
+  portoneV2ChannelKey: process.env.PORTONE_V2_CHANNEL_KEY || "",
+  portoneV2StoreId: process.env.PORTONE_V2_STORE_ID || "",
   metaAppId: process.env.META_APP_ID || "",
   metaAppSecret: process.env.META_APP_SECRET || "",
   metaRedirectUri: process.env.META_REDIRECT_URI || "",
