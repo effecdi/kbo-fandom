@@ -10,6 +10,11 @@ export interface RecentCharacter {
 const STORAGE_KEY = "olli_recent_characters";
 const MAX_ITEMS = 12;
 
+// Data URIs are too large for localStorage — skip them
+function isDataUri(url: string): boolean {
+  return url.startsWith("data:");
+}
+
 // Migration keys from old per-mode storage
 const OLD_KEYS = ["olli_instatoon_refchars", "olli_autowebtoon_chars"];
 
@@ -19,12 +24,17 @@ function loadFromStorage(): RecentCharacter[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed
+    const cleaned = parsed
       .filter(
-        (c: any) => c && typeof c.id === "string" && typeof c.imageUrl === "string"
+        (c: any) => c && typeof c.id === "string" && typeof c.imageUrl === "string" && !isDataUri(c.imageUrl)
       )
       .sort((a: RecentCharacter, b: RecentCharacter) => b.usedAt - a.usedAt)
       .slice(0, MAX_ITEMS);
+    // If we filtered out data URIs, re-save the cleaned list
+    if (cleaned.length < parsed.length) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned)); } catch { /* ignore */ }
+    }
+    return cleaned;
   } catch {
     return [];
   }
@@ -106,6 +116,8 @@ export function useRecentCharacters() {
 
   const addRecentCharacter = useCallback(
     (char: { id: string; name: string; imageUrl: string }) => {
+      // Never store data URIs — they blow up localStorage quota
+      if (isDataUri(char.imageUrl)) return;
       setRecentChars((prev) => {
         const now = Date.now();
         const existing = prev.findIndex((c) => c.id === char.id || c.imageUrl === char.imageUrl);
