@@ -66,7 +66,7 @@ export function EditorChecklistPopover({
         <div
           style={{
             position: "fixed",
-            bottom: "4.5rem",
+            top: "4.5rem",
             right: "1rem",
             width: 340,
             zIndex: 10001,
@@ -167,7 +167,7 @@ export function EditorChecklistPopover({
 
       {/* Collapsed bar + help button */}
       <div
-        className="fixed bottom-4 right-4 flex items-center gap-2"
+        className="fixed top-16 right-4 flex items-center gap-2"
         style={{ zIndex: 10000 }}
       >
         {/* Progress pill */}
