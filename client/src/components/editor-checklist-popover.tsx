@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   ImagePlus,
   Wand2,
@@ -37,7 +37,6 @@ export function EditorChecklistPopover({
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem(DISMISSED_KEY) === "1",
   );
-  const popoverRef = useRef<HTMLDivElement>(null);
 
   const completedCount = CHECKLIST_ITEMS.filter((item) =>
     completedItems.has(item.id),
@@ -57,141 +56,118 @@ export function EditorChecklistPopover({
     }
   }, [completedCount, total, onDismiss]);
 
-  // Popover API control
-  useEffect(() => {
-    const el = popoverRef.current;
-    if (!el) return;
-    try {
-      if (expanded) {
-        el.showPopover();
-      } else {
-        el.hidePopover();
-      }
-    } catch {
-      // Popover API not supported — fallback handled via CSS
-    }
-  }, [expanded]);
-
   if (dismissed) return null;
 
   return (
     <>
-      {/* Popover content */}
-      <div
-        ref={popoverRef}
-        // @ts-expect-error popover attribute
-        popover="manual"
-        style={{
-          position: "fixed",
-          bottom: "4.5rem",
-          right: "1rem",
-          width: "340px",
-          zIndex: 9999,
-          margin: 0,
-          padding: 0,
-          border: "none",
-          background: "transparent",
-          overflow: "visible",
-          inset: "unset",
-          ...(expanded ? {} : { display: "none" }),
-        }}
-      >
-        <div className="bg-background rounded-xl shadow-2xl border border-border overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 pt-3 pb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-foreground">
-                시작하세요
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {completedCount}/{total} 완료됨
-              </span>
+      {/* Expanded checklist panel */}
+      {expanded && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "4.5rem",
+            right: "1rem",
+            width: 340,
+            zIndex: 10001,
+          }}
+        >
+          <div className="bg-background rounded-xl shadow-2xl border border-border overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">
+                  시작하세요
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {completedCount}/{total} 완료됨
+                </span>
+              </div>
+              <button
+                onClick={() => setExpanded(false)}
+                className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted transition-colors"
+                title="최소화"
+              >
+                <MinusIcon className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
             </div>
-            <button
-              onClick={() => setExpanded(false)}
-              className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted transition-colors"
-              title="최소화"
-            >
-              <MinusIcon className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          </div>
 
-          {/* Progress bar */}
-          <div className="px-4 pb-3">
-            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-green-500 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Checklist items */}
-          <div className="px-2 pb-3 max-h-[340px] overflow-y-auto">
-            {CHECKLIST_ITEMS.map((item) => {
-              const done = completedItems.has(item.id);
-              const Icon = item.icon;
-              return (
+            {/* Progress bar */}
+            <div className="px-4 pb-3">
+              <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
                 <div
-                  key={item.id}
-                  className={`flex items-center gap-3 px-2 py-1.5 rounded-lg transition-colors ${
-                    done ? "opacity-60" : "hover:bg-muted/50"
-                  }`}
-                >
-                  {/* Checkbox */}
+                  className="h-full bg-green-500 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Checklist items */}
+            <div className="px-2 pb-3 max-h-[340px] overflow-y-auto">
+              {CHECKLIST_ITEMS.map((item) => {
+                const done = completedItems.has(item.id);
+                const Icon = item.icon;
+                return (
                   <div
-                    className={`h-5 w-5 rounded flex items-center justify-center shrink-0 border transition-colors ${
-                      done
-                        ? "bg-green-500 border-green-500"
-                        : "border-border bg-background"
+                    key={item.id}
+                    className={`flex items-center gap-3 px-2 py-1.5 rounded-lg transition-colors ${
+                      done ? "opacity-60" : "hover:bg-muted/50"
                     }`}
                   >
-                    {done && <Check className="h-3 w-3 text-white" />}
+                    {/* Checkbox */}
+                    <div
+                      className={`h-5 w-5 rounded flex items-center justify-center shrink-0 border transition-colors ${
+                        done
+                          ? "bg-green-500 border-green-500"
+                          : "border-border bg-background"
+                      }`}
+                    >
+                      {done && <Check className="h-3 w-3 text-white" />}
+                    </div>
+
+                    {/* Icon */}
+                    <Icon
+                      className={`h-4 w-4 shrink-0 ${
+                        done ? "text-muted-foreground" : "text-foreground/70"
+                      }`}
+                    />
+
+                    {/* Label */}
+                    <span
+                      className={`text-sm ${
+                        done
+                          ? "text-muted-foreground line-through"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
                   </div>
+                );
+              })}
+            </div>
 
-                  {/* Icon */}
-                  <Icon
-                    className={`h-4 w-4 shrink-0 ${
-                      done ? "text-muted-foreground" : "text-foreground/70"
-                    }`}
-                  />
-
-                  {/* Label */}
-                  <span
-                    className={`text-sm ${
-                      done
-                        ? "text-muted-foreground line-through"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Dismiss link */}
-          <div className="px-4 pb-3 pt-1 border-t border-border">
-            <button
-              onClick={() => {
-                setExpanded(false);
-                setDismissed(true);
-                localStorage.setItem(DISMISSED_KEY, "1");
-                onDismiss();
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              가이드 닫기
-            </button>
+            {/* Dismiss link */}
+            <div className="px-4 pb-3 pt-1 border-t border-border">
+              <button
+                onClick={() => {
+                  setExpanded(false);
+                  setDismissed(true);
+                  localStorage.setItem(DISMISSED_KEY, "1");
+                  onDismiss();
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                가이드 닫기
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Collapsed bar + help button */}
       <div
         className="fixed bottom-4 right-4 flex items-center gap-2"
-        style={{ zIndex: 9998 }}
+        style={{ zIndex: 10000 }}
       >
         {/* Progress pill */}
         <button

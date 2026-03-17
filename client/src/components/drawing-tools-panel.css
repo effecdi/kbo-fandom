@@ -324,7 +324,7 @@
 }
 .tools-compact-panel__strip--sub {
   background: hsl(var(--muted)/0.3);
-  z-index: 999;
+  z-index: 9999;
 }
 .tools-compact-panel__tool-btn {
   display: flex;
