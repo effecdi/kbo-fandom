@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ImagePlus,
   Wand2,
@@ -58,7 +59,7 @@ export function EditorChecklistPopover({
 
   if (dismissed) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Expanded checklist panel */}
       {expanded && (
@@ -198,6 +199,7 @@ export function EditorChecklistPopover({
           <HelpCircle className="h-5 w-5 text-muted-foreground" />
         </button>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
