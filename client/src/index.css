@@ -423,3 +423,24 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(transparent, #00c6ff, transparent);
 }
+
+/* Driver.js tour video styling */
+.olli-tour-popover {
+  max-width: 380px !important;
+}
+.olli-tour-popover .tour-video {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  max-height: 200px;
+  object-fit: cover;
+}
+.olli-tour-popover .driver-popover-description p,
+.olli-tour-popover .driver-popover-description ul {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.olli-tour-popover .driver-popover-description ul {
+  padding-left: 16px;
+}

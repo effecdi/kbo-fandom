@@ -113,6 +113,7 @@ import { AutoWebtoonPanel } from "@/components/auto-webtoon-panel";
 import { CharacterPicker, type CharacterImage } from "@/components/character-picker";
 import { EditorChecklistPopover } from "@/components/editor-checklist-popover";
 import { StoryGuidePanel } from "@/components/story-guide-panel";
+import { startStoryTour } from "@/lib/story-tour";
 import { InstagramPublishDialog } from "@/components/instagram-publish-dialog";
 import { getFlowState, clearFlowState } from "@/lib/flow";
 import type { StoryPanelScript, Generation, GenerationLight, CharacterFolder } from "@shared/schema";
@@ -7653,7 +7654,7 @@ export default function StoryPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-wrap">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={toggleGuidePanel} title="도움말" data-testid="button-story-help">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={startStoryTour} title="도움말" data-testid="button-story-help">
                     <Lightbulb className="h-3.5 w-3.5" />
                   </Button>
                   <DropdownMenu>

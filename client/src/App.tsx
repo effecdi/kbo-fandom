@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SpotlightTourProvider } from "@/components/spotlight-tour";
+
 import { Navbar } from "@/components/navbar";
 import { ReactLenis } from "lenis/react";
 import { useAuth } from "@/hooks/use-auth";
@@ -102,12 +102,10 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <TooltipProvider>
-            <SpotlightTourProvider>
               <div className="min-h-screen bg-background text-foreground">
                 <Navbar />
                 <Router />
               </div>
-            </SpotlightTourProvider>
           </TooltipProvider>
         </ThemeProvider>
       </QueryClientProvider>

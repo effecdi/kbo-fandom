@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import type { Generation } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
-import { useTour } from "@/components/spotlight-tour";
+import { useLocation } from "wouter";
 
 interface UsageData {
   credits: number;
@@ -271,7 +271,7 @@ export default function HomePage() {
     queryKey: ["/api/gallery"],
   });
 
-  const { startTour } = useTour();
+  const [, navigate] = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTierGuide, setShowTierGuide] = useState(false);
   const [showTourBanner, setShowTourBanner] = useState(false);
@@ -323,7 +323,7 @@ export default function HomePage() {
               variant="outline"
               size="sm"
               className="gap-1.5"
-              onClick={startTour}
+              onClick={() => navigate("/story")}
               data-testid="button-start-guide"
             >
               <HelpCircle className="h-4 w-4" />
@@ -361,7 +361,7 @@ export default function HomePage() {
                 size="sm"
                 onClick={() => {
                   setShowTourBanner(false);
-                  startTour();
+                  navigate("/story");
                 }}
               >
                 가이드 시작

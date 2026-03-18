@@ -35,7 +35,7 @@ import type { Generation, PopularCreator } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
 import { InstagramConnect } from "@/components/instagram-connect";
 import { useToast } from "@/hooks/use-toast";
-import { useTour } from "@/components/spotlight-tour";
+import { useLocation } from "wouter";
 
 interface UsageData {
   credits: number;
@@ -258,7 +258,7 @@ export default function DashboardPage() {
   const [showTierGuide, setShowTierGuide] = useState(false);
   const [showTourBanner, setShowTourBanner] = useState(false);
   const { toast } = useToast();
-  const { startTour } = useTour();
+  const [, navigate] = useLocation();
   const search = useSearch();
 
   useEffect(() => {
@@ -322,7 +322,7 @@ export default function DashboardPage() {
             variant="outline"
             size="sm"
             className="gap-1.5"
-            onClick={startTour}
+            onClick={() => navigate("/story")}
             data-testid="button-start-guide"
           >
             <HelpCircle className="h-4 w-4" />
@@ -359,7 +359,7 @@ export default function DashboardPage() {
               size="sm"
               onClick={() => {
                 setShowTourBanner(false);
-                startTour();
+                navigate("/story");
               }}
             >
               가이드 시작
