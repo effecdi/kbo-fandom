@@ -7503,7 +7503,7 @@ export default function StoryPage() {
               </div>
           )}
 
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <div
               className="w-full relative"
@@ -9628,7 +9628,7 @@ export default function StoryPage() {
           </div>
 
 
-          <div className="flex items-center justify-center gap-3 px-4 py-2 border-t border-border bg-background shrink-0" data-testid="story-bottom-toolbar">
+          <div className="flex items-center justify-center gap-3 px-4 py-2 border border-border bg-background shrink-0" style={{ position: "absolute", bottom: 20, borderRadius: 20, left: "50%", transform: "translateX(-50%)" }} data-testid="story-bottom-toolbar">
             <div className="flex items-center gap-1.5">
               <Button
                 size="icon"
