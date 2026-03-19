@@ -255,7 +255,7 @@ export function CharacterPicker({
   const galleryContent = (
     <div className="space-y-1.5">
       {galleryPickerVariant === "inline" && (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           생성된 이미지 선택 {mode === "multi" ? `(최대 ${max}개, 클릭으로 토글)` : "(클릭으로 선택)"}:
         </p>
       )}
@@ -264,7 +264,7 @@ export function CharacterPicker({
       {characterFolders.length > 0 && (
         <div className="flex flex-wrap gap-1">
           <button
-            className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+            className={`text-[13px] px-2 py-0.5 rounded-full border transition-colors ${
               activeGalleryFolderId === null
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border text-muted-foreground hover:border-primary/50"
@@ -276,7 +276,7 @@ export function CharacterPicker({
           {characterFolders.map((f) => (
             <button
               key={f.id}
-              className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+              className={`text-[13px] px-2 py-0.5 rounded-full border transition-colors ${
                 activeGalleryFolderId === f.id
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-border text-muted-foreground hover:border-primary/50"
@@ -295,7 +295,7 @@ export function CharacterPicker({
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : !galleryData?.length ? (
-        <p className="text-[11px] text-muted-foreground text-center py-3">
+        <p className="text-[13px] text-muted-foreground text-center py-3">
           생성된 이미지가 없어요.<br />먼저 캐릭터를 만들어주세요.
         </p>
       ) : (
@@ -365,21 +365,21 @@ export function CharacterPicker({
       {label && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-semibold text-foreground">{label}</span>
-          {required && <span className="text-[10px] text-destructive font-medium">필수</span>}
+          {required && <span className="text-[13px] text-destructive font-medium">필수</span>}
           {!required && description && (
-            <span className="text-[10px] text-muted-foreground">{description}</span>
+            <span className="text-[13px] text-muted-foreground">{description}</span>
           )}
         </div>
       )}
 
       {/* Description (below label when required) */}
       {required && description && (
-        <p className="text-[11px] text-muted-foreground leading-relaxed">{description}</p>
+        <p className="text-[13px] text-muted-foreground leading-relaxed">{description}</p>
       )}
 
       {/* Style hint */}
       {showStyleHint && (
-        <p className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1">
+        <p className="text-[13px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1">
           🎨 이미지 업로드 시 그림 스타일을 자동 감지 → 배경·아이템도 같은 스타일로 생성됩니다
         </p>
       )}
@@ -450,8 +450,8 @@ export function CharacterPicker({
             className="h-10 w-10 rounded object-cover border border-border flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium truncate">{selectedImages[0].name || "선택된 이미지"}</p>
-            <p className="text-[10px] text-muted-foreground">이 캐릭터 기반으로 프롬프트 자동 작성</p>
+            <p className="text-[13px] font-medium truncate">{selectedImages[0].name || "선택된 이미지"}</p>
+            <p className="text-[13px] text-muted-foreground">이 캐릭터 기반으로 프롬프트 자동 작성</p>
           </div>
           <button
             onClick={() => onSelectedImagesChange([])}
@@ -470,9 +470,9 @@ export function CharacterPicker({
             className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-2.5 text-xs text-muted-foreground hover:border-primary/50 hover:bg-muted/70 transition-colors"
           >
             <UploadCloud className={mode === "multi" ? "h-5 w-5 text-muted-foreground/70" : "h-4 w-4 opacity-70"} />
-            <span className="text-[11px] font-medium">이미지 업로드</span>
+            <span className="text-[13px] font-medium">이미지 업로드</span>
             {mode === "multi" && (
-              <span className="text-[10px] opacity-70">JPG·PNG ({selectedImages.length}/{max})</span>
+              <span className="text-[13px] opacity-70">JPG·PNG ({selectedImages.length}/{max})</span>
             )}
           </button>
           <button
@@ -484,9 +484,9 @@ export function CharacterPicker({
             }`}
           >
             <ImagePlus className={mode === "multi" ? "h-5 w-5 opacity-70" : "h-4 w-4 opacity-70"} />
-            <span className="text-[11px] font-medium">갤러리에서</span>
+            <span className="text-[13px] font-medium">갤러리에서</span>
             {mode === "multi" && (
-              <span className="text-[10px] opacity-70">생성 이미지 ({selectedImages.length}/{max})</span>
+              <span className="text-[13px] opacity-70">생성 이미지 ({selectedImages.length}/{max})</span>
             )}
           </button>
         </div>

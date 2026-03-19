@@ -728,7 +728,7 @@ export function AutoWebtoonPanel({
               <Badge
                 key={i}
                 variant="outline"
-                className="cursor-pointer hover:bg-primary/10 transition-colors text-[10px]"
+                className="cursor-pointer hover:bg-primary/10 transition-colors text-[13px]"
                 onClick={(e) => { e.stopPropagation(); setStoryPrompt(topic); }}
               >
                 {topic}
@@ -774,7 +774,7 @@ export function AutoWebtoonPanel({
               onMouseDown={(e) => e.stopPropagation()}
             >
               <LayoutPreview cuts={n} size={32} layoutType={n === cutsPerCanvas ? cutLayoutType : "default"} canvasW={effectiveCanvasW} canvasH={effectiveCanvasH} />
-              <span className="text-[10px] font-medium">{n}컷</span>
+              <span className="text-[13px] font-medium">{n}컷</span>
             </button>
           ))}
         </div>
@@ -786,7 +786,7 @@ export function AutoWebtoonPanel({
 
         {/* Layout type */}
         <div className="space-y-1">
-          <span className="text-[10px] text-muted-foreground">레이아웃</span>
+          <span className="text-[13px] text-muted-foreground">레이아웃</span>
           <div className="flex gap-2">
             <button
               type="button"
@@ -799,7 +799,7 @@ export function AutoWebtoonPanel({
               onMouseDown={(e) => e.stopPropagation()}
             >
               <LayoutPreview cuts={cutsPerCanvas} size={32} layoutType="default" canvasW={effectiveCanvasW} canvasH={effectiveCanvasH} />
-              <span className="text-[10px] font-medium">기본</span>
+              <span className="text-[13px] font-medium">기본</span>
             </button>
             <button
               type="button"
@@ -816,18 +816,18 @@ export function AutoWebtoonPanel({
               title={cutsPerCanvas !== 4 ? "4컷일 때만 사용 가능" : undefined}
             >
               <LayoutPreview cuts={4} size={32} layoutType="square" canvasW={effectiveCanvasW} canvasH={effectiveCanvasH} />
-              <span className="text-[10px] font-medium">정사각형</span>
+              <span className="text-[13px] font-medium">정사각형</span>
             </button>
           </div>
         </div>
 
         {/* Border style */}
         <div className="space-y-1">
-          <span className="text-[10px] text-muted-foreground">보더 스타일</span>
+          <span className="text-[13px] text-muted-foreground">보더 스타일</span>
           <div className="flex gap-2">
             <button
               type="button"
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border-2 transition-colors cursor-pointer text-[10px] font-medium ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border-2 transition-colors cursor-pointer text-[13px] font-medium ${
                 cutBorderStyle === "wobbly"
                   ? "border-primary bg-primary/20 shadow-sm"
                   : "border-border hover:border-primary/50"
@@ -842,7 +842,7 @@ export function AutoWebtoonPanel({
             </button>
             <button
               type="button"
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border-2 transition-colors cursor-pointer text-[10px] font-medium ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border-2 transition-colors cursor-pointer text-[13px] font-medium ${
                 cutBorderStyle === "simple"
                   ? "border-primary bg-primary/20 shadow-sm"
                   : "border-border hover:border-primary/50"
@@ -908,10 +908,10 @@ export function AutoWebtoonPanel({
         <div className="space-y-2">
           <div className="text-xs text-muted-foreground">
             총 비용: <span className="font-bold text-foreground">{isPro ? "무료 (Pro)" : `${totalCost} 크레딧`}</span>
-            {!isPro && <span className="text-[10px] ml-1">(분해 {breakdownCost} + 이미지 {imageCost})</span>}
+            {!isPro && <span className="text-[13px] ml-1">(분해 {breakdownCost} + 이미지 {imageCost})</span>}
           </div>
           {!isPro && (
-            <div className="text-[10px] text-muted-foreground">
+            <div className="text-[13px] text-muted-foreground">
               보유: {availableCredits} 크레딧
               {!hasEnoughCredits && <a href="/pricing" className="text-primary ml-1 underline">충전</a>}
             </div>
@@ -951,7 +951,7 @@ export function AutoWebtoonPanel({
         <div className="flex gap-2 overflow-x-auto pb-1">
           {Array.from({ length: canvasCount }, (_, ci) => (
             <div key={ci} className="flex-shrink-0 text-center">
-              <div className="text-[10px] text-muted-foreground mb-0.5">C{ci + 1}</div>
+              <div className="text-[13px] text-muted-foreground mb-0.5">C{ci + 1}</div>
               <LayoutPreview cuts={cutsPerCanvas} size={36} layoutType={cutLayoutType} canvasW={effectiveCanvasW} canvasH={effectiveCanvasH} />
             </div>
           ))}
@@ -968,7 +968,7 @@ export function AutoWebtoonPanel({
             return (
               <Card key={idx} className="p-2">
                 <div className="flex items-start gap-2">
-                  <Badge variant="secondary" className="shrink-0 text-[10px] px-1.5 py-0">
+                  <Badge variant="secondary" className="shrink-0 text-[13px] px-1.5 py-0">
                     C{canvasIdx + 1}-{cutIdx + 1}
                   </Badge>
                   <div className="flex-1 space-y-1 min-w-0">
@@ -1021,7 +1021,7 @@ export function AutoWebtoonPanel({
                             setScenes(updated);
                           }}
                         >
-                          <SelectTrigger className="text-[10px] h-7 w-[72px] px-1.5" onMouseDown={(e) => e.stopPropagation()}>
+                          <SelectTrigger className="text-[13px] h-7 w-[72px] px-1.5" onMouseDown={(e) => e.stopPropagation()}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1040,7 +1040,7 @@ export function AutoWebtoonPanel({
                             setScenes(updated);
                           }}
                         >
-                          <SelectTrigger className="text-[10px] h-7 w-[56px] px-1.5" onMouseDown={(e) => e.stopPropagation()}>
+                          <SelectTrigger className="text-[13px] h-7 w-[56px] px-1.5" onMouseDown={(e) => e.stopPropagation()}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1069,7 +1069,7 @@ export function AutoWebtoonPanel({
                     {(scene.bubbles || []).length < 2 && (
                       <button
                         type="button"
-                        className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                        className="text-[13px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={() => {
                           const updated = [...scenes];
@@ -1201,12 +1201,12 @@ export function AutoWebtoonPanel({
 
               {/* Status badge */}
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                <Badge variant="secondary" className="text-[13px] px-1.5 py-0">
                   C{canvasIdx + 1}-{cutIdx + 1}
                 </Badge>
                 <Badge
                   variant={r.status === "done" ? "default" : r.status === "failed" ? "destructive" : "secondary"}
-                  className="text-[10px] px-1.5 py-0"
+                  className="text-[13px] px-1.5 py-0"
                 >
                   {r.status === "done" ? "완료" : r.status === "generating" ? "생성중" : r.status === "failed" ? "실패" : "대기"}
                 </Badge>
@@ -1309,7 +1309,7 @@ export function AutoWebtoonPanel({
           <div key={num} className="flex items-center gap-1">
             {i > 0 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
             <div
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium transition-colors ${
                 step === num
                   ? "bg-primary text-primary-foreground"
                   : step > num

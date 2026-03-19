@@ -247,7 +247,7 @@ export function InstagramPublishDialog({
                   </Label>
                 </div>
               </RadioGroup>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {publishType === "feed" && "이미지 1장을 피드에 게시합니다."}
                 {publishType === "carousel" && "2~10장의 이미지를 캐러셀로 게시합니다."}
                 {publishType === "story" && "이미지 1장을 스토리에 게시합니다 (24시간 후 사라짐)."}
@@ -287,7 +287,7 @@ export function InstagramPublishDialog({
                 <Label className="text-xs font-semibold">
                   {sourceTab === "panels" ? "패널 선택" : "이미지 선택"}
                 </Label>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-[13px]">
                   {selectedCount}장 선택
                   {publishType === "carousel" && ` / 최소 2장`}
                 </Badge>
@@ -328,7 +328,7 @@ export function InstagramPublishDialog({
                           </div>
                         )}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1">
-                          <span className="text-[10px] text-white font-medium">{panel.index + 1}</span>
+                          <span className="text-[13px] text-white font-medium">{panel.index + 1}</span>
                         </div>
                       </button>
                     );
@@ -389,7 +389,7 @@ export function InstagramPublishDialog({
                   className="resize-none text-sm"
                   rows={3}
                 />
-                <p className="text-[11px] text-muted-foreground text-right">
+                <p className="text-[13px] text-muted-foreground text-right">
                   {caption.length} / 2,200
                 </p>
               </div>
@@ -397,7 +397,7 @@ export function InstagramPublishDialog({
 
             {/* Actions */}
             <div className="flex items-center justify-between pt-2">
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 @{igStatus?.igUsername}으로 게시
               </p>
               <div className="flex gap-2">

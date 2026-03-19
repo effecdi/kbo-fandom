@@ -136,7 +136,7 @@ $transition-normal: 200ms ease;
 
   &__section-label {
     display: block;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     color: $muted-fg;
     margin-bottom: 8px;
@@ -175,7 +175,7 @@ $transition-normal: 200ms ease;
   }
 
   &__brush-label {
-    font-size: 10px;
+    font-size: 13px;
     line-height: 1.2;
     white-space: nowrap;
   }
@@ -239,7 +239,7 @@ $transition-normal: 200ms ease;
   }
 
   &__custom-color-label {
-    font-size: 11px;
+    font-size: 13px;
     color: $muted-fg;
     flex-shrink: 0;
   }
@@ -277,7 +277,7 @@ $transition-normal: 200ms ease;
   }
 
   &__slider-value {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     color: $primary;
     font-variant-numeric: tabular-nums;
@@ -322,7 +322,7 @@ $transition-normal: 200ms ease;
     gap: 6px;
     padding: 8px;
     border-radius: $radius-md;
-    font-size: 11px;
+    font-size: 13px;
     white-space: nowrap;
 
     &--danger {
@@ -372,7 +372,7 @@ $transition-normal: 200ms ease;
   background: hsl(var(--primary) / 0.9);
   color: hsl(var(--primary-foreground));
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   backdrop-filter: blur(8px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);

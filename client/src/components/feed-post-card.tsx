@@ -68,7 +68,7 @@ export function FeedPostCard({ post, onAuthorClick, onPostClick }: FeedPostCardP
         >
           <Avatar className="h-6 w-6">
             <AvatarImage src={post.authorProfileImageUrl || ""} />
-            <AvatarFallback className="text-[10px]">
+            <AvatarFallback className="text-[13px]">
               {(post.authorName || "U").charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>

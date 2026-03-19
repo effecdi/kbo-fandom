@@ -167,7 +167,7 @@ export default function EditsPage() {
         </div>
         <div className="flex items-center gap-1 mt-0.5">
           <Clock className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[13px] text-muted-foreground">
             {formatDate(project.updatedAt)}
           </span>
         </div>
@@ -307,7 +307,7 @@ export default function EditsPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{folder.name}</p>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {folderProjectCounts.get(folder.id) || 0}개 프로젝트
                         </p>
                       </div>

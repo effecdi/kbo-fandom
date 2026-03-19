@@ -396,7 +396,7 @@ export default function LandingPage() {
                 <div className="relative flex h-full flex-col">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
-                    <span className="text-[11px] text-slate-400 dark:text-slate-400">영구 무료</span>
+                    <span className="text-[13px] text-slate-400 dark:text-slate-400">영구 무료</span>
                   </div>
                   <div className="mb-2">
                     <div className="flex items-baseline gap-1">
@@ -449,8 +449,8 @@ export default function LandingPage() {
               >
                 <div className="relative flex h-full flex-col">
                   <div className="flex items-center justify-between mb-6">
-                    <Badge className="bg-primary-foreground/15 text-primary-foreground text-[11px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
-                    <span className="text-[11px] text-primary-foreground/70">/월</span>
+                    <Badge className="bg-primary-foreground/15 text-primary-foreground text-[13px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
+                    <span className="text-[13px] text-primary-foreground/70">/월</span>
                   </div>
                   <div className="mb-2">
                     <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>

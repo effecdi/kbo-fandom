@@ -195,7 +195,7 @@ $transition-normal: 200ms ease;
   }
 
   &__submenu-title {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     color: $muted-fg;
     text-transform: uppercase;
@@ -226,7 +226,7 @@ $transition-normal: 200ms ease;
     border-radius: $radius-md;
     border: 1px solid $border;
     color: $muted-fg;
-    font-size: 10px;
+    font-size: 13px;
     @include hover-lift;
 
     &--active {
@@ -291,7 +291,7 @@ $transition-normal: 200ms ease;
   }
 
   &__color-hex {
-    font-size: 11px;
+    font-size: 13px;
     color: $muted-fg;
     font-family: monospace;
   }
@@ -311,7 +311,7 @@ $transition-normal: 200ms ease;
   }
 
   &__slider-label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     color: $muted-fg;
     width: 40px;
@@ -355,7 +355,7 @@ $transition-normal: 200ms ease;
   }
 
   &__slider-value {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     color: $primary;
     font-variant-numeric: tabular-nums;
@@ -379,7 +379,7 @@ $transition-normal: 200ms ease;
   // ─── Hint text ───────────────────────────────────────────────────
 
   &__hint {
-    font-size: 10px;
+    font-size: 13px;
     color: $muted-fg;
     line-height: 1.5;
     margin: 0;
@@ -398,7 +398,7 @@ $transition-normal: 200ms ease;
   }
 
   &__field-label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     color: $muted-fg;
   }
@@ -489,7 +489,7 @@ $transition-normal: 200ms ease;
     padding: 0 6px;
     border-radius: $radius-sm;
     color: $muted-fg;
-    font-size: 11px;
+    font-size: 13px;
     @include hover-lift;
 
     &--active {

@@ -86,7 +86,7 @@ export function startStoryTour() {
               <li>③ <b>한 번에 생성</b> → 캐릭터가 같은 그림체로 재생성</li>
               <li>④ 생성된 이미지가 각 패널에 자동 배치</li>
             </ul>
-            <p style="margin-top:6px;font-size:11px;color:#aaa;">10 크레딧 소모 · Pro 멤버십 전용</p>
+            <p style="margin-top:6px;font-size:13px;color:#aaa;">10 크레딧 소모 · Pro 멤버십 전용</p>
           `,
           side: "right" as const,
         },
@@ -107,7 +107,7 @@ export function startStoryTour() {
               <li>③ <b>포즈/표정 프롬프트</b> — AI가 자동으로 영문 프롬프트 생성</li>
               <li>④ <b>생성 버튼</b> → 해당 패널에 이미지 자동 배치</li>
             </ul>
-            <p style="margin-top:6px;font-size:11px;color:#aaa;">10 크레딧 소모 · Pro 멤버십 전용</p>
+            <p style="margin-top:6px;font-size:13px;color:#aaa;">10 크레딧 소모 · Pro 멤버십 전용</p>
           `,
           side: "right" as const,
         },
@@ -128,7 +128,7 @@ export function startStoryTour() {
               <li>③ <b>일괄 생성</b> → 각 패널에 자동으로 이미지 + 자막 배치</li>
               <li>④ 생성 후 개별 패널 수정 가능</li>
             </ul>
-            <p style="margin-top:6px;font-size:11px;color:#aaa;">연속된 스토리를 빠르게 만들고 싶을 때 사용하세요</p>
+            <p style="margin-top:6px;font-size:13px;color:#aaa;">연속된 스토리를 빠르게 만들고 싶을 때 사용하세요</p>
           `,
           side: "right" as const,
         },

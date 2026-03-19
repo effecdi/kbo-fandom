@@ -2536,7 +2536,7 @@ function EditorPanel({
             <Label className="text-xs text-muted-foreground">캔버스 배경</Label>
 
             <div className="flex gap-1 flex-wrap items-center">
-              <span className="text-[11px] text-muted-foreground mr-0.5">배경색</span>
+              <span className="text-[13px] text-muted-foreground mr-0.5">배경색</span>
               {CANVAS_BG_COLORS.map((c) => (
                 <button
                   key={c.value}
@@ -2591,7 +2591,7 @@ function EditorPanel({
 
             {charImages.length > 0 && (
               <>
-                <p className="text-[11px] text-muted-foreground pt-1">내 갤러리에서 선택:</p>
+                <p className="text-[13px] text-muted-foreground pt-1">내 갤러리에서 선택:</p>
                 <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
                   {charImages.map((gen) => (
                     <button
@@ -2644,7 +2644,7 @@ function EditorPanel({
             <div className="flex items-center justify-between">
               <Label className="text-xs font-semibold">갤러리에서 선택</Label>
               {selectedGalleryIds.size > 0 && (
-                <span className="text-[10px] text-primary font-medium">{selectedGalleryIds.size}개 선택됨</span>
+                <span className="text-[13px] text-primary font-medium">{selectedGalleryIds.size}개 선택됨</span>
               )}
             </div>
 
@@ -2652,7 +2652,7 @@ function EditorPanel({
             {setActiveGalleryFolderId && (
               <div className="flex flex-wrap gap-1">
                 <button
-                  className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors font-medium ${activeGalleryFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}
+                  className={`text-[13px] px-2.5 py-1 rounded-full border transition-colors font-medium ${activeGalleryFolderId === null ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}
                   onClick={() => setActiveGalleryFolderId(null)}
                 >
                   전체
@@ -2660,7 +2660,7 @@ function EditorPanel({
                 {characterFolders.map(f => (
                   <button
                     key={f.id}
-                    className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors font-medium ${activeGalleryFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}
+                    className={`text-[13px] px-2.5 py-1 rounded-full border transition-colors font-medium ${activeGalleryFolderId === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}
                     onClick={() => setActiveGalleryFolderId(f.id)}
                   >
                     {f.name} ({f.items.length})
@@ -2760,7 +2760,7 @@ function EditorPanel({
 
       {/* Character placement note - images are added as moveable characters */}
       {isImageMode && panel.characters.length === 0 && (
-        <div className="rounded-md bg-muted/40 p-3 text-[11px] text-muted-foreground text-center">
+        <div className="rounded-md bg-muted/40 p-3 text-[13px] text-muted-foreground text-center">
           <ImageIcon className="h-4 w-4 mx-auto mb-1 opacity-50" />
           이미지를 추가하면 캔버스에서<br/>이동·크기·회전 편집이 가능합니다
         </div>
@@ -2773,7 +2773,7 @@ function EditorPanel({
               이미지 도구
             </span>
             {!isPro && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              <Badge variant="outline" className="text-[13px] px-1.5 py-0">
                 Pro
               </Badge>
             )}
@@ -2815,10 +2815,10 @@ function EditorPanel({
       {(isBubbleMode || isTemplateMode) && selectedBubble && (
         <div className="space-y-3 pt-4">
           <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               선택된 말풍선: <span className="font-medium text-foreground">{selectedBubble.text || "(텍스트 없음)"}</span>
             </p>
-            <p className="text-[10px] text-muted-foreground/70 mt-1">
+            <p className="text-[13px] text-muted-foreground/70 mt-1">
               우측 속성 패널에서 편집하세요
             </p>
           </div>
@@ -7036,8 +7036,8 @@ export default function StoryPage() {
                         <div className="tools-compact-panel__settings">
                           <div className="tools-compact-panel__settings-section">
                             <div className="tools-compact-panel__settings-row">
-                              <span className="text-[11px] text-muted-foreground font-medium">굵기</span>
-                              <span className="text-[11px] text-primary font-medium tabular-nums">{drawingToolState.size}px</span>
+                              <span className="text-[13px] text-muted-foreground font-medium">굵기</span>
+                              <span className="text-[13px] text-primary font-medium tabular-nums">{drawingToolState.size}px</span>
                             </div>
                             <Slider
                               min={1}
@@ -7050,8 +7050,8 @@ export default function StoryPage() {
                           </div>
                           <div className="tools-compact-panel__settings-section">
                             <div className="tools-compact-panel__settings-row">
-                              <span className="text-[11px] text-muted-foreground font-medium">불투명도</span>
-                              <span className="text-[11px] text-primary font-medium tabular-nums">{Math.round(drawingToolState.opacity * 100)}%</span>
+                              <span className="text-[13px] text-muted-foreground font-medium">불투명도</span>
+                              <span className="text-[13px] text-primary font-medium tabular-nums">{Math.round(drawingToolState.opacity * 100)}%</span>
                             </div>
                             <Slider
                               min={5}
@@ -7338,10 +7338,10 @@ export default function StoryPage() {
                         </div>
                         {(expandTop + expandRight + expandBottom + expandLeft > 0) && (
                           <div style={{ padding: "2px 8px", width: "100%", display: "flex", flexWrap: "wrap", gap: 4, fontSize: 10 }}>
-                            {expandTop > 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">상 {expandTop}px</Badge>}
-                            {expandRight > 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">우 {expandRight}px</Badge>}
-                            {expandBottom > 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">하 {expandBottom}px</Badge>}
-                            {expandLeft > 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">좌 {expandLeft}px</Badge>}
+                            {expandTop > 0 && <Badge variant="secondary" className="text-[13px] px-1.5 py-0">상 {expandTop}px</Badge>}
+                            {expandRight > 0 && <Badge variant="secondary" className="text-[13px] px-1.5 py-0">우 {expandRight}px</Badge>}
+                            {expandBottom > 0 && <Badge variant="secondary" className="text-[13px] px-1.5 py-0">하 {expandBottom}px</Badge>}
+                            {expandLeft > 0 && <Badge variant="secondary" className="text-[13px] px-1.5 py-0">좌 {expandLeft}px</Badge>}
                           </div>
                         )}
                         <div style={{ padding: "2px 8px", width: "100%" }}>
@@ -7680,7 +7680,7 @@ export default function StoryPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
-                      <DropdownMenuLabel className="text-[11px]">PNG 다운로드</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-[13px]">PNG 다운로드</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => guard(() => downloadPanelSized(activePanelIndex, CANVAS_W, CANVAS_H))}>
 
                         <span className="text-xs">Original ({CANVAS_W}×{CANVAS_H})</span>
@@ -7711,7 +7711,7 @@ export default function StoryPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
-                      <DropdownMenuLabel className="text-[11px]">PNG 전체 다운로드</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-[13px]">PNG 전체 다운로드</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => guard(() => downloadAllSized(CANVAS_W, CANVAS_H))}>
                         <span className="text-xs">Original ({CANVAS_W}×{CANVAS_H})</span>
                       </DropdownMenuItem>
@@ -9408,7 +9408,7 @@ export default function StoryPage() {
                             return ((maskShape as any).maskedLayerIds || []).includes(ctxInfo!.id);
                           })();
                           const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
-                          const ctxShortcut = "text-[10px] text-muted-foreground ml-4";
+                          const ctxShortcut = "text-[13px] text-muted-foreground ml-4";
                           return (
                           <>
                             <div
@@ -9818,13 +9818,13 @@ export default function StoryPage() {
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-1 bg-muted rounded-md p-0.5">
               <button
-                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${canvasRatio === "3:4" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`px-2 py-0.5 rounded text-[13px] font-medium transition-colors ${canvasRatio === "3:4" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => setCanvasRatio("3:4")}
               >
                 3:4
               </button>
               <button
-                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${canvasRatio === "1:1" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`px-2 py-0.5 rounded text-[13px] font-medium transition-colors ${canvasRatio === "1:1" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => setCanvasRatio("1:1")}
               >
                 1:1
@@ -9992,7 +9992,7 @@ export default function StoryPage() {
                   {activeLeftTab === "elements" && elementsSubTab === "script" ? (
                     <div className="h-full overflow-y-auto p-3 space-y-3">
                       <h4 className="text-xs font-semibold">자막 설정</h4>
-                      <p className="text-[10px] text-muted-foreground">패널 {activePanelIndex + 1}</p>
+                      <p className="text-[13px] text-muted-foreground">패널 {activePanelIndex + 1}</p>
 
                       <div className="flex gap-1 flex-wrap">
                         <Button
@@ -10044,7 +10044,7 @@ export default function StoryPage() {
                           <div className="flex items-center gap-2">
                             <Badge
                               variant="secondary"
-                              className="text-[11px] shrink-0 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400"
+                              className="text-[13px] shrink-0 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400"
                             >
                               상단
                             </Badge>
@@ -10092,7 +10092,7 @@ export default function StoryPage() {
                                     },
                                   });
                                 }}
-                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.topScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                                className={`px-2.5 py-1 text-[13px] rounded-lg transition-colors ${activePanel.topScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                                 data-testid={`button-top-script-style-${opt.value}-${activePanelIndex}`}
                               >
                                 {opt.label}
@@ -10100,7 +10100,7 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                            <span className="text-[13px] text-muted-foreground mr-0.5">
                               색상
                             </span>
                             {SCRIPT_COLOR_OPTIONS.map((c) => (
@@ -10121,7 +10121,7 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
+                            <span className="text-[13px] text-muted-foreground shrink-0">
                               글씨 크기
                             </span>
                             <Slider
@@ -10139,12 +10139,12 @@ export default function StoryPage() {
                               className="flex-1"
                               data-testid={`slider-top-script-fontsize-${activePanelIndex}`}
                             />
-                            <span className="text-[11px] text-muted-foreground w-6 text-right">
+                            <span className="text-[13px] text-muted-foreground w-6 text-right">
                               {activePanel.topScript.fontSize || 20}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
+                            <span className="text-[13px] text-muted-foreground shrink-0">
                               글꼴
                             </span>
                             <Select
@@ -10157,12 +10157,12 @@ export default function StoryPage() {
                                 });
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[11px] flex-1" data-testid={`select-top-script-font-${activePanelIndex}`}>
+                              <SelectTrigger className="h-7 text-[13px] flex-1" data-testid={`select-top-script-font-${activePanelIndex}`}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 {availableFonts.map((f) => (
-                                  <SelectItem key={f.value} value={f.value} className="text-[11px]">
+                                  <SelectItem key={f.value} value={f.value} className="text-[13px]">
                                     <span style={{ fontFamily: f.family }}>{f.label}</span>
                                   </SelectItem>
                                 ))}
@@ -10170,7 +10170,7 @@ export default function StoryPage() {
                             </Select>
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                            <span className="text-[13px] text-muted-foreground mr-0.5">
                               글자색
                             </span>
                             {SCRIPT_TEXT_COLORS.map((c) => (
@@ -10197,13 +10197,13 @@ export default function StoryPage() {
                                   topScript: { ...p.topScript!, bold: !(p.topScript!.bold !== false) },
                                 });
                               }}
-                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.topScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              className={`px-1.5 py-0.5 text-[13px] rounded-lg transition-colors font-bold ${activePanel.topScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                               data-testid={`button-top-script-bold-${activePanelIndex}`}
                             >
                               B
                             </button>
                           </div>
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             캔버스에서 드래그하여 위치를 이동할 수 있습니다
                           </p>
                         </div>
@@ -10214,7 +10214,7 @@ export default function StoryPage() {
                           <div className="flex items-center gap-2">
                             <Badge
                               variant="secondary"
-                              className="text-[11px] shrink-0 bg-sky-400/20 text-sky-700 dark:text-sky-400"
+                              className="text-[13px] shrink-0 bg-sky-400/20 text-sky-700 dark:text-sky-400"
                             >
                               하단
                             </Badge>
@@ -10262,7 +10262,7 @@ export default function StoryPage() {
                                     },
                                   });
                                 }}
-                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.bottomScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                                className={`px-2.5 py-1 text-[13px] rounded-lg transition-colors ${activePanel.bottomScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                                 data-testid={`button-bottom-script-style-${opt.value}-${activePanelIndex}`}
                               >
                                 {opt.label}
@@ -10270,7 +10270,7 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                            <span className="text-[13px] text-muted-foreground mr-0.5">
                               색상
                             </span>
                             {SCRIPT_COLOR_OPTIONS.map((c) => (
@@ -10294,7 +10294,7 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
+                            <span className="text-[13px] text-muted-foreground shrink-0">
                               글씨 크기
                             </span>
                             <Slider
@@ -10312,12 +10312,12 @@ export default function StoryPage() {
                               className="flex-1"
                               data-testid={`slider-bottom-script-fontsize-${activePanelIndex}`}
                             />
-                            <span className="text-[11px] text-muted-foreground w-6 text-right">
+                            <span className="text-[13px] text-muted-foreground w-6 text-right">
                               {activePanel.bottomScript.fontSize || 20}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
+                            <span className="text-[13px] text-muted-foreground shrink-0">
                               글꼴
                             </span>
                             <Select
@@ -10330,12 +10330,12 @@ export default function StoryPage() {
                                 });
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[11px] flex-1" data-testid={`select-bottom-script-font-${activePanelIndex}`}>
+                              <SelectTrigger className="h-7 text-[13px] flex-1" data-testid={`select-bottom-script-font-${activePanelIndex}`}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 {availableFonts.map((f) => (
-                                  <SelectItem key={f.value} value={f.value} className="text-[11px]">
+                                  <SelectItem key={f.value} value={f.value} className="text-[13px]">
                                     <span style={{ fontFamily: f.family }}>{f.label}</span>
                                   </SelectItem>
                                 ))}
@@ -10343,7 +10343,7 @@ export default function StoryPage() {
                             </Select>
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                            <span className="text-[13px] text-muted-foreground mr-0.5">
                               글자색
                             </span>
                             {SCRIPT_TEXT_COLORS.map((c) => (
@@ -10370,13 +10370,13 @@ export default function StoryPage() {
                                   bottomScript: { ...p.bottomScript!, bold: !(p.bottomScript!.bold !== false) },
                                 });
                               }}
-                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.bottomScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              className={`px-1.5 py-0.5 text-[13px] rounded-lg transition-colors font-bold ${activePanel.bottomScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                               data-testid={`button-bottom-script-bold-${activePanelIndex}`}
                             >
                               B
                             </button>
                           </div>
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             캔버스에서 드래그하여 위치를 이동할 수 있습니다
                           </p>
                         </div>
@@ -10450,7 +10450,7 @@ export default function StoryPage() {
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      <p className="text-[13px] text-muted-foreground leading-relaxed">
                         인스타툰 자동화 생성 · 프롬프트 자동 작성: 각 10 크레딧 소모
                       </p>
 
@@ -10527,37 +10527,37 @@ export default function StoryPage() {
                             </div>
                           </div>
                           <div className="space-y-1.5">
-                            <span className="text-xs font-semibold text-foreground">③ 인스타툰 전체 프롬프트 <span className="text-[10px] font-normal text-muted-foreground">(선택 — 포즈·표정·배경·아이템을 한 번에 적어도 돼요)</span></span>
+                            <span className="text-xs font-semibold text-foreground">③ 인스타툰 전체 프롬프트 <span className="text-[13px] font-normal text-muted-foreground">(선택 — 포즈·표정·배경·아이템을 한 번에 적어도 돼요)</span></span>
                             <Textarea value={instatoonScenePrompt} onChange={(e) => setInstatoonScenePrompt(e.target.value)} placeholder="예: 비 오는 월요일 출근길, 주인공은 커피를 들고 지하철 안에서 멍한 표정으로 서 있고, 뒤에는 붐비는 사람들과 형광 조명이 보인다" className="text-xs resize-none" rows={3} />
-                            <p className="text-[10px] text-muted-foreground">빈칸으로 두면 아래 포즈/표정·배경/아이템 칸을 기준으로 생성돼요.</p>
+                            <p className="text-[13px] text-muted-foreground">빈칸으로 두면 아래 포즈/표정·배경/아이템 칸을 기준으로 생성돼요.</p>
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-foreground">④ 포즈 / 표정 <span className="text-[10px] font-normal text-muted-foreground">(선택 — 비우면 AI가 자동 결정)</span></span>
+                              <span className="text-xs font-semibold text-foreground">④ 포즈 / 표정 <span className="text-[13px] font-normal text-muted-foreground">(선택 — 비우면 AI가 자동 결정)</span></span>
                               <Button size="sm" variant={posePromptMutation.isPending ? "destructive" : "outline"} onClick={() => posePromptMutation.isPending ? promptAbortRef.current?.abort() : posePromptMutation.mutate()}>
-                                {posePromptMutation.isPending ? (<span className="text-[11px]">취소</span>) : (<span className="text-[11px]">AI 추천</span>)}
+                                {posePromptMutation.isPending ? (<span className="text-[13px]">취소</span>) : (<span className="text-[13px]">AI 추천</span>)}
                               </Button>
                             </div>
                             <div className="grid grid-cols-1 gap-2">
                               <Textarea value={posePrompt} onChange={(e) => setPosePrompt(e.target.value)} placeholder="포즈 (예: 여고생 팬과 나란히 서서 브이포즈로 사진 찍기)" className="text-xs resize-none" rows={2} />
                               <Textarea value={expressionPrompt} onChange={(e) => setExpressionPrompt(e.target.value)} placeholder="표정 (예: 부끄러우면서도 기뻐하는 표정, 볼이 붉어짐)" className="text-xs resize-none" rows={2} />
                             </div>
-                            <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-relaxed bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1.5">💡 다른 인물이 등장하는 장면은 포즈에 함께 묘사하세요</p>
+                            <p className="text-[13px] text-amber-600 dark:text-amber-400 leading-relaxed bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1.5">💡 다른 인물이 등장하는 장면은 포즈에 함께 묘사하세요</p>
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-foreground">⑤ 배경 / 아이템 <span className="text-[10px] font-normal text-muted-foreground">(선택)</span></span>
+                              <span className="text-xs font-semibold text-foreground">⑤ 배경 / 아이템 <span className="text-[13px] font-normal text-muted-foreground">(선택)</span></span>
                               <Button size="sm" variant="outline" disabled={backgroundPromptMutation.isPending} onClick={() => backgroundPromptMutation.mutate()}>
-                                {backgroundPromptMutation.isPending ? (<span className="text-[11px] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />생성 중</span>) : (<span className="text-[11px]">AI 추천</span>)}
+                                {backgroundPromptMutation.isPending ? (<span className="text-[13px] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />생성 중</span>) : (<span className="text-[13px]">AI 추천</span>)}
                               </Button>
-                              {backgroundPromptMutation.isPending && (<button type="button" className="text-[10px] text-muted-foreground hover:text-destructive transition-colors" onClick={() => promptAbortRef.current?.abort()}>취소</button>)}
+                              {backgroundPromptMutation.isPending && (<button type="button" className="text-[13px] text-muted-foreground hover:text-destructive transition-colors" onClick={() => promptAbortRef.current?.abort()}>취소</button>)}
                             </div>
                             <div className="grid grid-cols-1 gap-2">
                               <Textarea value={backgroundPrompt} onChange={(e) => setBackgroundPrompt(e.target.value)} placeholder="배경 (예: 퇴근길 지하철 안, 붐비는 플랫폼)" className="text-xs resize-none" rows={2} />
                               <Textarea value={itemPrompt} onChange={(e) => setItemPrompt(e.target.value)} placeholder="아이템/소품 (예: 커피컵, 스마트폰)" className="text-xs resize-none" rows={2} />
                             </div>
                           </div>
-                          {autoRefImages.length === 0 && (<p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-md px-2.5 py-1.5">⚠️ 기준 캐릭터 이미지를 선택해야 포즈·표정이 자동 변형됩니다.</p>)}
+                          {autoRefImages.length === 0 && (<p className="text-[13px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-md px-2.5 py-1.5">⚠️ 기준 캐릭터 이미지를 선택해야 포즈·표정이 자동 변형됩니다.</p>)}
                           {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
                             <Button className="w-full" size="sm" variant="destructive" onClick={() => { generateAbortRef.current?.abort(); instatoonAbortRef.current?.abort(); }}><X className="h-4 w-4 mr-1.5" />생성 취소</Button>
                           ) : (
@@ -10592,25 +10592,25 @@ export default function StoryPage() {
                           {(promptRefImages.length > 0 || autoRefImages.length > 0) && (
                             <div className="space-y-1.5 border border-border/60 rounded-lg p-2.5 bg-muted/30">
                               <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-semibold text-foreground">🎨 그림 스타일 통일</span>
+                                <span className="text-[13px] font-semibold text-foreground">🎨 그림 스타일 통일</span>
                                 {isDetectingStyle && (<div className="h-2.5 w-2.5 animate-spin rounded-full border border-primary border-t-transparent" />)}
                               </div>
                               <div className="flex flex-wrap gap-1">
-                                <button onClick={() => setDetectedStyle("auto")} className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${detectedStyle === "auto" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>자동</button>
-                                {Object.entries(ART_STYLES).filter(([k]) => k !== "auto").map(([key, s]) => (<button key={key} onClick={() => setDetectedStyle(key)} title={s.description} className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${detectedStyle === key ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>{s.label}</button>))}
+                                <button onClick={() => setDetectedStyle("auto")} className={`text-[13px] px-2 py-0.5 rounded-full border transition-colors ${detectedStyle === "auto" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>자동</button>
+                                {Object.entries(ART_STYLES).filter(([k]) => k !== "auto").map(([key, s]) => (<button key={key} onClick={() => setDetectedStyle(key)} title={s.description} className={`text-[13px] px-2 py-0.5 rounded-full border transition-colors ${detectedStyle === key ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>{s.label}</button>))}
                               </div>
                               <p className="text-[9px] text-muted-foreground">선택한 스타일로 배경·아이템이 캐릭터와 통일됩니다</p>
                             </div>
                           )}
                           <div className="space-y-2">
-                            <div className="flex items-center gap-1"><span className="text-xs font-semibold text-foreground">포즈 / 표정</span><span className="text-[10px] text-muted-foreground ml-1">— 입력하면 배경이 자동 완성됩니다</span></div>
+                            <div className="flex items-center gap-1"><span className="text-xs font-semibold text-foreground">포즈 / 표정</span><span className="text-[13px] text-muted-foreground ml-1">— 입력하면 배경이 자동 완성됩니다</span></div>
                             <div className="grid grid-cols-1 gap-2">
                               <Textarea value={posePrompt} onChange={(e) => setPosePrompt(e.target.value)} placeholder="포즈 (예: 팬과 나란히 카메라 향해 브이포즈 취하기)" className="text-xs resize-none" rows={2} />
                               <Textarea value={expressionPrompt} onChange={(e) => setExpressionPrompt(e.target.value)} placeholder="표정 (예: 수줍어하면서 기뻐하는 표정)" className="text-xs resize-none" rows={2} />
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-2"><span className="text-xs font-semibold text-foreground">배경 / 아이템{(posePrompt.trim() || expressionPrompt.trim()) && (<span className="ml-1.5 text-[10px] font-normal text-primary">← 자동 생성 가능</span>)}</span></div>
+                            <div className="flex items-center justify-between gap-2"><span className="text-xs font-semibold text-foreground">배경 / 아이템{(posePrompt.trim() || expressionPrompt.trim()) && (<span className="ml-1.5 text-[13px] font-normal text-primary">← 자동 생성 가능</span>)}</span></div>
                             <div className="grid grid-cols-1 gap-2">
                               <Textarea value={backgroundPrompt} onChange={(e) => setBackgroundPrompt(e.target.value)} placeholder="배경 프롬프트 — 비워도 AI가 자동으로 채워줍니다" className="text-xs resize-none" rows={2} />
                               <Textarea value={itemPrompt} onChange={(e) => setItemPrompt(e.target.value)} placeholder="아이템/소품 프롬프트 — 비워도 자동 생성됩니다" className="text-xs resize-none" rows={2} />
@@ -10696,10 +10696,10 @@ export default function StoryPage() {
                       return (
                         <div className="p-2 border-t border-border space-y-1.5 overflow-y-auto">
                           <div className="flex items-center gap-1.5">
-                            <Badge variant="secondary" className={`text-[10px] shrink-0 ${isTop ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-400" : "bg-sky-400/20 text-sky-700 dark:text-sky-400"}`}>
+                            <Badge variant="secondary" className={`text-[13px] shrink-0 ${isTop ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-400" : "bg-sky-400/20 text-sky-700 dark:text-sky-400"}`}>
                               {isTop ? "상단" : "하단"}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground">자막 편집</span>
+                            <span className="text-[13px] text-muted-foreground">자막 편집</span>
                             <Button
                               size="icon"
                               variant="ghost"
@@ -10729,14 +10729,14 @@ export default function StoryPage() {
                               <button
                                 key={opt.value}
                                 onClick={() => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, style: opt.value } })}
-                                className={`px-2 py-0.5 text-[10px] rounded-lg transition-colors ${sd.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                                className={`px-2 py-0.5 text-[13px] rounded-lg transition-colors ${sd.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                               >
                                 {opt.label}
                               </button>
                             ))}
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[10px] text-muted-foreground mr-0.5">색상</span>
+                            <span className="text-[13px] text-muted-foreground mr-0.5">색상</span>
                             {SCRIPT_COLOR_OPTIONS.map((c) => (
                               <button
                                 key={c.value}
@@ -10748,27 +10748,27 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground shrink-0">크기</span>
+                            <span className="text-[13px] text-muted-foreground shrink-0">크기</span>
                             <Slider
                               min={8} max={36} step={1}
                               value={[sd.fontSize || 16]}
                               onValueChange={([v]) => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, fontSize: v } })}
                               className="flex-1"
                             />
-                            <span className="text-[10px] text-muted-foreground w-5 text-right">{sd.fontSize || 16}</span>
+                            <span className="text-[13px] text-muted-foreground w-5 text-right">{sd.fontSize || 16}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground shrink-0">글꼴</span>
+                            <span className="text-[13px] text-muted-foreground shrink-0">글꼴</span>
                             <Select
                               value={sd.fontKey || "default"}
                               onValueChange={(v) => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, fontKey: v } })}
                             >
-                              <SelectTrigger className="h-6 text-[10px] flex-1">
+                              <SelectTrigger className="h-6 text-[13px] flex-1">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 {availableFonts.map((f) => (
-                                  <SelectItem key={f.value} value={f.value} className="text-[10px]">
+                                  <SelectItem key={f.value} value={f.value} className="text-[13px]">
                                     <span style={{ fontFamily: f.family }}>{f.label}</span>
                                   </SelectItem>
                                 ))}
@@ -10776,7 +10776,7 @@ export default function StoryPage() {
                             </Select>
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[10px] text-muted-foreground mr-0.5">글자색</span>
+                            <span className="text-[13px] text-muted-foreground mr-0.5">글자색</span>
                             {SCRIPT_TEXT_COLORS.map((c) => (
                               <button
                                 key={c.value || "auto"}
@@ -10788,7 +10788,7 @@ export default function StoryPage() {
                             ))}
                             <button
                               onClick={() => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, bold: !(sd.bold !== false) } })}
-                              className={`px-1.5 py-0.5 text-[10px] rounded-lg transition-colors font-bold ${sd.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              className={`px-1.5 py-0.5 text-[13px] rounded-lg transition-colors font-bold ${sd.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                             >
                               B
                             </button>
@@ -10806,7 +10806,7 @@ export default function StoryPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                           onClick={() => guard(() => {
                             setElementsSubTab("bubble");
                             setActiveLeftTab("elements");
@@ -10818,7 +10818,7 @@ export default function StoryPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                           onClick={() => guard(() => {
                             setActiveLeftTab("image");
                           })}
@@ -10829,7 +10829,7 @@ export default function StoryPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                           onClick={() => guard(() => {
                             setElementsSubTab("template");
                             setActiveLeftTab("elements");
@@ -11195,7 +11195,7 @@ export default function StoryPage() {
 
                     </div>
                     {currentProjectId && (
-                      <p className="text-[11px] text-muted-foreground text-center">
+                      <p className="text-[13px] text-muted-foreground text-center">
                         기존 프로젝트를 덮어씁니다
                       </p>
                     )}
@@ -11207,21 +11207,21 @@ export default function StoryPage() {
                       if (folderProjects.length === 0) return null;
                       return (
                         <div className="pt-2 border-t">
-                          <p className="text-[11px] text-muted-foreground mb-1.5">
+                          <p className="text-[13px] text-muted-foreground mb-1.5">
                             {selectedFolderId ? projectFolders.find(f => f.id === selectedFolderId)?.name : "폴더 없음"} ({folderProjects.length})
                           </p>
                           <div className="max-h-28 overflow-y-auto space-y-0.5">
                             {folderProjects.map((p) => (
                               <div
                                 key={p.id}
-                                className={`flex items-center justify-between gap-2 px-2 py-1 rounded text-[11px] cursor-pointer hover:bg-muted/50 transition-colors ${currentProjectId === p.id ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
+                                className={`flex items-center justify-between gap-2 px-2 py-1 rounded text-[13px] cursor-pointer hover:bg-muted/50 transition-colors ${currentProjectId === p.id ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
                                 onClick={() => {
                                   setCurrentProjectId(p.id);
                                   setProjectName(p.name);
                                 }}
                               >
                                 <span className="truncate">{p.name}</span>
-                                <span className="shrink-0 text-[10px] opacity-60">
+                                <span className="shrink-0 text-[13px] opacity-60">
                                   {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                                 </span>
                               </div>
@@ -11329,8 +11329,8 @@ export default function StoryPage() {
                             </div>
                             {/* 정보 */}
                             <div className="px-2 py-2 bg-background">
-                              <p className="text-[11px] font-medium truncate leading-tight">{p.name}</p>
-                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                              <p className="text-[13px] font-medium truncate leading-tight">{p.name}</p>
+                              <p className="text-[13px] text-muted-foreground mt-0.5">
                                 {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                               </p>
                             </div>

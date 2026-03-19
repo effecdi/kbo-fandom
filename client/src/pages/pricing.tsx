@@ -371,7 +371,7 @@ export default function PricingPage() {
             onClick={() => setBillingCycle("yearly")}
           >
             Yearly
-            <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0 text-[10px] px-1.5">Save 15%</Badge>
+            <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0 text-[13px] px-1.5">Save 15%</Badge>
           </button>
         </div>
       </div>
@@ -394,7 +394,7 @@ export default function PricingPage() {
                 <div className="flex items-center justify-between mb-5">
                   {plan.highlighted ? (
                     <>
-                      <Badge className="bg-primary-foreground/15 text-primary-foreground text-[11px] px-3 py-1 border border-primary-foreground/20">Recommended</Badge>
+                      <Badge className="bg-primary-foreground/15 text-primary-foreground text-[13px] px-3 py-1 border border-primary-foreground/20">Recommended</Badge>
                     </>
                   ) : (
                     <h3 className={`font-semibold text-sm uppercase tracking-[0.18em] ${plan.tier === "premium" ? "text-amber-500 dark:text-amber-400" : "text-slate-400"}`}>

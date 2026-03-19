@@ -599,7 +599,7 @@ export default function AutoWebtoonPage() {
                 >
                   <X className="h-3 w-3" />
                 </button>
-                <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center truncate px-1">
+                <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[13px] text-center truncate px-1">
                   {char.name}
                 </span>
               </div>

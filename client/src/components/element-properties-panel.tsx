@@ -205,27 +205,27 @@ export function ElementPropertiesPanel({
 
         {/* Position section */}
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium text-muted-foreground">위치</p>
+          <p className="text-[13px] font-medium text-muted-foreground">위치</p>
           <AlignButtons onAlign={alignChar} />
 
           {/* X, Y, Rotation — 3 column grid */}
           <div className="grid grid-cols-3 gap-1.5">
             <div className="flex items-center gap-1">
-              <span className="text-[11px] text-muted-foreground w-3 shrink-0">X</span>
+              <span className="text-[13px] text-muted-foreground w-3 shrink-0">X</span>
               <Input
                 type="number"
                 value={Math.round(selectedChar.x)}
                 onChange={(e) => onUpdateChar?.(selectedChar.id, { x: Number(e.target.value) })}
-                className="h-7 text-[11px] bg-card border-border"
+                className="h-7 text-[13px] bg-card border-border"
               />
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[11px] text-muted-foreground w-3 shrink-0">Y</span>
+              <span className="text-[13px] text-muted-foreground w-3 shrink-0">Y</span>
               <Input
                 type="number"
                 value={Math.round(selectedChar.y)}
                 onChange={(e) => onUpdateChar?.(selectedChar.id, { y: Number(e.target.value) })}
-                className="h-7 text-[11px] bg-card border-border"
+                className="h-7 text-[13px] bg-card border-border"
               />
             </div>
             <div className="flex items-center gap-1">
@@ -234,7 +234,7 @@ export function ElementPropertiesPanel({
                 type="number"
                 value={rotDeg}
                 onChange={(e) => onUpdateChar?.(selectedChar.id, { rotation: (Number(e.target.value) * Math.PI) / 180 })}
-                className="h-7 text-[11px] bg-card border-border"
+                className="h-7 text-[13px] bg-card border-border"
               />
             </div>
           </div>
@@ -244,7 +244,7 @@ export function ElementPropertiesPanel({
             <Button
               variant={selectedChar.flipX ? "default" : "outline"}
               size="sm"
-              className="flex-1 gap-1 h-7 text-[11px]"
+              className="flex-1 gap-1 h-7 text-[13px]"
               onClick={() => onUpdateChar?.(selectedChar.id, { flipX: !selectedChar.flipX })}
             >
               <FlipHorizontal2 className="h-3 w-3" />
@@ -253,7 +253,7 @@ export function ElementPropertiesPanel({
             <Button
               variant={selectedChar.flipY ? "default" : "outline"}
               size="sm"
-              className="flex-1 gap-1 h-7 text-[11px]"
+              className="flex-1 gap-1 h-7 text-[13px]"
               onClick={() => onUpdateChar?.(selectedChar.id, { flipY: !selectedChar.flipY })}
             >
               <FlipVertical2 className="h-3 w-3" />
@@ -266,10 +266,10 @@ export function ElementPropertiesPanel({
 
         {/* Size section */}
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium text-muted-foreground">크기</p>
+          <p className="text-[13px] font-medium text-muted-foreground">크기</p>
           <div className="grid grid-cols-2 gap-1.5">
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-muted-foreground w-4 shrink-0">W</span>
+              <span className="text-[13px] text-muted-foreground w-4 shrink-0">W</span>
               <Input
                 type="number"
                 value={currentW}
@@ -279,11 +279,11 @@ export function ElementPropertiesPanel({
                     onUpdateChar?.(selectedChar.id, { scale: newW / naturalW });
                   }
                 }}
-                className="h-7 text-[11px] bg-card border-border"
+                className="h-7 text-[13px] bg-card border-border"
               />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-muted-foreground w-4 shrink-0">H</span>
+              <span className="text-[13px] text-muted-foreground w-4 shrink-0">H</span>
               <Input
                 type="number"
                 value={currentH}
@@ -293,7 +293,7 @@ export function ElementPropertiesPanel({
                     onUpdateChar?.(selectedChar.id, { scale: newH / naturalH });
                   }
                 }}
-                className="h-7 text-[11px] bg-card border-border"
+                className="h-7 text-[13px] bg-card border-border"
               />
             </div>
           </div>
@@ -301,8 +301,8 @@ export function ElementPropertiesPanel({
           {/* Scale slider */}
           <div>
             <div className="flex items-center justify-between gap-2 mb-1">
-              <span className="text-[11px] text-muted-foreground">Scale</span>
-              <span className="text-[11px] text-muted-foreground tabular-nums">{scalePercent}%</span>
+              <span className="text-[13px] text-muted-foreground">Scale</span>
+              <span className="text-[13px] text-muted-foreground tabular-nums">{scalePercent}%</span>
             </div>
             <Slider
               value={[charScale * 100]}
@@ -318,7 +318,7 @@ export function ElementPropertiesPanel({
                 key={pct}
                 variant={scalePercent === pct ? "default" : "outline"}
                 size="sm"
-                className="flex-1 h-7 text-[11px] px-0"
+                className="flex-1 h-7 text-[13px] px-0"
                 onClick={() => onUpdateChar?.(selectedChar.id, { scale: pct / 100 })}
               >
                 {pct}%
@@ -333,7 +333,7 @@ export function ElementPropertiesPanel({
           <Button
             variant={isPro ? "default" : "outline"}
             size="sm"
-            className="w-full gap-1 h-7 text-[11px]"
+            className="w-full gap-1 h-7 text-[13px]"
             onClick={onRemoveBackground}
             disabled={removingBg || !isPro}
           >
@@ -350,7 +350,7 @@ export function ElementPropertiesPanel({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full text-red-500 h-7 text-[11px]"
+          className="w-full text-red-500 h-7 text-[13px]"
           onClick={() => onDeleteChar?.(selectedChar.id)}
         >
           <Trash2 className="mr-1.5 h-3 w-3" /> 삭제
@@ -372,12 +372,12 @@ export function ElementPropertiesPanel({
             { label: "H", value: Math.round(selectedText.height), key: "height" },
           ].map(({ label, value, key }) => (
             <div key={key} className="flex items-center gap-1.5">
-              <span className="text-[11px] text-muted-foreground w-4 shrink-0">{label}</span>
+              <span className="text-[13px] text-muted-foreground w-4 shrink-0">{label}</span>
               <Input
                 type="number"
                 value={value}
                 onChange={(e) => onUpdateText?.(selectedText.id, { [key]: Number(e.target.value) })}
-                className="h-7 text-[11px] bg-card border-border"
+                className="h-7 text-[13px] bg-card border-border"
               />
             </div>
           ))}
@@ -420,12 +420,12 @@ export function ElementPropertiesPanel({
               { label: "H", value: Math.round(selectedBubble.height), key: "height" },
             ].map(({ label, value, key }) => (
               <div key={key} className="flex items-center gap-1.5">
-                <span className="text-[11px] text-muted-foreground w-4 shrink-0">{label}</span>
+                <span className="text-[13px] text-muted-foreground w-4 shrink-0">{label}</span>
                 <Input
                   type="number"
                   value={value}
                   onChange={(e) => updateBubble({ [key]: Number(e.target.value) })}
-                  className="h-7 text-[11px] bg-card border-border"
+                  className="h-7 text-[13px] bg-card border-border"
                 />
               </div>
             ))}
@@ -436,7 +436,7 @@ export function ElementPropertiesPanel({
       {/* Text hint */}
       <div>
         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">텍스트</p>
-        <p className="text-[11px] text-muted-foreground/70 italic">
+        <p className="text-[13px] text-muted-foreground/70 italic">
           캔버스에서 더블클릭하여 텍스트 편집
         </p>
       </div>
@@ -446,13 +446,13 @@ export function ElementPropertiesPanel({
         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">말풍선 형태</p>
         {BUBBLE_CATEGORIES.map((cat) => (
           <div key={cat.label} className="mb-1.5">
-            <span className="text-[10px] text-muted-foreground/70 font-medium">{cat.label}</span>
+            <span className="text-[13px] text-muted-foreground/70 font-medium">{cat.label}</span>
             <div className="flex gap-1 mt-0.5 overflow-x-auto scrollbar-hide pb-0.5">
               {cat.styles.map((k) => (
                 <button
                   key={k}
                   onClick={() => updateBubble({ style: k as BubbleStyle, seed: Math.floor(Math.random() * 1000000) })}
-                  className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                  className={`px-2.5 py-1 text-[13px] rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                     selectedBubble.style === k
                       ? "bg-primary/12 text-primary font-medium"
                       : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
@@ -467,7 +467,7 @@ export function ElementPropertiesPanel({
       {/* Wobble slider for applicable styles */}
       {(["handwritten", "wobbly", "wavy"] as BubbleStyle[]).includes(selectedBubble.style) && (
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground w-14 shrink-0">흔들림 {selectedBubble.wobble ?? 5}</span>
+          <span className="text-[13px] text-muted-foreground w-14 shrink-0">흔들림 {selectedBubble.wobble ?? 5}</span>
           <Slider value={[selectedBubble.wobble ?? 5]} onValueChange={([v]) => updateBubble({ wobble: v })} min={0} max={20} step={0.5} className="flex-1" />
         </div>
       )}
@@ -545,10 +545,10 @@ export function ElementPropertiesPanel({
           onUpdate={updateBubble}
         >
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[11px] text-muted-foreground flex-1">내부 채우기</span>
+            <span className="text-[13px] text-muted-foreground flex-1">내부 채우기</span>
             <button
               onClick={() => updateBubble({ flashFilled: !(selectedBubble.flashFilled ?? true) })}
-              className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${
+              className={`px-2.5 py-1 text-[13px] rounded-lg transition-colors ${
                 (selectedBubble.flashFilled ?? true)
                   ? "bg-primary/12 text-primary font-medium"
                   : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
@@ -646,7 +646,7 @@ export function ElementPropertiesPanel({
                 tailCtrl1X: undefined, tailCtrl1Y: undefined,
                 tailCtrl2X: undefined, tailCtrl2Y: undefined,
               })}
-              className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+              className={`px-2.5 py-1 text-[13px] rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                 selectedBubble.tailStyle === k
                   ? "bg-primary/12 text-primary font-medium"
                   : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
@@ -660,7 +660,7 @@ export function ElementPropertiesPanel({
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-1.5">
             <div>
-              <span className="text-[11px] text-muted-foreground block mb-1">방향</span>
+              <span className="text-[13px] text-muted-foreground block mb-1">방향</span>
               <Select
                 value={selectedBubble.tailDirection}
                 onValueChange={(v: any) => updateBubble({
@@ -670,7 +670,7 @@ export function ElementPropertiesPanel({
                   tailCtrl2X: undefined, tailCtrl2Y: undefined,
                 })}
               >
-                <SelectTrigger className="h-7 text-[11px] bg-card border-border"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-7 text-[13px] bg-card border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="bottom">아래</SelectItem>
                   <SelectItem value="top">위</SelectItem>
@@ -684,7 +684,7 @@ export function ElementPropertiesPanel({
                 variant="outline"
                 size="sm"
                 onClick={onFlipTailHorizontally}
-                className="w-full h-7 text-[11px]"
+                className="w-full h-7 text-[13px]"
               >
                 좌우 반전
               </Button>
@@ -723,8 +723,8 @@ export function ElementPropertiesPanel({
       {/* Stroke width */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-[11px] text-muted-foreground">테두리 두께</span>
-          <span className="text-[11px] text-muted-foreground tabular-nums">{selectedBubble.strokeWidth}px</span>
+          <span className="text-[13px] text-muted-foreground">테두리 두께</span>
+          <span className="text-[13px] text-muted-foreground tabular-nums">{selectedBubble.strokeWidth}px</span>
         </div>
         <Slider value={[selectedBubble.strokeWidth]} onValueChange={([v]) => updateBubble({ strokeWidth: v })} min={1} max={8} step={0.5} />
       </div>
@@ -752,7 +752,7 @@ export function ElementPropertiesPanel({
         </div>
         <div className="grid grid-cols-2 gap-1.5">
           <div>
-            <span className="text-[11px] text-muted-foreground block mb-1">채우기</span>
+            <span className="text-[13px] text-muted-foreground block mb-1">채우기</span>
             <input
               type="color"
               value={selectedBubble.fillColor && selectedBubble.fillColor !== "transparent" ? selectedBubble.fillColor : "#ffffff"}
@@ -761,7 +761,7 @@ export function ElementPropertiesPanel({
             />
           </div>
           <div>
-            <span className="text-[11px] text-muted-foreground block mb-1">테두리</span>
+            <span className="text-[13px] text-muted-foreground block mb-1">테두리</span>
             <input
               type="color"
               value={selectedBubble.strokeColor || "#222222"}
@@ -780,7 +780,7 @@ export function ElementPropertiesPanel({
             <button
               key={mode}
               onClick={() => updateBubble({ drawMode: mode })}
-              className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${
+              className={`px-2.5 py-1 text-[13px] rounded-lg transition-colors ${
                 (selectedBubble.drawMode ?? "both") === mode
                   ? "bg-primary/12 text-primary font-medium"
                   : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
@@ -795,8 +795,8 @@ export function ElementPropertiesPanel({
       {/* Fill opacity */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-[11px] text-muted-foreground">채우기 투명도</span>
-          <span className="text-[11px] text-muted-foreground tabular-nums">
+          <span className="text-[13px] text-muted-foreground">채우기 투명도</span>
+          <span className="text-[13px] text-muted-foreground tabular-nums">
             {Math.round((selectedBubble.fillOpacity ?? 1) * 100)}%
           </span>
         </div>
@@ -812,7 +812,7 @@ export function ElementPropertiesPanel({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full text-red-500 h-7 text-[11px]"
+          className="w-full text-red-500 h-7 text-[13px]"
           onClick={() => onDeleteBubble(selectedBubble.id)}
         >
           <Trash2 className="mr-1.5 h-3 w-3" /> 삭제
@@ -847,12 +847,12 @@ function StyleSettings({
 }) {
   return (
     <div className="space-y-1.5 rounded-md bg-muted/30 p-2">
-      <p className="text-[11px] font-semibold text-muted-foreground">{title}</p>
+      <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
       {items.map(({ label, key, min, max, step, def }) => {
         const val = (bubble as any)[key] ?? def;
         return (
           <div key={key} className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground w-14 shrink-0">
+            <span className="text-[13px] text-muted-foreground w-14 shrink-0">
               {label} {step < 1 ? val.toFixed(step < 0.1 ? 2 : 1) : val}
             </span>
             <Slider

@@ -110,12 +110,12 @@ export function StoryGuidePanel({ onClose, onNavigateToTab }: StoryGuidePanelPro
         </button>
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="h-4 w-4 opacity-80" />
-          <span className="text-[11px] font-medium opacity-80 uppercase tracking-wider">
+          <span className="text-[13px] font-medium opacity-80 uppercase tracking-wider">
             Story Editor Guide
           </span>
         </div>
         <h3 className="text-base font-bold mt-2">에디터 기능 가이드</h3>
-        <p className="text-[11px] opacity-70 mt-1">
+        <p className="text-[13px] opacity-70 mt-1">
           각 섹션을 펼쳐 기능 설명을 확인하고 바로가기로 이동하세요
         </p>
       </div>
@@ -140,7 +140,7 @@ export function StoryGuidePanel({ onClose, onNavigateToTab }: StoryGuidePanelPro
                 {section.tip && (
                   <div className="mt-2.5 flex items-start gap-2 bg-muted/50 dark:bg-muted/30 rounded-lg px-2.5 py-2">
                     <Sparkles className="h-3 w-3 text-[hsl(173_100%_35%)] shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    <p className="text-[13px] text-muted-foreground leading-relaxed">
                       {section.tip}
                     </p>
                   </div>
@@ -149,7 +149,7 @@ export function StoryGuidePanel({ onClose, onNavigateToTab }: StoryGuidePanelPro
                   <Button
                     size="sm"
                     variant="outline"
-                    className="mt-2.5 h-7 text-[11px] gap-1.5"
+                    className="mt-2.5 h-7 text-[13px] gap-1.5"
                     onClick={() =>
                       onNavigateToTab(section.navigateTo!.tab, section.navigateTo!.subTab)
                     }

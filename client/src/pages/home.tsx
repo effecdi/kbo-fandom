@@ -393,7 +393,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="font-bold text-lg" data-testid="text-tier-name">{tier.name}</h2>
                       {genreLabel && (
-                        <Badge variant="secondary" className="text-[11px]" data-testid="badge-genre">{genreLabel}</Badge>
+                        <Badge variant="secondary" className="text-[13px]" data-testid="badge-genre">{genreLabel}</Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -405,20 +405,20 @@ export default function HomePage() {
                   <div className="flex flex-col items-end gap-0.5">
                     <div className="flex items-center gap-2">
                       {usage?.tier === "pro" ? (
-                        <Badge variant="default" className="text-[11px]" data-testid="badge-plan">Pro</Badge>
+                        <Badge variant="default" className="text-[13px]" data-testid="badge-plan">Pro</Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-[11px]" data-testid="badge-plan">Free</Badge>
+                        <Badge variant="secondary" className="text-[13px]" data-testid="badge-plan">Free</Badge>
                       )}
                       <span className="text-xs text-muted-foreground" data-testid="text-credits">
                         {usage?.tier === "pro" ? "무제한" : `${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
                       </span>
                     </div>
                     {usage?.tier === "pro" ? (
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-[13px] text-muted-foreground">
                         모든 기능과 모든 폰트 제공
                       </span>
                     ) : (
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-[13px] text-muted-foreground">
                         기본 및 일부 무료 폰트 제공
                       </span>
                     )}
@@ -448,7 +448,7 @@ export default function HomePage() {
                   <Gift className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-primary mb-0.5">다음 등급 혜택</p>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
+                    <p className="text-[13px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
                   </div>
                 </div>
               )}
@@ -480,8 +480,8 @@ export default function HomePage() {
                           </div>
                           <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                             <span className="font-semibold">{t.name}</span>
-                            <Badge variant="secondary" className="text-[10px]">{t.badge}</Badge>
-                            {isCurrent && <Badge variant="default" className="text-[10px]">현재</Badge>}
+                            <Badge variant="secondary" className="text-[13px]">{t.badge}</Badge>
+                            {isCurrent && <Badge variant="default" className="text-[13px]">현재</Badge>}
                             {isUnlocked && !isCurrent && <Check className="h-3.5 w-3.5 text-green-500" />}
                             {!isUnlocked && <Lock className="h-3 w-3 text-muted-foreground" />}
                           </div>
@@ -619,7 +619,7 @@ export default function HomePage() {
               <div className="relative flex h-full flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
-                  <span className="text-[11px] text-slate-400 dark:text-slate-400">영구 무료</span>
+                  <span className="text-[13px] text-slate-400 dark:text-slate-400">영구 무료</span>
                 </div>
                 <div className="mb-2">
                   <div className="flex items-baseline gap-1">
@@ -666,8 +666,8 @@ export default function HomePage() {
             <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
               <div className="relative flex h-full flex-col">
                 <div className="flex items-center justify-between mb-6">
-                  <Badge className="bg-primary-foreground/15 text-primary-foreground text-[11px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
-                  <span className="text-[11px] text-primary-foreground/70">/월</span>
+                  <Badge className="bg-primary-foreground/15 text-primary-foreground text-[13px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
+                  <span className="text-[13px] text-primary-foreground/70">/월</span>
                 </div>
                 <div className="mb-2">
                   <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>

@@ -389,7 +389,7 @@ export default function DashboardPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-sm">
                   <Wand2 className="h-5 w-5 text-white" />
                 </div>
-                <Badge variant="secondary" className="text-[11px]">Step 1</Badge>
+                <Badge variant="secondary" className="text-[13px]">Step 1</Badge>
               </div>
               <h3 className="font-semibold text-sm mb-1">캐릭터 생성</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">텍스트로 나만의 AI 캐릭터를 만들어보세요.</p>
@@ -404,7 +404,7 @@ export default function DashboardPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm">
                   <Layers className="h-5 w-5 text-white" />
                 </div>
-                <Badge variant="secondary" className="text-[11px]">Step 2</Badge>
+                <Badge variant="secondary" className="text-[13px]">Step 2</Badge>
               </div>
               <h3 className="font-semibold text-sm mb-1">포즈/배경 꾸미기</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">다양한 포즈, 표정, 배경을 추가하세요.</p>
@@ -420,7 +420,7 @@ export default function DashboardPage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 shadow-sm">
                     <BookOpen className="h-5 w-5 text-white" />
                   </div>
-                  <Badge variant="secondary" className="text-[11px]">Step 3</Badge>
+                  <Badge variant="secondary" className="text-[13px]">Step 3</Badge>
                 </div>
                 <h3 className="font-semibold text-sm mb-1">스토리 에디터로 완성</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">멀티패널 인스타툰을 제작하고 공유하세요.</p>
@@ -438,7 +438,7 @@ export default function DashboardPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 shadow-sm">
                   <BookOpen className="h-5 w-5 text-white" />
                 </div>
-                <Badge variant="secondary" className="text-[11px]">Step 3</Badge>
+                <Badge variant="secondary" className="text-[13px]">Step 3</Badge>
                 <Lock className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
               </div>
               <h3 className="font-semibold text-sm mb-1">스토리 에디터로 완성</h3>
@@ -462,11 +462,11 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="font-bold text-lg">크리에이터 등급</h2>
-                    <Badge variant="outline" className="text-[11px]">
+                    <Badge variant="outline" className="text-[13px]">
                       {tier.badge}
                     </Badge>
                     {genreLabel && (
-                      <Badge variant="secondary" className="text-[11px]">
+                      <Badge variant="secondary" className="text-[13px]">
                         {genreLabel}
                       </Badge>
                     )}
@@ -480,11 +480,11 @@ export default function DashboardPage() {
                 <div className="flex flex-col items-end gap-0.5">
                   <div className="flex items-center gap-2">
                     {(usage?.tier === "pro" || usage?.tier === "premium") ? (
-                      <Badge variant="default" className="text-[11px]">
+                      <Badge variant="default" className="text-[13px]">
                         {usage?.tier === "premium" ? "Premium" : "Pro"}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-[11px]">
+                      <Badge variant="secondary" className="text-[13px]">
                         Free
                       </Badge>
                     )}
@@ -521,7 +521,7 @@ export default function DashboardPage() {
                 <Gift className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold text-primary mb-0.5">다음 등급 혜택</p>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
+                  <p className="text-[13px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
                 </div>
               </div>
             )}
@@ -553,11 +553,11 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                           <span className="font-semibold">{t.name}</span>
-                          <Badge variant="secondary" className="text-[10px]">
+                          <Badge variant="secondary" className="text-[13px]">
                             {t.badge}
                           </Badge>
                           {isCurrent && (
-                            <Badge variant="default" className="text-[10px]">
+                            <Badge variant="default" className="text-[13px]">
                               현재
                             </Badge>
                           )}
@@ -620,7 +620,7 @@ export default function DashboardPage() {
                 <h2 className="text-base font-bold leading-tight">
                   인기 크리에이터
                 </h2>
-                <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                <p className="text-[13px] text-muted-foreground leading-tight mt-0.5">
                   팔로워 & 좋아요 기반 랭킹
                 </p>
               </div>
@@ -646,7 +646,7 @@ export default function DashboardPage() {
                           {creator.authorName || creator.firstName || "유저"}
                         </span>
                         {creator.genre && (
-                          <Badge variant="secondary" className="text-[10px] shrink-0">
+                          <Badge variant="secondary" className="text-[13px] shrink-0">
                             {creator.genre === "daily" ? "일상" : creator.genre === "gag" ? "개그" : creator.genre === "romance" ? "로맨스" : creator.genre === "fantasy" ? "판타지" : creator.genre}
                           </Badge>
                         )}

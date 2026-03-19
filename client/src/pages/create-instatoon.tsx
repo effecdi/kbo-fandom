@@ -293,7 +293,7 @@ export default function CreateInstatoonPage() {
         <div className="w-[220px] flex-shrink-0">
           <div className="rounded-md border bg-card">
             <div className="px-3 py-2 border-b">
-              <p className="text-[11px] font-semibold text-muted-foreground">패널</p>
+              <p className="text-[13px] font-semibold text-muted-foreground">패널</p>
             </div>
             <nav className="p-2 space-y-1">
               <button
@@ -405,7 +405,7 @@ export default function CreateInstatoonPage() {
                 <Card className="p-3">
                   <div className="flex items-center justify-between mb-3 gap-2">
                     <h3 className="text-sm font-medium text-muted-foreground">또는 생성한 캐릭터/장면에서 선택</h3>
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-[13px]">
                       My Gallery
                     </Badge>
                   </div>
@@ -470,7 +470,7 @@ export default function CreateInstatoonPage() {
                   className="min-h-[120px] resize-none"
                   data-testid="input-instatoon-prompt"
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   장면 분위기, 장소, 시간대, 감정을 짧게 적어주세요. 배경과 소품이 자동으로 추가됩니다.
                 </p>
                 <Button
@@ -640,7 +640,7 @@ export default function CreateInstatoonPage() {
 
               <div className="space-y-1.5 mb-3">
                 {bubblePage.bubbles.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     말풍선을 추가하고 캔버스에서 자유롭게 움직여보세요.
                   </p>
                 ) : (
@@ -714,7 +714,7 @@ export default function CreateInstatoonPage() {
                                 </SelectItem>
                               ))}
                               {!canAllFontsInstatoon && (
-                                <div className="px-3 py-2 text-[11px] text-muted-foreground border-t">
+                                <div className="px-3 py-2 text-[13px] text-muted-foreground border-t">
                                   Pro 멤버십 또는 프로 연재러(30회+) 등급에서 전체 폰트 해금
                                 </div>
                               )}
@@ -725,7 +725,7 @@ export default function CreateInstatoonPage() {
                         <div className="space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <Label className="text-xs">글자 크기</Label>
-                            <span className="text-[11px] text-muted-foreground">
+                            <span className="text-[13px] text-muted-foreground">
                               {selected.fontSize}px
                             </span>
                           </div>
@@ -742,7 +742,7 @@ export default function CreateInstatoonPage() {
 
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
-                            <Label className="text-[11px]">스타일</Label>
+                            <Label className="text-[13px]">스타일</Label>
                             <Select
                               value={selected.style}
                               onValueChange={(v) =>
@@ -765,7 +765,7 @@ export default function CreateInstatoonPage() {
                             </Select>
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-[11px]">꼬리 방향</Label>
+                            <Label className="text-[13px]">꼬리 방향</Label>
                             <Select
                               value={selected.tailDirection}
                               onValueChange={(v: any) =>
@@ -785,7 +785,7 @@ export default function CreateInstatoonPage() {
                           </div>
                         </div>
 
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           캔버스에서 말풍선 테두리와 꼬리 끝을 드래그하면 크기와 꼬리를 조절할 수 있습니다.
                         </p>
                       </>

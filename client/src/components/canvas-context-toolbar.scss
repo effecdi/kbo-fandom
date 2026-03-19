@@ -267,7 +267,7 @@ $transition-fast: 150ms ease;
   }
 
   &__color-hex {
-    font-size: 11px;
+    font-size: 13px;
     color: $muted-fg;
     font-family: monospace;
   }
@@ -397,7 +397,7 @@ $transition-fast: 150ms ease;
 
   &__mode-btn {
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: 13px;
     border: none;
     border-radius: 6px;
     background: hsl(var(--muted) / 0.4);
@@ -431,7 +431,7 @@ $transition-fast: 150ms ease;
   }
 
   &__cat-label {
-    font-size: 10px;
+    font-size: 13px;
     color: hsl(var(--muted-foreground) / 0.7);
     font-weight: 500;
   }

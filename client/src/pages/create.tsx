@@ -160,7 +160,7 @@ export default function CreatePage() {
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-2 py-1 truncate">
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[13px] px-2 py-1 truncate">
                     {sourceImageName || "업로드됨"}
                   </div>
                 </div>
@@ -174,7 +174,7 @@ export default function CreatePage() {
                 >
                   <UploadCloud className="h-7 w-7 text-muted-foreground/60" />
                   <span className="text-xs text-muted-foreground font-medium">이미지를 드래그하거나 클릭하여 업로드</span>
-                  <span className="text-[10px] text-muted-foreground/60">JPG, PNG (최대 10MB)</span>
+                  <span className="text-[13px] text-muted-foreground/60">JPG, PNG (최대 10MB)</span>
                 </div>
               )}
               <input
@@ -190,7 +190,7 @@ export default function CreatePage() {
                 data-testid="input-source-image-file"
               />
               {sourceImage && !prompt.trim() && (
-                <p className="mt-2 text-[11px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1.5">
+                <p className="mt-2 text-[13px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1.5">
                   이미지만으로도 캐릭터를 생성할 수 있어요. 추가 설명을 입력하면 더 정확한 결과를 얻을 수 있습니다.
                 </p>
               )}
@@ -245,7 +245,7 @@ export default function CreatePage() {
                 그림 스타일 선택
               </Button>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="px-2 py-1 rounded-full bg-muted text-[11px]">
+                <span className="px-2 py-1 rounded-full bg-muted text-[13px]">
                   {styles.find((s) => s.value === style)?.label || "심플 라인"}
                 </span>
                 <span>스타일 적용 중</span>
@@ -277,13 +277,13 @@ export default function CreatePage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-sm">{s.label}</span>
                         {isLocked && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5">
+                          <Badge variant="secondary" className="text-[13px] px-1.5 py-0 gap-0.5">
                             <Lock className="h-2.5 w-2.5" />
                             Pro
                           </Badge>
                         )}
                       </div>
-                      <div className="text-[11px] text-muted-foreground">{s.description}</div>
+                      <div className="text-[13px] text-muted-foreground">{s.description}</div>
                     </button>
                   );
                 })}

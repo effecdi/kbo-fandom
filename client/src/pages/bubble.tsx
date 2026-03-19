@@ -1067,7 +1067,7 @@ export default function BubblePage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                      className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                       onClick={() => guard(() => addBubble())}
                     >
                       <MessageCircle className="h-3 w-3" />
@@ -1076,7 +1076,7 @@ export default function BubblePage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                      className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                       onClick={() => guard(() => setShowGalleryPicker(true))}
                     >
                       <ImagePlus className="h-3 w-3" />
@@ -1085,7 +1085,7 @@ export default function BubblePage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                      className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                       onClick={() => guard(() => setShowTemplatePicker(true))}
                     >
                       <Type className="h-3 w-3" />
@@ -1297,7 +1297,7 @@ export default function BubblePage() {
               {currentProjectId ? "업데이트" : "저장하기"}
             </Button>
             {currentProjectId && (
-              <p className="text-[11px] text-muted-foreground text-center">
+              <p className="text-[13px] text-muted-foreground text-center">
                 기존 프로젝트를 덮어씁니다
               </p>
             )}

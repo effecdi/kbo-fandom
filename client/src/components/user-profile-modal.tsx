@@ -110,7 +110,7 @@ export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
               ].map((stat) => (
                 <div key={stat.label} className="text-center p-2 rounded-lg bg-muted/50">
                   <div className="text-lg font-bold">{stat.value}</div>
-                  <div className="text-[10px] text-muted-foreground">{stat.label}</div>
+                  <div className="text-[13px] text-muted-foreground">{stat.label}</div>
                 </div>
               ))}
             </div>

@@ -87,7 +87,7 @@ export function InstagramConnect() {
           </p>
         </div>
         {status?.connected && (
-          <Badge variant="default" className="text-[10px] shrink-0">연결됨</Badge>
+          <Badge variant="default" className="text-[13px] shrink-0">연결됨</Badge>
         )}
       </div>
 
@@ -102,7 +102,7 @@ export function InstagramConnect() {
             <div className="flex items-center gap-2 text-xs">
               <span className="text-muted-foreground">토큰 만료:</span>
               {daysUntilExpiry <= 7 ? (
-                <Badge variant="destructive" className="text-[10px]">
+                <Badge variant="destructive" className="text-[13px]">
                   {daysUntilExpiry}일 후 만료
                 </Badge>
               ) : (
