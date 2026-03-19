@@ -6692,7 +6692,7 @@ export default function StoryPage() {
       />
       <div
         className="left-icon-sidebar flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-background/80 border-r"
-        style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "50px", zIndex: 20 }}
+        style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "80px", zIndex: 20 }}
         data-testid="left-icon-sidebar"
       >
         {LEFT_TABS.map((tab) => (
@@ -6702,7 +6702,7 @@ export default function StoryPage() {
             className={`left-icon-sidebar__btn flex items-center justify-center rounded-full transition-colors w-[40px] h-[40px] pt-[10px] pb-[10px] ${activeLeftTab === tab.id ? "bg-primary/10 text-primary font-semibold left-icon-sidebar__btn--active" : "text-muted-foreground hover-elevate"}`}
             data-testid={`button-left-tab-${tab.id}`}
           >
-            <tab.icon className="h-[18px] w-[18px]" />
+            <tab.icon className="h-[24px] w-[24px]" />
             <span className="left-icon-sidebar__label">{tab.label}</span>
           </button>
         ))}
