@@ -3246,9 +3246,10 @@ export default function StoryPage() {
     enabled: isAuthenticated,
   });
 
-  const { data: savedProjects = [] } = useQuery<{ id: number; name: string; folderId: number | null; updatedAt: string; editorType: string }[]>({
+  const [showLoadDropdown, setShowLoadDropdown] = useState(false);
+  const { data: savedProjects = [] } = useQuery<{ id: number; name: string; folderId: number | null; updatedAt: string; editorType: string; thumbnailUrl: string | null }[]>({
     queryKey: ["/api/bubble-projects"],
-    enabled: isAuthenticated && showSaveModal,
+    enabled: isAuthenticated && (showSaveModal || showLoadDropdown),
   });
 
   const createFolderMutation = useMutation({
@@ -6546,75 +6547,89 @@ export default function StoryPage() {
     }
   }, [isLoadProjectError, loadProjectError]);
 
+  const restoreProject = useCallback((project: any) => {
+    setCurrentProjectId(project.id);
+    setProjectName(project.name);
+    setSelectedFolderId(project.folderId ?? null);
+
+    // 프로젝트 로딩 시 선택 상태 초기화
+    setSelectedBubbleId(null);
+    setSelectedCharId(null);
+    setSelectedTextId(null);
+    setSelectedLineId(null);
+    setSelectedShapeId(null);
+    setSelectedDrawingLayerId(null);
+    setSelectedScriptPosition(null);
+
+    try {
+      const data = typeof project.canvasData === "string"
+        ? JSON.parse(project.canvasData)
+        : project.canvasData;
+      if (data.topic) setTopic(data.topic);
+      if (data.panels && Array.isArray(data.panels)) {
+        const restoredPanels: PanelData[] = data.panels.map((p: any) => ({
+          id: p.id || generateId(),
+          topScript: p.topScript ?? null,
+          bottomScript: p.bottomScript ?? null,
+          backgroundColor: p.backgroundColor || "#ffffff",
+          backgroundImageUrl: p.backgroundImageUrl || undefined,
+          backgroundImageEl: null,
+          bubbles: (p.bubbles || []).map((b: any) => ({
+            ...b,
+            templateImg: undefined,
+          })),
+          characters: (p.characters || []).map((c: any) => ({
+            ...c,
+            imageEl: null,
+          })),
+          drawingLayers: (p.drawingLayers || []).map((dl: any) => ({
+            ...dl,
+            imageEl: null,
+          })),
+          textElements: p.textElements || [],
+          lineElements: p.lineElements || [],
+          shapeElements: p.shapeElements || [],
+        }));
+        setPanelsRaw(restoredPanels);
+        setActivePanelIndex(0);
+        requestAnimationFrame(() => {
+          rehydrateImages(restoredPanels);
+        });
+      } else {
+        console.warn("Project canvasData has no panels:", Object.keys(data));
+      }
+      if (data.refCharacters && Array.isArray(data.refCharacters)) {
+        setAutoRefImages(data.refCharacters.map((rc: any) => ({
+          id: rc.id || rc.url?.slice(-16) || Math.random().toString(36).slice(2, 10),
+          imageUrl: rc.url || rc.imageUrl || "",
+          name: rc.name || "캐릭터",
+        })).filter((rc: any) => rc.imageUrl));
+      }
+    } catch (e) {
+      console.error("Project canvasData parse error:", e);
+      toast({ title: "프로젝트 로드 실패", variant: "destructive" });
+    }
+  }, [rehydrateImages, toast]);
+
   const projectLoadedRef = useRef<number | null>(null);
   useEffect(() => {
     if (loadedProject && projectLoadedRef.current !== loadedProject.id) {
       projectLoadedRef.current = loadedProject.id;
-      setCurrentProjectId(loadedProject.id);
-      setProjectName(loadedProject.name);
-      setSelectedFolderId(loadedProject.folderId ?? null);
-
-      // 프로젝트 로딩 시 선택 상태 초기화
-      setSelectedBubbleId(null);
-      setSelectedCharId(null);
-      setSelectedTextId(null);
-      setSelectedLineId(null);
-      setSelectedShapeId(null);
-      setSelectedDrawingLayerId(null);
-      setSelectedScriptPosition(null);
-
-      try {
-        const data = typeof loadedProject.canvasData === "string"
-          ? JSON.parse(loadedProject.canvasData)
-          : loadedProject.canvasData;
-        if (data.topic) setTopic(data.topic);
-        if (data.panels && Array.isArray(data.panels)) {
-          const restoredPanels: PanelData[] = data.panels.map((p: any) => ({
-            id: p.id || generateId(),
-            topScript: p.topScript ?? null,
-            bottomScript: p.bottomScript ?? null,
-            backgroundColor: p.backgroundColor || "#ffffff",
-            backgroundImageUrl: p.backgroundImageUrl || undefined,
-            backgroundImageEl: null,
-            bubbles: (p.bubbles || []).map((b: any) => ({
-              ...b,
-              templateImg: undefined,
-            })),
-            characters: (p.characters || []).map((c: any) => ({
-              ...c,
-              imageEl: null,
-            })),
-            drawingLayers: (p.drawingLayers || []).map((dl: any) => ({
-              ...dl,
-              imageEl: null,
-            })),
-            textElements: p.textElements || [],
-            lineElements: p.lineElements || [],
-            shapeElements: p.shapeElements || [],
-          }));
-          setPanelsRaw(restoredPanels);
-          setActivePanelIndex(0);
-          // rehydrateImages는 상태 설정 후 실행 (이미지 로드 콜백이 최신 상태 참조)
-          requestAnimationFrame(() => {
-            rehydrateImages(restoredPanels);
-          });
-        } else {
-          console.warn("Project canvasData has no panels:", Object.keys(data));
-        }
-        // 참조 캐릭터 복원
-        if (data.refCharacters && Array.isArray(data.refCharacters)) {
-          setAutoRefImages(data.refCharacters.map((rc: any) => ({
-            id: rc.id || rc.url?.slice(-16) || Math.random().toString(36).slice(2, 10),
-            imageUrl: rc.url || rc.imageUrl || "",
-            name: rc.name || "캐릭터",
-          })).filter((rc: any) => rc.imageUrl));
-        }
-      } catch (e) {
-        console.error("Project canvasData parse error:", e);
-        toast({ title: "프로젝트 로드 실패", variant: "destructive" });
-      }
+      restoreProject(loadedProject);
     }
-  }, [loadedProject]);
+  }, [loadedProject, restoreProject]);
+
+  const handleLoadProject = useCallback(async (projectId: number) => {
+    try {
+      const res = await apiRequest("GET", `/api/bubble-projects/${projectId}`);
+      const project = await res.json();
+      projectLoadedRef.current = project.id;
+      restoreProject(project);
+      toast({ title: "프로젝트 불러오기 완료", description: `"${project.name}" 로드됨` });
+    } catch (e: any) {
+      toast({ title: "프로젝트 불러오기 실패", description: e.message || "", variant: "destructive" });
+    }
+  }, [restoreProject, toast]);
 
   // Flow에서 넘어온 이미지를 첫 패널에 자동 추가
   const flowLoadedRef = useRef(false);
@@ -7727,9 +7742,39 @@ export default function StoryPage() {
                     <Instagram className="h-3 w-3" />
                     게시
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setLocation("/edits")} title="내 편집" data-testid="button-story-my-edits">
-                    <FolderOpen className="h-3.5 w-3.5" />
-                  </Button>
+                  <DropdownMenu open={showLoadDropdown} onOpenChange={setShowLoadDropdown}>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="불러오기" data-testid="button-story-load-project">
+                        <FolderOpen className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 max-h-72 overflow-y-auto">
+                      <DropdownMenuLabel className="text-[11px]">저장된 프로젝트</DropdownMenuLabel>
+                      {savedProjects.filter(p => p.editorType === "story").length === 0 ? (
+                        <div className="px-2 py-3 text-center text-xs text-muted-foreground">저장된 스토리가 없습니다</div>
+                      ) : (
+                        savedProjects.filter(p => p.editorType === "story").map((p) => (
+                          <DropdownMenuItem
+                            key={p.id}
+                            className="cursor-pointer gap-2"
+                            onClick={() => {
+                              setShowLoadDropdown(false);
+                              handleLoadProject(p.id);
+                            }}
+                          >
+                            <BookOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <span className="truncate flex-1 text-xs">{p.name}</span>
+                            {p.id === currentProjectId && <Check className="h-3 w-3 text-primary shrink-0" />}
+                          </DropdownMenuItem>
+                        ))
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => setLocation("/edits")}>
+                        <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+                        <span className="text-xs">내 편집 페이지로 이동</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
               <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
