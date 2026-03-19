@@ -3246,10 +3246,11 @@ export default function StoryPage() {
     enabled: isAuthenticated,
   });
 
-  const [showLoadDropdown, setShowLoadDropdown] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [loadFolderId, setLoadFolderId] = useState<number | null>(null);
   const { data: savedProjects = [] } = useQuery<{ id: number; name: string; folderId: number | null; updatedAt: string; editorType: string; thumbnailUrl: string | null }[]>({
     queryKey: ["/api/bubble-projects"],
-    enabled: isAuthenticated && (showSaveModal || showLoadDropdown),
+    enabled: isAuthenticated && (showSaveModal || showLoadModal),
   });
 
   const createFolderMutation = useMutation({
@@ -7742,39 +7743,9 @@ export default function StoryPage() {
                     <Instagram className="h-3 w-3" />
                     게시
                   </Button>
-                  <DropdownMenu open={showLoadDropdown} onOpenChange={setShowLoadDropdown}>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="불러오기" data-testid="button-story-load-project">
-                        <FolderOpen className="h-3.5 w-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 max-h-72 overflow-y-auto">
-                      <DropdownMenuLabel className="text-[11px]">저장된 프로젝트</DropdownMenuLabel>
-                      {savedProjects.filter(p => p.editorType === "story").length === 0 ? (
-                        <div className="px-2 py-3 text-center text-xs text-muted-foreground">저장된 스토리가 없습니다</div>
-                      ) : (
-                        savedProjects.filter(p => p.editorType === "story").map((p) => (
-                          <DropdownMenuItem
-                            key={p.id}
-                            className="cursor-pointer gap-2"
-                            onClick={() => {
-                              setShowLoadDropdown(false);
-                              handleLoadProject(p.id);
-                            }}
-                          >
-                            <BookOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            <span className="truncate flex-1 text-xs">{p.name}</span>
-                            {p.id === currentProjectId && <Check className="h-3 w-3 text-primary shrink-0" />}
-                          </DropdownMenuItem>
-                        ))
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => setLocation("/edits")}>
-                        <FolderOpen className="h-3.5 w-3.5 shrink-0" />
-                        <span className="text-xs">내 편집 페이지로 이동</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" title="불러오기" data-testid="button-story-load-project" onClick={() => { setLoadFolderId(null); setShowLoadModal(true); }}>
+                    <FolderOpen className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
               <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
@@ -11282,6 +11253,113 @@ export default function StoryPage() {
                 )}
               </DialogContent>
             </Dialog>
+            {/* ── 불러오기 팝업 ── */}
+            <Dialog open={showLoadModal} onOpenChange={(open) => { setShowLoadModal(open); if (!open) setLoadFolderId(null); }}>
+              <DialogContent className="max-w-sm" data-testid="modal-load-story">
+                <DialogHeader>
+                  <DialogTitle className="text-base flex items-center gap-2">
+                    {loadFolderId !== null && (
+                      <button className="h-6 w-6 rounded hover:bg-muted flex items-center justify-center" onClick={() => setLoadFolderId(null)}>
+                        <ArrowLeft className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {loadFolderId !== null
+                      ? projectFolders.find(f => f.id === loadFolderId)?.name || "폴더"
+                      : "프로젝트 불러오기"}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-1 max-h-80 overflow-y-auto">
+                  {loadFolderId === null && (
+                    <>
+                      {/* 폴더 목록 */}
+                      {projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).map((folder) => (
+                        <button
+                          key={folder.id}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-muted/60 transition-colors text-left"
+                          onClick={() => setLoadFolderId(folder.id)}
+                        >
+                          <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+                            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{folder.name}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {savedProjects.filter(p => p.editorType === "story" && p.folderId === folder.id).length}개 프로젝트
+                            </p>
+                          </div>
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        </button>
+                      ))}
+                      {/* 폴더 없는 프로젝트 */}
+                      {savedProjects.filter(p => p.editorType === "story" && !p.folderId).length > 0 && projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).length > 0 && (
+                        <div className="pt-2 mt-1 border-t">
+                          <p className="text-[10px] text-muted-foreground px-3 mb-1">폴더 없음</p>
+                        </div>
+                      )}
+                      {savedProjects.filter(p => p.editorType === "story" && !p.folderId).map((p) => (
+                        <button
+                          key={p.id}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/60 transition-colors text-left ${currentProjectId === p.id ? "bg-primary/10" : ""}`}
+                          onClick={() => { setShowLoadModal(false); handleLoadProject(p.id); }}
+                        >
+                          {p.thumbnailUrl ? (
+                            <img src={p.thumbnailUrl} alt="" className="h-10 w-8 rounded object-cover shrink-0 bg-muted" />
+                          ) : (
+                            <div className="h-10 w-8 rounded bg-muted flex items-center justify-center shrink-0">
+                              <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{p.name}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                          {currentProjectId === p.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {loadFolderId !== null && (
+                    <>
+                      {savedProjects.filter(p => p.editorType === "story" && p.folderId === loadFolderId).length === 0 ? (
+                        <div className="text-center py-6 text-xs text-muted-foreground">이 폴더에 스토리가 없습니다</div>
+                      ) : (
+                        savedProjects.filter(p => p.editorType === "story" && p.folderId === loadFolderId).map((p) => (
+                          <button
+                            key={p.id}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/60 transition-colors text-left ${currentProjectId === p.id ? "bg-primary/10" : ""}`}
+                            onClick={() => { setShowLoadModal(false); handleLoadProject(p.id); }}
+                          >
+                            {p.thumbnailUrl ? (
+                              <img src={p.thumbnailUrl} alt="" className="h-10 w-8 rounded object-cover shrink-0 bg-muted" />
+                            ) : (
+                              <div className="h-10 w-8 rounded bg-muted flex items-center justify-center shrink-0">
+                                <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{p.name}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                            {currentProjectId === p.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                          </button>
+                        ))
+                      )}
+                    </>
+                  )}
+                  {savedProjects.filter(p => p.editorType === "story").length === 0 && (
+                    <div className="text-center py-6">
+                      <FolderOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground">저장된 스토리가 없습니다</p>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {showSavedConfirm && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 animate-in fade-in duration-200">
                 <div className="bg-background rounded-xl shadow-lg px-8 py-6 flex flex-col items-center gap-2 animate-in zoom-in-95 duration-200">
