@@ -1,29 +1,21 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   Sparkles,
-  Rocket,
   Building2,
   Instagram,
   FileText,
   Users,
   BarChart3,
   Shield,
-  CheckCircle2,
-  Star,
   Moon,
   Sun,
   Zap,
-  ArrowRight,
   Brain,
   Target,
   Palette,
   TrendingUp,
   Globe,
-  Award,
-  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 const olliLogo = "/favicon.png";
@@ -34,44 +26,12 @@ import { ShuffleText } from "@/components/ShuffleText";
 import { ShinyText } from "@/components/ShinyText";
 import { GlareHover } from "@/components/GlareHover";
 import { TargetCursor } from "@/components/TargetCursor";
-import { DomeGallery } from "@/components/DomeGallery";
-import { CharacterGrid } from "@/components/CharacterGrid";
 import { MagneticCTA } from "@/components/MagneticCTA";
 import { InfiniteCharacterGrid } from "@/components/InfiniteCharacterGrid";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-
-  // Refs for animations
-  const heroRef = useRef<HTMLDivElement>(null);
-  const scrollTextRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const showcaseRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Hero entrance animation
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-    tl.from(".hero-logo", {
-      scale: 0,
-      rotation: 180,
-      opacity: 0,
-      duration: 1.2,
-      ease: "back.out(1.7)",
-    })
-      .from(".hero-title", { y: 100, opacity: 0, duration: 0.8 }, "-=0.6")
-      .from(".hero-subtitle", { y: 60, opacity: 0, duration: 0.6 }, "-=0.4")
-      .from(".hero-cta", { y: 40, opacity: 0, duration: 0.5, stagger: 0.1 }, "-=0.2");
-
-    return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
-    };
-  }, []);
 
   return (
     <div
@@ -103,7 +63,6 @@ export function LandingPage() {
 
       {/* Hero Section */}
       <section
-        ref={heroRef}
         className="relative min-h-screen flex items-center justify-center overflow-hidden"
       >
         {/* Animated background gradients */}
@@ -220,7 +179,6 @@ export function LandingPage() {
 
       {/* Apple-style Scroll Text Section */}
       <section
-        ref={scrollTextRef}
         className={`min-h-screen flex items-center justify-center px-6 ${
           theme === "dark" ? "bg-gradient-to-b from-black to-gray-900" : "bg-gradient-to-b from-white to-gray-50"
         }`}
@@ -242,7 +200,6 @@ export function LandingPage() {
 
       {/* Stats Section */}
       <section
-        ref={statsRef}
         className={`py-32 px-6 ${
           theme === "dark" ? "bg-gray-900" : "bg-gray-50"
         }`}
@@ -291,7 +248,6 @@ export function LandingPage() {
 
       {/* Features Section */}
       <section
-        ref={featuresRef}
         className={`py-32 px-6 ${
           theme === "dark" ? "bg-black" : "bg-white"
         }`}
@@ -405,7 +361,6 @@ export function LandingPage() {
 
       {/* Showcase Gallery */}
       <section
-        ref={showcaseRef}
         className={`py-32 px-6 ${
           theme === "dark" ? "bg-gray-900" : "bg-gray-50"
         }`}
@@ -486,7 +441,6 @@ export function LandingPage() {
 
       {/* Final CTA */}
       <section
-        ref={ctaRef}
         className={`py-32 px-6 ${
           theme === "dark" ? "bg-black" : "bg-white"
         }`}
