@@ -1,10 +1,10 @@
-import { Link } from "wouter";
+import { Link } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 export default function RefundPolicyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+      <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
         <ArrowLeft className="h-4 w-4" />
         홈으로 돌아가기
       </Link>

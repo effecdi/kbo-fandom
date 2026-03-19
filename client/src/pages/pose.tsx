@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useLocation, useSearchParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -40,7 +40,7 @@ const multiPosePresets = [
 ];
 
 export default function PosePage() {
-  const search = useSearch();
+  const [searchParams] = useSearchParams(); const search = searchParams.toString();
   const params = new URLSearchParams(search);
   const isFlow = params.get("flow") === "1";
   const [, navigate] = useLocation();

@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
+import { Link } from "react-router";
 import { Download, Image as ImageIcon, Wand2, LayoutGrid, Paintbrush, Trees, Trash2, CheckSquare, Square, Loader2 } from "lucide-react";
 import type { GenerationLight } from "@shared/schema";
 import { supabase } from "@/lib/supabase";
@@ -299,7 +299,7 @@ export default function GalleryPage() {
                       </Badge>
                       <div className="flex items-center gap-1.5">
                         {gen.characterId && (
-                          <Link href={`/pose?characterId=${gen.characterId}`}>
+                          <Link to={`/pose?characterId=${gen.characterId}`}>
                             <Button
                               variant="outline"
                               size="sm"

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { useSearch, Link } from "wouter";
+import { useSearchParams, Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +24,7 @@ interface ChatMessage {
 export default function ChatPage() {
   const { isAuthenticated } = useAuth();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
-  const searchString = useSearch();
+  const [searchParams] = useSearchParams(); const searchString = searchParams.toString();
   const params = new URLSearchParams(searchString);
   const characterIdParam = params.get("characterId");
   const characterId = characterIdParam ? parseInt(characterIdParam) : null;

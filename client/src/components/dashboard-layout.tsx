@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useTheme } from "@/components/theme-provider";
@@ -52,7 +52,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <aside className="w-60 bg-card border-r flex flex-col fixed h-screen z-20">
         {/* Logo */}
         <div className="p-6 border-b">
-          <Link href="/" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <img src={logoImg} alt="OLLI" className="w-10 h-10 object-contain rounded-md" />
             <span className="text-2xl font-black bg-gradient-to-r from-indigo-600 to-blue-600 text-transparent bg-clip-text">
               OLLI

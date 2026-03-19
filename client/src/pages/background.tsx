@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useLocation, useSearchParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +37,7 @@ interface SourceEntry {
 }
 
 export default function BackgroundPage() {
-  const search = useSearch();
+  const [searchParams] = useSearchParams(); const search = searchParams.toString();
   const bgParams = new URLSearchParams(search);
   const isFlow = bgParams.get("flow") === "1";
   const [, navigate] = useLocation();

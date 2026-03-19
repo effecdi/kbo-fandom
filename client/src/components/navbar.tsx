@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,7 +26,7 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { startTour } = useTour();
-  const [location] = useLocation();
+  const location = useLocation().pathname;
   const { toast } = useToast();
 
   const { data: credits } = useQuery<{ credits: number; dailyBonusCredits: number; tier: string }>({
@@ -77,7 +77,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
-        <Link href="/" data-testid="link-home">
+        <Link to="/" data-testid="link-home">
           <div className="flex items-center gap-2 cursor-pointer shrink-0">
             <img src={logoImg} alt="OLLI" className="h-8 w-8 rounded-md object-cover" />
             <span className="text-lg font-semibold tracking-tight hidden sm:inline">OLLI</span>
@@ -85,7 +85,7 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
-            <Link href="/home">
+            <Link to="/home">
               <Button
                 variant="ghost"
                 size="sm"
@@ -143,7 +143,7 @@ export function Navbar() {
               </DropdownMenu>
             ))}
 
-            <Link href="/feed">
+            <Link to="/feed">
               <Button
                 variant="ghost"
                 size="sm"
@@ -155,7 +155,7 @@ export function Navbar() {
               </Button>
             </Link>
 
-            <Link href="/pricing">
+            <Link to="/pricing">
               <Button
                 variant="ghost"
                 size="sm"
@@ -182,7 +182,7 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem asChild>
-                  <Link href="/pose" className="cursor-pointer" data-testid="menu-pose-expression">
+                  <Link to="/pose" className="cursor-pointer" data-testid="menu-pose-expression">
                     <Image className="mr-2 h-4 w-4" />
                     포즈/표정
                   </Link>
@@ -222,20 +222,20 @@ export function Navbar() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="cursor-pointer" data-testid="menu-dashboard">
+                  <Link to="/dashboard" className="cursor-pointer" data-testid="menu-dashboard">
                     <Home className="mr-2 h-4 w-4" />
                     대쉬보드
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/gallery" className="cursor-pointer">
+                  <Link to="/gallery" className="cursor-pointer">
                     <Image className="mr-2 h-4 w-4" />
                     My Gallery
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/payments" className="cursor-pointer">
+                  <Link to="/payments" className="cursor-pointer">
                     <CreditCard className="mr-2 h-4 w-4" />
                     결제 내역
                   </Link>
@@ -253,7 +253,7 @@ export function Navbar() {
             </DropdownMenu>
           ) : (
             <Button asChild data-testid="button-login">
-              <Link href="/login">Sign In</Link>
+              <Link to="/login">Sign In</Link>
             </Button>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -66,7 +66,7 @@ export default function PaymentsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/pricing">
+        <Link to="/pricing">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -85,7 +85,7 @@ export default function PaymentsPage() {
           <p className="text-sm text-muted-foreground mb-4">
             아직 결제한 내역이 없어요.
           </p>
-          <Link href="/pricing">
+          <Link to="/pricing">
             <Button variant="outline" size="sm">
               요금제 보기
             </Button>

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Link, useLocation, useSearch } from "wouter";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { Upload, Download, RotateCcw, Eye, ArrowRight, ArrowLeft } from "lucide-react";
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
@@ -26,7 +26,7 @@ export default function EffectsPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
-  const search = useSearch();
+  const [searchParams] = useSearchParams(); const search = searchParams.toString();
   const effectsParams = new URLSearchParams(search);
   const isFlow = effectsParams.get("flow") === "1";
   const [, navigate] = useLocation();

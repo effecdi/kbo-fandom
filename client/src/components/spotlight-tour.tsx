@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { TOUR_STEPS, type TourStep } from "@/lib/tour-steps";
 import { ChevronLeft, ChevronRight, X, Play, Pause } from "lucide-react";

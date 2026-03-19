@@ -25,7 +25,7 @@ import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { LeaveEditorDialog } from "@/components/leave-editor-dialog";
 import { useNavigationGuard } from "@/hooks/use-navigation-guard";
-import { useLocation, useSearch } from "wouter";
+import { useLocation, useSearchParams } from "react-router";
 import { BubbleCanvas } from "@/components/bubble-canvas";
 import { SpeechBubble, CharacterOverlay, PageData, DragMode, BubbleStyle, TailStyle } from "@/lib/bubble-types";
 import { generateId, KOREAN_FONTS, STYLE_LABELS, FLASH_STYLE_LABELS, TAIL_LABELS, drawBubble, getTailGeometry, getDefaultTailTip, getFontFamily } from "@/lib/bubble-utils";
@@ -69,9 +69,8 @@ export default function BubblePage() {
   const { toast } = useToast();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const { showDialog: showLeaveDialog, confirmLeave, cancelLeave } = useNavigationGuard();
-  const [location, setLocation] = useLocation();
-  const searchString = useSearch();
-  const searchParams = new URLSearchParams(searchString);
+  const location = useLocation().pathname; const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const loadProjectId = searchParams.get("projectId");
   const from = searchParams.get("from");
   const canvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
@@ -714,7 +713,7 @@ export default function BubblePage() {
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             {showBackButton && (
-              <Button variant="ghost" size="icon" onClick={() => setLocation("/story")}>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/story")}>
                 <ArrowRight className="h-4 w-4 rotate-180" />
               </Button>
             )}
@@ -773,7 +772,7 @@ export default function BubblePage() {
                       description: "말풍선 프로젝트 저장은 Pro 업그레이드 후 이용할 수 있습니다.",
                       variant: "destructive",
                     });
-                    setLocation("/pricing");
+                    navigate("/pricing");
                     return;
                   }
                   setShowSaveModal(true);
@@ -800,7 +799,7 @@ export default function BubblePage() {
               size="icon"
               variant="ghost"
               className="h-8 w-8"
-              onClick={() => setLocation("/edits")}
+              onClick={() => navigate("/edits")}
               title="내 편집"
               data-testid="button-bubble-my-edits"
             >

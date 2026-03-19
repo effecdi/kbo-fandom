@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -346,7 +346,7 @@ export default function HomePage() {
               <HelpCircle className="h-4 w-4" />
               <span className="hidden sm:inline">사용 가이드</span>
             </Button>
-            <Link href="/pricing">
+            <Link to="/pricing">
               <Avatar className="h-10 w-10 cursor-pointer" data-testid="avatar-profile">
                 <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
                   {(usage?.authorName || user?.firstName || "C").charAt(0).toUpperCase()}
@@ -526,7 +526,7 @@ export default function HomePage() {
               <div>
                 <div className="flex items-center justify-between mb-4 gap-2">
                   <h2 className="text-lg font-bold">최근 작품</h2>
-                  <Link href="/gallery">
+                  <Link to="/gallery">
                     <Button variant="ghost" size="sm" className="gap-1 text-xs" data-testid="button-view-all-gallery">
                       전체보기 <ArrowRight className="h-3 w-3" />
                     </Button>
@@ -609,7 +609,7 @@ export default function HomePage() {
             </Card>
 
             {usage?.tier !== "pro" && (
-              <Link href="/pricing">
+              <Link to="/pricing">
                 <Card
                   className="p-5 hover-elevate cursor-pointer bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20 border-primary/20"
                   data-testid="card-upgrade-cta"
@@ -628,7 +628,7 @@ export default function HomePage() {
               </Link>
             )}
 
-            <Link href="/pricing">
+            <Link to="/pricing">
               <Card
                 className="p-5 hover-elevate cursor-pointer bg-gradient-to-br from-primary/5 via-primary/8 to-primary/10 dark:from-primary/10 dark:via-primary/15 dark:to-primary/20 border-primary/20 dark:border-primary/30"
                 data-testid="card-credit-topup-home"
@@ -767,7 +767,7 @@ export default function HomePage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/pricing">
+                <Link to="/pricing">
                   <Button
                     className="mt-auto w-full h-11 rounded-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 border-0"
                     disabled={usage?.tier === "pro"}
@@ -781,7 +781,7 @@ export default function HomePage() {
 
           {/* Credit Top-Up */}
           {isAuthenticated ? (
-            <Link href="/pricing">
+            <Link to="/pricing">
               <Card
                 className="mt-6 relative overflow-hidden rounded-2xl border px-8 py-7 cursor-pointer hover:scale-[1.01] transition-transform bg-gradient-to-br from-primary/5 via-primary/8 to-primary/10 dark:from-primary/10 dark:via-primary/15 dark:to-primary/20 border-primary/20 dark:border-primary/30 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.15)]"
                 data-testid="card-credit-topup-bottom"

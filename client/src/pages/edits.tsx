@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trash2, FolderOpen, Loader2, Crown, Clock, MessageCircle, BookOpen } from "lucide-react";
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "react-router";
 
 interface BubbleProject {
   id: number;
@@ -25,7 +25,7 @@ export default function EditsPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const { showLoginDialog, setShowLoginDialog } = useLoginGuard();
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const { data: projects = [], isLoading } = useQuery<BubbleProject[]>({
@@ -82,11 +82,11 @@ export default function EditsPage() {
               Pro
             </Badge>
           )}
-          <Button size="sm" variant="outline" onClick={() => setLocation("/bubble")} className="gap-1.5" data-testid="button-new-bubble">
+          <Button size="sm" variant="outline" onClick={() => navigate("/bubble")} className="gap-1.5" data-testid="button-new-bubble">
             <MessageCircle className="h-3.5 w-3.5" />
             말풍선
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setLocation("/story")} className="gap-1.5" data-testid="button-new-story">
+          <Button size="sm" variant="outline" onClick={() => navigate("/story")} className="gap-1.5" data-testid="button-new-story">
             <BookOpen className="h-3.5 w-3.5" />
             스토리
           </Button>
@@ -105,11 +105,11 @@ export default function EditsPage() {
             {isPro ? "에디터에서 프로젝트를 저장해보세요." : "Pro 멤버십으로 업그레이드하면 프로젝트를 저장할 수 있습니다."}
           </p>
           <div className="flex items-center justify-center gap-2 flex-wrap">
-            <Button size="sm" variant="outline" onClick={() => setLocation("/bubble")} className="gap-1.5" data-testid="button-go-bubble-editor">
+            <Button size="sm" variant="outline" onClick={() => navigate("/bubble")} className="gap-1.5" data-testid="button-go-bubble-editor">
               <MessageCircle className="h-3.5 w-3.5" />
               말풍선 에디터
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setLocation("/story")} className="gap-1.5" data-testid="button-go-story-editor">
+            <Button size="sm" variant="outline" onClick={() => navigate("/story")} className="gap-1.5" data-testid="button-go-story-editor">
               <BookOpen className="h-3.5 w-3.5" />
               스토리 에디터
             </Button>
@@ -129,7 +129,7 @@ export default function EditsPage() {
             <Card
               key={project.id}
               className="group cursor-pointer hover-elevate"
-              onClick={() => setLocation(`/${project.editorType === "story" ? "story" : "bubble"}?projectId=${project.id}`)}
+              onClick={() => navigate(`/${project.editorType === "story" ? "story" : "bubble"}?projectId=${project.id}`)}
               data-testid={`card-project-${project.id}`}
             >
               <div className="aspect-[3/4] bg-muted relative overflow-hidden rounded-t-md">

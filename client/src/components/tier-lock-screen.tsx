@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Lock, ArrowRight, Sparkles } from "lucide-react";
 import { TIERS, FEATURE_TIER_REQUIREMENTS, type FeatureKey } from "@/lib/tier";
@@ -30,7 +30,7 @@ export function TierLockScreen({ featureKey, currentTier, totalGenerations }: Ti
         )}
       </p>
       <div className="flex flex-col gap-3 items-center">
-        <Link href="/create">
+        <Link to="/create">
           <Button className="gap-2" data-testid="button-go-create-unlock">
             <Sparkles className="h-4 w-4" />
             캐릭터 만들어서 해금하기

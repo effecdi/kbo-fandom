@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link } from "react-router";
 import {
   Sparkles,
   Target,
@@ -82,7 +82,7 @@ export default function BusinessDashboardPage() {
           <div className="bg-card rounded-2xl p-6 border">
             <h2 className="text-xl font-black text-foreground mb-6">빠른 시작</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link href="/create">
+              <Link to="/create">
                 <button className="w-full p-6 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/50 dark:to-blue-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-indigo-300">
                   <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-xl flex items-center justify-center mb-4">
                     <Sparkles className="w-6 h-6 text-white" />
@@ -92,7 +92,7 @@ export default function BusinessDashboardPage() {
                 </button>
               </Link>
 
-              <Link href="/story">
+              <Link to="/story">
                 <button className="w-full p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-purple-300">
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4">
                     <Palette className="w-6 h-6 text-white" />
@@ -102,7 +102,7 @@ export default function BusinessDashboardPage() {
                 </button>
               </Link>
 
-              <Link href="/ad-match">
+              <Link to="/ad-match">
                 <button className="w-full p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/50 dark:to-cyan-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-blue-300">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4">
                     <Target className="w-6 h-6 text-white" />
@@ -112,7 +112,7 @@ export default function BusinessDashboardPage() {
                 </button>
               </Link>
 
-              <Link href="/feed">
+              <Link to="/feed">
                 <button className="w-full p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-green-300">
                   <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4">
                     <Users className="w-6 h-6 text-white" />

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo, startTransition } from "react";
-import { useSearch } from "wouter";
+import { useSearchParams } from "react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,7 +31,7 @@ import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { LeaveEditorDialog } from "@/components/leave-editor-dialog";
 import { useNavigationGuard } from "@/hooks/use-navigation-guard";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "react-router";
 import {
   Plus,
   Trash2,
@@ -3529,8 +3529,8 @@ export default function StoryPage() {
   const { isAuthenticated } = useAuth();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const { showDialog: showLeaveDialog, confirmLeave, cancelLeave } = useNavigationGuard();
-  const [, setLocation] = useLocation();
-  const searchString = useSearch();
+  const navigate = useNavigate();
+  const [storySearchParams] = useSearchParams(); const searchString = storySearchParams.toString();
   const [topic, setTopic] = useState("");
   const [aiMode, setAiMode] = useState<"subtitle" | "instatoonFull" | "instatoonPrompt" | "autoWebtoon" | null>(null);
   // Art style definitions (matching /api/generate-character styles)
@@ -8087,7 +8087,7 @@ export default function StoryPage() {
                     <Instagram className="h-3 w-3" />
                     게시
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setLocation("/edits")} title="내 편집" data-testid="button-story-my-edits">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigate("/edits")} title="내 편집" data-testid="button-story-my-edits">
                     <FolderOpen className="h-3.5 w-3.5" />
                   </Button>
                 </div>

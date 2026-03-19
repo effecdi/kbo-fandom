@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { useSearch } from "wouter";
+import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link } from "wouter";
+import { Link } from "react-router";
 import {
   Wand2,
   ArrowRight,
@@ -254,7 +254,7 @@ export default function DashboardPage() {
 
   const [showTierGuide, setShowTierGuide] = useState(false);
   const { toast } = useToast();
-  const search = useSearch();
+  const [searchParams] = useSearchParams(); const search = searchParams.toString();
 
   useEffect(() => {
     const params = new URLSearchParams(search);
@@ -304,7 +304,7 @@ export default function DashboardPage() {
             오늘도 멋진 인스타툰을 만들어볼까요?
           </p>
         </div>
-        <Link href="/pricing">
+        <Link to="/pricing">
           <Avatar className="h-10 w-10 cursor-pointer" data-testid="avatar-profile">
             <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
               {(usage?.authorName || user?.firstName || "C").charAt(0).toUpperCase()}
@@ -450,7 +450,7 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center justify-between mb-4 gap-2">
                 <h2 className="text-lg font-bold">최근 작품</h2>
-                <Link href="/gallery">
+                <Link to="/gallery">
                   <Button variant="ghost" size="sm" className="gap-1 text-xs">
                     전체보기 <ArrowRight className="h-3 w-3" />
                   </Button>
@@ -533,7 +533,7 @@ export default function DashboardPage() {
           <InstagramConnect />
 
           {usage?.tier !== "pro" && (
-            <Link href="/pricing">
+            <Link to="/pricing">
               <Card className="p-5 hover-elevate cursor-pointer bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20 border-primary/20">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">

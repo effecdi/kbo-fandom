@@ -1,9 +1,9 @@
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "react-router";
 import { FLOW_STEPS, getStepByPath } from "@/lib/flow";
 import { Check } from "lucide-react";
 
 export function FlowStepper({ currentStep }: { currentStep?: number }) {
-  const [location] = useLocation();
+  const location = useLocation().pathname;
   const step = currentStep ?? getStepByPath(location);
 
   return (
