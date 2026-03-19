@@ -343,7 +343,7 @@ export function LandingPage() {
               <Folder
                 key={i}
                 color={feature.color}
-                size={1.2}
+                size={1.6}
                 items={feature.items}
                 label={feature.label}
                 className={theme === "dark" ? "text-gray-200" : "text-gray-800"}

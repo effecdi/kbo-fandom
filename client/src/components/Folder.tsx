@@ -47,7 +47,12 @@ export function Folder({
     [open]
   );
 
+  const handleMouseEnter = useCallback(() => {
+    setOpen(true);
+  }, []);
+
   const handleMouseLeave = useCallback(() => {
+    setOpen(false);
     setPaperOffsets(Array(3).fill({ x: 0, y: 0 }));
   }, []);
 
@@ -60,8 +65,7 @@ export function Folder({
   return (
     <div className={`flex flex-col items-center gap-4 ${className}`}>
       <div
-        className={`folder ${open ? "open folder--click" : ""}`}
-        onClick={() => setOpen((v) => !v)}
+        onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         style={{
@@ -161,9 +165,8 @@ export function Folder({
           }}
         />
 
-        {/* Right flap (visible on hover/open) */}
+        {/* Right flap */}
         <div
-          className="right"
           style={{
             position: "absolute",
             zIndex: 3,
@@ -189,21 +192,6 @@ export function Folder({
           {label}
         </span>
       )}
-
-      <style>{`
-        .folder:not(.folder--click):hover {
-          transform: translateY(-8px);
-        }
-        .folder:not(.folder--click):hover .paper {
-          transform: translate(-50%, 0%);
-        }
-        .folder:not(.folder--click):hover > div:last-of-type {
-          transform: skew(15deg) scaleY(0.6);
-        }
-        .folder:not(.folder--click):hover .right {
-          transform: skew(-15deg) scaleY(0.6);
-        }
-      `}</style>
     </div>
   );
 }
