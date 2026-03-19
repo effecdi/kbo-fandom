@@ -7245,19 +7245,21 @@ export default function StoryPage() {
                     {/* Sub-panel for fill: selection mode + prompt */}
                     {selectedGenTool === "fill" && (
                       <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 2 }}>선택 도구</span>
-                        <button onClick={() => setSelectionMode("brush")} className={`tools-compact-panel__tool-btn ${selectionMode === "brush" ? "tools-compact-panel__tool-btn--active" : ""}`} title="선택 브러시">
-                          <Paintbrush className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => setSelectionMode("lasso")} className={`tools-compact-panel__tool-btn ${selectionMode === "lasso" ? "tools-compact-panel__tool-btn--active" : ""}`} title="올가미">
-                          <Spline className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => setSelectionMode("rectangle")} className={`tools-compact-panel__tool-btn ${selectionMode === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`} title="사각형 선택">
-                          <Square className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => setSelectionMode("ellipse")} className={`tools-compact-panel__tool-btn ${selectionMode === "ellipse" ? "tools-compact-panel__tool-btn--active" : ""}`} title="원형 선택">
-                          <Circle className="h-4 w-4" />
-                        </button>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 2 }}>선택 도구</span>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "2px 4px" }}>
+                          <button onClick={() => setSelectionMode("brush")} className={`tools-compact-panel__tool-btn ${selectionMode === "brush" ? "tools-compact-panel__tool-btn--active" : ""}`} title="선택 브러시">
+                            <Paintbrush className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("lasso")} className={`tools-compact-panel__tool-btn ${selectionMode === "lasso" ? "tools-compact-panel__tool-btn--active" : ""}`} title="올가미">
+                            <Spline className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("rectangle")} className={`tools-compact-panel__tool-btn ${selectionMode === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`} title="사각형 선택">
+                            <Square className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("ellipse")} className={`tools-compact-panel__tool-btn ${selectionMode === "ellipse" ? "tools-compact-panel__tool-btn--active" : ""}`} title="원형 선택">
+                            <Circle className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                        </div>
 
                         {selectionMode === "brush" && (
                           <div style={{ padding: "4px 8px", width: "100%" }}>
@@ -7474,22 +7476,22 @@ export default function StoryPage() {
                         </div>
 
                         {/* Selection tools */}
-                        <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", padding: "4px 8px 0", width: "100%" }}>선택 도구</span>
-                        <div style={{ display: "flex", gap: 4, padding: "2px 4px", flexWrap: "wrap" }}>
-                          <button onClick={() => setSelectionMode("click")} className={`tools-compact-panel__tool-btn ${selectionMode === "click" ? "tools-compact-panel__tool-btn--active" : ""}`} title="클릭 선택 (마법봉)" style={{ width: 32, height: 32 }}>
-                            <MousePointerClick className="h-3.5 w-3.5" />
+                        <span style={{ fontSize: 13, color: "hsl(var(--muted-foreground))", padding: "4px 8px 0", width: "100%" }}>선택 도구</span>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "2px 4px" }}>
+                          <button onClick={() => setSelectionMode("click")} className={`tools-compact-panel__tool-btn ${selectionMode === "click" ? "tools-compact-panel__tool-btn--active" : ""}`} title="클릭 선택 (마법봉)">
+                            <MousePointerClick className="h-[1.4rem] w-[1.4rem]" />
                           </button>
-                          <button onClick={() => setSelectionMode("brush")} className={`tools-compact-panel__tool-btn ${selectionMode === "brush" ? "tools-compact-panel__tool-btn--active" : ""}`} title="브러시" style={{ width: 32, height: 32 }}>
-                            <Paintbrush className="h-3.5 w-3.5" />
+                          <button onClick={() => setSelectionMode("brush")} className={`tools-compact-panel__tool-btn ${selectionMode === "brush" ? "tools-compact-panel__tool-btn--active" : ""}`} title="브러시">
+                            <Paintbrush className="h-[1.4rem] w-[1.4rem]" />
                           </button>
-                          <button onClick={() => setSelectionMode("lasso")} className={`tools-compact-panel__tool-btn ${selectionMode === "lasso" ? "tools-compact-panel__tool-btn--active" : ""}`} title="올가미" style={{ width: 32, height: 32 }}>
-                            <Spline className="h-3.5 w-3.5" />
+                          <button onClick={() => setSelectionMode("lasso")} className={`tools-compact-panel__tool-btn ${selectionMode === "lasso" ? "tools-compact-panel__tool-btn--active" : ""}`} title="올가미">
+                            <Spline className="h-[1.4rem] w-[1.4rem]" />
                           </button>
-                          <button onClick={() => setSelectionMode("rectangle")} className={`tools-compact-panel__tool-btn ${selectionMode === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`} title="사각형" style={{ width: 32, height: 32 }}>
-                            <Square className="h-3.5 w-3.5" />
+                          <button onClick={() => setSelectionMode("rectangle")} className={`tools-compact-panel__tool-btn ${selectionMode === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`} title="사각형">
+                            <Square className="h-[1.4rem] w-[1.4rem]" />
                           </button>
-                          <button onClick={() => setSelectionMode("ellipse")} className={`tools-compact-panel__tool-btn ${selectionMode === "ellipse" ? "tools-compact-panel__tool-btn--active" : ""}`} title="원형" style={{ width: 32, height: 32 }}>
-                            <Circle className="h-3.5 w-3.5" />
+                          <button onClick={() => setSelectionMode("ellipse")} className={`tools-compact-panel__tool-btn ${selectionMode === "ellipse" ? "tools-compact-panel__tool-btn--active" : ""}`} title="원형">
+                            <Circle className="h-[1.4rem] w-[1.4rem]" />
                           </button>
                         </div>
 
