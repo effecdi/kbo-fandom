@@ -11255,7 +11255,7 @@ export default function StoryPage() {
             </Dialog>
             {/* ── 불러오기 팝업 ── */}
             <Dialog open={showLoadModal} onOpenChange={(open) => { setShowLoadModal(open); if (!open) setLoadFolderId(null); }}>
-              <DialogContent className="max-w-sm" data-testid="modal-load-story">
+              <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto" data-testid="modal-load-story">
                 <DialogHeader>
                   <DialogTitle className="text-base flex items-center gap-2">
                     {loadFolderId !== null && (
