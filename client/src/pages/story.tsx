@@ -2570,30 +2570,11 @@ function EditorPanel({
               </div>
             )}
 
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-[13px] text-muted-foreground hover-elevate"
-              onClick={() =>
-                document.getElementById(`story-bg-upload-${index}`)?.click()
-              }
-              data-testid={`button-upload-bg-${index}`}
-            >
-              <FolderOpen className="h-3.5 w-3.5" />
-              <span>배경 이미지 업로드</span>
-            </button>
-            <input
-              id={`story-bg-upload-${index}`}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleBackgroundImageUpload}
-            />
-
           </div>
 
           <hr className="border-border" />
 
-          {/* 이미지 업로드 섹션 (기존) */}
+          {/* 이미지 업로드 섹션 */}
           <div className="space-y-1.5">
             <Label className="text-[13px] text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
             <button
@@ -2616,6 +2597,38 @@ function EditorPanel({
               onChange={(e) => handleLocalImageFiles(e.target.files)}
             />
           </div>
+
+          {/* 내 생성 이미지에서 추가 */}
+          {charImages.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-[13px] text-muted-foreground">내 이미지에서 추가</Label>
+              <div className="grid grid-cols-3 gap-1.5 max-h-[200px] overflow-y-auto">
+                {charImages.map((gen) => (
+                  <button
+                    key={gen.id}
+                    className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary/50 cursor-pointer transition-all"
+                    onClick={() => addCharacter(gen)}
+                    data-testid={`button-pick-gen-${gen.id}`}
+                  >
+                    <img
+                      src={gen.thumbnailUrl || gen.resultImageUrl}
+                      alt={gen.prompt}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+              {galleryHasMore && (
+                <button
+                  className="w-full py-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={onLoadMoreGallery}
+                >
+                  더 보기
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
