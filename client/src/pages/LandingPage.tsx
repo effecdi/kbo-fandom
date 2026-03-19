@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useLenis } from "lenis/react";
 import {
   Sparkles,
   Rocket,
@@ -46,11 +45,6 @@ export function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
-  // Sync Lenis smooth scroll with GSAP ScrollTrigger
-  useLenis(() => {
-    ScrollTrigger.update();
-  });
-
   // Refs for animations
   const heroRef = useRef<HTMLDivElement>(null);
   const scrollTextRef = useRef<HTMLDivElement>(null);
@@ -73,125 +67,6 @@ export function LandingPage() {
       .from(".hero-title", { y: 100, opacity: 0, duration: 0.8 }, "-=0.6")
       .from(".hero-subtitle", { y: 60, opacity: 0, duration: 0.6 }, "-=0.4")
       .from(".hero-cta", { y: 40, opacity: 0, duration: 0.5, stagger: 0.1 }, "-=0.2");
-
-    // Apple-style scroll text animation
-    if (scrollTextRef.current) {
-      gsap.to(scrollTextRef.current, {
-        scrollTrigger: {
-          trigger: scrollTextRef.current,
-          start: "top top",
-          end: "+=150%",
-          scrub: 1,
-          pin: true,
-          pinSpacing: true,
-        },
-      });
-
-      const words = scrollTextRef.current.querySelectorAll(".scroll-word");
-      words.forEach((word, i) => {
-        gsap.fromTo(
-          word,
-          {
-            opacity: 0.3,
-            scale: 0.95,
-            y: 50,
-          },
-          {
-            scrollTrigger: {
-              trigger: scrollTextRef.current,
-              start: "top top",
-              end: "+=150%",
-              scrub: 1,
-            },
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            ease: "power2.out",
-          }
-        );
-      });
-    }
-
-    // Stats counter animation
-    if (statsRef.current) {
-      const stats = statsRef.current.querySelectorAll(".stat-number");
-      stats.forEach((stat) => {
-        const target = parseInt(stat.getAttribute("data-target") || "0");
-        gsap.from(stat, {
-          scrollTrigger: {
-            trigger: stat,
-            start: "top center+=100",
-            toggleActions: "play none none reverse",
-          },
-          innerText: 0,
-          duration: 2,
-          snap: { innerText: 1 },
-          onUpdate: function () {
-            stat.textContent = Math.ceil(this.targets()[0].innerText);
-          },
-        });
-      });
-    }
-
-    // Feature cards stagger animation
-    if (featuresRef.current) {
-      const cards = featuresRef.current.querySelectorAll(".feature-card");
-      gsap.from(cards, {
-        scrollTrigger: {
-          trigger: featuresRef.current,
-          start: "top center+=100",
-          toggleActions: "play none none none",
-        },
-        y: 100,
-        opacity: 0,
-        scale: 0.8,
-        duration: 0.8,
-        stagger: 0.15,
-        ease: "back.out(1.2)",
-      });
-    }
-
-    // Showcase zoom effect
-    if (showcaseRef.current) {
-      gsap.from(showcaseRef.current, {
-        scrollTrigger: {
-          trigger: showcaseRef.current,
-          start: "top bottom",
-          end: "top center",
-          scrub: 1,
-        },
-        scale: 0.8,
-        opacity: 0,
-      });
-    }
-
-    // Final CTA magnetic effect
-    if (ctaRef.current) {
-      gsap.from(ctaRef.current, {
-        scrollTrigger: {
-          trigger: ctaRef.current,
-          start: "top center+=100",
-          toggleActions: "play none none reverse",
-        },
-        scale: 0.5,
-        opacity: 0,
-        duration: 1,
-        ease: "elastic.out(1, 0.5)",
-      });
-    }
-
-    // Parallax backgrounds
-    gsap.utils.toArray(".parallax-bg").forEach((bg: any) => {
-      gsap.to(bg, {
-        scrollTrigger: {
-          trigger: bg,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true,
-        },
-        y: -100,
-      });
-    });
 
     return () => {
       ScrollTrigger.getAll().forEach((t) => t.kill());
@@ -763,42 +638,32 @@ function FeatureCard({
   className = "",
 }: FeatureCardProps) {
   return (
-    <GlareHover>
+    <div
+      className={`group relative p-10 rounded-3xl border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${
+        theme === "dark"
+          ? "bg-gray-900 border-gray-800 hover:border-[#00e5cc]/50"
+          : "bg-white border-gray-200 hover:border-[#00e5cc]/50 shadow-xl"
+      } ${className}`}
+    >
       <div
-        className={`feature-card group relative p-10 rounded-3xl backdrop-blur-xl border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${
-          theme === "dark"
-            ? "bg-gray-900/50 border-gray-800 hover:border-[#00e5cc]/50"
-            : "bg-white/90 border-gray-200 hover:border-[#00e5cc]/50 shadow-xl"
-        } ${className}`}
+        className={`relative w-20 h-20 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-6 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}
       >
-        {/* Icon */}
-        <div
-          className={`relative w-20 h-20 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-6 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}
-        >
-          <Icon className="w-10 h-10 text-white" />
-        </div>
-
-        {/* Content */}
-        <h3
-          className={`text-4xl font-black mb-4 ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}
-        >
-          {title}
-        </h3>
-        <p
-          className={`text-xl ${
-            theme === "dark" ? "text-gray-400" : "text-gray-600"
-          }`}
-        >
-          {description}
-        </p>
-
-        {/* Hover gradient overlay */}
-        <div
-          className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
-        />
+        <Icon className="w-10 h-10 text-white" />
       </div>
-    </GlareHover>
+      <h3
+        className={`text-4xl font-black mb-4 ${
+          theme === "dark" ? "text-white" : "text-gray-900"
+        }`}
+      >
+        {title}
+      </h3>
+      <p
+        className={`text-xl ${
+          theme === "dark" ? "text-gray-400" : "text-gray-600"
+        }`}
+      >
+        {description}
+      </p>
+    </div>
   );
 }

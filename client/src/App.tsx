@@ -3,7 +3,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ReactLenis } from "lenis/react";
 import { useAuth } from "@/hooks/use-auth";
 
 // Design pages
@@ -184,15 +183,13 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <ReactLenis root options={{ lerp: 0.08, duration: 1.2, smoothWheel: true }}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <TooltipProvider>
-            <RouterProvider router={router} />
-          </TooltipProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </ReactLenis>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>
+          <RouterProvider router={router} />
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

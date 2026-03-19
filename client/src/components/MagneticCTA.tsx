@@ -68,15 +68,6 @@ export function MagneticCTA({ theme, onButtonClick }: MagneticCTAProps) {
         } as React.CSSProperties
       }
     >
-      {/* Mouse-following gradient glow */}
-      <div
-        ref={glowRef}
-        className="pointer-events-none absolute w-96 h-96 opacity-0 transition-opacity duration-300 rounded-full blur-3xl"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(0, 229, 204, 0.4), rgba(59, 130, 246, 0.3), transparent 70%)",
-        }}
-      />
 
       {/* Radial gradient that follows cursor */}
       <div
