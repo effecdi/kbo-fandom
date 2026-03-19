@@ -702,7 +702,7 @@ export function AutoWebtoonPanel({
     <div className="space-y-4" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
       {/* Story input */}
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">스토리 입력</Label>
+        <Label className="text-[13px] font-semibold">스토리 입력</Label>
         <Textarea
           value={storyPrompt}
           onChange={(e) => setStoryPrompt(e.target.value)}
@@ -715,7 +715,7 @@ export function AutoWebtoonPanel({
           type="button"
           variant="outline"
           size="sm"
-          className="h-7 text-xs"
+          className="h-7 text-[13px]"
           onClick={(e) => { e.stopPropagation(); topicMutation.mutate(); }}
           disabled={topicMutation.isPending}
         >
@@ -740,7 +740,7 @@ export function AutoWebtoonPanel({
 
       {/* Canvas count */}
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">캔버스 수 (최대 {effectiveMaxCanvas})</Label>
+        <Label className="text-[13px] font-semibold">캔버스 수 (최대 {effectiveMaxCanvas})</Label>
         <div className="flex flex-wrap gap-1">
           {Array.from({ length: effectiveMaxCanvas }, (_, i) => i + 1).map((n) => (
             <Button
@@ -748,7 +748,7 @@ export function AutoWebtoonPanel({
               type="button"
               variant={canvasCount === n ? "default" : "outline"}
               size="sm"
-              className="w-7 h-7 p-0 text-xs"
+              className="w-7 h-7 p-0 text-[13px]"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCanvasCount(n); }}
             >
               {n}
@@ -759,7 +759,7 @@ export function AutoWebtoonPanel({
 
       {/* Cuts per canvas */}
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">캔버스당 컷 수</Label>
+        <Label className="text-[13px] font-semibold">캔버스당 컷 수</Label>
         <div className="flex gap-2">
           {[1, 2, 3, 4].map((n) => (
             <button
@@ -782,7 +782,7 @@ export function AutoWebtoonPanel({
 
       {/* Cut design - layout & border */}
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">컷 디자인</Label>
+        <Label className="text-[13px] font-semibold">컷 디자인</Label>
 
         {/* Layout type */}
         <div className="space-y-1">
@@ -886,7 +886,7 @@ export function AutoWebtoonPanel({
 
       {/* Style */}
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">스타일</Label>
+        <Label className="text-[13px] font-semibold">스타일</Label>
         <div className="flex flex-wrap gap-1.5">
           {Object.entries(ART_STYLES).map(([key, s]) => (
             <Button
@@ -894,7 +894,7 @@ export function AutoWebtoonPanel({
               type="button"
               variant={selectedStyle === key ? "default" : "outline"}
               size="sm"
-              className="h-7 text-xs"
+              className="h-7 text-[13px]"
               onClick={(e) => { e.stopPropagation(); setSelectedStyle(key); }}
             >
               {s.label}
@@ -906,7 +906,7 @@ export function AutoWebtoonPanel({
       {/* Cost & Action */}
       <Card className="p-3">
         <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">
+          <div className="text-[13px] text-muted-foreground">
             총 비용: <span className="font-bold text-foreground">{isPro ? "무료 (Pro)" : `${totalCost} 크레딧`}</span>
             {!isPro && <span className="text-[13px] ml-1">(분해 {breakdownCost} + 이미지 {imageCost})</span>}
           </div>
@@ -945,7 +945,7 @@ export function AutoWebtoonPanel({
     <div className="space-y-3" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
       {/* Layout preview */}
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">
+        <Label className="text-[13px] font-semibold">
           레이아웃 ({canvasCount}캔버스 x {cutsPerCanvas}컷)
         </Label>
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -960,7 +960,7 @@ export function AutoWebtoonPanel({
 
       {/* Scene list */}
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold">장면 목록 ({scenes.length}컷)</Label>
+        <Label className="text-[13px] font-semibold">장면 목록 ({scenes.length}컷)</Label>
         <div className="space-y-1.5 max-h-[45vh] overflow-y-auto pr-0.5">
           {scenes.map((scene, idx) => {
             const canvasIdx = Math.floor(idx / cutsPerCanvas);
@@ -980,7 +980,7 @@ export function AutoWebtoonPanel({
                         setScenes(updated);
                       }}
                       rows={2}
-                      className="text-xs resize-none"
+                      className="text-[13px] resize-none"
                       placeholder="장면 묘사 (English)"
                       onMouseDown={(e) => e.stopPropagation()}
                     />
@@ -992,7 +992,7 @@ export function AutoWebtoonPanel({
                         setScenes(updated);
                       }}
                       placeholder="나레이션"
-                      className="text-xs h-7"
+                      className="text-[13px] h-7"
                       onMouseDown={(e) => e.stopPropagation()}
                     />
                     {/* Bubbles editor */}
@@ -1008,7 +1008,7 @@ export function AutoWebtoonPanel({
                             setScenes(updated);
                           }}
                           placeholder="대사"
-                          className="text-xs h-7 flex-1"
+                          className="text-[13px] h-7 flex-1"
                           onMouseDown={(e) => e.stopPropagation()}
                         />
                         <Select
@@ -1091,7 +1091,7 @@ export function AutoWebtoonPanel({
 
       {/* Actions */}
       <div className="flex gap-2 justify-between">
-        <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setStep(1); }}>
+        <Button type="button" variant="outline" size="sm" className="h-7 text-[13px]" onClick={(e) => { e.stopPropagation(); setStep(1); }}>
           <ArrowLeft className="h-3 w-3 mr-1" /> 이전
         </Button>
         <div className="flex gap-1.5">
@@ -1099,14 +1099,14 @@ export function AutoWebtoonPanel({
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 text-xs"
+            className="h-7 text-[13px]"
             onClick={(e) => { e.stopPropagation(); breakdownMutation.mutate(); }}
             disabled={breakdownMutation.isPending}
           >
             <RefreshCw className={`h-3 w-3 mr-1 ${breakdownMutation.isPending ? "animate-spin" : ""}`} />
             다시
           </Button>
-          <Button type="button" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); startGeneration(); }}>
+          <Button type="button" size="sm" className="h-7 text-[13px]" onClick={(e) => { e.stopPropagation(); startGeneration(); }}>
             <ImageIcon className="h-3 w-3 mr-1" />
             생성 시작
           </Button>
@@ -1125,7 +1125,7 @@ export function AutoWebtoonPanel({
       <div className="space-y-3" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
         {/* Progress */}
         <div className="space-y-1.5">
-          <div className="flex justify-between text-xs">
+          <div className="flex justify-between text-[13px]">
             <span className="font-medium">
               {isGenerating ? `${doneCount}/${cutResults.length} 생성 중...` : `완료 (${doneCount}/${cutResults.length})`}
             </span>
@@ -1194,7 +1194,7 @@ export function AutoWebtoonPanel({
                 <div className="w-full aspect-[3/4] max-h-[40vh] flex items-center justify-center rounded border bg-destructive/10">
                   <div className="text-center">
                     <X className="h-6 w-6 text-destructive mx-auto mb-1" />
-                    <span className="text-xs text-destructive">{r.error || "생성 실패"}</span>
+                    <span className="text-[13px] text-destructive">{r.error || "생성 실패"}</span>
                   </div>
                 </div>
               ) : null}
@@ -1221,7 +1221,7 @@ export function AutoWebtoonPanel({
                   setScenes(updated);
                 }}
                 rows={3}
-                className="text-xs resize-none"
+                className="text-[13px] resize-none"
                 placeholder="프롬프트 수정"
                 onMouseDown={(e) => e.stopPropagation()}
               />
@@ -1231,7 +1231,7 @@ export function AutoWebtoonPanel({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="w-full h-7 text-xs"
+                className="w-full h-7 text-[13px]"
                 disabled={isGenerating}
                 onClick={(e) => { e.stopPropagation(); regenerateSingle(previewIndex); }}
               >
@@ -1249,7 +1249,7 @@ export function AutoWebtoonPanel({
               type="button"
               variant="destructive"
               size="sm"
-              className="w-full h-7 text-xs"
+              className="w-full h-7 text-[13px]"
               onClick={(e) => {
                 e.stopPropagation();
                 cancelledRef.current = true;
@@ -1264,7 +1264,7 @@ export function AutoWebtoonPanel({
               type="button"
               variant="outline"
               size="sm"
-              className="w-full h-7 text-xs"
+              className="w-full h-7 text-[13px]"
               onClick={(e) => { e.stopPropagation(); retryFailed(); }}
             >
               <RefreshCw className="h-3 w-3 mr-1" /> 실패 재시도 ({failedCount}컷)
@@ -1284,7 +1284,7 @@ export function AutoWebtoonPanel({
             type="button"
             variant="outline"
             size="sm"
-            className="w-full h-7 text-xs"
+            className="w-full h-7 text-[13px]"
             disabled={isGenerating}
             onClick={(e) => { e.stopPropagation(); setStep(1); setCutResults([]); setPreviewIndex(null); }}
           >

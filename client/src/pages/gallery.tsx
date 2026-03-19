@@ -68,7 +68,7 @@ function InlineNameEditor({ genId, initialName, prompt }: { genId: number; initi
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { savedRef.current = true; setEditing(false); } }}
           onBlur={save}
-          className="h-6 text-xs px-1.5"
+          className="h-6 text-[13px] px-1.5"
           autoFocus
           maxLength={100}
         />
@@ -129,7 +129,7 @@ function FolderItemNameEditor({ genId, initialName, prompt }: { genId: number; i
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { savedRef.current = true; setEditing(false); } }}
           onBlur={save}
-          className="h-6 text-xs px-1.5"
+          className="h-6 text-[13px] px-1.5"
           autoFocus
           maxLength={100}
         />
@@ -140,7 +140,7 @@ function FolderItemNameEditor({ genId, initialName, prompt }: { genId: number; i
   const displayName = initialName || prompt || "캐릭터";
   return (
     <span
-      className="text-xs truncate flex-1 min-w-0 cursor-pointer hover:underline"
+      className="text-[13px] truncate flex-1 min-w-0 cursor-pointer hover:underline"
       onClick={(e) => { e.stopPropagation(); startEdit(); }}
       title="클릭하여 이름 편집"
     >
@@ -432,14 +432,14 @@ export default function GalleryPage() {
                 {selected.size}개 선택됨
               </span>
               <button
-                className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 hover:border-primary/50"
+                className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-[13px] font-medium text-primary transition-colors hover:bg-primary/10 hover:border-primary/50"
                 onClick={() => setShowAddToFolder(!showAddToFolder)}
               >
                 <FolderPlus className="h-3.5 w-3.5" />
                 폴더에 추가
               </button>
               <button
-                className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:border-red-400 disabled:opacity-40 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/20 dark:hover:border-red-500/50"
+                className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-[13px] font-medium text-red-600 transition-colors hover:bg-red-100 hover:border-red-400 disabled:opacity-40 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/20 dark:hover:border-red-500/50"
                 disabled={isDeleting}
                 onClick={() => {
                   if (confirm(`${selected.size}개 항목을 삭제하시겠습니까?`)) {
@@ -451,7 +451,7 @@ export default function GalleryPage() {
                 선택 삭제
               </button>
               <button
-                className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:border-red-400 disabled:opacity-40 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/20 dark:hover:border-red-500/50"
+                className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-[13px] font-medium text-red-600 transition-colors hover:bg-red-100 hover:border-red-400 disabled:opacity-40 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/20 dark:hover:border-red-500/50"
                 disabled={total === 0 || isDeleting}
                 onClick={() => {
                   if (confirm("모든 항목을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
@@ -468,15 +468,15 @@ export default function GalleryPage() {
           {/* Add to folder dropdown */}
           {showAddToFolder && hasSelection && (
             <div className="mb-4 p-3 rounded-lg bg-background border space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">폴더 선택:</p>
+              <p className="text-[13px] font-medium text-muted-foreground">폴더 선택:</p>
               {characterFolders.length === 0 ? (
-                <p className="text-xs text-muted-foreground">폴더가 없습니다. 오른쪽 사이드바에서 폴더를 먼저 만들어주세요.</p>
+                <p className="text-[13px] text-muted-foreground">폴더가 없습니다. 오른쪽 사이드바에서 폴더를 먼저 만들어주세요.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {characterFolders.map((folder) => (
                     <button
                       key={folder.id}
-                      className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                      className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-muted"
                       onClick={() => addToFolderMutation.mutate({ folderId: folder.id, generationIds: Array.from(selected) })}
                       disabled={addToFolderMutation.isPending}
                     >
@@ -591,7 +591,7 @@ export default function GalleryPage() {
                       <div className="p-3.5">
                         <InlineNameEditor genId={gen.id} initialName={gen.characterName} prompt={gen.prompt} />
                         <div className="flex items-center justify-between flex-wrap gap-1.5 mt-2">
-                          <Badge variant="secondary" className="capitalize text-xs">
+                          <Badge variant="secondary" className="capitalize text-[13px]">
                             {gen.type === "character" ? (
                               <><Wand2 className="h-3 w-3 mr-1" />{gen.type}</>
                             ) : gen.type === "background" ? (
@@ -606,7 +606,7 @@ export default function GalleryPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="gap-1 text-xs"
+                                  className="gap-1 text-[13px]"
                                   data-testid={`button-pose-${gen.id}`}
                                   onClick={(e) => e.stopPropagation()}
                                 >
@@ -615,7 +615,7 @@ export default function GalleryPage() {
                                 </Button>
                               </Link>
                             )}
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-[13px] text-muted-foreground">
                               {new Date(gen.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -654,7 +654,7 @@ export default function GalleryPage() {
                   }
                 }}
                 placeholder="새 폴더 이름"
-                className="h-8 text-xs"
+                className="h-8 text-[13px]"
               />
               <Button
                 size="sm"
@@ -672,7 +672,7 @@ export default function GalleryPage() {
             {/* Folder list */}
             <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
               {characterFolders.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
+                <p className="text-[13px] text-muted-foreground text-center py-4">
                   폴더가 없습니다
                 </p>
               ) : (
@@ -693,7 +693,7 @@ export default function GalleryPage() {
                           <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-250 ${isOpen ? "" : "-rotate-90"}`} />
                           <FolderNameEditor folder={folder} onUpdate={invalidateAll} />
                           {folder.items.length > 0 && (
-                            <span className="text-xs text-muted-foreground shrink-0">({folder.items.length})</span>
+                            <span className="text-[13px] text-muted-foreground shrink-0">({folder.items.length})</span>
                           )}
                         </div>
                         <button
@@ -788,8 +788,8 @@ export default function GalleryPage() {
               </div>
               <div className="flex-1 min-w-0 space-y-1">
                 <p className="text-sm font-medium truncate">{regenTarget.characterName || regenTarget.prompt}</p>
-                <p className="text-xs text-muted-foreground">기존 캐릭터 이미지를 참고하여 새로운 이미지를 생성합니다.</p>
-                <Badge variant="secondary" className="text-xs capitalize mt-1">{regenTarget.type}</Badge>
+                <p className="text-[13px] text-muted-foreground">기존 캐릭터 이미지를 참고하여 새로운 이미지를 생성합니다.</p>
+                <Badge variant="secondary" className="text-[13px] capitalize mt-1">{regenTarget.type}</Badge>
               </div>
             </div>
 
@@ -804,7 +804,7 @@ export default function GalleryPage() {
                 maxLength={500}
                 disabled={regenerateMutation.isPending}
               />
-              <p className="text-xs text-muted-foreground">비워두면 같은 캐릭터의 변형 이미지가 생성됩니다.</p>
+              <p className="text-[13px] text-muted-foreground">비워두면 같은 캐릭터의 변형 이미지가 생성됩니다.</p>
             </div>
 
             <div className="flex gap-2 justify-end">

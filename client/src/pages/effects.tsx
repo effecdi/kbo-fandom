@@ -246,7 +246,7 @@ export default function EffectsPage() {
                       data-testid={`button-blur-${bt.value}`}
                     >
                       <span className="font-semibold">{bt.label}</span>
-                      <span className="text-xs opacity-70">{bt.labelKo}</span>
+                      <span className="text-[13px] opacity-70">{bt.labelKo}</span>
                     </Button>
                   ))}
                 </div>
@@ -267,8 +267,8 @@ export default function EffectsPage() {
                   data-testid="slider-strength"
                 />
                 <div className="flex justify-between mt-1">
-                  <span className="text-xs text-muted-foreground">0</span>
-                  <span className="text-xs text-muted-foreground">20</span>
+                  <span className="text-[13px] text-muted-foreground">0</span>
+                  <span className="text-[13px] text-muted-foreground">20</span>
                 </div>
               </Card>
 

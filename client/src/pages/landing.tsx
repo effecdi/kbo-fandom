@@ -268,7 +268,7 @@ export default function LandingPage() {
                 <div className="text-2xl sm:text-3xl font-black mb-0.5" data-testid={`text-stat-value-${i}`}>
                   <CountUp to={stat.value} duration={2.5} suffix={stat.suffix} />
                 </div>
-                <div className="text-xs text-muted-foreground" data-testid={`text-stat-label-${i}`}>{stat.label}</div>
+                <div className="text-[13px] text-muted-foreground" data-testid={`text-stat-label-${i}`}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -309,7 +309,7 @@ export default function LandingPage() {
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.gradient} mx-auto mb-5 flex items-center justify-center shadow-lg`}>
                   <item.icon className="h-7 w-7 text-white" />
                 </div>
-                <div className="text-xs font-bold text-primary/40 uppercase tracking-widest mb-2">Step {item.step}</div>
+                <div className="text-[13px] font-bold text-primary/40 uppercase tracking-widest mb-2">Step {item.step}</div>
                 <h3 className="font-bold text-lg mb-2" data-testid={`text-step-title-${item.step}`}>{item.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-step-desc-${item.step}`}>{item.desc}</p>
               </motion.div>
@@ -403,7 +403,7 @@ export default function LandingPage() {
                       <span className="text-4xl font-black tracking-tight">₩0</span>
                       <span className="text-sm text-slate-400">/월</span>
                     </div>
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
+                    <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
                   </div>
                   <ul className="space-y-2.5 text-sm mb-7 mt-2">
                     {[
@@ -453,12 +453,12 @@ export default function LandingPage() {
                     <span className="text-[13px] text-primary-foreground/70">/월</span>
                   </div>
                   <div className="mb-2">
-                    <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
+                    <p className="text-[13px] uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-4xl font-black tracking-tight">₩29,900</span>
                       <span className="text-sm text-primary-foreground/70">/월</span>
                     </div>
-                    <p className="mt-2 text-xs text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
+                    <p className="mt-2 text-[13px] text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
                   </div>
                   <ul className="space-y-2.5 text-sm mb-7 mt-2">
                     {[

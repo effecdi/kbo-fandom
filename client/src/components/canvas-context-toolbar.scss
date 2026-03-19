@@ -57,7 +57,7 @@ $transition-fast: 150ms ease;
     cursor: pointer;
     transition: all $transition-fast;
     color: $muted-fg;
-    font-size: 12px;
+    font-size: 13px;
     flex-shrink: 0;
 
     &:hover {
@@ -84,7 +84,7 @@ $transition-fast: 150ms ease;
   }
 
   &__btn-label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -171,7 +171,7 @@ $transition-fast: 150ms ease;
     border-radius: 4px;
     background: transparent;
     text-align: left;
-    font-size: 12px;
+    font-size: 13px;
     color: $muted-fg;
     cursor: pointer;
     transition: all $transition-fast;
@@ -366,13 +366,13 @@ $transition-fast: 150ms ease;
   }
 
   &__label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     color: $muted-fg;
   }
 
   &__value {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: $primary;
     font-variant-numeric: tabular-nums;

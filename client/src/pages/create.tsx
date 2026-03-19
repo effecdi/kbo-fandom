@@ -149,7 +149,7 @@ export default function CreatePage() {
 
             {/* Image Upload Area */}
             <div className="mb-4">
-              <p className="text-xs font-medium text-muted-foreground mb-2">참고 이미지 (선택)</p>
+              <p className="text-[13px] font-medium text-muted-foreground mb-2">참고 이미지 (선택)</p>
               {sourceImage ? (
                 <div className="relative w-full max-w-[180px] aspect-square rounded-lg overflow-hidden border border-border bg-muted">
                   <img src={sourceImage} alt="참고 이미지" className="w-full h-full object-cover" />
@@ -173,7 +173,7 @@ export default function CreatePage() {
                   data-testid="dropzone-source-image"
                 >
                   <UploadCloud className="h-7 w-7 text-muted-foreground/60" />
-                  <span className="text-xs text-muted-foreground font-medium">이미지를 드래그하거나 클릭하여 업로드</span>
+                  <span className="text-[13px] text-muted-foreground font-medium">이미지를 드래그하거나 클릭하여 업로드</span>
                   <span className="text-[13px] text-muted-foreground/60">JPG, PNG (최대 10MB)</span>
                 </div>
               )}
@@ -196,7 +196,7 @@ export default function CreatePage() {
               )}
             </div>
 
-            <p className="text-xs font-medium text-muted-foreground mb-2">프롬프트 {sourceImage ? "(선택)" : ""}</p>
+            <p className="text-[13px] font-medium text-muted-foreground mb-2">프롬프트 {sourceImage ? "(선택)" : ""}</p>
             <Textarea
               placeholder={sourceImage
                 ? "예: 이 이미지와 같은 야구선수인데 토끼머리띠를 썼다, 이 캐릭터를 귀엽게 변환..."
@@ -208,7 +208,7 @@ export default function CreatePage() {
               data-testid="input-prompt"
             />
             <div className="mt-2.5 flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {sourceImage ? "이미지를 분석하여 캐릭터를 생성합니다" : "간단한 설명일수록 더 좋은 결과를 얻을 수 있어요!"}
               </p>
               <Button
@@ -244,7 +244,7 @@ export default function CreatePage() {
               >
                 그림 스타일 선택
               </Button>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
                 <span className="px-2 py-1 rounded-full bg-muted text-[13px]">
                   {styles.find((s) => s.value === style)?.label || "심플 라인"}
                 </span>
@@ -311,11 +311,11 @@ export default function CreatePage() {
             )}
           </Button>
           {!isPro && (
-            <p className="mt-1.5 text-xs text-muted-foreground text-center">1회 생성 시 2 크레딧 소모</p>
+            <p className="mt-1.5 text-[13px] text-muted-foreground text-center">1회 생성 시 2 크레딧 소모</p>
           )}
           {!isPro && isOutOfCredits && (
             <div className="mt-2 flex items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">크레딧이 부족합니다.</p>
+              <p className="text-[13px] text-muted-foreground">크레딧이 부족합니다.</p>
               <Button size="sm" variant="secondary" asChild>
                 <a href="/pricing">크레딧 충전</a>
               </Button>
@@ -331,7 +331,7 @@ export default function CreatePage() {
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">캐릭터를 그리고 있어요...</p>
-                  <p className="text-xs text-muted-foreground">15~30초 정도 걸려요</p>
+                  <p className="text-[13px] text-muted-foreground">15~30초 정도 걸려요</p>
                 </div>
               </div>
             ) : generatedImage ? (

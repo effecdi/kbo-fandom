@@ -182,7 +182,7 @@ export function ElementPropertiesPanel({
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-6">
         <MousePointer2 className="h-8 w-8 text-muted-foreground/40 mb-3" />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           요소를 선택하세요
         </p>
       </div>
@@ -201,7 +201,7 @@ export function ElementPropertiesPanel({
 
     return (
       <div className="p-3 space-y-3 overflow-y-auto h-full">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">캐릭터</p>
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground">캐릭터</p>
 
         {/* Position section */}
         <div className="space-y-1.5">
@@ -363,7 +363,7 @@ export function ElementPropertiesPanel({
   if (selectedText) {
     return (
       <div className="p-3 space-y-3 overflow-y-auto h-full">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">텍스트</p>
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground">텍스트</p>
         <div className="grid grid-cols-2 gap-1.5">
           {[
             { label: "X", value: Math.round(selectedText.x), key: "x" },
@@ -390,8 +390,8 @@ export function ElementPropertiesPanel({
   if (selectedLine) {
     return (
       <div className="p-3 space-y-3 overflow-y-auto h-full">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">선</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground">선</p>
+        <p className="text-[13px] text-muted-foreground">
           {selectedLine.lineType === "straight" ? "직선" : selectedLine.lineType === "curved" ? "곡선" : "꺾인선"}
         </p>
       </div>
@@ -409,7 +409,7 @@ export function ElementPropertiesPanel({
     <div className="p-3 space-y-3 overflow-y-auto h-full">
       {/* Transform */}
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">변환</p>
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground mb-1.5">변환</p>
         <div className="space-y-1.5">
           <AlignButtons onAlign={alignBubble} />
           <div className="grid grid-cols-2 gap-1.5">
@@ -435,7 +435,7 @@ export function ElementPropertiesPanel({
 
       {/* Text hint */}
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">텍스트</p>
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground mb-1.5">텍스트</p>
         <p className="text-[13px] text-muted-foreground/70 italic">
           캔버스에서 더블클릭하여 텍스트 편집
         </p>
@@ -443,7 +443,7 @@ export function ElementPropertiesPanel({
 
       {/* Style */}
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">말풍선 형태</p>
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground mb-1.5">말풍선 형태</p>
         {BUBBLE_CATEGORIES.map((cat) => (
           <div key={cat.label} className="mb-1.5">
             <span className="text-[13px] text-muted-foreground/70 font-medium">{cat.label}</span>
@@ -635,7 +635,7 @@ export function ElementPropertiesPanel({
 
       {/* Tail */}
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">말꼬리</p>
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground mb-1.5">말꼬리</p>
         <div className="flex gap-1 overflow-x-auto scrollbar-hide">
           {(Object.entries(TAIL_LABELS) as [string, string][]).map(([k, l]) => (
             <button
@@ -731,7 +731,7 @@ export function ElementPropertiesPanel({
 
       {/* Colors */}
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">색상</p>
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground mb-1.5">색상</p>
         <div className="flex flex-wrap gap-1 mb-2">
           {BUBBLE_COLOR_PRESETS.map((preset) => (
             <button
@@ -774,7 +774,7 @@ export function ElementPropertiesPanel({
 
       {/* Draw mode */}
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">그리기 모드</p>
+        <p className="text-[13px] uppercase tracking-wide text-muted-foreground mb-1.5">그리기 모드</p>
         <div className="flex gap-1 flex-wrap">
           {(["both", "fill_only", "stroke_only"] as const).map((mode) => (
             <button

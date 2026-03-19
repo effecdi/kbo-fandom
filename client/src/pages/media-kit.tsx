@@ -413,16 +413,16 @@ export default function MediaKitPage() {
               <h3 className="text-sm font-semibold mb-3" data-testid="label-profile-section">프로필 정보</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs mb-1 block">인스타그램 핸들</Label>
+                  <Label className="text-[13px] mb-1 block">인스타그램 핸들</Label>
                   <Input value={data.handle} onChange={(e) => updateField("handle", e.target.value)} placeholder="@username" data-testid="input-handle" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">프로필 이름</Label>
+                  <Label className="text-[13px] mb-1 block">프로필 이름</Label>
                   <Input value={data.profileName} onChange={(e) => updateField("profileName", e.target.value)} placeholder="표시 이름" data-testid="input-profile-name" />
                 </div>
               </div>
               <div className="mt-3">
-                <Label className="text-xs mb-1 block">카테고리</Label>
+                <Label className="text-[13px] mb-1 block">카테고리</Label>
                 <Select value={data.category} onValueChange={(v) => updateField("category", v)}>
                   <SelectTrigger data-testid="select-category"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -432,7 +432,7 @@ export default function MediaKitPage() {
               </div>
               <div className="mt-3">
                 <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                  <Label className="text-xs">자기 소개</Label>
+                  <Label className="text-[13px]">자기 소개</Label>
                   <Button
                     variant="outline"
                     size="sm"
@@ -456,11 +456,11 @@ export default function MediaKitPage() {
               <h3 className="text-sm font-semibold mb-3" data-testid="label-contact-section">연락처</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs mb-1 block">이메일</Label>
+                  <Label className="text-[13px] mb-1 block">이메일</Label>
                   <Input value={data.contactEmail} onChange={(e) => updateField("contactEmail", e.target.value)} placeholder="email@example.com" data-testid="input-contact-email" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">카카오톡 ID</Label>
+                  <Label className="text-[13px] mb-1 block">카카오톡 ID</Label>
                   <Input value={data.contactKakao} onChange={(e) => updateField("contactKakao", e.target.value)} placeholder="kakao_id" data-testid="input-contact-kakao" />
                 </div>
               </div>
@@ -472,33 +472,33 @@ export default function MediaKitPage() {
               <h3 className="text-sm font-semibold mb-3" data-testid="label-metrics-section">지표 & 인사이트</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs mb-1 block">팔로워</Label>
+                  <Label className="text-[13px] mb-1 block">팔로워</Label>
                   <Input type="number" value={data.followers} onChange={(e) => updateField("followers", e.target.value)} placeholder="10000" data-testid="input-followers" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">팔로잉</Label>
+                  <Label className="text-[13px] mb-1 block">팔로잉</Label>
                   <Input type="number" value={data.following} onChange={(e) => updateField("following", e.target.value)} placeholder="500" data-testid="input-following" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">평균 좋아요</Label>
+                  <Label className="text-[13px] mb-1 block">평균 좋아요</Label>
                   <Input type="number" value={data.avgLikes} onChange={(e) => updateField("avgLikes", e.target.value)} placeholder="500" data-testid="input-avg-likes" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">평균 댓글</Label>
+                  <Label className="text-[13px] mb-1 block">평균 댓글</Label>
                   <Input type="number" value={data.avgComments} onChange={(e) => updateField("avgComments", e.target.value)} placeholder="50" data-testid="input-avg-comments" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">월간 도달</Label>
+                  <Label className="text-[13px] mb-1 block">월간 도달</Label>
                   <Input type="number" value={data.reach} onChange={(e) => updateField("reach", e.target.value)} placeholder="50000" data-testid="input-reach" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">참여율 (%)</Label>
+                  <Label className="text-[13px] mb-1 block">참여율 (%)</Label>
                   <Input type="number" value={data.engagement} onChange={(e) => updateField("engagement", e.target.value)} placeholder="5.2" data-testid="input-engagement" />
                 </div>
               </div>
 
               <div className="mt-4">
-                <Label className="text-xs font-medium mb-2 block">연령 분포 (%)</Label>
+                <Label className="text-[13px] font-medium mb-2 block">연령 분포 (%)</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { key: "ageGroup1" as const, label: "13-17" },
@@ -507,7 +507,7 @@ export default function MediaKitPage() {
                     { key: "ageGroup4" as const, label: "35+" },
                   ].map((ag) => (
                     <div key={ag.key}>
-                      <Label className="text-xs text-muted-foreground mb-1 block">{ag.label}</Label>
+                      <Label className="text-[13px] text-muted-foreground mb-1 block">{ag.label}</Label>
                       <Input type="number" value={data[ag.key]} onChange={(e) => updateField(ag.key, e.target.value)} data-testid={`input-age-${ag.label}`} />
                     </div>
                   ))}
@@ -515,14 +515,14 @@ export default function MediaKitPage() {
               </div>
 
               <div className="mt-4">
-                <Label className="text-xs font-medium mb-2 block">성별 비율 (%)</Label>
+                <Label className="text-[13px] font-medium mb-2 block">성별 비율 (%)</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-1 block">남성</Label>
+                    <Label className="text-[13px] text-muted-foreground mb-1 block">남성</Label>
                     <Input type="number" value={data.genderMale} onChange={(e) => updateField("genderMale", e.target.value)} data-testid="input-gender-male" />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-1 block">여성</Label>
+                    <Label className="text-[13px] text-muted-foreground mb-1 block">여성</Label>
                     <Input type="number" value={data.genderFemale} onChange={(e) => updateField("genderFemale", e.target.value)} data-testid="input-gender-female" />
                   </div>
                 </div>
@@ -533,19 +533,19 @@ export default function MediaKitPage() {
               <h3 className="text-sm font-semibold mb-3" data-testid="label-pricing-section">광고 단가 (원)</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs mb-1 block">피드 게시물</Label>
+                  <Label className="text-[13px] mb-1 block">피드 게시물</Label>
                   <Input type="number" value={data.priceFeed} onChange={(e) => updateField("priceFeed", e.target.value)} placeholder="100000" data-testid="input-price-feed" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">스토리</Label>
+                  <Label className="text-[13px] mb-1 block">스토리</Label>
                   <Input type="number" value={data.priceStory} onChange={(e) => updateField("priceStory", e.target.value)} placeholder="50000" data-testid="input-price-story" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">릴스</Label>
+                  <Label className="text-[13px] mb-1 block">릴스</Label>
                   <Input type="number" value={data.priceReel} onChange={(e) => updateField("priceReel", e.target.value)} placeholder="200000" data-testid="input-price-reel" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">패키지</Label>
+                  <Label className="text-[13px] mb-1 block">패키지</Label>
                   <Input type="number" value={data.pricePackage} onChange={(e) => updateField("pricePackage", e.target.value)} placeholder="300000" data-testid="input-price-package" />
                 </div>
               </div>

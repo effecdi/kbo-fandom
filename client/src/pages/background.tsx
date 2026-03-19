@@ -198,7 +198,7 @@ export default function BackgroundPage() {
         <div className="flex flex-col gap-4">
           <Card className="p-4">
             <h3 className="text-sm font-medium mb-3 text-muted-foreground">
-              원본 이미지 선택 <span className="text-xs">({sourceImages.length}/{MAX_SOURCES})</span>
+              원본 이미지 선택 <span className="text-[13px]">({sourceImages.length}/{MAX_SOURCES})</span>
             </h3>
 
             {/* 선택된 이미지 미리보기 */}
@@ -212,7 +212,7 @@ export default function BackgroundPage() {
                         alt={`Source ${idx + 1}`}
                         className="w-full h-full object-cover rounded-md border-2 border-primary"
                       />
-                      <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                      <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[13px] font-bold">
                         {idx + 1}
                       </div>
                       <button
@@ -279,7 +279,7 @@ export default function BackgroundPage() {
                           className="w-full aspect-square object-cover"
                         />
                         {isSelected && (
-                          <div className="absolute top-1 left-1 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                          <div className="absolute top-1 left-1 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[13px] font-bold">
                             {selIndex + 1}
                           </div>
                         )}
@@ -376,11 +376,11 @@ export default function BackgroundPage() {
             )}
           </Button>
           {!isPro && (
-            <p className="mt-1.5 text-xs text-muted-foreground text-center">1회 생성 시 5 크레딧 소모</p>
+            <p className="mt-1.5 text-[13px] text-muted-foreground text-center">1회 생성 시 5 크레딧 소모</p>
           )}
               {!isPro && isOutOfCredits && (
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <p className="text-xs text-muted-foreground">크레딧이 부족합니다.</p>
+                  <p className="text-[13px] text-muted-foreground">크레딧이 부족합니다.</p>
                   <Button size="sm" variant="secondary" asChild>
                     <a href="/pricing">크레딧 충전</a>
                   </Button>

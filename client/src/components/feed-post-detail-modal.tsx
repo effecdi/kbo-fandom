@@ -102,7 +102,7 @@ export function FeedPostDetailModal({ post, onClose, onAuthorClick }: FeedPostDe
               >
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarImage src={post.authorProfileImageUrl || ""} />
-                  <AvatarFallback className="text-xs">
+                  <AvatarFallback className="text-[13px]">
                     {(post.authorName || "U").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -124,7 +124,7 @@ export function FeedPostDetailModal({ post, onClose, onAuthorClick }: FeedPostDe
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Eye className="h-3.5 w-3.5" />
                 {post.viewCount}

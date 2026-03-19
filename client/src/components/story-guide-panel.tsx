@@ -134,7 +134,7 @@ export function StoryGuidePanel({ onClose, onNavigateToTab }: StoryGuidePanelPro
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pl-[38px] pr-1">
-                <p className="text-[12px] leading-relaxed text-muted-foreground whitespace-pre-line">
+                <p className="text-[13px] leading-relaxed text-muted-foreground whitespace-pre-line">
                   {section.description}
                 </p>
                 {section.tip && (

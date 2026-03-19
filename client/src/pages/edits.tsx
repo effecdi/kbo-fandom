@@ -158,7 +158,7 @@ export default function EditsPage() {
       </div>
       <div className="p-2.5">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <p className="text-xs font-medium truncate flex-1">
+          <p className="text-[13px] font-medium truncate flex-1">
             {episodeNum !== undefined ? `${episodeNum}화. ${project.name}` : project.name}
           </p>
           <Badge variant="secondary" className="text-[9px] px-1.5 py-0 shrink-0">
@@ -194,18 +194,18 @@ export default function EditsPage() {
             {currentFolderId !== null ? (
               <div className="flex items-center gap-1.5">
                 <button
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setCurrentFolderId(null)}
                 >
                   내 편집
                 </button>
-                <span className="text-xs text-muted-foreground">/</span>
+                <span className="text-[13px] text-muted-foreground">/</span>
                 <h1 className="text-lg font-bold tracking-tight">{currentFolder?.name}</h1>
               </div>
             ) : (
               <>
                 <h1 className="text-lg font-bold tracking-tight" data-testid="text-edits-title">내 편집</h1>
-                <p className="text-xs text-muted-foreground mt-0.5">저장된 프로젝트를 관리하세요</p>
+                <p className="text-[13px] text-muted-foreground mt-0.5">저장된 프로젝트를 관리하세요</p>
               </>
             )}
           </div>
@@ -253,7 +253,7 @@ export default function EditsPage() {
           <div className="text-center py-20">
             <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-sm font-medium mb-1">이 폴더에 프로젝트가 없습니다</h3>
-            <p className="text-xs text-muted-foreground">에디터에서 프로젝트를 저장할 때 이 폴더를 선택해보세요.</p>
+            <p className="text-[13px] text-muted-foreground">에디터에서 프로젝트를 저장할 때 이 폴더를 선택해보세요.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -265,7 +265,7 @@ export default function EditsPage() {
         <div className="text-center py-20">
           <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-sm font-medium mb-1" data-testid="text-no-projects">저장된 프로젝트가 없습니다</h3>
-          <p className="text-xs text-muted-foreground mb-4">
+          <p className="text-[13px] text-muted-foreground mb-4">
             {isPro ? "에디터에서 프로젝트를 저장해보세요." : "Pro 멤버십으로 업그레이드하면 프로젝트를 저장할 수 있습니다."}
           </p>
           <div className="flex items-center justify-center gap-2 flex-wrap">

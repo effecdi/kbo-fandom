@@ -80,7 +80,7 @@ export function startStoryTour() {
               <source src="/videos/tour/04-instatoon-full.mp4" type="video/mp4" />
             </video>
             <p><b>캐릭터 이미지 + 주제만으로 완성된 인스타툰을 자동 생성합니다.</b></p>
-            <ul style="margin-top:6px;padding-left:16px;font-size:12px;color:#888;">
+            <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:#888;">
               <li>① <b>기준 캐릭터 이미지 업로드</b> (최대 4장) — 그림체 자동 감지</li>
               <li>② <b>포즈·표정·아이템·배경</b> 프롬프트 자동 작성</li>
               <li>③ <b>한 번에 생성</b> → 캐릭터가 같은 그림체로 재생성</li>
@@ -101,7 +101,7 @@ export function startStoryTour() {
               <source src="/videos/tour/05-instatoon-prompt.mp4" type="video/mp4" />
             </video>
             <p><b>기준 이미지를 바탕으로 포즈·표정 프롬프트를 자동 작성하고 이미지를 생성합니다.</b></p>
-            <ul style="margin-top:6px;padding-left:16px;font-size:12px;color:#888;">
+            <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:#888;">
               <li>① <b>기준 이미지 선택</b> — 갤러리 또는 직접 업로드</li>
               <li>② <b>아트 스타일 선택</b> — 자동 감지 또는 수동 지정</li>
               <li>③ <b>포즈/표정 프롬프트</b> — AI가 자동으로 영문 프롬프트 생성</li>
@@ -122,7 +122,7 @@ export function startStoryTour() {
               <source src="/videos/tour/06-multicut.mp4" type="video/mp4" />
             </video>
             <p><b>한 번에 여러 장면(패널)을 자동으로 생성합니다.</b></p>
-            <ul style="margin-top:6px;padding-left:16px;font-size:12px;color:#888;">
+            <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:#888;">
               <li>① <b>주제/시나리오 입력</b> — 간단한 설명만으로 OK</li>
               <li>② <b>패널 수 설정</b> — 원하는 장면 수를 선택</li>
               <li>③ <b>일괄 생성</b> → 각 패널에 자동으로 이미지 + 자막 배치</li>
@@ -181,7 +181,7 @@ export function startStoryTour() {
               <source src="/videos/tour/09-bubble.mp4" type="video/mp4" />
             </video>
             <p><b>요소 탭 → 말풍선에서 다양한 편집이 가능합니다.</b></p>
-            <ul style="margin-top:6px;padding-left:16px;font-size:12px;color:#888;">
+            <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:#888;">
               <li><b>말풍선 추가</b>: 패널당 최대 5개</li>
               <li><b>스타일 변경</b>: 둥근형, 네모형, 구름형, 외침형 등</li>
               <li><b>꼬리 편집</b>: 꼬리 방향/위치를 드래그로 조절</li>
@@ -216,7 +216,7 @@ export function startStoryTour() {
               <source src="/videos/tour/11-canvas-context.mp4" type="video/mp4" />
             </video>
             <p><b>캔버스에서 요소를 클릭하면 컨텍스트 툴바가 상단에 나타납니다.</b></p>
-            <ul style="margin-top:6px;padding-left:16px;font-size:12px;color:#888;">
+            <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:#888;">
               <li><b>캐릭터 클릭</b> → 좌우 반전, 삭제, <b>AI 재생성</b> 버튼</li>
               <li><b>텍스트 클릭</b> → 폰트, 크기, 색상, 정렬 빠른 변경</li>
               <li><b>말풍선 클릭</b> → 스타일, 색상, 꼬리 방향 변경</li>
@@ -237,11 +237,11 @@ export function startStoryTour() {
               <source src="/videos/tour/12-ai-regen.mp4" type="video/mp4" />
             </video>
             <p><b>캔버스에서 캐릭터 이미지를 클릭하면 컨텍스트 툴바에 AI 재생성 버튼이 나타납니다.</b></p>
-            <ul style="margin-top:6px;padding-left:16px;font-size:12px;color:#888;">
+            <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:#888;">
               <li><b>프롬프트로 재생성</b>: 원하는 장면을 텍스트로 설명 → 해당 캐릭터 이미지 새로 생성</li>
               <li><b>다른 포즈/표정</b>: 프롬프트 없이 자동으로 다른 변형 생성</li>
             </ul>
-            <p style="margin-top:6px;font-size:12px;color:#888;">💡 캐릭터를 먼저 클릭 → 상단 컨텍스트 툴바에서 🔄 아이콘을 눌러 재생성 패널을 엽니다.</p>
+            <p style="margin-top:6px;font-size:13px;color:#888;">💡 캐릭터를 먼저 클릭 → 상단 컨텍스트 툴바에서 🔄 아이콘을 눌러 재생성 패널을 엽니다.</p>
           `,
           side: "left" as const,
         },
@@ -256,12 +256,12 @@ export function startStoryTour() {
               <source src="/videos/tour/13-watermark.mp4" type="video/mp4" />
             </video>
             <p><b>무료 사용자는 "OLLI Free" 워터마크가 자동 적용됩니다.</b></p>
-            <ul style="margin-top:6px;padding-left:16px;font-size:12px;color:#888;">
+            <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:#888;">
               <li><b>캔버스 워터마크</b>: 편집 중 캔버스 중앙에 반투명 "OLLI Free" 텍스트가 표시됩니다</li>
               <li><b>이미지 생성 워터마크</b>: 캐릭터/포즈/배경 이미지 생성 시 하단 중앙에 OLLI 로고가 삽입됩니다 (너비 30%, 투명도 70%)</li>
               <li><b>다운로드 시</b>: 워터마크가 포함된 채로 이미지가 저장됩니다</li>
             </ul>
-            <p style="margin-top:8px;font-size:12px;"><b>Pro 멤버십 업그레이드 시 모든 워터마크가 완전히 제거됩니다.</b></p>
+            <p style="margin-top:8px;font-size:13px;"><b>Pro 멤버십 업그레이드 시 모든 워터마크가 완전히 제거됩니다.</b></p>
           `,
           side: "left" as const,
         },

@@ -449,7 +449,7 @@ export function LayerListPanel({
         const isMask = ci.type === "shape" && ci.maskEnabled;
         const isLinked = !!ci.clipMaskId;
         const isScript = ci.type === "topScript" || ci.type === "bottomScript";
-        const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
+        const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[13px] hover:bg-accent hover:text-accent-foreground transition-colors";
         const ctxShortcut = "text-[13px] text-muted-foreground ml-4";
         return (
         <>
@@ -537,7 +537,7 @@ export function LayerListPanel({
 
             {/* Delete */}
             <button type="button"
-              className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+              className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[13px] text-red-500 hover:bg-red-500/10 transition-colors"
               onClick={() => { onDeleteLayer(ci); setContextMenu(null); }}>
               <span>레이어 삭제</span><span className={ctxShortcut}>Del</span>
             </button>

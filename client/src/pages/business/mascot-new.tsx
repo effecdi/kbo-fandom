@@ -207,7 +207,7 @@ export default function BusinessMascotNewPage() {
                   }`}
                 >
                   <p className="text-sm font-semibold text-foreground">{opt.label}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{opt.description}</p>
+                  <p className="text-[13px] text-muted-foreground mt-1">{opt.description}</p>
                 </button>
               ))}
             </div>
@@ -228,7 +228,7 @@ export default function BusinessMascotNewPage() {
               {sourceImage ? (
                 <div className="relative">
                   <img src={sourceImage} alt="참고 이미지" className="max-h-48 mx-auto rounded-lg object-contain" />
-                  <p className="text-xs text-muted-foreground mt-2">{sourceImageName}</p>
+                  <p className="text-[13px] text-muted-foreground mt-2">{sourceImageName}</p>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -247,7 +247,7 @@ export default function BusinessMascotNewPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">클릭 또는 드래그하여 업로드</p>
-                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP (10MB 이하)</p>
+                    <p className="text-[13px] text-muted-foreground mt-1">PNG, JPG, WEBP (10MB 이하)</p>
                   </div>
                 </div>
               )}

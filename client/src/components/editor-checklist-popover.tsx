@@ -79,7 +79,7 @@ export function EditorChecklistPopover({
                 <span className="text-sm font-semibold text-foreground">
                   시작하세요
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[13px] text-muted-foreground">
                   {completedCount}/{total} 완료됨
                 </span>
               </div>
@@ -156,7 +156,7 @@ export function EditorChecklistPopover({
                   localStorage.setItem(DISMISSED_KEY, "1");
                   onDismiss();
                 }}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               >
                 가이드 닫기
               </button>
@@ -178,7 +178,7 @@ export function EditorChecklistPopover({
           <span className="text-sm font-medium text-foreground whitespace-nowrap">
             시작하세요
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[13px] text-muted-foreground">
             {completedCount}/{total}
           </span>
           {/* Mini progress bar */}

@@ -163,7 +163,7 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
         <Card className="w-full max-w-md p-8 space-y-6" data-testid="card-onboarding-name">
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">STEP 1/2</p>
+            <p className="text-[13px] text-muted-foreground">STEP 1/2</p>
             <h2 className="text-xl font-bold">작가명을 알려주세요</h2>
             <p className="text-sm text-muted-foreground">
               크리에이터 프로필에 표시될 이름이에요.
@@ -197,7 +197,7 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
       <Card className="w-full max-w-md p-8 space-y-6" data-testid="card-onboarding-genre">
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">STEP 2/2</p>
+          <p className="text-[13px] text-muted-foreground">STEP 2/2</p>
           <h2 className="text-xl font-bold">주력 장르를 선택하세요</h2>
           <p className="text-sm text-muted-foreground">
             맞춤 트렌드 랭킹을 보여드릴게요.
@@ -216,7 +216,7 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
               data-testid={`button-genre-${g.value}`}
             >
               <div className="font-semibold text-sm">{g.label}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{g.desc}</div>
+              <div className="text-[13px] text-muted-foreground mt-0.5">{g.desc}</div>
             </button>
           ))}
         </div>
@@ -351,7 +351,7 @@ export default function HomePage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold">처음이신가요?</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   사용 가이드를 통해 주요 기능을 빠르게 둘러보세요.
                 </p>
               </div>
@@ -396,7 +396,7 @@ export default function HomePage() {
                         <Badge variant="secondary" className="text-[13px]" data-testid="badge-genre">{genreLabel}</Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-[13px] text-muted-foreground mt-0.5">
                       총 {totalGen}개 작품 생성
                     </p>
                   </div>
@@ -409,7 +409,7 @@ export default function HomePage() {
                       ) : (
                         <Badge variant="secondary" className="text-[13px]" data-testid="badge-plan">Free</Badge>
                       )}
-                      <span className="text-xs text-muted-foreground" data-testid="text-credits">
+                      <span className="text-[13px] text-muted-foreground" data-testid="text-credits">
                         {usage?.tier === "pro" ? "무제한" : `${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
                       </span>
                     </div>
@@ -428,13 +428,13 @@ export default function HomePage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">경험치</span>
-                  <span className="text-xs font-medium tabular-nums" data-testid="text-xp-progress">
+                  <span className="text-[13px] text-muted-foreground">경험치</span>
+                  <span className="text-[13px] font-medium tabular-nums" data-testid="text-xp-progress">
                     {xp.nextTier ? `${Math.round(xp.progress)}%` : "MAX"}
                   </span>
                 </div>
                 <Progress value={xp.progress} className="h-2" data-testid="progress-xp" />
-                <p className="text-xs text-muted-foreground" data-testid="text-xp-hint">
+                <p className="text-[13px] text-muted-foreground" data-testid="text-xp-hint">
                   {xp.nextTier && xp.remaining > 0 ? (
                     <><span className="font-medium text-primary">{xp.nextTier}</span>까지 {xp.remaining}개 더 생성하면 혜택 업그레이드</>
                   ) : (
@@ -447,7 +447,7 @@ export default function HomePage() {
                 <div className="flex items-start gap-2.5 mt-3 rounded-lg bg-primary/5 p-3" data-testid="section-next-unlock">
                   <Gift className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-primary mb-0.5">다음 등급 혜택</p>
+                    <p className="text-[13px] font-semibold text-primary mb-0.5">다음 등급 혜택</p>
                     <p className="text-[13px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
                   </div>
                 </div>
@@ -455,7 +455,7 @@ export default function HomePage() {
 
               <button
                 onClick={() => setShowTierGuide((v) => !v)}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover-elevate rounded-md px-2 py-1.5 -mx-1 w-fit mt-3"
+                className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover-elevate rounded-md px-2 py-1.5 -mx-1 w-fit mt-3"
                 data-testid="button-tier-guide-toggle"
               >
                 <Info className="h-3.5 w-3.5" />
@@ -471,7 +471,7 @@ export default function HomePage() {
                     return (
                       <div
                         key={t.name}
-                        className={`rounded-lg border p-3 text-xs transition-colors ${isCurrent ? "border-primary/30 bg-primary/5" : isUnlocked ? "border-border" : "border-border opacity-60"}`}
+                        className={`rounded-lg border p-3 text-[13px] transition-colors ${isCurrent ? "border-primary/30 bg-primary/5" : isUnlocked ? "border-border" : "border-border opacity-60"}`}
                         data-testid={`tier-info-${i}`}
                       >
                         <div className="flex items-center gap-2.5 mb-2.5">
@@ -510,7 +510,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-4 gap-2">
                   <h2 className="text-lg font-bold">최근 작품</h2>
                   <Link href="/gallery">
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs" data-testid="button-view-all-gallery">
+                    <Button variant="ghost" size="sm" className="gap-1 text-[13px]" data-testid="button-view-all-gallery">
                       전체보기 <ArrowRight className="h-3 w-3" />
                     </Button>
                   </Link>
@@ -526,7 +526,7 @@ export default function HomePage() {
                         />
                       </div>
                       <div className="p-2.5">
-                        <p className="text-xs truncate text-muted-foreground">{gen.prompt}</p>
+                        <p className="text-[13px] truncate text-muted-foreground">{gen.prompt}</p>
                       </div>
                     </Card>
                   ))}
@@ -548,7 +548,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm">Pro로 업그레이드</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">무제한 생성 & 모든 기능·모든 폰트 해제</p>
+                      <p className="text-[13px] text-muted-foreground mt-0.5">무제한 생성 & 모든 기능·모든 폰트 해제</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-primary shrink-0" />
                   </div>
@@ -567,7 +567,7 @@ export default function HomePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm">크레딧 충전</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">₩4,900 / 50 크레딧</p>
+                    <p className="text-[13px] text-muted-foreground mt-0.5">₩4,900 / 50 크레딧</p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-primary shrink-0" />
                 </div>
@@ -598,7 +598,7 @@ export default function HomePage() {
                               <h3 className="font-semibold text-sm dark:text-white">{tool.title}</h3>
                               {/* PRO 배지 제거 */}
                             </div>
-                            <p className="text-xs text-muted-foreground dark:text-white/60 mt-1 leading-relaxed">{tool.desc}</p>
+                            <p className="text-[13px] text-muted-foreground dark:text-white/60 mt-1 leading-relaxed">{tool.desc}</p>
                           </div>
                         </div>
                       </div>
@@ -626,7 +626,7 @@ export default function HomePage() {
                     <span className="text-4xl font-black tracking-tight">₩0</span>
                     <span className="text-sm text-slate-400">/월</span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
+                  <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
                 </div>
                 <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
@@ -670,12 +670,12 @@ export default function HomePage() {
                   <span className="text-[13px] text-primary-foreground/70">/월</span>
                 </div>
                 <div className="mb-2">
-                  <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
+                  <p className="text-[13px] uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-black tracking-tight">₩29,900</span>
                     <span className="text-sm text-primary-foreground/70">/월</span>
                   </div>
-                  <p className="mt-2 text-xs text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
+                  <p className="mt-2 text-[13px] text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
                 </div>
                 <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
@@ -726,7 +726,7 @@ export default function HomePage() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-2xl font-black text-primary">₩4,900</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
+                    <div className="text-[13px] text-slate-500 dark:text-slate-400">50 크레딧</div>
                   </div>
                 </div>
               </Card>
@@ -748,7 +748,7 @@ export default function HomePage() {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-2xl font-black text-primary">₩4,900</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
+                  <div className="text-[13px] text-slate-500 dark:text-slate-400">50 크레딧</div>
                 </div>
               </div>
             </Card>

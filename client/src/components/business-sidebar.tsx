@@ -77,7 +77,7 @@ export function BusinessSidebar() {
             <p className="text-sm font-semibold text-foreground truncate">
               {user?.firstName || "사용자"}
             </p>
-            <p className="text-xs text-muted-foreground">기업 모드</p>
+            <p className="text-[13px] text-muted-foreground">기업 모드</p>
           </div>
         </div>
         <div className="mt-2 space-y-1">

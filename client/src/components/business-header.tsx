@@ -27,7 +27,7 @@ export function BusinessHeader() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-xs font-semibold">
+          <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[13px] font-semibold">
             기업 모드
           </div>
 

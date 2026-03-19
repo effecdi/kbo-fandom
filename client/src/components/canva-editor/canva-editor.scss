@@ -409,7 +409,7 @@ $transition-normal: 200ms ease;
     border: 1px solid $border;
     border-radius: $radius-sm;
     padding: 0 8px;
-    font-size: 12px;
+    font-size: 13px;
     background: transparent;
     color: $toolbar-fg;
     outline: none;
@@ -620,7 +620,7 @@ $transition-normal: 200ms ease;
     width: 100%;
     padding: 8px 10px;
     border-radius: $radius-sm;
-    font-size: 12px;
+    font-size: 13px;
     color: $toolbar-fg;
     @include hover-lift;
   }

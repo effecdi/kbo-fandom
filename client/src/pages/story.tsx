@@ -2533,7 +2533,7 @@ function EditorPanel({
         <div className="rounded-md space-y-3">
           {/* 캔버스 배경 섹션 */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">캔버스 배경</Label>
+            <Label className="text-[13px] text-muted-foreground">캔버스 배경</Label>
 
             <div className="flex gap-1 flex-wrap items-center">
               <span className="text-[13px] text-muted-foreground mr-0.5">배경색</span>
@@ -2572,7 +2572,7 @@ function EditorPanel({
 
             <button
               type="button"
-              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover-elevate"
+              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-[13px] text-muted-foreground hover-elevate"
               onClick={() =>
                 document.getElementById(`story-bg-upload-${index}`)?.click()
               }
@@ -2617,10 +2617,10 @@ function EditorPanel({
 
           {/* 이미지 업로드 섹션 (기존) */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
+            <Label className="text-[13px] text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
             <button
               type="button"
-              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover-elevate"
+              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-[13px] text-muted-foreground hover-elevate"
               onClick={() =>
                 document.getElementById(`story-image-upload-${index}`)?.click()
               }
@@ -2642,7 +2642,7 @@ function EditorPanel({
           {/* 갤러리에서 선택 섹션 */}
           <div className="space-y-2 rounded-lg border border-border p-2.5">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-semibold">갤러리에서 선택</Label>
+              <Label className="text-[13px] font-semibold">갤러리에서 선택</Label>
               {selectedGalleryIds.size > 0 && (
                 <span className="text-[13px] text-primary font-medium">{selectedGalleryIds.size}개 선택됨</span>
               )}
@@ -2675,7 +2675,7 @@ function EditorPanel({
               </div>
             ) : charImages.length === 0 ? (
               <p
-                className="text-xs text-muted-foreground py-3 text-center"
+                className="text-[13px] text-muted-foreground py-3 text-center"
                 data-testid="text-no-characters"
               >
                 {activeGalleryFolderId ? "이 폴더에 이미지가 없습니다." : "생성된 이미지가 없습니다. 먼저 캐릭터나 배경을 만들어주세요."}
@@ -2700,7 +2700,7 @@ function EditorPanel({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-xs px-2"
+                      className="text-[13px] px-2"
                       onClick={() => setSelectedGalleryIds(new Set())}
                     >
                       취소
@@ -2746,7 +2746,7 @@ function EditorPanel({
                 </div>
                 {galleryHasMore && (
                   <button
-                    className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="w-full py-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                     onClick={onLoadMoreGallery}
                   >
                     더 보기
@@ -2769,7 +2769,7 @@ function EditorPanel({
       {isImageMode && selectedChar && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2 mt-3">
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-[13px] font-medium text-muted-foreground">
               이미지 도구
             </span>
             {!isPro && (
@@ -2792,7 +2792,7 @@ function EditorPanel({
             }}
           >
             <FlipHorizontal2 className="h-3.5 w-3.5" />
-            <span className="text-xs">좌우 반전</span>
+            <span className="text-[13px]">좌우 반전</span>
           </Button>
           <Button
             size="sm"
@@ -2806,7 +2806,7 @@ function EditorPanel({
             ) : (
               <Wand2 className="h-3.5 w-3.5" />
             )}
-            <span className="text-xs">AI 배경제거 (Pro)</span>
+            <span className="text-[13px]">AI 배경제거 (Pro)</span>
           </Button>
         </div>
       )}
@@ -7683,17 +7683,17 @@ export default function StoryPage() {
                       <DropdownMenuLabel className="text-[13px]">PNG 다운로드</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => guard(() => downloadPanelSized(activePanelIndex, CANVAS_W, CANVAS_H))}>
 
-                        <span className="text-xs">Original ({CANVAS_W}×{CANVAS_H})</span>
+                        <span className="text-[13px]">Original ({CANVAS_W}×{CANVAS_H})</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, CANVAS_W * 2, CANVAS_H * 2))}>
 
-                        <span className="text-xs">Instagram 2x ({CANVAS_W * 2}×{CANVAS_H * 2})</span>
+                        <span className="text-[13px]">Instagram 2x ({CANVAS_W * 2}×{CANVAS_H * 2})</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSvg(activePanelIndex))}>
 
-                        <span className="text-xs">SVG</span>
+                        <span className="text-[13px]">SVG</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -7703,7 +7703,7 @@ export default function StoryPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 h-7 text-xs px-2"
+                        className="gap-1 h-7 text-[13px] px-2"
                         data-testid="button-download-all-panels"
                       >
                         <Download className="h-3 w-3" />
@@ -7713,21 +7713,21 @@ export default function StoryPage() {
                     <DropdownMenuContent align="end" className="min-w-[200px]">
                       <DropdownMenuLabel className="text-[13px]">PNG 전체 다운로드</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => guard(() => downloadAllSized(CANVAS_W, CANVAS_H))}>
-                        <span className="text-xs">Original ({CANVAS_W}×{CANVAS_H})</span>
+                        <span className="text-[13px]">Original ({CANVAS_W}×{CANVAS_H})</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(CANVAS_W * 2, CANVAS_H * 2))}>
-                        <span className="text-xs">Instagram 2x ({CANVAS_W * 2}×{CANVAS_H * 2})</span>
+                        <span className="text-[13px]">Instagram 2x ({CANVAS_W * 2}×{CANVAS_H * 2})</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSvg())}>
-                        <span className="text-xs">SVG</span>
+                        <span className="text-[13px]">SVG</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <Button size="sm" onClick={() => guard(() => setShowSaveModal(true))} className="gap-1 h-7 text-xs px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
+                  <Button size="sm" onClick={() => guard(() => setShowSaveModal(true))} className="gap-1 h-7 text-[13px] px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
                     <Save className="h-3 w-3" />
                     저장
                     {!isPro && <Crown className="h-2.5 w-2.5 ml-0.5 text-yellow-300" />}
@@ -7735,7 +7735,7 @@ export default function StoryPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1 h-7 text-xs px-2"
+                    className="gap-1 h-7 text-[13px] px-2"
                     onClick={() => guard(() => setShowInstagramPublish(true))}
                     title="Instagram에 게시"
                     data-testid="button-instagram-publish"
@@ -9407,7 +9407,7 @@ export default function StoryPage() {
                             if (!maskShape) return false;
                             return ((maskShape as any).maskedLayerIds || []).includes(ctxInfo!.id);
                           })();
-                          const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
+                          const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[13px] hover:bg-accent hover:text-accent-foreground transition-colors";
                           const ctxShortcut = "text-[13px] text-muted-foreground ml-4";
                           return (
                           <>
@@ -9491,7 +9491,7 @@ export default function StoryPage() {
 
                               {/* Delete */}
                               <button type="button"
-                                className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+                                className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[13px] text-red-500 hover:bg-red-500/10 transition-colors"
                                 disabled={!hasSelection}
                                 onClick={() => { handleOverlayDelete(); setOverlayContextMenu(null); }}>
                                 <span>삭제</span><span className={ctxShortcut}>Del</span>
@@ -9794,7 +9794,7 @@ export default function StoryPage() {
               >
                 <ZoomIn className="h-3.5 w-3.5" />
               </Button>
-              <span className="text-xs text-muted-foreground tabular-nums w-9 text-right" data-testid="text-story-zoom-value">{zoom}%</span>
+              <span className="text-[13px] text-muted-foreground tabular-nums w-9 text-right" data-testid="text-story-zoom-value">{zoom}%</span>
             </div>
             <div className="h-4 w-px bg-border" />
             <Button
@@ -9991,7 +9991,7 @@ export default function StoryPage() {
                 <ResizablePanel defaultSize={50} minSize={20}>
                   {activeLeftTab === "elements" && elementsSubTab === "script" ? (
                     <div className="h-full overflow-y-auto p-3 space-y-3">
-                      <h4 className="text-xs font-semibold">자막 설정</h4>
+                      <h4 className="text-[13px] font-semibold">자막 설정</h4>
                       <p className="text-[13px] text-muted-foreground">패널 {activePanelIndex + 1}</p>
 
                       <div className="flex gap-1 flex-wrap">
@@ -10385,7 +10385,7 @@ export default function StoryPage() {
                   ) : activeLeftTab === "elements" && elementsSubTab === "bubble" ? (
                     <div className="h-full overflow-y-auto flex flex-col">
                       <div className="p-3 border-b border-border space-y-2">
-                        <h4 className="text-xs font-semibold">말풍선</h4>
+                        <h4 className="text-[13px] font-semibold">말풍선</h4>
                         <Button size="sm" variant="ghost" className="w-full bg-muted/40 hover:bg-muted/60"
                           onClick={() => {
                             if (activePanel.bubbles.length >= 5) return;
@@ -10440,7 +10440,7 @@ export default function StoryPage() {
                   ) : activeLeftTab === "ai" && aiMode ? (
                     <div className="h-full overflow-y-auto p-3 space-y-4">
                       <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-xs font-semibold">
+                        <h4 className="text-[13px] font-semibold">
                           {aiMode === "subtitle" && "AI 프롬프트 자막 생성"}
                           {aiMode === "instatoonFull" && "인스타툰 자동화 생성"}
                           {aiMode === "instatoonPrompt" && "인스타툰 이미지 생성"}
@@ -10518,7 +10518,7 @@ export default function StoryPage() {
                             onFirstImageSelected={(img) => { setDetectedStyle("auto"); detectArtStyle(img.imageUrl).finally(() => setIsDetectingStyle(false)); }}
                           />
                           <div className="space-y-1.5">
-                            <span className="text-xs font-semibold text-foreground">② 인스타툰 주제</span>
+                            <span className="text-[13px] font-semibold text-foreground">② 인스타툰 주제</span>
                             <div className="flex gap-2">
                               <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="주제 입력 (예: 월요일 출근길)" className="text-sm" data-testid="input-story-topic" />
                               <Button size="icon" variant="outline" onClick={() => suggestMutation.mutate()} disabled={suggestMutation.isPending} data-testid="button-suggest-topic">
@@ -10527,34 +10527,34 @@ export default function StoryPage() {
                             </div>
                           </div>
                           <div className="space-y-1.5">
-                            <span className="text-xs font-semibold text-foreground">③ 인스타툰 전체 프롬프트 <span className="text-[13px] font-normal text-muted-foreground">(선택 — 포즈·표정·배경·아이템을 한 번에 적어도 돼요)</span></span>
-                            <Textarea value={instatoonScenePrompt} onChange={(e) => setInstatoonScenePrompt(e.target.value)} placeholder="예: 비 오는 월요일 출근길, 주인공은 커피를 들고 지하철 안에서 멍한 표정으로 서 있고, 뒤에는 붐비는 사람들과 형광 조명이 보인다" className="text-xs resize-none" rows={3} />
+                            <span className="text-[13px] font-semibold text-foreground">③ 인스타툰 전체 프롬프트 <span className="text-[13px] font-normal text-muted-foreground">(선택 — 포즈·표정·배경·아이템을 한 번에 적어도 돼요)</span></span>
+                            <Textarea value={instatoonScenePrompt} onChange={(e) => setInstatoonScenePrompt(e.target.value)} placeholder="예: 비 오는 월요일 출근길, 주인공은 커피를 들고 지하철 안에서 멍한 표정으로 서 있고, 뒤에는 붐비는 사람들과 형광 조명이 보인다" className="text-[13px] resize-none" rows={3} />
                             <p className="text-[13px] text-muted-foreground">빈칸으로 두면 아래 포즈/표정·배경/아이템 칸을 기준으로 생성돼요.</p>
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-foreground">④ 포즈 / 표정 <span className="text-[13px] font-normal text-muted-foreground">(선택 — 비우면 AI가 자동 결정)</span></span>
+                              <span className="text-[13px] font-semibold text-foreground">④ 포즈 / 표정 <span className="text-[13px] font-normal text-muted-foreground">(선택 — 비우면 AI가 자동 결정)</span></span>
                               <Button size="sm" variant={posePromptMutation.isPending ? "destructive" : "outline"} onClick={() => posePromptMutation.isPending ? promptAbortRef.current?.abort() : posePromptMutation.mutate()}>
                                 {posePromptMutation.isPending ? (<span className="text-[13px]">취소</span>) : (<span className="text-[13px]">AI 추천</span>)}
                               </Button>
                             </div>
                             <div className="grid grid-cols-1 gap-2">
-                              <Textarea value={posePrompt} onChange={(e) => setPosePrompt(e.target.value)} placeholder="포즈 (예: 여고생 팬과 나란히 서서 브이포즈로 사진 찍기)" className="text-xs resize-none" rows={2} />
-                              <Textarea value={expressionPrompt} onChange={(e) => setExpressionPrompt(e.target.value)} placeholder="표정 (예: 부끄러우면서도 기뻐하는 표정, 볼이 붉어짐)" className="text-xs resize-none" rows={2} />
+                              <Textarea value={posePrompt} onChange={(e) => setPosePrompt(e.target.value)} placeholder="포즈 (예: 여고생 팬과 나란히 서서 브이포즈로 사진 찍기)" className="text-[13px] resize-none" rows={2} />
+                              <Textarea value={expressionPrompt} onChange={(e) => setExpressionPrompt(e.target.value)} placeholder="표정 (예: 부끄러우면서도 기뻐하는 표정, 볼이 붉어짐)" className="text-[13px] resize-none" rows={2} />
                             </div>
                             <p className="text-[13px] text-amber-600 dark:text-amber-400 leading-relaxed bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1.5">💡 다른 인물이 등장하는 장면은 포즈에 함께 묘사하세요</p>
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-foreground">⑤ 배경 / 아이템 <span className="text-[13px] font-normal text-muted-foreground">(선택)</span></span>
+                              <span className="text-[13px] font-semibold text-foreground">⑤ 배경 / 아이템 <span className="text-[13px] font-normal text-muted-foreground">(선택)</span></span>
                               <Button size="sm" variant="outline" disabled={backgroundPromptMutation.isPending} onClick={() => backgroundPromptMutation.mutate()}>
                                 {backgroundPromptMutation.isPending ? (<span className="text-[13px] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />생성 중</span>) : (<span className="text-[13px]">AI 추천</span>)}
                               </Button>
                               {backgroundPromptMutation.isPending && (<button type="button" className="text-[13px] text-muted-foreground hover:text-destructive transition-colors" onClick={() => promptAbortRef.current?.abort()}>취소</button>)}
                             </div>
                             <div className="grid grid-cols-1 gap-2">
-                              <Textarea value={backgroundPrompt} onChange={(e) => setBackgroundPrompt(e.target.value)} placeholder="배경 (예: 퇴근길 지하철 안, 붐비는 플랫폼)" className="text-xs resize-none" rows={2} />
-                              <Textarea value={itemPrompt} onChange={(e) => setItemPrompt(e.target.value)} placeholder="아이템/소품 (예: 커피컵, 스마트폰)" className="text-xs resize-none" rows={2} />
+                              <Textarea value={backgroundPrompt} onChange={(e) => setBackgroundPrompt(e.target.value)} placeholder="배경 (예: 퇴근길 지하철 안, 붐비는 플랫폼)" className="text-[13px] resize-none" rows={2} />
+                              <Textarea value={itemPrompt} onChange={(e) => setItemPrompt(e.target.value)} placeholder="아이템/소품 (예: 커피컵, 스마트폰)" className="text-[13px] resize-none" rows={2} />
                             </div>
                           </div>
                           {autoRefImages.length === 0 && (<p className="text-[13px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-md px-2.5 py-1.5">⚠️ 기준 캐릭터 이미지를 선택해야 포즈·표정이 자동 변형됩니다.</p>)}
@@ -10603,23 +10603,23 @@ export default function StoryPage() {
                             </div>
                           )}
                           <div className="space-y-2">
-                            <div className="flex items-center gap-1"><span className="text-xs font-semibold text-foreground">포즈 / 표정</span><span className="text-[13px] text-muted-foreground ml-1">— 입력하면 배경이 자동 완성됩니다</span></div>
+                            <div className="flex items-center gap-1"><span className="text-[13px] font-semibold text-foreground">포즈 / 표정</span><span className="text-[13px] text-muted-foreground ml-1">— 입력하면 배경이 자동 완성됩니다</span></div>
                             <div className="grid grid-cols-1 gap-2">
-                              <Textarea value={posePrompt} onChange={(e) => setPosePrompt(e.target.value)} placeholder="포즈 (예: 팬과 나란히 카메라 향해 브이포즈 취하기)" className="text-xs resize-none" rows={2} />
-                              <Textarea value={expressionPrompt} onChange={(e) => setExpressionPrompt(e.target.value)} placeholder="표정 (예: 수줍어하면서 기뻐하는 표정)" className="text-xs resize-none" rows={2} />
+                              <Textarea value={posePrompt} onChange={(e) => setPosePrompt(e.target.value)} placeholder="포즈 (예: 팬과 나란히 카메라 향해 브이포즈 취하기)" className="text-[13px] resize-none" rows={2} />
+                              <Textarea value={expressionPrompt} onChange={(e) => setExpressionPrompt(e.target.value)} placeholder="표정 (예: 수줍어하면서 기뻐하는 표정)" className="text-[13px] resize-none" rows={2} />
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-2"><span className="text-xs font-semibold text-foreground">배경 / 아이템{(posePrompt.trim() || expressionPrompt.trim()) && (<span className="ml-1.5 text-[13px] font-normal text-primary">← 자동 생성 가능</span>)}</span></div>
+                            <div className="flex items-center justify-between gap-2"><span className="text-[13px] font-semibold text-foreground">배경 / 아이템{(posePrompt.trim() || expressionPrompt.trim()) && (<span className="ml-1.5 text-[13px] font-normal text-primary">← 자동 생성 가능</span>)}</span></div>
                             <div className="grid grid-cols-1 gap-2">
-                              <Textarea value={backgroundPrompt} onChange={(e) => setBackgroundPrompt(e.target.value)} placeholder="배경 프롬프트 — 비워도 AI가 자동으로 채워줍니다" className="text-xs resize-none" rows={2} />
-                              <Textarea value={itemPrompt} onChange={(e) => setItemPrompt(e.target.value)} placeholder="아이템/소품 프롬프트 — 비워도 자동 생성됩니다" className="text-xs resize-none" rows={2} />
+                              <Textarea value={backgroundPrompt} onChange={(e) => setBackgroundPrompt(e.target.value)} placeholder="배경 프롬프트 — 비워도 AI가 자동으로 채워줍니다" className="text-[13px] resize-none" rows={2} />
+                              <Textarea value={itemPrompt} onChange={(e) => setItemPrompt(e.target.value)} placeholder="아이템/소품 프롬프트 — 비워도 자동 생성됩니다" className="text-[13px] resize-none" rows={2} />
                             </div>
                           </div>
                           {instatoonPromptMutation.isPending ? (
                             <div className="space-y-1">
                               <Button className="w-full" size="sm" disabled><Loader2 className="h-4 w-4 mr-2 animate-spin" />{instatoonPromptMutation.variables?.scope === "current" ? "선택 컷 생성 중..." : "전체 생성 중..."}</Button>
-                              <button type="button" className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors py-1" onClick={() => promptAbortRef.current?.abort()}>취소</button>
+                              <button type="button" className="w-full text-center text-[13px] text-muted-foreground hover:text-destructive transition-colors py-1" onClick={() => promptAbortRef.current?.abort()}>취소</button>
                             </div>
                           ) : (
                             <div className="flex gap-2">
@@ -11158,7 +11158,7 @@ export default function StoryPage() {
                         />
                         <Button
                           variant="outline"
-                          className="h-[3.125rem] px-3 text-xs shrink-0"
+                          className="h-[3.125rem] px-3 text-[13px] shrink-0"
                           disabled={creatingFolder || !newFolderName.trim()}
                           onClick={() => {
                             setCreatingFolder(true);
@@ -11238,7 +11238,7 @@ export default function StoryPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium mb-1">Pro 전용 기능</p>
-                      <p className="text-xs text-muted-foreground">프로젝트 저장/관리는 Pro 멤버십 전용 기능입니다.</p>
+                      <p className="text-[13px] text-muted-foreground">프로젝트 저장/관리는 Pro 멤버십 전용 기능입니다.</p>
                     </div>
                     <div className="flex flex-col gap-2">
                       <Button asChild className="w-full gap-1.5" data-testid="button-upgrade-pro-story">
@@ -11260,7 +11260,7 @@ export default function StoryPage() {
                 <div className="px-6 pt-5 pb-4 border-b border-border/40">
                   <DialogHeader>
                     <DialogTitle className="text-lg font-semibold tracking-tight">프로젝트 불러오기</DialogTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-[13px] text-muted-foreground mt-0.5">
                       {savedProjects.filter(p => p.editorType === "story").length}개의 스토리
                     </p>
                   </DialogHeader>
@@ -11268,7 +11268,7 @@ export default function StoryPage() {
                   {projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).length > 0 && (
                     <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
                       <button
-                        className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${loadFolderId === null ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
+                        className={`shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all ${loadFolderId === null ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
                         onClick={() => setLoadFolderId(null)}
                       >
                         전체
@@ -11276,7 +11276,7 @@ export default function StoryPage() {
                       {projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).map((folder) => (
                         <button
                           key={folder.id}
-                          className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${loadFolderId === folder.id ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
+                          className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all ${loadFolderId === folder.id ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
                           onClick={() => setLoadFolderId(folder.id)}
                         >
                           <FolderOpen className="h-3 w-3" />
@@ -11298,7 +11298,7 @@ export default function StoryPage() {
                         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                           <FolderOpen className="h-12 w-12 mb-3 opacity-40" />
                           <p className="text-sm font-medium">{loadFolderId !== null ? "이 폴더에 스토리가 없습니다" : "저장된 스토리가 없습니다"}</p>
-                          <p className="text-xs mt-1 opacity-60">새 스토리를 만들어보세요</p>
+                          <p className="text-[13px] mt-1 opacity-60">새 스토리를 만들어보세요</p>
                         </div>
                       );
                     }

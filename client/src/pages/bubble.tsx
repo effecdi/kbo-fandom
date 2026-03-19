@@ -767,7 +767,7 @@ export default function BubblePage() {
             <Button
               size="sm"
               variant="ghost"
-              className="gap-1.5 h-8 text-xs px-2.5 bg-muted/40 hover:bg-muted/60"
+              className="gap-1.5 h-8 text-[13px] px-2.5 bg-muted/40 hover:bg-muted/60"
               onClick={() => guard(() => handleDownloadAll())}
               data-testid="button-download-bubble-all"
             >
@@ -777,7 +777,7 @@ export default function BubblePage() {
             <Button
               size="sm"
               variant="ghost"
-              className="gap-1.5 h-8 text-xs px-2.5 bg-muted/40 hover:bg-muted/60"
+              className="gap-1.5 h-8 text-[13px] px-2.5 bg-muted/40 hover:bg-muted/60"
               onClick={() => guard(() => document.getElementById("bg-upload")?.click())}
               data-testid="button-upload-bubble-bg"
             >
@@ -807,7 +807,7 @@ export default function BubblePage() {
                   setShowSaveModal(true);
                 });
               }}
-              className="gap-1.5 h-8 text-xs px-2.5 bg-primary text-primary-foreground border-primary"
+              className="gap-1.5 h-8 text-[13px] px-2.5 bg-primary text-primary-foreground border-primary"
               data-testid="button-save-bubble-project"
             >
               <Save className="h-3.5 w-3.5" />
@@ -1226,7 +1226,7 @@ export default function BubblePage() {
                 />
                 <Button
                   variant="outline"
-                  className="h-[3.125rem] px-3 text-xs shrink-0"
+                  className="h-[3.125rem] px-3 text-[13px] shrink-0"
                   disabled={creatingFolder || !newFolderName.trim()}
                   onClick={() => {
                     setCreatingFolder(true);

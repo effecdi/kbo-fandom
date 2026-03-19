@@ -73,12 +73,12 @@ export default function BusinessMascotResultPage() {
                 >
                   <step.icon className="w-5 h-5" />
                 </div>
-                <p className={`text-xs font-semibold ${
+                <p className={`text-[13px] font-semibold ${
                   index <= currentStep ? "text-indigo-600 dark:text-indigo-400" : "text-muted-foreground"
                 }`}>
                   {step.label}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
+                <p className="text-[13px] text-muted-foreground mt-1 hidden sm:block">
                   {step.description}
                 </p>
               </div>
@@ -114,7 +114,7 @@ export default function BusinessMascotResultPage() {
                   )}
                 </div>
                 <div className="absolute top-3 left-3">
-                  <span className="px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-full">
+                  <span className="px-3 py-1 bg-indigo-600 text-white text-[13px] font-semibold rounded-full">
                     메인
                   </span>
                 </div>
@@ -129,7 +129,7 @@ export default function BusinessMascotResultPage() {
                 >
                   <div className="text-center">
                     <Sparkles className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-xs text-muted-foreground">추가 생성</p>
+                    <p className="text-[13px] text-muted-foreground">추가 생성</p>
                   </div>
                 </div>
               ))}
@@ -145,11 +145,11 @@ export default function BusinessMascotResultPage() {
               <h3 className="text-sm font-bold text-foreground mb-4">마스코트 정보</h3>
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-muted-foreground">프롬프트</p>
+                  <p className="text-[13px] text-muted-foreground">프롬프트</p>
                   <p className="text-sm text-foreground mt-1">{character.prompt}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">스타일</p>
+                  <p className="text-[13px] text-muted-foreground">스타일</p>
                   <p className="text-sm text-foreground mt-1">{character.style}</p>
                 </div>
               </div>

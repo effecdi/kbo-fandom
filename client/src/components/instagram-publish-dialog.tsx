@@ -183,7 +183,7 @@ export function InstagramPublishDialog({
             <p className="text-sm text-muted-foreground">
               Instagram 계정이 연결되어 있지 않습니다.
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               대시보드에서 Instagram 계정을 먼저 연결해주세요.
             </p>
             <Button variant="outline" size="sm" onClick={() => { handleClose(); window.location.href = "/dashboard"; }}>
@@ -195,7 +195,7 @@ export function InstagramPublishDialog({
             <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
             <div>
               <p className="text-sm font-medium">Instagram에 게시 중...</p>
-              <p className="text-xs text-muted-foreground mt-1">이미지 업로드 및 게시가 진행 중입니다.</p>
+              <p className="text-[13px] text-muted-foreground mt-1">이미지 업로드 및 게시가 진행 중입니다.</p>
             </div>
           </div>
         ) : step === "done" ? (
@@ -203,7 +203,7 @@ export function InstagramPublishDialog({
             <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto" />
             <div>
               <p className="text-sm font-medium">게시 완료!</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground mt-1">
                 Instagram에서 확인해보세요.
               </p>
             </div>
@@ -214,7 +214,7 @@ export function InstagramPublishDialog({
             <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
             <div>
               <p className="text-sm font-medium">게시에 실패했습니다</p>
-              <p className="text-xs text-muted-foreground mt-1">다시 시도해주세요.</p>
+              <p className="text-[13px] text-muted-foreground mt-1">다시 시도해주세요.</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setStep("select")}>다시 시도</Button>
           </div>
@@ -222,7 +222,7 @@ export function InstagramPublishDialog({
           <div className="space-y-5">
             {/* Publish type */}
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">게시 유형</Label>
+              <Label className="text-[13px] font-semibold">게시 유형</Label>
               <RadioGroup
                 value={publishType}
                 onValueChange={(v) => handleTypeChange(v as PublishType)}
@@ -230,19 +230,19 @@ export function InstagramPublishDialog({
               >
                 <div className="flex items-center gap-1.5">
                   <RadioGroupItem value="feed" id="type-feed" />
-                  <Label htmlFor="type-feed" className="text-xs cursor-pointer flex items-center gap-1">
+                  <Label htmlFor="type-feed" className="text-[13px] cursor-pointer flex items-center gap-1">
                     <Image className="h-3 w-3" /> 피드
                   </Label>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <RadioGroupItem value="carousel" id="type-carousel" />
-                  <Label htmlFor="type-carousel" className="text-xs cursor-pointer flex items-center gap-1">
+                  <Label htmlFor="type-carousel" className="text-[13px] cursor-pointer flex items-center gap-1">
                     <Images className="h-3 w-3" /> 캐러셀
                   </Label>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <RadioGroupItem value="story" id="type-story" />
-                  <Label htmlFor="type-story" className="text-xs cursor-pointer flex items-center gap-1">
+                  <Label htmlFor="type-story" className="text-[13px] cursor-pointer flex items-center gap-1">
                     <Clock className="h-3 w-3" /> 스토리
                   </Label>
                 </div>
@@ -256,12 +256,12 @@ export function InstagramPublishDialog({
 
             {/* Source tab selector */}
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">이미지 소스</Label>
+              <Label className="text-[13px] font-semibold">이미지 소스</Label>
               <div className="flex gap-2">
                 <Button
                   variant={sourceTab === "gallery" ? "default" : "outline"}
                   size="sm"
-                  className="flex-1 gap-1.5 text-xs"
+                  className="flex-1 gap-1.5 text-[13px]"
                   onClick={() => { setSourceTab("gallery"); setSelectedPanels(new Set()); }}
                 >
                   <GalleryHorizontalEnd className="h-3.5 w-3.5" />
@@ -271,7 +271,7 @@ export function InstagramPublishDialog({
                   <Button
                     variant={sourceTab === "panels" ? "default" : "outline"}
                     size="sm"
-                    className="flex-1 gap-1.5 text-xs"
+                    className="flex-1 gap-1.5 text-[13px]"
                     onClick={() => { setSourceTab("panels"); setSelectedGalleryIds(new Set()); }}
                   >
                     <LayoutPanelTop className="h-3.5 w-3.5" />
@@ -284,7 +284,7 @@ export function InstagramPublishDialog({
             {/* Image selection */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold">
+                <Label className="text-[13px] font-semibold">
                   {sourceTab === "panels" ? "패널 선택" : "이미지 선택"}
                 </Label>
                 <Badge variant="secondary" className="text-[13px]">
@@ -315,7 +315,7 @@ export function InstagramPublishDialog({
                           />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <span className="text-xs text-muted-foreground">{panel.index + 1}</span>
+                            <span className="text-[13px] text-muted-foreground">{panel.index + 1}</span>
                           </div>
                         )}
                         {publishType === "carousel" && (
@@ -381,7 +381,7 @@ export function InstagramPublishDialog({
             {/* Caption */}
             {publishType !== "story" && (
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">캡션</Label>
+                <Label className="text-[13px] font-semibold">캡션</Label>
                 <Textarea
                   value={caption}
                   onChange={(e) => setCaption(e.target.value.slice(0, 2200))}

@@ -545,7 +545,7 @@ export default function AutoWebtoonPage() {
                 onClick={() => setCutsPerCanvas(n)}
               >
                 <LayoutPreview cuts={n} size={40} />
-                <span className="text-xs font-medium">{n}컷</span>
+                <span className="text-[13px] font-medium">{n}컷</span>
               </button>
             ))}
           </div>
@@ -632,11 +632,11 @@ export default function AutoWebtoonPage() {
             <div className="text-sm text-muted-foreground">
               총 비용: <span className="font-bold text-foreground">{isPro ? "무료 (Pro)" : `${totalCost} 크레딧`}</span>
               {!isPro && (
-                <span className="text-xs ml-2">(분해 {breakdownCost} + 이미지 {imageCost})</span>
+                <span className="text-[13px] ml-2">(분해 {breakdownCost} + 이미지 {imageCost})</span>
               )}
             </div>
             {!isPro && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-[13px] text-muted-foreground">
                 보유: {availableCredits} 크레딧
                 {!hasEnoughCredits && (
                   <a href="/pricing" className="text-primary ml-1 underline">충전하기</a>
@@ -725,7 +725,7 @@ export default function AutoWebtoonPage() {
         <div className="flex gap-3 overflow-x-auto pb-2">
           {Array.from({ length: canvasCount }, (_, ci) => (
             <div key={ci} className="flex-shrink-0">
-              <div className="text-xs text-muted-foreground text-center mb-1">Canvas {ci + 1}</div>
+              <div className="text-[13px] text-muted-foreground text-center mb-1">Canvas {ci + 1}</div>
               <LayoutPreview cuts={cutsPerCanvas} size={60} />
             </div>
           ))}
@@ -852,7 +852,7 @@ export default function AutoWebtoonPage() {
                     <X className="h-5 w-5 text-destructive" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-[13px]">
                     {idx + 1}
                   </div>
                 )}

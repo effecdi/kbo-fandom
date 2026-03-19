@@ -133,7 +133,7 @@ export function PublishToFeedDialog({ children }: PublishToFeedDialogProps) {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground text-xs">
+                    <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground text-[13px]">
                       {proj.name}
                     </div>
                   )}

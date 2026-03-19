@@ -341,7 +341,7 @@ export function CharacterPicker({
           </div>
           {galleryHasMore && onLoadMoreGallery && (
             <button
-              className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="w-full py-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               onClick={onLoadMoreGallery}
             >
               더 보기
@@ -364,7 +364,7 @@ export function CharacterPicker({
       {/* Label */}
       {label && (
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-foreground">{label}</span>
+          <span className="text-[13px] font-semibold text-foreground">{label}</span>
           {required && <span className="text-[13px] text-destructive font-medium">필수</span>}
           {!required && description && (
             <span className="text-[13px] text-muted-foreground">{description}</span>
@@ -467,7 +467,7 @@ export function CharacterPicker({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-2.5 text-xs text-muted-foreground hover:border-primary/50 hover:bg-muted/70 transition-colors"
+            className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-2.5 text-[13px] text-muted-foreground hover:border-primary/50 hover:bg-muted/70 transition-colors"
           >
             <UploadCloud className={mode === "multi" ? "h-5 w-5 text-muted-foreground/70" : "h-4 w-4 opacity-70"} />
             <span className="text-[13px] font-medium">이미지 업로드</span>
@@ -477,7 +477,7 @@ export function CharacterPicker({
           </button>
           <button
             onClick={() => setShowGallery((v) => !v)}
-            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-2.5 text-xs transition-colors ${
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-2.5 text-[13px] transition-colors ${
               showGallery && galleryPickerVariant === "inline"
                 ? "border-primary bg-primary/5 text-primary"
                 : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/70"
@@ -515,7 +515,7 @@ export function CharacterPicker({
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
                 <span>갤러리에서 캐릭터 선택</span>
-                <span className="text-xs font-normal text-muted-foreground">
+                <span className="text-[13px] font-normal text-muted-foreground">
                   {selectedImages.length}/{max} 선택됨
                 </span>
               </DialogTitle>

@@ -405,7 +405,7 @@ export default function PricingPage() {
 
                 <div className="mb-4">
                   {plan.highlighted && (
-                    <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">Pro</p>
+                    <p className="text-[13px] uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">Pro</p>
                   )}
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-black tracking-tight">{plan.priceLabel}</span>
@@ -416,16 +416,16 @@ export default function PricingPage() {
                     )}
                   </div>
                   {plan.monthlyEq && (
-                    <p className={`text-xs mt-1 ${plan.highlighted ? "text-primary-foreground/60" : "text-slate-400"}`}>
+                    <p className={`text-[13px] mt-1 ${plan.highlighted ? "text-primary-foreground/60" : "text-slate-400"}`}>
                       ${plan.monthlyEq}/mo equivalent
                     </p>
                   )}
                   {plan.tier !== "free" && (
-                    <p className={`text-xs mt-0.5 ${plan.highlighted ? "text-primary-foreground/50" : "text-slate-400"}`}>
+                    <p className={`text-[13px] mt-0.5 ${plan.highlighted ? "text-primary-foreground/50" : "text-slate-400"}`}>
                       ~{getPrice(plan.tier as "pro" | "premium").krw.toLocaleString("ko-KR")} KRW
                     </p>
                   )}
-                  <p className={`mt-2 text-xs ${plan.highlighted ? "text-primary-foreground/80" : "text-slate-500 dark:text-slate-400"}`}>
+                  <p className={`mt-2 text-[13px] ${plan.highlighted ? "text-primary-foreground/80" : "text-slate-500 dark:text-slate-400"}`}>
                     {plan.description}
                   </p>
                 </div>
@@ -482,7 +482,7 @@ export default function PricingPage() {
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                   Active Subscription: {credits.subscription.plan === "premium" ? "Premium" : "Pro"} ({credits.subscription.billingCycle === "yearly" ? "Annual" : "Monthly"})
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
                   Next billing: {new Date(credits.subscription.currentPeriodEnd).toLocaleDateString("ko-KR")}
                 </p>
               </div>
@@ -544,7 +544,7 @@ export default function PricingPage() {
             </div>
             <div className="text-right shrink-0">
               <div className="text-2xl font-black text-primary">{pricingData ? `₩${pricingData.products.credits.amount.toLocaleString("ko-KR")}` : "₩4,900"}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">50 credits</div>
+              <div className="text-[13px] text-slate-500 dark:text-slate-400">50 credits</div>
             </div>
           </div>
         </Card>
@@ -569,7 +569,7 @@ export default function PricingPage() {
                 className={`flex items-center justify-between py-2 ${i < arr.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
               >
                 <span className="text-slate-700 dark:text-slate-200">{item.label}</span>
-                <Badge variant="secondary" className="text-xs">{item.cost} credits</Badge>
+                <Badge variant="secondary" className="text-[13px]">{item.cost} credits</Badge>
               </div>
             ))}
           </div>
