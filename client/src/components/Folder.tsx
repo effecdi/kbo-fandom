@@ -94,6 +94,29 @@ export function Folder({
               openTransform = `translate(calc(-50% + ${paperOffsets[2].x}px), calc(-100% + ${paperOffsets[2].y}px)) rotateZ(5deg)`;
           }
 
+          // Render description text content
+          const renderContent = () => {
+            if (!open || !item) return null;
+            if (typeof item === "string") {
+              return (
+                <span
+                  style={{
+                    fontSize: 14 * size,
+                    fontWeight: 700,
+                    color: "#374151",
+                    textAlign: "center",
+                    lineHeight: 1.4,
+                    whiteSpace: "pre-line",
+                    padding: `${4 * size}px ${8 * size}px`,
+                  }}
+                >
+                  {item}
+                </span>
+              );
+            }
+            return item;
+          };
+
           return (
             <div
               key={i}
@@ -102,9 +125,7 @@ export function Folder({
                 zIndex: 2,
                 bottom: "10%",
                 left: "50%",
-                transform: open
-                  ? openTransform
-                  : "translate(-50%, 10%)",
+                transform: open ? openTransform : "translate(-50%, 10%)",
                 width: `${widthPercent}%`,
                 height: open && i > 0 ? "80%" : `${heightPercent}%`,
                 background: paperBg,
@@ -113,12 +134,11 @@ export function Folder({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: 4 * size,
+                padding: `${6 * size}px`,
                 overflow: "hidden",
-                fontSize: 10 * size,
               }}
             >
-              {open && item}
+              {renderContent()}
             </div>
           );
         })}
@@ -186,8 +206,8 @@ export function Folder({
       {/* Label */}
       {label && (
         <span
-          className="text-center font-bold leading-tight mt-2"
-          style={{ fontSize: 13 * size, maxWidth: baseWidth * 1.3 }}
+          className="text-center font-black leading-tight mt-2"
+          style={{ fontSize: 15 * size, maxWidth: baseWidth * 1.4 }}
         >
           {label}
         </span>

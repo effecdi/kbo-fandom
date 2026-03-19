@@ -265,7 +265,7 @@ export function LandingPage() {
               핵심 기능
             </div>
             <h2
-              className={`text-6xl md:text-8xl font-black mb-8 ${
+              className={`text-6xl md:text-8xl font-black mb-4 ${
                 theme === "dark" ? "text-white" : "text-gray-900"
               }`}
             >
@@ -274,77 +274,49 @@ export function LandingPage() {
           </div>
 
           {/* Folder Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 justify-items-center">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 justify-items-center pt-8">
             {[
               {
                 color: "#00e5cc",
                 label: "AI 캐릭터 생성",
-                items: [
-                  <Brain key="ic" className="w-6 h-6 text-gray-700" />,
-                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">텍스트 한 줄로 독창적인 캐릭터 탄생</span>,
-                  <Sparkles key="s" className="w-5 h-5 text-teal-600" />,
-                ],
+                desc: "텍스트 한 줄로\n독창적인 캐릭터 탄생",
               },
               {
                 color: "#f59e0b",
                 label: "초고속 처리",
-                items: [
-                  <Zap key="ic" className="w-6 h-6 text-gray-700" />,
-                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">5초만에 완성</span>,
-                  <Zap key="s" className="w-5 h-5 text-orange-500" />,
-                ],
+                desc: "5초만에\n완성",
               },
               {
                 color: "#a855f7",
                 label: "자동 스토리보드",
-                items: [
-                  <Palette key="ic" className="w-6 h-6 text-gray-700" />,
-                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">AI가 스토리를 시각화</span>,
-                  <Palette key="s" className="w-5 h-5 text-purple-500" />,
-                ],
+                desc: "AI가 스토리를\n시각화",
               },
               {
                 color: "#ec4899",
                 label: "원클릭 퍼블리싱",
-                items: [
-                  <Instagram key="ic" className="w-6 h-6 text-gray-700" />,
-                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">인스타그램 직접 연동</span>,
-                  <Instagram key="s" className="w-5 h-5 text-pink-500" />,
-                ],
+                desc: "인스타그램\n직접 연동",
               },
               {
                 color: "#3b82f6",
                 label: "브랜드 마스코트",
-                items: [
-                  <Target key="ic" className="w-6 h-6 text-gray-700" />,
-                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">기업 맞춤 AI 학습</span>,
-                  <Target key="s" className="w-5 h-5 text-blue-500" />,
-                ],
+                desc: "기업 맞춤\nAI 학습",
               },
               {
                 color: "#22c55e",
                 label: "실시간 분석",
-                items: [
-                  <BarChart3 key="ic" className="w-6 h-6 text-gray-700" />,
-                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">데이터 기반 인사이트</span>,
-                  <TrendingUp key="s" className="w-5 h-5 text-green-500" />,
-                ],
+                desc: "데이터 기반\n인사이트",
               },
               {
                 color: "#6b7280",
                 label: "엔터프라이즈 보안",
-                items: [
-                  <Shield key="ic" className="w-6 h-6 text-gray-700" />,
-                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">SOC 2 인증 완료</span>,
-                  <Shield key="s" className="w-5 h-5 text-gray-500" />,
-                ],
+                desc: "SOC 2\n인증 완료",
               },
             ].map((feature, i) => (
               <Folder
                 key={i}
                 color={feature.color}
                 size={1.6}
-                items={feature.items}
+                items={[feature.desc]}
                 label={feature.label}
                 className={theme === "dark" ? "text-gray-200" : "text-gray-800"}
               />
