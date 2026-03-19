@@ -33,7 +33,7 @@ declare global {
   }
 }
 
-type PGMethod = "kakaopay" | "tosspayments";
+type PGMethod = "html5_inicis" | "tosspayments";
 type BillingCycle = "monthly" | "yearly";
 
 interface PricingPlanData {
@@ -589,13 +589,13 @@ export default function PricingPage() {
             <AlertDialogDescription>Choose your preferred payment method.</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="grid grid-cols-2 gap-3 py-4">
-            <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => executePayment("kakaopay")} disabled={isProcessing}>
-              <CreditCard className="h-6 w-6 text-yellow-500" />
-              <span className="text-sm font-medium">KakaoPay</span>
+            <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => executePayment("html5_inicis")} disabled={isProcessing}>
+              <CreditCard className="h-6 w-6 text-green-600" />
+              <span className="text-sm font-medium">KG이니시스</span>
             </Button>
             <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => executePayment("tosspayments")} disabled={isProcessing}>
               <CreditCard className="h-6 w-6 text-blue-500" />
-              <span className="text-sm font-medium">Card / Google Pay</span>
+              <span className="text-sm font-medium">토스페이먼츠</span>
             </Button>
           </div>
           <AlertDialogFooter>
