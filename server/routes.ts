@@ -75,7 +75,8 @@ export async function registerRoutes(
         },
       },
       portoneV2StoreId: config.portoneV2StoreId,
-      portoneV2ChannelKey: config.portoneV2ChannelKey,
+      portoneV2ChannelKeyInicis: config.portoneV2ChannelKeyInicis,
+      portoneV2ChannelKeyToss: config.portoneV2ChannelKeyToss,
     });
   });
 
@@ -769,10 +770,10 @@ export async function registerRoutes(
   app.post("/api/payment/complete", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const { imp_uid, merchant_uid, product_type } = req.body;
+      const { paymentId, product_type } = req.body;
 
       // 1. 필수 필드 검증
-      if (!imp_uid || typeof imp_uid !== "string" || !merchant_uid || typeof merchant_uid !== "string") {
+      if (!paymentId || typeof paymentId !== "string") {
         return res.status(400).json({ message: "잘못된 결제 요청입니다." });
       }
 
@@ -784,41 +785,36 @@ export async function registerRoutes(
       const productKey = resolvedProductType as keyof typeof PRODUCT_PRICES;
 
       // 3. 멱등성: 이미 처리된 결제인지 확인
-      const existingPayment = await storage.getPaymentByImpUid(imp_uid);
+      const existingPayment = await storage.getPaymentByImpUid(paymentId);
       if (existingPayment) {
         return res.status(409).json({ message: "이미 처리된 결제입니다." });
       }
 
-      // 4. PortOne API로 실제 결제 데이터 검증 (서버 ↔ 서버)
-      const accessToken = await getPortoneAccessToken();
-      const paymentResponse = await axios.get(`https://api.iamport.kr/payments/${imp_uid}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      // 4. PortOne V2 API로 실제 결제 데이터 검증 (서버 ↔ 서버)
+      const paymentResponse = await axios.get(
+        `https://api.portone.io/payments/${encodeURIComponent(paymentId)}`,
+        { headers: { Authorization: `PortOne ${config.portoneV2ApiSecret}` } },
+      );
 
-      const paymentData = paymentResponse.data.response;
-      if (!paymentData || paymentData.status !== "paid") {
+      const paymentData = paymentResponse.data;
+      if (!paymentData || paymentData.status !== "PAID") {
         return res.status(400).json({ message: "결제가 완료되지 않았습니다." });
       }
 
-      // 5. PortOne이 반환한 merchant_uid와 클라이언트가 보낸 것 일치 확인
-      if (paymentData.merchant_uid !== merchant_uid) {
-        return res.status(400).json({ message: "주문 정보가 일치하지 않습니다." });
-      }
-
-      // 6. 금액 검증: PortOne 실결제 금액 vs 서버 상품 가격
-      const amount = paymentData.amount;
+      // 5. 금액 검증: PortOne 실결제 금액 vs 서버 상품 가격
+      const amount = paymentData.amount?.total;
       const expectedAmount = PRODUCT_PRICES[productKey];
       if (amount !== expectedAmount) {
         return res.status(400).json({ message: "결제 금액이 일치하지 않습니다. 관리자에게 문의하세요." });
       }
 
-      // 7. merchant_uid에서 product_type 추출하여 이중 검증
-      const merchantProductType = merchant_uid.split("_")[0];
+      // 6. paymentId에서 product_type 추출하여 이중 검증
+      const merchantProductType = paymentId.split("_")[0];
       if (merchantProductType !== productKey) {
         return res.status(400).json({ message: "주문 정보가 일치하지 않습니다." });
       }
 
-      // 8. 상품 처리 (서버 상수 기반)
+      // 7. 상품 처리 (서버 상수 기반)
       const creditsToAdd = PRODUCT_CREDITS[productKey];
       if (productKey === "pro") {
         await storage.updateUserTier(userId, "pro");
@@ -826,11 +822,11 @@ export async function registerRoutes(
         await storage.addCredits(userId, creditsToAdd);
       }
 
-      // 9. 결제 기록 저장
+      // 8. 결제 기록 저장
       await storage.createPayment({
         userId,
-        impUid: imp_uid,
-        merchantUid: merchant_uid,
+        impUid: paymentId,
+        merchantUid: paymentId,
         amount,
         status: "paid",
         productType: productKey,

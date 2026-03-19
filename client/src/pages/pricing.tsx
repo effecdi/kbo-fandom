@@ -23,17 +23,14 @@ import { CREDIT_COSTS } from "@/lib/tier";
 
 declare global {
   interface Window {
-    IMP?: {
-      init: (merchantId: string) => void;
-      request_pay: (params: any, callback: (response: any) => void) => void;
-    };
     PortOne?: {
+      requestPayment: (params: any) => Promise<any>;
       requestIssueBillingKey: (params: any) => Promise<any>;
     };
   }
 }
 
-type PGMethod = "html5_inicis" | "tosspayments";
+type PGMethod = "inicis" | "toss";
 type BillingCycle = "monthly" | "yearly";
 
 interface PricingPlanData {
@@ -73,23 +70,13 @@ export default function PricingPage() {
     products: { pro: { amount: number; name: string }; credits: { amount: number; name: string } };
     plans: { free: PricingPlanData; pro: PricingPlanData; premium: PricingPlanData };
     portoneV2StoreId: string;
-    portoneV2ChannelKey: string;
+    portoneV2ChannelKeyInicis: string;
+    portoneV2ChannelKeyToss: string;
   }>({
     queryKey: ["/api/pricing"],
   });
 
-  // PortOne V1 SDK (크레딧 충전용)
-  useEffect(() => {
-    if (!document.getElementById("iamport-sdk")) {
-      const script = document.createElement("script");
-      script.id = "iamport-sdk";
-      script.src = "https://cdn.iamport.kr/v1/iamport.js";
-      script.async = true;
-      document.head.appendChild(script);
-    }
-  }, []);
-
-  // PortOne V2 SDK (구독 빌링키용)
+  // PortOne V2 SDK
   useEffect(() => {
     if (!document.getElementById("portone-v2-sdk")) {
       const script = document.createElement("script");
@@ -112,17 +99,17 @@ export default function PricingPage() {
       toast({ title: "결제 모듈 로딩 중", description: "잠시 후 다시 시도해주세요.", variant: "destructive" });
       return;
     }
-    if (!pricingData?.portoneV2StoreId || !pricingData?.portoneV2ChannelKey) {
+    if (!pricingData?.portoneV2StoreId || !pricingData?.portoneV2ChannelKeyToss) {
       toast({ title: "결제 설정 오류", description: "관리자에게 문의하세요.", variant: "destructive" });
       return;
     }
 
     setIsProcessing(true);
     try {
-      // 빌링키 발급
+      // 빌링키 발급 (정기결제는 토스페이먼츠 채널 사용)
       const issueResponse = await window.PortOne.requestIssueBillingKey({
         storeId: pricingData.portoneV2StoreId,
-        channelKey: pricingData.portoneV2ChannelKey,
+        channelKey: pricingData.portoneV2ChannelKeyToss,
         billingKeyMethod: "CARD",
         issueId: `issue_${plan}_${billingCycle}_${Date.now()}`,
         issueName: `OLLI ${plan === "premium" ? "Premium" : "Pro"} 정기구독`,
@@ -184,7 +171,7 @@ export default function PricingPage() {
     }
   }, [toast]);
 
-  // 크레딧 일회성 충전 (V1 유지)
+  // 크레딧 일회성 충전 (V2 SDK)
   const initiatePayment = useCallback((productType: "credits") => {
     if (!isAuthenticated) {
       window.location.href = "/login";
@@ -198,52 +185,65 @@ export default function PricingPage() {
     setPgDialogOpen(false);
     if (!pendingProductType) return;
 
-    if (!window.IMP) {
+    if (!window.PortOne) {
       toast({ title: "결제 모듈 로딩 중", description: "잠시 후 다시 시도해주세요.", variant: "destructive" });
       return;
     }
 
     const product = pricingData?.products?.credits;
-    if (!product) {
+    if (!product || !pricingData?.portoneV2StoreId) {
       toast({ title: "가격 정보 로딩 중", description: "잠시 후 다시 시도해주세요.", variant: "destructive" });
       return;
     }
-    const merchantUid = `credits_${Date.now()}`;
 
-    window.IMP.init(import.meta.env.VITE_PORTONE_MERCHANT_ID || "imp00000000");
+    const channelKey = pgMethod === "inicis"
+      ? pricingData.portoneV2ChannelKeyInicis
+      : pricingData.portoneV2ChannelKeyToss;
+
+    if (!channelKey) {
+      toast({ title: "결제 채널 미설정", description: "관리자에게 문의하세요.", variant: "destructive" });
+      return;
+    }
+
+    const paymentId = `credits_${Date.now()}`;
     setIsProcessing(true);
 
-    window.IMP.request_pay(
-      {
-        pg: pgMethod,
-        pay_method: "card",
-        merchant_uid: merchantUid,
-        name: product.name,
-        amount: product.amount,
-        buyer_email: user?.email || "",
-        buyer_name: user?.firstName || "",
-      },
-      async (response: any) => {
-        if (response.success) {
-          try {
-            const res = await apiRequest("POST", "/api/payment/complete", {
-              imp_uid: response.imp_uid,
-              merchant_uid: merchantUid,
-              product_type: "credits",
-            });
-            const data = await res.json();
-            queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
-            toast({ title: "충전 완료!", description: `${data.creditsAdded}개의 크레딧이 추가되었습니다.` });
-          } catch (error: any) {
-            toast({ title: "결제 검증 실패", description: error.message || "관리자에게 문의하세요.", variant: "destructive" });
-          }
-        } else {
-          toast({ title: "결제 취소", description: response.error_msg || "결제가 취소되었습니다.", variant: "destructive" });
+    try {
+      const response = await window.PortOne.requestPayment({
+        storeId: pricingData.portoneV2StoreId,
+        channelKey,
+        paymentId,
+        orderName: product.name,
+        totalAmount: product.amount,
+        currency: "CURRENCY_KRW",
+        payMethod: "CARD",
+        customer: {
+          email: user?.email || undefined,
+          fullName: user?.firstName || undefined,
+        },
+      });
+
+      if (response.code) {
+        if (response.code !== "USER_CANCEL") {
+          toast({ title: "결제 실패", description: response.message || "다시 시도해주세요.", variant: "destructive" });
         }
-        setIsProcessing(false);
-        setPendingProductType(null);
+        return;
       }
-    );
+
+      // 서버에서 결제 검증
+      const res = await apiRequest("POST", "/api/payment/complete", {
+        paymentId,
+        product_type: "credits",
+      });
+      const data = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+      toast({ title: "충전 완료!", description: `${data.creditsAdded}개의 크레딧이 추가되었습니다.` });
+    } catch (error: any) {
+      toast({ title: "결제 검증 실패", description: error.message || "관리자에게 문의하세요.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+      setPendingProductType(null);
+    }
   }, [pendingProductType, user, toast, pricingData]);
 
   const getPrice = (plan: "pro" | "premium") => {
@@ -589,11 +589,11 @@ export default function PricingPage() {
             <AlertDialogDescription>Choose your preferred payment method.</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="grid grid-cols-2 gap-3 py-4">
-            <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => executePayment("html5_inicis")} disabled={isProcessing}>
+            <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => executePayment("inicis")} disabled={isProcessing}>
               <CreditCard className="h-6 w-6 text-green-600" />
               <span className="text-sm font-medium">KG이니시스</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => executePayment("tosspayments")} disabled={isProcessing}>
+            <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => executePayment("toss")} disabled={isProcessing}>
               <CreditCard className="h-6 w-6 text-blue-500" />
               <span className="text-sm font-medium">토스페이먼츠</span>
             </Button>
