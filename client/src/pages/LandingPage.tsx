@@ -28,6 +28,7 @@ import { GlareHover } from "@/components/GlareHover";
 import { TargetCursor } from "@/components/TargetCursor";
 import { MagneticCTA } from "@/components/MagneticCTA";
 import { InfiniteCharacterGrid } from "@/components/InfiniteCharacterGrid";
+import { Folder } from "@/components/Folder";
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -272,59 +273,82 @@ export function LandingPage() {
             </h2>
           </div>
 
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard
-              icon={Brain}
-              title="AI 캐릭터 생성"
-              description="텍스트 한 줄로 독창적인 캐릭터 탄생"
-              theme={theme}
-              gradient="from-[#00e5cc] to-teal-600"
-              className="lg:col-span-2"
-            />
-            <FeatureCard
-              icon={Zap}
-              title="초고속 처리"
-              description="5초만에 완성"
-              theme={theme}
-              gradient="from-yellow-500 to-orange-600"
-            />
-            <FeatureCard
-              icon={Palette}
-              title="자동 스토리보드"
-              description="AI가 스토리를 시각화"
-              theme={theme}
-              gradient="from-purple-500 to-pink-600"
-            />
-            <FeatureCard
-              icon={Instagram}
-              title="원클릭 퍼블리싱"
-              description="인스타그램 직접 연동"
-              theme={theme}
-              gradient="from-pink-500 to-rose-600"
-              className="lg:col-span-2"
-            />
-            <FeatureCard
-              icon={Target}
-              title="브랜드 마스코트"
-              description="기업 맞춤 AI 학습"
-              theme={theme}
-              gradient="from-blue-500 to-indigo-600"
-            />
-            <FeatureCard
-              icon={BarChart3}
-              title="실시간 분석"
-              description="데이터 기반 인사이트"
-              theme={theme}
-              gradient="from-green-500 to-emerald-600"
-            />
-            <FeatureCard
-              icon={Shield}
-              title="엔터프라이즈 보안"
-              description="SOC 2 인증 완료"
-              theme={theme}
-              gradient="from-gray-600 to-gray-800"
-            />
+          {/* Folder Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 justify-items-center">
+            {[
+              {
+                color: "#00e5cc",
+                label: "AI 캐릭터 생성",
+                items: [
+                  <Brain key="ic" className="w-6 h-6 text-gray-700" />,
+                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">텍스트 한 줄로 독창적인 캐릭터 탄생</span>,
+                  <Sparkles key="s" className="w-5 h-5 text-teal-600" />,
+                ],
+              },
+              {
+                color: "#f59e0b",
+                label: "초고속 처리",
+                items: [
+                  <Zap key="ic" className="w-6 h-6 text-gray-700" />,
+                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">5초만에 완성</span>,
+                  <Zap key="s" className="w-5 h-5 text-orange-500" />,
+                ],
+              },
+              {
+                color: "#a855f7",
+                label: "자동 스토리보드",
+                items: [
+                  <Palette key="ic" className="w-6 h-6 text-gray-700" />,
+                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">AI가 스토리를 시각화</span>,
+                  <Palette key="s" className="w-5 h-5 text-purple-500" />,
+                ],
+              },
+              {
+                color: "#ec4899",
+                label: "원클릭 퍼블리싱",
+                items: [
+                  <Instagram key="ic" className="w-6 h-6 text-gray-700" />,
+                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">인스타그램 직접 연동</span>,
+                  <Instagram key="s" className="w-5 h-5 text-pink-500" />,
+                ],
+              },
+              {
+                color: "#3b82f6",
+                label: "브랜드 마스코트",
+                items: [
+                  <Target key="ic" className="w-6 h-6 text-gray-700" />,
+                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">기업 맞춤 AI 학습</span>,
+                  <Target key="s" className="w-5 h-5 text-blue-500" />,
+                ],
+              },
+              {
+                color: "#22c55e",
+                label: "실시간 분석",
+                items: [
+                  <BarChart3 key="ic" className="w-6 h-6 text-gray-700" />,
+                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">데이터 기반 인사이트</span>,
+                  <TrendingUp key="s" className="w-5 h-5 text-green-500" />,
+                ],
+              },
+              {
+                color: "#6b7280",
+                label: "엔터프라이즈 보안",
+                items: [
+                  <Shield key="ic" className="w-6 h-6 text-gray-700" />,
+                  <span key="t" className="text-[10px] text-gray-600 text-center px-1">SOC 2 인증 완료</span>,
+                  <Shield key="s" className="w-5 h-5 text-gray-500" />,
+                ],
+              },
+            ].map((feature, i) => (
+              <Folder
+                key={i}
+                color={feature.color}
+                size={1.2}
+                items={feature.items}
+                label={feature.label}
+                className={theme === "dark" ? "text-gray-200" : "text-gray-800"}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -573,51 +597,3 @@ export function LandingPage() {
   );
 }
 
-// Feature Card Component
-interface FeatureCardProps {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  theme: string;
-  gradient: string;
-  className?: string;
-}
-
-function FeatureCard({
-  icon: Icon,
-  title,
-  description,
-  theme,
-  gradient,
-  className = "",
-}: FeatureCardProps) {
-  return (
-    <div
-      className={`group relative p-10 rounded-3xl border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${
-        theme === "dark"
-          ? "bg-gray-900 border-gray-800 hover:border-[#00e5cc]/50"
-          : "bg-white border-gray-200 hover:border-[#00e5cc]/50 shadow-xl"
-      } ${className}`}
-    >
-      <div
-        className={`relative w-20 h-20 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-6 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}
-      >
-        <Icon className="w-10 h-10 text-white" />
-      </div>
-      <h3
-        className={`text-4xl font-black mb-4 ${
-          theme === "dark" ? "text-white" : "text-gray-900"
-        }`}
-      >
-        {title}
-      </h3>
-      <p
-        className={`text-xl ${
-          theme === "dark" ? "text-gray-400" : "text-gray-600"
-        }`}
-      >
-        {description}
-      </p>
-    </div>
-  );
-}
