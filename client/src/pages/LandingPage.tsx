@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useLenis } from "lenis/react";
 import {
   Sparkles,
   Rocket,
@@ -44,6 +45,11 @@ gsap.registerPlugin(ScrollTrigger);
 export function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+
+  // Sync Lenis smooth scroll with GSAP ScrollTrigger
+  useLenis(() => {
+    ScrollTrigger.update();
+  });
 
   // Refs for animations
   const heroRef = useRef<HTMLDivElement>(null);
@@ -186,6 +192,10 @@ export function LandingPage() {
         y: -100,
       });
     });
+
+    return () => {
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, []);
 
   return (
