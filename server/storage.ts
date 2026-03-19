@@ -89,10 +89,10 @@ export interface IStorage {
   getProjectFoldersByUser(userId: string): Promise<ProjectFolder[]>;
   updateProjectFolder(id: number, userId: string, data: { name?: string }): Promise<ProjectFolder | undefined>;
   deleteProjectFolder(id: number, userId: string): Promise<boolean>;
-  getBubbleProjectsByFolder(folderId: number, userId: string): Promise<BubbleProject[]>;
+  getBubbleProjectsByFolder(folderId: number, userId: string): Promise<Omit<BubbleProject, "canvasData">[]>;
 
   createBubbleProject(data: InsertBubbleProject): Promise<BubbleProject>;
-  getBubbleProjectsByUser(userId: string): Promise<BubbleProject[]>;
+  getBubbleProjectsByUser(userId: string): Promise<Omit<BubbleProject, "canvasData">[]>;
   getBubbleProject(id: number, userId: string): Promise<BubbleProject | undefined>;
   updateBubbleProject(id: number, userId: string, data: Partial<Pick<BubbleProject, "name" | "thumbnailUrl" | "canvasData" | "folderId">>): Promise<BubbleProject | undefined>;
   deleteBubbleProject(id: number, userId: string): Promise<boolean>;
@@ -929,9 +929,18 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async getBubbleProjectsByFolder(folderId: number, userId: string): Promise<BubbleProject[]> {
+  async getBubbleProjectsByFolder(folderId: number, userId: string): Promise<Omit<BubbleProject, "canvasData">[]> {
     const db = this.getDb();
-    return db.select().from(bubbleProjects)
+    return db.select({
+      id: bubbleProjects.id,
+      userId: bubbleProjects.userId,
+      name: bubbleProjects.name,
+      thumbnailUrl: bubbleProjects.thumbnailUrl,
+      editorType: bubbleProjects.editorType,
+      folderId: bubbleProjects.folderId,
+      createdAt: bubbleProjects.createdAt,
+      updatedAt: bubbleProjects.updatedAt,
+    }).from(bubbleProjects)
       .where(and(eq(bubbleProjects.folderId, folderId), eq(bubbleProjects.userId, userId)))
       .orderBy(asc(bubbleProjects.createdAt));
   }
@@ -942,9 +951,18 @@ export class DatabaseStorage implements IStorage {
     return project;
   }
 
-  async getBubbleProjectsByUser(userId: string): Promise<BubbleProject[]> {
+  async getBubbleProjectsByUser(userId: string): Promise<Omit<BubbleProject, "canvasData">[]> {
     const db = this.getDb();
-    return db.select().from(bubbleProjects)
+    return db.select({
+      id: bubbleProjects.id,
+      userId: bubbleProjects.userId,
+      name: bubbleProjects.name,
+      thumbnailUrl: bubbleProjects.thumbnailUrl,
+      editorType: bubbleProjects.editorType,
+      folderId: bubbleProjects.folderId,
+      createdAt: bubbleProjects.createdAt,
+      updatedAt: bubbleProjects.updatedAt,
+    }).from(bubbleProjects)
       .where(eq(bubbleProjects.userId, userId))
       .orderBy(desc(bubbleProjects.updatedAt));
   }
