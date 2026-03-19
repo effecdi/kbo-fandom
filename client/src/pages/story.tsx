@@ -11255,107 +11255,90 @@ export default function StoryPage() {
             </Dialog>
             {/* ── 불러오기 팝업 ── */}
             <Dialog open={showLoadModal} onOpenChange={(open) => { setShowLoadModal(open); if (!open) setLoadFolderId(null); }}>
-              <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto" data-testid="modal-load-story">
-                <DialogHeader>
-                  <DialogTitle className="text-base flex items-center gap-2">
-                    {loadFolderId !== null && (
-                      <button className="h-6 w-6 rounded hover:bg-muted flex items-center justify-center" onClick={() => setLoadFolderId(null)}>
-                        <ArrowLeft className="h-3.5 w-3.5" />
+              <DialogContent className="max-w-[820px] w-[95vw] p-0 gap-0 overflow-hidden rounded-2xl border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl" data-testid="modal-load-story">
+                {/* Header */}
+                <div className="px-6 pt-5 pb-4 border-b border-border/40">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg font-semibold tracking-tight">프로젝트 불러오기</DialogTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {savedProjects.filter(p => p.editorType === "story").length}개의 스토리
+                    </p>
+                  </DialogHeader>
+                  {/* 폴더 가로 스크롤 칩 */}
+                  {projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).length > 0 && (
+                    <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+                      <button
+                        className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${loadFolderId === null ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
+                        onClick={() => setLoadFolderId(null)}
+                      >
+                        전체
                       </button>
-                    )}
-                    {loadFolderId !== null
-                      ? projectFolders.find(f => f.id === loadFolderId)?.name || "폴더"
-                      : "프로젝트 불러오기"}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-1 max-h-80 overflow-y-auto">
-                  {loadFolderId === null && (
-                    <>
-                      {/* 폴더 목록 */}
                       {projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).map((folder) => (
                         <button
                           key={folder.id}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-muted/60 transition-colors text-left"
+                          className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${loadFolderId === folder.id ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
                           onClick={() => setLoadFolderId(folder.id)}
                         >
-                          <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-                            <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">{folder.name}</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {savedProjects.filter(p => p.editorType === "story" && p.folderId === folder.id).length}개 프로젝트
-                            </p>
-                          </div>
-                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <FolderOpen className="h-3 w-3" />
+                          {folder.name}
+                          <span className="opacity-60">
+                            {savedProjects.filter(p => p.editorType === "story" && p.folderId === folder.id).length}
+                          </span>
                         </button>
                       ))}
-                      {/* 폴더 없는 프로젝트 */}
-                      {savedProjects.filter(p => p.editorType === "story" && !p.folderId).length > 0 && projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).length > 0 && (
-                        <div className="pt-2 mt-1 border-t">
-                          <p className="text-[10px] text-muted-foreground px-3 mb-1">폴더 없음</p>
-                        </div>
-                      )}
-                      {savedProjects.filter(p => p.editorType === "story" && !p.folderId).map((p) => (
-                        <button
-                          key={p.id}
-                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/60 transition-colors text-left ${currentProjectId === p.id ? "bg-primary/10" : ""}`}
-                          onClick={() => { setShowLoadModal(false); handleLoadProject(p.id); }}
-                        >
-                          {p.thumbnailUrl ? (
-                            <img src={p.thumbnailUrl} alt="" className="h-10 w-8 rounded object-cover shrink-0 bg-muted" />
-                          ) : (
-                            <div className="h-10 w-8 rounded bg-muted flex items-center justify-center shrink-0">
-                              <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">{p.name}</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          </div>
-                          {currentProjectId === p.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
-                        </button>
-                      ))}
-                    </>
-                  )}
-                  {loadFolderId !== null && (
-                    <>
-                      {savedProjects.filter(p => p.editorType === "story" && p.folderId === loadFolderId).length === 0 ? (
-                        <div className="text-center py-6 text-xs text-muted-foreground">이 폴더에 스토리가 없습니다</div>
-                      ) : (
-                        savedProjects.filter(p => p.editorType === "story" && p.folderId === loadFolderId).map((p) => (
-                          <button
-                            key={p.id}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/60 transition-colors text-left ${currentProjectId === p.id ? "bg-primary/10" : ""}`}
-                            onClick={() => { setShowLoadModal(false); handleLoadProject(p.id); }}
-                          >
-                            {p.thumbnailUrl ? (
-                              <img src={p.thumbnailUrl} alt="" className="h-10 w-8 rounded object-cover shrink-0 bg-muted" />
-                            ) : (
-                              <div className="h-10 w-8 rounded bg-muted flex items-center justify-center shrink-0">
-                                <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium truncate">{p.name}</p>
-                              <p className="text-[10px] text-muted-foreground">
-                                {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                              </p>
-                            </div>
-                            {currentProjectId === p.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
-                          </button>
-                        ))
-                      )}
-                    </>
-                  )}
-                  {savedProjects.filter(p => p.editorType === "story").length === 0 && (
-                    <div className="text-center py-6">
-                      <FolderOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground">저장된 스토리가 없습니다</p>
                     </div>
                   )}
+                </div>
+                {/* 프로젝트 그리드 */}
+                <div className="px-6 py-4 max-h-[60vh] overflow-y-auto">
+                  {(() => {
+                    const filtered = savedProjects.filter(p => p.editorType === "story" && (loadFolderId === null ? true : p.folderId === loadFolderId));
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                          <FolderOpen className="h-12 w-12 mb-3 opacity-40" />
+                          <p className="text-sm font-medium">{loadFolderId !== null ? "이 폴더에 스토리가 없습니다" : "저장된 스토리가 없습니다"}</p>
+                          <p className="text-xs mt-1 opacity-60">새 스토리를 만들어보세요</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                        {filtered.map((p) => (
+                          <button
+                            key={p.id}
+                            className={`group relative flex flex-col rounded-xl overflow-hidden transition-all duration-200 hover:ring-2 hover:ring-primary/40 hover:shadow-lg hover:-translate-y-0.5 ${currentProjectId === p.id ? "ring-2 ring-primary shadow-md" : "ring-1 ring-border/30"}`}
+                            onClick={() => { setShowLoadModal(false); handleLoadProject(p.id); }}
+                          >
+                            {/* 썸네일 */}
+                            <div className="relative aspect-[3/4] bg-muted/40 overflow-hidden">
+                              {p.thumbnailUrl ? (
+                                <img src={p.thumbnailUrl} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/60 to-muted">
+                                  <BookOpen className="h-8 w-8 text-muted-foreground/40" />
+                                </div>
+                              )}
+                              {currentProjectId === p.id && (
+                                <div className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                                  <Check className="h-3 w-3 text-primary-foreground" />
+                                </div>
+                              )}
+                              {/* 호버 오버레이 */}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
+                            </div>
+                            {/* 정보 */}
+                            <div className="px-2 py-2 bg-background">
+                              <p className="text-[11px] font-medium truncate leading-tight">{p.name}</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </DialogContent>
             </Dialog>
