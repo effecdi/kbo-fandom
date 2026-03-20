@@ -1,4 +1,5 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { Link } from "react-router";
 import {
   Sparkles,
   Target,
@@ -87,7 +88,7 @@ export function BusinessDashboard() {
               빠른 시작
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              <button className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-300 dark:from-blue-900/30 dark:to-indigo-900/30 dark:hover:border-blue-600">
+              <Link to="/business/mascot" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-300 dark:from-blue-900/30 dark:to-indigo-900/30 dark:hover:border-blue-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center mb-4">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
@@ -97,9 +98,9 @@ export function BusinessDashboard() {
                 <p className="text-sm text-muted-foreground">
                   AI로 1분만에 생성
                 </p>
-              </button>
+              </Link>
 
-              <button className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-teal-50 to-cyan-50 hover:border-teal-300 dark:from-teal-900/30 dark:to-cyan-900/30 dark:hover:border-teal-600">
+              <Link to="/business/content" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-teal-50 to-cyan-50 hover:border-teal-300 dark:from-teal-900/30 dark:to-cyan-900/30 dark:hover:border-teal-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] rounded-xl flex items-center justify-center mb-4">
                   <Palette className="w-6 h-6 text-white" />
                 </div>
@@ -109,9 +110,9 @@ export function BusinessDashboard() {
                 <p className="text-sm text-muted-foreground">
                   직접 만들어보기
                 </p>
-              </button>
+              </Link>
 
-              <button className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-purple-300 dark:hover:border-purple-600">
+              <Link to="/business/campaigns/new" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-purple-300 dark:hover:border-purple-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4">
                   <Target className="w-6 h-6 text-white" />
                 </div>
@@ -121,9 +122,9 @@ export function BusinessDashboard() {
                 <p className="text-sm text-muted-foreground">
                   작가 협업 시작
                 </p>
-              </button>
+              </Link>
 
-              <button className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-green-50 to-emerald-50 hover:border-green-300 dark:from-green-900/30 dark:to-emerald-900/30 dark:hover:border-green-600">
+              <Link to="/business/creators" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-green-50 to-emerald-50 hover:border-green-300 dark:from-green-900/30 dark:to-emerald-900/30 dark:hover:border-green-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4">
                   <Users className="w-6 h-6 text-white" />
                 </div>
@@ -133,7 +134,7 @@ export function BusinessDashboard() {
                 <p className="text-sm text-muted-foreground">
                   최적의 작가 찾기
                 </p>
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -143,10 +144,12 @@ export function BusinessDashboard() {
               <h2 className="text-xl font-black text-foreground">
                 브랜드 자산
               </h2>
-              <Button variant="ghost" size="sm">
-                전체 보기
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <Link to="/business/brand-assets">
+                <Button variant="ghost" size="sm">
+                  전체 보기
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
             </div>
             <div className="grid grid-cols-3 gap-4">
               {[
@@ -180,10 +183,12 @@ export function BusinessDashboard() {
               <h2 className="text-xl font-black text-foreground">
                 진행 중인 캠페인
               </h2>
-              <Button variant="ghost" size="sm">
-                전체 보기
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <Link to="/business/campaigns">
+                <Button variant="ghost" size="sm">
+                  전체 보기
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
             </div>
             <div className="space-y-4">
               {[
@@ -300,10 +305,12 @@ export function BusinessDashboard() {
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-4">
-              더 많은 작가 보기
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            <Link to="/business/creators">
+              <Button variant="outline" className="w-full mt-4">
+                더 많은 작가 보기
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           </div>
 
           {/* Proposal Status */}
@@ -312,7 +319,7 @@ export function BusinessDashboard() {
               제안 현황
             </h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20">
+              <Link to="/business/proposals" className="flex items-center justify-between p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 hover:opacity-80 transition-opacity">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-200 dark:bg-blue-800/50">
                     <MessageSquare className="w-5 h-5 text-blue-700 dark:text-blue-300" />
@@ -323,9 +330,9 @@ export function BusinessDashboard() {
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-muted-foreground" />
-              </div>
+              </Link>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-green-50 dark:bg-green-950/20">
+              <Link to="/business/proposals" className="flex items-center justify-between p-4 rounded-xl bg-green-50 dark:bg-green-950/20 hover:opacity-80 transition-opacity">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-green-200 dark:bg-green-800/50">
                     <CheckCircle2 className="w-5 h-5 text-green-700 dark:text-green-300" />
@@ -336,9 +343,9 @@ export function BusinessDashboard() {
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-muted-foreground" />
-              </div>
+              </Link>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-yellow-50 dark:bg-yellow-950/20">
+              <Link to="/business/proposals" className="flex items-center justify-between p-4 rounded-xl bg-yellow-50 dark:bg-yellow-950/20 hover:opacity-80 transition-opacity">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-yellow-200 dark:bg-yellow-800/50">
                     <Clock className="w-5 h-5 text-yellow-700 dark:text-yellow-300" />
@@ -349,7 +356,7 @@ export function BusinessDashboard() {
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-muted-foreground" />
-              </div>
+              </Link>
             </div>
           </div>
 
@@ -383,9 +390,11 @@ export function BusinessDashboard() {
                 <span className="text-sm text-foreground">담당자 정보 보완</span>
               </div>
             </div>
-            <Button className="w-full mt-6 bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
-              프로필 수정
-            </Button>
+            <Link to="/business/settings">
+              <Button className="w-full mt-6 bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                프로필 수정
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

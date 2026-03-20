@@ -156,7 +156,7 @@ export function CreatorDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button size="sm" className="bg-[#00e5cc] text-black hover:bg-[#00f0ff]" onClick={() => { setShowTourBanner(false); navigate("/story"); }}>
+            <Button size="sm" className="bg-[#00e5cc] text-black hover:bg-[#00f0ff]" onClick={() => { setShowTourBanner(false); navigate("/creator/story"); }}>
               가이드 시작
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setShowTourBanner(false); try { localStorage.setItem("olli_tour_completed", "true"); } catch {} }}>
@@ -244,7 +244,7 @@ export function CreatorDashboard() {
           <div className="rounded-2xl p-6 border bg-card border-border">
             <h2 className="text-xl font-black mb-6 text-foreground">빠른 시작</h2>
             <div className="grid grid-cols-2 gap-4">
-              <Link to="/create" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-violet-50 to-purple-50 hover:border-violet-300 dark:from-violet-900/30 dark:to-purple-900/30 dark:hover:border-violet-600">
+              <Link to="/creator/character/new" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-violet-50 to-purple-50 hover:border-violet-300 dark:from-violet-900/30 dark:to-purple-900/30 dark:hover:border-violet-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
                   <Wand2 className="w-6 h-6 text-white" />
                 </div>
@@ -252,7 +252,7 @@ export function CreatorDashboard() {
                 <p className="text-sm text-muted-foreground">텍스트로 AI 캐릭터 만들기</p>
               </Link>
 
-              <Link to="/pose" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-300 dark:from-blue-900/30 dark:to-indigo-900/30 dark:hover:border-blue-600">
+              <Link to="/creator/pose-expression" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-300 dark:from-blue-900/30 dark:to-indigo-900/30 dark:hover:border-blue-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4">
                   <Layers className="w-6 h-6 text-white" />
                 </div>
@@ -260,7 +260,7 @@ export function CreatorDashboard() {
                 <p className="text-sm text-muted-foreground">다양한 포즈 & 표정 생성</p>
               </Link>
 
-              <Link to="/story" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-teal-50 to-cyan-50 hover:border-teal-300 dark:from-teal-900/30 dark:to-cyan-900/30 dark:hover:border-teal-600">
+              <Link to="/creator/story" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-teal-50 to-cyan-50 hover:border-teal-300 dark:from-teal-900/30 dark:to-cyan-900/30 dark:hover:border-teal-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] rounded-xl flex items-center justify-center mb-4">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
@@ -268,7 +268,7 @@ export function CreatorDashboard() {
                 <p className="text-sm text-muted-foreground">멀티패널 인스타툰 제작</p>
               </Link>
 
-              <Link to="/background" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-emerald-50 to-green-50 hover:border-emerald-300 dark:from-emerald-900/30 dark:to-green-900/30 dark:hover:border-emerald-600">
+              <Link to="/creator/background" className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-emerald-50 to-green-50 hover:border-emerald-300 dark:from-emerald-900/30 dark:to-green-900/30 dark:hover:border-emerald-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mb-4">
                   <Trees className="w-6 h-6 text-white" />
                 </div>
@@ -283,7 +283,7 @@ export function CreatorDashboard() {
             <div className="rounded-2xl p-6 border bg-card border-border">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-black text-foreground">최근 작품</h2>
-                <Link to="/gallery">
+                <Link to="/creator/character">
                   <Button variant="ghost" size="sm">
                     전체 보기 <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -312,12 +312,12 @@ export function CreatorDashboard() {
             <h2 className="text-xl font-black mb-6 text-foreground">편집 도구</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[
-                { href: "/bubble", icon: Paintbrush, title: "말풍선 편집", desc: "손글씨 폰트 말풍선", gradient: "from-pink-500 to-rose-600" },
-                { href: "/effects", icon: Eye, title: "블러 효과", desc: "가우시안 / 모션 / 방사형", gradient: "from-cyan-500 to-sky-600" },
-                { href: "/chat", icon: MessageCircle, title: "채팅 이미지", desc: "카카오톡 스타일", gradient: "from-amber-500 to-orange-600" },
-                { href: "/ad-match", icon: Target, title: "광고주 매칭", desc: "AI 맞춤 추천", gradient: "from-rose-500 to-red-600" },
-                { href: "/media-kit", icon: FileText, title: "미디어킷", desc: "포트폴리오 제작", gradient: "from-orange-500 to-amber-600" },
-                { href: "/create-instatoon", icon: Sparkles, title: "인스타툰", desc: "자동 생성", gradient: "from-indigo-500 to-purple-600" },
+                { href: "/creator/speech-bubble", icon: Paintbrush, title: "말풍선 편집", desc: "손글씨 폰트 말풍선", gradient: "from-pink-500 to-rose-600" },
+                { href: "/creator/blur-effects", icon: Eye, title: "블러 효과", desc: "가우시안 / 모션 / 방사형", gradient: "from-cyan-500 to-sky-600" },
+                { href: "/creator/chat-maker", icon: MessageCircle, title: "채팅 이미지", desc: "카카오톡 스타일", gradient: "from-amber-500 to-orange-600" },
+                { href: "/creator/campaigns", icon: Target, title: "광고주 매칭", desc: "AI 맞춤 추천", gradient: "from-rose-500 to-red-600" },
+                { href: "/creator/media-kit", icon: FileText, title: "미디어킷", desc: "포트폴리오 제작", gradient: "from-orange-500 to-amber-600" },
+                { href: "/creator/story", icon: Sparkles, title: "인스타툰", desc: "자동 생성", gradient: "from-indigo-500 to-purple-600" },
               ].map((tool) => (
                 <Link key={tool.href} to={tool.href} className="p-4 rounded-xl hover:shadow-lg transition-all border border-transparent hover:border-border">
                   <div className={`w-10 h-10 bg-gradient-to-br ${tool.gradient} rounded-lg flex items-center justify-center mb-3`}>
