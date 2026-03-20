@@ -86,22 +86,22 @@ export function BusinessHub() {
                     <Star className="w-6 h-6 text-gold-500" />
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold text-gray-900">
+                    <h4 className="text-lg font-bold text-foreground">
                       Brand Match Score
                     </h4>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-foreground">
                       AI-Powered Analysis
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-4xl font-black text-gray-900">98%</p>
+                  <p className="text-4xl font-black text-foreground">98%</p>
                 </div>
               </div>
 
               {/* Matching Brands */}
               <div className="bg-white/30 rounded-xl p-4">
-                <p className="text-sm font-semibold text-gray-900 mb-3">
+                <p className="text-sm font-semibold text-foreground mb-3">
                   Top Matching Brands:
                 </p>
                 <div className="space-y-2">
@@ -112,7 +112,7 @@ export function BusinessHub() {
                   ].map((brand, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 text-gray-800"
+                      className="flex items-center gap-2 text-foreground"
                     >
                       <CheckCircle2 className="w-4 h-4 text-green-700" />
                       <span className="text-sm font-medium">{brand}</span>
@@ -146,9 +146,9 @@ export function BusinessHub() {
           </div>
 
           {/* Right Side - Automated Media Kit Preview */}
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="bg-card rounded-3xl shadow-2xl p-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-foreground">
                 Automated Media Kit
               </h3>
               <div className="bg-green-100 rounded-full px-4 py-1">
@@ -161,10 +161,10 @@ export function BusinessHub() {
             {/* Media Kit Preview */}
             <div className="space-y-6">
               {/* Growth Chart */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-200">
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 rounded-2xl p-6 border-2 border-indigo-200">
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-indigo-600" />
-                  <h4 className="font-bold text-gray-900">
+                  <h4 className="font-bold text-foreground">
                     Follower Growth
                   </h4>
                 </div>
@@ -176,24 +176,24 @@ export function BusinessHub() {
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   <div className="text-center">
                     <p className="text-lg font-bold text-indigo-600">+127%</p>
-                    <p className="text-xs text-gray-600">3 Months</p>
+                    <p className="text-xs text-muted-foreground">3 Months</p>
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-bold text-indigo-600">+89%</p>
-                    <p className="text-xs text-gray-600">6 Months</p>
+                    <p className="text-xs text-muted-foreground">6 Months</p>
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-bold text-indigo-600">+234%</p>
-                    <p className="text-xs text-gray-600">1 Year</p>
+                    <p className="text-xs text-muted-foreground">1 Year</p>
                   </div>
                 </div>
               </div>
 
               {/* Previous Toon Examples */}
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border-2 border-purple-200">
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-5 h-5 text-purple-600" />
-                  <h4 className="font-bold text-gray-900">Top Performing Toons</h4>
+                  <h4 className="font-bold text-foreground">Top Performing Toons</h4>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {[1, 2, 3].map((toon) => (
@@ -207,7 +207,7 @@ export function BusinessHub() {
                         className="w-full h-20 object-contain mb-2"
                       />
                       <div className="text-center">
-                        <p className="text-xs font-semibold text-gray-700">
+                        <p className="text-xs font-semibold text-foreground">
                           Episode {toon}
                         </p>
                         <p className="text-xs text-purple-600 font-bold">
@@ -220,35 +220,35 @@ export function BusinessHub() {
               </div>
 
               {/* Audience Demographics */}
-              <div className="bg-gradient-to-br from-gold-50 to-amber-50 rounded-2xl p-6 border-2 border-gold-200">
-                <h4 className="font-bold text-gray-900 mb-4">
+              <div className="bg-gradient-to-br from-gold-50 to-amber-50 dark:from-amber-950/20 dark:to-amber-950/20 rounded-2xl p-6 border-2 border-gold-200">
+                <h4 className="font-bold text-foreground mb-4">
                   Audience Insights
                 </h4>
                 <div className="space-y-3">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700">Age 18-24</span>
-                      <span className="font-semibold text-gray-900">42%</span>
+                      <span className="text-foreground">Age 18-24</span>
+                      <span className="font-semibold text-foreground">42%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-gold-500 h-2 rounded-full w-[42%]" />
                     </div>
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700">Age 25-34</span>
-                      <span className="font-semibold text-gray-900">38%</span>
+                      <span className="text-foreground">Age 25-34</span>
+                      <span className="font-semibold text-foreground">38%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-gold-500 h-2 rounded-full w-[38%]" />
                     </div>
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700">Age 35+</span>
-                      <span className="font-semibold text-gray-900">20%</span>
+                      <span className="text-foreground">Age 35+</span>
+                      <span className="font-semibold text-foreground">20%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-gold-500 h-2 rounded-full w-[20%]" />
                     </div>
                   </div>
@@ -265,7 +265,7 @@ export function BusinessHub() {
                 <Download className="w-5 h-5 mr-2" />
                 Download Your AI-Generated Media Kit
               </Button>
-              <p className="text-center text-sm text-gray-500 mt-3">
+              <p className="text-center text-sm text-muted-foreground mt-3">
                 Professional PDF • Updated in real-time
               </p>
             </div>

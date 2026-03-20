@@ -7,14 +7,8 @@ interface CreatorToolMockupProps {
 
 export function CreatorToolMockup({ theme }: CreatorToolMockupProps) {
   return (
-    <div className={`rounded-[2rem] p-10 border-2 backdrop-blur-xl relative overflow-hidden ${
-      theme === "dark"
-        ? "bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700/50"
-        : "bg-gradient-to-br from-gray-50/80 to-white/80 border-gray-200/50 shadow-2xl"
-    }`}>
-      <div className={`aspect-square rounded-2xl ${
-        theme === "dark" ? "bg-gray-900/50" : "bg-white"
-      }`}>
+    <div className="rounded-[2rem] p-10 border-2 backdrop-blur-xl relative overflow-hidden bg-gradient-to-br from-muted/80 to-card/80 border-border/50 shadow-2xl dark:shadow-none">
+      <div className="aspect-square rounded-2xl bg-card">
         <div className="w-full h-full p-6 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -22,16 +16,12 @@ export function CreatorToolMockup({ theme }: CreatorToolMockupProps) {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00e5cc] to-cyan-400 flex items-center justify-center">
                 <Wand2 className="w-4 h-4 text-white" />
               </div>
-              <span className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <span className="text-sm font-bold text-foreground">
                 캐릭터 생성
               </span>
             </div>
             <motion.button
-              className={`px-4 py-2 rounded-lg text-xs font-bold ${
-                theme === "dark"
-                  ? "bg-[#00e5cc]/20 text-[#00e5cc]"
-                  : "bg-teal-100 text-teal-700"
-              }`}
+              className="px-4 py-2 rounded-lg text-xs font-bold bg-teal-100 dark:bg-[#00e5cc]/20 text-teal-700 dark:text-[#00e5cc]"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -41,19 +31,15 @@ export function CreatorToolMockup({ theme }: CreatorToolMockupProps) {
 
           {/* Prompt Input */}
           <div
-            className={`p-4 rounded-xl border ${
-              theme === "dark"
-                ? "bg-gray-800/50 border-gray-700"
-                : "bg-gray-50 border-gray-200"
-            }`}
+            className="p-4 rounded-xl border bg-muted border-border"
           >
             <div className="flex items-center gap-2 mb-2">
-              <Type className={`w-4 h-4 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
-              <span className={`text-xs font-semibold ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+              <Type className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">
                 프롬프트
               </span>
             </div>
-            <p className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+            <p className="text-sm text-foreground">
               귀여운 토끼 캐릭터, 파란 옷을 입고, 밝은 표정, 만화 스타일...
             </p>
           </div>
@@ -65,12 +51,8 @@ export function CreatorToolMockup({ theme }: CreatorToolMockupProps) {
                 key={i}
                 className={`aspect-square rounded-xl border-2 relative overflow-hidden ${
                   i === 1
-                    ? theme === "dark"
-                      ? "border-[#00e5cc] bg-gradient-to-br from-[#00e5cc]/20 to-cyan-400/10"
-                      : "border-teal-500 bg-gradient-to-br from-teal-50 to-cyan-50"
-                    : theme === "dark"
-                    ? "border-gray-700 bg-gray-800/30"
-                    : "border-gray-200 bg-gray-50"
+                    ? "border-teal-500 dark:border-[#00e5cc] bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-[#00e5cc]/20 dark:to-cyan-400/10"
+                    : "border-border bg-muted"
                 }`}
                 whileHover={{ scale: 1.05, y: -5 }}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -81,9 +63,7 @@ export function CreatorToolMockup({ theme }: CreatorToolMockupProps) {
                   <Image className={`w-8 h-8 ${
                     i === 1
                       ? "text-[#00e5cc]"
-                      : theme === "dark"
-                      ? "text-gray-600"
-                      : "text-gray-300"
+                      : "text-muted-foreground"
                   }`} />
                 </div>
                 {i === 1 && (
@@ -109,9 +89,7 @@ export function CreatorToolMockup({ theme }: CreatorToolMockupProps) {
                 className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold ${
                   i === 0
                     ? "bg-gradient-to-r from-[#00e5cc] to-cyan-400 text-white"
-                    : theme === "dark"
-                    ? "bg-gray-800 text-gray-400"
-                    : "bg-gray-100 text-gray-600"
+                    : "bg-muted text-muted-foreground"
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -123,7 +101,7 @@ export function CreatorToolMockup({ theme }: CreatorToolMockupProps) {
 
           {/* Color Palette */}
           <div className="flex items-center gap-2">
-            <Palette className={`w-4 h-4 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
+            <Palette className="w-4 h-4 text-muted-foreground" />
             <div className="flex gap-2">
               {["#00e5cc", "#7c3aed", "#3b82f6", "#f59e0b"].map((color) => (
                 <motion.div

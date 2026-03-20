@@ -180,11 +180,11 @@ export function BrandAssets() {
       case "pending":
         return theme === "dark" ? "text-yellow-400 bg-yellow-500/20" : "text-yellow-600 bg-yellow-100";
       case "draft":
-        return theme === "dark" ? "text-gray-400 bg-gray-500/20" : "text-gray-600 bg-gray-100";
+        return theme === "dark" ? "text-gray-400 bg-gray-500/20" : "text-muted-foreground bg-muted";
       case "rejected":
         return theme === "dark" ? "text-red-400 bg-red-500/20" : "text-red-600 bg-red-100";
       case "archived":
-        return theme === "dark" ? "text-gray-500 bg-gray-700/20" : "text-gray-500 bg-gray-200";
+        return theme === "dark" ? "text-muted-foreground bg-gray-700/20" : "text-muted-foreground bg-muted";
     }
   };
 
@@ -270,18 +270,18 @@ export function BrandAssets() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className={`text-3xl font-black mb-2 ${
-              theme === "dark" ? "text-white" : "text-gray-900"
+              theme === "dark" ? "text-white" : "text-foreground"
             }`}>
               브랜드 자산
             </h1>
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-400" : "text-muted-foreground"}>
               승인된 마스코트, 로고, 아이콘을 통합 관리하고 버전을 추적하세요
             </p>
           </div>
           <div className="flex gap-3">
             <Button
               variant="outline"
-              className={theme === "dark" ? "border-gray-700" : ""}
+              className={theme === "dark" ? "border-border" : ""}
             >
               <Upload className="w-4 h-4 mr-2" />
               업로드
@@ -299,17 +299,17 @@ export function BrandAssets() {
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
           <div className={`rounded-xl p-4 border ${
-            theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+            theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
           }`}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
                 <FolderOpen className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                   {stats.total}
                 </p>
-                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                   전체 자산
                 </p>
               </div>
@@ -317,17 +317,17 @@ export function BrandAssets() {
           </div>
 
           <div className={`rounded-xl p-4 border ${
-            theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+            theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
           }`}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                   {stats.approved}
                 </p>
-                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                   승인됨
                 </p>
               </div>
@@ -335,17 +335,17 @@ export function BrandAssets() {
           </div>
 
           <div className={`rounded-xl p-4 border ${
-            theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+            theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
           }`}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
                 <Clock className="w-5 h-5 text-yellow-500" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                   {stats.pending}
                 </p>
-                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                   검토중
                 </p>
               </div>
@@ -353,17 +353,17 @@ export function BrandAssets() {
           </div>
 
           <div className={`rounded-xl p-4 border ${
-            theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+            theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
           }`}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gray-500/20 rounded-lg flex items-center justify-center">
-                <Edit className="w-5 h-5 text-gray-500" />
+                <Edit className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                   {stats.draft}
                 </p>
-                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                   초안
                 </p>
               </div>
@@ -374,20 +374,20 @@ export function BrandAssets() {
 
       {/* Filters & Search */}
       <div className={`rounded-2xl p-6 border mb-6 ${
-        theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+        theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
       }`}>
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
             <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-              theme === "dark" ? "text-gray-500" : "text-gray-400"
+              theme === "dark" ? "text-muted-foreground" : "text-gray-400"
             }`} />
             <Input
               placeholder="자산 이름 또는 태그로 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`pl-12 ${
-                theme === "dark" ? "bg-gray-900 border-gray-800" : ""
+                theme === "dark" ? "bg-gray-900 border-border" : ""
               }`}
             />
           </div>
@@ -420,8 +420,8 @@ export function BrandAssets() {
             onChange={(e) => setSelectedStatus(e.target.value as AssetStatus | "all")}
             className={`px-4 py-2 rounded-lg border font-semibold text-sm ${
               theme === "dark"
-                ? "bg-gray-900 border-gray-800 text-white"
-                : "bg-white border-gray-200 text-gray-900"
+                ? "bg-gray-900 border-border text-white"
+                : "bg-card border-border text-foreground"
             }`}
           >
             <option value="all">모든 상태</option>
@@ -434,7 +434,7 @@ export function BrandAssets() {
 
           {/* View Mode */}
           <div className={`flex rounded-lg border ${
-            theme === "dark" ? "border-gray-800" : "border-gray-200"
+            theme === "dark" ? "border-border" : "border-border"
           }`}>
             <button
               onClick={() => setViewMode("grid")}
@@ -442,10 +442,10 @@ export function BrandAssets() {
                 viewMode === "grid"
                   ? theme === "dark"
                     ? "bg-gray-800 text-white"
-                    : "bg-gray-100 text-gray-900"
+                    : "bg-muted text-foreground"
                   : theme === "dark"
                   ? "text-gray-400"
-                  : "text-gray-600"
+                  : "text-muted-foreground"
               }`}
             >
               <Grid3x3 className="w-4 h-4" />
@@ -456,10 +456,10 @@ export function BrandAssets() {
                 viewMode === "list"
                   ? theme === "dark"
                     ? "bg-gray-800 text-white"
-                    : "bg-gray-100 text-gray-900"
+                    : "bg-muted text-foreground"
                   : theme === "dark"
                   ? "text-gray-400"
-                  : "text-gray-600"
+                  : "text-muted-foreground"
               }`}
             >
               <List className="w-4 h-4" />
@@ -475,11 +475,11 @@ export function BrandAssets() {
             <div
               key={asset.id}
               className={`group rounded-2xl border overflow-hidden hover:shadow-xl transition-all ${
-                theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+                theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
               }`}
             >
               {/* Thumbnail */}
-              <div className="relative aspect-square overflow-hidden bg-gray-100">
+              <div className="relative aspect-square overflow-hidden bg-muted">
                 <img
                   src={asset.thumbnail}
                   alt={asset.name}
@@ -527,23 +527,23 @@ export function BrandAssets() {
               <div className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className={`font-bold text-sm line-clamp-1 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
+                    theme === "dark" ? "text-white" : "text-foreground"
                   }`}>
                     {asset.name}
                   </h3>
-                  <button className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+                  <button className={theme === "dark" ? "text-gray-400" : "text-muted-foreground"}>
                     <MoreVertical className="w-4 h-4" />
                   </button>
                 </div>
 
                 <div className="flex items-center gap-2 mb-3">
                   <span className={`text-xs px-2 py-1 rounded ${
-                    theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-gray-100 text-gray-600"
+                    theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-muted text-muted-foreground"
                   }`}>
                     {getTypeLabel(asset.type)}
                   </span>
                   <span className={`text-xs font-mono ${
-                    theme === "dark" ? "text-gray-500" : "text-gray-500"
+                    theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
                   }`}>
                     {asset.version}
                   </span>
@@ -561,14 +561,14 @@ export function BrandAssets() {
                     </span>
                   ))}
                   {asset.tags.length > 2 && (
-                    <span className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+                    <span className={`text-xs ${theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"}`}>
                       +{asset.tags.length - 2}
                     </span>
                   )}
                 </div>
 
                 <div className={`flex items-center justify-between text-xs pt-3 border-t ${
-                  theme === "dark" ? "border-gray-800 text-gray-500" : "border-gray-100 text-gray-500"
+                  theme === "dark" ? "border-border text-muted-foreground" : "border-border text-muted-foreground"
                 }`}>
                   <div className="flex items-center gap-1">
                     <Download className="w-3 h-3" />
@@ -589,12 +589,12 @@ export function BrandAssets() {
             <div
               key={asset.id}
               className={`rounded-xl p-4 border hover:shadow-lg transition-all ${
-                theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+                theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
               }`}
             >
               <div className="flex items-center gap-4">
                 {/* Thumbnail */}
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                   <img
                     src={asset.thumbnail}
                     alt={asset.name}
@@ -606,21 +606,21 @@ export function BrandAssets() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className={`font-bold truncate ${
-                      theme === "dark" ? "text-white" : "text-gray-900"
+                      theme === "dark" ? "text-white" : "text-foreground"
                     }`}>
                       {asset.name}
                     </h3>
-                    {asset.isLocked && <Lock className="w-4 h-4 text-gray-500" />}
+                    {asset.isLocked && <Lock className="w-4 h-4 text-muted-foreground" />}
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <span className={`inline-flex items-center gap-1 ${
-                      theme === "dark" ? "text-gray-400" : "text-gray-600"
+                      theme === "dark" ? "text-gray-400" : "text-muted-foreground"
                     }`}>
                       {getTypeIcon(asset.type)}
                       {getTypeLabel(asset.type)}
                     </span>
                     <span className={`font-mono text-xs ${
-                      theme === "dark" ? "text-gray-500" : "text-gray-500"
+                      theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
                     }`}>
                       {asset.version}
                     </span>
@@ -647,7 +647,7 @@ export function BrandAssets() {
 
                 {/* Meta */}
                 <div className={`hidden md:flex items-center gap-4 text-sm ${
-                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  theme === "dark" ? "text-gray-400" : "text-muted-foreground"
                 }`}>
                   <div className="flex items-center gap-1">
                     <User className="w-4 h-4" />
@@ -684,17 +684,17 @@ export function BrandAssets() {
       {/* Empty State */}
       {filteredAssets.length === 0 && (
         <div className={`text-center py-16 rounded-2xl border ${
-          theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+          theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
         }`}>
           <div className="w-16 h-16 bg-gray-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FolderOpen className="w-8 h-8 text-gray-500" />
+            <FolderOpen className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className={`text-xl font-bold mb-2 ${
-            theme === "dark" ? "text-white" : "text-gray-900"
+            theme === "dark" ? "text-white" : "text-foreground"
           }`}>
             자산을 찾을 수 없습니다
           </h3>
-          <p className={`mb-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+          <p className={`mb-6 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
             검색 조건을 변경하거나 새 자산을 생성해보세요
           </p>
           <Button

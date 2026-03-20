@@ -66,7 +66,7 @@ export function CutePoster() {
       {/* Main Poster Container */}
       <div className="relative max-w-4xl w-full">
         {/* Poster Card */}
-        <div className="bg-white rounded-[3rem] shadow-2xl p-12 relative overflow-hidden border-8 border-white">
+        <div className="bg-card rounded-[3rem] shadow-2xl p-12 relative overflow-hidden border-8 border-card">
           {/* Rainbow Border Effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-pink-400 via-purple-400 via-blue-400 via-green-400 to-yellow-400 opacity-20 rounded-[2.5rem]" />
 
@@ -88,7 +88,7 @@ export function CutePoster() {
               <h1 className="text-7xl font-black mb-4 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-transparent bg-clip-text tracking-tight">
                 OLLI
               </h1>
-              <p className="text-3xl font-bold text-gray-700 mb-2">
+              <p className="text-3xl font-bold text-foreground mb-2">
                 올리와 함께라면
               </p>
               <p className="text-4xl font-black text-purple-600">
@@ -124,7 +124,7 @@ export function CutePoster() {
                         />
                         <div className="text-center">
                           <p className="text-2xl mb-1">{item.emoji}</p>
-                          <p className="text-sm font-bold text-gray-700">
+                          <p className="text-sm font-bold text-foreground">
                             {item.label}
                           </p>
                         </div>
@@ -151,7 +151,7 @@ export function CutePoster() {
                   className={`bg-gradient-to-br from-${feature.color}-50 to-${feature.color}-100 rounded-2xl p-4 text-center border-3 border-${feature.color}-200 shadow-lg`}
                 >
                   <feature.icon className={`w-8 h-8 mx-auto mb-2 text-${feature.color}-600`} />
-                  <p className="font-bold text-gray-800 text-sm">
+                  <p className="font-bold text-foreground text-sm">
                     {feature.text}
                   </p>
                 </div>
@@ -167,7 +167,7 @@ export function CutePoster() {
                   <Heart className="w-7 h-7 fill-white" />
                 </div>
               </button>
-              <p className="mt-4 text-gray-600 font-semibold">
+              <p className="mt-4 text-muted-foreground font-semibold">
                 ✨ 그림 못 그려도 OK! 아이디어만 있으면 충분해요 ✨
               </p>
             </div>
@@ -179,7 +179,7 @@ export function CutePoster() {
                   <p className="text-4xl font-black text-purple-600 mb-1">
                     10K+
                   </p>
-                  <p className="text-sm text-gray-600 font-semibold">
+                  <p className="text-sm text-muted-foreground font-semibold">
                     활동 작가님
                   </p>
                 </div>
@@ -187,7 +187,7 @@ export function CutePoster() {
                   <p className="text-4xl font-black text-pink-600 mb-1">
                     50K+
                   </p>
-                  <p className="text-sm text-gray-600 font-semibold">
+                  <p className="text-sm text-muted-foreground font-semibold">
                     생성된 툰
                   </p>
                 </div>
@@ -195,7 +195,7 @@ export function CutePoster() {
                   <p className="text-4xl font-black text-orange-600 mb-1">
                     4.9★
                   </p>
-                  <p className="text-sm text-gray-600 font-semibold">
+                  <p className="text-sm text-muted-foreground font-semibold">
                     평점
                   </p>
                 </div>

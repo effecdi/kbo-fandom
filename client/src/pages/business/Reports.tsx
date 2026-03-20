@@ -122,10 +122,10 @@ export function Reports() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               리포트 & 분석
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               마스코트 활용도와 캠페인 성과를 확인하세요
             </p>
           </div>
@@ -165,7 +165,7 @@ export function Reports() {
             return (
               <div
                 key={idx}
-                className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all"
+                className="bg-card rounded-2xl p-6 border border-border hover:shadow-lg transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className={`w-12 h-12 ${colorClasses} rounded-xl flex items-center justify-center`}>
@@ -186,10 +186,10 @@ export function Reports() {
                     {stat.change}
                   </div>
                 </div>
-                <div className="text-3xl font-black text-gray-900 mb-1">
+                <div className="text-3xl font-black text-foreground mb-1">
                   {stat.value}
                 </div>
-                <div className="text-sm text-gray-600">{stat.label}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
               </div>
             );
           })}
@@ -198,9 +198,9 @@ export function Reports() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Campaign Performance */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="bg-card rounded-2xl p-6 border border-border">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-black text-gray-900">
+                <h2 className="text-xl font-black text-foreground">
                   캠페인 성과
                 </h2>
                 <Button variant="ghost" size="sm">
@@ -213,22 +213,22 @@ export function Reports() {
                 {campaignPerformance.map((campaign, idx) => (
                   <div
                     key={idx}
-                    className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all"
+                    className="border border-border rounded-xl p-4 hover:shadow-md transition-all"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-bold text-gray-900 mb-1">
+                        <h3 className="font-bold text-foreground mb-1">
                           {campaign.name}
                         </h3>
                         <div className="flex items-center gap-2">
                           <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
                             campaign.status === "진행중"
                               ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-700"
+                              : "bg-muted text-foreground"
                           }`}>
                             {campaign.status}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-muted-foreground">
                             예산: {campaign.budget}원
                           </span>
                         </div>
@@ -237,46 +237,46 @@ export function Reports() {
                         <div className="text-lg font-black text-green-600">
                           ROI {campaign.roi}
                         </div>
-                        <div className="text-xs text-gray-600">투자 대비 효과</div>
+                        <div className="text-xs text-muted-foreground">투자 대비 효과</div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-4 gap-4">
-                      <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <div className="text-center p-2 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <Eye className="w-3 h-3 text-gray-500" />
-                          <span className="text-sm font-black text-gray-900">
+                          <Eye className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm font-black text-foreground">
                             {campaign.views}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">조회수</div>
+                        <div className="text-xs text-muted-foreground">조회수</div>
                       </div>
-                      <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <div className="text-center p-2 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <Heart className="w-3 h-3 text-gray-500" />
-                          <span className="text-sm font-black text-gray-900">
+                          <Heart className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm font-black text-foreground">
                             {campaign.engagement}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">참여율</div>
+                        <div className="text-xs text-muted-foreground">참여율</div>
                       </div>
-                      <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <div className="text-center p-2 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <Users className="w-3 h-3 text-gray-500" />
-                          <span className="text-sm font-black text-gray-900">
+                          <Users className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm font-black text-foreground">
                             {campaign.reach}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">도달</div>
+                        <div className="text-xs text-muted-foreground">도달</div>
                       </div>
-                      <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <div className="text-center p-2 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <Share2 className="w-3 h-3 text-gray-500" />
-                          <span className="text-sm font-black text-gray-900">
+                          <Share2 className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm font-black text-foreground">
                             {campaign.shares}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">공유</div>
+                        <div className="text-xs text-muted-foreground">공유</div>
                       </div>
                     </div>
                   </div>
@@ -287,8 +287,8 @@ export function Reports() {
 
           {/* Top Mascots */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-6">
-              <h2 className="text-xl font-black text-gray-900 mb-6">
+            <div className="bg-card rounded-2xl p-6 border border-border mb-6">
+              <h2 className="text-xl font-black text-foreground mb-6">
                 인기 마스코트
               </h2>
 
@@ -302,10 +302,10 @@ export function Reports() {
                       #{idx + 1}
                     </div>
                     <div className="flex-1">
-                      <div className="font-bold text-gray-900 mb-1">
+                      <div className="font-bold text-foreground mb-1">
                         {mascot.name}
                       </div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-muted-foreground">
                         {mascot.campaigns}개 캠페인 · {mascot.views} 조회
                       </div>
                       <div className="text-xs font-semibold text-indigo-600">
@@ -319,23 +319,23 @@ export function Reports() {
 
             {/* Quick Insights */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200">
-              <h3 className="font-black text-gray-900 mb-4">💡 인사이트</h3>
+              <h3 className="font-black text-foreground mb-4">💡 인사이트</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-2">
                   <TrendingUp className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-700">
+                  <p className="text-foreground">
                     <span className="font-semibold">브랜디</span> 마스코트가 가장 높은 참여율을 기록하고 있습니다
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <TrendingUp className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-700">
+                  <p className="text-foreground">
                     작가 협업 캠페인의 평균 참여율이 <span className="font-semibold">38% 더 높습니다</span>
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <Calendar className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-700">
+                  <p className="text-foreground">
                     목요일 오후 2-4시에 가장 높은 조회수를 기록합니다
                   </p>
                 </div>
@@ -345,11 +345,11 @@ export function Reports() {
         </div>
 
         {/* Export Options */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
-          <h2 className="text-xl font-black text-gray-900 mb-4">
+        <div className="bg-card rounded-2xl p-6 border border-border">
+          <h2 className="text-xl font-black text-foreground mb-4">
             리포트 내보내기
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             관공서 내부 보고용 리포트를 다운로드하세요
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -359,8 +359,8 @@ export function Reports() {
                   <FileText className="w-5 h-5 text-red-600" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-gray-900">PDF 리포트</div>
-                  <div className="text-xs text-gray-600">전체 성과 요약</div>
+                  <div className="font-semibold text-foreground">PDF 리포트</div>
+                  <div className="text-xs text-muted-foreground">전체 성과 요약</div>
                 </div>
               </div>
             </Button>
@@ -370,8 +370,8 @@ export function Reports() {
                   <FileText className="w-5 h-5 text-green-600" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-gray-900">Excel 데이터</div>
-                  <div className="text-xs text-gray-600">상세 수치 분석</div>
+                  <div className="font-semibold text-foreground">Excel 데이터</div>
+                  <div className="text-xs text-muted-foreground">상세 수치 분석</div>
                 </div>
               </div>
             </Button>
@@ -381,8 +381,8 @@ export function Reports() {
                   <FileText className="w-5 h-5 text-blue-600" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-gray-900">PPT 발표자료</div>
-                  <div className="text-xs text-gray-600">내부 결재용</div>
+                  <div className="font-semibold text-foreground">PPT 발표자료</div>
+                  <div className="text-xs text-muted-foreground">내부 결재용</div>
                 </div>
               </div>
             </Button>

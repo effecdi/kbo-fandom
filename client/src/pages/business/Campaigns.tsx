@@ -103,7 +103,7 @@ export function Campaigns() {
       active: { label: "진행중", color: "bg-green-100 text-green-700 border-green-300", icon: PlayCircle },
       recruiting: { label: "작가모집중", color: "bg-purple-100 text-purple-700 border-purple-300", icon: Users },
       planning: { label: "기획중", color: "bg-blue-100 text-blue-700 border-blue-300", icon: Target },
-      completed: { label: "완료", color: "bg-gray-100 text-gray-700 border-gray-300", icon: CheckCircle },
+      completed: { label: "완료", color: "bg-muted text-foreground border-border", icon: CheckCircle },
     };
     return configs[status] || configs.planning;
   };
@@ -123,10 +123,10 @@ export function Campaigns() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               캠페인 관리
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               진행 중인 캠페인의 상태와 성과를 관리하세요
             </p>
           </div>
@@ -141,49 +141,49 @@ export function Campaigns() {
 
         {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <PlayCircle className="w-5 h-5 text-green-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">1</span>
+              <span className="text-2xl font-black text-foreground">1</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">진행중</p>
+            <p className="text-sm font-semibold text-muted-foreground">진행중</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-5 h-5 text-yellow-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">1</span>
+              <span className="text-2xl font-black text-foreground">1</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">승인대기</p>
+            <p className="text-sm font-semibold text-muted-foreground">승인대기</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-blue-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">1</span>
+              <span className="text-2xl font-black text-foreground">1</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">기획중</p>
+            <p className="text-sm font-semibold text-muted-foreground">기획중</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-5 h-5 text-purple-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">1</span>
+              <span className="text-2xl font-black text-foreground">1</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">완료</p>
+            <p className="text-sm font-semibold text-muted-foreground">완료</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
+        <div className="bg-card rounded-xl p-4 border border-border mb-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="캠페인 검색..."
                 className="pl-10"
@@ -206,14 +206,14 @@ export function Campaigns() {
             return (
               <div
                 key={campaign.id}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer"
+                className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all cursor-pointer"
                 onClick={() => navigate(`/business/campaigns/${campaign.id}`)}
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-black text-gray-900">
+                        <h3 className="text-xl font-black text-foreground">
                           {campaign.title}
                         </h3>
                         <Badge className={`${statusConfig.color} border`}>
@@ -224,7 +224,7 @@ export function Campaigns() {
                           {approvalConfig.label}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Target className="w-4 h-4" />
                           {campaign.type}
@@ -246,10 +246,10 @@ export function Campaigns() {
                   {/* Progress Bar */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="font-semibold text-gray-700">진행률</span>
-                      <span className="font-black text-gray-900">{campaign.progress}%</span>
+                      <span className="font-semibold text-foreground">진행률</span>
+                      <span className="font-black text-foreground">{campaign.progress}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-gradient-to-r from-indigo-600 to-blue-600 h-2 rounded-full transition-all"
                         style={{ width: `${campaign.progress}%` }}
@@ -259,38 +259,38 @@ export function Campaigns() {
 
                   {/* Stats Grid */}
                   <div className="grid grid-cols-6 gap-4">
-                    <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200">
                       <div className="text-xs text-purple-600 mb-1 font-semibold">지원자</div>
                       <div className="font-black text-purple-700 text-lg">
                         {campaign.applicants}명
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200">
                       <div className="text-xs text-green-600 mb-1 font-semibold">선정</div>
                       <div className="font-black text-green-700 text-lg">
                         {campaign.selected}명
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="text-xs text-gray-600 mb-1">예산</div>
-                      <div className="font-black text-gray-900 text-sm">
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-xs text-muted-foreground mb-1">예산</div>
+                      <div className="font-black text-foreground text-sm">
                         {campaign.budget}원
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="text-xs text-gray-600 mb-1">콘텐츠</div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-xs text-muted-foreground mb-1">콘텐츠</div>
                       <div className="font-black text-indigo-600 text-sm">
                         {campaign.contents}개
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="text-xs text-gray-600 mb-1">조회수</div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-xs text-muted-foreground mb-1">조회수</div>
                       <div className="font-black text-blue-600 text-sm">
                         {campaign.views}
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="text-xs text-gray-600 mb-1">참여율</div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-xs text-muted-foreground mb-1">참여율</div>
                       <div className="font-black text-green-600 text-sm">
                         {campaign.engagement}
                       </div>

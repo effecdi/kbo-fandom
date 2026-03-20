@@ -173,9 +173,9 @@ export function Pricing() {
   ];
 
   return (
-    <div className={`min-h-screen ${theme === "dark" ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen ${theme === "dark" ? "bg-gray-900" : "bg-muted"}`}>
       {/* Header */}
-      <div className={`border-b ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className={`border-b ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-card border-border"}`}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <Button 
             variant="ghost" 
@@ -196,16 +196,16 @@ export function Pricing() {
             모든 규모에 맞는 요금제
           </span>
         </div>
-        <h1 className={`text-4xl md:text-5xl font-black mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+        <h1 className={`text-4xl md:text-5xl font-black mb-4 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
           성장에 맞춘 유연한 가격
         </h1>
-        <p className={`text-lg md:text-xl mb-8 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+        <p className={`text-lg md:text-xl mb-8 ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
           무료로 시작하고, 필요할 때 업그레이드하세요
         </p>
 
         {/* Type Toggle */}
         <div className={`inline-flex p-1.5 rounded-2xl mb-12 ${
-          theme === "dark" ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200 shadow-sm"
+          theme === "dark" ? "bg-gray-800 border border-gray-700" : "bg-card border border-border shadow-sm"
         }`}>
           <button
             onClick={() => setSelectedType("creator")}
@@ -214,7 +214,7 @@ export function Pricing() {
                 ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
                 : theme === "dark"
                 ? "text-gray-400 hover:text-white"
-                : "text-gray-600 hover:text-gray-900"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Wand2 className="w-4 h-4" />
@@ -227,7 +227,7 @@ export function Pricing() {
                 ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
                 : theme === "dark"
                 ? "text-gray-400 hover:text-white"
-                : "text-gray-600 hover:text-gray-900"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Building2 className="w-4 h-4" />
@@ -249,13 +249,13 @@ export function Pricing() {
                     ? selectedType === "creator"
                       ? theme === "dark"
                         ? "border-[#00e5cc] bg-gray-800 shadow-2xl shadow-[#00e5cc]/20 scale-105"
-                        : "border-teal-500 bg-white shadow-2xl scale-105"
+                        : "border-teal-500 bg-card shadow-2xl scale-105"
                       : theme === "dark"
                       ? "border-blue-500 bg-gray-800 shadow-2xl shadow-blue-500/20 scale-105"
-                      : "border-blue-500 bg-white shadow-2xl scale-105"
+                      : "border-blue-500 bg-card shadow-2xl scale-105"
                     : theme === "dark"
                     ? "border-gray-700 bg-gray-800 hover:border-gray-600"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg"
+                    : "border-border bg-card hover:border-border hover:shadow-lg"
                 }`}
               >
                 {/* Popular Badge */}
@@ -280,29 +280,29 @@ export function Pricing() {
                       : "bg-gradient-to-br from-blue-500 to-indigo-500"
                     : theme === "dark"
                     ? "bg-gray-700"
-                    : "bg-gray-100"
+                    : "bg-muted"
                 }`}>
                   <Icon className={`w-7 h-7 ${
-                    plan.popular ? "text-white" : theme === "dark" ? "text-gray-400" : "text-gray-600"
+                    plan.popular ? "text-white" : theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
                   }`} />
                 </div>
 
                 {/* Plan Name */}
-                <h3 className={`text-2xl font-black mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <h3 className={`text-2xl font-black mb-2 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                   {plan.name}
                 </h3>
 
                 {/* Description */}
-                <p className={`text-sm mb-4 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <p className={`text-sm mb-4 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                   {plan.description}
                 </p>
 
                 {/* Price */}
                 <div className="mb-2">
-                  <span className={`text-4xl md:text-5xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <span className={`text-4xl md:text-5xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                     {plan.price}
                   </span>
-                  <span className={`text-lg ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                  <span className={`text-lg ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                     {plan.period}
                   </span>
                 </div>
@@ -334,7 +334,7 @@ export function Pricing() {
                             : "bg-blue-500/20"
                           : theme === "dark"
                           ? "bg-gray-700"
-                          : "bg-gray-100"
+                          : "bg-muted"
                       }`}>
                         <Check className={`w-3 h-3 ${
                           plan.popular
@@ -342,11 +342,11 @@ export function Pricing() {
                               ? "text-[#00e5cc]"
                               : "text-blue-500"
                             : theme === "dark"
-                            ? "text-gray-400"
-                            : "text-gray-600"
+                            ? "text-muted-foreground"
+                            : "text-muted-foreground"
                         }`} />
                       </div>
-                      <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                      <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                         {feature}
                       </span>
                     </li>
@@ -387,16 +387,16 @@ export function Pricing() {
         <div className={`rounded-2xl p-8 border text-center ${
           theme === "dark" 
             ? "bg-gray-800 border-gray-700" 
-            : "bg-white border-gray-200"
+            : "bg-card border-border"
         }`}>
-          <h3 className={`font-bold mb-3 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          <h3 className={`font-bold mb-3 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
             모든 플랜에 포함된 기본 기능
           </h3>
-          <p className={`text-sm mb-4 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+          <p className={`text-sm mb-4 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
             모든 플랜에는 기본 보안, 정기 업데이트, 커뮤니티 접근이 포함됩니다.
           </p>
           {selectedType === "business" && (
-            <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+            <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
               💼 기업 플랜은 <strong>관공서, 공공기관, 비영리단체</strong>도 이용 가능하며,<br />
               <strong>승인 프로세스, 버전 관리, 검토 기능</strong>이 포함되어 안전한 업무 환경을 제공합니다.
             </p>
@@ -405,14 +405,14 @@ export function Pricing() {
       </div>
 
       {/* FAQ */}
-      <div className={`py-16 ${theme === "dark" ? "bg-gray-800/50" : "bg-gray-100"}`}>
+      <div className={`py-16 ${theme === "dark" ? "bg-gray-800/50" : "bg-muted"}`}>
         <div className="max-w-4xl mx-auto px-6">
           <h2 className={`text-3xl md:text-4xl font-black mb-2 text-center ${
-            theme === "dark" ? "text-white" : "text-gray-900"
+            theme === "dark" ? "text-white" : "text-foreground"
           }`}>
             자주 묻는 질문
           </h2>
-          <p className={`text-center mb-12 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+          <p className={`text-center mb-12 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
             궁금하신 점이 있으신가요?
           </p>
           <div className="space-y-4">
@@ -422,22 +422,22 @@ export function Pricing() {
                 className={`rounded-2xl border overflow-hidden ${
                   theme === "dark" 
                     ? "bg-gray-800 border-gray-700" 
-                    : "bg-white border-gray-200"
+                    : "bg-card border-border"
                 }`}
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === index ? null : index)}
                   className="w-full p-6 flex items-center justify-between text-left transition-colors hover:bg-opacity-50"
                 >
-                  <h3 className={`font-bold text-lg ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <h3 className={`font-bold text-lg ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                     {item.q}
                   </h3>
                   <ChevronDown className={`w-5 h-5 transition-transform flex-shrink-0 ml-4 ${
                     openFaq === index ? "rotate-180" : ""
-                  } ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
+                  } ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`} />
                 </button>
                 {openFaq === index && (
-                  <div className={`px-6 pb-6 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <div className={`px-6 pb-6 ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                     {item.a}
                   </div>
                 )}
@@ -466,7 +466,7 @@ export function Pricing() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
-              className="bg-white hover:bg-gray-100 font-bold h-14 px-8"
+              className="bg-white hover:bg-muted font-bold h-14 px-8"
               style={{ color: selectedType === "creator" ? "#00b3a6" : "#4f46e5" }}
               onClick={() => navigate("/signup")}
             >

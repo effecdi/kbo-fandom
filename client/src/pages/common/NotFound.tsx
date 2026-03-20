@@ -10,7 +10,7 @@ export function NotFound() {
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-6 ${
-      theme === "dark" ? "bg-gray-900" : "bg-gray-50"
+      theme === "dark" ? "bg-gray-900" : "bg-muted"
     }`}>
       <div className="max-w-2xl w-full text-center">
         {/* Logo */}
@@ -24,7 +24,7 @@ export function NotFound() {
               />
             </div>
             <span className={`text-2xl font-black ${
-              theme === "dark" ? "text-gray-600" : "text-gray-400"
+              theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
             }`}>
               OLLI
             </span>
@@ -36,10 +36,10 @@ export function NotFound() {
           <div className={`inline-flex items-center justify-center w-48 h-48 rounded-full mb-6 ${
             theme === "dark" 
               ? "bg-gradient-to-br from-gray-800 to-gray-700" 
-              : "bg-gradient-to-br from-gray-100 to-gray-200"
+              : "bg-gradient-to-br from-muted to-muted"
           }`}>
             <Compass className={`w-24 h-24 ${
-              theme === "dark" ? "text-gray-600" : "text-gray-400"
+              theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
             }`} />
           </div>
           
@@ -52,12 +52,12 @@ export function NotFound() {
         {/* Message */}
         <div className="mb-10">
           <h2 className={`text-2xl md:text-3xl font-black mb-3 ${
-            theme === "dark" ? "text-white" : "text-gray-900"
+            theme === "dark" ? "text-white" : "text-foreground"
           }`}>
             페이지를 찾을 수 없습니다
           </h2>
           <p className={`text-lg mb-6 ${
-            theme === "dark" ? "text-gray-400" : "text-gray-600"
+            theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
           }`}>
             요청하신 페이지가 존재하지 않거나 이동되었습니다
           </p>
@@ -65,11 +65,11 @@ export function NotFound() {
           {/* Helpful Links */}
           <div className={`rounded-2xl p-6 mb-8 border ${
             theme === "dark" 
-              ? "bg-gray-800 border-gray-700" 
-              : "bg-white border-gray-200"
+              ? "bg-gray-800 border-border" 
+              : "bg-card border-border"
           }`}>
             <p className={`text-sm font-semibold mb-4 ${
-              theme === "dark" ? "text-gray-300" : "text-gray-700"
+              theme === "dark" ? "text-gray-300" : "text-foreground"
             }`}>
               자주 찾는 페이지
             </p>
@@ -79,7 +79,7 @@ export function NotFound() {
                 className={`p-3 rounded-xl text-sm font-semibold transition-all ${
                   theme === "dark"
                     ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                    : "bg-muted text-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 작가 대시보드
@@ -89,7 +89,7 @@ export function NotFound() {
                 className={`p-3 rounded-xl text-sm font-semibold transition-all ${
                   theme === "dark"
                     ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                    : "bg-muted text-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 기업 대시보드
@@ -99,7 +99,7 @@ export function NotFound() {
                 className={`p-3 rounded-xl text-sm font-semibold transition-all ${
                   theme === "dark"
                     ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                    : "bg-muted text-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 요금제
@@ -109,7 +109,7 @@ export function NotFound() {
                 className={`p-3 rounded-xl text-sm font-semibold transition-all ${
                   theme === "dark"
                     ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                    : "bg-muted text-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 로그인
@@ -125,7 +125,7 @@ export function NotFound() {
             onClick={() => navigate(-1)}
             className={`h-12 font-semibold ${
               theme === "dark" 
-                ? "border-gray-700 text-white hover:bg-gray-800" 
+                ? "border-border text-white hover:bg-gray-800" 
                 : ""
             }`}
           >
@@ -143,7 +143,7 @@ export function NotFound() {
 
         {/* Help Text */}
         <p className={`mt-8 text-sm ${
-          theme === "dark" ? "text-gray-500" : "text-gray-500"
+          theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
         }`}>
           계속 문제가 발생하면{" "}
           <button 

@@ -7,14 +7,8 @@ interface EnterpriseSystemMockupProps {
 
 export function EnterpriseSystemMockup({ theme }: EnterpriseSystemMockupProps) {
   return (
-    <div className={`rounded-[2rem] p-10 border-2 backdrop-blur-xl relative overflow-hidden ${
-      theme === "dark"
-        ? "bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border-blue-800/50"
-        : "bg-gradient-to-br from-blue-50/80 to-indigo-50/80 border-blue-200/50 shadow-2xl"
-    }`}>
-      <div className={`aspect-square rounded-2xl ${
-        theme === "dark" ? "bg-blue-950/50" : "bg-white"
-      }`}>
+    <div className="rounded-[2rem] p-10 border-2 backdrop-blur-xl relative overflow-hidden bg-gradient-to-br from-blue-50/80 to-indigo-50/80 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-200/50 dark:border-blue-800/50 shadow-2xl dark:shadow-none">
+      <div className="aspect-square rounded-2xl bg-card">
         <div className="w-full h-full p-6 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -22,13 +16,11 @@ export function EnterpriseSystemMockup({ theme }: EnterpriseSystemMockupProps) {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
                 <Shield className="w-4 h-4 text-white" />
               </div>
-              <span className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <span className="text-sm font-bold text-foreground">
                 승인 대시보드
               </span>
             </div>
-            <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-              theme === "dark" ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"
-            }`}>
+            <div className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400">
               3개 대기중
             </div>
           </div>
@@ -42,17 +34,13 @@ export function EnterpriseSystemMockup({ theme }: EnterpriseSystemMockupProps) {
             ].map((status, i) => (
               <motion.div
                 key={status.label}
-                className={`p-3 rounded-xl border ${
-                  theme === "dark"
-                    ? "bg-gray-800/30 border-gray-700"
-                    : "bg-white border-gray-200"
-                }`}
+                className="p-3 rounded-xl border bg-card border-border"
                 whileHover={{ y: -5, scale: 1.05 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <div className={`text-xs font-semibold mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <div className="text-xs font-semibold mb-1 text-muted-foreground">
                   {status.label}
                 </div>
                 <div className={`text-2xl font-black bg-gradient-to-r ${status.color} bg-clip-text text-transparent`}>
@@ -71,29 +59,23 @@ export function EnterpriseSystemMockup({ theme }: EnterpriseSystemMockupProps) {
             ].map((item, i) => (
               <motion.div
                 key={i}
-                className={`p-4 rounded-xl border flex items-center justify-between ${
-                  theme === "dark"
-                    ? "bg-gray-800/30 border-gray-700 hover:border-gray-600"
-                    : "bg-white border-gray-200 hover:border-gray-300"
-                }`}
+                className="p-4 rounded-xl border flex items-center justify-between bg-card border-border hover:border-border/80"
                 whileHover={{ x: 5 }}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + i * 0.1 }}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg ${
-                    theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-                  } flex items-center justify-center`}>
-                    <FileText className={`w-5 h-5 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <div className="text-sm font-bold text-foreground">
                       {item.title}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Users className={`w-3 h-3 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
-                      <span className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-600"}`}>
+                      <Users className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
                         {item.user}
                       </span>
                     </div>
@@ -113,7 +95,7 @@ export function EnterpriseSystemMockup({ theme }: EnterpriseSystemMockupProps) {
                       transition={{ duration: 2, repeat: Infinity }}
                     />
                   )}
-                  <ChevronRight className={`w-4 h-4 ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`} />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>
               </motion.div>
             ))}
@@ -121,17 +103,13 @@ export function EnterpriseSystemMockup({ theme }: EnterpriseSystemMockupProps) {
 
           {/* Version Control */}
           <div
-            className={`p-4 rounded-xl border ${
-              theme === "dark"
-                ? "bg-gradient-to-br from-blue-900/20 to-indigo-900/20 border-blue-800/50"
-                : "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200"
-            }`}
+            className="p-4 rounded-xl border bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800/50"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className={`text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-700"}`}>
+              <span className="text-xs font-bold text-blue-700 dark:text-blue-400">
                 버전 관리
               </span>
-              <span className={`text-xs ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}>
+              <span className="text-xs text-blue-600 dark:text-blue-400">
                 v3.2.1
               </span>
             </div>
@@ -142,9 +120,7 @@ export function EnterpriseSystemMockup({ theme }: EnterpriseSystemMockupProps) {
                   className={`flex-1 h-2 rounded-full ${
                     v <= 3
                       ? "bg-gradient-to-r from-blue-500 to-indigo-500"
-                      : theme === "dark"
-                      ? "bg-gray-700"
-                      : "bg-gray-200"
+                      : "bg-muted"
                   }`}
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}

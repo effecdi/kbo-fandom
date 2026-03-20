@@ -27,9 +27,9 @@ const img19 = "/favicon.png";
 const img20 = "/favicon.png";
 
 const images = [
-  img1, img2, img3, img4, img5, 
+  img1, img2, img3, img4, img5,
   img6, img7, img8, img9, img10,
-  img11, img12, img13, img14, img15, 
+  img11, img12, img13, img14, img15,
   img16, img17, img18, img19, img20,
 ];
 
@@ -71,7 +71,7 @@ export function InfiniteCharacterGrid({ theme }: InfiniteCharacterGridProps) {
     cards.forEach((card, i) => {
       const row = Math.floor(i / 5);
       const col = i % 5;
-      
+
       gsap.to(card, {
         y: Math.sin((row + col) * 0.5) * 20,
         rotationX: Math.sin((row + col) * 0.3) * 5,
@@ -87,7 +87,7 @@ export function InfiniteCharacterGrid({ theme }: InfiniteCharacterGridProps) {
     // Mouse move parallax
     const handleMouseMove = (e: MouseEvent) => {
       if (!gridRef.current) return;
-      
+
       const rect = gridRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left - rect.width / 2) / rect.width;
       const y = (e.clientY - rect.top - rect.height / 2) / rect.height;
@@ -138,7 +138,7 @@ export function InfiniteCharacterGrid({ theme }: InfiniteCharacterGridProps) {
         {images.map((img, index) => {
           const row = Math.floor(index / 5);
           const col = index % 5;
-          
+
           return (
             <div
               key={index}
@@ -195,7 +195,7 @@ export function InfiniteCharacterGrid({ theme }: InfiniteCharacterGridProps) {
                   className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center font-black text-sm backdrop-blur-xl transition-all duration-500 group-hover:scale-125 ${
                     theme === "dark"
                       ? "bg-black/60 text-white border border-white/20 group-hover:bg-[#00e5cc] group-hover:text-black group-hover:border-[#00e5cc]"
-                      : "bg-white/60 text-gray-900 border border-gray-300 group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500"
+                      : "bg-white/60 text-foreground border border-border group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500"
                   }`}
                   style={{
                     transformStyle: "preserve-3d",
@@ -209,8 +209,8 @@ export function InfiniteCharacterGrid({ theme }: InfiniteCharacterGridProps) {
                 <div
                   className="absolute inset-0 pointer-events-none"
                   style={{
-                    background: `linear-gradient(135deg, 
-                      rgba(0, 0, 0, ${0.3 - (row + col) * 0.02}) 0%, 
+                    background: `linear-gradient(135deg,
+                      rgba(0, 0, 0, ${0.3 - (row + col) * 0.02}) 0%,
                       rgba(255, 255, 255, ${0.1 + (row + col) * 0.01}) 100%)`,
                   }}
                 />

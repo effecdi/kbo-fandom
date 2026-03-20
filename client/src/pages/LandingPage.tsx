@@ -227,7 +227,7 @@ export function LandingPage() {
             </h2>
           </div>
 
-          <FeatureCardSwap theme={theme} />
+          <FeatureCardSwap />
         </div>
       </section>
 
@@ -249,7 +249,7 @@ export function LandingPage() {
             </h2>
           </div>
 
-          <CardSwap theme={theme} />
+          <CardSwap />
         </div>
       </section>
 
@@ -279,7 +279,7 @@ export function LandingPage() {
             </p>
           </div>
 
-          <WebtoonShowcase theme={theme} />
+          <WebtoonShowcase />
         </div>
       </section>
 
@@ -318,7 +318,7 @@ export function LandingPage() {
         className="py-32 px-6 bg-background"
       >
         <div className="max-w-6xl mx-auto">
-          <MagneticCTA theme={theme} onButtonClick={() => navigate("/signup")} />
+          <MagneticCTA onButtonClick={() => navigate("/signup")} />
         </div>
       </section>
 

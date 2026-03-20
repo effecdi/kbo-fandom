@@ -20,10 +20,10 @@ export function ContentCreate() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">
+          <h1 className="text-3xl font-black text-foreground mb-2">
             콘텐츠 제작
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             마스코트로 직접 콘텐츠를 만들거나 전문 작가와 협업하세요
           </p>
         </div>
@@ -32,18 +32,18 @@ export function ContentCreate() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <button
             onClick={() => navigate("/business/content/editor")}
-            className="bg-white rounded-2xl p-8 border-2 border-gray-200 hover:border-indigo-600 hover:shadow-lg transition-all text-left group"
+            className="bg-card rounded-2xl p-8 border-2 border-border hover:border-indigo-600 hover:shadow-lg transition-all text-left group"
           >
             <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Wand2 className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-black text-gray-900 mb-3">
+            <h2 className="text-2xl font-black text-foreground mb-3">
               AI로 직접 제작
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               보유한 마스코트를 활용해 템플릿 기반으로 빠르게 콘텐츠를 생성하세요
             </p>
-            <ul className="space-y-2 text-sm text-gray-600 mb-6">
+            <ul className="space-y-2 text-sm text-muted-foreground mb-6">
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-indigo-600" />
                 공지 배너, 행사 안내 템플릿
@@ -70,13 +70,13 @@ export function ContentCreate() {
             <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
               <Users className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-black text-gray-900 mb-3">
+            <h2 className="text-2xl font-black text-foreground mb-3">
               작가와 협업 🎨
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               전문 작가와 함께 스토리텔링이 필요한 고퀄리티 콘텐츠를 제작하세요
             </p>
-            <ul className="space-y-2 text-sm text-gray-600 mb-6">
+            <ul className="space-y-2 text-sm text-muted-foreground mb-6">
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-purple-600" />
                 지역행사 · 정책홍보 인스타툰
@@ -98,9 +98,9 @@ export function ContentCreate() {
         </div>
 
         {/* Recent Contents */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <div className="bg-card rounded-2xl p-6 border border-border">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-black text-gray-900">
+            <h2 className="text-xl font-black text-foreground">
               최근 제작한 콘텐츠
             </h2>
             <Button variant="ghost" size="sm">
@@ -119,13 +119,13 @@ export function ContentCreate() {
                 <div className="aspect-square bg-gradient-to-br from-indigo-100 to-blue-100 rounded-xl mb-3 flex items-center justify-center group-hover:shadow-lg transition-all relative overflow-hidden">
                   <FileText className="w-16 h-16 text-indigo-300" />
                   <div className="absolute top-3 right-3">
-                    <span className="bg-white/90 backdrop-blur-sm text-xs font-semibold text-gray-700 px-2 py-1 rounded-full">
+                    <span className="bg-white/90 backdrop-blur-sm text-xs font-semibold text-foreground px-2 py-1 rounded-full">
                       {content.type}
                     </span>
                   </div>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1">{content.title}</h3>
-                <p className="text-sm text-gray-600">{content.date}</p>
+                <h3 className="font-bold text-foreground mb-1">{content.title}</h3>
+                <p className="text-sm text-muted-foreground">{content.date}</p>
               </div>
             ))}
           </div>

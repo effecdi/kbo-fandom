@@ -129,7 +129,7 @@ function getXpProgress(totalGenerations: number) {
 
 function RankMedal({ rank }: { rank: number }) {
   if (rank === 1) return <Trophy className="h-5 w-5 text-amber-500" />;
-  if (rank === 2) return <Star className="h-5 w-5 text-gray-400" />;
+  if (rank === 2) return <Star className="h-5 w-5 text-muted-foreground" />;
   if (rank === 3) return <Star className="h-5 w-5 text-amber-700 dark:text-amber-600" />;
   return (
     <span className="flex h-5 w-5 items-center justify-center text-[13px] font-bold text-muted-foreground">

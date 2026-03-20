@@ -53,10 +53,10 @@ export function Mascots() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               내 마스코트 관리 🎭
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               브랜드/공공 마스코트를 관리하고 활용하세요
             </p>
           </div>
@@ -71,10 +71,10 @@ export function Mascots() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-6">
+      <div className="bg-card rounded-2xl p-6 border border-border mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="마스코트 검색..."
               className="pl-10"
@@ -120,7 +120,7 @@ export function Mascots() {
         {mascots.map((mascot) => (
           <div
             key={mascot.id}
-            className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group"
+            className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all group"
           >
             <div className="aspect-square bg-gradient-to-br from-blue-100 to-indigo-100 relative overflow-hidden">
               <img
@@ -174,14 +174,14 @@ export function Mascots() {
             <div className="p-6">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="font-black text-gray-900 text-lg mb-1">{mascot.name}</h3>
-                  <p className="text-sm text-gray-600">{mascot.style} 스타일</p>
+                  <h3 className="font-black text-foreground text-lg mb-1">{mascot.name}</h3>
+                  <p className="text-sm text-muted-foreground">{mascot.style} 스타일</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                 <div>
-                  <span className="font-semibold text-gray-900">{mascot.usedIn}</span>
+                  <span className="font-semibold text-foreground">{mascot.usedIn}</span>
                   <span className="ml-1">개 콘텐츠</span>
                 </div>
                 <div className="text-xs">생성: {mascot.createdAt}</div>
@@ -208,17 +208,17 @@ export function Mascots() {
 
       {/* Empty State (hidden when mascots exist) */}
       {mascots.length === 0 && (
-        <div className="bg-white rounded-2xl p-12 border border-gray-200 text-center">
+        <div className="bg-card rounded-2xl p-12 border border-border text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-blue-600" />
           </div>
-          <h3 className="text-xl font-black text-gray-900 mb-2">
+          <h3 className="text-xl font-black text-foreground mb-2">
             첫 번째 마스코트를 만들어보세요
           </h3>
-          <p className="text-gray-600 mb-2">
+          <p className="text-muted-foreground mb-2">
             브랜드 정체성이나 공공 캠페인을 담은 마스코트로 콘텐츠를 시작하세요
           </p>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             기업 홍보, 공공기관 캠페인, 지역 홍보 등 다양하게 활용 가능합니다
           </p>
           <Button

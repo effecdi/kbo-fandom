@@ -18,7 +18,7 @@ export function Signup() {
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
 
   return (
-    <div className={`min-h-screen flex ${theme === "dark" ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen flex ${theme === "dark" ? "bg-gray-900" : "bg-muted"}`}>
       {/* Left Side - Signup Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
@@ -37,22 +37,22 @@ export function Signup() {
               <div className="w-12 h-12 flex items-center justify-center">
                 <img src={olliMascot} alt="OLLI" className="w-full h-full" />
               </div>
-              <h1 className={`text-3xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <h1 className={`text-3xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                 OLLI
               </h1>
             </div>
-            <h2 className={`text-2xl font-bold mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+            <h2 className={`text-2xl font-bold mb-2 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
               새로운 계정 만들기
             </h2>
-            <p className={theme === "dark" ? "text-gray-300" : "text-gray-700"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-foreground"}>
               AI 인스타툰 제작을 시작하세요
             </p>
           </div>
 
           {/* Form Card */}
-          <div className={`rounded-3xl p-8 shadow-xl border ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+          <div className={`rounded-3xl p-8 shadow-xl border ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-card border-border"}`}>
             {/* Tab Selector */}
-            <div className={`grid grid-cols-2 gap-3 mb-8 p-2 rounded-2xl ${theme === "dark" ? "bg-gray-700/50" : "bg-gray-50"}`}>
+            <div className={`grid grid-cols-2 gap-3 mb-8 p-2 rounded-2xl ${theme === "dark" ? "bg-gray-700/50" : "bg-muted"}`}>
               <button
                 onClick={() => setSelectedTab("creator")}
                 className={`py-4 px-6 rounded-xl font-bold text-sm transition-all ${
@@ -60,7 +60,7 @@ export function Signup() {
                     ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
                     : theme === "dark"
                     ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <User className="w-4 h-4 inline mr-2" />
@@ -73,7 +73,7 @@ export function Signup() {
                     ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
                     : theme === "dark"
                     ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Building2 className="w-4 h-4 inline mr-2" />
@@ -85,21 +85,21 @@ export function Signup() {
             <form className="space-y-5">
               {/* Name/Company Name */}
               <div>
-                <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                   {selectedTab === "creator" ? "이름" : "기업/기관명"}
                 </Label>
                 <div className="relative">
                   {selectedTab === "creator" ? (
-                    <User className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                    <User className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                   ) : (
-                    <Building2 className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                    <Building2 className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                   )}
                   <Input
                     placeholder={selectedTab === "creator" ? "홍길동" : "(주)올리코리아"}
                     className={`pl-12 h-12 text-base ${
                       theme === "dark" 
                         ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-500" 
-                        : "bg-white border-gray-200"
+                        : "bg-card border-border"
                     }`}
                   />
                 </div>
@@ -108,16 +108,16 @@ export function Signup() {
               {/* Business Type (Business only) */}
               {selectedTab === "business" && (
                 <div>
-                  <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                     조직 유형
                   </Label>
                   <div className="relative">
-                    <Briefcase className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                    <Briefcase className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                     <select
                       className={`w-full pl-12 h-12 text-base rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         theme === "dark" 
                           ? "bg-gray-700 border-gray-600 text-white" 
-                          : "bg-white border-gray-200"
+                          : "bg-card border-border"
                       }`}
                     >
                       <option value="">선택해주세요</option>
@@ -132,18 +132,18 @@ export function Signup() {
 
               {/* Email */}
               <div>
-                <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                   이메일
                 </Label>
                 <div className="relative">
-                  <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                  <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                   <Input
                     type="email"
                     placeholder="example@email.com"
                     className={`pl-12 h-12 text-base ${
                       theme === "dark" 
                         ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-500" 
-                        : "bg-white border-gray-200"
+                        : "bg-card border-border"
                     }`}
                   />
                 </div>
@@ -152,18 +152,18 @@ export function Signup() {
               {/* Phone (Business only) */}
               {selectedTab === "business" && (
                 <div>
-                  <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                     연락처
                   </Label>
                   <div className="relative">
-                    <Phone className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                    <Phone className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                     <Input
                       type="tel"
                       placeholder="010-1234-5678"
                       className={`pl-12 h-12 text-base ${
                         theme === "dark" 
                           ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-500" 
-                          : "bg-white border-gray-200"
+                          : "bg-card border-border"
                       }`}
                     />
                   </div>
@@ -172,18 +172,18 @@ export function Signup() {
 
               {/* Password */}
               <div>
-                <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                   비밀번호
                 </Label>
                 <div className="relative">
-                  <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                  <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="8자 이상, 영문/숫자 포함"
                     className={`pl-12 pr-12 h-12 text-base ${
                       theme === "dark" 
                         ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-500" 
-                        : "bg-white border-gray-200"
+                        : "bg-card border-border"
                     }`}
                   />
                   <button
@@ -192,9 +192,9 @@ export function Signup() {
                     className="absolute right-4 top-1/2 transform -translate-y-1/2"
                   >
                     {showPassword ? (
-                      <EyeOff className={`w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                      <EyeOff className={`w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                     ) : (
-                      <Eye className={`w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                      <Eye className={`w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                     )}
                   </button>
                 </div>
@@ -202,18 +202,18 @@ export function Signup() {
 
               {/* Confirm Password */}
               <div>
-                <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                   비밀번호 확인
                 </Label>
                 <div className="relative">
-                  <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                  <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                   <Input
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="비밀번호를 다시 입력하세요"
                     className={`pl-12 pr-12 h-12 text-base ${
                       theme === "dark" 
                         ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-500" 
-                        : "bg-white border-gray-200"
+                        : "bg-card border-border"
                     }`}
                   />
                   <button
@@ -222,9 +222,9 @@ export function Signup() {
                     className="absolute right-4 top-1/2 transform -translate-y-1/2"
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className={`w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                      <EyeOff className={`w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                     ) : (
-                      <Eye className={`w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                      <Eye className={`w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                     )}
                   </button>
                 </div>
@@ -238,9 +238,9 @@ export function Signup() {
                     id="terms"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-teal-500 focus:ring-teal-500 mt-0.5"
+                    className="w-5 h-5 rounded border-border text-teal-500 focus:ring-teal-500 mt-0.5"
                   />
-                  <label htmlFor="terms" className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <label htmlFor="terms" className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                     <span className="font-semibold">이용약관</span>에 동의합니다 (필수)
                   </label>
                 </div>
@@ -250,9 +250,9 @@ export function Signup() {
                     id="privacy"
                     checked={agreedToPrivacy}
                     onChange={(e) => setAgreedToPrivacy(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-teal-500 focus:ring-teal-500 mt-0.5"
+                    className="w-5 h-5 rounded border-border text-teal-500 focus:ring-teal-500 mt-0.5"
                   />
-                  <label htmlFor="privacy" className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <label htmlFor="privacy" className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                     <span className="font-semibold">개인정보처리방침</span>에 동의합니다 (필수)
                   </label>
                 </div>
@@ -273,9 +273,9 @@ export function Signup() {
 
               {/* Divider */}
               <div className="relative my-6">
-                <Separator className={theme === "dark" ? "bg-gray-700" : "bg-gray-200"} />
+                <Separator className={theme === "dark" ? "bg-gray-700" : "bg-muted"} />
                 <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold ${
-                  theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-white text-gray-500"
+                  theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-card text-muted-foreground"
                 }`}>
                   또는
                 </span>
@@ -289,7 +289,7 @@ export function Signup() {
                   className={`w-full h-12 ${
                     theme === "dark" 
                       ? "border-gray-700 bg-gray-700 text-white hover:bg-gray-600" 
-                      : "border-gray-200 hover:bg-gray-50"
+                      : "border-border hover:bg-muted/50"
                   }`}
                 >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -303,7 +303,7 @@ export function Signup() {
               </div>
 
               {/* Login Link */}
-              <p className={`text-center text-sm mt-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+              <p className={`text-center text-sm mt-6 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                 이미 계정이 있으신가요?{" "}
                 <button
                   type="button"

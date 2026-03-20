@@ -2,11 +2,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, Sparkles } from "lucide-react";
 
-interface WebtoonShowcaseProps {
-  theme: string;
-}
-
-export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
+export function WebtoonShowcase() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const webtoons = [
@@ -58,23 +54,19 @@ export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
       <div className="relative w-full max-w-md">
         {/* Instagram-style Frame */}
         <div
-          className={`rounded-3xl overflow-hidden border-2 ${
-            theme === "dark"
-              ? "bg-gray-900 border-gray-800"
-              : "bg-white border-gray-200"
-          } shadow-2xl`}
+          className="rounded-3xl overflow-hidden border-2 bg-card border-border shadow-2xl"
         >
           {/* Header */}
-          <div className={`px-4 py-3 border-b ${theme === "dark" ? "border-gray-800" : "border-gray-200"}`}>
+          <div className="px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${current.color} flex items-center justify-center`}>
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <div className="text-sm font-bold text-foreground">
                   {current.author}
                 </div>
-                <div className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+                <div className="text-xs text-muted-foreground">
                   {current.style}
                 </div>
               </div>
@@ -93,9 +85,7 @@ export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
             >
               {/* Webtoon Canvas */}
               <div
-                className={`w-full h-full flex items-center justify-center ${
-                  theme === "dark" ? "bg-gray-800" : "bg-gray-100"
-                }`}
+                className="w-full h-full flex items-center justify-center bg-muted"
               >
                 <div className="text-center p-8">
                   {/* Simulated Comic Panels */}
@@ -111,7 +101,7 @@ export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
                     ))}
                   </div>
                   <motion.div
-                    className={`text-lg font-black mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}
+                    className="text-lg font-black mb-2 text-foreground"
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.5 }}
@@ -119,7 +109,7 @@ export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
                     {current.title}
                   </motion.div>
                   <motion.div
-                    className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}
+                    className="text-sm text-muted-foreground"
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.6 }}
@@ -144,7 +134,7 @@ export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
           </AnimatePresence>
 
           {/* Engagement Bar */}
-          <div className={`px-4 py-3 border-b ${theme === "dark" ? "border-gray-800" : "border-gray-200"}`}>
+          <div className="px-4 py-3 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <motion.button
@@ -152,27 +142,27 @@ export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <Heart className={`w-6 h-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
+                  <Heart className="w-6 h-6 text-muted-foreground" />
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <MessageCircle className={`w-6 h-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
+                  <MessageCircle className="w-6 h-6 text-muted-foreground" />
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <Share2 className={`w-6 h-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
+                  <Share2 className="w-6 h-6 text-muted-foreground" />
                 </motion.button>
               </div>
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <Bookmark className={`w-6 h-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
+                <Bookmark className="w-6 h-6 text-muted-foreground" />
               </motion.button>
             </div>
           </div>
 
           {/* Stats */}
           <div className="px-4 py-3">
-            <div className={`text-sm font-bold mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+            <div className="text-sm font-bold mb-2 text-foreground">
               좋아요 {current.likes}개
             </div>
-            <div className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+            <div className="text-sm text-muted-foreground">
               댓글 {current.comments}개 모두 보기
             </div>
           </div>
@@ -181,28 +171,20 @@ export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
         {/* Navigation Arrows */}
         <motion.button
           onClick={() => setCurrentIndex((prev) => (prev - 1 + webtoons.length) % webtoons.length)}
-          className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-14 w-10 h-10 rounded-full flex items-center justify-center ${
-            theme === "dark"
-              ? "bg-gray-800 hover:bg-gray-700"
-              : "bg-white hover:bg-gray-100"
-          } shadow-xl`}
+          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-14 w-10 h-10 rounded-full flex items-center justify-center bg-card hover:bg-muted shadow-xl"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
-          <ChevronLeft className={`w-6 h-6 ${theme === "dark" ? "text-white" : "text-gray-900"}`} />
+          <ChevronLeft className="w-6 h-6 text-foreground" />
         </motion.button>
 
         <motion.button
           onClick={() => setCurrentIndex((prev) => (prev + 1) % webtoons.length)}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-14 w-10 h-10 rounded-full flex items-center justify-center ${
-            theme === "dark"
-              ? "bg-gray-800 hover:bg-gray-700"
-              : "bg-white hover:bg-gray-100"
-          } shadow-xl`}
+          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-14 w-10 h-10 rounded-full flex items-center justify-center bg-card hover:bg-muted shadow-xl"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
-          <ChevronRight className={`w-6 h-6 ${theme === "dark" ? "text-white" : "text-gray-900"}`} />
+          <ChevronRight className="w-6 h-6 text-foreground" />
         </motion.button>
 
         {/* Indicators */}
@@ -214,9 +196,7 @@ export function WebtoonShowcase({ theme }: WebtoonShowcaseProps) {
               className={`h-2 rounded-full transition-all ${
                 index === currentIndex
                   ? "w-8 bg-gradient-to-r from-[#00e5cc] to-cyan-400"
-                  : theme === "dark"
-                  ? "w-2 bg-gray-700"
-                  : "w-2 bg-gray-300"
+                  : "w-2 bg-border"
               }`}
               whileHover={{ scale: 1.2 }}
             />

@@ -62,11 +62,7 @@ const features = [
   },
 ];
 
-interface FeatureCardSwapProps {
-  theme: string;
-}
-
-export function FeatureCardSwap({ theme }: FeatureCardSwapProps) {
+export function FeatureCardSwap() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -103,11 +99,7 @@ export function FeatureCardSwap({ theme }: FeatureCardSwapProps) {
             return (
               <motion.div
                 key={`stack-${offset}`}
-                className={`absolute inset-0 rounded-3xl border-2 ${
-                  theme === "dark"
-                    ? "bg-gray-800/60 border-gray-700/40"
-                    : "bg-white/60 border-gray-200/60"
-                }`}
+                className="absolute inset-0 rounded-3xl border-2 bg-card/60 border-border/40"
                 animate={{
                   y: offset * 16,
                   scale: 1 - offset * 0.04,
@@ -134,11 +126,7 @@ export function FeatureCardSwap({ theme }: FeatureCardSwapProps) {
                 stiffness: 260,
                 damping: 25,
               }}
-              className={`absolute inset-0 rounded-3xl p-10 border-2 shadow-2xl overflow-hidden cursor-pointer ${
-                theme === "dark"
-                  ? "bg-gray-900 border-gray-700"
-                  : "bg-white border-gray-200"
-              }`}
+              className="absolute inset-0 rounded-3xl p-10 border-2 shadow-2xl overflow-hidden cursor-pointer bg-card border-border"
               style={{ transformStyle: "preserve-3d", zIndex: 1 }}
               onClick={next}
             >
@@ -163,35 +151,27 @@ export function FeatureCardSwap({ theme }: FeatureCardSwapProps) {
 
                 {/* Title */}
                 <h3
-                  className={`text-3xl md:text-4xl font-black mb-4 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
+                  className="text-3xl md:text-4xl font-black mb-4 text-foreground"
                 >
                   {current.title}
                 </h3>
 
                 {/* Description */}
                 <p
-                  className={`text-lg md:text-xl leading-relaxed flex-1 ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-600"
-                  }`}
+                  className="text-lg md:text-xl leading-relaxed flex-1 text-muted-foreground"
                 >
                   {current.description}
                 </p>
 
                 {/* Counter */}
-                <div className="flex items-center justify-between pt-6 mt-auto border-t border-gray-200/20">
+                <div className="flex items-center justify-between pt-6 mt-auto border-t border-border/20">
                   <span
-                    className={`text-sm font-bold ${
-                      theme === "dark" ? "text-gray-500" : "text-gray-400"
-                    }`}
+                    className="text-sm font-bold text-muted-foreground"
                   >
                     {String(currentIndex + 1).padStart(2, "0")} / {String(features.length).padStart(2, "0")}
                   </span>
                   <span
-                    className={`text-sm font-semibold ${
-                      theme === "dark" ? "text-gray-500" : "text-gray-400"
-                    }`}
+                    className="text-sm font-semibold text-muted-foreground"
                   >
                     클릭하여 넘기기
                   </span>
@@ -213,12 +193,8 @@ export function FeatureCardSwap({ theme }: FeatureCardSwapProps) {
                   onClick={() => setCurrentIndex(i)}
                   className={`relative flex items-center gap-4 p-4 rounded-2xl text-left transition-all border-2 ${
                     isActive
-                      ? theme === "dark"
-                        ? "bg-white/10 border-white/20 shadow-lg"
-                        : "bg-white border-gray-200 shadow-lg"
-                      : theme === "dark"
-                      ? "bg-transparent border-transparent hover:bg-white/5"
-                      : "bg-transparent border-transparent hover:bg-gray-50"
+                      ? "bg-card border-border shadow-lg"
+                      : "bg-transparent border-transparent hover:bg-muted"
                   }`}
                   animate={isActive ? { x: 4 } : { x: 0 }}
                   transition={{ duration: 0.2 }}
@@ -236,18 +212,14 @@ export function FeatureCardSwap({ theme }: FeatureCardSwapProps) {
                     className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center ${
                       isActive
                         ? `bg-gradient-to-br ${feature.gradient}`
-                        : theme === "dark"
-                        ? "bg-white/10"
-                        : "bg-gray-100"
+                        : "bg-muted"
                     }`}
                   >
                     <FIcon
                       className={`w-5 h-5 ${
                         isActive
                           ? "text-white"
-                          : theme === "dark"
-                          ? "text-gray-400"
-                          : "text-gray-500"
+                          : "text-muted-foreground"
                       }`}
                     />
                   </div>
@@ -256,12 +228,8 @@ export function FeatureCardSwap({ theme }: FeatureCardSwapProps) {
                     <div
                       className={`text-base font-bold truncate ${
                         isActive
-                          ? theme === "dark"
-                            ? "text-white"
-                            : "text-gray-900"
-                          : theme === "dark"
-                          ? "text-gray-400"
-                          : "text-gray-500"
+                          ? "text-foreground"
+                          : "text-muted-foreground"
                       }`}
                     >
                       {feature.title}

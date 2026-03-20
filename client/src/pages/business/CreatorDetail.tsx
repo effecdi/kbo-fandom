@@ -61,7 +61,7 @@ export function CreatorDetail() {
         {/* Back Button */}
         <button
           onClick={() => navigate("/business/creators")}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="font-semibold">작가 목록으로</span>
@@ -71,7 +71,7 @@ export function CreatorDetail() {
           {/* Left - Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Header Card */}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="bg-card rounded-2xl border border-border overflow-hidden">
               <div className="relative bg-gradient-to-br from-indigo-50 to-blue-50 p-8">
                 <div className="absolute top-4 right-4 bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
                   <Star className="w-4 h-4 fill-white" />
@@ -82,7 +82,7 @@ export function CreatorDetail() {
                     <Users className="w-12 h-12 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h1 className="text-3xl font-black text-gray-900 mb-3">
+                    <h1 className="text-3xl font-black text-foreground mb-3">
                       {creator.name}
                     </h1>
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -96,12 +96,12 @@ export function CreatorDetail() {
                       ))}
                     </div>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="flex items-center gap-1 text-gray-700">
+                      <span className="flex items-center gap-1 text-foreground">
                         <Instagram className="w-4 h-4" />
                         {creator.instagram}
                       </span>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-gray-700">
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-foreground">
                         타겟: {creator.targetAudience}
                       </span>
                     </div>
@@ -110,30 +110,30 @@ export function CreatorDetail() {
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-4 gap-4 p-6 bg-gray-50">
+              <div className="grid grid-cols-4 gap-4 p-6 bg-muted">
                 <div className="text-center">
-                  <p className="text-2xl font-black text-gray-900 mb-1">
+                  <p className="text-2xl font-black text-foreground mb-1">
                     {creator.followers}
                   </p>
-                  <p className="text-xs text-gray-600">팔로워</p>
+                  <p className="text-xs text-muted-foreground">팔로워</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-black text-gray-900 mb-1">
+                  <p className="text-2xl font-black text-foreground mb-1">
                     {creator.engagementRate}
                   </p>
-                  <p className="text-xs text-gray-600">참여율</p>
+                  <p className="text-xs text-muted-foreground">참여율</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-black text-gray-900 mb-1">
+                  <p className="text-2xl font-black text-foreground mb-1">
                     {creator.completedProjects}
                   </p>
-                  <p className="text-xs text-gray-600">완료 협업</p>
+                  <p className="text-xs text-muted-foreground">완료 협업</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-black text-gray-900 mb-1">
+                  <p className="text-2xl font-black text-foreground mb-1">
                     {creator.responseRate}
                   </p>
-                  <p className="text-xs text-gray-600">응답률</p>
+                  <p className="text-xs text-muted-foreground">응답률</p>
                 </div>
               </div>
             </div>
@@ -142,32 +142,32 @@ export function CreatorDetail() {
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100">
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle2 className="w-6 h-6 text-green-600" />
-                <h2 className="text-xl font-black text-gray-900">
+                <h2 className="text-xl font-black text-foreground">
                   추천 이유
                 </h2>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="text-green-600 mt-1">✓</span>
-                  <span className="text-gray-700">
+                  <span className="text-foreground">
                     귀하의 타겟층(20-30대 여성)과 정확히 일치합니다
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-green-600 mt-1">✓</span>
-                  <span className="text-gray-700">
+                  <span className="text-foreground">
                     유사 카테고리 협업 경험 15건 이상 보유
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-green-600 mt-1">✓</span>
-                  <span className="text-gray-700">
+                  <span className="text-foreground">
                     평균 응답 시간 2시간으로 빠른 커뮤니케이션 가능
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-green-600 mt-1">✓</span>
-                  <span className="text-gray-700">
+                  <span className="text-foreground">
                     높은 참여율(8.2%)로 효과적인 도달 예상
                   </span>
                 </li>
@@ -175,17 +175,17 @@ export function CreatorDetail() {
             </div>
 
             {/* About */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-black text-gray-900 mb-4">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="text-xl font-black text-foreground mb-4">
                 작가 소개
               </h2>
-              <p className="text-gray-700 leading-relaxed mb-6">
+              <p className="text-foreground leading-relaxed mb-6">
                 {creator.description}
               </p>
 
               {/* Style Tags */}
               <div className="mb-6">
-                <h3 className="text-sm font-bold text-gray-700 mb-3">
+                <h3 className="text-sm font-bold text-foreground mb-3">
                   콘텐츠 스타일
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -202,7 +202,7 @@ export function CreatorDetail() {
 
               {/* Collab Categories */}
               <div>
-                <h3 className="text-sm font-bold text-gray-700 mb-3">
+                <h3 className="text-sm font-bold text-foreground mb-3">
                   협업 가능 분야
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -219,12 +219,12 @@ export function CreatorDetail() {
             </div>
 
             {/* Portfolio */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="bg-card rounded-2xl p-6 border border-border">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-black text-gray-900">
+                <h2 className="text-xl font-black text-foreground">
                   대표 포트폴리오
                 </h2>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   전체 {creator.portfolio}개
                 </span>
               </div>
@@ -257,20 +257,20 @@ export function CreatorDetail() {
             </div>
 
             {/* Achievements */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-black text-gray-900 mb-4">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="text-xl font-black text-foreground mb-4">
                 주요 성과
               </h2>
               <div className="space-y-3">
                 {creator.achievements.map((achievement, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-4 bg-yellow-50 rounded-xl"
+                    className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-xl"
                   >
                     <div className="w-10 h-10 bg-yellow-200 rounded-full flex items-center justify-center flex-shrink-0">
                       <Star className="w-5 h-5 text-yellow-700 fill-yellow-700" />
                     </div>
-                    <span className="text-gray-900 font-semibold">
+                    <span className="text-foreground font-semibold">
                       {achievement}
                     </span>
                   </div>
@@ -282,17 +282,17 @@ export function CreatorDetail() {
           {/* Right - Action Panel */}
           <div className="space-y-6">
             {/* Action Card */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky top-24">
+            <div className="bg-card rounded-2xl p-6 border border-border sticky top-24">
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-600">
+                  <span className="text-sm font-semibold text-muted-foreground">
                     평균 단가
                   </span>
-                  <span className="text-2xl font-black text-gray-900">
+                  <span className="text-2xl font-black text-foreground">
                     {creator.avgPrice}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   프로젝트 규모에 따라 협의 가능
                 </p>
               </div>
@@ -324,32 +324,32 @@ export function CreatorDetail() {
                 </Button>
               </div>
 
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="font-bold text-gray-900 mb-4">빠른 정보</h3>
+              <div className="border-t border-border pt-6">
+                <h3 className="font-bold text-foreground mb-4">빠른 정보</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">응답률</span>
-                    <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                    <span className="text-sm text-muted-foreground">응답률</span>
+                    <span className="text-sm font-bold text-foreground flex items-center gap-1">
                       <CheckCircle2 className="w-4 h-4 text-green-600" />
                       {creator.responseRate}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">평균 응답 시간</span>
-                    <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                    <span className="text-sm text-muted-foreground">평균 응답 시간</span>
+                    <span className="text-sm font-bold text-foreground flex items-center gap-1">
                       <Clock className="w-4 h-4 text-blue-600" />
                       {creator.avgResponseTime}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">진행 중 프로젝트</span>
-                    <span className="text-sm font-bold text-gray-900">
+                    <span className="text-sm text-muted-foreground">진행 중 프로젝트</span>
+                    <span className="text-sm font-bold text-foreground">
                       {creator.activeProjects}건
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">완료 프로젝트</span>
-                    <span className="text-sm font-bold text-gray-900">
+                    <span className="text-sm text-muted-foreground">완료 프로젝트</span>
+                    <span className="text-sm font-bold text-foreground">
                       {creator.completedProjects}건
                     </span>
                   </div>
@@ -358,16 +358,16 @@ export function CreatorDetail() {
             </div>
 
             {/* Tags */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4">검증 정보</h3>
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h3 className="font-bold text-foreground mb-4">검증 정보</h3>
               <div className="space-y-2">
                 {creator.tags.map((tag) => (
                   <div
                     key={tag}
-                    className="flex items-center gap-2 p-3 bg-green-50 rounded-xl"
+                    className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-xl"
                   >
                     <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-semibold text-foreground">
                       {tag}
                     </span>
                   </div>
@@ -377,16 +377,16 @@ export function CreatorDetail() {
 
             {/* Stats */}
             <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl p-6 border border-indigo-100">
-              <h3 className="font-bold text-gray-900 mb-4">활동 지표</h3>
+              <h3 className="font-bold text-foreground mb-4">활동 지표</h3>
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-700">참여율</span>
+                    <span className="text-sm text-foreground">참여율</span>
                     <span className="text-sm font-bold text-indigo-600">
                       {creator.engagementRate}
                     </span>
                   </div>
-                  <div className="w-full h-2 bg-white rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-card rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full"
                       style={{ width: "82%" }}
@@ -395,12 +395,12 @@ export function CreatorDetail() {
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-700">응답률</span>
+                    <span className="text-sm text-foreground">응답률</span>
                     <span className="text-sm font-bold text-indigo-600">
                       {creator.responseRate}
                     </span>
                   </div>
-                  <div className="w-full h-2 bg-white rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-card rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full"
                       style={{ width: "95%" }}
@@ -409,12 +409,12 @@ export function CreatorDetail() {
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-700">매칭 점수</span>
+                    <span className="text-sm text-foreground">매칭 점수</span>
                     <span className="text-sm font-bold text-indigo-600">
                       {creator.matchScore}%
                     </span>
                   </div>
-                  <div className="w-full h-2 bg-white rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-card rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full"
                       style={{ width: "95%" }}

@@ -495,8 +495,8 @@ export default function FabricEditor({ isPro = false, className, onClose }: { is
         </div>
       </div>
       <div className="flex flex-1 items-center justify-center">
-        <div className="p-4 bg-gray-100 rounded-lg border w-full h-full flex items-center justify-center overflow-auto">
-          <canvas ref={canvasRef} className="bg-white shadow rounded" />
+        <div className="p-4 bg-muted rounded-lg border w-full h-full flex items-center justify-center overflow-auto">
+          <canvas ref={canvasRef} className="bg-card shadow rounded" />
         </div>
       </div>
     </div>

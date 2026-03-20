@@ -62,16 +62,16 @@ export function CollaborationNew() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">
+          <h1 className="text-3xl font-black text-foreground mb-2">
             작가 협업 프로젝트 만들기
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             프로젝트 요구사항을 작성하면 AI가 최적의 작가를 추천해드립니다
           </p>
         </div>
 
         {/* Steps */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-8">
+        <div className="bg-card rounded-2xl p-6 border border-border mb-8">
           <div className="flex items-center justify-between">
             {[
               { num: 1, label: "프로젝트 정보" },
@@ -84,14 +84,14 @@ export function CollaborationNew() {
                     className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                       step >= s.num
                         ? "bg-purple-600 text-white"
-                        : "bg-gray-200 text-gray-500"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {step > s.num ? <CheckCircle className="w-5 h-5" /> : s.num}
                   </div>
                   <span
                     className={`font-semibold ${
-                      step >= s.num ? "text-gray-900" : "text-gray-400"
+                      step >= s.num ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     {s.label}
@@ -100,7 +100,7 @@ export function CollaborationNew() {
                 {idx < 2 && (
                   <div
                     className={`flex-1 h-1 mx-4 rounded ${
-                      step > s.num ? "bg-purple-600" : "bg-gray-200"
+                      step > s.num ? "bg-purple-600" : "bg-muted"
                     }`}
                   />
                 )}
@@ -113,7 +113,7 @@ export function CollaborationNew() {
         {step === 1 && (
           <div className="space-y-6">
             {/* Info Notice */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-800">
@@ -127,8 +127,8 @@ export function CollaborationNew() {
             </div>
 
             {/* Project Title */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-2">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 프로젝트 제목 *
               </label>
               <input
@@ -136,13 +136,13 @@ export function CollaborationNew() {
                 value={projectTitle}
                 onChange={(e) => setProjectTitle(e.target.value)}
                 placeholder="예: 2024 봄 축제 홍보 인스타툰 제작"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
 
             {/* Content Type */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-4">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <label className="block text-sm font-bold text-foreground mb-4">
                 콘텐츠 유형 * (복수 선택 가능)
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -152,12 +152,12 @@ export function CollaborationNew() {
                     onClick={() => toggleContentType(type.id)}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       contentType.includes(type.id)
-                        ? "border-purple-600 bg-purple-50"
-                        : "border-gray-200 hover:border-purple-300"
+                        ? "border-purple-600 bg-purple-50 dark:bg-purple-950/20"
+                        : "border-border hover:border-purple-300"
                     }`}
                   >
                     <div className="text-2xl mb-2">{type.emoji}</div>
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-sm font-semibold text-foreground">
                       {type.label}
                     </div>
                   </button>
@@ -166,8 +166,8 @@ export function CollaborationNew() {
             </div>
 
             {/* Project Description */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-2">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 프로젝트 상세 설명 *
               </label>
               <textarea
@@ -175,16 +175,16 @@ export function CollaborationNew() {
                 onChange={(e) => setProjectDescription(e.target.value)}
                 placeholder="프로젝트의 목적, 타겟 대상, 원하는 톤앤매너, 핵심 메시지 등을 구체적으로 작성해주세요.&#10;&#10;예시:&#10;- 목적: 지역 봄 축제 홍보 및 참여 유도&#10;- 대상: 20-40대 지역 주민 및 관광객&#10;- 톤앤매너: 친근하고 따뜻한 느낌&#10;- 핵심 메시지: 가족 단위 방문 환영, 다양한 체험 프로그램 강조"
                 rows={10}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
               />
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 목적, 타겟, 톤앤매너, 핵심 메시지를 포함하면 더 정확한 매칭이 가능합니다
               </p>
             </div>
 
             {/* Target Genre */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-4">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <label className="block text-sm font-bold text-foreground mb-4">
                 선호하는 작가 장르 (선택)
               </label>
               <div className="flex flex-wrap gap-2">
@@ -195,7 +195,7 @@ export function CollaborationNew() {
                     className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                       targetGenre.includes(genre)
                         ? "bg-purple-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        : "bg-muted text-foreground hover:bg-muted"
                     }`}
                   >
                     {genre}
@@ -223,7 +223,7 @@ export function CollaborationNew() {
         {step === 2 && (
           <div className="space-y-6">
             {/* Info Notice */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-yellow-800">
@@ -237,8 +237,8 @@ export function CollaborationNew() {
             </div>
 
             {/* Budget */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-4">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <label className="block text-sm font-bold text-foreground mb-4">
                 예산 범위 *
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -253,19 +253,19 @@ export function CollaborationNew() {
                     onClick={() => setBudget(option.value)}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${
                       budget === option.value
-                        ? "border-purple-600 bg-purple-50"
-                        : "border-gray-200 hover:border-purple-300"
+                        ? "border-purple-600 bg-purple-50 dark:bg-purple-950/20"
+                        : "border-border hover:border-purple-300"
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <DollarSign className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                        budget === option.value ? "text-purple-600" : "text-gray-400"
+                        budget === option.value ? "text-purple-600" : "text-muted-foreground"
                       }`} />
                       <div>
-                        <div className="font-bold text-gray-900 mb-1">
+                        <div className="font-bold text-foreground mb-1">
                           {option.label}
                         </div>
-                        <div className="text-sm text-gray-600">{option.desc}</div>
+                        <div className="text-sm text-muted-foreground">{option.desc}</div>
                       </div>
                     </div>
                   </button>
@@ -274,8 +274,8 @@ export function CollaborationNew() {
             </div>
 
             {/* Timeline */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-4">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <label className="block text-sm font-bold text-foreground mb-4">
                 희망 완료 시기 *
               </label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -289,12 +289,12 @@ export function CollaborationNew() {
                     onClick={() => setDeadline(option.value)}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       deadline === option.value
-                        ? "border-purple-600 bg-purple-50"
-                        : "border-gray-200 hover:border-purple-300"
+                        ? "border-purple-600 bg-purple-50 dark:bg-purple-950/20"
+                        : "border-border hover:border-purple-300"
                     }`}
                   >
                     <div className="text-2xl mb-2">{option.icon}</div>
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-sm font-semibold text-foreground">
                       {option.label}
                     </div>
                   </button>
@@ -302,25 +302,25 @@ export function CollaborationNew() {
               </div>
               
               <div className="mt-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-foreground mb-2">
                   구체적인 마감일 (선택)
                 </label>
                 <input
                   type="date"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
 
             {/* Additional Requirements */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-2">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 추가 요구사항 (선택)
               </label>
               <textarea
                 placeholder="기타 협업 시 고려해야 할 사항이 있다면 작성해주세요.&#10;&#10;예시:&#10;- 내부 검토 및 승인 프로세스 2회 예정&#10;- 수정 요청 최대 3회까지 가능&#10;- 저작권 및 2차 사용 권리 협의 필요"
                 rows={6}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
               />
             </div>
 

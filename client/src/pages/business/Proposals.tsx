@@ -108,10 +108,10 @@ export function BusinessProposals() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               제안 관리
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               작가에게 보낸 협업 제안의 상태를 확인하세요
             </p>
           </div>
@@ -126,49 +126,49 @@ export function BusinessProposals() {
 
         {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-purple-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">{stats.total}</span>
+              <span className="text-2xl font-black text-foreground">{stats.total}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">전체 제안</p>
+            <p className="text-sm font-semibold text-muted-foreground">전체 제안</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-5 h-5 text-yellow-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">{stats.pending}</span>
+              <span className="text-2xl font-black text-foreground">{stats.pending}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">응답 대기</p>
+            <p className="text-sm font-semibold text-muted-foreground">응답 대기</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">{stats.accepted}</span>
+              <span className="text-2xl font-black text-foreground">{stats.accepted}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">수락됨</p>
+            <p className="text-sm font-semibold text-muted-foreground">수락됨</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-blue-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">{stats.inProgress}</span>
+              <span className="text-2xl font-black text-foreground">{stats.inProgress}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">진행중</p>
+            <p className="text-sm font-semibold text-muted-foreground">진행중</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
+        <div className="bg-card rounded-xl p-4 border border-border mb-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="프로젝트 또는 작가 검색..."
                 className="pl-10"
@@ -190,7 +190,7 @@ export function BusinessProposals() {
             return (
               <div
                 key={proposal.id}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all"
+                className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all"
               >
                 <div className="p-6">
                   <div className="flex items-start gap-6">
@@ -206,7 +206,7 @@ export function BusinessProposals() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-black text-gray-900">
+                            <h3 className="text-lg font-black text-foreground">
                               {proposal.projectTitle}
                             </h3>
                             <Badge className={`${statusConfig.color} border`}>
@@ -214,7 +214,7 @@ export function BusinessProposals() {
                               {statusConfig.label}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                             <span className="inline-flex items-center gap-1">
                               <User className="w-4 h-4" />
                               {proposal.creatorName}
@@ -234,16 +234,16 @@ export function BusinessProposals() {
                           {/* Project Details */}
                           <div className="flex items-center gap-6 mb-4">
                             <div className="flex items-center gap-2 text-sm">
-                              <DollarSign className="w-4 h-4 text-gray-400" />
-                              <span className="text-gray-600">예산:</span>
-                              <span className="font-semibold text-gray-900">
+                              <DollarSign className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">예산:</span>
+                              <span className="font-semibold text-foreground">
                                 {proposal.budget}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
-                              <Clock className="w-4 h-4 text-gray-400" />
-                              <span className="text-gray-600">기한:</span>
-                              <span className="font-semibold text-gray-900">
+                              <Clock className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">기한:</span>
+                              <span className="font-semibold text-foreground">
                                 {proposal.deadline}
                               </span>
                             </div>
@@ -251,7 +251,7 @@ export function BusinessProposals() {
 
                           {/* Response Message */}
                           {proposal.message && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-lg p-4 mb-4">
                               <div className="flex items-start gap-2">
                                 <MessageSquare className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                                 <div>
@@ -311,13 +311,13 @@ export function BusinessProposals() {
 
         {/* Empty State (hidden when there are proposals) */}
         {proposals.length === 0 && (
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <div className="bg-card rounded-2xl p-6 border border-border">
             <div className="text-center py-12">
-              <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <MessageSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-foreground mb-2">
                 제안 내역이 없습니다
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 작가를 탐색하고 제안을 보내보세요
               </p>
               <Button onClick={() => navigate("/business/creators")}>

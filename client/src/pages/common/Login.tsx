@@ -22,7 +22,7 @@ export function Login() {
   };
 
   return (
-    <div className={`min-h-screen flex ${theme === "dark" ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen flex ${theme === "dark" ? "bg-gray-900" : "bg-muted"}`}>
       {/* Left Side - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
@@ -41,23 +41,23 @@ export function Login() {
               <div className="w-12 h-12 flex items-center justify-center">
                 <img src={olliMascot} alt="OLLI" className="w-full h-full" />
               </div>
-              <h1 className={`text-3xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <h1 className={`text-3xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                 OLLI
               </h1>
             </div>
-            <h2 className={`text-2xl font-bold mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+            <h2 className={`text-2xl font-bold mb-2 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
               다시 오신 것을 환영합니다
             </h2>
-            <p className={theme === "dark" ? "text-gray-300" : "text-gray-700"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-foreground"}>
               계정에 로그인하여 계속하세요
             </p>
           </div>
 
           {/* Form Card */}
-          <div className={`rounded-3xl p-8 shadow-2xl border ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
+          <div className={`rounded-3xl p-8 shadow-2xl border ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-card border-border"}`}>
             <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as "creator" | "business")}>
               {/* Custom Tab Selector */}
-              <div className={`grid grid-cols-2 gap-3 mb-8 p-2 rounded-2xl ${theme === "dark" ? "bg-gray-700/50" : "bg-gray-50"}`}>
+              <div className={`grid grid-cols-2 gap-3 mb-8 p-2 rounded-2xl ${theme === "dark" ? "bg-gray-700/50" : "bg-muted"}`}>
                 <button
                   onClick={() => setSelectedTab("creator")}
                   className={`py-4 px-6 rounded-xl font-bold text-sm transition-all ${
@@ -67,7 +67,7 @@ export function Login() {
                         : "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
                       : theme === "dark"
                       ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                      : "text-gray-600 hover:text-gray-900"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <User className="w-4 h-4 inline mr-2" />
@@ -82,7 +82,7 @@ export function Login() {
                         : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
                       : theme === "dark"
                       ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                      : "text-gray-600 hover:text-gray-900"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Building2 className="w-4 h-4 inline mr-2" />
@@ -94,11 +94,11 @@ export function Login() {
                 <form className="space-y-5">
                   {/* Email */}
                   <div>
-                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                       이메일
                     </Label>
                     <div className="relative">
-                      <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                      <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                       <Input
                         id="creator-email"
                         type="email"
@@ -108,7 +108,7 @@ export function Login() {
                         className={`pl-12 h-12 text-base ${
                           theme === "dark" 
                             ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
-                            : "bg-white border-gray-200"
+                            : "bg-card border-border"
                         }`}
                       />
                     </div>
@@ -116,11 +116,11 @@ export function Login() {
 
                   {/* Password */}
                   <div>
-                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                       비밀번호
                     </Label>
                     <div className="relative">
-                      <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                      <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                       <Input
                         id="creator-password"
                         type="password"
@@ -130,7 +130,7 @@ export function Login() {
                         className={`pl-12 h-12 text-base ${
                           theme === "dark" 
                             ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
-                            : "bg-white border-gray-200"
+                            : "bg-card border-border"
                         }`}
                       />
                     </div>
@@ -139,8 +139,8 @@ export function Login() {
                   {/* Remember & Forgot */}
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500" />
-                      <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <input type="checkbox" className="w-4 h-4 rounded border-border text-teal-500 focus:ring-teal-500" />
+                      <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                         로그인 상태 유지
                       </span>
                     </label>
@@ -164,9 +164,9 @@ export function Login() {
 
                   {/* Divider */}
                   <div className="relative my-8">
-                    <Separator className={theme === "dark" ? "bg-gray-700" : "bg-gray-200"} />
+                    <Separator className={theme === "dark" ? "bg-gray-700" : "bg-muted"} />
                     <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold ${
-                      theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-white text-gray-500"
+                      theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-card text-muted-foreground"
                     }`}>
                       또는
                     </span>
@@ -180,7 +180,7 @@ export function Login() {
                       className={`w-full h-12 ${
                         theme === "dark" 
                           ? "border-gray-700 text-white hover:bg-gray-800" 
-                          : "border-gray-200 hover:bg-gray-50"
+                          : "border-border hover:bg-muted/50"
                       }`}
                     >
                       <img src="https://www.google.com/favicon.ico" className="w-5 h-5 mr-2" alt="Google" />
@@ -192,7 +192,7 @@ export function Login() {
                       className={`w-full h-12 ${
                         theme === "dark" 
                           ? "border-gray-700 text-white hover:bg-gray-800" 
-                          : "border-gray-200 hover:bg-gray-50"
+                          : "border-border hover:bg-muted/50"
                       }`}
                     >
                       <div className="w-5 h-5 mr-2 bg-yellow-400 rounded-full" />
@@ -201,7 +201,7 @@ export function Login() {
                   </div>
 
                   {/* Signup Link */}
-                  <p className={`text-center text-sm pt-4 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                  <p className={`text-center text-sm pt-4 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                     계정이 없으신가요?{" "}
                     <button
                       type="button"
@@ -218,11 +218,11 @@ export function Login() {
                 <form className="space-y-5">
                   {/* Email */}
                   <div>
-                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                       업무 이메일
                     </Label>
                     <div className="relative">
-                      <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                      <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                       <Input
                         id="business-email"
                         type="email"
@@ -230,7 +230,7 @@ export function Login() {
                         className={`pl-12 h-12 text-base ${
                           theme === "dark" 
                             ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
-                            : "bg-white border-gray-200"
+                            : "bg-card border-border"
                         }`}
                       />
                     </div>
@@ -238,11 +238,11 @@ export function Login() {
 
                   {/* Password */}
                   <div>
-                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
                       비밀번호
                     </Label>
                     <div className="relative">
-                      <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                      <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
                       <Input
                         id="business-password"
                         type="password"
@@ -250,7 +250,7 @@ export function Login() {
                         className={`pl-12 h-12 text-base ${
                           theme === "dark" 
                             ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
-                            : "bg-white border-gray-200"
+                            : "bg-card border-border"
                         }`}
                       />
                     </div>
@@ -259,8 +259,8 @@ export function Login() {
                   {/* Remember & Forgot */}
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500" />
-                      <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <input type="checkbox" className="w-4 h-4 rounded border-border text-blue-500 focus:ring-blue-500" />
+                      <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                         로그인 상태 유지
                       </span>
                     </label>
@@ -284,9 +284,9 @@ export function Login() {
 
                   {/* Divider */}
                   <div className="relative my-8">
-                    <Separator className={theme === "dark" ? "bg-gray-700" : "bg-gray-200"} />
+                    <Separator className={theme === "dark" ? "bg-gray-700" : "bg-muted"} />
                     <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold ${
-                      theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-white text-gray-500"
+                      theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-card text-muted-foreground"
                     }`}>
                       또는
                     </span>
@@ -300,7 +300,7 @@ export function Login() {
                       className={`w-full h-12 ${
                         theme === "dark" 
                           ? "border-gray-700 text-white hover:bg-gray-800" 
-                          : "border-gray-200 hover:bg-gray-50"
+                          : "border-border hover:bg-muted/50"
                       }`}
                     >
                       <img src="https://www.google.com/favicon.ico" className="w-5 h-5 mr-2" alt="Google" />
@@ -312,7 +312,7 @@ export function Login() {
                       className={`w-full h-12 ${
                         theme === "dark" 
                           ? "border-gray-700 text-white hover:bg-gray-800" 
-                          : "border-gray-200 hover:bg-gray-50"
+                          : "border-border hover:bg-muted/50"
                       }`}
                     >
                       <Building2 className="w-5 h-5 mr-2" />
@@ -321,7 +321,7 @@ export function Login() {
                   </div>
 
                   {/* Signup Link */}
-                  <p className={`text-center text-sm pt-4 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                  <p className={`text-center text-sm pt-4 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                     계정이 없으신가요?{" "}
                     <button
                       type="button"

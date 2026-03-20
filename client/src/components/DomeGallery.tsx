@@ -135,11 +135,7 @@ export function DomeGallery({ theme }: { theme: string }) {
               }}
             >
               <div
-                className={`w-64 h-64 rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 ${
-                  theme === "dark"
-                    ? "bg-gray-800/50 border-2 border-gray-700/50"
-                    : "bg-white border-2 border-gray-200"
-                }`}
+                className="w-64 h-64 rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 bg-card border-2 border-border"
               >
                 <img
                   src={img}
@@ -162,9 +158,7 @@ export function DomeGallery({ theme }: { theme: string }) {
             className={`w-3 h-3 rounded-full transition-all duration-300 ${
               index === currentIndex
                 ? "bg-[#00e5cc] w-8"
-                : theme === "dark"
-                ? "bg-gray-600 hover:bg-gray-500"
-                : "bg-gray-300 hover:bg-gray-400"
+                : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
             }`}
           />
         ))}

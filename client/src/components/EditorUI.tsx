@@ -12,14 +12,14 @@ const olliMascot = "/favicon.png";
 
 export function EditorUI() {
   return (
-    <section className="min-h-screen bg-gradient-to-br from-violet-50 via-mint-50 to-cyan-50 flex items-center justify-center px-4 py-20">
+    <section className="min-h-screen bg-gradient-to-br from-violet-50 via-mint-50 to-cyan-50 dark:from-violet-950/20 dark:via-transparent dark:to-cyan-950/20 flex items-center justify-center px-4 py-20">
       <div className="max-w-7xl mx-auto w-full">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
+          <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
             OLLI Story Editor
           </h2>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-muted-foreground">
             Create, customize, and perfect your Instagram toons
           </p>
         </div>
@@ -29,12 +29,12 @@ export function EditorUI() {
           {/* Sidebar */}
           <div className="lg:col-span-3 space-y-4">
             {/* Character Library */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-violet-200">
+            <div className="bg-card rounded-2xl shadow-lg p-6 border-2 border-violet-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-violet-100 rounded-xl p-2">
                   <Users className="w-5 h-5 text-violet-600" />
                 </div>
-                <h3 className="font-bold text-gray-900">Character Library</h3>
+                <h3 className="font-bold text-foreground">Character Library</h3>
               </div>
               <div className="space-y-3">
                 {[1, 2, 3].map((char) => (
@@ -49,10 +49,10 @@ export function EditorUI() {
                         className="w-12 h-12"
                       />
                       <div>
-                        <p className="font-semibold text-sm text-gray-900">
+                        <p className="font-semibold text-sm text-foreground">
                           Character {char}
                         </p>
-                        <p className="text-xs text-gray-500">AI Generated</p>
+                        <p className="text-xs text-muted-foreground">AI Generated</p>
                       </div>
                     </div>
                   </div>
@@ -68,18 +68,18 @@ export function EditorUI() {
             </div>
 
             {/* Pose/Expression Slider */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-mint-200">
+            <div className="bg-card rounded-2xl shadow-lg p-6 border-2 border-mint-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-mint-100 rounded-xl p-2">
                   <Smile className="w-5 h-5 text-mint-600" />
                 </div>
-                <h3 className="font-bold text-gray-900">
+                <h3 className="font-bold text-foreground">
                   Pose & Expression
                 </h3>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-foreground mb-2 block">
                     Happiness
                   </label>
                   <Slider
@@ -90,7 +90,7 @@ export function EditorUI() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-foreground mb-2 block">
                     Energy
                   </label>
                   <Slider
@@ -101,7 +101,7 @@ export function EditorUI() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-foreground mb-2 block">
                     Surprise
                   </label>
                   <Slider
@@ -135,10 +135,10 @@ export function EditorUI() {
 
           {/* Center Canvas Area */}
           <div className="lg:col-span-9">
-            <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-violet-200">
+            <div className="bg-card rounded-2xl shadow-xl p-8 border-2 border-violet-200">
               {/* Toolbar */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b">
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3 className="text-xl font-bold text-foreground">
                   4-Panel Canvas
                 </h3>
                 <div className="flex gap-2">
@@ -203,7 +203,7 @@ export function EditorUI() {
 
                       {/* Title */}
                       <div className="text-center">
-                        <p className="text-lg font-bold text-gray-800 mb-1">
+                        <p className="text-lg font-bold text-foreground mb-1">
                           {panel.title}
                         </p>
                         <p className="text-3xl">{panel.emotion}</p>

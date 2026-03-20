@@ -65,19 +65,19 @@ export default function OnboardingPage() {
       <div className="max-w-5xl w-full relative z-10">
         {/* Progress Bar */}
         <div className="mb-8">
-          <div className="relative h-2 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-full overflow-hidden">
+          <div className="relative h-2 bg-card/50 backdrop-blur-sm rounded-full overflow-hidden">
             <div
               className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
           <div className="flex justify-between mt-3 px-1">
-            <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+            <p className="text-sm font-bold text-foreground">
               {step} / {totalSteps} 단계
             </p>
             <button
               onClick={handleSkip}
-              className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-semibold transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground font-semibold transition-colors"
             >
               건너뛰기 →
             </button>
@@ -86,7 +86,7 @@ export default function OnboardingPage() {
 
         {/* Logo */}
         <div className="flex justify-center mb-12">
-          <div className="flex items-center gap-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl px-8 py-4 shadow-lg">
+          <div className="flex items-center gap-4 bg-card/80 backdrop-blur-sm rounded-3xl px-8 py-4 shadow-lg">
             <img src={logoImg} alt="OLLI" className="w-16 h-16 object-contain rounded-md" />
             <span className="text-4xl font-black text-primary">
               OLLI
@@ -96,12 +96,12 @@ export default function OnboardingPage() {
 
         {/* Step 1: User Type Selection */}
         {step === 1 && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12">
+          <div className="bg-card rounded-3xl shadow-2xl p-8 md:p-12">
             <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white">
+              <h1 className="text-3xl md:text-5xl font-black mb-4 text-foreground">
                 반갑습니다! 👋
               </h1>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400">
+              <p className="text-lg md:text-xl text-muted-foreground">
                 어떤 목적으로 OLLI를 사용하시나요?
               </p>
             </div>
@@ -115,10 +115,10 @@ export default function OnboardingPage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Wand2 className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                <h3 className="text-2xl font-bold mb-3 text-foreground">
                   작가 / 크리에이터
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                <p className="text-muted-foreground mb-6 leading-relaxed">
                   AI로 인스타툰을 쉽게 만들고,<br />
                   광고 협업 기회까지 연결하고 싶어요
                 </p>
@@ -146,10 +146,10 @@ export default function OnboardingPage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Building2 className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                <h3 className="text-2xl font-bold mb-3 text-foreground">
                   기업 / 브랜드
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                <p className="text-muted-foreground mb-6 leading-relaxed">
                   브랜드 마스코트를 만들고,<br />
                   필요시 인스타툰 작가와 협업하고 싶어요
                 </p>
@@ -174,12 +174,12 @@ export default function OnboardingPage() {
 
         {/* Step 2: Creator Purpose */}
         {step === 2 && userType === "creator" && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12">
+          <div className="bg-card rounded-3xl shadow-2xl p-8 md:p-12">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-black mb-4 text-gray-900 dark:text-white">
+              <h2 className="text-3xl md:text-4xl font-black mb-4 text-foreground">
                 어떤 툰을 만들고 싶으세요?
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400">
+              <p className="text-lg md:text-xl text-muted-foreground">
                 가장 관심있는 분야를 선택해주세요
               </p>
             </div>
@@ -196,12 +196,12 @@ export default function OnboardingPage() {
                   key={item.id}
                   onClick={() => { setPurpose(item.id); setStep(3); }}
                   className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-purple-600 hover:shadow-lg ${
-                    purpose === item.id ? "border-purple-600 bg-purple-50 dark:bg-purple-950/50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                    purpose === item.id ? "border-purple-600 bg-purple-50 dark:bg-purple-950/50" : "border-border bg-card"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <span className="text-4xl">{item.emoji}</span>
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">{item.label}</span>
+                    <span className="text-lg font-bold text-foreground">{item.label}</span>
                   </div>
                 </button>
               ))}
@@ -217,12 +217,12 @@ export default function OnboardingPage() {
 
         {/* Step 2: Business Purpose */}
         {step === 2 && userType === "business" && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12">
+          <div className="bg-card rounded-3xl shadow-2xl p-8 md:p-12">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-black mb-4 text-gray-900 dark:text-white">
+              <h2 className="text-3xl md:text-4xl font-black mb-4 text-foreground">
                 어떤 용도로 사용하시나요?
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400">
+              <p className="text-lg md:text-xl text-muted-foreground">
                 주요 활용 목적을 선택해주세요
               </p>
             </div>
@@ -239,12 +239,12 @@ export default function OnboardingPage() {
                   key={item.id}
                   onClick={() => { setPurpose(item.id); setStep(3); }}
                   className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-indigo-600 hover:shadow-lg ${
-                    purpose === item.id ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                    purpose === item.id ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50" : "border-border bg-card"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <span className="text-4xl">{item.emoji}</span>
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">{item.label}</span>
+                    <span className="text-lg font-bold text-foreground">{item.label}</span>
                   </div>
                 </button>
               ))}
@@ -260,12 +260,12 @@ export default function OnboardingPage() {
 
         {/* Step 3: Creator Experience */}
         {step === 3 && userType === "creator" && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12">
+          <div className="bg-card rounded-3xl shadow-2xl p-8 md:p-12">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-black mb-4 text-gray-900 dark:text-white">
+              <h2 className="text-3xl md:text-4xl font-black mb-4 text-foreground">
                 경험 수준은 어느 정도인가요?
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400">
+              <p className="text-lg md:text-xl text-muted-foreground">
                 당신의 경험 수준을 선택해주세요
               </p>
             </div>
@@ -279,12 +279,12 @@ export default function OnboardingPage() {
                   key={item.id}
                   onClick={() => { setExperience(item.id); setStep(4); }}
                   className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-purple-600 hover:shadow-lg ${
-                    experience === item.id ? "border-purple-600 bg-purple-50 dark:bg-purple-950/50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                    experience === item.id ? "border-purple-600 bg-purple-50 dark:bg-purple-950/50" : "border-border bg-card"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <span className="text-4xl">{item.emoji}</span>
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">{item.label}</span>
+                    <span className="text-lg font-bold text-foreground">{item.label}</span>
                   </div>
                 </button>
               ))}
@@ -300,12 +300,12 @@ export default function OnboardingPage() {
 
         {/* Step 3: Business Budget */}
         {step === 3 && userType === "business" && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12">
+          <div className="bg-card rounded-3xl shadow-2xl p-8 md:p-12">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-black mb-4 text-gray-900 dark:text-white">
+              <h2 className="text-3xl md:text-4xl font-black mb-4 text-foreground">
                 예산은 어느 정도인가요?
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400">
+              <p className="text-lg md:text-xl text-muted-foreground">
                 예산 범위를 선택해주세요
               </p>
             </div>
@@ -320,12 +320,12 @@ export default function OnboardingPage() {
                   key={item.id}
                   onClick={() => { setBrandSize(item.id); setStep(4); }}
                   className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-indigo-600 hover:shadow-lg ${
-                    brandSize === item.id ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                    brandSize === item.id ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50" : "border-border bg-card"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <span className="text-4xl">{item.emoji}</span>
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">{item.label}</span>
+                    <span className="text-lg font-bold text-foreground">{item.label}</span>
                   </div>
                 </button>
               ))}
@@ -341,7 +341,7 @@ export default function OnboardingPage() {
 
         {/* Step 4: Completion */}
         {step === 4 && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12 text-center">
+          <div className="bg-card rounded-3xl shadow-2xl p-8 md:p-12 text-center">
             <div className="mb-8 flex justify-center">
               <div className="w-32 h-32 bg-primary/10 rounded-full flex items-center justify-center">
                 <img src={logoImg} alt="OLLI" className="w-24 h-24 object-contain rounded-md" />
@@ -353,12 +353,12 @@ export default function OnboardingPage() {
                 <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
                 <span className="text-green-700 dark:text-green-300 font-bold">준비 완료!</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-black mb-4 text-gray-900 dark:text-white">
+              <h2 className="text-3xl md:text-4xl font-black mb-4 text-foreground">
                 {userType === "creator"
                   ? "멋진 작품을 만들 준비가 되었어요!"
                   : "브랜드 자산을 만들 준비가 되었어요!"}
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8">
+              <p className="text-lg md:text-xl text-muted-foreground mb-8">
                 {userType === "creator"
                   ? "이제 AI와 함께 당신의 이야기를 인스타툰으로 만들어보세요"
                   : "마스코트 생성부터 작가 협업까지, AI가 도와드릴게요"}
@@ -371,22 +371,22 @@ export default function OnboardingPage() {
                   <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Wand2 className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-2">AI 생성</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">1분만에 캐릭터 완성</p>
+                  <h3 className="font-bold text-foreground mb-2">AI 생성</h3>
+                  <p className="text-sm text-muted-foreground">1분만에 캐릭터 완성</p>
                 </div>
                 <div className="bg-pink-50 dark:bg-pink-950/50 rounded-xl p-6">
                   <div className="w-12 h-12 bg-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Sparkles className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-2">인스타 최적화</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">바로 업로드 가능</p>
+                  <h3 className="font-bold text-foreground mb-2">인스타 최적화</h3>
+                  <p className="text-sm text-muted-foreground">바로 업로드 가능</p>
                 </div>
                 <div className="bg-purple-50 dark:bg-purple-950/50 rounded-xl p-6">
                   <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <TrendingUp className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-2">수익화</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">광고 협업 연결</p>
+                  <h3 className="font-bold text-foreground mb-2">수익화</h3>
+                  <p className="text-sm text-muted-foreground">광고 협업 연결</p>
                 </div>
               </div>
             )}
@@ -397,22 +397,22 @@ export default function OnboardingPage() {
                   <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Sparkles className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-2">마스코트 생성</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">1분만에 브랜드 자산 완성</p>
+                  <h3 className="font-bold text-foreground mb-2">마스코트 생성</h3>
+                  <p className="text-sm text-muted-foreground">1분만에 브랜드 자산 완성</p>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-950/50 rounded-xl p-6">
                   <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Palette className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-2">콘텐츠 제작</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">직접 만들고 관리</p>
+                  <h3 className="font-bold text-foreground mb-2">콘텐츠 제작</h3>
+                  <p className="text-sm text-muted-foreground">직접 만들고 관리</p>
                 </div>
                 <div className="bg-indigo-50 dark:bg-indigo-950/50 rounded-xl p-6">
                   <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Users className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-2">작가 협업</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">확장 시 전문가 매칭</p>
+                  <h3 className="font-bold text-foreground mb-2">작가 협업</h3>
+                  <p className="text-sm text-muted-foreground">확장 시 전문가 매칭</p>
                 </div>
               </div>
             )}
@@ -432,7 +432,7 @@ export default function OnboardingPage() {
               </Button>
               <button
                 onClick={() => setStep(2)}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-semibold text-sm"
+                className="text-muted-foreground hover:text-foreground font-semibold text-sm"
               >
                 이전으로
               </button>

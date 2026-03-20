@@ -97,10 +97,10 @@ export function CollaborationMatching() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">
+          <h1 className="text-3xl font-black text-foreground mb-2">
             AI 추천 작가 매칭 결과 ✨
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             프로젝트에 최적화된 작가를 매칭했습니다. 미디어킷을 확인하고 협업 제안을 보내세요
           </p>
         </div>
@@ -109,10 +109,10 @@ export function CollaborationMatching() {
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200 mb-8">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="font-black text-gray-900 text-lg mb-2">
+              <h3 className="font-black text-foreground text-lg mb-2">
                 📋 프로젝트: 2024 봄 축제 홍보 인스타툰 제작
               </h3>
-              <div className="flex items-center gap-6 text-sm text-gray-600">
+              <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-purple-600" />
                   <span>예산: 300-500만원</span>
@@ -135,23 +135,23 @@ export function CollaborationMatching() {
 
         {/* Matching Stats */}
         <div className="grid grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-4 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-4 border border-border text-center">
             <div className="text-3xl font-black text-purple-600 mb-1">
               {creators.length}
             </div>
-            <div className="text-sm text-gray-600">매칭된 작가</div>
+            <div className="text-sm text-muted-foreground">매칭된 작가</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-4 border border-border text-center">
             <div className="text-3xl font-black text-blue-600 mb-1">98%</div>
-            <div className="text-sm text-gray-600">최고 매칭률</div>
+            <div className="text-sm text-muted-foreground">최고 매칭률</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-4 border border-border text-center">
             <div className="text-3xl font-black text-green-600 mb-1">4.9</div>
-            <div className="text-sm text-gray-600">평균 평점</div>
+            <div className="text-sm text-muted-foreground">평균 평점</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-4 border border-border text-center">
             <div className="text-3xl font-black text-orange-600 mb-1">24</div>
-            <div className="text-sm text-gray-600">평균 경험</div>
+            <div className="text-sm text-muted-foreground">평균 경험</div>
           </div>
         </div>
 
@@ -165,7 +165,7 @@ export function CollaborationMatching() {
               </span>
             </div>
             <Button
-              className="bg-white text-purple-600 hover:bg-purple-50"
+              className="bg-card text-purple-600 hover:bg-purple-50"
               onClick={() => navigate("/business/proposals/new")}
             >
               <Send className="w-4 h-4 mr-2" />
@@ -179,10 +179,10 @@ export function CollaborationMatching() {
           {creators.map((creator) => (
             <div
               key={creator.id}
-              className={`bg-white rounded-2xl border-2 overflow-hidden transition-all ${
+              className={`bg-card rounded-2xl border-2 overflow-hidden transition-all ${
                 selectedCreators.includes(creator.id)
                   ? "border-purple-600 shadow-lg"
-                  : "border-gray-200 hover:shadow-lg"
+                  : "border-border hover:shadow-lg"
               }`}
             >
               <div className="p-6">
@@ -204,7 +204,7 @@ export function CollaborationMatching() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-black text-gray-900">
+                          <h3 className="text-xl font-black text-foreground">
                             {creator.name}
                           </h3>
                           <Badge className="bg-indigo-100 text-indigo-700">
@@ -217,14 +217,14 @@ export function CollaborationMatching() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-gray-600 mb-3">
+                        <p className="text-muted-foreground mb-3">
                           {creator.description}
                         </p>
                         <div className="flex flex-wrap gap-2 mb-4">
                           {creator.tags.map((tag, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold"
+                              className="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/20 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold"
                             >
                               <Sparkles className="w-3 h-3" />
                               {tag}
@@ -236,60 +236,60 @@ export function CollaborationMatching() {
 
                     {/* Stats */}
                     <div className="grid grid-cols-5 gap-4 mb-4">
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-center p-3 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 text-yellow-500 mb-1">
                           <Star className="w-4 h-4 fill-yellow-500" />
-                          <span className="font-black text-gray-900">
+                          <span className="font-black text-foreground">
                             {creator.rating}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">평점</div>
+                        <div className="text-xs text-muted-foreground">평점</div>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-center p-3 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 mb-1">
                           <Users className="w-4 h-4 text-blue-600" />
-                          <span className="font-black text-gray-900">
+                          <span className="font-black text-foreground">
                             {creator.followers}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">팔로워</div>
+                        <div className="text-xs text-muted-foreground">팔로워</div>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-center p-3 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 mb-1">
                           <Eye className="w-4 h-4 text-purple-600" />
-                          <span className="font-black text-gray-900">
+                          <span className="font-black text-foreground">
                             {creator.avgViews}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">평균 조회</div>
+                        <div className="text-xs text-muted-foreground">평균 조회</div>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-center p-3 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 mb-1">
                           <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span className="font-black text-gray-900">
+                          <span className="font-black text-foreground">
                             {creator.completedProjects}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">완료</div>
+                        <div className="text-xs text-muted-foreground">완료</div>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-center p-3 bg-muted rounded-lg">
                         <div className="flex items-center justify-center gap-1 mb-1">
                           <ThumbsUp className="w-4 h-4 text-indigo-600" />
-                          <span className="font-black text-gray-900">
+                          <span className="font-black text-foreground">
                             {creator.portfolioCount}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">포트폴리오</div>
+                        <div className="text-xs text-muted-foreground">포트폴리오</div>
                       </div>
                     </div>
 
                     {/* Price & Actions */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm text-gray-600 mb-1">
+                        <div className="text-sm text-muted-foreground mb-1">
                           예상 비용
                         </div>
-                        <div className="text-lg font-black text-gray-900">
+                        <div className="text-lg font-black text-foreground">
                           {creator.price}
                         </div>
                       </div>
@@ -304,7 +304,7 @@ export function CollaborationMatching() {
                           className={
                             selectedCreators.includes(creator.id)
                               ? "bg-purple-600 text-white"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              : "bg-muted text-foreground hover:bg-muted"
                           }
                           onClick={() => toggleCreator(creator.id)}
                         >
@@ -327,9 +327,9 @@ export function CollaborationMatching() {
         </div>
 
         {/* Bottom Actions */}
-        <div className="mt-8 flex items-center justify-between bg-white rounded-2xl p-6 border border-gray-200">
+        <div className="mt-8 flex items-center justify-between bg-card rounded-2xl p-6 border border-border">
           <div>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="text-sm text-muted-foreground mb-1">
               더 많은 작가를 보고 싶으신가요?
             </p>
             <Button variant="outline" size="sm">

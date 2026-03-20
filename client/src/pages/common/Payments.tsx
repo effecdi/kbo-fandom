@@ -47,10 +47,10 @@ export function Payments() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className={`text-3xl md:text-4xl font-black mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          <h1 className={`text-3xl md:text-4xl font-black mb-2 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
             결제 및 구독 관리
           </h1>
-          <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+          <p className={theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"}>
             현재 플랜과 결제 내역을 확인하세요
           </p>
         </div>
@@ -67,10 +67,10 @@ export function Payments() {
                 <TrendingUp className="w-4 h-4" />
                 Pro
               </div>
-              <h2 className={`text-2xl font-black mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <h2 className={`text-2xl font-black mb-1 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                 Pro 플랜 구독 중
               </h2>
-              <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+              <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                 무제한 캐릭터 생성 및 고급 기능 이용 중
               </p>
             </div>
@@ -97,20 +97,20 @@ export function Payments() {
             <div className={`rounded-2xl p-5 border ${
               theme === "dark"
                 ? "bg-gray-800 border-gray-700"
-                : "bg-white border-gray-200"
+                : "bg-card border-border"
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] flex items-center justify-center">
                   <DollarSign className="w-4 h-4 text-white" />
                 </div>
-                <span className={`text-xs font-bold ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <span className={`text-xs font-bold ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                   월 결제 금액
                 </span>
               </div>
-              <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                 ₩19,900
               </p>
-              <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+              <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`}>
                 매월 자동 결제
               </p>
             </div>
@@ -118,20 +118,20 @@ export function Payments() {
             <div className={`rounded-2xl p-5 border ${
               theme === "dark"
                 ? "bg-gray-800 border-gray-700"
-                : "bg-white border-gray-200"
+                : "bg-card border-border"
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                   <Calendar className="w-4 h-4 text-white" />
                 </div>
-                <span className={`text-xs font-bold ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <span className={`text-xs font-bold ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                   다음 결제일
                 </span>
               </div>
-              <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                 2024-04-01
               </p>
-              <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+              <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`}>
                 7일 후
               </p>
             </div>
@@ -139,20 +139,20 @@ export function Payments() {
             <div className={`rounded-2xl p-5 border ${
               theme === "dark"
                 ? "bg-gray-800 border-gray-700"
-                : "bg-white border-gray-200"
+                : "bg-card border-border"
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
                   <CreditCard className="w-4 h-4 text-white" />
                 </div>
-                <span className={`text-xs font-bold ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <span className={`text-xs font-bold ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                   결제 수단
                 </span>
               </div>
-              <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                 ****1234
               </p>
-              <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+              <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`}>
                 Visa 신용카드
               </p>
             </div>
@@ -163,14 +163,14 @@ export function Payments() {
         <div className={`rounded-3xl border p-8 ${
           theme === "dark"
             ? "bg-gray-800 border-gray-700"
-            : "bg-white border-gray-200"
+            : "bg-card border-border"
         }`}>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className={`text-2xl font-black mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <h2 className={`text-2xl font-black mb-1 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                 결제 내역
               </h2>
-              <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+              <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                 최근 4개월 결제 내역
               </p>
             </div>
@@ -192,19 +192,19 @@ export function Payments() {
                 className={`rounded-2xl p-5 border transition-all hover:shadow-md ${
                   theme === "dark"
                     ? "bg-gray-900/50 border-gray-700 hover:border-gray-600"
-                    : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                    : "bg-muted border-border hover:border-border"
                 }`}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      theme === "dark" ? "bg-gray-800" : "bg-white"
+                      theme === "dark" ? "bg-gray-800" : "bg-card"
                     }`}>
-                      <Receipt className={`w-6 h-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`} />
+                      <Receipt className={`w-6 h-6 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                        <h3 className={`font-bold ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                           {payment.plan}
                         </h3>
                         <Badge className="bg-green-500/20 text-green-400 hover:bg-green-500/20">
@@ -212,13 +212,13 @@ export function Payments() {
                           {payment.status}
                         </Badge>
                       </div>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
                         {payment.date} • {payment.method}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <p className={`text-xl font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <p className={`text-xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
                       {payment.amount}
                     </p>
                     <Button
@@ -240,12 +240,12 @@ export function Payments() {
         <div className={`rounded-2xl p-6 mt-6 border ${
           theme === "dark"
             ? "bg-gray-800/50 border-gray-700"
-            : "bg-gray-100 border-gray-200"
+            : "bg-muted border-border"
         }`}>
-          <h3 className={`font-bold mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          <h3 className={`font-bold mb-2 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
             도움이 필요하신가요?
           </h3>
-          <p className={`text-sm mb-4 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+          <p className={`text-sm mb-4 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
             결제 관련 문의사항이 있으시면 고객지원팀에 연락해주세요
           </p>
           <div className="flex gap-3">

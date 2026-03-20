@@ -2,11 +2,10 @@ import { useRef, useEffect } from "react";
 import { Award, Rocket } from "lucide-react";
 
 interface MagneticCTAProps {
-  theme: string;
   onButtonClick: () => void;
 }
 
-export function MagneticCTA({ theme, onButtonClick }: MagneticCTAProps) {
+export function MagneticCTA({ onButtonClick }: MagneticCTAProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
 
@@ -56,11 +55,7 @@ export function MagneticCTA({ theme, onButtonClick }: MagneticCTAProps) {
   return (
     <div
       ref={cardRef}
-      className={`group relative rounded-[4rem] p-20 md:p-32 text-center overflow-hidden border-2 ${
-        theme === "dark"
-          ? "bg-gradient-to-br from-gray-900 to-black border-gray-800"
-          : "bg-gradient-to-br from-gray-50 to-white border-gray-200 shadow-2xl"
-      }`}
+      className="group relative rounded-[4rem] p-20 md:p-32 text-center overflow-hidden border-2 bg-gradient-to-br from-muted to-card border-border shadow-2xl"
       style={
         {
           "--mouse-x": "50%",
@@ -87,16 +82,12 @@ export function MagneticCTA({ theme, onButtonClick }: MagneticCTAProps) {
           <Award className="w-24 h-24 text-[#00e5cc] animate-bounce" />
         </div>
         <h2
-          className={`text-6xl md:text-8xl font-black mb-8 ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}
+          className="text-6xl md:text-8xl font-black mb-8 text-foreground"
         >
           지금 바로 시작하세요
         </h2>
         <p
-          className={`text-2xl md:text-3xl mb-12 max-w-3xl mx-auto ${
-            theme === "dark" ? "text-gray-400" : "text-gray-600"
-          }`}
+          className="text-2xl md:text-3xl mb-12 max-w-3xl mx-auto text-muted-foreground"
         >
           무료 계정을 만들고 AI로 당신의 첫 작품을 완성하세요
         </p>

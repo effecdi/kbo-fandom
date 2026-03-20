@@ -63,10 +63,10 @@ export function CampaignNew() {
             캠페인 목록으로
           </Button>
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               새 캠페인 만들기 🚀
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               협업 캠페인 정보를 단계별로 입력하세요
             </p>
           </div>
@@ -76,7 +76,7 @@ export function CampaignNew() {
           {/* Main Form */}
           <div className="lg:col-span-3">
             {/* Stepper */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-6">
+            <div className="bg-card rounded-2xl p-6 border border-border mb-6">
               <div className="flex items-center justify-between mb-8">
                 {steps.map((step, index) => (
                   <div key={index} className="flex items-center flex-1">
@@ -87,7 +87,7 @@ export function CampaignNew() {
                             ? "bg-blue-600 text-white scale-110"
                             : index + 1 < currentStep
                             ? "bg-green-600 text-white"
-                            : "bg-gray-200 text-gray-600"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
                         {index + 1}
@@ -98,7 +98,7 @@ export function CampaignNew() {
                             ? "text-blue-600"
                             : index + 1 < currentStep
                             ? "text-green-600"
-                            : "text-gray-500"
+                            : "text-muted-foreground"
                         }`}
                       >
                         {step}
@@ -107,7 +107,7 @@ export function CampaignNew() {
                     {index < steps.length - 1 && (
                       <div
                         className={`h-1 flex-1 mx-2 -mt-6 transition-all ${
-                          index + 1 < currentStep ? "bg-green-600" : "bg-gray-200"
+                          index + 1 < currentStep ? "bg-green-600" : "bg-muted"
                         }`}
                       />
                     )}
@@ -117,11 +117,11 @@ export function CampaignNew() {
             </div>
 
             {/* Step Content */}
-            <div className="bg-white rounded-2xl p-8 border border-gray-200">
+            <div className="bg-card rounded-2xl p-8 border border-border">
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-black text-gray-900 mb-6">기본 정보</h2>
+                    <h2 className="text-xl font-black text-foreground mb-6">기본 정보</h2>
                   </div>
                   <div>
                     <Label htmlFor="name">캠페인명 *</Label>
@@ -164,7 +164,7 @@ export function CampaignNew() {
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-black text-gray-900 mb-6">타겟 & 조건</h2>
+                    <h2 className="text-xl font-black text-foreground mb-6">타겟 & 조건</h2>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -229,7 +229,7 @@ export function CampaignNew() {
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-black text-gray-900 mb-6">예산 & 일정</h2>
+                    <h2 className="text-xl font-black text-foreground mb-6">예산 & 일정</h2>
                   </div>
                   <div>
                     <Label htmlFor="budget">예산 범위</Label>
@@ -271,7 +271,7 @@ export function CampaignNew() {
               {currentStep === 4 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-black text-gray-900 mb-6">요청 산출물</h2>
+                    <h2 className="text-xl font-black text-foreground mb-6">요청 산출물</h2>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -317,23 +317,23 @@ export function CampaignNew() {
               {currentStep === 5 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-black text-gray-900 mb-6">최종 검토</h2>
+                    <h2 className="text-xl font-black text-foreground mb-6">최종 검토</h2>
                   </div>
                   <div className="space-y-4">
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-sm font-semibold text-gray-600 mb-1">캠페인명</p>
-                      <p className="text-gray-900">{formData.name || "입력 필요"}</p>
+                    <div className="p-4 bg-muted rounded-xl">
+                      <p className="text-sm font-semibold text-muted-foreground mb-1">캠페인명</p>
+                      <p className="text-foreground">{formData.name || "입력 필요"}</p>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-sm font-semibold text-gray-600 mb-1">설명</p>
-                      <p className="text-gray-900">{formData.description || "입력 필요"}</p>
+                    <div className="p-4 bg-muted rounded-xl">
+                      <p className="text-sm font-semibold text-muted-foreground mb-1">설명</p>
+                      <p className="text-foreground">{formData.description || "입력 필요"}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-blue-50 rounded-xl">
+                      <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
                         <p className="text-sm font-semibold text-blue-900 mb-1">예산</p>
                         <p className="text-blue-700">{formData.budget || "미정"}</p>
                       </div>
-                      <div className="p-4 bg-green-50 rounded-xl">
+                      <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-xl">
                         <p className="text-sm font-semibold text-green-900 mb-1">마감일</p>
                         <p className="text-green-700">{formData.deadline || "미정"}</p>
                       </div>
@@ -343,7 +343,7 @@ export function CampaignNew() {
               )}
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+              <div className="flex justify-between mt-8 pt-6 border-t border-border">
                 <Button
                   variant="outline"
                   onClick={prevStep}
@@ -375,26 +375,26 @@ export function CampaignNew() {
 
           {/* Right Sidebar - Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky top-8">
-              <h3 className="font-black text-gray-900 mb-4">요약</h3>
+            <div className="bg-card rounded-2xl p-6 border border-border sticky top-8">
+              <h3 className="font-black text-foreground mb-4">요약</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <p className="text-gray-600 mb-1">진행 단계</p>
+                  <p className="text-muted-foreground mb-1">진행 단계</p>
                   <Badge>{currentStep}/{totalSteps} 단계</Badge>
                 </div>
-                <div className="pt-3 border-t border-gray-200">
-                  <p className="text-gray-600 mb-2">입력된 정보</p>
+                <div className="pt-3 border-t border-border">
+                  <p className="text-muted-foreground mb-2">입력된 정보</p>
                   <div className="space-y-2">
                     {formData.name && (
                       <div className="flex items-center gap-2 text-xs">
                         <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-gray-700">캠페인명</span>
+                        <span className="text-foreground">캠페인명</span>
                       </div>
                     )}
                     {formData.description && (
                       <div className="flex items-center gap-2 text-xs">
                         <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-gray-700">설명</span>
+                        <span className="text-foreground">설명</span>
                       </div>
                     )}
                   </div>

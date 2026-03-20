@@ -49,13 +49,13 @@ export function MascotNew() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">
+          <h1 className="text-3xl font-black text-foreground mb-2">
             브랜드/공공 마스코트 생성
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             AI로 초안을 만든 후 검토·수정·승인 과정을 거쳐 확정본을 완성하세요
           </p>
-          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <div className="mt-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-800">
@@ -70,13 +70,13 @@ export function MascotNew() {
           {/* Left - Input Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Brand Info */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-black text-gray-900 mb-6">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="text-xl font-black text-foreground mb-6">
                 브랜드 정보
               </h2>
               
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-foreground mb-2">
                   브랜드명
                 </label>
                 <input
@@ -84,12 +84,12 @@ export function MascotNew() {
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
                   placeholder="예: 올리, ABC 브랜드..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-foreground mb-2">
                   마스코트 컨셉 설명
                 </label>
                 <textarea
@@ -97,17 +97,17 @@ export function MascotNew() {
                   onChange={(e) => setConcept(e.target.value)}
                   placeholder="어떤 마스코트를 만들고 싶으신가요?&#10;예: 귀여운 곰돌이 캐릭터, 활기찬 느낌, 파란색 계열, 친근하고 다가가기 쉬운 이미지"
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                 />
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   외형, 색상, 느낌을 구체적으로 설명할수록 좋아요
                 </p>
               </div>
             </div>
 
             {/* Tone & Manner */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-black text-gray-900 mb-6">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="text-xl font-black text-foreground mb-6">
                 톤앤매너 (복수 선택 가능)
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -118,7 +118,7 @@ export function MascotNew() {
                     className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                       tone.includes(t)
                         ? "bg-indigo-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        : "bg-muted text-foreground hover:bg-muted"
                     }`}
                   >
                     {t}
@@ -128,8 +128,8 @@ export function MascotNew() {
             </div>
 
             {/* Purpose */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-black text-gray-900 mb-6">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="text-xl font-black text-foreground mb-6">
                 활용 목적 (복수 선택 가능)
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -140,7 +140,7 @@ export function MascotNew() {
                     className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                       purpose.includes(p)
                         ? "bg-indigo-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        : "bg-muted text-foreground hover:bg-muted"
                     }`}
                   >
                     {p}
@@ -150,16 +150,16 @@ export function MascotNew() {
             </div>
 
             {/* Reference Image */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-black text-gray-900 mb-6">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="text-xl font-black text-foreground mb-6">
                 참고 이미지 (선택사항)
               </h2>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-all cursor-pointer">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-gray-700 mb-1">
+              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-indigo-400 transition-all cursor-pointer">
+                <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm font-semibold text-foreground mb-1">
                   브랜드 로고나 참고 이미지 업로드
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   JPG, PNG 지원 · 최대 10MB
                 </p>
               </div>
@@ -182,30 +182,30 @@ export function MascotNew() {
             <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl p-6 border border-indigo-100">
               <div className="flex items-center gap-2 mb-4">
                 <Lightbulb className="w-5 h-5 text-indigo-600" />
-                <h3 className="font-bold text-gray-900">생성 팁</h3>
+                <h3 className="font-bold text-foreground">생성 팁</h3>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-600 mt-1">•</span>
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     브랜드 정체성과 일치하는 컨셉을 선택하세요
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-600 mt-1">•</span>
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     타겟 고객층의 취향을 고려해보세요
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-600 mt-1">•</span>
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     여러 번 생성해서 최적의 결과를 찾으세요
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-600 mt-1">•</span>
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     생성 후 전문 작가에게 협업 의뢰 가능
                   </span>
                 </li>
@@ -213,30 +213,30 @@ export function MascotNew() {
             </div>
 
             {/* Examples */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4">예시 컨셉</h3>
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h3 className="font-bold text-foreground mb-4">예시 컨셉</h3>
               <div className="space-y-3">
-                <button className="w-full p-4 bg-gray-50 rounded-xl text-left hover:bg-gray-100 transition-all">
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
+                <button className="w-full p-4 bg-muted rounded-xl text-left hover:bg-muted transition-all">
+                  <p className="text-sm font-semibold text-foreground mb-1">
                     🐻 식품 브랜드
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     귀여운 곰돌이, 따뜻한 느낌, 갈색 계열
                   </p>
                 </button>
-                <button className="w-full p-4 bg-gray-50 rounded-xl text-left hover:bg-gray-100 transition-all">
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
+                <button className="w-full p-4 bg-muted rounded-xl text-left hover:bg-muted transition-all">
+                  <p className="text-sm font-semibold text-foreground mb-1">
                     🚀 IT 스타트업
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     미래적인 로봇, 혁신적인 느낌, 파란색
                   </p>
                 </button>
-                <button className="w-full p-4 bg-gray-50 rounded-xl text-left hover:bg-gray-100 transition-all">
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
+                <button className="w-full p-4 bg-muted rounded-xl text-left hover:bg-muted transition-all">
+                  <p className="text-sm font-semibold text-foreground mb-1">
                     🌿 친환경 브랜드
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     자연 친화적 동물, 부드러운 느낌, 녹색
                   </p>
                 </button>
@@ -244,18 +244,18 @@ export function MascotNew() {
             </div>
 
             {/* Value Proposition */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4">마스코트의 가치</h3>
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h3 className="font-bold text-foreground mb-4">마스코트의 가치</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Building2 className="w-4 h-4 text-indigo-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 mb-1">
+                    <p className="text-sm font-bold text-foreground mb-1">
                       브랜드 자산
                     </p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-muted-foreground">
                       장기적으로 활용 가능한 브랜드 IP
                     </p>
                   </div>
@@ -265,10 +265,10 @@ export function MascotNew() {
                     <Target className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 mb-1">
+                    <p className="text-sm font-bold text-foreground mb-1">
                       고객 친밀감
                     </p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-muted-foreground">
                       친근한 이미지로 고객과 소통
                     </p>
                   </div>
@@ -278,10 +278,10 @@ export function MascotNew() {
                     <Palette className="w-4 h-4 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 mb-1">
+                    <p className="text-sm font-bold text-foreground mb-1">
                       다양한 활용
                     </p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-muted-foreground">
                       SNS, 제품, 이벤트 등 다방면 사용
                     </p>
                   </div>
@@ -290,12 +290,12 @@ export function MascotNew() {
             </div>
 
             {/* Info */}
-            <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-6 border border-blue-100">
               <div className="flex items-center gap-2 mb-3">
                 <Info className="w-5 h-5 text-blue-600" />
-                <h3 className="font-bold text-gray-900">다음 단계</h3>
+                <h3 className="font-bold text-foreground">다음 단계</h3>
               </div>
-              <p className="text-sm text-gray-700 mb-4">
+              <p className="text-sm text-foreground mb-4">
                 마스코트 생성 후 직접 콘텐츠를 제작하거나, 전문 작가와 협업하여 더 풍부한 스토리로 확장할 수 있습니다.
               </p>
               <Button variant="outline" size="sm" className="w-full">

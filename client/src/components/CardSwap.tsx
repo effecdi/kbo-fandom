@@ -2,10 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Wand2, Building2, Brain, TrendingUp, Zap, Shield, Sparkles, ChevronRight } from "lucide-react";
 
-interface CardSwapProps {
-  theme: string;
-}
-
 const cards = [
   {
     id: 1,
@@ -69,7 +65,7 @@ const cards = [
   },
 ];
 
-export function CardSwap({ theme }: CardSwapProps) {
+export function CardSwap() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
@@ -118,11 +114,7 @@ export function CardSwap({ theme }: CardSwapProps) {
           {[...Array(3)].map((_, i) => (
             <motion.div
               key={`bg-${i}`}
-              className={`absolute w-full max-w-md h-[500px] rounded-[2rem] border-2 backdrop-blur-xl ${
-                theme === "dark"
-                  ? "bg-gray-800/60 border-gray-700/60"
-                  : "bg-white/20 border-gray-200/30"
-              }`}
+              className="absolute w-full max-w-md h-[500px] rounded-[2rem] border-2 backdrop-blur-xl bg-card/60 border-border/60"
               style={{
                 zIndex: -i,
               }}
@@ -150,18 +142,12 @@ export function CardSwap({ theme }: CardSwapProps) {
                 rotateY: { duration: 0.4 },
                 scale: { duration: 0.3 },
               }}
-              className={`absolute w-full max-w-md h-[500px] rounded-[2rem] p-10 border-2 backdrop-blur-2xl shadow-2xl overflow-hidden ${
-                theme === "dark"
-                  ? "bg-gray-800/95 border-gray-600/80"
-                  : "bg-white/90 border-gray-200/50"
-              }`}
+              className="absolute w-full max-w-md h-[500px] rounded-[2rem] p-10 border-2 backdrop-blur-2xl shadow-2xl overflow-hidden bg-card/95 border-border/80"
               style={{ transformStyle: "preserve-3d" }}
             >
               {/* Gradient overlay */}
               <div
-                className={`absolute inset-0 bg-gradient-to-br ${currentCard.gradient} ${
-                  theme === "dark" ? "opacity-15" : "opacity-10"
-                } pointer-events-none`}
+                className={`absolute inset-0 bg-gradient-to-br ${currentCard.gradient} opacity-10 pointer-events-none`}
               />
 
               {/* Content */}
@@ -176,7 +162,7 @@ export function CardSwap({ theme }: CardSwapProps) {
                 </motion.div>
 
                 {/* Title */}
-                <h3 className={`text-3xl font-black mb-3 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <h3 className="text-3xl font-black mb-3 text-foreground">
                   {currentCard.title}
                 </h3>
 
@@ -186,7 +172,7 @@ export function CardSwap({ theme }: CardSwapProps) {
                 </div>
 
                 {/* Description */}
-                <p className={`text-base leading-relaxed mb-6 ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                <p className="text-base leading-relaxed mb-6 text-muted-foreground">
                   {currentCard.description}
                 </p>
 
@@ -203,7 +189,7 @@ export function CardSwap({ theme }: CardSwapProps) {
                       <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${currentCard.gradient} flex items-center justify-center flex-shrink-0`}>
                         <Sparkles className="w-3 h-3 text-white" />
                       </div>
-                      <span className={`text-sm ${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
+                      <span className="text-sm text-foreground">
                         {feature}
                       </span>
                     </motion.div>
@@ -211,12 +197,8 @@ export function CardSwap({ theme }: CardSwapProps) {
                 </div>
 
                 {/* Stats */}
-                <div className={`p-4 rounded-xl backdrop-blur-xl border ${
-                  theme === "dark"
-                    ? "bg-gray-700/70 border-gray-600/60"
-                    : "bg-gray-50/50 border-gray-200/50"
-                }`}>
-                  <div className={`text-xs font-semibold mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <div className="p-4 rounded-xl backdrop-blur-xl border bg-muted/50 border-border/50">
+                  <div className="text-xs font-semibold mb-1 text-muted-foreground">
                     {currentCard.stats.label}
                   </div>
                   <div className={`text-3xl font-black bg-gradient-to-r ${currentCard.gradient} bg-clip-text text-transparent`}>
@@ -230,67 +212,51 @@ export function CardSwap({ theme }: CardSwapProps) {
           {/* Navigation arrows */}
           <motion.button
             onClick={handlePrev}
-            className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center z-10 backdrop-blur-xl border-2 ${
-              theme === "dark"
-                ? "bg-gray-800/95 border-gray-600/80 hover:bg-gray-700/95"
-                : "bg-white/80 border-gray-200/50 hover:bg-gray-50/80"
-            }`}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center z-10 backdrop-blur-xl border-2 bg-card/95 border-border/80 hover:bg-muted/95"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <ChevronRight className={`w-6 h-6 rotate-180 ${theme === "dark" ? "text-white" : "text-gray-900"}`} />
+            <ChevronRight className="w-6 h-6 rotate-180 text-foreground" />
           </motion.button>
 
           <motion.button
             onClick={handleNext}
-            className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center z-10 backdrop-blur-xl border-2 ${
-              theme === "dark"
-                ? "bg-gray-800/95 border-gray-600/80 hover:bg-gray-700/95"
-                : "bg-white/80 border-gray-200/50 hover:bg-gray-50/80"
-            }`}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center z-10 backdrop-blur-xl border-2 bg-card/95 border-border/80 hover:bg-muted/95"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <ChevronRight className={`w-6 h-6 ${theme === "dark" ? "text-white" : "text-gray-900"}`} />
+            <ChevronRight className="w-6 h-6 text-foreground" />
           </motion.button>
         </div>
 
         {/* Right: Info */}
         <div>
           <motion.div
-            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border backdrop-blur-xl mb-8 shadow-lg ${
-              theme === "dark"
-                ? "bg-white/20 border-white/30"
-                : "bg-[#00e5cc]/10 border-[#00e5cc]/30"
-            }`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border backdrop-blur-xl mb-8 shadow-lg bg-[#00e5cc]/10 border-[#00e5cc]/30"
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
             <Zap className="w-4 h-4 text-[#00e5cc]" />
-            <span className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+            <span className="text-sm font-bold text-foreground">
               핵심 기능 소개
             </span>
           </motion.div>
 
           <motion.h2
-            className={`text-5xl md:text-6xl font-black mb-6 leading-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}
+            className="text-5xl md:text-6xl font-black mb-6 leading-tight text-foreground"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
             OLLI가<br />
-            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${
-              theme === "dark" 
-                ? "from-[#00e5cc] via-cyan-300 to-blue-300"
-                : "from-[#00e5cc] via-blue-500 to-blue-600"
-            }`}>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00e5cc] via-cyan-300 to-blue-300">
               특별한 이유
             </span>
           </motion.h2>
 
           <motion.p
-            className={`text-xl leading-relaxed mb-10 ${theme === "dark" ? "text-white" : "text-gray-700"}`}
+            className="text-xl leading-relaxed mb-10 text-foreground"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -313,61 +279,53 @@ export function CardSwap({ theme }: CardSwapProps) {
                   }}
                   className={`group relative p-5 rounded-2xl transition-all backdrop-blur-xl border-2 text-left overflow-hidden ${
                     isActive
-                      ? theme === "dark"
-                        ? "bg-white/15 border-[#00e5cc] shadow-xl shadow-[#00e5cc]/20"
-                        : "bg-white/95 border-[#00e5cc] shadow-xl shadow-[#00e5cc]/10"
-                      : theme === "dark"
-                      ? "bg-white/5 border-white/20 hover:border-white/40 hover:bg-white/10"
-                      : "bg-white/80 border-gray-200 hover:border-[#00e5cc]/50 hover:bg-white/95 hover:shadow-lg"
+                      ? "bg-card/95 border-[#00e5cc] shadow-xl shadow-[#00e5cc]/10"
+                      : "bg-card/80 border-border hover:border-[#00e5cc]/50 hover:bg-card/95 hover:shadow-lg"
                   }`}
                   whileHover={{ scale: 1.02, x: 5 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   {/* Gradient overlay for active state */}
                   {isActive && (
-                    <div className={`absolute inset-0 bg-gradient-to-r ${card.gradient} ${theme === "dark" ? "opacity-20" : "opacity-5"} pointer-events-none`} />
+                    <div className={`absolute inset-0 bg-gradient-to-r ${card.gradient} opacity-5 pointer-events-none`} />
                   )}
-                  
+
                   <div className="relative z-10 flex items-center gap-4">
                     {/* Icon */}
                     <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center shadow-lg ${
-                      isActive 
+                      isActive
                         ? `bg-gradient-to-br ${card.gradient}`
-                        : theme === "dark"
-                        ? "bg-white/15 border border-white/20"
-                        : "bg-gray-100"
+                        : "bg-muted"
                     }`}>
                       <CardIcon className={`w-7 h-7 ${
-                        isActive 
-                          ? "text-white" 
-                          : theme === "dark" 
-                          ? "text-white" 
-                          : "text-gray-600"
+                        isActive
+                          ? "text-white"
+                          : "text-muted-foreground"
                       }`} />
                     </div>
-                    
+
                     {/* Text */}
                     <div className="flex-1 min-w-0">
-                      <div className={`text-base font-bold mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      <div className="text-base font-bold mb-1 text-foreground">
                         {card.title}
                       </div>
                       <div className={`text-xs font-semibold ${
                         isActive
                           ? `bg-gradient-to-r ${card.gradient} bg-clip-text text-transparent`
-                          : theme === "dark" ? "text-gray-400" : "text-gray-600"
+                          : "text-muted-foreground"
                       }`}>
                         {card.subtitle}
                       </div>
                     </div>
-                    
+
                     {/* Arrow indicator */}
                     <ChevronRight className={`flex-shrink-0 w-5 h-5 transition-all ${
                       isActive
                         ? "text-[#00e5cc] translate-x-1"
-                        : theme === "dark" ? "text-gray-400 group-hover:text-white" : "text-gray-400 group-hover:text-[#00e5cc]"
+                        : "text-muted-foreground group-hover:text-[#00e5cc]"
                     }`} />
                   </div>
-                  
+
                   {/* Active indicator bar */}
                   {isActive && (
                     <motion.div
@@ -392,11 +350,7 @@ export function CardSwap({ theme }: CardSwapProps) {
               return (
                 <motion.div
                   key={item.label}
-                  className={`p-5 rounded-xl backdrop-blur-xl border shadow-lg ${
-                    theme === "dark"
-                      ? "bg-white/15 border-white/30"
-                      : "bg-white/90 border-gray-200"
-                  }`}
+                  className="p-5 rounded-xl backdrop-blur-xl border shadow-lg bg-card/90 border-border"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -404,10 +358,10 @@ export function CardSwap({ theme }: CardSwapProps) {
                   whileHover={{ y: -5, scale: 1.05 }}
                 >
                   <ItemIcon className="w-6 h-6 mb-3 text-[#00e5cc]" />
-                  <div className={`text-xs font-semibold mb-1 ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                  <div className="text-xs font-semibold mb-1 text-muted-foreground">
                     {item.label}
                   </div>
-                  <div className={`text-lg font-black ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <div className="text-lg font-black text-foreground">
                     {item.value}
                   </div>
                 </motion.div>

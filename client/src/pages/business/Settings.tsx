@@ -36,8 +36,8 @@ export function BusinessSettings() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">설정</h1>
-          <p className="text-gray-600">계정 및 기관 정보를 관리하세요</p>
+          <h1 className="text-3xl font-black text-foreground mb-2">설정</h1>
+          <p className="text-muted-foreground">계정 및 기관 정보를 관리하세요</p>
         </div>
 
         <Tabs defaultValue="organization" className="space-y-6">
@@ -53,8 +53,8 @@ export function BusinessSettings() {
           <TabsContent value="organization">
             <div className="space-y-6">
               {/* Logo */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">기관 로고</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">기관 로고</h3>
                 <div className="flex items-center gap-6">
                   <div className="relative">
                     <img
@@ -67,7 +67,7 @@ export function BusinessSettings() {
                     </button>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       JPG, PNG 파일 (최대 5MB)
                     </p>
                     <div className="flex items-center gap-3">
@@ -83,8 +83,8 @@ export function BusinessSettings() {
               </div>
 
               {/* Basic Info */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">기본 정보</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">기본 정보</h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -110,14 +110,14 @@ export function BusinessSettings() {
                       id="description"
                       rows={4}
                       defaultValue="시민 중심의 따뜻한 서울을 만들어갑니다. 지역 발전과 시민 복지를 위한 다양한 정책과 사업을 추진하고 있습니다."
-                      className="w-full mt-2 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                      className="w-full mt-2 px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="email">대표 이메일 *</Label>
                       <div className="relative mt-2">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="email"
                           type="email"
@@ -129,7 +129,7 @@ export function BusinessSettings() {
                     <div>
                       <Label htmlFor="phone">대표 전화번호</Label>
                       <div className="relative mt-2">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="phone"
                           defaultValue="02-1234-5678"
@@ -141,7 +141,7 @@ export function BusinessSettings() {
                   <div>
                     <Label htmlFor="address">주소</Label>
                     <div className="relative mt-2">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="address"
                         defaultValue="서울특별시 중구 세종대로 110"
@@ -152,7 +152,7 @@ export function BusinessSettings() {
                   <div>
                     <Label htmlFor="website">웹사이트</Label>
                     <div className="relative mt-2">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="website"
                         defaultValue="https://www.seoul.go.kr"
@@ -170,8 +170,8 @@ export function BusinessSettings() {
               </div>
 
               {/* Business Registration */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">사업자 정보</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">사업자 정보</h3>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="business-number">사업자등록번호 *</Label>
@@ -203,9 +203,9 @@ export function BusinessSettings() {
           {/* Members Tab */}
           <TabsContent value="members">
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+              <div className="bg-card rounded-2xl p-6 border border-border">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold text-gray-900">멤버 관리</h3>
+                  <h3 className="font-bold text-foreground">멤버 관리</h3>
                   <Button className="bg-indigo-600 text-white">
                     <Users className="w-4 h-4 mr-2" />
                     멤버 초대
@@ -235,17 +235,17 @@ export function BusinessSettings() {
                   ].map((member, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-xl"
+                      className="flex items-center justify-between p-4 border border-border rounded-xl"
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-xl flex items-center justify-center">
                           <Users className="w-6 h-6 text-indigo-600" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-1">
+                          <h4 className="font-semibold text-foreground mb-1">
                             {member.name}
                           </h4>
-                          <p className="text-sm text-gray-600">{member.email}</p>
+                          <p className="text-sm text-muted-foreground">{member.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -258,7 +258,7 @@ export function BusinessSettings() {
                         >
                           {member.status === "active" ? "활성" : "대기"}
                         </span>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                           {member.role}
                         </span>
                         <Button variant="ghost" size="sm">
@@ -270,9 +270,9 @@ export function BusinessSettings() {
                 </div>
               </div>
 
-              <div className="bg-blue-50 rounded-2xl p-6 border-2 border-blue-200">
-                <h3 className="font-bold text-gray-900 mb-2">💡 멤버 권한 안내</h3>
-                <ul className="space-y-2 text-sm text-gray-700">
+              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-6 border-2 border-blue-200">
+                <h3 className="font-bold text-foreground mb-2">💡 멤버 권한 안내</h3>
+                <ul className="space-y-2 text-sm text-foreground">
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600">•</span>
                     <span><strong>관리자:</strong> 모든 기능 사용 및 멤버 관리 가능</span>
@@ -292,15 +292,15 @@ export function BusinessSettings() {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4">알림 설정</h3>
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h3 className="font-bold text-foreground mb-4">알림 설정</h3>
               <div className="space-y-6">
-                <div className="flex items-center justify-between py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between py-4 border-b border-border">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-foreground mb-1">
                       새로운 지원자
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       캠페인에 작가가 지원할 때 알림을 받습니다
                     </p>
                   </div>
@@ -312,12 +312,12 @@ export function BusinessSettings() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between py-4 border-b border-border">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-foreground mb-1">
                       캠페인 업데이트
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       진행 중인 캠페인에 업데이트가 있을 때 알림을 받습니다
                     </p>
                   </div>
@@ -329,12 +329,12 @@ export function BusinessSettings() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between py-4 border-b border-border">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-foreground mb-1">
                       결제 알림
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       결제가 완료되거나 승인이 필요할 때 알림을 받습니다
                     </p>
                   </div>
@@ -348,10 +348,10 @@ export function BusinessSettings() {
 
                 <div className="flex items-center justify-between py-4">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-foreground mb-1">
                       마케팅 알림
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       새로운 기능, 이벤트 등의 소식을 받습니다
                     </p>
                   </div>
@@ -374,18 +374,18 @@ export function BusinessSettings() {
           {/* Billing Tab */}
           <TabsContent value="billing">
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">결제 수단</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">결제 수단</h3>
                 <div className="space-y-4">
                   <div className="p-4 border-2 border-indigo-600 rounded-xl bg-indigo-50">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <CreditCard className="w-5 h-5 text-indigo-600" />
                         <div>
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-foreground">
                             기업 카드
                           </p>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-muted-foreground">
                             **** **** **** 1234
                           </p>
                         </div>
@@ -410,8 +410,8 @@ export function BusinessSettings() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">청구서 정보</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">청구서 정보</h3>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="billing-email">청구서 이메일 *</Label>
@@ -439,8 +439,8 @@ export function BusinessSettings() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">청구 내역</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">청구 내역</h3>
                 <div className="space-y-3">
                   {[
                     { date: "2024-03-01", amount: "8,000,000원", status: "완료" },
@@ -449,11 +449,11 @@ export function BusinessSettings() {
                   ].map((bill, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-xl"
+                      className="flex items-center justify-between p-4 border border-border rounded-xl"
                     >
                       <div>
-                        <p className="font-semibold text-gray-900">{bill.date}</p>
-                        <p className="text-sm text-gray-600">{bill.amount}</p>
+                        <p className="font-semibold text-foreground">{bill.date}</p>
+                        <p className="text-sm text-muted-foreground">{bill.amount}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-semibold text-green-600">
@@ -474,8 +474,8 @@ export function BusinessSettings() {
           {/* Account Tab */}
           <TabsContent value="account">
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">비밀번호 변경</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">비밀번호 변경</h3>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="current-password">현재 비밀번호 *</Label>
@@ -510,40 +510,40 @@ export function BusinessSettings() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">계정 관리</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">계정 관리</h3>
                 <div className="space-y-4">
-                  <button className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                  <button className="w-full flex items-center justify-between p-4 border border-border rounded-xl hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-gray-600" />
+                      <Shield className="w-5 h-5 text-muted-foreground" />
                       <div className="text-left">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-foreground">
                           개인정보 처리방침
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           OLLI의 개인정보 처리방침 보기
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   </button>
 
-                  <button className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                  <button className="w-full flex items-center justify-between p-4 border border-border rounded-xl hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <HelpCircle className="w-5 h-5 text-gray-600" />
+                      <HelpCircle className="w-5 h-5 text-muted-foreground" />
                       <div className="text-left">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-foreground">
                           고객 지원
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           도움이 필요하신가요?
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   </button>
 
-                  <button className="w-full flex items-center justify-between p-4 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">
+                  <button className="w-full flex items-center justify-between p-4 border border-red-200 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
                     <div className="flex items-center gap-3">
                       <LogOut className="w-5 h-5 text-red-600" />
                       <div className="text-left">
@@ -560,7 +560,7 @@ export function BusinessSettings() {
                 </div>
               </div>
 
-              <div className="bg-red-50 rounded-2xl p-6 border-2 border-red-200">
+              <div className="bg-red-50 dark:bg-red-950/20 rounded-2xl p-6 border-2 border-red-200">
                 <h3 className="font-bold text-red-900 mb-2">위험 구역</h3>
                 <p className="text-sm text-red-700 mb-4">
                   기관 계정을 삭제하면 모든 캠페인과 데이터가 영구적으로 삭제되며 복구할 수 없습니다.

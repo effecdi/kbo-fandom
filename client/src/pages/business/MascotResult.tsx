@@ -57,10 +57,10 @@ export function MascotResult() {
         </Button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               마스코트 초안 생성 완료! 🎉
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               초안을 검토하고 수정 후 승인 프로세스를 시작하세요
             </p>
           </div>
@@ -76,7 +76,7 @@ export function MascotResult() {
       {/* Status & Workflow */}
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-blue-200">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-gray-900">검토·승인 워크플로우</h3>
+          <h3 className="font-black text-foreground">검토·승인 워크플로우</h3>
           <span className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">
             <Clock className="w-4 h-4" />
             시안 검토 중
@@ -97,7 +97,7 @@ export function MascotResult() {
                   ? "bg-green-100 border border-green-300"
                   : item.status === "current"
                   ? "bg-blue-100 border-2 border-blue-500"
-                  : "bg-gray-100 border border-gray-300"
+                  : "bg-muted border border-border"
               }`}
             >
               <div
@@ -111,7 +111,7 @@ export function MascotResult() {
               >
                 <item.icon className="w-5 h-5 text-white" />
               </div>
-              <p className="text-xs font-semibold text-gray-700">{item.step}</p>
+              <p className="text-xs font-semibold text-foreground">{item.step}</p>
             </div>
           ))}
         </div>
@@ -128,7 +128,7 @@ export function MascotResult() {
                 : "border-transparent hover:border-blue-200 hover:shadow-lg"
             }`}
           >
-            <div className="aspect-square bg-gray-100 relative">
+            <div className="aspect-square bg-muted relative">
               <img
                 src={result.image}
                 alt={`Generated mascot ${result.id}`}
@@ -155,17 +155,17 @@ export function MascotResult() {
                 </div>
               </div>
             </div>
-            <div className="p-4 bg-white">
-              <p className="text-sm font-semibold text-gray-700">{result.style} 스타일</p>
-              <p className="text-xs text-gray-500">브랜드/공공 마스코트 옵션</p>
+            <div className="p-4 bg-card">
+              <p className="text-sm font-semibold text-foreground">{result.style} 스타일</p>
+              <p className="text-xs text-muted-foreground">브랜드/공공 마스코트 옵션</p>
             </div>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
-          <h2 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-card rounded-2xl p-6 border border-border">
+          <h2 className="text-xl font-black text-foreground mb-4 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-blue-600" />
             다음 단계
           </h2>
@@ -177,7 +177,7 @@ export function MascotResult() {
             >
               <div className="text-left">
                 <div className="font-bold mb-1">브랜드 콘텐츠 만들기</div>
-                <div className="text-xs text-gray-500">마스코트로 직접 콘텐츠 제작</div>
+                <div className="text-xs text-muted-foreground">마스코트로 직접 콘텐츠 제작</div>
               </div>
             </Button>
             <Button
@@ -190,30 +190,30 @@ export function MascotResult() {
                   작가와 협업하기
                   <Users className="w-4 h-4" />
                 </div>
-                <div className="text-xs text-gray-500">전문 작가에게 작업 의뢰</div>
+                <div className="text-xs text-muted-foreground">전문 작가에게 작업 의뢰</div>
               </div>
             </Button>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
-          <h2 className="text-xl font-black text-gray-900 mb-4">세부 수정 옵션</h2>
+        <div className="bg-card rounded-2xl p-6 border border-border">
+          <h2 className="text-xl font-black text-foreground mb-4">세부 수정 옵션</h2>
           <div className="grid grid-cols-2 gap-3">
             <Button variant="outline" className="h-auto py-4 flex-col">
               <div className="font-bold mb-1">색상 변경</div>
-              <div className="text-xs text-gray-500">브랜드 컬러 적용</div>
+              <div className="text-xs text-muted-foreground">브랜드 컬러 적용</div>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex-col">
               <div className="font-bold mb-1">스타일 조정</div>
-              <div className="text-xs text-gray-500">톤앤매너 수정</div>
+              <div className="text-xs text-muted-foreground">톤앤매너 수정</div>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex-col">
               <div className="font-bold mb-1">표정 추가</div>
-              <div className="text-xs text-gray-500">다양한 감정 생성</div>
+              <div className="text-xs text-muted-foreground">다양한 감정 생성</div>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex-col">
               <div className="font-bold mb-1">포즈 생성</div>
-              <div className="text-xs text-gray-500">액션 포즈 만들기</div>
+              <div className="text-xs text-muted-foreground">액션 포즈 만들기</div>
             </Button>
           </div>
         </div>

@@ -130,7 +130,7 @@ export function CampaignDetail() {
     const configs: Record<string, { label: string; color: string; icon: any }> = {
       pending: { label: "검토중", color: "bg-yellow-100 text-yellow-700", icon: Clock },
       selected: { label: "선정됨", color: "bg-green-100 text-green-700", icon: CheckCircle },
-      rejected: { label: "미선정", color: "bg-gray-100 text-gray-700", icon: XCircle },
+      rejected: { label: "미선정", color: "bg-muted text-foreground", icon: XCircle },
     };
     return configs[status] || configs.pending;
   };
@@ -151,7 +151,7 @@ export function CampaignDetail() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-black text-gray-900">
+                <h1 className="text-3xl font-black text-foreground">
                   {campaign.title}
                 </h1>
                 <Badge className="bg-purple-100 text-purple-700 border-purple-300">
@@ -160,8 +160,8 @@ export function CampaignDetail() {
                 </Badge>
                 <Badge className="bg-green-600 text-white">승인완료</Badge>
               </div>
-              <p className="text-gray-600 mb-4">{campaign.description}</p>
-              <div className="flex items-center gap-6 text-sm text-gray-600">
+              <p className="text-muted-foreground mb-4">{campaign.description}</p>
+              <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Target className="w-4 h-4" />
                   {campaign.type}
@@ -185,36 +185,36 @@ export function CampaignDetail() {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-6 border border-border text-center">
             <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-            <p className="text-2xl font-black text-gray-900">{applicants.length}</p>
-            <p className="text-sm text-gray-600">총 지원자</p>
+            <p className="text-2xl font-black text-foreground">{applicants.length}</p>
+            <p className="text-sm text-muted-foreground">총 지원자</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-6 border border-border text-center">
             <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-            <p className="text-2xl font-black text-gray-900">
+            <p className="text-2xl font-black text-foreground">
               {applicants.filter(a => a.status === "selected").length}
             </p>
-            <p className="text-sm text-gray-600">선정됨</p>
+            <p className="text-sm text-muted-foreground">선정됨</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-6 border border-border text-center">
             <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-            <p className="text-2xl font-black text-gray-900">
+            <p className="text-2xl font-black text-foreground">
               {applicants.filter(a => a.status === "pending").length}
             </p>
-            <p className="text-sm text-gray-600">검토중</p>
+            <p className="text-sm text-muted-foreground">검토중</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-6 border border-border text-center">
             <FileText className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-            <p className="text-2xl font-black text-gray-900">
+            <p className="text-2xl font-black text-foreground">
               {campaign.deliverables}
             </p>
-            <p className="text-sm text-gray-600">결과물</p>
+            <p className="text-sm text-muted-foreground">결과물</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
+          <div className="bg-card rounded-xl p-6 border border-border text-center">
             <TrendingUp className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
-            <p className="text-2xl font-black text-gray-900">{campaign.progress}%</p>
-            <p className="text-sm text-gray-600">진행률</p>
+            <p className="text-2xl font-black text-foreground">{campaign.progress}%</p>
+            <p className="text-sm text-muted-foreground">진행률</p>
           </div>
         </div>
 
@@ -231,7 +231,7 @@ export function CampaignDetail() {
 
           {/* Applicants Tab */}
           <TabsContent value="applicants" className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-xl p-4 mb-6">
               <div className="flex items-start gap-3">
                 <MessageSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-800">
@@ -251,7 +251,7 @@ export function CampaignDetail() {
               return (
                 <div
                   key={applicant.id}
-                  className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden hover:shadow-lg transition-all"
+                  className="bg-card rounded-2xl border-2 border-border overflow-hidden hover:shadow-lg transition-all"
                 >
                   <div className="p-6">
                     <div className="flex items-start gap-6 mb-6">
@@ -267,7 +267,7 @@ export function CampaignDetail() {
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-black text-gray-900">
+                              <h3 className="text-xl font-black text-foreground">
                                 {applicant.name}
                               </h3>
                               <Badge className="bg-indigo-100 text-indigo-700">
@@ -284,7 +284,7 @@ export function CampaignDetail() {
                                 {statusConfig.label}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                               <span className="inline-flex items-center gap-1">
                                 <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                                 {applicant.rating}
@@ -300,28 +300,28 @@ export function CampaignDetail() {
 
                         {/* Proposal Details */}
                         <div className="grid grid-cols-3 gap-4 mb-4">
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="text-xs text-gray-600 mb-1">제안 예산</div>
-                            <div className="font-black text-gray-900">
+                          <div className="bg-muted rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground mb-1">제안 예산</div>
+                            <div className="font-black text-foreground">
                               {applicant.proposedBudget}원
                             </div>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="text-xs text-gray-600 mb-1">예상 기간</div>
-                            <div className="font-black text-gray-900">
+                          <div className="bg-muted rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground mb-1">예상 기간</div>
+                            <div className="font-black text-foreground">
                               {applicant.proposedTimeline}
                             </div>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="text-xs text-gray-600 mb-1">평균 조회수</div>
-                            <div className="font-black text-gray-900">
+                          <div className="bg-muted rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground mb-1">평균 조회수</div>
+                            <div className="font-black text-foreground">
                               {applicant.avgViews}
                             </div>
                           </div>
                         </div>
 
                         {/* Cover Letter */}
-                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                        <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 rounded-lg p-4 mb-4">
                           <h4 className="text-sm font-bold text-purple-900 mb-2">
                             📝 지원 메시지
                           </h4>
@@ -332,7 +332,7 @@ export function CampaignDetail() {
 
                         {/* Portfolio */}
                         <div className="mb-4">
-                          <h4 className="text-sm font-bold text-gray-700 mb-2">
+                          <h4 className="text-sm font-bold text-foreground mb-2">
                             포트폴리오
                           </h4>
                           <div className="flex flex-wrap gap-2">
@@ -389,7 +389,7 @@ export function CampaignDetail() {
               selectedCreators.map((creator) => (
                 <div
                   key={creator.id}
-                  className="bg-white rounded-2xl border border-gray-200 p-6"
+                  className="bg-card rounded-2xl border border-border p-6"
                 >
                   <div className="flex items-start gap-6">
                     <img
@@ -400,7 +400,7 @@ export function CampaignDetail() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-4">
                         <div>
-                          <h3 className="text-lg font-black text-gray-900 mb-1">
+                          <h3 className="text-lg font-black text-foreground mb-1">
                             {creator.name}
                           </h3>
                           <Badge className="bg-green-100 text-green-700">
@@ -408,7 +408,7 @@ export function CampaignDetail() {
                           </Badge>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm text-gray-600 mb-1">작업 진행률</div>
+                          <div className="text-sm text-muted-foreground mb-1">작업 진행률</div>
                           <div className="text-2xl font-black text-green-600">
                             {creator.progress}%
                           </div>
@@ -417,19 +417,19 @@ export function CampaignDetail() {
 
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div>
-                          <div className="text-sm text-gray-600 mb-1">계약 금액</div>
-                          <div className="font-bold text-gray-900">
+                          <div className="text-sm text-muted-foreground mb-1">계약 금액</div>
+                          <div className="font-bold text-foreground">
                             {creator.budget}원
                           </div>
                         </div>
                         <div>
-                          <div className="text-sm text-gray-600 mb-1">결과물</div>
-                          <div className="font-bold text-gray-900">
+                          <div className="text-sm text-muted-foreground mb-1">결과물</div>
+                          <div className="font-bold text-foreground">
                             {creator.deliverables}
                           </div>
                         </div>
                         <div>
-                          <div className="text-sm text-gray-600 mb-1">상태</div>
+                          <div className="text-sm text-muted-foreground mb-1">상태</div>
                           <Badge className="bg-blue-100 text-blue-700">
                             {creator.status}
                           </Badge>
@@ -438,12 +438,12 @@ export function CampaignDetail() {
 
                       <div className="mb-4">
                         <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-gray-600">작업 진행률</span>
-                          <span className="font-bold text-gray-900">
+                          <span className="text-muted-foreground">작업 진행률</span>
+                          <span className="font-bold text-foreground">
                             {creator.progress}%
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-muted rounded-full h-2">
                           <div
                             className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full"
                             style={{ width: `${creator.progress}%` }}
@@ -463,12 +463,12 @@ export function CampaignDetail() {
                 </div>
               ))
             ) : (
-              <div className="bg-white rounded-2xl p-12 border border-gray-200 text-center">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <div className="bg-card rounded-2xl p-12 border border-border text-center">
+                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-foreground mb-2">
                   아직 선정된 작가가 없습니다
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   지원자를 검토하고 작가를 선정해주세요
                 </p>
               </div>
@@ -477,52 +477,52 @@ export function CampaignDetail() {
 
           {/* Campaign Info Tab */}
           <TabsContent value="info">
-            <div className="bg-white rounded-2xl p-8 border border-gray-200">
+            <div className="bg-card rounded-2xl p-8 border border-border">
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-2">캠페인 설명</h3>
-                  <p className="text-gray-700 leading-relaxed">
+                  <h3 className="font-bold text-foreground mb-2">캠페인 설명</h3>
+                  <p className="text-foreground leading-relaxed">
                     {campaign.description}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <h3 className="font-bold text-gray-900 mb-2">프로젝트 기간</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-bold text-foreground mb-2">프로젝트 기간</h3>
+                    <p className="text-foreground">
                       {campaign.startDate} ~ {campaign.endDate}
                     </p>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 mb-2">지원 마감일</h3>
-                    <p className="text-gray-700">{campaign.deadline}</p>
+                    <h3 className="font-bold text-foreground mb-2">지원 마감일</h3>
+                    <p className="text-foreground">{campaign.deadline}</p>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-2">예산</h3>
-                  <p className="text-gray-700">{campaign.budget}원</p>
+                  <h3 className="font-bold text-foreground mb-2">예산</h3>
+                  <p className="text-foreground">{campaign.budget}원</p>
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-2">타겟 대상</h3>
-                  <p className="text-gray-700">{campaign.targetAudience}</p>
+                  <h3 className="font-bold text-foreground mb-2">타겟 대상</h3>
+                  <p className="text-foreground">{campaign.targetAudience}</p>
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-2">결과물</h3>
-                  <p className="text-gray-700">{campaign.deliverables}</p>
+                  <h3 className="font-bold text-foreground mb-2">결과물</h3>
+                  <p className="text-foreground">{campaign.deliverables}</p>
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-2">요구사항</h3>
-                  <pre className="text-gray-700 whitespace-pre-wrap font-sans">
+                  <h3 className="font-bold text-foreground mb-2">요구사항</h3>
+                  <pre className="text-foreground whitespace-pre-wrap font-sans">
                     {campaign.requirements}
                   </pre>
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-2">사용 마스코트</h3>
+                  <h3 className="font-bold text-foreground mb-2">사용 마스코트</h3>
                   <Badge className="bg-indigo-100 text-indigo-700">
                     {campaign.mascot}
                   </Badge>

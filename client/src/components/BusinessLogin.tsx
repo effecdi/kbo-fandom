@@ -22,7 +22,7 @@ export function BusinessLogin() {
   return (
     <div className="min-h-screen w-full flex">
       {/* Left Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-card">
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
@@ -34,27 +34,27 @@ export function BusinessLogin() {
               />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900">OLLI</h1>
-              <p className="text-xs text-gray-500 font-semibold">for Business</p>
+              <h1 className="text-2xl font-black text-foreground">OLLI</h1>
+              <p className="text-xs text-muted-foreground font-semibold">for Business</p>
             </div>
           </div>
 
           {/* Tab Selector */}
-          <div className="flex gap-2 mb-8 bg-gray-100 rounded-xl p-1">
-            <button className="flex-1 px-4 py-3 rounded-lg bg-white shadow-sm text-gray-900 font-semibold text-sm transition-all">
+          <div className="flex gap-2 mb-8 bg-muted rounded-xl p-1">
+            <button className="flex-1 px-4 py-3 rounded-lg bg-card shadow-sm text-foreground font-semibold text-sm transition-all">
               광고주 로그인
             </button>
-            <button className="flex-1 px-4 py-3 rounded-lg text-gray-600 font-semibold text-sm hover:text-gray-900 transition-all">
+            <button className="flex-1 px-4 py-3 rounded-lg text-muted-foreground font-semibold text-sm hover:text-foreground transition-all">
               작가 로그인
             </button>
           </div>
 
           {/* Welcome Message */}
           <div className="mb-8">
-            <h2 className="text-3xl font-black text-gray-900 mb-3">
+            <h2 className="text-3xl font-black text-foreground mb-3">
               환영합니다! 👋
             </h2>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               브랜드에 맞는 인스타툰 작가를 찾아보세요
             </p>
           </div>
@@ -63,35 +63,35 @@ export function BusinessLogin() {
           <form className="space-y-5">
             {/* Email Input */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 이메일
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   type="email"
                   placeholder="business@company.com"
-                  className="pl-11 h-12 border-gray-300 focus:ring-purple-600 focus:border-purple-600"
+                  className="pl-11 h-12 border-border focus:ring-purple-600 focus:border-purple-600"
                 />
               </div>
             </div>
 
             {/* Password Input */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 비밀번호
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-11 pr-11 h-12 border-gray-300 focus:ring-purple-600 focus:border-purple-600"
+                  className="pl-11 pr-11 h-12 border-border focus:ring-purple-600 focus:border-purple-600"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -108,7 +108,7 @@ export function BusinessLogin() {
                 <Checkbox id="remember" />
                 <label
                   htmlFor="remember"
-                  className="text-sm text-gray-600 cursor-pointer"
+                  className="text-sm text-muted-foreground cursor-pointer"
                 >
                   로그인 상태 유지
                 </label>
@@ -134,10 +134,10 @@ export function BusinessLogin() {
           {/* Divider */}
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">또는</span>
+              <span className="px-4 bg-card text-muted-foreground">또는</span>
             </div>
           </div>
 
@@ -145,7 +145,7 @@ export function BusinessLogin() {
           <div className="space-y-3">
             <Button
               variant="outline"
-              className="w-full h-12 border-gray-300 hover:bg-gray-50"
+              className="w-full h-12 border-border hover:bg-muted/50"
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path
@@ -170,7 +170,7 @@ export function BusinessLogin() {
 
             <Button
               variant="outline"
-              className="w-full h-12 border-gray-300 hover:bg-gray-50"
+              className="w-full h-12 border-border hover:bg-muted/50"
             >
               <svg className="w-5 h-5 mr-3" fill="#03C75A" viewBox="0 0 24 24">
                 <path d="M13.5 2C7.152 2 2 7.152 2 13.5S7.152 25 13.5 25 25 19.848 25 13.5 19.848 2 13.5 2zm-1.5 18.5h-2v-7h2v7zm7 0h-2v-7c0-1.1-.9-2-2-2h-1v9h-2v-7h-1c-1.1 0-2 .9-2 2v5h-2v-7c0-2.21 1.79-4 4-4h2c2.21 0 4 1.79 4 4v7z" />
@@ -181,7 +181,7 @@ export function BusinessLogin() {
 
           {/* Sign Up Link */}
           <div className="mt-8 text-center">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               아직 계정이 없으신가요?{" "}
               <a
                 href="#"
@@ -193,16 +193,16 @@ export function BusinessLogin() {
           </div>
 
           {/* Help Links */}
-          <div className="mt-6 flex justify-center gap-6 text-sm text-gray-500">
-            <a href="#" className="hover:text-gray-700">
+          <div className="mt-6 flex justify-center gap-6 text-sm text-muted-foreground">
+            <a href="#" className="hover:text-foreground">
               고객지원
             </a>
             <span>•</span>
-            <a href="#" className="hover:text-gray-700">
+            <a href="#" className="hover:text-foreground">
               이용약관
             </a>
             <span>•</span>
-            <a href="#" className="hover:text-gray-700">
+            <a href="#" className="hover:text-foreground">
               개인정보처리방침
             </a>
           </div>

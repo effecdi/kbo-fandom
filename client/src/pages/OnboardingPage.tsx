@@ -31,8 +31,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 const olliLogo = "/favicon.png";
-import { useTheme } from "@/components/theme-provider";
-
 type UserType = "creator" | "business" | null;
 type CreatorPurpose = "daily" | "humor" | "info" | "review" | "story" | "etc";
 type BusinessPurpose = "mascot" | "content" | "campaign" | "collab" | "brand" | "etc";
@@ -41,7 +39,6 @@ type BrandSize = "startup" | "small" | "medium" | "enterprise";
 
 export function OnboardingPage() {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState<UserType>(null);
   const [purpose, setPurpose] = useState<string>("");
@@ -76,9 +73,7 @@ export function OnboardingPage() {
   const progressPercentage = (step / totalSteps) * 100;
 
   return (
-    <div className={`min-h-screen w-full flex items-center justify-center p-4 md:p-6 relative overflow-hidden ${
-      theme === "dark" ? "bg-gray-900" : "bg-gray-50"
-    }`}>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-6 relative overflow-hidden bg-muted">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -116,15 +111,9 @@ export function OnboardingPage() {
                       : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
                     : index + 1 === step
                     ? userType === "creator"
-                      ? theme === "dark"
-                        ? "bg-[#00e5cc]/20 text-[#00e5cc] border-2 border-[#00e5cc]"
-                        : "bg-teal-100 text-teal-600 border-2 border-teal-500"
-                      : theme === "dark"
-                      ? "bg-blue-500/20 text-blue-400 border-2 border-blue-500"
-                      : "bg-blue-100 text-blue-600 border-2 border-blue-500"
-                    : theme === "dark"
-                    ? "bg-gray-800 text-gray-600"
-                    : "bg-gray-200 text-gray-400"
+                      ? "bg-teal-100 dark:bg-[#00e5cc]/20 text-teal-600 dark:text-[#00e5cc] border-2 border-teal-500 dark:border-[#00e5cc]"
+                      : "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-2 border-blue-500"
+                    : "bg-muted text-muted-foreground"
                 }`}>
                   {index + 1 < step ? <Check className="w-5 h-5" /> : index + 1}
                 </div>
@@ -134,9 +123,7 @@ export function OnboardingPage() {
                       ? userType === "creator"
                         ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6]"
                         : "bg-gradient-to-r from-blue-500 to-indigo-500"
-                      : theme === "dark"
-                      ? "bg-gray-800"
-                      : "bg-gray-200"
+                      : "bg-muted"
                   }`} />
                 )}
               </div>
@@ -145,16 +132,12 @@ export function OnboardingPage() {
 
           {/* Progress Info */}
           <div className="flex items-center justify-between max-w-md mx-auto px-4">
-            <p className={`text-sm font-semibold ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+            <p className="text-sm font-semibold text-muted-foreground">
               {step}/{totalSteps} 단계
             </p>
             <button
               onClick={handleSkip}
-              className={`text-sm font-semibold transition-colors ${
-                theme === "dark" 
-                  ? "text-gray-400 hover:text-gray-200" 
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className="text-sm font-semibold transition-colors text-muted-foreground hover:text-foreground"
             >
               건너뛰기 →
             </button>
@@ -163,18 +146,12 @@ export function OnboardingPage() {
 
         {/* Step 1: User Type Selection */}
         {step === 1 && (
-          <div className={`rounded-3xl shadow-xl p-8 md:p-12 border ${
-            theme === "dark" 
-              ? "bg-gray-800 border-gray-700" 
-              : "bg-white border-gray-200"
-          }`}>
+          <div className="rounded-3xl shadow-xl p-8 md:p-12 border bg-card border-border">
             <div className="text-center mb-10">
-              <h1 className={`text-3xl md:text-4xl font-black mb-3 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}>
+              <h1 className="text-3xl md:text-4xl font-black mb-3 text-foreground">
                 OLLI에 오신 것을 환영합니다! 👋
               </h1>
-              <p className={`text-lg ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+              <p className="text-lg text-foreground">
                 어떤 목적으로 사용하시나요?
               </p>
             </div>
@@ -183,11 +160,7 @@ export function OnboardingPage() {
               {/* Creator Card */}
               <button
                 onClick={() => handleUserTypeSelect("creator")}
-                className={`group relative rounded-2xl p-8 transition-all border-2 text-left overflow-hidden ${
-                  theme === "dark"
-                    ? "bg-gray-900 border-gray-700 hover:border-[#00e5cc] hover:shadow-2xl hover:shadow-[#00e5cc]/20"
-                    : "bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200 hover:border-teal-500 hover:shadow-2xl"
-                }`}
+                className="group relative rounded-2xl p-8 transition-all border-2 text-left overflow-hidden bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200 hover:border-teal-500 hover:shadow-2xl dark:from-transparent dark:to-transparent dark:bg-card dark:border-border dark:hover:border-[#00e5cc] dark:hover:shadow-[#00e5cc]/20"
               >
                 {/* Background Decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#00e5cc]/10 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500" />
@@ -196,34 +169,24 @@ export function OnboardingPage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
                     <Wand2 className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className={`text-2xl font-black mb-2 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}>
+                  <h3 className="text-2xl font-black mb-2 text-foreground">
                     작가 / 크리에이터
                   </h3>
-                  <p className={`mb-6 leading-relaxed ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-700"
-                  }`}>
+                  <p className="mb-6 leading-relaxed text-foreground">
                     AI로 인스타툰을 쉽게 만들고,
                     <br />
                     광고 협업으로 수익을 창출하세요
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
-                      theme === "dark" ? "bg-teal-500/20 text-teal-400" : "bg-teal-100 text-teal-700"
-                    }`}>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-400">
                       <Palette className="w-3.5 h-3.5" />
                       캐릭터 생성
                     </span>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
-                      theme === "dark" ? "bg-cyan-500/20 text-cyan-400" : "bg-cyan-100 text-cyan-700"
-                    }`}>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400">
                       <Instagram className="w-3.5 h-3.5" />
                       툰 제작
                     </span>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
-                      theme === "dark" ? "bg-teal-500/20 text-teal-400" : "bg-teal-100 text-teal-700"
-                    }`}>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-400">
                       <TrendingUp className="w-3.5 h-3.5" />
                       수익화
                     </span>
@@ -237,11 +200,7 @@ export function OnboardingPage() {
               {/* Business Card */}
               <button
                 onClick={() => handleUserTypeSelect("business")}
-                className={`group relative rounded-2xl p-8 transition-all border-2 text-left overflow-hidden ${
-                  theme === "dark"
-                    ? "bg-gray-900 border-gray-700 hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/20"
-                    : "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:border-blue-500 hover:shadow-2xl"
-                }`}
+                className="group relative rounded-2xl p-8 transition-all border-2 text-left overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:border-blue-500 hover:shadow-2xl dark:from-transparent dark:to-transparent dark:bg-card dark:border-border dark:hover:shadow-blue-500/20"
               >
                 {/* Background Decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500" />
@@ -250,34 +209,24 @@ export function OnboardingPage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
                     <Building2 className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className={`text-2xl font-black mb-2 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}>
+                  <h3 className="text-2xl font-black mb-2 text-foreground">
                     기업 / 기관
                   </h3>
-                  <p className={`mb-6 leading-relaxed ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-700"
-                  }`}>
+                  <p className="mb-6 leading-relaxed text-foreground">
                     브랜드 마스코트를 생성하고,
                     <br />
                     작가와 협업하여 콘텐츠를 제작하세요
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
-                      theme === "dark" ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"
-                    }`}>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
                       <Sparkles className="w-3.5 h-3.5" />
                       마스코트
                     </span>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
-                      theme === "dark" ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-100 text-indigo-700"
-                    }`}>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400">
                       <Palette className="w-3.5 h-3.5" />
                       콘텐츠
                     </span>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
-                      theme === "dark" ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"
-                    }`}>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
                       <Users className="w-3.5 h-3.5" />
                       협업
                     </span>
@@ -293,18 +242,12 @@ export function OnboardingPage() {
 
         {/* Step 2: Purpose Selection - Creator */}
         {step === 2 && userType === "creator" && (
-          <div className={`rounded-3xl shadow-xl p-8 md:p-12 border ${
-            theme === "dark" 
-              ? "bg-gray-800 border-gray-700" 
-              : "bg-white border-gray-200"
-          }`}>
+          <div className="rounded-3xl shadow-xl p-8 md:p-12 border bg-card border-border">
             <div className="text-center mb-10">
-              <h2 className={`text-3xl md:text-4xl font-black mb-3 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}>
+              <h2 className="text-3xl md:text-4xl font-black mb-3 text-foreground">
                 어떤 콘텐츠를 만들고 싶으세요?
               </h2>
-              <p className={`text-lg ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+              <p className="text-lg text-foreground">
                 주로 만들 콘텐츠 유형을 선택해주세요
               </p>
             </div>
@@ -326,39 +269,27 @@ export function OnboardingPage() {
                   }}
                   className={`p-5 rounded-2xl border-2 transition-all text-left group ${
                     purpose === item.id
-                      ? theme === "dark"
-                        ? "border-[#00e5cc] bg-[#00e5cc]/10 shadow-lg shadow-[#00e5cc]/20"
-                        : "border-teal-500 bg-teal-50 shadow-lg"
-                      : theme === "dark"
-                      ? "border-gray-700 bg-gray-900/50 hover:border-gray-600 hover:bg-gray-900"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                      ? "border-teal-500 dark:border-[#00e5cc] bg-teal-50 dark:bg-[#00e5cc]/10 shadow-lg dark:shadow-[#00e5cc]/20"
+                      : "border-border bg-card hover:border-muted-foreground/30 hover:shadow-md"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
                       purpose === item.id
                         ? "bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] scale-105 shadow-lg"
-                        : theme === "dark"
-                        ? "bg-gray-800 group-hover:bg-gray-700"
-                        : "bg-gray-100 group-hover:bg-teal-100"
+                        : "bg-muted group-hover:bg-teal-100 dark:group-hover:bg-muted/80"
                     }`}>
                       <item.icon className={`w-7 h-7 ${
                         purpose === item.id
                           ? "text-white"
-                          : theme === "dark"
-                          ? "text-gray-400"
-                          : "text-gray-600"
+                          : "text-muted-foreground"
                       }`} />
                     </div>
                     <div className="flex-1">
-                      <h3 className={`text-lg font-bold mb-1 ${
-                        theme === "dark" ? "text-white" : "text-gray-900"
-                      }`}>
+                      <h3 className="text-lg font-bold mb-1 text-foreground">
                         {item.label}
                       </h3>
-                      <p className={`text-sm ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
-                      }`}>
+                      <p className="text-sm text-muted-foreground">
                         {item.desc}
                       </p>
                     </div>
@@ -374,7 +305,7 @@ export function OnboardingPage() {
               <Button
                 variant="outline"
                 onClick={() => setStep(1)}
-                className={theme === "dark" ? "border-gray-700 text-white hover:bg-gray-900" : ""}
+                className=""
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 이전
@@ -393,18 +324,12 @@ export function OnboardingPage() {
 
         {/* Step 2: Purpose Selection - Business */}
         {step === 2 && userType === "business" && (
-          <div className={`rounded-3xl shadow-xl p-8 md:p-12 border ${
-            theme === "dark" 
-              ? "bg-gray-800 border-gray-700" 
-              : "bg-white border-gray-200"
-          }`}>
+          <div className="rounded-3xl shadow-xl p-8 md:p-12 border bg-card border-border">
             <div className="text-center mb-10">
-              <h2 className={`text-3xl md:text-4xl font-black mb-3 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}>
+              <h2 className="text-3xl md:text-4xl font-black mb-3 text-foreground">
                 주요 활용 목적은 무엇인가요?
               </h2>
-              <p className={`text-lg ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+              <p className="text-lg text-foreground">
                 OLLI를 어떻게 활용하실 계획인가요?
               </p>
             </div>
@@ -426,39 +351,27 @@ export function OnboardingPage() {
                   }}
                   className={`p-5 rounded-2xl border-2 transition-all text-left group ${
                     purpose === item.id
-                      ? theme === "dark"
-                        ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
-                        : "border-blue-500 bg-blue-50 shadow-lg"
-                      : theme === "dark"
-                      ? "border-gray-700 bg-gray-900/50 hover:border-gray-600 hover:bg-gray-900"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 shadow-lg dark:shadow-blue-500/20"
+                      : "border-border bg-card hover:border-muted-foreground/30 hover:shadow-md"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
                       purpose === item.id
                         ? "bg-gradient-to-br from-blue-500 to-indigo-500 scale-105 shadow-lg"
-                        : theme === "dark"
-                        ? "bg-gray-800 group-hover:bg-gray-700"
-                        : "bg-gray-100 group-hover:bg-blue-100"
+                        : "bg-muted group-hover:bg-blue-100 dark:group-hover:bg-muted/80"
                     }`}>
                       <item.icon className={`w-7 h-7 ${
                         purpose === item.id
                           ? "text-white"
-                          : theme === "dark"
-                          ? "text-gray-400"
-                          : "text-gray-600"
+                          : "text-muted-foreground"
                       }`} />
                     </div>
                     <div className="flex-1">
-                      <h3 className={`text-lg font-bold mb-1 ${
-                        theme === "dark" ? "text-white" : "text-gray-900"
-                      }`}>
+                      <h3 className="text-lg font-bold mb-1 text-foreground">
                         {item.label}
                       </h3>
-                      <p className={`text-sm ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
-                      }`}>
+                      <p className="text-sm text-muted-foreground">
                         {item.desc}
                       </p>
                     </div>
@@ -474,7 +387,7 @@ export function OnboardingPage() {
               <Button
                 variant="outline"
                 onClick={() => setStep(1)}
-                className={theme === "dark" ? "border-gray-700 text-white hover:bg-gray-900" : ""}
+                className=""
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 이전
@@ -493,18 +406,12 @@ export function OnboardingPage() {
 
         {/* Step 3: Experience Level - Creator */}
         {step === 3 && userType === "creator" && (
-          <div className={`rounded-3xl shadow-xl p-8 md:p-12 border ${
-            theme === "dark" 
-              ? "bg-gray-800 border-gray-700" 
-              : "bg-white border-gray-200"
-          }`}>
+          <div className="rounded-3xl shadow-xl p-8 md:p-12 border bg-card border-border">
             <div className="text-center mb-10">
-              <h2 className={`text-3xl md:text-4xl font-black mb-3 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}>
+              <h2 className="text-3xl md:text-4xl font-black mb-3 text-foreground">
                 경험 수준을 알려주세요
               </h2>
-              <p className={`text-lg ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+              <p className="text-lg text-foreground">
                 맞춤형 가이드를 제공해드릴게요
               </p>
             </div>
@@ -523,42 +430,28 @@ export function OnboardingPage() {
                   }}
                   className={`p-6 rounded-2xl border-2 transition-all text-center group ${
                     experience === item.id
-                      ? theme === "dark"
-                        ? "border-[#00e5cc] bg-[#00e5cc]/10 shadow-lg shadow-[#00e5cc]/20"
-                        : "border-teal-500 bg-teal-50 shadow-lg"
-                      : theme === "dark"
-                      ? "border-gray-700 bg-gray-900/50 hover:border-gray-600"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                      ? "border-teal-500 dark:border-[#00e5cc] bg-teal-50 dark:bg-[#00e5cc]/10 shadow-lg dark:shadow-[#00e5cc]/20"
+                      : "border-border bg-card hover:border-muted-foreground/30 hover:shadow-md"
                   }`}
                 >
                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-all ${
                     experience === item.id
                       ? "bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] scale-110 shadow-lg"
-                      : theme === "dark"
-                      ? "bg-gray-800 group-hover:bg-gray-700"
-                      : "bg-gray-100 group-hover:bg-teal-100"
+                      : "bg-muted group-hover:bg-teal-100 dark:group-hover:bg-muted/80"
                   }`}>
                     <item.icon className={`w-8 h-8 ${
                       experience === item.id
                         ? "text-white"
-                        : theme === "dark"
-                        ? "text-gray-400"
-                        : "text-gray-600"
+                        : "text-muted-foreground"
                     }`} />
                   </div>
-                  <h3 className={`text-xl font-black mb-2 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}>
+                  <h3 className="text-xl font-black mb-2 text-foreground">
                     {item.label}
                   </h3>
-                  <p className={`text-sm mb-2 ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-700"
-                  }`}>
+                  <p className="text-sm mb-2 text-foreground">
                     {item.desc}
                   </p>
-                  <p className={`text-xs ${
-                    theme === "dark" ? "text-gray-500" : "text-gray-500"
-                  }`}>
+                  <p className="text-xs text-muted-foreground">
                     {item.detail}
                   </p>
                 </button>
@@ -569,7 +462,7 @@ export function OnboardingPage() {
               <Button
                 variant="outline"
                 onClick={() => setStep(2)}
-                className={theme === "dark" ? "border-gray-700 text-white hover:bg-gray-900" : ""}
+                className=""
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 이전
@@ -588,18 +481,12 @@ export function OnboardingPage() {
 
         {/* Step 3: Brand Size - Business */}
         {step === 3 && userType === "business" && (
-          <div className={`rounded-3xl shadow-xl p-8 md:p-12 border ${
-            theme === "dark" 
-              ? "bg-gray-800 border-gray-700" 
-              : "bg-white border-gray-200"
-          }`}>
+          <div className="rounded-3xl shadow-xl p-8 md:p-12 border bg-card border-border">
             <div className="text-center mb-10">
-              <h2 className={`text-3xl md:text-4xl font-black mb-3 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}>
+              <h2 className="text-3xl md:text-4xl font-black mb-3 text-foreground">
                 조직 규모를 알려주세요
               </h2>
-              <p className={`text-lg ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+              <p className="text-lg text-foreground">
                 최적의 플랜과 기능을 추천해드릴게요
               </p>
             </div>
@@ -619,39 +506,27 @@ export function OnboardingPage() {
                   }}
                   className={`p-6 rounded-2xl border-2 transition-all text-left group ${
                     brandSize === item.id
-                      ? theme === "dark"
-                        ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
-                        : "border-blue-500 bg-blue-50 shadow-lg"
-                      : theme === "dark"
-                      ? "border-gray-700 bg-gray-900/50 hover:border-gray-600 hover:bg-gray-900"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 shadow-lg dark:shadow-blue-500/20"
+                      : "border-border bg-card hover:border-muted-foreground/30 hover:shadow-md"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
                       brandSize === item.id
                         ? "bg-gradient-to-br from-blue-500 to-indigo-500 scale-105 shadow-lg"
-                        : theme === "dark"
-                        ? "bg-gray-800 group-hover:bg-gray-700"
-                        : "bg-gray-100 group-hover:bg-blue-100"
+                        : "bg-muted group-hover:bg-blue-100 dark:group-hover:bg-muted/80"
                     }`}>
                       <item.icon className={`w-7 h-7 ${
                         brandSize === item.id
                           ? "text-white"
-                          : theme === "dark"
-                          ? "text-gray-400"
-                          : "text-gray-600"
+                          : "text-muted-foreground"
                       }`} />
                     </div>
                     <div className="flex-1">
-                      <h3 className={`text-lg font-bold mb-1 ${
-                        theme === "dark" ? "text-white" : "text-gray-900"
-                      }`}>
+                      <h3 className="text-lg font-bold mb-1 text-foreground">
                         {item.label}
                       </h3>
-                      <p className={`text-sm ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
-                      }`}>
+                      <p className="text-sm text-muted-foreground">
                         {item.desc}
                       </p>
                     </div>
@@ -667,7 +542,7 @@ export function OnboardingPage() {
               <Button
                 variant="outline"
                 onClick={() => setStep(2)}
-                className={theme === "dark" ? "border-gray-700 text-white hover:bg-gray-900" : ""}
+                className=""
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 이전
@@ -686,11 +561,7 @@ export function OnboardingPage() {
 
         {/* Step 4: Completion */}
         {step === 4 && (
-          <div className={`rounded-3xl shadow-xl p-8 md:p-12 text-center border ${
-            theme === "dark" 
-              ? "bg-gray-800 border-gray-700" 
-              : "bg-white border-gray-200"
-          }`}>
+          <div className="rounded-3xl shadow-xl p-8 md:p-12 text-center border bg-card border-border">
             {/* Success Animation */}
             <div className="mb-8 flex justify-center">
               <div className={`relative w-32 h-32 rounded-full flex items-center justify-center ${
@@ -716,12 +587,10 @@ export function OnboardingPage() {
 
             {/* Success Message */}
             <div className="mb-8">
-              <h2 className={`text-3xl md:text-4xl font-black mb-4 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}>
+              <h2 className="text-3xl md:text-4xl font-black mb-4 text-foreground">
                 모든 준비가 완료되었습니다! 🎉
               </h2>
-              <p className={`text-lg mb-6 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+              <p className="text-lg mb-6 text-foreground">
                 {userType === "creator"
                   ? "이제 AI와 함께 멋진 인스타툰을 만들어보세요"
                   : "이제 브랜드 마스코트를 생성하고 작가와 협업할 수 있습니다"}
@@ -729,26 +598,24 @@ export function OnboardingPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className={`rounded-2xl p-6 mb-8 text-left ${
-              theme === "dark" ? "bg-gray-900/50 border border-gray-700" : "bg-gray-50 border border-gray-200"
-            }`}>
-              <h3 className={`text-sm font-bold mb-4 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+            <div className="rounded-2xl p-6 mb-8 text-left bg-muted border border-border">
+              <h3 className="text-sm font-bold mb-4 text-muted-foreground">
                 선택하신 정보
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className={`rounded-xl p-4 ${theme === "dark" ? "bg-gray-800" : "bg-white"}`}>
-                  <p className={`text-xs font-semibold mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+                <div className="rounded-xl p-4 bg-card">
+                  <p className="text-xs font-semibold mb-2 text-muted-foreground">
                     계정 유형
                   </p>
-                  <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <p className="font-bold text-foreground">
                     {userType === "creator" ? "작가 / 크리에이터" : "기업 / 기관"}
                   </p>
                 </div>
-                <div className={`rounded-xl p-4 ${theme === "dark" ? "bg-gray-800" : "bg-white"}`}>
-                  <p className={`text-xs font-semibold mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+                <div className="rounded-xl p-4 bg-card">
+                  <p className="text-xs font-semibold mb-2 text-muted-foreground">
                     {userType === "creator" ? "콘텐츠 유형" : "활용 목적"}
                   </p>
-                  <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <p className="font-bold text-foreground">
                     {purpose === "daily" && "일상 / 에세이툰"}
                     {purpose === "humor" && "개그 / 유머툰"}
                     {purpose === "info" && "정보 / 지식툰"}
@@ -762,11 +629,11 @@ export function OnboardingPage() {
                     {purpose === "etc" && "기타"}
                   </p>
                 </div>
-                <div className={`rounded-xl p-4 ${theme === "dark" ? "bg-gray-800" : "bg-white"}`}>
-                  <p className={`text-xs font-semibold mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+                <div className="rounded-xl p-4 bg-card">
+                  <p className="text-xs font-semibold mb-2 text-muted-foreground">
                     {userType === "creator" ? "경험 수준" : "조직 규모"}
                   </p>
-                  <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <p className="font-bold text-foreground">
                     {experience === "beginner" && "초보자"}
                     {experience === "intermediate" && "중급자"}
                     {experience === "expert" && "전문가"}
@@ -781,90 +648,78 @@ export function OnboardingPage() {
 
             {/* What's Next */}
             <div className="mb-8">
-              <h3 className={`text-xl font-bold mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <h3 className="text-xl font-bold mb-4 text-foreground">
                 다음 단계
               </h3>
               <div className="grid md:grid-cols-3 gap-4 text-left">
                 {userType === "creator" ? (
                   <>
-                    <div className={`rounded-xl p-4 border ${theme === "dark" ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                        theme === "dark" ? "bg-teal-500/20" : "bg-teal-100"
-                      }`}>
-                        <Sparkles className={`w-5 h-5 ${theme === "dark" ? "text-teal-400" : "text-teal-600"}`} />
+                    <div className="rounded-xl p-4 border bg-muted border-border">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-teal-100 dark:bg-teal-500/20">
+                        <Sparkles className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                       </div>
-                      <h4 className={`font-bold mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      <h4 className="font-bold mb-1 text-foreground">
                         캐릭터 생성
                       </h4>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className="text-sm text-muted-foreground">
                         AI로 나만의 캐릭터 만들기
                       </p>
                     </div>
-                    <div className={`rounded-xl p-4 border ${theme === "dark" ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                        theme === "dark" ? "bg-teal-500/20" : "bg-teal-100"
-                      }`}>
-                        <FileText className={`w-5 h-5 ${theme === "dark" ? "text-teal-400" : "text-teal-600"}`} />
+                    <div className="rounded-xl p-4 border bg-muted border-border">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-teal-100 dark:bg-teal-500/20">
+                        <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                       </div>
-                      <h4 className={`font-bold mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      <h4 className="font-bold mb-1 text-foreground">
                         스토리 제작
                       </h4>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className="text-sm text-muted-foreground">
                         툰 에디터로 작품 완성
                       </p>
                     </div>
-                    <div className={`rounded-xl p-4 border ${theme === "dark" ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                        theme === "dark" ? "bg-teal-500/20" : "bg-teal-100"
-                      }`}>
-                        <DollarSign className={`w-5 h-5 ${theme === "dark" ? "text-teal-400" : "text-teal-600"}`} />
+                    <div className="rounded-xl p-4 border bg-muted border-border">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-teal-100 dark:bg-teal-500/20">
+                        <DollarSign className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                       </div>
-                      <h4 className={`font-bold mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      <h4 className="font-bold mb-1 text-foreground">
                         수익 창출
                       </h4>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className="text-sm text-muted-foreground">
                         광고 협업 기회 탐색
                       </p>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className={`rounded-xl p-4 border ${theme === "dark" ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                        theme === "dark" ? "bg-blue-500/20" : "bg-blue-100"
-                      }`}>
-                        <Palette className={`w-5 h-5 ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
+                    <div className="rounded-xl p-4 border bg-muted border-border">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-blue-100 dark:bg-blue-500/20">
+                        <Palette className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <h4 className={`font-bold mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      <h4 className="font-bold mb-1 text-foreground">
                         마스코트 생성
                       </h4>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className="text-sm text-muted-foreground">
                         브랜드 마스코트 AI 생성
                       </p>
                     </div>
-                    <div className={`rounded-xl p-4 border ${theme === "dark" ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                        theme === "dark" ? "bg-blue-500/20" : "bg-blue-100"
-                      }`}>
-                        <Users className={`w-5 h-5 ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
+                    <div className="rounded-xl p-4 border bg-muted border-border">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-blue-100 dark:bg-blue-500/20">
+                        <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <h4 className={`font-bold mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      <h4 className="font-bold mb-1 text-foreground">
                         작가 탐색
                       </h4>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className="text-sm text-muted-foreground">
                         최적의 크리에이터 발굴
                       </p>
                     </div>
-                    <div className={`rounded-xl p-4 border ${theme === "dark" ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                        theme === "dark" ? "bg-blue-500/20" : "bg-blue-100"
-                      }`}>
-                        <Target className={`w-5 h-5 ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
+                    <div className="rounded-xl p-4 border bg-muted border-border">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-blue-100 dark:bg-blue-500/20">
+                        <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <h4 className={`font-bold mb-1 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      <h4 className="font-bold mb-1 text-foreground">
                         캠페인 시작
                       </h4>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className="text-sm text-muted-foreground">
                         마케팅 캠페인 관리
                       </p>
                     </div>

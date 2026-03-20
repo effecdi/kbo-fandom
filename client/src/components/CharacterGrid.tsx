@@ -130,11 +130,7 @@ export function CharacterGrid({ theme }: CharacterGridProps) {
 
             {/* Number badge */}
             <div
-              className={`absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center font-black text-lg backdrop-blur-xl transition-all duration-300 ${
-                theme === "dark"
-                  ? "bg-black/50 text-white group-hover:bg-[#00e5cc] group-hover:text-black"
-                  : "bg-white/50 text-gray-900 group-hover:bg-[#00e5cc] group-hover:text-white"
-              }`}
+              className="absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center font-black text-lg backdrop-blur-xl transition-all duration-300 bg-background/50 text-foreground group-hover:bg-[#00e5cc] group-hover:text-white"
             >
               {index + 1}
             </div>
@@ -144,14 +140,10 @@ export function CharacterGrid({ theme }: CharacterGridProps) {
 
       {/* Floating gradient orbs */}
       <div
-        className={`absolute top-1/4 left-10 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none ${
-          theme === "dark" ? "bg-[#00e5cc]" : "bg-[#00e5cc]"
-        }`}
+        className="absolute top-1/4 left-10 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none bg-[#00e5cc]"
       />
       <div
-        className={`absolute bottom-1/4 right-10 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none ${
-          theme === "dark" ? "bg-blue-500" : "bg-blue-400"
-        }`}
+        className="absolute bottom-1/4 right-10 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none bg-blue-500"
       />
     </div>
   );

@@ -21,9 +21,9 @@ const olliMascot = "/favicon.png";
 
 export function DetailPage() {
   return (
-    <div className="min-h-screen w-full bg-white">
+    <div className="min-h-screen w-full bg-background">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
+      <nav className="fixed top-0 w-full bg-background/95 backdrop-blur-sm shadow-sm z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 flex items-center justify-center">
@@ -33,19 +33,19 @@ export function DetailPage() {
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="text-2xl font-black text-gray-900">OLLI</span>
+            <span className="text-2xl font-black text-foreground">OLLI</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-gray-600 hover:text-purple-600 font-semibold">
+            <a href="#features" className="text-muted-foreground hover:text-purple-600 font-semibold">
               기능
             </a>
-            <a href="#how-it-works" className="text-gray-600 hover:text-purple-600 font-semibold">
+            <a href="#how-it-works" className="text-muted-foreground hover:text-purple-600 font-semibold">
               사용방법
             </a>
-            <Link to="/business" className="text-gray-600 hover:text-indigo-600 font-semibold">
+            <Link to="/business" className="text-muted-foreground hover:text-indigo-600 font-semibold">
               광고주
             </Link>
-            <a href="#pricing" className="text-gray-600 hover:text-purple-600 font-semibold">
+            <a href="#pricing" className="text-muted-foreground hover:text-purple-600 font-semibold">
               요금제
             </a>
             <Button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
@@ -56,7 +56,7 @@ export function DetailPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50">
+      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 dark:from-purple-950/20 dark:via-pink-950/20 dark:to-yellow-950/20">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
@@ -67,14 +67,14 @@ export function DetailPage() {
                   AI 기반 웹툰 제작 플랫폼
                 </span>
               </div>
-              <h1 className="text-5xl md:text-6xl font-black mb-6 text-gray-900 leading-tight">
+              <h1 className="text-5xl md:text-6xl font-black mb-6 text-foreground leading-tight">
                 그림 실력 제로,
                 <br />
                 <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">
                   스토리는 무한대
                 </span>
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
                 AI가 당신의 아이디어를 프로급 인스타툰으로 변환합니다.
                 <br />
                 1분 만에 작가 데뷔, 지금 바로 시작하세요.
@@ -106,7 +106,7 @@ export function DetailPage() {
                       />
                     ))}
                   </div>
-                  <span className="text-gray-600 font-semibold">
+                  <span className="text-muted-foreground font-semibold">
                     10,000+ 작가님
                   </span>
                 </div>
@@ -116,7 +116,7 @@ export function DetailPage() {
                   <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                   <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                   <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                  <span className="text-gray-600 font-semibold ml-2">
+                  <span className="text-muted-foreground font-semibold ml-2">
                     4.9/5.0
                   </span>
                 </div>
@@ -125,7 +125,7 @@ export function DetailPage() {
 
             {/* Right Content - Character Showcase */}
             <div className="relative">
-              <div className="relative bg-white rounded-3xl shadow-2xl p-8">
+              <div className="relative bg-card rounded-3xl shadow-2xl p-8">
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { label: "행복", emoji: "😊", bg: "from-yellow-100 to-orange-100" },
@@ -145,7 +145,7 @@ export function DetailPage() {
                         />
                       </div>
                       <p className="text-2xl mb-1">{item.emoji}</p>
-                      <p className="text-sm font-bold text-gray-700">
+                      <p className="text-sm font-bold text-foreground">
                         {item.label}
                       </p>
                     </div>
@@ -165,13 +165,13 @@ export function DetailPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-6 bg-white">
+      <section id="features" className="py-20 px-6 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
               왜 OLLI인가요?
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-muted-foreground">
               전문가 수준의 툰을 누구나 쉽게 만들 수 있어요
             </p>
           </div>
@@ -217,17 +217,17 @@ export function DetailPage() {
             ].map((feature, idx) => (
               <div
                 key={idx}
-                className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 hover:shadow-xl transition-all group"
+                className="bg-gradient-to-br from-muted to-muted rounded-2xl p-8 hover:shadow-xl transition-all group"
               >
                 <div
                   className={`w-14 h-14 bg-gradient-to-br from-${feature.color}-400 to-${feature.color}-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
                 >
                   <feature.icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900">
+                <h3 className="text-xl font-bold mb-3 text-foreground">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
               </div>
@@ -237,13 +237,13 @@ export function DetailPage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 px-6 bg-gradient-to-br from-purple-50 to-pink-50">
+      <section id="how-it-works" className="py-20 px-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
               3단계로 완성하는 웹툰
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-muted-foreground">
               복잡한 과정 없이 누구나 쉽게 시작할 수 있어요
             </p>
           </div>
@@ -270,17 +270,17 @@ export function DetailPage() {
               },
             ].map((step, idx) => (
               <div key={idx} className="relative">
-                <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all">
+                <div className="bg-card rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all">
                   <div className="text-6xl font-black text-purple-100 mb-4">
                     {step.step}
                   </div>
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6">
                     <step.icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 text-gray-900">
+                  <h3 className="text-2xl font-bold mb-4 text-foreground">
                     {step.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -296,13 +296,13 @@ export function DetailPage() {
       </section>
 
       {/* Example Gallery */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-20 px-6 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
               올리와 함께한 작품들
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-muted-foreground">
               실제 유저들이 만든 인스타툰을 확인해보세요
             </p>
           </div>
@@ -311,14 +311,14 @@ export function DetailPage() {
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div
                 key={item}
-                className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 hover:shadow-xl transition-all cursor-pointer group"
+                className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 hover:shadow-xl transition-all cursor-pointer group"
               >
-                <div className="bg-white rounded-xl p-4 mb-4">
+                <div className="bg-card rounded-xl p-4 mb-4">
                   <div className="grid grid-cols-2 gap-2">
                     {[1, 2, 3, 4].map((panel) => (
                       <div
                         key={panel}
-                        className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center"
+                        className="aspect-square bg-gradient-to-br from-muted to-muted rounded-lg flex items-center justify-center"
                       >
                         <div className="w-16 h-16 flex items-center justify-center">
                           <img
@@ -334,11 +334,11 @@ export function DetailPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full" />
-                    <span className="font-semibold text-gray-700">
+                    <span className="font-semibold text-foreground">
                       작가{item}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-600">
+                  <div className="flex items-center gap-1 text-muted-foreground">
                     <Heart className="w-4 h-4" />
                     <span className="text-sm font-semibold">
                       {(Math.random() * 10 + 2).toFixed(1)}K
@@ -363,13 +363,13 @@ export function DetailPage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 px-6 bg-gradient-to-br from-gray-50 to-gray-100">
+      <section id="pricing" className="py-20 px-6 bg-gradient-to-br from-muted to-muted">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
               모두를 위한 요금제
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-muted-foreground">
               무료로 시작해서 필요할 때 업그레이드하세요
             </p>
           </div>
@@ -420,7 +420,7 @@ export function DetailPage() {
             ].map((plan, idx) => (
               <div
                 key={idx}
-                className={`relative bg-white rounded-3xl p-8 ${
+                className={`relative bg-card rounded-3xl p-8 ${
                   plan.popular
                     ? "ring-4 ring-purple-600 shadow-2xl scale-105"
                     : "shadow-lg"
@@ -432,21 +432,21 @@ export function DetailPage() {
                   </div>
                 )}
                 <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-4 text-gray-900">
+                  <h3 className="text-2xl font-bold mb-4 text-foreground">
                     {plan.name}
                   </h3>
                   <div className="mb-2">
-                    <span className="text-5xl font-black text-gray-900">
+                    <span className="text-5xl font-black text-foreground">
                       {plan.price}
                     </span>
                   </div>
-                  <p className="text-gray-600">/{plan.period}</p>
+                  <p className="text-muted-foreground">/{plan.period}</p>
                 </div>
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((feature, fIdx) => (
                     <li key={fIdx} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{feature}</span>
+                      <span className="text-foreground">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -454,7 +454,7 @@ export function DetailPage() {
                   className={`w-full py-6 ${
                     plan.popular
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
-                      : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                      : "bg-muted text-foreground hover:bg-muted"
                   }`}
                 >
                   {plan.cta}
@@ -485,7 +485,7 @@ export function DetailPage() {
           </p>
           <Button
             size="lg"
-            className="bg-white text-purple-600 hover:bg-gray-100 text-xl px-12 py-8 shadow-2xl"
+            className="bg-white text-purple-600 hover:bg-muted text-xl px-12 py-8 shadow-2xl"
           >
             <Sparkles className="w-6 h-6 mr-2" />
             무료로 시작하기
