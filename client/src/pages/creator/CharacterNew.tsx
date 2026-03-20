@@ -141,17 +141,17 @@ export function CharacterNew() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">
+          <h1 className="text-3xl font-black text-foreground mb-2">
             새 캐릭터 만들기
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             AI가 당신의 아이디어를 멋진 캐릭터로 만들어드립니다
           </p>
         </div>
 
         {/* Method Selection */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-8">
-          <h2 className="text-xl font-black text-gray-900 mb-4">
+        <div className="bg-card rounded-2xl p-6 border border-border mb-8">
+          <h2 className="text-xl font-black text-foreground mb-4">
             생성 방식 선택
           </h2>
           <div className="grid grid-cols-3 gap-4">
@@ -160,14 +160,14 @@ export function CharacterNew() {
               className={`p-6 rounded-xl border-2 transition-all ${
                 method === "text"
                   ? "border-purple-600 bg-purple-50"
-                  : "border-gray-200 hover:border-purple-300"
+                  : "border-border hover:border-purple-300"
               }`}
             >
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Type className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">텍스트로 시작</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-bold text-foreground mb-1">텍스트로 시작</h3>
+              <p className="text-sm text-muted-foreground">
                 설명만으로 생성
               </p>
             </button>
@@ -177,14 +177,14 @@ export function CharacterNew() {
               className={`p-6 rounded-xl border-2 transition-all ${
                 method === "image"
                   ? "border-purple-600 bg-purple-50"
-                  : "border-gray-200 hover:border-purple-300"
+                  : "border-border hover:border-purple-300"
               }`}
             >
               <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <ImageIcon className="w-6 h-6 text-pink-600" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">이미지 참고</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-bold text-foreground mb-1">이미지 참고</h3>
+              <p className="text-sm text-muted-foreground">
                 사진 업로드해서 생성
               </p>
             </button>
@@ -194,14 +194,14 @@ export function CharacterNew() {
               className={`p-6 rounded-xl border-2 transition-all ${
                 method === "variation"
                   ? "border-purple-600 bg-purple-50"
-                  : "border-gray-200 hover:border-purple-300"
+                  : "border-border hover:border-purple-300"
               }`}
             >
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Zap className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">기존 변형</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-bold text-foreground mb-1">기존 변형</h3>
+              <p className="text-sm text-muted-foreground">
                 기존 캐릭터 수정
               </p>
             </button>
@@ -211,14 +211,14 @@ export function CharacterNew() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left - Input Form */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-black text-gray-900 mb-6">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="text-xl font-black text-foreground mb-6">
                 기본 정보
               </h2>
 
               {/* Character Name */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-foreground mb-2">
                   캐릭터 이름
                 </label>
                 <input
@@ -226,13 +226,13 @@ export function CharacterNew() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="예: 민지, 토리, 뽀로로..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
 
               {/* Mood Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-foreground mb-2">
                   성격/무드 (복수 선택 가능)
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -243,7 +243,7 @@ export function CharacterNew() {
                       className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                         mood.includes(m)
                           ? "bg-purple-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-muted text-foreground hover:bg-muted"
                       }`}
                     >
                       {m}
@@ -254,7 +254,7 @@ export function CharacterNew() {
 
               {/* Description */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-foreground mb-2">
                   외형 설명
                 </label>
                 <textarea
@@ -262,16 +262,16 @@ export function CharacterNew() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="캐릭터의 외모, 특징, 스타일을 자유롭게 설명해주세요.&#10;예: 20대 여성, 긴 생머리, 안경 착용, 캐주얼한 옷차림"
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
                 />
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   상세할수록 더 정확한 결과를 얻을 수 있어요
                 </p>
               </div>
 
               {/* Style Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-foreground mb-2">
                   그림 스타일
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -286,12 +286,12 @@ export function CharacterNew() {
                         } ${
                           style === s.value
                             ? "border-purple-600 bg-purple-50"
-                            : "border-gray-200 hover:border-purple-300"
+                            : "border-border hover:border-purple-300"
                         }`}
                       >
-                        <span className="text-sm font-semibold text-gray-900">{s.label}</span>
+                        <span className="text-sm font-semibold text-foreground">{s.label}</span>
                         {isLocked && <span className="ml-1 text-xs text-purple-600">Pro</span>}
-                        <p className="text-xs text-gray-500 mt-0.5">{s.description}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{s.description}</p>
                       </button>
                     );
                   })}
@@ -301,7 +301,7 @@ export function CharacterNew() {
               {/* Image Upload */}
               {method === "image" && (
                 <div className="mb-6">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-foreground mb-2">
                     참고 이미지 업로드
                   </label>
                   {sourceImage ? (
@@ -309,7 +309,7 @@ export function CharacterNew() {
                       <img
                         src={sourceImage}
                         alt="참고 이미지"
-                        className="w-full aspect-square object-cover rounded-xl border border-gray-200"
+                        className="w-full aspect-square object-cover rounded-xl border border-border"
                       />
                       <button
                         onClick={() => setSourceImage(null)}
@@ -323,13 +323,13 @@ export function CharacterNew() {
                       onClick={() => fileInputRef.current?.click()}
                       onDrop={handleDrop}
                       onDragOver={(e) => e.preventDefault()}
-                      className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-400 transition-all cursor-pointer"
+                      className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-purple-400 transition-all cursor-pointer"
                     >
-                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm font-semibold text-gray-700 mb-1">
+                      <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm font-semibold text-foreground mb-1">
                         클릭하거나 드래그해서 업로드
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         JPG, PNG 지원 · 최대 10MB
                       </p>
                     </div>
@@ -368,11 +368,11 @@ export function CharacterNew() {
                 )}
               </Button>
               {!isPro && (
-                <p className="text-sm text-gray-500 text-center mt-2">1회 생성 시 2 크레딧 소모</p>
+                <p className="text-sm text-muted-foreground text-center mt-2">1회 생성 시 2 크레딧 소모</p>
               )}
               {!isPro && isOutOfCredits && (
                 <div className="mt-2 flex items-center justify-between">
-                  <p className="text-sm text-gray-500">크레딧이 부족합니다.</p>
+                  <p className="text-sm text-muted-foreground">크레딧이 부족합니다.</p>
                   <Button size="sm" variant="outline" asChild>
                     <a href="/pricing">크레딧 충전</a>
                   </Button>
@@ -385,20 +385,20 @@ export function CharacterNew() {
           <div className="space-y-6">
             {/* Result Area */}
             {generateMutation.isPending ? (
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">생성 중...</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">생성 중...</h3>
                 <Skeleton className="w-full aspect-square rounded-xl" />
                 <div className="flex flex-col items-center gap-2 mt-4">
                   <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
-                  <p className="text-sm text-gray-600">캐릭터를 그리고 있어요...</p>
-                  <p className="text-xs text-gray-500">15~30초 정도 걸려요</p>
+                  <p className="text-sm text-muted-foreground">캐릭터를 그리고 있어요...</p>
+                  <p className="text-xs text-muted-foreground">15~30초 정도 걸려요</p>
                 </div>
               </div>
             ) : generatedImage ? (
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">생성 결과</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">생성 결과</h3>
                 <div
-                  className="w-full overflow-hidden rounded-xl border border-gray-200"
+                  className="w-full overflow-hidden rounded-xl border border-border"
                   style={{
                     backgroundImage: "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
                     backgroundSize: "16px 16px",
@@ -437,24 +437,24 @@ export function CharacterNew() {
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
                   <div className="flex items-center gap-2 mb-4">
                     <Lightbulb className="w-5 h-5 text-purple-600" />
-                    <h3 className="font-bold text-gray-900">생성 팁</h3>
+                    <h3 className="font-bold text-foreground">생성 팁</h3>
                   </div>
                   <ul className="space-y-3">
                     <li className="flex items-start gap-2">
                       <span className="text-purple-600 mt-1">•</span>
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-foreground">
                         구체적인 설명일수록 더 정확한 결과가 나와요
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-purple-600 mt-1">•</span>
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-foreground">
                         성격/무드는 캐릭터의 분위기를 결정해요
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-purple-600 mt-1">•</span>
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-foreground">
                         여러 번 생성해서 마음에 드는 것을 선택하세요
                       </span>
                     </li>
@@ -462,19 +462,19 @@ export function CharacterNew() {
                 </div>
 
                 {/* Examples */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                  <h3 className="font-bold text-gray-900 mb-4">예시 프롬프트</h3>
+                <div className="bg-card rounded-2xl p-6 border border-border">
+                  <h3 className="font-bold text-foreground mb-4">예시 프롬프트</h3>
                   <div className="space-y-3">
                     {examplePrompts.map((example) => (
                       <button
                         key={example.name}
-                        className="w-full p-4 bg-gray-50 rounded-xl text-left hover:bg-gray-100 transition-all"
+                        className="w-full p-4 bg-muted rounded-xl text-left hover:bg-muted transition-all"
                         onClick={() => applyExample(example)}
                       >
-                        <p className="text-sm font-semibold text-gray-900 mb-1">
+                        <p className="text-sm font-semibold text-foreground mb-1">
                           {example.name}
                         </p>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-muted-foreground">
                           {example.description}
                         </p>
                       </button>
@@ -483,12 +483,12 @@ export function CharacterNew() {
                 </div>
 
                 {/* Info */}
-                <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-6 border border-blue-100">
                   <div className="flex items-center gap-2 mb-3">
                     <Info className="w-5 h-5 text-blue-600" />
-                    <h3 className="font-bold text-gray-900">안내</h3>
+                    <h3 className="font-bold text-foreground">안내</h3>
                   </div>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-foreground">
                     생성된 캐릭터는 언제든지 수정하고 다시 생성할 수 있습니다.
                     마음에 드는 결과가 나올 때까지 여러 번 시도해보세요!
                   </p>

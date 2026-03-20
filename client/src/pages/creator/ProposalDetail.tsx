@@ -60,12 +60,12 @@ export function ProposalDetail() {
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-black text-gray-900">
+                <h1 className="text-3xl font-black text-foreground">
                   {proposal.campaignTitle}
                 </h1>
                 <Badge variant="secondary">{proposal.status}</Badge>
               </div>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {proposal.brandName}에서 받은 협업 제안입니다
               </p>
             </div>
@@ -76,9 +76,9 @@ export function ProposalDetail() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Brand Info */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="bg-card rounded-2xl p-6 border border-border">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden">
+                <div className="w-16 h-16 bg-muted rounded-xl overflow-hidden">
                   <img
                     src={proposal.brandLogo}
                     alt={proposal.brandName}
@@ -86,32 +86,32 @@ export function ProposalDetail() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-gray-900">{proposal.brandName}</h2>
-                  <p className="text-sm text-gray-600">뷰티 & 라이프스타일</p>
+                  <h2 className="text-xl font-black text-foreground">{proposal.brandName}</h2>
+                  <p className="text-sm text-muted-foreground">뷰티 & 라이프스타일</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-purple-50 rounded-xl">
+                <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
                   <DollarSign className="w-5 h-5 text-purple-600 mb-2" />
-                  <p className="text-xs text-gray-600 mb-1">예산</p>
-                  <p className="font-bold text-gray-900 text-sm">{proposal.budget}</p>
+                  <p className="text-xs text-muted-foreground mb-1">예산</p>
+                  <p className="font-bold text-foreground text-sm">{proposal.budget}</p>
                 </div>
-                <div className="p-4 bg-blue-50 rounded-xl">
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
                   <Calendar className="w-5 h-5 text-blue-600 mb-2" />
-                  <p className="text-xs text-gray-600 mb-1">마감일</p>
-                  <p className="font-bold text-gray-900 text-sm">{proposal.deadline}</p>
+                  <p className="text-xs text-muted-foreground mb-1">마감일</p>
+                  <p className="font-bold text-foreground text-sm">{proposal.deadline}</p>
                 </div>
-                <div className="p-4 bg-green-50 rounded-xl">
+                <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-xl">
                   <FileText className="w-5 h-5 text-green-600 mb-2" />
-                  <p className="text-xs text-gray-600 mb-1">타겟</p>
-                  <p className="font-bold text-gray-900 text-sm">{proposal.targetAudience}</p>
+                  <p className="text-xs text-muted-foreground mb-1">타겟</p>
+                  <p className="font-bold text-foreground text-sm">{proposal.targetAudience}</p>
                 </div>
               </div>
             </div>
 
             {/* Campaign Details */}
-            <div className="bg-white rounded-2xl border border-gray-200">
+            <div className="bg-card rounded-2xl border border-border">
               <Tabs defaultValue="details" className="p-6">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="details">상세 내용</TabsTrigger>
@@ -122,18 +122,18 @@ export function ProposalDetail() {
                 <TabsContent value="details" className="mt-6">
                   <div className="space-y-4">
                     <div>
-                      <h3 className="font-bold text-gray-900 mb-2">캠페인 설명</h3>
-                      <p className="text-gray-700 leading-relaxed">
+                      <h3 className="font-bold text-foreground mb-2">캠페인 설명</h3>
+                      <p className="text-foreground leading-relaxed">
                         {proposal.requirements}
                       </p>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 mb-2">타겟 독자</h3>
-                      <p className="text-gray-700">{proposal.targetAudience}</p>
+                      <h3 className="font-bold text-foreground mb-2">타겟 독자</h3>
+                      <p className="text-foreground">{proposal.targetAudience}</p>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 mb-2">제안 받은 날짜</h3>
-                      <p className="text-gray-700">{proposal.receivedDate}</p>
+                      <h3 className="font-bold text-foreground mb-2">제안 받은 날짜</h3>
+                      <p className="text-foreground">{proposal.receivedDate}</p>
                     </div>
                   </div>
                 </TabsContent>
@@ -143,10 +143,10 @@ export function ProposalDetail() {
                     {proposal.deliverables.map((item, index) => (
                       <div
                         key={index}
-                        className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl"
+                        className="flex items-start gap-3 p-4 bg-muted rounded-xl"
                       >
                         <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-900">{item}</span>
+                        <span className="text-foreground">{item}</span>
                       </div>
                     ))}
                   </div>
@@ -157,15 +157,15 @@ export function ProposalDetail() {
                     {proposal.attachments.map((file, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                        className="flex items-center justify-between p-4 bg-muted rounded-xl hover:bg-muted transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                             <FileText className="w-5 h-5 text-purple-600" />
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900 text-sm">{file.name}</p>
-                            <p className="text-xs text-gray-500">{file.size}</p>
+                            <p className="font-semibold text-foreground text-sm">{file.name}</p>
+                            <p className="text-xs text-muted-foreground">{file.size}</p>
                           </div>
                         </div>
                         <Button size="sm" variant="ghost">
@@ -179,8 +179,8 @@ export function ProposalDetail() {
             </div>
 
             {/* Response Section */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="font-black text-gray-900 mb-4 flex items-center gap-2">
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="font-black text-foreground mb-4 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-purple-600" />
                 답변 작성
               </h2>
@@ -196,8 +196,8 @@ export function ProposalDetail() {
 
           {/* Right Sidebar - Action Panel */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky top-8 space-y-4">
-              <h2 className="font-black text-gray-900 mb-4">답변 하기</h2>
+            <div className="bg-card rounded-2xl p-6 border border-border sticky top-8 space-y-4">
+              <h2 className="font-black text-foreground mb-4">답변 하기</h2>
               
               <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white h-12">
                 <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -214,8 +214,8 @@ export function ProposalDetail() {
                 거절하기
               </Button>
 
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex items-start gap-2 p-4 bg-blue-50 rounded-xl">
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-start gap-2 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
                   <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-blue-900 mb-1">안내</p>
@@ -226,19 +226,19 @@ export function ProposalDetail() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="font-bold text-gray-900 text-sm mb-3">제안 정보</h3>
+              <div className="pt-4 border-t border-border">
+                <h3 className="font-bold text-foreground text-sm mb-3">제안 정보</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">제안 번호</span>
-                    <span className="font-semibold text-gray-900">#{proposal.id}</span>
+                    <span className="text-muted-foreground">제안 번호</span>
+                    <span className="font-semibold text-foreground">#{proposal.id}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">받은 날짜</span>
-                    <span className="font-semibold text-gray-900">{proposal.receivedDate}</span>
+                    <span className="text-muted-foreground">받은 날짜</span>
+                    <span className="font-semibold text-foreground">{proposal.receivedDate}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">상태</span>
+                    <span className="text-muted-foreground">상태</span>
                     <Badge variant="secondary">{proposal.status}</Badge>
                   </div>
                 </div>

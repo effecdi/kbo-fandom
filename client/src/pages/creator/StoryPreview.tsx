@@ -50,10 +50,10 @@ export function StoryPreview() {
         </Button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               툰 미리보기 👀
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               발행 전 최종 확인을 해보세요
             </p>
           </div>
@@ -80,8 +80,8 @@ export function StoryPreview() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Panel - Controls */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
-            <h2 className="font-black text-gray-900 mb-4">미리보기 설정</h2>
+          <div className="bg-card rounded-2xl p-6 border border-border">
+            <h2 className="font-black text-foreground mb-4">미리보기 설정</h2>
             
             <div className="space-y-4">
               <div>
@@ -124,8 +124,8 @@ export function StoryPreview() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
-            <h2 className="font-black text-gray-900 mb-4">품질 체크</h2>
+          <div className="bg-card rounded-2xl p-6 border border-border">
+            <h2 className="font-black text-foreground mb-4">품질 체크</h2>
             <div className="space-y-3">
               {checkpoints.map((checkpoint, index) => (
                 <div key={index} className="flex items-center gap-2">
@@ -134,14 +134,14 @@ export function StoryPreview() {
                   ) : (
                     <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
                   )}
-                  <span className="text-sm text-gray-700">{checkpoint.label}</span>
+                  <span className="text-sm text-foreground">{checkpoint.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
-            <h2 className="font-black text-gray-900 mb-4">내보내기</h2>
+          <div className="bg-card rounded-2xl p-6 border border-border">
+            <h2 className="font-black text-foreground mb-4">내보내기</h2>
             <div className="space-y-3">
               <Button variant="outline" className="w-full justify-start">
                 <Instagram className="w-4 h-4 mr-2" />
@@ -161,9 +161,9 @@ export function StoryPreview() {
 
         {/* Center - Preview */}
         <div className="lg:col-span-3">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <div className="bg-card rounded-2xl p-6 border border-border">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-black text-gray-900">전체 스크롤 미리보기</h2>
+              <h2 className="font-black text-foreground">전체 스크롤 미리보기</h2>
               <div className="flex gap-2">
                 <Badge variant="secondary">총 {panels.length}컷</Badge>
                 <Badge variant="outline">인스타툰 형식</Badge>
@@ -171,15 +171,15 @@ export function StoryPreview() {
             </div>
 
             {/* Preview Container */}
-            <div className={`mx-auto bg-gray-50 rounded-2xl p-8 ${viewMode === "mobile" ? "max-w-md" : "max-w-3xl"}`}>
-              <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+            <div className={`mx-auto bg-muted rounded-2xl p-8 ${viewMode === "mobile" ? "max-w-md" : "max-w-3xl"}`}>
+              <div className="bg-card rounded-xl shadow-2xl overflow-hidden">
                 {/* Story Header */}
-                <div className="p-4 border-b border-gray-200">
+                <div className="p-4 border-b border-border">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full" />
                     <div>
                       <p className="font-bold text-sm">일상툰 시리즈 #12</p>
-                      <p className="text-xs text-gray-500">2026년 3월 8일</p>
+                      <p className="text-xs text-muted-foreground">2026년 3월 8일</p>
                     </div>
                   </div>
                 </div>
@@ -204,8 +204,8 @@ export function StoryPreview() {
                 </div>
 
                 {/* Story Footer */}
-                <div className="p-4 border-t border-gray-200">
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="p-4 border-t border-border">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span>❤️ 좋아요</span>
                     <span>💬 댓글</span>
                     <span>📤 공유</span>
@@ -216,19 +216,19 @@ export function StoryPreview() {
               {/* Mobile indicator */}
               {viewMode === "mobile" && (
                 <div className="text-center mt-4">
-                  <p className="text-xs text-gray-500">모바일 화면 (375px)</p>
+                  <p className="text-xs text-muted-foreground">모바일 화면 (375px)</p>
                 </div>
               )}
             </div>
 
             {/* Panel Navigation */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4">컷별 검토</h3>
+            <div className="mt-6 pt-6 border-t border-border">
+              <h3 className="font-bold text-foreground mb-4">컷별 검토</h3>
               <div className="grid grid-cols-4 gap-4">
                 {panels.map((panel, index) => (
                   <button
                     key={panel.id}
-                    className="aspect-[3/4] rounded-xl overflow-hidden border-2 border-gray-200 hover:border-purple-600 transition-all"
+                    className="aspect-[3/4] rounded-xl overflow-hidden border-2 border-border hover:border-purple-600 transition-all"
                   >
                     <img
                       src={panel.image}

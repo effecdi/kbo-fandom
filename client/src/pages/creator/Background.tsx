@@ -196,10 +196,10 @@ export function Background() {
         </Button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               배경 생성
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               인스타툰에 어울리는 배경을 만들어보세요
             </p>
           </div>
@@ -221,9 +221,9 @@ export function Background() {
         {/* Left Panel */}
         <div className="lg:col-span-1 space-y-6">
           {/* Source Image Selection */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
-            <h2 className="font-black text-gray-900 mb-4">
-              원본 이미지 <span className="text-sm font-normal text-gray-500">({sourceImages.length}/{MAX_SOURCES})</span>
+          <div className="bg-card rounded-2xl p-6 border border-border">
+            <h2 className="font-black text-foreground mb-4">
+              원본 이미지 <span className="text-sm font-normal text-muted-foreground">({sourceImages.length}/{MAX_SOURCES})</span>
             </h2>
 
             {/* Selected sources preview */}
@@ -250,13 +250,13 @@ export function Background() {
             {/* Upload area */}
             {sourceImages.length < MAX_SOURCES && (
               <div
-                className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-300 p-4 cursor-pointer hover:border-purple-400 transition-all mb-3"
+                className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-4 cursor-pointer hover:border-purple-400 transition-all mb-3"
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => document.getElementById("bg-file-input")?.click()}
               >
-                <Upload className="h-6 w-6 text-gray-400" />
-                <p className="text-xs text-gray-500 text-center">클릭 또는 드래그로 업로드</p>
+                <Upload className="h-6 w-6 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground text-center">클릭 또는 드래그로 업로드</p>
                 <input
                   id="bg-file-input"
                   type="file"
@@ -270,7 +270,7 @@ export function Background() {
             {/* Gallery character selection */}
             {characterItems.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2">내 캐릭터에서 선택</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-2">내 캐릭터에서 선택</p>
                 <div className="grid grid-cols-3 gap-2 max-h-[150px] overflow-y-auto">
                   {characterItems.map((item) => {
                     const isSelected = sourceImages.some((s) => s.characterId === item.characterId);
@@ -279,7 +279,7 @@ export function Background() {
                         key={item.id}
                         onClick={() => toggleGalleryItem(item)}
                         className={`relative overflow-hidden rounded-lg border-2 transition-all ${
-                          isSelected ? "border-purple-600 ring-2 ring-purple-200" : "border-gray-200 hover:border-purple-300"
+                          isSelected ? "border-purple-600 ring-2 ring-purple-200" : "border-border hover:border-purple-300"
                         }`}
                       >
                         <img
@@ -296,7 +296,7 @@ export function Background() {
           </div>
 
           {/* Create / Preset Tabs */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <div className="bg-card rounded-2xl p-6 border border-border">
             <Tabs defaultValue="create">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="create">직접 생성</TabsTrigger>
@@ -305,7 +305,7 @@ export function Background() {
 
               <TabsContent value="create" className="mt-6 space-y-4">
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-semibold text-foreground mb-2 block">
                     배경 설명
                   </label>
                   <Textarea
@@ -318,7 +318,7 @@ export function Background() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-semibold text-foreground mb-2 block">
                     아이템 (선택)
                   </label>
                   <Input
@@ -329,7 +329,7 @@ export function Background() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-semibold text-foreground mb-2 block">
                     스타일 선택
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -347,7 +347,7 @@ export function Background() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-semibold text-foreground mb-2 block">
                     시간대
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -365,7 +365,7 @@ export function Background() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-semibold text-foreground mb-2 block">
                     날씨
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -405,11 +405,11 @@ export function Background() {
                   )}
                 </Button>
                 {!isPro && (
-                  <p className="text-xs text-gray-500 text-center">1회 생성 시 5 크레딧 소모</p>
+                  <p className="text-xs text-muted-foreground text-center">1회 생성 시 5 크레딧 소모</p>
                 )}
                 {!isPro && isOutOfCredits && (
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-500">크레딧이 부족합니다.</p>
+                    <p className="text-xs text-muted-foreground">크레딧이 부족합니다.</p>
                     <Button size="sm" variant="outline" asChild>
                       <a href="/pricing">충전</a>
                     </Button>
@@ -419,7 +419,7 @@ export function Background() {
 
               <TabsContent value="preset" className="mt-6">
                 <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="프리셋 검색..."
                     className="pl-10"
@@ -429,12 +429,12 @@ export function Background() {
                   {bgPresets.map((preset, index) => (
                     <div
                       key={index}
-                      className="group cursor-pointer rounded-xl overflow-hidden border border-gray-200 hover:border-purple-600 transition-all hover:shadow-lg"
+                      className="group cursor-pointer rounded-xl overflow-hidden border border-border hover:border-purple-600 transition-all hover:shadow-lg"
                       onClick={() => applyPreset(preset)}
                     >
-                      <div className="p-3 bg-white">
-                        <p className="font-semibold text-sm text-gray-900">{preset.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">{preset.bg}</p>
+                      <div className="p-3 bg-card">
+                        <p className="font-semibold text-sm text-foreground">{preset.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{preset.bg}</p>
                       </div>
                     </div>
                   ))}
@@ -446,9 +446,9 @@ export function Background() {
 
         {/* Center & Right - Results */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <div className="bg-card rounded-2xl p-6 border border-border">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-black text-gray-900">생성 결과</h2>
+              <h2 className="font-black text-foreground">생성 결과</h2>
               <div className="flex gap-2">
                 {["1:1", "16:9", "9:16"].map((ratio) => (
                   <Button
@@ -468,12 +468,12 @@ export function Background() {
                 <Skeleton className="w-full aspect-video rounded-xl" />
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
-                  <p className="text-sm text-gray-600">배경과 아이템을 추가하는 중...</p>
+                  <p className="text-sm text-muted-foreground">배경과 아이템을 추가하는 중...</p>
                 </div>
               </div>
             ) : bgResultImage ? (
               <div>
-                <div className="overflow-hidden rounded-xl border border-gray-200 mb-4">
+                <div className="overflow-hidden rounded-xl border border-border mb-4">
                   <img
                     src={bgResultImage}
                     alt="Generated background"
@@ -501,11 +501,11 @@ export function Background() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                  <Sparkles className="w-8 h-8 text-gray-400" />
+                <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
+                  <Sparkles className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h3 className="font-medium text-gray-900 mb-2">결과가 여기에 표시돼요</h3>
-                <p className="text-sm text-gray-500 text-center max-w-xs">
+                <h3 className="font-medium text-foreground mb-2">결과가 여기에 표시돼요</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-xs">
                   이미지를 선택하고 배경을 설명한 후 생성 버튼을 눌러주세요
                 </p>
               </div>
@@ -513,20 +513,20 @@ export function Background() {
 
             {/* Additional Options */}
             {!bgResultImage && !bgMutation.isPending && (
-              <div className="border-t border-gray-200 pt-6 mt-6">
-                <h3 className="font-bold text-gray-900 mb-4">추가 옵션</h3>
+              <div className="border-t border-border pt-6 mt-6">
+                <h3 className="font-bold text-foreground mb-4">추가 옵션</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <Button variant="outline" className="h-auto py-4 flex-col">
                     <span className="font-bold text-sm">블러 효과</span>
-                    <span className="text-xs text-gray-500 mt-1">배경 흐리게</span>
+                    <span className="text-xs text-muted-foreground mt-1">배경 흐리게</span>
                   </Button>
                   <Button variant="outline" className="h-auto py-4 flex-col">
                     <span className="font-bold text-sm">색상 조정</span>
-                    <span className="text-xs text-gray-500 mt-1">톤 변경</span>
+                    <span className="text-xs text-muted-foreground mt-1">톤 변경</span>
                   </Button>
                   <Button variant="outline" className="h-auto py-4 flex-col">
                     <span className="font-bold text-sm">프레임 추가</span>
-                    <span className="text-xs text-gray-500 mt-1">테두리 효과</span>
+                    <span className="text-xs text-muted-foreground mt-1">테두리 효과</span>
                   </Button>
                 </div>
               </div>

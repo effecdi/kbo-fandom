@@ -53,10 +53,10 @@ export function CharacterDetail() {
           </Button>
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-black text-gray-900 mb-2">
+              <h1 className="text-3xl font-black text-foreground mb-2">
                 {character.name}
               </h1>
-              <p className="text-gray-600">{character.description}</p>
+              <p className="text-muted-foreground">{character.description}</p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline">
@@ -74,7 +74,7 @@ export function CharacterDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left - Character Image */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden sticky top-8">
+            <div className="bg-card rounded-2xl border border-border overflow-hidden sticky top-8">
               <div className="aspect-square bg-gradient-to-br from-purple-100 to-pink-100">
                 <img
                   src={character.image}
@@ -85,15 +85,15 @@ export function CharacterDetail() {
               <div className="p-6">
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-semibold text-gray-600 mb-2">스타일</p>
+                    <p className="text-sm font-semibold text-muted-foreground mb-2">스타일</p>
                     <Badge variant="secondary">{character.style}</Badge>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-600 mb-2">생성일</p>
-                    <p className="text-sm text-gray-900">{character.createdAt}</p>
+                    <p className="text-sm font-semibold text-muted-foreground mb-2">생성일</p>
+                    <p className="text-sm text-foreground">{character.createdAt}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-600 mb-2">태그</p>
+                    <p className="text-sm font-semibold text-muted-foreground mb-2">태그</p>
                     <div className="flex flex-wrap gap-2">
                       {character.tags.map((tag, index) => (
                         <Badge key={index} variant="outline">
@@ -114,8 +114,8 @@ export function CharacterDetail() {
           {/* Right - Details & Actions */}
           <div className="lg:col-span-2 space-y-6">
             {/* Quick Actions */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-black text-gray-900 mb-4">빠른 작업</h2>
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h2 className="text-xl font-black text-foreground mb-4">빠른 작업</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Button variant="outline" className="h-auto py-6 flex-col">
                   <Smile className="w-8 h-8 mb-2 text-purple-600" />
@@ -137,7 +137,7 @@ export function CharacterDetail() {
             </div>
 
             {/* Character Info Tabs */}
-            <div className="bg-white rounded-2xl border border-gray-200">
+            <div className="bg-card rounded-2xl border border-border">
               <Tabs defaultValue="info" className="p-6">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="info">캐릭터 정보</TabsTrigger>
@@ -147,25 +147,25 @@ export function CharacterDetail() {
 
                 <TabsContent value="info" className="mt-6 space-y-6">
                   <div>
-                    <h3 className="font-bold text-gray-900 mb-3">기본 정보</h3>
+                    <h3 className="font-bold text-foreground mb-3">기본 정보</h3>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-xl">
-                        <p className="text-sm text-gray-600 mb-1">성별</p>
-                        <p className="font-semibold text-gray-900">{character.gender}</p>
+                      <div className="p-4 bg-muted rounded-xl">
+                        <p className="text-sm text-muted-foreground mb-1">성별</p>
+                        <p className="font-semibold text-foreground">{character.gender}</p>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-xl">
-                        <p className="text-sm text-gray-600 mb-1">무드</p>
-                        <p className="font-semibold text-gray-900">{character.mood}</p>
+                      <div className="p-4 bg-muted rounded-xl">
+                        <p className="text-sm text-muted-foreground mb-1">무드</p>
+                        <p className="font-semibold text-foreground">{character.mood}</p>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-xl col-span-2">
-                        <p className="text-sm text-gray-600 mb-1">타겟 독자</p>
-                        <p className="font-semibold text-gray-900">{character.target}</p>
+                      <div className="p-4 bg-muted rounded-xl col-span-2">
+                        <p className="text-sm text-muted-foreground mb-1">타겟 독자</p>
+                        <p className="font-semibold text-foreground">{character.target}</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-gray-900 mb-3">외형 특징</h3>
+                    <h3 className="font-bold text-foreground mb-3">외형 특징</h3>
                     <div className="flex flex-wrap gap-2">
                       {character.features.map((feature, index) => (
                         <Badge key={index} variant="secondary">
@@ -176,8 +176,8 @@ export function CharacterDetail() {
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-gray-900 mb-3">캐릭터 설명</h3>
-                    <p className="text-gray-700 leading-relaxed">
+                    <h3 className="font-bold text-foreground mb-3">캐릭터 설명</h3>
+                    <p className="text-foreground leading-relaxed">
                       {character.description}
                     </p>
                   </div>
@@ -188,14 +188,14 @@ export function CharacterDetail() {
                     {relatedProjects.map((project, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer"
+                        className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted transition-all cursor-pointer"
                       >
                         <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
                           <FileText className="w-6 h-6 text-purple-600" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-bold text-gray-900">{project.title}</h3>
-                          <p className="text-sm text-gray-500">{project.date}</p>
+                          <h3 className="font-bold text-foreground">{project.title}</h3>
+                          <p className="text-sm text-muted-foreground">{project.date}</p>
                         </div>
                         <Badge variant={project.status === "완료" ? "default" : "secondary"}>
                           {project.status}
@@ -208,7 +208,7 @@ export function CharacterDetail() {
                 <TabsContent value="variations" className="mt-6">
                   <div className="grid grid-cols-3 gap-4">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div key={i} className="aspect-square bg-gray-100 rounded-xl overflow-hidden group cursor-pointer">
+                      <div key={i} className="aspect-square bg-muted rounded-xl overflow-hidden group cursor-pointer">
                         <img
                           src={`https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&h=300&fit=crop&sig=${i}`}
                           alt={`Variation ${i}`}

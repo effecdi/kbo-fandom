@@ -45,10 +45,10 @@ export function Collaborations() {
   return (
     <DashboardLayout userType="creator">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">
+        <h1 className="text-3xl font-black text-foreground mb-2">
           협업 진행 관리 🤝
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           진행 중인 협업 프로젝트를 관리하세요
         </p>
       </div>
@@ -62,17 +62,17 @@ export function Collaborations() {
 
         <TabsContent value="active" className="space-y-6">
           {projects.map((project) => (
-            <div key={project.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div key={project.id} className="bg-card rounded-2xl border border-border overflow-hidden">
               {/* Project Header */}
               <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center">
                       <Building2 className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-gray-900">{project.campaign}</h2>
-                      <p className="text-sm text-gray-600">{project.brand}</p>
+                      <h2 className="text-xl font-black text-foreground">{project.campaign}</h2>
+                      <p className="text-sm text-muted-foreground">{project.brand}</p>
                     </div>
                   </div>
                   <Badge>{project.status}</Badge>
@@ -81,7 +81,7 @@ export function Collaborations() {
                 {/* Progress */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">진행률</span>
+                    <span className="text-muted-foreground">진행률</span>
                     <span className="font-bold text-purple-600">{project.progress}%</span>
                   </div>
                   <Progress value={project.progress} className="h-2" />
@@ -97,7 +97,7 @@ export function Collaborations() {
                             ? "bg-purple-600 text-white"
                             : index === project.stage
                             ? "bg-purple-200 text-purple-900"
-                            : "bg-gray-200 text-gray-500"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
                         {index + 1}
@@ -105,14 +105,14 @@ export function Collaborations() {
                       {index < stages.length - 1 && (
                         <div
                           className={`flex-1 h-1 mx-1 ${
-                            index < project.stage ? "bg-purple-600" : "bg-gray-200"
+                            index < project.stage ? "bg-purple-600" : "bg-muted"
                           }`}
                         />
                       )}
                     </div>
                   ))}
                 </div>
-                <div className="mt-2 flex justify-between text-xs text-gray-600">
+                <div className="mt-2 flex justify-between text-xs text-muted-foreground">
                   {stages.map((stage, index) => (
                     <div key={index} className="flex-1 text-center">
                       {index <= project.stage && <span className="font-semibold">{stage}</span>}
@@ -124,25 +124,25 @@ export function Collaborations() {
               {/* Project Details */}
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
                     <Calendar className="w-5 h-5 text-blue-600" />
                     <div>
-                      <p className="text-xs text-gray-600">마감일</p>
-                      <p className="font-bold text-gray-900 text-sm">{project.deadline}</p>
+                      <p className="text-xs text-muted-foreground">마감일</p>
+                      <p className="font-bold text-foreground text-sm">{project.deadline}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
                     <Clock className="w-5 h-5 text-orange-600" />
                     <div>
-                      <p className="text-xs text-gray-600">마지막 업데이트</p>
-                      <p className="font-bold text-gray-900 text-sm">{project.lastUpdate}</p>
+                      <p className="text-xs text-muted-foreground">마지막 업데이트</p>
+                      <p className="font-bold text-foreground text-sm">{project.lastUpdate}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
                     <FileText className="w-5 h-5 text-purple-600" />
                     <div>
-                      <p className="text-xs text-gray-600">단계</p>
-                      <p className="font-bold text-gray-900 text-sm">
+                      <p className="text-xs text-muted-foreground">단계</p>
+                      <p className="font-bold text-foreground text-sm">
                         {project.stage + 1}/{project.totalStages + 1}
                       </p>
                     </div>
@@ -165,8 +165,8 @@ export function Collaborations() {
                 </div>
 
                 {/* Recent Activity */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="mt-6 pt-6 border-t border-border">
+                  <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     최근 활동
                   </h3>
@@ -174,15 +174,15 @@ export function Collaborations() {
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-900">1차 시안 제출 완료</p>
-                        <p className="text-xs text-gray-500">2일 전</p>
+                        <p className="text-sm text-foreground">1차 시안 제출 완료</p>
+                        <p className="text-xs text-muted-foreground">2일 전</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-900">브랜드 피드백 확인</p>
-                        <p className="text-xs text-gray-500">3일 전</p>
+                        <p className="text-sm text-foreground">브랜드 피드백 확인</p>
+                        <p className="text-xs text-muted-foreground">3일 전</p>
                       </div>
                     </div>
                   </div>
@@ -193,30 +193,30 @@ export function Collaborations() {
         </TabsContent>
 
         <TabsContent value="completed">
-          <div className="bg-white rounded-2xl p-12 border border-gray-200 text-center">
+          <div className="bg-card rounded-2xl p-12 border border-border text-center">
             <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">완료된 협업이 없습니다</h3>
-            <p className="text-gray-600">첫 협업을 완료해보세요!</p>
+            <h3 className="text-xl font-bold text-foreground mb-2">완료된 협업이 없습니다</h3>
+            <p className="text-muted-foreground">첫 협업을 완료해보세요!</p>
           </div>
         </TabsContent>
 
         <TabsContent value="all">
           <div className="space-y-4">
             {projects.map((project) => (
-              <div key={project.id} className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer">
+              <div key={project.id} className="bg-card rounded-xl p-6 border border-border hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center">
                       <Building2 className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">{project.campaign}</h3>
-                      <p className="text-sm text-gray-600">{project.brand}</p>
+                      <h3 className="font-bold text-foreground">{project.campaign}</h3>
+                      <p className="text-sm text-muted-foreground">{project.brand}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <Badge className="mb-2">{project.status}</Badge>
-                    <p className="text-xs text-gray-500">{project.deadline}</p>
+                    <p className="text-xs text-muted-foreground">{project.deadline}</p>
                   </div>
                 </div>
               </div>

@@ -165,59 +165,59 @@ export function CreatorProposals() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">
+          <h1 className="text-3xl font-black text-foreground mb-2">
             광고 제안함 📬
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             기업과 관공서에서 받은 협업 제안을 확인하고 관리하세요
           </p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-purple-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">{stats.total}</span>
+              <span className="text-2xl font-black text-foreground">{stats.total}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">전체 제안</p>
+            <p className="text-sm font-semibold text-muted-foreground">전체 제안</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-5 h-5 text-yellow-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">{stats.pending}</span>
+              <span className="text-2xl font-black text-foreground">{stats.pending}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">응답 대기</p>
+            <p className="text-sm font-semibold text-muted-foreground">응답 대기</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">{stats.accepted}</span>
+              <span className="text-2xl font-black text-foreground">{stats.accepted}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">수락함</p>
+            <p className="text-sm font-semibold text-muted-foreground">수락함</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-blue-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">{stats.inProgress}</span>
+              <span className="text-2xl font-black text-foreground">{stats.inProgress}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">진행중</p>
+            <p className="text-sm font-semibold text-muted-foreground">진행중</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
+        <div className="bg-card rounded-xl p-4 border border-border mb-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="제안 검색..."
                 className="pl-10"
@@ -245,7 +245,7 @@ export function CreatorProposals() {
                 return (
                   <div
                     key={proposal.id}
-                    className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all"
+                    className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all"
                   >
                     <div className="p-6">
                       <div className="flex items-start gap-6">
@@ -253,7 +253,7 @@ export function CreatorProposals() {
                         <img
                           src={proposal.companyLogo}
                           alt={proposal.companyName}
-                          className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-gray-200"
+                          className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-border"
                         />
 
                         {/* Proposal Info */}
@@ -261,7 +261,7 @@ export function CreatorProposals() {
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-lg font-black text-gray-900">
+                                <h3 className="text-lg font-black text-foreground">
                                   {proposal.campaignTitle}
                                 </h3>
                                 <Badge className={`${statusConfig.color} border`}>
@@ -272,7 +272,7 @@ export function CreatorProposals() {
                                   {proposal.projectType}
                                 </Badge>
                               </div>
-                              <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                 <span className="inline-flex items-center gap-1">
                                   <Building2 className="w-4 h-4" />
                                   {proposal.companyName}
@@ -291,37 +291,37 @@ export function CreatorProposals() {
 
                               {/* Project Details */}
                               <div className="grid grid-cols-3 gap-4 mb-4">
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                <div className="bg-muted rounded-lg p-3">
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                                     <DollarSign className="w-4 h-4" />
                                     <span>예산</span>
                                   </div>
-                                  <div className="font-semibold text-gray-900 text-sm">
+                                  <div className="font-semibold text-foreground text-sm">
                                     {proposal.budget}
                                   </div>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                <div className="bg-muted rounded-lg p-3">
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                                     <Calendar className="w-4 h-4" />
                                     <span>마감일</span>
                                   </div>
-                                  <div className="font-semibold text-gray-900 text-sm">
+                                  <div className="font-semibold text-foreground text-sm">
                                     {proposal.deadline}
                                   </div>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                <div className="bg-muted rounded-lg p-3">
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                                     <FileText className="w-4 h-4" />
                                     <span>결과물</span>
                                   </div>
-                                  <div className="font-semibold text-gray-900 text-sm">
+                                  <div className="font-semibold text-foreground text-sm">
                                     {proposal.deliverables}
                                   </div>
                                 </div>
                               </div>
 
                               {/* Message */}
-                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-lg p-4 mb-4">
                                 <div className="flex items-start gap-2">
                                   <MessageSquare className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                                   <div>
@@ -356,14 +356,14 @@ export function CreatorProposals() {
                               {proposal.status === "in_progress" && proposal.progress && (
                                 <div className="mb-4">
                                   <div className="flex items-center justify-between text-sm mb-2">
-                                    <span className="font-semibold text-gray-700">
+                                    <span className="font-semibold text-foreground">
                                       작업 진행률
                                     </span>
-                                    <span className="font-black text-gray-900">
+                                    <span className="font-black text-foreground">
                                       {proposal.progress}%
                                     </span>
                                   </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="w-full bg-muted rounded-full h-2">
                                     <div
                                       className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
                                       style={{ width: `${proposal.progress}%` }}
@@ -431,13 +431,13 @@ export function CreatorProposals() {
 
             {/* Empty State */}
             {receivedProposals.length === 0 && (
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+              <div className="bg-card rounded-2xl p-6 border border-border">
                 <div className="text-center py-12">
-                  <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <MessageSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-foreground mb-2">
                     제안이 없습니다
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     미디어키트를 완성하면 제안을 받을 수 있습니다
                   </p>
                   <Button onClick={() => navigate("/creator/media-kit")}>
@@ -456,7 +456,7 @@ export function CreatorProposals() {
                 return (
                   <div
                     key={proposal.id}
-                    className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all"
+                    className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all"
                   >
                     <div className="p-6">
                       <div className="flex items-start gap-6">
@@ -464,7 +464,7 @@ export function CreatorProposals() {
                         <img
                           src={proposal.companyLogo}
                           alt={proposal.companyName}
-                          className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-gray-200"
+                          className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-border"
                         />
 
                         {/* Proposal Info */}
@@ -472,7 +472,7 @@ export function CreatorProposals() {
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-lg font-black text-gray-900">
+                                <h3 className="text-lg font-black text-foreground">
                                   {proposal.campaignTitle}
                                 </h3>
                                 <Badge className={`${statusConfig.color} border`}>
@@ -483,7 +483,7 @@ export function CreatorProposals() {
                                   {proposal.projectType}
                                 </Badge>
                               </div>
-                              <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                 <span className="inline-flex items-center gap-1">
                                   <Building2 className="w-4 h-4" />
                                   {proposal.companyName}
@@ -502,37 +502,37 @@ export function CreatorProposals() {
 
                               {/* Project Details */}
                               <div className="grid grid-cols-3 gap-4 mb-4">
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                <div className="bg-muted rounded-lg p-3">
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                                     <DollarSign className="w-4 h-4" />
                                     <span>예산</span>
                                   </div>
-                                  <div className="font-semibold text-gray-900 text-sm">
+                                  <div className="font-semibold text-foreground text-sm">
                                     {proposal.budget}
                                   </div>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                <div className="bg-muted rounded-lg p-3">
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                                     <Calendar className="w-4 h-4" />
                                     <span>마감일</span>
                                   </div>
-                                  <div className="font-semibold text-gray-900 text-sm">
+                                  <div className="font-semibold text-foreground text-sm">
                                     {proposal.deadline}
                                   </div>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                <div className="bg-muted rounded-lg p-3">
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                                     <FileText className="w-4 h-4" />
                                     <span>결과물</span>
                                   </div>
-                                  <div className="font-semibold text-gray-900 text-sm">
+                                  <div className="font-semibold text-foreground text-sm">
                                     {proposal.deliverables}
                                   </div>
                                 </div>
                               </div>
 
                               {/* Message */}
-                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-lg p-4 mb-4">
                                 <div className="flex items-start gap-2">
                                   <MessageSquare className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                                   <div>
@@ -567,14 +567,14 @@ export function CreatorProposals() {
                               {proposal.status === "in_progress" && proposal.progress && (
                                 <div className="mb-4">
                                   <div className="flex items-center justify-between text-sm mb-2">
-                                    <span className="font-semibold text-gray-700">
+                                    <span className="font-semibold text-foreground">
                                       작업 진행률
                                     </span>
-                                    <span className="font-black text-gray-900">
+                                    <span className="font-black text-foreground">
                                       {proposal.progress}%
                                     </span>
                                   </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="w-full bg-muted rounded-full h-2">
                                     <div
                                       className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
                                       style={{ width: `${proposal.progress}%` }}
@@ -642,13 +642,13 @@ export function CreatorProposals() {
 
             {/* Empty State */}
             {appliedCampaigns.length === 0 && (
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+              <div className="bg-card rounded-2xl p-6 border border-border">
                 <div className="text-center py-12">
-                  <Inbox className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <Inbox className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-foreground mb-2">
                     지원한 캠페인이 없습니다
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     새로운 캠페인에 지원해보세요
                   </p>
                   <Button onClick={() => navigate("/creator/campaigns")}>

@@ -164,10 +164,10 @@ export function PoseExpression() {
         </Button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               포즈 & 표정 생성
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               캐릭터의 다양한 포즈와 표정을 만들어보세요
             </p>
           </div>
@@ -189,9 +189,9 @@ export function PoseExpression() {
         {/* Left Panel - Settings */}
         <div className="lg:col-span-1 space-y-6">
           {/* Character Selection */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
-            <h2 className="font-black text-gray-900 mb-4">
-              기준 캐릭터 <span className="text-sm font-normal text-gray-500">({selectedCharacterIds.length}/{MAX_CHARACTERS})</span>
+          <div className="bg-card rounded-2xl p-6 border border-border">
+            <h2 className="font-black text-foreground mb-4">
+              기준 캐릭터 <span className="text-sm font-normal text-muted-foreground">({selectedCharacterIds.length}/{MAX_CHARACTERS})</span>
             </h2>
 
             {/* Selected characters preview */}
@@ -231,7 +231,7 @@ export function PoseExpression() {
                       key={item.id}
                       onClick={() => toggleCharacter(item.characterId!)}
                       className={`relative overflow-hidden rounded-lg border-2 transition-all ${
-                        isSelected ? "border-purple-600 ring-2 ring-purple-200" : "border-gray-200 hover:border-purple-300"
+                        isSelected ? "border-purple-600 ring-2 ring-purple-200" : "border-border hover:border-purple-300"
                       }`}
                     >
                       <img
@@ -244,14 +244,14 @@ export function PoseExpression() {
                 })}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 생성된 캐릭터가 없습니다. 먼저 캐릭터를 만들어주세요.
               </p>
             )}
           </div>
 
           {/* Pose & Expression Settings */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <div className="bg-card rounded-2xl p-6 border border-border">
             <Tabs defaultValue="pose">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="pose">포즈</TabsTrigger>
@@ -364,8 +364,8 @@ export function PoseExpression() {
                   className="mt-2 flex flex-col items-center gap-2 rounded-lg border-2 border-dashed p-4 cursor-pointer hover:border-purple-400 transition-colors"
                   onClick={() => document.getElementById("pose-ref-input")?.click()}
                 >
-                  <Upload className="h-5 w-5 text-gray-400" />
-                  <span className="text-xs text-gray-500">클릭하여 업로드</span>
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">클릭하여 업로드</span>
                   <input
                     id="pose-ref-input"
                     type="file"
@@ -395,11 +395,11 @@ export function PoseExpression() {
               )}
             </Button>
             {!isPro && (
-              <p className="text-xs text-gray-500 text-center mt-2">1회 생성 시 5 크레딧 소모</p>
+              <p className="text-xs text-muted-foreground text-center mt-2">1회 생성 시 5 크레딧 소모</p>
             )}
             {!isPro && isOutOfCredits && (
               <div className="mt-2 flex items-center justify-between">
-                <p className="text-xs text-gray-500">크레딧이 부족합니다.</p>
+                <p className="text-xs text-muted-foreground">크레딧이 부족합니다.</p>
                 <Button size="sm" variant="outline" asChild>
                   <a href="/pricing">충전</a>
                 </Button>
@@ -410,9 +410,9 @@ export function PoseExpression() {
 
         {/* Center - Canvas */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 h-full">
+          <div className="bg-card rounded-2xl p-6 border border-border h-full">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-black text-gray-900">미리보기</h2>
+              <h2 className="font-black text-foreground">미리보기</h2>
               {poseResultImage && (
                 <Button
                   variant="outline"
@@ -433,7 +433,7 @@ export function PoseExpression() {
                   <Skeleton className="w-full aspect-square rounded-lg" />
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
-                    <p className="text-sm text-gray-600">포즈와 표정을 생성하는 중...</p>
+                    <p className="text-sm text-muted-foreground">포즈와 표정을 생성하는 중...</p>
                   </div>
                 </div>
               ) : poseResultImage ? (
@@ -446,10 +446,10 @@ export function PoseExpression() {
                 </div>
               ) : (
                 <div className="text-center p-8">
-                  <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-8 h-8 text-gray-400" />
+                  <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     왼쪽에서 캐릭터를 선택하고 옵션을 설정한 후 생성 버튼을 눌러주세요
                   </p>
                 </div>
@@ -460,14 +460,14 @@ export function PoseExpression() {
 
         {/* Right Panel - History */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky top-8">
-            <h2 className="font-black text-gray-900 mb-4">생성 히스토리</h2>
+          <div className="bg-card rounded-2xl p-6 border border-border sticky top-8">
+            <h2 className="font-black text-foreground mb-4">생성 히스토리</h2>
             <div className="space-y-3">
               {poseHistory && poseHistory.length > 0 ? (
                 poseHistory.map((item) => (
                   <div
                     key={item.id}
-                    className="aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-600 transition-all"
+                    className="aspect-square bg-muted rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-600 transition-all"
                     onClick={() => setPoseResultImage(item.resultImageUrl!)}
                   >
                     <img
@@ -478,7 +478,7 @@ export function PoseExpression() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
+                <p className="text-sm text-muted-foreground text-center py-4">
                   아직 생성 기록이 없어요
                 </p>
               )}

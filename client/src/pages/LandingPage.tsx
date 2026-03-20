@@ -36,11 +36,7 @@ export function LandingPage() {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-500 ${
-        theme === "dark"
-          ? "bg-black text-white"
-          : "bg-white text-gray-900"
-      }`}
+      className="min-h-screen transition-colors duration-500 bg-background text-foreground"
     >
       <TargetCursor />
 
@@ -48,11 +44,7 @@ export function LandingPage() {
       <div className="fixed top-8 right-8 z-50">
         <button
           onClick={toggleTheme}
-          className={`group w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-2xl border-2 transition-all duration-300 hover:scale-110 ${
-            theme === "dark"
-              ? "bg-white/5 border-white/10 hover:border-[#00e5cc]/50"
-              : "bg-gray-900/5 border-gray-900/10 hover:border-[#00e5cc]/50"
-          }`}
+          className="group w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-2xl border-2 transition-all duration-300 hover:scale-110 bg-muted/50 border-border hover:border-[#00e5cc]/50"
         >
           {theme === "dark" ? (
             <Sun className="w-7 h-7 text-yellow-400 transition-transform group-hover:rotate-90" />
@@ -69,19 +61,13 @@ export function LandingPage() {
         {/* Animated background gradients */}
         <div className="absolute inset-0 overflow-hidden">
           <div
-            className={`parallax-bg absolute top-20 left-20 w-96 h-96 rounded-full blur-3xl opacity-30 ${
-              theme === "dark" ? "bg-[#00e5cc]" : "bg-[#00e5cc]"
-            }`}
+            className="parallax-bg absolute top-20 left-20 w-96 h-96 rounded-full blur-3xl opacity-30 bg-[#00e5cc]"
           />
           <div
-            className={`parallax-bg absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl opacity-30 ${
-              theme === "dark" ? "bg-blue-500" : "bg-blue-400"
-            }`}
+            className="parallax-bg absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl opacity-30 bg-blue-500"
           />
           <div
-            className={`parallax-bg absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-20 ${
-              theme === "dark" ? "bg-purple-600" : "bg-purple-400"
-            }`}
+            className="parallax-bg absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-20 bg-purple-500"
           />
         </div>
 
@@ -114,9 +100,7 @@ export function LandingPage() {
               <ShuffleText>OLLI</ShuffleText>
             </div>
             <div
-              className={`text-4xl md:text-6xl lg:text-7xl font-black ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
+              className="text-4xl md:text-6xl lg:text-7xl font-black text-foreground"
             >
               AI 인스타툰 혁명
             </div>
@@ -124,9 +108,7 @@ export function LandingPage() {
 
           {/* Subtitle */}
           <p
-            className={`hero-subtitle text-xl md:text-3xl mb-16 max-w-4xl mx-auto ${
-              theme === "dark" ? "text-gray-400" : "text-gray-600"
-            }`}
+            className="hero-subtitle text-xl md:text-3xl mb-16 max-w-4xl mx-auto text-muted-foreground"
           >
             작가와 기업을 연결하는 차세대 플랫폼
             <br />
@@ -151,11 +133,7 @@ export function LandingPage() {
             <GlareHover>
               <button
                 onClick={() => navigate("/enterprise")}
-                className={`hero-cta group relative px-14 py-7 font-black text-2xl rounded-2xl border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${
-                  theme === "dark"
-                    ? "bg-white/5 border-blue-500/50 text-blue-400 hover:bg-white/10 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/30"
-                    : "bg-gray-900/5 border-blue-600 text-blue-600 hover:bg-gray-900/10 hover:shadow-2xl hover:shadow-blue-500/30"
-                }`}
+                className="hero-cta group relative px-14 py-7 font-black text-2xl rounded-2xl border-2 overflow-hidden transition-all duration-300 hover:scale-105 bg-muted/50 border-blue-500/50 text-blue-500 hover:bg-muted hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/30"
               >
                 <span className="relative z-10 flex items-center gap-3">
                   <Building2 className="w-7 h-7" />
@@ -168,11 +146,7 @@ export function LandingPage() {
           {/* Scroll indicator */}
           <div className="animate-bounce">
             <div
-              className={`w-1 h-16 mx-auto rounded-full ${
-                theme === "dark"
-                  ? "bg-gradient-to-b from-[#00e5cc] to-transparent"
-                  : "bg-gradient-to-b from-[#00b3a6] to-transparent"
-              }`}
+              className="w-1 h-16 mx-auto rounded-full bg-gradient-to-b from-[#00e5cc] to-transparent"
             />
           </div>
         </div>
@@ -180,15 +154,11 @@ export function LandingPage() {
 
       {/* Apple-style Scroll Text Section */}
       <section
-        className={`min-h-screen flex items-center justify-center px-6 ${
-          theme === "dark" ? "bg-gradient-to-b from-black to-gray-900" : "bg-gradient-to-b from-white to-gray-50"
-        }`}
+        className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-background to-muted"
       >
         <div className="max-w-5xl mx-auto text-center">
           <h2
-            className={`text-5xl md:text-7xl lg:text-8xl font-black leading-tight ${
-              theme === "dark" ? "text-white" : "text-gray-900"
-            }`}
+            className="text-5xl md:text-7xl lg:text-8xl font-black leading-tight text-foreground"
           >
             <span className="scroll-word block mb-4">클릭 한 번으로</span>
             <span className="scroll-word block mb-4 bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
@@ -201,9 +171,7 @@ export function LandingPage() {
 
       {/* Stats Section */}
       <section
-        className={`py-32 px-6 ${
-          theme === "dark" ? "bg-gray-900" : "bg-gray-50"
-        }`}
+        className="py-32 px-6 bg-muted"
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-3 gap-12">
@@ -214,11 +182,7 @@ export function LandingPage() {
             ].map((stat, i) => (
               <GlareHover key={i}>
                 <div
-                  className={`group relative p-12 rounded-3xl text-center backdrop-blur-xl border-2 transition-all duration-300 hover:scale-105 ${
-                    theme === "dark"
-                      ? "bg-gray-800/50 border-gray-700/50 hover:border-[#00e5cc]/50"
-                      : "bg-white/80 border-gray-200 hover:border-[#00e5cc]/50 shadow-xl"
-                  }`}
+                  className="group relative p-12 rounded-3xl text-center backdrop-blur-xl border-2 transition-all duration-300 hover:scale-105 bg-card/80 border-border hover:border-[#00e5cc]/50 shadow-xl"
                 >
                   <div
                     className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#00e5cc] to-blue-500 shadow-2xl group-hover:scale-110 transition-transform duration-300`}
@@ -234,9 +198,7 @@ export function LandingPage() {
                     {stat.suffix}
                   </div>
                   <div
-                    className={`text-xl font-bold uppercase tracking-wider ${
-                      theme === "dark" ? "text-gray-400" : "text-gray-600"
-                    }`}
+                    className="text-xl font-bold uppercase tracking-wider text-muted-foreground"
                   >
                     {stat.label}
                   </div>
@@ -249,25 +211,17 @@ export function LandingPage() {
 
       {/* Features Section */}
       <section
-        className={`py-32 px-6 ${
-          theme === "dark" ? "bg-black" : "bg-white"
-        }`}
+        className="py-32 px-6 bg-background"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <div
-              className={`inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 ${
-                theme === "dark"
-                  ? "bg-[#00e5cc]/20 text-[#00e5cc] border-2 border-[#00e5cc]/30"
-                  : "bg-[#00e5cc]/10 text-[#00b3a6] border-2 border-[#00e5cc]/20"
-              }`}
+              className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20"
             >
               핵심 기능
             </div>
             <h2
-              className={`text-6xl md:text-8xl font-black ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
+              className="text-6xl md:text-8xl font-black text-foreground"
             >
               왜 <span className="bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">OLLI</span>인가?
             </h2>
@@ -279,25 +233,17 @@ export function LandingPage() {
 
       {/* Mode Switcher Section */}
       <section
-        className={`py-32 px-6 ${
-          theme === "dark" ? "bg-gradient-to-b from-black to-gray-900" : "bg-gradient-to-b from-white to-gray-50"
-        }`}
+        className="py-32 px-6 bg-gradient-to-b from-background to-muted"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <div
-              className={`inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 ${
-                theme === "dark"
-                  ? "bg-[#00e5cc]/20 text-[#00e5cc] border-2 border-[#00e5cc]/30"
-                  : "bg-[#00e5cc]/10 text-[#00b3a6] border-2 border-[#00e5cc]/20"
-              }`}
+              className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20"
             >
               양면 플랫폼
             </div>
             <h2
-              className={`text-6xl md:text-8xl font-black mb-8 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
+              className="text-6xl md:text-8xl font-black mb-8 text-foreground"
             >
               당신의 역할은?
             </h2>
@@ -309,25 +255,17 @@ export function LandingPage() {
 
       {/* Showcase Gallery */}
       <section
-        className={`py-32 px-6 ${
-          theme === "dark" ? "bg-gray-900" : "bg-gray-50"
-        }`}
+        className="py-32 px-6 bg-muted"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <div
-              className={`inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 ${
-                theme === "dark"
-                  ? "bg-[#00e5cc]/20 text-[#00e5cc] border-2 border-[#00e5cc]/30"
-                  : "bg-[#00e5cc]/10 text-[#00b3a6] border-2 border-[#00e5cc]/20"
-              }`}
+              className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20"
             >
               작품 갤러리
             </div>
             <h2
-              className={`text-6xl md:text-8xl font-black mb-8 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
+              className="text-6xl md:text-8xl font-black mb-8 text-foreground"
             >
               <span className="bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
                 놀라운
@@ -335,9 +273,7 @@ export function LandingPage() {
               작품들
             </h2>
             <p
-              className={`text-2xl ${
-                theme === "dark" ? "text-gray-400" : "text-gray-600"
-              }`}
+              className="text-2xl text-muted-foreground"
             >
               OLLI로 만들어진 실제 웹툰을 만나보세요
             </p>
@@ -349,25 +285,17 @@ export function LandingPage() {
 
       {/* Infinite Character Grid - 무한한 캐릭터 가능성 */}
       <section
-        className={`py-32 px-6 overflow-hidden ${
-          theme === "dark" ? "bg-black" : "bg-white"
-        }`}
+        className="py-32 px-6 overflow-hidden bg-background"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <div
-              className={`inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 ${
-                theme === "dark"
-                  ? "bg-[#00e5cc]/20 text-[#00e5cc] border-2 border-[#00e5cc]/30"
-                  : "bg-[#00e5cc]/10 text-[#00b3a6] border-2 border-[#00e5cc]/20"
-              }`}
+              className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20"
             >
               AI 캐릭터
             </div>
             <h2
-              className={`text-6xl md:text-8xl font-black mb-8 ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
+              className="text-6xl md:text-8xl font-black mb-8 text-foreground"
             >
               <span className="bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
                 무한한
@@ -375,9 +303,7 @@ export function LandingPage() {
               캐릭터 가능성
             </h2>
             <p
-              className={`text-2xl ${
-                theme === "dark" ? "text-gray-400" : "text-gray-600"
-              }`}
+              className="text-2xl text-muted-foreground"
             >
               마우스를 움직여 3D 그리드를 탐험하세요
             </p>
@@ -389,9 +315,7 @@ export function LandingPage() {
 
       {/* Final CTA */}
       <section
-        className={`py-32 px-6 ${
-          theme === "dark" ? "bg-black" : "bg-white"
-        }`}
+        className="py-32 px-6 bg-background"
       >
         <div className="max-w-6xl mx-auto">
           <MagneticCTA theme={theme} onButtonClick={() => navigate("/signup")} />
@@ -400,11 +324,7 @@ export function LandingPage() {
 
       {/* Footer */}
       <footer
-        className={`border-t py-20 px-6 ${
-          theme === "dark"
-            ? "border-gray-800 bg-black"
-            : "border-gray-200 bg-gray-50"
-        }`}
+        className="border-t py-20 px-6 border-border bg-muted"
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-5 gap-12 mb-16">
@@ -428,9 +348,7 @@ export function LandingPage() {
                 </span>
               </div>
               <p
-                className={`text-lg mb-6 ${
-                  theme === "dark" ? "text-gray-500" : "text-gray-600"
-                }`}
+                className="text-lg mb-6 text-muted-foreground"
               >
                 차세대 AI 인스타그램 툰 플랫폼
                 <br />
@@ -440,11 +358,7 @@ export function LandingPage() {
                 {[Instagram, Globe, TrendingUp].map((Icon, i) => (
                   <button
                     key={i}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 ${
-                      theme === "dark"
-                        ? "bg-gray-800 hover:bg-[#00e5cc]/20 text-gray-400 hover:text-[#00e5cc]"
-                        : "bg-gray-200 hover:bg-[#00e5cc]/20 text-gray-600 hover:text-[#00e5cc]"
-                    }`}
+                    className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 bg-muted hover:bg-[#00e5cc]/20 text-muted-foreground hover:text-[#00e5cc]"
                   >
                     <Icon className="w-5 h-5" />
                   </button>
@@ -468,9 +382,7 @@ export function LandingPage() {
             ].map((section) => (
               <div key={section.title}>
                 <h4
-                  className={`font-black mb-6 text-xl ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
+                  className="font-black mb-6 text-xl text-foreground"
                 >
                   {section.title}
                 </h4>
@@ -479,9 +391,7 @@ export function LandingPage() {
                     <li key={link}>
                       <a
                         href="#"
-                        className={`text-lg transition-colors hover:text-[#00e5cc] ${
-                          theme === "dark" ? "text-gray-500" : "text-gray-600"
-                        }`}
+                        className="text-lg transition-colors hover:text-[#00e5cc] text-muted-foreground"
                       >
                         {link}
                       </a>
@@ -493,14 +403,10 @@ export function LandingPage() {
           </div>
 
           <div
-            className={`pt-8 border-t text-center ${
-              theme === "dark" ? "border-gray-800" : "border-gray-200"
-            }`}
+            className="pt-8 border-t text-center border-border"
           >
             <p
-              className={`text-lg ${
-                theme === "dark" ? "text-gray-500" : "text-gray-600"
-              }`}
+              className="text-lg text-muted-foreground"
             >
               © 2026 OLLI. All rights reserved. Powered by AI.
             </p>

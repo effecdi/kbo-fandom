@@ -34,8 +34,8 @@ export function CreatorSettings() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">설정</h1>
-          <p className="text-gray-600">계정 및 프로필 정보를 관리하세요</p>
+          <h1 className="text-3xl font-black text-foreground mb-2">설정</h1>
+          <p className="text-muted-foreground">계정 및 프로필 정보를 관리하세요</p>
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
@@ -50,8 +50,8 @@ export function CreatorSettings() {
           <TabsContent value="profile">
             <div className="space-y-6">
               {/* Profile Photo */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">프로필 사진</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">프로필 사진</h3>
                 <div className="flex items-center gap-6">
                   <div className="relative">
                     <img
@@ -64,7 +64,7 @@ export function CreatorSettings() {
                     </button>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       JPG, PNG 또는 GIF 파일 (최대 5MB)
                     </p>
                     <div className="flex items-center gap-3">
@@ -80,8 +80,8 @@ export function CreatorSettings() {
               </div>
 
               {/* Basic Info */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">기본 정보</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">기본 정보</h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -107,14 +107,14 @@ export function CreatorSettings() {
                       id="bio"
                       rows={4}
                       defaultValue="일상 속 작은 행복을 담는 인스타툰 작가입니다. 공감과 위로를 주는 따뜻한 이야기를 그립니다."
-                      className="w-full mt-2 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      className="w-full mt-2 px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="email">이메일 *</Label>
                       <div className="relative mt-2">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="email"
                           type="email"
@@ -126,7 +126,7 @@ export function CreatorSettings() {
                     <div>
                       <Label htmlFor="phone">전화번호</Label>
                       <div className="relative mt-2">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="phone"
                           defaultValue="010-1234-5678"
@@ -138,7 +138,7 @@ export function CreatorSettings() {
                   <div>
                     <Label htmlFor="location">지역</Label>
                     <div className="relative mt-2">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="location"
                         defaultValue="서울, 대한민국"
@@ -156,13 +156,13 @@ export function CreatorSettings() {
               </div>
 
               {/* Social Links */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">소셜 미디어</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">소셜 미디어</h3>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="instagram">Instagram</Label>
                     <div className="relative mt-2">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="instagram"
                         placeholder="https://instagram.com/username"
@@ -173,7 +173,7 @@ export function CreatorSettings() {
                   <div>
                     <Label htmlFor="youtube">YouTube</Label>
                     <div className="relative mt-2">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="youtube"
                         placeholder="https://youtube.com/@username"
@@ -184,7 +184,7 @@ export function CreatorSettings() {
                   <div>
                     <Label htmlFor="twitter">Twitter</Label>
                     <div className="relative mt-2">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="twitter"
                         placeholder="https://twitter.com/username"
@@ -205,15 +205,15 @@ export function CreatorSettings() {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4">알림 설정</h3>
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <h3 className="font-bold text-foreground mb-4">알림 설정</h3>
               <div className="space-y-6">
-                <div className="flex items-center justify-between py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between py-4 border-b border-border">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-foreground mb-1">
                       새로운 제안
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       기업으로부터 새로운 협업 제안이 올 때 알림을 받습니다
                     </p>
                   </div>
@@ -225,12 +225,12 @@ export function CreatorSettings() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between py-4 border-b border-border">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-foreground mb-1">
                       프로젝트 업데이트
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       진행 중인 프로젝트에 업데이트가 있을 때 알림을 받습니다
                     </p>
                   </div>
@@ -242,12 +242,12 @@ export function CreatorSettings() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between py-4 border-b border-border">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-foreground mb-1">
                       정산 알림
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       정산이 완료되면 알림을 받습니다
                     </p>
                   </div>
@@ -261,10 +261,10 @@ export function CreatorSettings() {
 
                 <div className="flex items-center justify-between py-4">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-foreground mb-1">
                       마케팅 알림
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       새로운 기능, 이벤트 등의 소식을 받습니다
                     </p>
                   </div>
@@ -287,8 +287,8 @@ export function CreatorSettings() {
           {/* Payment Tab */}
           <TabsContent value="payment">
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">정산 계좌 정보</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">정산 계좌 정보</h3>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="bank">은행 *</Label>
@@ -323,8 +323,8 @@ export function CreatorSettings() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">세금 정보</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">세금 정보</h3>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="business-number">사업자등록번호</Label>
@@ -333,7 +333,7 @@ export function CreatorSettings() {
                       placeholder="000-00-00000"
                       className="mt-2"
                     />
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                       사업자인 경우에만 입력해주세요
                     </p>
                   </div>
@@ -360,8 +360,8 @@ export function CreatorSettings() {
           {/* Account Tab */}
           <TabsContent value="account">
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">비밀번호 변경</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">비밀번호 변경</h3>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="current-password">현재 비밀번호 *</Label>
@@ -396,37 +396,37 @@ export function CreatorSettings() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">계정 관리</h3>
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h3 className="font-bold text-foreground mb-4">계정 관리</h3>
                 <div className="space-y-4">
-                  <button className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                  <button className="w-full flex items-center justify-between p-4 border border-border rounded-xl hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-gray-600" />
+                      <Shield className="w-5 h-5 text-muted-foreground" />
                       <div className="text-left">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-foreground">
                           개인정보 처리방침
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           OLLI의 개인정보 처리방침 보기
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   </button>
 
-                  <button className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                  <button className="w-full flex items-center justify-between p-4 border border-border rounded-xl hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <HelpCircle className="w-5 h-5 text-gray-600" />
+                      <HelpCircle className="w-5 h-5 text-muted-foreground" />
                       <div className="text-left">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-foreground">
                           고객 지원
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           도움이 필요하신가요?
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   </button>
 
                   <button className="w-full flex items-center justify-between p-4 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">

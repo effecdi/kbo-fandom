@@ -145,13 +145,11 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
   const navItems = userType === "creator" ? creatorNavItems : businessNavItems;
 
   return (
-    <div className={`min-h-screen flex ${theme === "dark" ? "bg-[#0a0a0a]" : "bg-gray-50"}`}>
+    <div className={`min-h-screen flex bg-background`}>
       {/* Left Sidebar */}
-      <aside className={`w-60 border-r flex flex-col fixed h-screen ${
-        theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
-      }`}>
+      <aside className={`w-60 border-r flex flex-col fixed h-screen bg-card border-border`}>
         {/* Logo */}
-        <div className={`p-6 border-b ${theme === "dark" ? "border-gray-800" : "border-gray-200"}`}>
+        <div className={`p-6 border-b border-border`}>
           <Link to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 flex items-center justify-center">
               <img
@@ -179,9 +177,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                       isActive
                         ? "bg-[#00e5cc]/10 text-[#00e5cc] font-semibold"
-                        : theme === "dark"
-                        ? "text-gray-400 hover:bg-gray-800/50 hover:text-white"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <item.icon className="w-5 h-5" />
@@ -193,11 +189,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                   <div key={index}>
                     <button
                       onClick={item.toggle}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full ${
-                        theme === "dark"
-                          ? "text-gray-400 hover:bg-gray-800/50 hover:text-white"
-                          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                      }`}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-muted-foreground hover:bg-muted hover:text-foreground`}
                     >
                       <item.icon className="w-5 h-5" />
                       <span className="text-sm flex-1 text-left">{item.label}</span>
@@ -219,9 +211,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                               className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm ${
                                 isActive
                                   ? "bg-[#00e5cc]/10 text-[#00e5cc] font-semibold"
-                                  : theme === "dark"
-                                  ? "text-gray-400 hover:bg-gray-800/50 hover:text-white"
-                                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
                               }`}
                             >
                               {child.label}
@@ -239,11 +229,9 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
         </nav>
 
         {/* User Menu */}
-        <div className={`p-4 border-t relative ${theme === "dark" ? "border-gray-800" : "border-gray-200"}`}>
+        <div className={`p-4 border-t relative border-border`}>
           <button
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-all ${
-              theme === "dark" ? "hover:bg-gray-800/50" : "hover:bg-gray-100"
-            }`}
+            className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-all hover:bg-muted`}
             onClick={() => setUserMenuOpen(!userMenuOpen)}
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] flex items-center justify-center">
@@ -254,7 +242,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
               )}
             </div>
             <div className="flex-1 text-left">
-              <p className={`text-sm font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>사용자</p>
+              <p className={`text-sm font-semibold text-foreground`}>사용자</p>
               <p className="text-xs text-gray-500">
                 {userType === "creator" ? "작가 모드" : "기업 모드"}
               </p>
@@ -262,20 +250,14 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </button>
           {userMenuOpen && (
-            <div className={`absolute left-4 right-4 bottom-20 rounded-xl shadow-xl overflow-hidden z-50 ${
-              theme === "dark" ? "bg-[#252525] border border-gray-700" : "bg-white border border-gray-200"
-            }`}>
+            <div className={`absolute left-4 right-4 bottom-20 rounded-xl shadow-xl overflow-hidden z-50 bg-card border border-border`}>
               <div className="py-2">
                 <button
                   onClick={() => {
                     setUserMenuOpen(false);
                     navigate(userType === "creator" ? "/creator/dashboard" : "/business/dashboard");
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                    theme === "dark" 
-                      ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground`}
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   <span>대시보드</span>
@@ -285,11 +267,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                     setUserMenuOpen(false);
                     navigate(userType === "creator" ? "/creator/character" : "/business/mascots");
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                    theme === "dark" 
-                      ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground`}
                 >
                   <Image className="w-4 h-4" />
                   <span>My Gallery</span>
@@ -299,31 +277,23 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                     setUserMenuOpen(false);
                     navigate("/payments");
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                    theme === "dark" 
-                      ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground`}
                 >
                   <CreditCard className="w-4 h-4" />
                   <span>결제 내역</span>
                 </button>
-                <div className={`border-t my-1 ${theme === "dark" ? "border-gray-700" : "border-gray-200"}`}></div>
+                <div className={`border-t my-1 border-border`}></div>
                 <button
                   onClick={() => {
                     setUserMenuOpen(false);
                     navigate("/");
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                    theme === "dark" 
-                      ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground`}
                 >
                   <SwitchCamera className="w-4 h-4" />
                   <span>역할 변경</span>
                 </button>
-                <div className={`border-t my-1 ${theme === "dark" ? "border-gray-700" : "border-gray-200"}`}></div>
+                <div className={`border-t my-1 border-border`}></div>
                 <button
                   onClick={() => {
                     setUserMenuOpen(false);
@@ -343,9 +313,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
       {/* Main Content */}
       <div className="flex-1 ml-60">
         {/* Top Header */}
-        <header className={`h-18 border-b fixed top-0 right-0 left-60 z-10 ${
-          theme === "dark" ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
-        }`}>
+        <header className={`h-18 border-b fixed top-0 right-0 left-60 z-10 bg-card border-border`}>
           <div className="h-full px-8 flex items-center justify-between">
             {/* Search */}
             <div className="flex-1 max-w-xl">
@@ -354,11 +322,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                 <input
                   type="text"
                   placeholder="검색..."
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent ${
-                    theme === "dark"
-                      ? "bg-[#252525] border-gray-700 text-white placeholder-gray-500"
-                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
-                  }`}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent bg-muted border-border text-foreground placeholder-muted-foreground`}
                 />
               </div>
             </div>
@@ -379,9 +343,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
 
               {/* Help/Guide */}
               <button
-                className={`p-2 rounded-lg transition-all ${
-                  theme === "dark" ? "hover:bg-gray-800/50" : "hover:bg-gray-100"
-                }`}
+                className={`p-2 rounded-lg transition-all hover:bg-muted`}
                 title="사용 가이드"
               >
                 <HelpCircle className="w-5 h-5 text-gray-400" />
@@ -390,9 +352,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-all ${
-                  theme === "dark" ? "hover:bg-gray-800/50" : "hover:bg-gray-100"
-                }`}
+                className={`p-2 rounded-lg transition-all hover:bg-muted`}
                 title="다크모드 전환"
               >
                 {theme === "dark" ? (
@@ -403,9 +363,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
               </button>
 
               {/* Notifications */}
-              <button className={`relative p-2 rounded-lg transition-all ${
-                theme === "dark" ? "hover:bg-gray-800/50" : "hover:bg-gray-100"
-              }`}>
+              <button className={`relative p-2 rounded-lg transition-all hover:bg-muted`}>
                 <Bell className="w-5 h-5 text-gray-400" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-[#00e5cc] rounded-full"></span>
               </button>
@@ -423,20 +381,14 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                   )}
                 </button>
                 {profileMenuOpen && (
-                  <div className={`absolute right-0 top-12 w-56 rounded-xl shadow-xl overflow-hidden z-50 ${
-                    theme === "dark" ? "bg-[#252525] border border-gray-700" : "bg-white border border-gray-200"
-                  }`}>
+                  <div className={`absolute right-0 top-12 w-56 rounded-xl shadow-xl overflow-hidden z-50 bg-card border border-border`}>
                     <div className="py-2">
                       <button
                         onClick={() => {
                           setProfileMenuOpen(false);
                           navigate(userType === "creator" ? "/creator/dashboard" : "/business/dashboard");
                         }}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                          theme === "dark" 
-                            ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                        }`}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground`}
                       >
                         <LayoutDashboard className="w-4 h-4" />
                         <span>대시보드</span>
@@ -446,11 +398,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                           setProfileMenuOpen(false);
                           navigate(userType === "creator" ? "/creator/character" : "/business/mascots");
                         }}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                          theme === "dark" 
-                            ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                        }`}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground`}
                       >
                         <Image className="w-4 h-4" />
                         <span>My Gallery</span>
@@ -460,31 +408,23 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                           setProfileMenuOpen(false);
                           navigate("/payments");
                         }}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                          theme === "dark" 
-                            ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                        }`}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground`}
                       >
                         <CreditCard className="w-4 h-4" />
                         <span>결제 내역</span>
                       </button>
-                      <div className={`border-t my-1 ${theme === "dark" ? "border-gray-700" : "border-gray-200"}`}></div>
+                      <div className={`border-t my-1 border-border`}></div>
                       <button
                         onClick={() => {
                           setProfileMenuOpen(false);
                           navigate("/");
                         }}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                          theme === "dark" 
-                            ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                        }`}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground`}
                       >
                         <SwitchCamera className="w-4 h-4" />
                         <span>역할 변경</span>
                       </button>
-                      <div className={`border-t my-1 ${theme === "dark" ? "border-gray-700" : "border-gray-200"}`}></div>
+                      <div className={`border-t my-1 border-border`}></div>
                       <button
                         onClick={() => {
                           setProfileMenuOpen(false);

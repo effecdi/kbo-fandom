@@ -101,8 +101,8 @@ export function Profile() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-white mb-2">프로필 & 미디어킷 👤</h1>
-          <p className="text-gray-400">
+          <h1 className="text-3xl font-black text-foreground mb-2">프로필 & 미디어킷 👤</h1>
+          <p className="text-muted-foreground">
             작가 정보를 관리하고 기업에게 보낼 미디어킷을 만드세요
           </p>
         </div>
@@ -116,9 +116,9 @@ export function Profile() {
             <div className="flex-1">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-black text-white mb-1">올리 작가</h2>
-                  <p className="text-gray-400 mb-3">@olli_creator</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                  <h2 className="text-2xl font-black text-foreground mb-1">올리 작가</h2>
+                  <p className="text-muted-foreground mb-3">@olli_creator</p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Mail className="w-4 h-4" />
                       olli@example.com
@@ -132,7 +132,7 @@ export function Profile() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-gray-700 text-gray-400 hover:bg-gray-800"
+                  className="border-border text-muted-foreground hover:bg-muted"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   프로필 편집
@@ -141,21 +141,21 @@ export function Profile() {
 
               {/* Stats */}
               <div className="grid grid-cols-4 gap-4">
-                <div className="bg-[#1a1a1a] rounded-xl p-4 border border-gray-800">
-                  <div className="text-2xl font-black text-white mb-1">12</div>
-                  <div className="text-xs text-gray-400">완료 프로젝트</div>
+                <div className="bg-card rounded-xl p-4 border border-border">
+                  <div className="text-2xl font-black text-foreground mb-1">12</div>
+                  <div className="text-xs text-muted-foreground">완료 프로젝트</div>
                 </div>
-                <div className="bg-[#1a1a1a] rounded-xl p-4 border border-gray-800">
+                <div className="bg-card rounded-xl p-4 border border-border">
                   <div className="text-2xl font-black text-[#00e5cc] mb-1">4.9</div>
-                  <div className="text-xs text-gray-400">평균 평점</div>
+                  <div className="text-xs text-muted-foreground">평균 평점</div>
                 </div>
-                <div className="bg-[#1a1a1a] rounded-xl p-4 border border-gray-800">
-                  <div className="text-2xl font-black text-white mb-1">95</div>
-                  <div className="text-xs text-gray-400">미디어킷 조회</div>
+                <div className="bg-card rounded-xl p-4 border border-border">
+                  <div className="text-2xl font-black text-foreground mb-1">95</div>
+                  <div className="text-xs text-muted-foreground">미디어킷 조회</div>
                 </div>
-                <div className="bg-[#1a1a1a] rounded-xl p-4 border border-gray-800">
-                  <div className="text-2xl font-black text-white mb-1">8</div>
-                  <div className="text-xs text-gray-400">진행 중 제안</div>
+                <div className="bg-card rounded-xl p-4 border border-border">
+                  <div className="text-2xl font-black text-foreground mb-1">8</div>
+                  <div className="text-xs text-muted-foreground">진행 중 제안</div>
                 </div>
               </div>
             </div>
@@ -163,15 +163,15 @@ export function Profile() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-[#1a1a1a] rounded-2xl border border-gray-800 overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden">
           {/* Tab Headers */}
-          <div className="flex border-b border-gray-800">
+          <div className="flex border-b border-border">
             <button
               onClick={() => setActiveTab("basic")}
               className={`flex-1 px-6 py-4 font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "basic"
-                  ? "bg-[#252525] text-[#00e5cc] border-b-2 border-[#00e5cc]"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-[#00e5cc] border-b-2 border-[#00e5cc]"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <User className="w-4 h-4" />
@@ -181,8 +181,8 @@ export function Profile() {
               onClick={() => setActiveTab("mediakit")}
               className={`flex-1 px-6 py-4 font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "mediakit"
-                  ? "bg-[#252525] text-[#00e5cc] border-b-2 border-[#00e5cc]"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-[#00e5cc] border-b-2 border-[#00e5cc]"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -195,8 +195,8 @@ export function Profile() {
               onClick={() => setActiveTab("portfolio")}
               className={`flex-1 px-6 py-4 font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "portfolio"
-                  ? "bg-[#252525] text-[#00e5cc] border-b-2 border-[#00e5cc]"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-[#00e5cc] border-b-2 border-[#00e5cc]"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Award className="w-4 h-4" />
@@ -211,30 +211,30 @@ export function Profile() {
               <div className="grid grid-cols-2 gap-6">
                 {/* 프로필 정보 */}
                 <div className="space-y-6">
-                  <div className="bg-[#0a0a0a] rounded-xl p-6 border border-gray-800">
-                    <h3 className="text-lg font-bold text-white mb-4">프로필 정보</h3>
+                  <div className="bg-background rounded-xl p-6 border border-border">
+                    <h3 className="text-lg font-bold text-foreground mb-4">프로필 정보</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">작가명</label>
+                        <label className="block text-sm text-muted-foreground mb-2">작가명</label>
                         <input
                           type="text"
                           defaultValue="올리 작가"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           인스타그램 핸들
                         </label>
                         <input
                           type="text"
                           defaultValue="@olli_creator"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">카테고리</label>
-                        <select className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent">
+                        <label className="block text-sm text-muted-foreground mb-2">카테고리</label>
+                        <select className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent">
                           <option>라이프스타일</option>
                           <option>음식</option>
                           <option>패션</option>
@@ -243,7 +243,7 @@ export function Profile() {
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <label className="block text-sm text-gray-400">자기 소개</label>
+                          <label className="block text-sm text-muted-foreground">자기 소개</label>
                           <button className="flex items-center gap-1 text-xs text-[#00e5cc] hover:text-[#00f0ff]">
                             <Sparkles className="w-3 h-3" />
                             AI 작성
@@ -252,32 +252,32 @@ export function Profile() {
                         <textarea
                           rows={4}
                           defaultValue="따뜻하고 친근한 그림체로 일상과 공감 스토리를 그리는 작가입니다."
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent resize-none"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent resize-none"
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* 연락처 */}
-                  <div className="bg-[#0a0a0a] rounded-xl p-6 border border-gray-800">
-                    <h3 className="text-lg font-bold text-white mb-4">연락처</h3>
+                  <div className="bg-background rounded-xl p-6 border border-border">
+                    <h3 className="text-lg font-bold text-foreground mb-4">연락처</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">이메일</label>
+                        <label className="block text-sm text-muted-foreground mb-2">이메일</label>
                         <input
                           type="email"
                           defaultValue="olli@example.com"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           카카오톡 ID
                         </label>
                         <input
                           type="text"
                           defaultValue="olli_kakao"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -287,67 +287,67 @@ export function Profile() {
                 {/* 지표 & 단가 */}
                 <div className="space-y-6">
                   {/* 인사이트 */}
-                  <div className="bg-[#0a0a0a] rounded-xl p-6 border border-gray-800">
-                    <h3 className="text-lg font-bold text-white mb-4">
+                  <div className="bg-background rounded-xl p-6 border border-border">
+                    <h3 className="text-lg font-bold text-foreground mb-4">
                       지표 & 인사이트
                     </h3>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">리치</label>
+                        <label className="block text-sm text-muted-foreground mb-2">리치</label>
                         <input
                           type="number"
                           defaultValue="10000"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           노출양
                         </label>
                         <input
                           type="number"
                           defaultValue="5000"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           팔로워
                         </label>
                         <input
                           type="number"
                           defaultValue="50000"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           참여율 (%)
                         </label>
                         <input
                           type="number"
                           step="0.1"
                           defaultValue="5.2"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                     </div>
 
                     {/* 연령 분포 */}
                     <div className="mb-4">
-                      <label className="block text-sm text-gray-400 mb-3">
+                      <label className="block text-sm text-muted-foreground mb-3">
                         연령 분포 (%)
                       </label>
                       <div className="grid grid-cols-4 gap-3">
                         {["13-17", "18-24", "25-34", "35+"].map((age) => (
                           <div key={age}>
-                            <label className="block text-xs text-gray-500 mb-1">
+                            <label className="block text-xs text-muted-foreground mb-1">
                               {age}
                             </label>
                             <input
                               type="number"
                               defaultValue={age === "13-17" ? "35" : age === "18-24" ? "30" : age === "25-34" ? "20" : "15"}
-                              className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                             />
                           </div>
                         ))}
@@ -356,28 +356,28 @@ export function Profile() {
 
                     {/* 성별 비율 */}
                     <div>
-                      <label className="block text-sm text-gray-400 mb-3">
+                      <label className="block text-sm text-muted-foreground mb-3">
                         성별 비율 (%)
                       </label>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">
+                          <label className="block text-xs text-muted-foreground mb-1">
                             남성
                           </label>
                           <input
                             type="number"
                             defaultValue="35"
-                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                            className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">
+                          <label className="block text-xs text-muted-foreground mb-1">
                             여성
                           </label>
                           <input
                             type="number"
                             defaultValue="65"
-                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                            className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                           />
                         </div>
                       </div>
@@ -385,49 +385,49 @@ export function Profile() {
                   </div>
 
                   {/* 광고 단가 */}
-                  <div className="bg-[#0a0a0a] rounded-xl p-6 border border-gray-800">
-                    <h3 className="text-lg font-bold text-white mb-4">
+                  <div className="bg-background rounded-xl p-6 border border-border">
+                    <h3 className="text-lg font-bold text-foreground mb-4">
                       광고 단가 (원)
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           피드 게시글
                         </label>
                         <input
                           type="number"
                           defaultValue="100000"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           스토리
                         </label>
                         <input
                           type="number"
                           defaultValue="50000"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           릴스
                         </label>
                         <input
                           type="number"
                           defaultValue="200000"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           패키지
                         </label>
                         <input
                           type="number"
                           defaultValue="300000"
-                          className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -441,10 +441,10 @@ export function Profile() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-1">
+                    <h3 className="text-lg font-bold text-foreground mb-1">
                       미디어킷 관리
                     </h3>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       상황에 맞는 여러 버전의 미디어킷을 만들어 관리하세요
                     </p>
                   </div>
@@ -458,12 +458,12 @@ export function Profile() {
                   {mediakitVersions.map((kit) => (
                     <div
                       key={kit.id}
-                      className="bg-[#0a0a0a] rounded-xl border border-gray-800 p-6 hover:border-[#00e5cc]/30 transition-all"
+                      className="bg-background rounded-xl border border-border p-6 hover:border-[#00e5cc]/30 transition-all"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h4 className="text-lg font-bold text-white">
+                            <h4 className="text-lg font-bold text-foreground">
                               {kit.name}
                             </h4>
                             {kit.isDefault && (
@@ -475,7 +475,7 @@ export function Profile() {
                               {kit.type}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-400">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>생성: {kit.createdDate}</span>
                             <span className="flex items-center gap-1">
                               <Eye className="w-4 h-4" />
@@ -488,7 +488,7 @@ export function Profile() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border-gray-700 text-gray-400 hover:bg-gray-800"
+                            className="border-border text-muted-foreground hover:bg-muted"
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             미리보기
@@ -496,7 +496,7 @@ export function Profile() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border-gray-700 text-gray-400 hover:bg-gray-800"
+                            className="border-border text-muted-foreground hover:bg-muted"
                           >
                             <Download className="w-4 h-4 mr-2" />
                             PDF
@@ -504,7 +504,7 @@ export function Profile() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border-gray-700 text-gray-400 hover:bg-gray-800"
+                            className="border-border text-muted-foreground hover:bg-muted"
                           >
                             <Share2 className="w-4 h-4 mr-2" />
                             공유
@@ -512,14 +512,14 @@ export function Profile() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border-gray-700 text-gray-400 hover:bg-gray-800"
+                            className="border-border text-muted-foreground hover:bg-muted"
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border-gray-700 text-red-400 hover:bg-red-900/20"
+                            className="border-border text-red-400 hover:bg-red-900/20"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -534,8 +534,8 @@ export function Profile() {
                   <div className="flex items-start gap-3">
                     <BarChart3 className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-bold text-white mb-2">💡 미디어킷 활용 팁</h4>
-                      <ul className="space-y-1 text-sm text-gray-300">
+                      <h4 className="font-bold text-foreground mb-2">💡 미디어킷 활용 팁</h4>
+                      <ul className="space-y-1 text-sm text-muted-foreground">
                         <li>• 공공기관용과 브랜드용을 구분하여 만들면 전문성이 높아집니다</li>
                         <li>• 정기적으로 지표를 업데이트하여 최신 성과를 보여주세요</li>
                         <li>• 공유 링크 조회수를 확인하여 어떤 기업이 관심있는지 파악하세요</li>
@@ -551,10 +551,10 @@ export function Profile() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-1">
+                    <h3 className="text-lg font-bold text-foreground mb-1">
                       포트폴리오
                     </h3>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       완료한 프로젝트를 보기 좋게 정리하세요
                     </p>
                   </div>
@@ -568,7 +568,7 @@ export function Profile() {
                   {portfolioItems.map((item) => (
                     <div
                       key={item.id}
-                      className="bg-[#0a0a0a] rounded-xl border border-gray-800 overflow-hidden hover:border-[#00e5cc]/30 transition-all cursor-pointer group"
+                      className="bg-background rounded-xl border border-border overflow-hidden hover:border-[#00e5cc]/30 transition-all cursor-pointer group"
                     >
                       <div className="relative aspect-[4/3] overflow-hidden">
                         <img
@@ -590,12 +590,12 @@ export function Profile() {
                       </div>
                       <div className="p-4">
                         <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-bold text-white">{item.title}</h4>
+                          <h4 className="font-bold text-foreground">{item.title}</h4>
                           <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
                             {item.category}
                           </Badge>
                         </div>
-                        <div className="flex items-center justify-between text-sm text-gray-400">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
                           <span>{item.date}</span>
                           <div className="flex items-center gap-3">
                             <span className="flex items-center gap-1">

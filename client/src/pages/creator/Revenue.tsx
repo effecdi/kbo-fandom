@@ -105,10 +105,10 @@ export function Revenue() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               수익 현황 💰
             </h1>
-            <p className="text-gray-600">수익과 정산 내역을 확인하세요</p>
+            <p className="text-muted-foreground">수익과 정산 내역을 확인하세요</p>
           </div>
           <div className="flex items-center gap-3">
             <Select defaultValue="2024-03">
@@ -137,13 +137,13 @@ export function Revenue() {
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
             </div>
-            <div className="text-3xl font-black text-gray-900 mb-1">
+            <div className="text-3xl font-black text-foreground mb-1">
               {summary.totalEarnings}원
             </div>
-            <div className="text-sm text-gray-600">총 누적 수익</div>
+            <div className="text-sm text-muted-foreground">총 누적 수익</div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-green-600" />
@@ -163,42 +163,42 @@ export function Revenue() {
                 {summary.monthlyChange}
               </div>
             </div>
-            <div className="text-3xl font-black text-gray-900 mb-1">
+            <div className="text-3xl font-black text-foreground mb-1">
               {summary.thisMonth}원
             </div>
-            <div className="text-sm text-gray-600">이번 달 수익</div>
+            <div className="text-sm text-muted-foreground">이번 달 수익</div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
                 <Clock className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
-            <div className="text-3xl font-black text-gray-900 mb-1">
+            <div className="text-3xl font-black text-foreground mb-1">
               {summary.pending}원
             </div>
-            <div className="text-sm text-gray-600">정산 대기</div>
+            <div className="text-sm text-muted-foreground">정산 대기</div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-blue-600" />
               </div>
             </div>
-            <div className="text-3xl font-black text-gray-900 mb-1">
+            <div className="text-3xl font-black text-foreground mb-1">
               {summary.lastMonth}원
             </div>
-            <div className="text-sm text-gray-600">지난 달 수익</div>
+            <div className="text-sm text-muted-foreground">지난 달 수익</div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Monthly Trend */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-200">
+          <div className="lg:col-span-2 bg-card rounded-2xl p-6 border border-border">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-gray-900">월별 수익 추이</h2>
+              <h2 className="text-xl font-black text-foreground">월별 수익 추이</h2>
               <Button variant="ghost" size="sm">
                 전체 보기
               </Button>
@@ -209,11 +209,11 @@ export function Revenue() {
                 const height = ((parseFloat(data.earnings.replace(/,/g, "")) / 10000000) * 100);
                 return (
                   <div key={idx} className="flex items-center gap-4">
-                    <div className="w-20 text-sm text-gray-600 font-semibold">
+                    <div className="w-20 text-sm text-muted-foreground font-semibold">
                       {data.month}
                     </div>
                     <div className="flex-1">
-                      <div className="relative h-10 bg-gray-100 rounded-lg overflow-hidden">
+                      <div className="relative h-10 bg-muted rounded-lg overflow-hidden">
                         <div
                           className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-end pr-3"
                           style={{ width: `${height}%` }}
@@ -232,25 +232,25 @@ export function Revenue() {
 
           {/* Payment Info */}
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="bg-card rounded-2xl p-6 border border-border">
               <div className="flex items-center gap-2 mb-4">
                 <CreditCard className="w-5 h-5 text-indigo-600" />
-                <h3 className="font-bold text-gray-900">정산 계좌</h3>
+                <h3 className="font-bold text-foreground">정산 계좌</h3>
               </div>
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">은행</p>
-                  <p className="font-semibold text-gray-900">국민은행</p>
+                  <p className="text-sm text-muted-foreground mb-1">은행</p>
+                  <p className="font-semibold text-foreground">국민은행</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">계좌번호</p>
-                  <p className="font-semibold text-gray-900">
+                  <p className="text-sm text-muted-foreground mb-1">계좌번호</p>
+                  <p className="font-semibold text-foreground">
                     123-45-678901
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">예금주</p>
-                  <p className="font-semibold text-gray-900">김민지</p>
+                  <p className="text-sm text-muted-foreground mb-1">예금주</p>
+                  <p className="font-semibold text-foreground">김민지</p>
                 </div>
               </div>
               <Button variant="outline" size="sm" className="w-full mt-4">
@@ -259,8 +259,8 @@ export function Revenue() {
             </div>
 
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200">
-              <h3 className="font-bold text-gray-900 mb-2">💡 정산 안내</h3>
-              <ul className="space-y-2 text-sm text-gray-700">
+              <h3 className="font-bold text-foreground mb-2">💡 정산 안내</h3>
+              <ul className="space-y-2 text-sm text-foreground">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <span>프로젝트 완료 후 5영업일 내 정산</span>
@@ -279,9 +279,9 @@ export function Revenue() {
         </div>
 
         {/* Recent Transactions */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <div className="bg-card rounded-2xl p-6 border border-border">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-black text-gray-900">최근 거래 내역</h2>
+            <h2 className="text-xl font-black text-foreground">최근 거래 내역</h2>
             <Button variant="ghost" size="sm">
               전체 내역
             </Button>
@@ -295,7 +295,7 @@ export function Revenue() {
               return (
                 <div
                   key={transaction.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:shadow-md transition-all"
+                  className="flex items-center justify-between p-4 border border-border rounded-xl hover:shadow-md transition-all"
                 >
                   <div className="flex items-center gap-4 flex-1">
                     <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center">
@@ -303,7 +303,7 @@ export function Revenue() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
-                        <h4 className="font-bold text-gray-900">
+                        <h4 className="font-bold text-foreground">
                           {transaction.project}
                         </h4>
                         <Badge className={statusConfig.color}>
@@ -311,7 +311,7 @@ export function Revenue() {
                           {statusConfig.label}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>{transaction.client}</span>
                         <span>·</span>
                         <span>작업일: {transaction.date}</span>
@@ -321,7 +321,7 @@ export function Revenue() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-black text-gray-900 mb-1">
+                    <div className="text-xl font-black text-foreground mb-1">
                       {transaction.amount}원
                     </div>
                     <Button variant="ghost" size="sm">

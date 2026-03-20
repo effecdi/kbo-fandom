@@ -202,8 +202,8 @@ export function Projects() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-white mb-2">프로젝트 허브 🚀</h1>
-          <p className="text-gray-400">
+          <h1 className="text-3xl font-black text-foreground mb-2">프로젝트 허브 🚀</h1>
+          <p className="text-muted-foreground">
             제안, 지원, 진행, 완료까지 모든 협업을 한 곳에서 관리하세요
           </p>
         </div>
@@ -215,11 +215,11 @@ export function Projects() {
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
                 <Inbox className="w-6 h-6 text-purple-400" />
               </div>
-              <span className="text-3xl font-black text-white">
+              <span className="text-3xl font-black text-foreground">
                 {receivedProposals.filter(p => p.status === "pending").length}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-300">새 제안</p>
+            <p className="text-sm font-semibold text-muted-foreground">새 제안</p>
           </div>
 
           <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-2xl p-6 border border-blue-500/20">
@@ -227,11 +227,11 @@ export function Projects() {
               <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
                 <Send className="w-6 h-6 text-blue-400" />
               </div>
-              <span className="text-3xl font-black text-white">
+              <span className="text-3xl font-black text-foreground">
                 {appliedCampaigns.filter(c => c.status === "pending" || c.status === "interviewing").length}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-300">지원 대기</p>
+            <p className="text-sm font-semibold text-muted-foreground">지원 대기</p>
           </div>
 
           <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-2xl p-6 border border-green-500/20">
@@ -239,11 +239,11 @@ export function Projects() {
               <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-green-400" />
               </div>
-              <span className="text-3xl font-black text-white">
+              <span className="text-3xl font-black text-foreground">
                 {ongoingProjects.length}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-300">진행 중</p>
+            <p className="text-sm font-semibold text-muted-foreground">진행 중</p>
           </div>
 
           <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-2xl p-6 border border-yellow-500/20">
@@ -251,24 +251,24 @@ export function Projects() {
               <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
                 <PartyPopper className="w-6 h-6 text-yellow-400" />
               </div>
-              <span className="text-3xl font-black text-white">
+              <span className="text-3xl font-black text-foreground">
                 {completedProjects.length}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-300">완료됨</p>
+            <p className="text-sm font-semibold text-muted-foreground">완료됨</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-[#1a1a1a] rounded-2xl border border-gray-800 overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden">
           {/* Tab Headers */}
-          <div className="flex border-b border-gray-800">
+          <div className="flex border-b border-border">
             <button
               onClick={() => setActiveTab("received")}
               className={`flex-1 px-6 py-4 font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "received"
-                  ? "bg-[#252525] text-[#00e5cc] border-b-2 border-[#00e5cc]"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-[#00e5cc] border-b-2 border-[#00e5cc]"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Inbox className="w-4 h-4" />
@@ -283,8 +283,8 @@ export function Projects() {
               onClick={() => setActiveTab("applied")}
               className={`flex-1 px-6 py-4 font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "applied"
-                  ? "bg-[#252525] text-[#00e5cc] border-b-2 border-[#00e5cc]"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-[#00e5cc] border-b-2 border-[#00e5cc]"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Send className="w-4 h-4" />
@@ -294,8 +294,8 @@ export function Projects() {
               onClick={() => setActiveTab("ongoing")}
               className={`flex-1 px-6 py-4 font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "ongoing"
-                  ? "bg-[#252525] text-[#00e5cc] border-b-2 border-[#00e5cc]"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-[#00e5cc] border-b-2 border-[#00e5cc]"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -310,8 +310,8 @@ export function Projects() {
               onClick={() => setActiveTab("completed")}
               className={`flex-1 px-6 py-4 font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "completed"
-                  ? "bg-[#252525] text-[#00e5cc] border-b-2 border-[#00e5cc]"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-[#00e5cc] border-b-2 border-[#00e5cc]"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <CheckCircle className="w-4 h-4" />
@@ -327,21 +327,21 @@ export function Projects() {
                 {receivedProposals.map((proposal) => (
                   <div
                     key={proposal.id}
-                    className="bg-[#0a0a0a] rounded-xl border border-gray-800 p-6 hover:border-[#00e5cc]/30 transition-all"
+                    className="bg-background rounded-xl border border-border p-6 hover:border-[#00e5cc]/30 transition-all"
                   >
                     <div className="flex items-start gap-4">
                       <img
                         src={proposal.companyLogo}
                         alt={proposal.companyName}
-                        className="w-16 h-16 rounded-xl object-cover border border-gray-700"
+                        className="w-16 h-16 rounded-xl object-cover border border-border"
                       />
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="text-lg font-bold text-white mb-1">
+                            <h3 className="text-lg font-bold text-foreground mb-1">
                               {proposal.campaignTitle}
                             </h3>
-                            <div className="flex items-center gap-3 text-sm text-gray-400">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Building2 className="w-4 h-4" />
                                 {proposal.companyName}
@@ -355,29 +355,29 @@ export function Projects() {
                           {getStatusBadge(proposal.status)}
                         </div>
 
-                        <p className="text-sm text-gray-400 mb-4">{proposal.message}</p>
+                        <p className="text-sm text-muted-foreground mb-4">{proposal.message}</p>
 
                         <div className="grid grid-cols-3 gap-3 mb-4">
-                          <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                          <div className="bg-card rounded-lg p-3 border border-border">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                               <DollarSign className="w-3 h-3" />
                               예산
                             </div>
-                            <p className="text-sm font-bold text-white">{proposal.budget}</p>
+                            <p className="text-sm font-bold text-foreground">{proposal.budget}</p>
                           </div>
-                          <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                          <div className="bg-card rounded-lg p-3 border border-border">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                               <Calendar className="w-3 h-3" />
                               마감
                             </div>
-                            <p className="text-sm font-bold text-white">{proposal.deadline}</p>
+                            <p className="text-sm font-bold text-foreground">{proposal.deadline}</p>
                           </div>
-                          <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                          <div className="bg-card rounded-lg p-3 border border-border">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                               <FileText className="w-3 h-3" />
                               결과물
                             </div>
-                            <p className="text-sm font-bold text-white">{proposal.deliverables.split(" ")[1]}</p>
+                            <p className="text-sm font-bold text-foreground">{proposal.deliverables.split(" ")[1]}</p>
                           </div>
                         </div>
 
@@ -394,7 +394,7 @@ export function Projects() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="flex-1 border-gray-700 text-gray-400 hover:bg-gray-800"
+                              className="flex-1 border-border text-muted-foreground hover:bg-muted"
                             >
                               <XCircle className="w-4 h-4 mr-2" />
                               거절하기
@@ -414,22 +414,22 @@ export function Projects() {
                 {appliedCampaigns.map((campaign) => (
                   <div
                     key={campaign.id}
-                    className="bg-[#0a0a0a] rounded-xl border border-gray-800 p-6 hover:border-[#00e5cc]/30 transition-all cursor-pointer"
+                    className="bg-background rounded-xl border border-border p-6 hover:border-[#00e5cc]/30 transition-all cursor-pointer"
                     onClick={() => navigate(`/creator/campaigns/${campaign.id}`)}
                   >
                     <div className="flex items-start gap-4">
                       <img
                         src={campaign.companyLogo}
                         alt={campaign.company}
-                        className="w-16 h-16 rounded-xl object-cover border border-gray-700"
+                        className="w-16 h-16 rounded-xl object-cover border border-border"
                       />
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="text-lg font-bold text-white mb-1">
+                            <h3 className="text-lg font-bold text-foreground mb-1">
                               {campaign.title}
                             </h3>
-                            <div className="flex items-center gap-3 text-sm text-gray-400">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Building2 className="w-4 h-4" />
                                 {campaign.company}
@@ -444,19 +444,19 @@ export function Projects() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                          <div className="bg-card rounded-lg p-3 border border-border">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                               <DollarSign className="w-3 h-3" />
                               예산
                             </div>
-                            <p className="text-sm font-bold text-white">{campaign.budget}</p>
+                            <p className="text-sm font-bold text-foreground">{campaign.budget}</p>
                           </div>
-                          <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                          <div className="bg-card rounded-lg p-3 border border-border">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                               <Target className="w-3 h-3" />
                               분류
                             </div>
-                            <p className="text-sm font-bold text-white">{campaign.type}</p>
+                            <p className="text-sm font-bold text-foreground">{campaign.type}</p>
                           </div>
                         </div>
                       </div>
@@ -472,14 +472,14 @@ export function Projects() {
                 {ongoingProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="bg-[#0a0a0a] rounded-xl border border-gray-800 p-6 hover:border-[#00e5cc]/30 transition-all"
+                    className="bg-background rounded-xl border border-border p-6 hover:border-[#00e5cc]/30 transition-all"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-bold text-white mb-1">
+                        <h3 className="text-lg font-bold text-foreground mb-1">
                           {project.campaign}
                         </h3>
-                        <div className="flex items-center gap-3 text-sm text-gray-400">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Building2 className="w-4 h-4" />
                             {project.brand}
@@ -498,7 +498,7 @@ export function Projects() {
                     {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="text-gray-400">진행률</span>
+                        <span className="text-muted-foreground">진행률</span>
                         <span className="font-bold text-[#00e5cc]">{project.progress}%</span>
                       </div>
                       <Progress value={project.progress} className="h-2" />
@@ -506,13 +506,13 @@ export function Projects() {
 
                     {/* Stage & Milestone */}
                     <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                        <div className="text-xs text-gray-400 mb-1">현재 단계</div>
-                        <p className="text-sm font-bold text-white">{project.stage}</p>
+                      <div className="bg-card rounded-lg p-3 border border-border">
+                        <div className="text-xs text-muted-foreground mb-1">현재 단계</div>
+                        <p className="text-sm font-bold text-foreground">{project.stage}</p>
                       </div>
-                      <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                        <div className="text-xs text-gray-400 mb-1">다음 마일스톤</div>
-                        <p className="text-sm font-bold text-white">{project.nextMilestone}</p>
+                      <div className="bg-card rounded-lg p-3 border border-border">
+                        <div className="text-xs text-muted-foreground mb-1">다음 마일스톤</div>
+                        <p className="text-sm font-bold text-foreground">{project.nextMilestone}</p>
                       </div>
                     </div>
 
@@ -528,7 +528,7 @@ export function Projects() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 border-gray-700 text-gray-400 hover:bg-gray-800"
+                        className="flex-1 border-border text-muted-foreground hover:bg-muted"
                       >
                         <MessageSquare className="w-4 h-4 mr-2" />
                         메시지
@@ -536,7 +536,7 @@ export function Projects() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-gray-700 text-gray-400 hover:bg-gray-800"
+                        className="border-border text-muted-foreground hover:bg-muted"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -552,14 +552,14 @@ export function Projects() {
                 {completedProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="bg-[#0a0a0a] rounded-xl border border-gray-800 p-6"
+                    className="bg-background rounded-xl border border-border p-6"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-bold text-white mb-1">
+                        <h3 className="text-lg font-bold text-foreground mb-1">
                           {project.campaign}
                         </h3>
-                        <div className="flex items-center gap-3 text-sm text-gray-400">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Building2 className="w-4 h-4" />
                             {project.brand}
@@ -572,24 +572,24 @@ export function Projects() {
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-yellow-400">⭐</span>
-                        <span className="font-bold text-white">{project.rating}</span>
+                        <span className="font-bold text-foreground">{project.rating}</span>
                       </div>
                     </div>
 
                     {/* Feedback */}
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-gray-800 mb-4">
-                      <p className="text-sm text-gray-300 italic">"{project.feedback}"</p>
+                    <div className="bg-card rounded-lg p-4 border border-border mb-4">
+                      <p className="text-sm text-muted-foreground italic">"{project.feedback}"</p>
                     </div>
 
                     {/* Details */}
                     <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                        <div className="text-xs text-gray-400 mb-1">받은 금액</div>
+                      <div className="bg-card rounded-lg p-3 border border-border">
+                        <div className="text-xs text-muted-foreground mb-1">받은 금액</div>
                         <p className="text-sm font-bold text-green-400">{project.budget}</p>
                       </div>
-                      <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
-                        <div className="text-xs text-gray-400 mb-1">결과물</div>
-                        <p className="text-sm font-bold text-white">{project.deliverables}</p>
+                      <div className="bg-card rounded-lg p-3 border border-border">
+                        <div className="text-xs text-muted-foreground mb-1">결과물</div>
+                        <p className="text-sm font-bold text-foreground">{project.deliverables}</p>
                       </div>
                     </div>
 
@@ -598,7 +598,7 @@ export function Projects() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 border-gray-700 text-gray-400 hover:bg-gray-800"
+                        className="flex-1 border-border text-muted-foreground hover:bg-muted"
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         결과물 보기
@@ -606,7 +606,7 @@ export function Projects() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-gray-700 text-gray-400 hover:bg-gray-800"
+                        className="border-border text-muted-foreground hover:bg-muted"
                       >
                         <MessageSquare className="w-4 h-4" />
                       </Button>

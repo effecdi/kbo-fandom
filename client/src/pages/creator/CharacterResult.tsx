@@ -45,10 +45,10 @@ export function CharacterResult() {
         </Button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="text-3xl font-black text-foreground mb-2">
               캐릭터 생성 완료! 🎉
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               마음에 드는 결과를 선택하고 저장하세요
             </p>
           </div>
@@ -84,7 +84,7 @@ export function CharacterResult() {
                 : "border-transparent hover:border-purple-200 hover:shadow-lg"
             }`}
           >
-            <div className="aspect-square bg-gray-100 relative">
+            <div className="aspect-square bg-muted relative">
               <img
                 src={result.image}
                 alt={`Generated character ${result.id}`}
@@ -111,32 +111,32 @@ export function CharacterResult() {
                 </div>
               </div>
             </div>
-            <div className="p-4 bg-white">
-              <p className="text-sm font-semibold text-gray-700">{result.style} 스타일</p>
-              <p className="text-xs text-gray-500">생성일: {new Date().toLocaleDateString()}</p>
+            <div className="p-4 bg-card">
+              <p className="text-sm font-semibold text-foreground">{result.style} 스타일</p>
+              <p className="text-xs text-muted-foreground">생성일: {new Date().toLocaleDateString()}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Modification Options */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-200">
-        <h2 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-card rounded-2xl p-6 border border-border">
+        <h2 className="text-xl font-black text-foreground mb-4 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-purple-600" />
           세부 수정 옵션
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button variant="outline" className="h-auto py-4 flex-col">
             <div className="font-bold mb-1">표정 변경</div>
-            <div className="text-xs text-gray-500">다양한 감정 표현 추가</div>
+            <div className="text-xs text-muted-foreground">다양한 감정 표현 추가</div>
           </Button>
           <Button variant="outline" className="h-auto py-4 flex-col">
             <div className="font-bold mb-1">포즈 변경</div>
-            <div className="text-xs text-gray-500">액션 포즈 생성</div>
+            <div className="text-xs text-muted-foreground">액션 포즈 생성</div>
           </Button>
           <Button variant="outline" className="h-auto py-4 flex-col">
             <div className="font-bold mb-1">배경 추가</div>
-            <div className="text-xs text-gray-500">캐릭터와 어울리는 배경</div>
+            <div className="text-xs text-muted-foreground">캐릭터와 어울리는 배경</div>
           </Button>
         </div>
       </div>

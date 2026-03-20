@@ -126,10 +126,10 @@ export function CreatorCampaigns() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">
+          <h1 className="text-3xl font-black text-foreground mb-2">
             캠페인 찾기 🔍
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             관심있는 캠페인에 지원하고 협업 기회를 얻으세요
           </p>
         </div>
@@ -141,50 +141,50 @@ export function CreatorCampaigns() {
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-white" />
               </div>
-              <span className="text-2xl font-black text-gray-900">
+              <span className="text-2xl font-black text-foreground">
                 {campaigns.length}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">모집중인 캠페인</p>
+            <p className="text-sm font-semibold text-muted-foreground">모집중인 캠페인</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <Star className="w-5 h-5 text-green-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">
+              <span className="text-2xl font-black text-foreground">
                 {campaigns.filter(c => c.isNew).length}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">신규 캠페인</p>
+            <p className="text-sm font-semibold text-muted-foreground">신규 캠페인</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-blue-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">
+              <span className="text-2xl font-black text-foreground">
                 {new Set(campaigns.map(c => c.company)).size}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">참여 기관</p>
+            <p className="text-sm font-semibold text-muted-foreground">참여 기관</p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-yellow-600" />
               </div>
-              <span className="text-2xl font-black text-gray-900">HOT</span>
+              <span className="text-2xl font-black text-foreground">HOT</span>
             </div>
-            <p className="text-sm font-semibold text-gray-600">인기 캠페인</p>
+            <p className="text-sm font-semibold text-muted-foreground">인기 캠페인</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
+        <div className="bg-card rounded-xl p-4 border border-border mb-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="캠페인 검색..."
                 className="pl-10"
@@ -202,7 +202,7 @@ export function CreatorCampaigns() {
           {campaigns.map((campaign) => (
             <div
               key={campaign.id}
-              className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+              className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
             >
               <div className="p-6">
                 {/* Header */}
@@ -210,16 +210,16 @@ export function CreatorCampaigns() {
                   <img
                     src={campaign.companyLogo}
                     alt={campaign.company}
-                    className="w-16 h-16 rounded-xl object-cover border border-gray-200 flex-shrink-0"
+                    className="w-16 h-16 rounded-xl object-cover border border-border flex-shrink-0"
                   />
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h3 className="text-lg font-black text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">
+                        <h3 className="text-lg font-black text-foreground mb-1 group-hover:text-purple-600 transition-colors">
                           {campaign.title}
                         </h3>
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 text-sm text-gray-600">
+                          <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
                             <Building2 className="w-3 h-3" />
                             {campaign.company}
                           </span>
@@ -231,7 +231,7 @@ export function CreatorCampaigns() {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <Badge className="bg-indigo-100 text-indigo-700">
                         {campaign.type}
                       </Badge>
@@ -248,18 +248,18 @@ export function CreatorCampaigns() {
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-gray-700 mb-4 line-clamp-2">
+                <p className="text-sm text-foreground mb-4 line-clamp-2">
                   {campaign.description}
                 </p>
 
                 {/* Requirements */}
                 <div className="mb-4">
-                  <p className="text-xs font-semibold text-gray-600 mb-2">요구사항</p>
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">요구사항</p>
                   <div className="flex flex-wrap gap-2">
                     {campaign.requirements.map((req, idx) => (
                       <span
                         key={idx}
-                        className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
+                        className="text-xs bg-muted text-foreground px-2 py-1 rounded-full"
                       >
                         {req}
                       </span>
@@ -269,7 +269,7 @@ export function CreatorCampaigns() {
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                  <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-3 border border-purple-200">
                     <div className="flex items-center gap-1 text-xs text-purple-600 mb-1">
                       <DollarSign className="w-3 h-3" />
                       <span className="font-semibold">예산</span>
@@ -278,7 +278,7 @@ export function CreatorCampaigns() {
                       {campaign.budget.split("-")[0].trim()}
                     </div>
                   </div>
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 border border-blue-200">
                     <div className="flex items-center gap-1 text-xs text-blue-600 mb-1">
                       <Calendar className="w-3 h-3" />
                       <span className="font-semibold">마감일</span>
@@ -287,7 +287,7 @@ export function CreatorCampaigns() {
                       {campaign.deadline}
                     </div>
                   </div>
-                  <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                  <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3 border border-green-200">
                     <div className="flex items-center gap-1 text-xs text-green-600 mb-1">
                       <Users className="w-3 h-3" />
                       <span className="font-semibold">지원자</span>
@@ -300,8 +300,8 @@ export function CreatorCampaigns() {
 
                 {/* Deliverables */}
                 <div className="flex items-center gap-2 mb-4 text-sm">
-                  <span className="text-gray-600">📦 결과물:</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="text-muted-foreground">📦 결과물:</span>
+                  <span className="font-semibold text-foreground">
                     {campaign.deliverables}
                   </span>
                 </div>
