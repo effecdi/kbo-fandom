@@ -318,7 +318,7 @@ export function Reports() {
             </div>
 
             {/* Quick Insights */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800">
+            <div className="rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800">
               <h3 className="font-black text-foreground mb-4">💡 인사이트</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-2">

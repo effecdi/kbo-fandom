@@ -56,7 +56,7 @@ export function DetailPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 dark:from-purple-950/20 dark:via-pink-950/20 dark:to-yellow-950/20">
+      <section className="pt-32 pb-20 px-6 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
@@ -237,7 +237,7 @@ export function DetailPage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 px-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+      <section id="how-it-works" className="py-20 px-6 bg-muted">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
@@ -311,7 +311,7 @@ export function DetailPage() {
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div
                 key={item}
-                className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 hover:shadow-xl transition-all cursor-pointer group"
+                className="bg-muted rounded-2xl p-6 hover:shadow-xl transition-all cursor-pointer group"
               >
                 <div className="bg-card rounded-xl p-4 mb-4">
                   <div className="grid grid-cols-2 gap-2">

@@ -106,7 +106,7 @@ export function CollaborationMatching() {
         </div>
 
         {/* Project Summary */}
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800 mb-8">
+        <div className="rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800 mb-8">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h3 className="font-black text-foreground text-lg mb-2">

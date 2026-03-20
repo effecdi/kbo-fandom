@@ -434,7 +434,7 @@ export function CharacterNew() {
             ) : (
               <>
                 {/* Tips */}
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border border-purple-100 dark:border-purple-800">
+                <div className="rounded-2xl p-6 border border-purple-100 dark:border-purple-800">
                   <div className="flex items-center gap-2 mb-4">
                     <Lightbulb className="w-5 h-5 text-purple-600" />
                     <h3 className="font-bold text-foreground">생성 팁</h3>

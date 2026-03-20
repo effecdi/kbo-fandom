@@ -111,7 +111,7 @@ export function BusinessDashboard() {
                 </p>
               </button>
 
-              <button className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-300 dark:from-purple-900/30 dark:to-pink-900/30 dark:hover:border-purple-600">
+              <button className="p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-purple-300 dark:hover:border-purple-600">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4">
                   <Target className="w-6 h-6 text-white" />
                 </div>

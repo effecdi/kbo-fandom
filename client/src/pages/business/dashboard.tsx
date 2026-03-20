@@ -93,7 +93,7 @@ export default function BusinessDashboardPage() {
               </Link>
 
               <Link to="/story">
-                <button className="w-full p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-purple-300">
+                <button className="w-full p-6 rounded-xl hover:shadow-lg transition-all text-left border-2 border-transparent hover:border-purple-300">
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4">
                     <Palette className="w-6 h-6 text-white" />
                   </div>

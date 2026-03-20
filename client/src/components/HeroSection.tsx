@@ -4,7 +4,7 @@ const olliMascot = "/favicon.png";
 
 export function HeroSection() {
   return (
-    <section className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 dark:from-purple-950/20 dark:via-pink-950/20 dark:to-yellow-950/20 flex items-center justify-center px-4 py-20">
+    <section className="min-h-screen bg-background flex items-center justify-center px-4 py-20">
       <div className="max-w-7xl mx-auto w-full">
         {/* Header with Logo */}
         <div className="text-center mb-12">

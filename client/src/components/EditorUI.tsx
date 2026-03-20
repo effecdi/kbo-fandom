@@ -174,7 +174,7 @@ export function EditorUI() {
                   {
                     title: "Panel 4: Thinking",
                     emotion: "🤔",
-                    bg: "from-purple-50 to-violet-50",
+                    bg: "from-muted to-muted",
                   },
                 ].map((panel, idx) => (
                   <div

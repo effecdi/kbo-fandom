@@ -136,7 +136,7 @@ export function CreatorCampaigns() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-xl p-6 border-2 border-purple-200 dark:border-purple-800">
+          <div className="rounded-xl p-6 border-2 border-purple-200 dark:border-purple-800">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-white" />

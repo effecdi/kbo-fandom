@@ -64,7 +64,7 @@ export function Collaborations() {
           {projects.map((project) => (
             <div key={project.id} className="bg-card rounded-2xl border border-border overflow-hidden">
               {/* Project Header */}
-              <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+              <div className="p-6 bg-muted">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center">

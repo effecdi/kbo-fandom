@@ -110,7 +110,7 @@ export default function OnboardingPage() {
               {/* Creator Card */}
               <button
                 onClick={() => handleUserTypeSelect("creator")}
-                className="group relative bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 rounded-2xl p-8 hover:shadow-2xl transition-all border-2 border-transparent hover:border-purple-600 text-left"
+                className="group relative rounded-2xl p-8 hover:shadow-2xl transition-all border-2 border-transparent hover:border-purple-600 text-left"
               >
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Wand2 className="w-8 h-8 text-white" />

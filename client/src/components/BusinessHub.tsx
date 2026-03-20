@@ -190,7 +190,7 @@ export function BusinessHub() {
               </div>
 
               {/* Previous Toon Examples */}
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800">
+              <div className="rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800">
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-5 h-5 text-purple-600" />
                   <h4 className="font-bold text-foreground">Top Performing Toons</h4>

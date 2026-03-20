@@ -263,7 +263,7 @@ export function CreatorCampaignDetail() {
             </div>
 
             {/* Encouragement */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border border-purple-200 dark:border-purple-800 text-left mb-8">
+            <div className="rounded-2xl p-6 border border-purple-200 dark:border-purple-800 text-left mb-8">
               <h3 className="font-black text-lg text-foreground mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-purple-600" />
                 포기하지 마세요!
