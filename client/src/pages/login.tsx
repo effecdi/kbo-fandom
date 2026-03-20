@@ -1,13 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {

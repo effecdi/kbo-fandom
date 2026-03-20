@@ -18,7 +18,7 @@ export function FlowStepper({ currentStep }: { currentStep?: number }) {
             )}
             <div className="flex items-center gap-1.5">
               <div
-                className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0 transition-colors ${
+                className={`flex items-center justify-center w-5 h-5 rounded-full text-[13px] font-bold shrink-0 transition-colors ${
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : isDone
@@ -29,7 +29,7 @@ export function FlowStepper({ currentStep }: { currentStep?: number }) {
                 {isDone ? <Check className="h-3 w-3" /> : s.step}
               </div>
               <span
-                className={`text-[11px] hidden sm:inline whitespace-nowrap ${
+                className={`text-[13px] hidden sm:inline whitespace-nowrap ${
                   isActive ? "font-semibold text-foreground" : "text-muted-foreground"
                 }`}
               >

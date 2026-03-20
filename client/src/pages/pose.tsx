@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { useLocation, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -43,7 +43,7 @@ export default function PosePage() {
   const [searchParams] = useSearchParams(); const search = searchParams.toString();
   const params = new URLSearchParams(search);
   const isFlow = params.get("flow") === "1";
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
 
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<number[]>(() => {
     const charId = params.get("characterId");
@@ -60,7 +60,7 @@ export default function PosePage() {
   const { data: usageData } = useQuery<{ creatorTier: number; totalGenerations: number; tier: string; credits: number }>({
     queryKey: ["/api/usage"],
   });
-  const isPro = usageData?.tier === "pro";
+  const isPro = usageData?.tier === "pro" || usageData?.tier === "premium";
   const isOutOfCredits = !isPro && (usageData?.credits ?? 0) <= 0;
 
   // URL에서 전달된 characterId를 직접 fetch (gallery 캐시와 무관하게 즉시 표시)
@@ -222,7 +222,7 @@ export default function PosePage() {
         <div className="flex flex-col gap-4">
           <Card className="p-4">
             <h3 className="text-sm font-medium mb-3 text-muted-foreground">
-              기준 캐릭터 선택 <span className="text-xs">({selectedCharacterIds.length}/{MAX_CHARACTERS})</span>
+              기준 캐릭터 선택 <span className="text-[13px]">({selectedCharacterIds.length}/{MAX_CHARACTERS})</span>
             </h3>
 
             {/* 선택된 캐릭터 미리보기 */}
@@ -236,7 +236,7 @@ export default function PosePage() {
                         alt={gen.prompt}
                         className="w-full h-full object-cover rounded-md border-2 border-primary"
                       />
-                      <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                      <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[13px] font-bold">
                         {idx + 1}
                       </div>
                       <button
@@ -279,7 +279,7 @@ export default function PosePage() {
                           className="w-full aspect-square object-cover"
                         />
                         {isSelected && (
-                          <div className="absolute top-1 left-1 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                          <div className="absolute top-1 left-1 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[13px] font-bold">
                             {selIndex + 1}
                           </div>
                         )}
@@ -416,11 +416,11 @@ export default function PosePage() {
             )}
           </Button>
           {!isPro && (
-            <p className="mt-1.5 text-xs text-muted-foreground text-center">1회 생성 시 5 크레딧 소모</p>
+            <p className="mt-1.5 text-[13px] text-muted-foreground text-center">1회 생성 시 5 크레딧 소모</p>
           )}
           {!isPro && isOutOfCredits && (
             <div className="mt-2 flex items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">크레딧이 부족합니다.</p>
+              <p className="text-[13px] text-muted-foreground">크레딧이 부족합니다.</p>
               <Button size="sm" variant="secondary" asChild>
                 <a href="/pricing">크레딧 충전</a>
               </Button>

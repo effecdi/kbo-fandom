@@ -132,7 +132,7 @@ const BUBBLE_STEPS: OnboardingStep[] = [
 const ONBOARDING_KEY_STORY = "charagen_story_onboarding_seen_v2";
 const ONBOARDING_KEY_BUBBLE = "charagen_bubble_onboarding_seen_v2";
 
-export function EditorOnboarding({ editor }: { editor: "story" | "bubble" }) {
+export function EditorOnboarding({ editor, onComplete }: { editor: "story" | "bubble"; onComplete?: () => void }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const steps = editor === "story" ? STORY_STEPS : BUBBLE_STEPS;
@@ -149,6 +149,7 @@ export function EditorOnboarding({ editor }: { editor: "story" | "bubble" }) {
   const handleClose = () => {
     setOpen(false);
     localStorage.setItem(storageKey, "1");
+    onComplete?.();
   };
 
   const handleNext = () => {
@@ -173,7 +174,7 @@ export function EditorOnboarding({ editor }: { editor: "story" | "bubble" }) {
           <div className="bg-gradient-to-br from-[hsl(173_100%_35%)] to-[hsl(262_83%_45%)] px-6 pt-8 pb-6 text-white">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="h-4 w-4 opacity-80" />
-              <span className="text-[11px] font-medium opacity-80 uppercase tracking-wider">
+              <span className="text-[13px] font-medium opacity-80 uppercase tracking-wider">
                 {editor === "story" ? "Story Editor" : "Bubble Editor"} Guide
               </span>
             </div>
@@ -183,7 +184,7 @@ export function EditorOnboarding({ editor }: { editor: "story" | "bubble" }) {
               </div>
               <div>
                 <h3 className="text-lg font-bold leading-tight" data-testid="text-onboarding-title">{current.title}</h3>
-                <span className="text-[11px] opacity-70">Step {step + 1} / {steps.length}</span>
+                <span className="text-[13px] opacity-70">Step {step + 1} / {steps.length}</span>
               </div>
             </div>
           </div>
@@ -205,7 +206,7 @@ export function EditorOnboarding({ editor }: { editor: "story" | "bubble" }) {
           {current.tip && (
             <div className="mt-3 flex items-start gap-2 bg-muted/50 dark:bg-muted/30 rounded-lg px-3 py-2.5">
               <Sparkles className="h-3.5 w-3.5 text-[hsl(173_100%_35%)] shrink-0 mt-0.5" />
-              <p className="text-[11px] text-muted-foreground leading-relaxed" data-testid="text-onboarding-tip">{current.tip}</p>
+              <p className="text-[13px] text-muted-foreground leading-relaxed" data-testid="text-onboarding-tip">{current.tip}</p>
             </div>
           )}
         </div>

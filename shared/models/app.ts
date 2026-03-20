@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, serial, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial, uniqueIndex, foreignKey, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./auth";
@@ -22,6 +22,7 @@ export const generations = pgTable("generations", {
   referenceImageUrl: text("reference_image_url"),
   resultImageUrl: text("result_image_url").notNull(),
   thumbnailUrl: text("thumbnail_url"),
+  characterName: text("character_name"),
   creditsUsed: integer("credits_used").notNull().default(1),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -30,7 +31,8 @@ export const userCredits = pgTable("user_credits", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id).unique(),
   credits: integer("credits").notNull().default(50),
-  tier: text("tier").notNull().default("free"),
+  tier: text("tier").notNull().default("free"), // "free" | "pro" | "premium"
+  monthlyCreditsQuota: integer("monthly_credits_quota").notNull().default(30),
   authorName: text("author_name"),
   genre: text("genre"),
   totalGenerations: integer("total_generations").notNull().default(0),
@@ -39,6 +41,29 @@ export const userCredits = pgTable("user_credits", {
   dailyBonusCredits: integer("daily_bonus_credits").notNull().default(0),
   lastDailyBonusAt: timestamp("last_daily_bonus_at"),
   lastResetAt: timestamp("last_reset_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  proExpiresAt: timestamp("pro_expires_at"),
+});
+
+// ── Subscriptions ──
+
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  plan: text("plan").notNull(), // "pro" | "premium"
+  billingCycle: text("billing_cycle").notNull(), // "monthly" | "yearly"
+  billingKey: text("billing_key").notNull(),
+  pgProvider: text("pg_provider").notNull().default("tosspayments"),
+  status: text("status").notNull().default("active"), // "active" | "cancelled" | "past_due" | "expired"
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  nextPaymentAt: timestamp("next_payment_at"),
+  cancelledAt: timestamp("cancelled_at"),
+  cancelReason: text("cancel_reason"),
+  portoneScheduleId: text("portone_schedule_id"),
+  retryCount: integer("retry_count").notNull().default(0),
+  lastRetryAt: timestamp("last_retry_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
 export const payments = pgTable("payments", {
@@ -50,6 +75,9 @@ export const payments = pgTable("payments", {
   status: text("status").notNull().default("pending"),
   productType: text("product_type").notNull(),
   creditsAdded: integer("credits_added").notNull().default(0),
+  subscriptionId: integer("subscription_id"),
+  billingCycle: text("billing_cycle"), // "monthly" | "yearly"
+  currency: text("currency").notNull().default("KRW"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -133,6 +161,7 @@ export const storyScriptSchema = z.object({
   expressionPrompt: z.string().optional(),
   itemPrompt: z.string().optional(),
   backgroundPrompt: z.string().optional(),
+  characterNames: z.array(z.string()).optional(),
 });
 
 export const topicSuggestSchema = z.object({
@@ -160,6 +189,39 @@ export interface StoryScriptResponse {
 
 export type CreatorProfile = z.infer<typeof creatorProfileSchema>;
 
+// ── Character Folders ──
+
+export const characterFolders = pgTable("character_folders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const characterFolderItems = pgTable("character_folder_items", {
+  id: serial("id").primaryKey(),
+  folderId: integer("folder_id").notNull().references(() => characterFolders.id, { onDelete: "cascade" }),
+  generationId: integer("generation_id").notNull().references(() => generations.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => ({
+  uniqueFolderItem: uniqueIndex("unique_folder_item").on(table.folderId, table.generationId),
+}));
+
+export const insertCharacterFolderSchema = createInsertSchema(characterFolders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const projectFolders = pgTable("project_folders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 export const bubbleProjects = pgTable("bubble_projects", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -167,8 +229,19 @@ export const bubbleProjects = pgTable("bubble_projects", {
   thumbnailUrl: text("thumbnail_url"),
   canvasData: text("canvas_data").notNull(),
   editorType: text("editor_type").notNull().default("bubble"),
+  folderId: integer("folder_id").references(() => projectFolders.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertProjectFolderSchema = createInsertSchema(projectFolders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateProjectFolderSchema = z.object({
+  name: z.string().min(1).optional(),
 });
 
 export const insertBubbleProjectSchema = createInsertSchema(bubbleProjects).omit({
@@ -181,10 +254,18 @@ export const updateBubbleProjectSchema = z.object({
   name: z.string().min(1).optional(),
   thumbnailUrl: z.string().optional(),
   canvasData: z.string().optional(),
+  folderId: z.number().int().positive().nullable().optional(),
 });
 
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+export type CharacterFolder = typeof characterFolders.$inferSelect;
+export type InsertCharacterFolder = z.infer<typeof insertCharacterFolderSchema>;
+export type CharacterFolderItem = typeof characterFolderItems.$inferSelect;
+export type ProjectFolder = typeof projectFolders.$inferSelect;
+export type InsertProjectFolder = z.infer<typeof insertProjectFolderSchema>;
 export type BubbleProject = typeof bubbleProjects.$inferSelect;
 export type InsertBubbleProject = z.infer<typeof insertBubbleProjectSchema>;
 
@@ -194,6 +275,7 @@ export type Generation = typeof generations.$inferSelect;
 export type GenerationLight = Omit<Generation, "referenceImageUrl"> & {
   resultImageUrl: string | null;
   referenceImageUrl?: undefined;
+  characterName?: string | null;
 };
 export type InsertGeneration = z.infer<typeof insertGenerationSchema>;
 export type UserCredits = typeof userCredits.$inferSelect;

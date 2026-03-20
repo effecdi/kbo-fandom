@@ -32,12 +32,32 @@ import { Link, useLocation, useNavigate } from "react-router";
 const olliLogo = "/favicon.png";
 import { useTheme } from "@/components/theme-provider";
 
+interface NavItemSingle {
+  type: "single";
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  path: string;
+}
+
+interface NavItemDropdown {
+  type: "dropdown";
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  badge?: string;
+  isOpen: boolean;
+  toggle: () => void;
+  children: { label: string; path: string }[];
+}
+
+type NavItem = NavItemSingle | NavItemDropdown;
+
 interface DashboardLayoutProps {
   children: ReactNode;
   userType: "creator" | "business";
+  noPadding?: boolean;
 }
 
-export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
+export function DashboardLayout({ children, userType, noPadding }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -48,7 +68,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const [businessMenuOpen, setBusinessMenuOpen] = useState(false);
 
   // 작가 모드는 원래 네비게이션 구조 사용
-  const creatorNavItems = [
+  const creatorNavItems: NavItem[] = [
     { 
       icon: Home, 
       label: "Home", 
@@ -110,7 +130,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     },
   ];
 
-  const businessNavItems = [
+  const businessNavItems: NavItem[] = [
     { icon: LayoutDashboard, label: "대시보드", path: "/business/dashboard", type: "single" },
     { icon: Sparkles, label: "마스코트 생성", path: "/business/mascot", type: "single" },
     { icon: FolderOpen, label: "브랜드 자산", path: "/business/brand-assets", type: "single" },
@@ -484,7 +504,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         </header>
 
         {/* Content Area */}
-        <main className="pt-18 p-8">
+        <main className={`pt-18 ${noPadding ? "" : "p-8"}`}>
           {children}
         </main>
       </div>

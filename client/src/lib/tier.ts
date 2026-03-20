@@ -62,21 +62,40 @@ export function getCreatorTier(totalGenerations: number): number {
   return 0;
 }
 
+/**
+ * 유료 티어인지 확인 (Pro 또는 Premium)
+ */
+export function isPaidTier(tier: string): boolean {
+  return tier === "pro" || tier === "premium";
+}
+
 export const FEATURE_TIER_REQUIREMENTS = {
   pose: { minTier: 2, label: "포즈 생성", unlockAt: "인기 작가 (15회+)" },
   background: { minTier: 2, label: "배경/아이템 합성", unlockAt: "인기 작가 (15회+)" },
   effects: { minTier: 1, label: "블러 효과", unlockAt: "신인 작가 (5회+)" },
   bubbleEditor: { minTier: 1, label: "말풍선 에디터", unlockAt: "신인 작가 (5회+)" },
   allFonts: { minTier: 3, label: "전체 폰트", unlockAt: "프로 연재러 (30회+)" },
-  chat: { minTier: -1, label: "채팅 이미지", unlockAt: "Pro 멤버십" },
-  adMatch: { minTier: -1, label: "광고 매칭 AI", unlockAt: "Pro 멤버십" },
+  chat: { minTier: -1, label: "채팅 이미지", unlockAt: "유료 멤버십" },
+  adMatch: { minTier: -1, label: "광고 매칭 AI", unlockAt: "유료 멤버십" },
 } as const;
 
 export type FeatureKey = keyof typeof FEATURE_TIER_REQUIREMENTS;
 
 export function canAccessFeature(featureKey: FeatureKey, creatorTier: number, isPro: boolean): boolean {
   const req = FEATURE_TIER_REQUIREMENTS[featureKey];
+  // isPro here means "is paid tier" (Pro or Premium)
   if (req.minTier === -1) return isPro;
   if (isPro) return true;
   return creatorTier >= req.minTier;
 }
+
+// 크레딧 소모량 상수 (클라이언트 표시용)
+export const CREDIT_COSTS = {
+  character: 10,
+  pose: 25,
+  background: 25,
+  effect: 15,
+  basic: 5,
+  storyAuto: 50,
+  storyPrompt: 50,
+} as const;

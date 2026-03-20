@@ -68,11 +68,11 @@ export function FeedPostCard({ post, onAuthorClick, onPostClick }: FeedPostCardP
         >
           <Avatar className="h-6 w-6">
             <AvatarImage src={post.authorProfileImageUrl || ""} />
-            <AvatarFallback className="text-[10px]">
+            <AvatarFallback className="text-[13px]">
               {(post.authorName || "U").charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs font-medium truncate flex-1">{displayName}</span>
+          <span className="text-[13px] font-medium truncate flex-1">{displayName}</span>
           {post.authorGenre && (
             <Badge variant="secondary" className="text-[9px] shrink-0">
               {post.authorGenre === "daily" ? "Daily" : post.authorGenre === "gag" ? "Comedy" : post.authorGenre === "romance" ? "Romance" : post.authorGenre === "fantasy" ? "Fantasy" : post.authorGenre}
@@ -89,7 +89,7 @@ export function FeedPostCard({ post, onAuthorClick, onPostClick }: FeedPostCardP
 
         <div className="flex items-center justify-between">
           <button
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
             onClick={() => isAuthenticated && likeMutation.mutate()}
             disabled={!isAuthenticated || likeMutation.isPending}
           >

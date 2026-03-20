@@ -82,12 +82,12 @@ export function InstagramConnect() {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-sm">Instagram 연동</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             {status?.connected ? "계정이 연결되어 있습니다" : "비즈니스/크리에이터 계정 연결"}
           </p>
         </div>
         {status?.connected && (
-          <Badge variant="default" className="text-[10px] shrink-0">연결됨</Badge>
+          <Badge variant="default" className="text-[13px] shrink-0">연결됨</Badge>
         )}
       </div>
 
@@ -99,10 +99,10 @@ export function InstagramConnect() {
           </div>
 
           {daysUntilExpiry !== null && (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-[13px]">
               <span className="text-muted-foreground">토큰 만료:</span>
               {daysUntilExpiry <= 7 ? (
-                <Badge variant="destructive" className="text-[10px]">
+                <Badge variant="destructive" className="text-[13px]">
                   {daysUntilExpiry}일 후 만료
                 </Badge>
               ) : (
@@ -116,7 +116,7 @@ export function InstagramConnect() {
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1 text-xs h-7"
+                className="gap-1 text-[13px] h-7"
                 onClick={() => refreshMutation.mutate()}
                 disabled={refreshMutation.isPending}
               >
@@ -131,7 +131,7 @@ export function InstagramConnect() {
             <Button
               size="sm"
               variant="ghost"
-              className="gap-1 text-xs h-7 text-destructive hover:text-destructive"
+              className="gap-1 text-[13px] h-7 text-destructive hover:text-destructive"
               onClick={() => disconnectMutation.mutate()}
               disabled={disconnectMutation.isPending}
             >

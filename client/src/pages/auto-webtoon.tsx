@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,7 +64,7 @@ export default function AutoWebtoonPage() {
   const { isAuthenticated } = useAuth();
   const { showLoginDialog, setShowLoginDialog, guard } = useLoginGuard();
   const { toast } = useToast();
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
 
   // ---- Step state ----
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -111,7 +111,7 @@ export default function AutoWebtoonPage() {
   const imageCost = totalCuts;
   const totalCost = breakdownCost + imageCost;
   const availableCredits = (usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0);
-  const isPro = usage?.tier === "pro";
+  const isPro = usage?.tier === "pro" || usage?.tier === "premium";
   const hasEnoughCredits = isPro || availableCredits >= totalCost;
 
   // ---- Topic suggestion ----
@@ -545,7 +545,7 @@ export default function AutoWebtoonPage() {
                 onClick={() => setCutsPerCanvas(n)}
               >
                 <LayoutPreview cuts={n} size={40} />
-                <span className="text-xs font-medium">{n}컷</span>
+                <span className="text-[13px] font-medium">{n}컷</span>
               </button>
             ))}
           </div>
@@ -599,7 +599,7 @@ export default function AutoWebtoonPage() {
                 >
                   <X className="h-3 w-3" />
                 </button>
-                <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center truncate px-1">
+                <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[13px] text-center truncate px-1">
                   {char.name}
                 </span>
               </div>
@@ -632,11 +632,11 @@ export default function AutoWebtoonPage() {
             <div className="text-sm text-muted-foreground">
               총 비용: <span className="font-bold text-foreground">{isPro ? "무료 (Pro)" : `${totalCost} 크레딧`}</span>
               {!isPro && (
-                <span className="text-xs ml-2">(분해 {breakdownCost} + 이미지 {imageCost})</span>
+                <span className="text-[13px] ml-2">(분해 {breakdownCost} + 이미지 {imageCost})</span>
               )}
             </div>
             {!isPro && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-[13px] text-muted-foreground">
                 보유: {availableCredits} 크레딧
                 {!hasEnoughCredits && (
                   <a href="/pricing" className="text-primary ml-1 underline">충전하기</a>
@@ -665,7 +665,7 @@ export default function AutoWebtoonPage() {
 
       {/* Gallery picker dialog */}
       <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto" data-lenis-prevent>
           <DialogHeader>
             <DialogTitle>갤러리에서 캐릭터 선택</DialogTitle>
           </DialogHeader>
@@ -725,7 +725,7 @@ export default function AutoWebtoonPage() {
         <div className="flex gap-3 overflow-x-auto pb-2">
           {Array.from({ length: canvasCount }, (_, ci) => (
             <div key={ci} className="flex-shrink-0">
-              <div className="text-xs text-muted-foreground text-center mb-1">Canvas {ci + 1}</div>
+              <div className="text-[13px] text-muted-foreground text-center mb-1">Canvas {ci + 1}</div>
               <LayoutPreview cuts={cutsPerCanvas} size={60} />
             </div>
           ))}
@@ -852,7 +852,7 @@ export default function AutoWebtoonPage() {
                     <X className="h-5 w-5 text-destructive" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-[13px]">
                     {idx + 1}
                   </div>
                 )}

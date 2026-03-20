@@ -87,7 +87,16 @@
   --font-sans: 'A2Z', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: Menlo, monospace;
   --radius: .625rem;
-  --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
+  --mint-50: #f0fdfa;
+  --mint-100: #ccfbf1;
+  --mint-200: #99f6e4;
+  --mint-600: #0d9488;
+  --gold-50: #fffbeb;
+  --gold-300: #fcd34d;
+  --gold-400: #fbbf24;
+  --gold-500: #f59e0b;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;  --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
   --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.04);
   --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.04), 0 1px 3px -1px hsl(0 0% 0% / 0.03);
   --shadow: 0 2px 6px -1px hsl(0 0% 0% / 0.05), 0 1px 3px -1px hsl(0 0% 0% / 0.04);
@@ -216,6 +225,41 @@
   }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+.animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+.animate-blob { animation: blob 7s infinite; }
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
+/* Lenis smooth scroll */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
 
 /**
  * Using the elevate system.
@@ -339,7 +383,7 @@
 
 .editor-page button,
 .editor-page [role="button"] {
-  font-size: 11px !important;
+  font-size: 13px !important;
   border: none !important;
 }
 
@@ -401,4 +445,25 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(transparent, #00c6ff, transparent);
+}
+
+/* Driver.js tour video styling */
+.olli-tour-popover {
+  max-width: 380px !important;
+}
+.olli-tour-popover .tour-video {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  max-height: 200px;
+  object-fit: cover;
+}
+.olli-tour-popover .driver-popover-description p,
+.olli-tour-popover .driver-popover-description ul {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.olli-tour-popover .driver-popover-description ul {
+  padding-left: 16px;
 }

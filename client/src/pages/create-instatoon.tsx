@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +33,7 @@ import type { Generation } from "@shared/schema";
 type InstatoonPanelTab = "image" | "prompt" | "captions" | "bubbles";
 
 export default function CreateInstatoonPage() {
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -59,7 +59,7 @@ export default function CreateInstatoonPage() {
   const { data: usage } = useQuery<{ tier: string; credits: number; creatorTier: number; totalGenerations: number; creditsUsed?: number }>({
     queryKey: ["/api/usage"],
   });
-  const isPro = usage?.tier === "pro";
+  const isPro = usage?.tier === "pro" || usage?.tier === "premium";
   const isOutOfCredits = !isPro && (usage?.credits ?? 0) <= 0;
   const canAllFontsInstatoon = isPro || (usage?.creatorTier ?? 0) >= 3;
   const availableFonts = canAllFontsInstatoon ? KOREAN_FONTS : KOREAN_FONTS.slice(0, 3);
@@ -276,7 +276,7 @@ export default function CreateInstatoonPage() {
       <button
         type="button"
         onClick={() => navigate("/create")}
-        className="mb-4 inline-flex items-center text-xs text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center text-[13px] text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5 mr-1" />
         캐릭터 만들기로 돌아가기
@@ -293,13 +293,13 @@ export default function CreateInstatoonPage() {
         <div className="w-[220px] flex-shrink-0">
           <div className="rounded-md border bg-card">
             <div className="px-3 py-2 border-b">
-              <p className="text-[11px] font-semibold text-muted-foreground">패널</p>
+              <p className="text-[13px] font-semibold text-muted-foreground">패널</p>
             </div>
             <nav className="p-2 space-y-1">
               <button
                 type="button"
                 onClick={() => setActiveTab("image")}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs ${
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[13px] ${
                   activeTab === "image" ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover-elevate"
                 }`}
               >
@@ -311,7 +311,7 @@ export default function CreateInstatoonPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("prompt")}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs ${
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[13px] ${
                   activeTab === "prompt" ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover-elevate"
                 }`}
               >
@@ -323,7 +323,7 @@ export default function CreateInstatoonPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("captions")}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs ${
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[13px] ${
                   activeTab === "captions" ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover-elevate"
                 }`}
               >
@@ -335,7 +335,7 @@ export default function CreateInstatoonPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("bubbles")}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs ${
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[13px] ${
                   activeTab === "bubbles" ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover-elevate"
                 }`}
               >
@@ -405,7 +405,7 @@ export default function CreateInstatoonPage() {
                 <Card className="p-3">
                   <div className="flex items-center justify-between mb-3 gap-2">
                     <h3 className="text-sm font-medium text-muted-foreground">또는 생성한 캐릭터/장면에서 선택</h3>
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-[13px]">
                       My Gallery
                     </Badge>
                   </div>
@@ -470,7 +470,7 @@ export default function CreateInstatoonPage() {
                   className="min-h-[120px] resize-none"
                   data-testid="input-instatoon-prompt"
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   장면 분위기, 장소, 시간대, 감정을 짧게 적어주세요. 배경과 소품이 자동으로 추가됩니다.
                 </p>
                 <Button
@@ -494,7 +494,7 @@ export default function CreateInstatoonPage() {
                 </Button>
                 {!isPro && isOutOfCredits && (
                   <div className="mt-1 flex items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">오늘의 무료 생성 횟수를 모두 사용했습니다.</p>
+                    <p className="text-[13px] text-muted-foreground">오늘의 무료 생성 횟수를 모두 사용했습니다.</p>
                     <Button size="sm" variant="secondary" asChild>
                       <a href="/pricing">Pro 업그레이드</a>
                     </Button>
@@ -510,7 +510,7 @@ export default function CreateInstatoonPage() {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <Label className="text-xs font-medium flex items-center gap-1">
+                    <Label className="text-[13px] font-medium flex items-center gap-1">
                       <Type className="h-3.5 w-3.5" />
                       상단 자막
                     </Label>
@@ -553,7 +553,7 @@ export default function CreateInstatoonPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="w-full justify-center gap-1.5 text-xs"
+                        className="w-full justify-center gap-1.5 text-[13px]"
                         onClick={() => setTopCaptions([""])}
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -565,7 +565,7 @@ export default function CreateInstatoonPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <Label className="text-xs font-medium flex items-center gap-1">
+                    <Label className="text-[13px] font-medium flex items-center gap-1">
                       <Type className="h-3.5 w-3.5" />
                       하단 자막
                     </Label>
@@ -608,7 +608,7 @@ export default function CreateInstatoonPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="w-full justify-center gap-1.5 text-xs"
+                        className="w-full justify-center gap-1.5 text-[13px]"
                         onClick={() => setBottomCaptions([""])}
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -640,14 +640,14 @@ export default function CreateInstatoonPage() {
 
               <div className="space-y-1.5 mb-3">
                 {bubblePage.bubbles.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     말풍선을 추가하고 캔버스에서 자유롭게 움직여보세요.
                   </p>
                 ) : (
                   bubblePage.bubbles.map((b, index) => (
                     <div
                       key={b.id}
-                      className={`flex items-center justify-between rounded-md px-2 py-1.5 cursor-pointer text-xs ${
+                      className={`flex items-center justify-between rounded-md px-2 py-1.5 cursor-pointer text-[13px] ${
                         selectedBubbleId === b.id ? "bg-primary/10" : "hover:bg-muted"
                       }`}
                       onClick={() => setSelectedBubbleId(b.id)}
@@ -686,25 +686,25 @@ export default function CreateInstatoonPage() {
                     return (
                       <>
                         <div className="space-y-1.5">
-                          <Label className="text-xs">말풍선 텍스트</Label>
+                          <Label className="text-[13px]">말풍선 텍스트</Label>
                           <Textarea
                             value={selected.text}
                             onChange={(e) =>
                               updateSpeechBubble(selected.id, { text: e.target.value })
                             }
-                            className="h-20 text-xs"
+                            className="h-20 text-[13px]"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-xs">폰트</Label>
+                          <Label className="text-[13px]">폰트</Label>
                           <Select
                             value={selected.fontKey}
                             onValueChange={(v) =>
                               updateSpeechBubble(selected.id, { fontKey: v })
                             }
                           >
-                            <SelectTrigger className="h-8 text-xs">
+                            <SelectTrigger className="h-8 text-[13px]">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -714,7 +714,7 @@ export default function CreateInstatoonPage() {
                                 </SelectItem>
                               ))}
                               {!canAllFontsInstatoon && (
-                                <div className="px-3 py-2 text-[11px] text-muted-foreground border-t">
+                                <div className="px-3 py-2 text-[13px] text-muted-foreground border-t">
                                   Pro 멤버십 또는 프로 연재러(30회+) 등급에서 전체 폰트 해금
                                 </div>
                               )}
@@ -724,8 +724,8 @@ export default function CreateInstatoonPage() {
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between gap-2">
-                            <Label className="text-xs">글자 크기</Label>
-                            <span className="text-[11px] text-muted-foreground">
+                            <Label className="text-[13px]">글자 크기</Label>
+                            <span className="text-[13px] text-muted-foreground">
                               {selected.fontSize}px
                             </span>
                           </div>
@@ -742,7 +742,7 @@ export default function CreateInstatoonPage() {
 
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
-                            <Label className="text-[11px]">스타일</Label>
+                            <Label className="text-[13px]">스타일</Label>
                             <Select
                               value={selected.style}
                               onValueChange={(v) =>
@@ -752,7 +752,7 @@ export default function CreateInstatoonPage() {
                                 })
                               }
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger className="h-8 text-[13px]">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -765,14 +765,14 @@ export default function CreateInstatoonPage() {
                             </Select>
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-[11px]">꼬리 방향</Label>
+                            <Label className="text-[13px]">꼬리 방향</Label>
                             <Select
                               value={selected.tailDirection}
                               onValueChange={(v: any) =>
                                 updateSpeechBubble(selected.id, { tailDirection: v })
                               }
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger className="h-8 text-[13px]">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -785,7 +785,7 @@ export default function CreateInstatoonPage() {
                           </div>
                         </div>
 
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           캔버스에서 말풍선 테두리와 꼬리 끝을 드래그하면 크기와 꼬리를 조절할 수 있습니다.
                         </p>
                       </>

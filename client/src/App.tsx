@@ -3,6 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Navbar } from "@/components/navbar";
+import { ReactLenis } from "lenis/react";
 import { useAuth } from "@/hooks/use-auth";
 
 // Design pages
@@ -70,6 +72,7 @@ import { Payments } from "@/pages/common/Payments";
 import StoryPage from "@/pages/story";
 import BubblePage from "@/pages/bubble";
 import CreatePage from "@/pages/create";
+import CreateInstatoonPage from "@/pages/create-instatoon";
 import PosePage from "@/pages/pose";
 import BackgroundPage from "@/pages/background";
 import ChatPage from "@/pages/chat";
@@ -82,7 +85,6 @@ import AdMatchPage from "@/pages/ad-match";
 import EditsPage from "@/pages/edits";
 import MediaKitPage from "@/pages/media-kit";
 import AutoWebtoonPage from "@/pages/auto-webtoon";
-import CreateInstatoonPage from "@/pages/create-instatoon";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
 import RefundPolicyPage from "@/pages/refund-policy";
@@ -183,13 +185,15 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <RouterProvider router={router} />
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ReactLenis root options={{ lerp: 0.08, duration: 1.2, smoothWheel: true }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <TooltipProvider>
+            <RouterProvider router={router} />
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ReactLenis>
   );
 }
 

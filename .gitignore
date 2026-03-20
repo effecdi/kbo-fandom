@@ -23,4 +23,11 @@ attached_assets/*.zip
 .env.local
 .env.*.local
 .env.production
+.env.development
+.env.staging
+
+# certificates & private keys
+*.pem
+*.key
+
 .vite-cache/

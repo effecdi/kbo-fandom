@@ -128,7 +128,7 @@ export default function AdMatchPage() {
   });
   const [results, setResults] = useState<AdMatchResult | null>(null);
 
-  const isPro = credits?.tier === "pro";
+  const isPro = credits?.tier === "pro" || credits?.tier === "premium";
   const [limitOpen, setLimitOpen] = useState(false);
 
   const getDailyKey = (feature: string) => {
@@ -348,7 +348,7 @@ export default function AdMatchPage() {
                 <Card key={idx} className="p-5" data-testid={`card-recommendation-${idx}`}>
                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <h4 className="font-semibold">{rec.category}</h4>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[13px]">
                       매칭 {rec.matchScore}%
                     </Badge>
                   </div>
@@ -357,11 +357,11 @@ export default function AdMatchPage() {
 
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {rec.brands.map((brand) => (
-                      <Badge key={brand} variant="outline" className="text-xs">{brand}</Badge>
+                      <Badge key={brand} variant="outline" className="text-[13px]">{brand}</Badge>
                     ))}
                   </div>
 
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-[13px] text-muted-foreground">
                     예상 CPM: <span className="font-medium">{rec.expectedCPM}</span>
                   </div>
                 </Card>

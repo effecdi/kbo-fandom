@@ -12,7 +12,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowLeft, Receipt } from "lucide-react";
-import type { Payment } from "@shared/schema";
+// 서버에서 impUid/merchantUid/userId를 제거하고 보내므로 클라이언트용 타입 정의
+type PaymentSafe = {
+  id: number;
+  amount: number;
+  status: string;
+  productType: string;
+  creditsAdded: number;
+  createdAt: string;
+};
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -46,7 +54,7 @@ function getStatusBadge(status: string) {
 export default function PaymentsPage() {
   const { isAuthenticated } = useAuth();
 
-  const { data: payments, isLoading } = useQuery<Payment[]>({
+  const { data: payments, isLoading } = useQuery<PaymentSafe[]>({
     queryKey: ["/api/payments"],
     enabled: isAuthenticated,
   });
@@ -106,7 +114,7 @@ export default function PaymentsPage() {
               {payments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell className="text-sm">
-                    {formatDate(payment.createdAt as unknown as string)}
+                    {formatDate(payment.createdAt)}
                   </TableCell>
                   <TableCell className="text-sm font-medium">
                     {getProductLabel(payment.productType, payment.creditsAdded)}

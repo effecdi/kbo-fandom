@@ -38,7 +38,8 @@ const navItems = [
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [location, navigate] = useLocation();
+  const location = useLocation().pathname;
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { clearRole } = useUserRole();
   const { theme, toggleTheme } = useTheme();
@@ -64,7 +65,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <nav className="flex-1 p-4 overflow-y-auto">
           <div className="space-y-1">
             {navItems.map((item) => (
-              <Link key={item.path} href={item.path}>
+              <Link key={item.path} to={item.path}>
                 <div
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer ${
                     isActive(item)

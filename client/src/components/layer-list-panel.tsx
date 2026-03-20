@@ -213,19 +213,19 @@ export function LayerListPanel({
     <div className="h-full overflow-y-auto p-3 space-y-2">
       <div className="flex items-center gap-1.5">
         <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+        <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
           레이어 ({items.length})
         </span>
       </div>
 
       {items.length === 0 && (
-        <p className="text-[11px] text-muted-foreground text-center py-4">레이어가 없습니다</p>
+        <p className="text-[13px] text-muted-foreground text-center py-4">레이어가 없습니다</p>
       )}
 
       {/* Bulk action bar */}
       {hasMulti && (
         <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-md">
-          <span className="text-[11px] text-primary font-medium flex-1">
+          <span className="text-[13px] text-primary font-medium flex-1">
             {multiSelectedItems.length}개 선택
           </span>
           {maskShapes.length > 0 && onToggleMaskLink && (
@@ -375,7 +375,7 @@ export function LayerListPanel({
                   )}
                 </div>
                 {isMask && <Scan className="h-3 w-3 text-primary shrink-0" />}
-                <span className="text-[11px] truncate">
+                <span className="text-[13px] truncate">
                   {isMask ? `[마스크] ${item.label}` : item.label}
                 </span>
               </div>
@@ -449,8 +449,8 @@ export function LayerListPanel({
         const isMask = ci.type === "shape" && ci.maskEnabled;
         const isLinked = !!ci.clipMaskId;
         const isScript = ci.type === "topScript" || ci.type === "bottomScript";
-        const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
-        const ctxShortcut = "text-[10px] text-muted-foreground ml-4";
+        const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[13px] hover:bg-accent hover:text-accent-foreground transition-colors";
+        const ctxShortcut = "text-[13px] text-muted-foreground ml-4";
         return (
         <>
           <div
@@ -537,7 +537,7 @@ export function LayerListPanel({
 
             {/* Delete */}
             <button type="button"
-              className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+              className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[13px] text-red-500 hover:bg-red-500/10 transition-colors"
               onClick={() => { onDeleteLayer(ci); setContextMenu(null); }}>
               <span>레이어 삭제</span><span className={ctxShortcut}>Del</span>
             </button>

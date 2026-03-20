@@ -10,7 +10,7 @@ import {
   Wand2, MessageCircle, Target, Eye, ChevronDown, FileText, Paintbrush, Briefcase, MessageSquare, Trees, BookOpen, FolderOpen, Crown, HelpCircle, Rss,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useTour } from "@/components/spotlight-tour";
+
 import { useQuery } from "@tanstack/react-query";
 import logoImg from "@assets/logo.png";
 
@@ -25,7 +25,6 @@ interface NavGroup {
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { startTour } = useTour();
   const location = useLocation().pathname;
   const { toast } = useToast();
 
@@ -71,7 +70,7 @@ export function Navbar() {
     },
   ];
 
-  const isPro = credits?.tier === "pro";
+  const isPro = credits?.tier === "pro" || credits?.tier === "premium";
   const isGroupActive = (group: NavGroup) => group.paths.includes(location);
 
   return (
@@ -85,17 +84,6 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
-            <Link to="/home">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`gap-1.5 ${location === "/home" ? "bg-primary/10 text-primary" : ""}`}
-                data-testid="link-landing"
-              >
-                <Home className="h-4 w-4" />
-                <span className="hidden sm:inline">Home</span>
-              </Button>
-            </Link>
             {navGroups.map((group) => (
               <DropdownMenu key={group.label}>
                 <DropdownMenuTrigger asChild>
@@ -129,7 +117,7 @@ export function Navbar() {
                     ) : (
                       <DropdownMenuItem key={item.path} asChild>
                         <Link
-                          href={item.path}
+                          to={item.path}
                           className="cursor-pointer"
                           data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
                         >
@@ -191,16 +179,6 @@ export function Navbar() {
             </DropdownMenu>
           )}
 
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={startTour}
-            data-testid="button-guide"
-            title="사용 가이드"
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
-
           <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme-toggle">
             {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
@@ -218,7 +196,7 @@ export function Navbar() {
               <DropdownMenuContent align="end" className="w-48">
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <p className="text-[13px] text-muted-foreground">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

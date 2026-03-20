@@ -19,12 +19,10 @@ import {
   MessageCircle,
   Target,
   Paintbrush,
-  TrendingUp,
   Heart,
   PenTool,
   Image,
   Trophy,
-  Medal,
   Star,
   ChevronRight,
   Layers,
@@ -41,9 +39,9 @@ import {
   X,
   HelpCircle,
 } from "lucide-react";
-import type { Generation, PopularCreator } from "@shared/schema";
+import type { Generation } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
-import { useTour } from "@/components/spotlight-tour";
+import { useNavigate } from "react-router";
 
 interface UsageData {
   credits: number;
@@ -165,7 +163,7 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
         <Card className="w-full max-w-md p-8 space-y-6" data-testid="card-onboarding-name">
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">STEP 1/2</p>
+            <p className="text-[13px] text-muted-foreground">STEP 1/2</p>
             <h2 className="text-xl font-bold">작가명을 알려주세요</h2>
             <p className="text-sm text-muted-foreground">
               크리에이터 프로필에 표시될 이름이에요.
@@ -199,7 +197,7 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
       <Card className="w-full max-w-md p-8 space-y-6" data-testid="card-onboarding-genre">
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">STEP 2/2</p>
+          <p className="text-[13px] text-muted-foreground">STEP 2/2</p>
           <h2 className="text-xl font-bold">주력 장르를 선택하세요</h2>
           <p className="text-sm text-muted-foreground">
             맞춤 트렌드 랭킹을 보여드릴게요.
@@ -218,7 +216,7 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
               data-testid={`button-genre-${g.value}`}
             >
               <div className="font-semibold text-sm">{g.label}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{g.desc}</div>
+              <div className="text-[13px] text-muted-foreground mt-0.5">{g.desc}</div>
             </button>
           ))}
         </div>
@@ -232,17 +230,6 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
         </Button>
       </Card>
     </div>
-  );
-}
-
-function RankMedal({ rank }: { rank: number }) {
-  if (rank === 1) return <Medal className="h-5 w-5 text-amber-500" />;
-  if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-  if (rank === 3) return <Medal className="h-5 w-5 text-amber-700 dark:text-amber-600" />;
-  return (
-    <span className="flex h-5 w-5 items-center justify-center text-xs font-bold text-muted-foreground">
-      {rank}
-    </span>
   );
 }
 
@@ -283,11 +270,8 @@ export default function HomePage() {
   const { data: recentGenerations } = useQuery<Generation[]>({
     queryKey: ["/api/gallery"],
   });
-  const { data: popularCreators } = useQuery<PopularCreator[]>({
-    queryKey: ["/api/popular-creators"],
-  });
 
-  const { startTour } = useTour();
+  const navigate = useNavigate();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTierGuide, setShowTierGuide] = useState(false);
   const [showTourBanner, setShowTourBanner] = useState(false);
@@ -315,7 +299,6 @@ export default function HomePage() {
   const userGenre = usage?.genre;
   const genreLabel = GENRES.find(g => g.value === userGenre)?.label;
 
-  const topCreators = (popularCreators || []).slice(0, 5);
 
   const recent = recentGenerations?.slice(0, 4) || [];
 
@@ -340,7 +323,7 @@ export default function HomePage() {
               variant="outline"
               size="sm"
               className="gap-1.5"
-              onClick={startTour}
+              onClick={() => navigate("/story")}
               data-testid="button-start-guide"
             >
               <HelpCircle className="h-4 w-4" />
@@ -368,7 +351,7 @@ export default function HomePage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold">처음이신가요?</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   사용 가이드를 통해 주요 기능을 빠르게 둘러보세요.
                 </p>
               </div>
@@ -378,7 +361,7 @@ export default function HomePage() {
                 size="sm"
                 onClick={() => {
                   setShowTourBanner(false);
-                  startTour();
+                  navigate("/story");
                 }}
               >
                 가이드 시작
@@ -410,10 +393,10 @@ export default function HomePage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="font-bold text-lg" data-testid="text-tier-name">{tier.name}</h2>
                       {genreLabel && (
-                        <Badge variant="secondary" className="text-[11px]" data-testid="badge-genre">{genreLabel}</Badge>
+                        <Badge variant="secondary" className="text-[13px]" data-testid="badge-genre">{genreLabel}</Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-[13px] text-muted-foreground mt-0.5">
                       총 {totalGen}개 작품 생성
                     </p>
                   </div>
@@ -422,20 +405,20 @@ export default function HomePage() {
                   <div className="flex flex-col items-end gap-0.5">
                     <div className="flex items-center gap-2">
                       {usage?.tier === "pro" ? (
-                        <Badge variant="default" className="text-[11px]" data-testid="badge-plan">Pro</Badge>
+                        <Badge variant="default" className="text-[13px]" data-testid="badge-plan">Pro</Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-[11px]" data-testid="badge-plan">Free</Badge>
+                        <Badge variant="secondary" className="text-[13px]" data-testid="badge-plan">Free</Badge>
                       )}
-                      <span className="text-xs text-muted-foreground" data-testid="text-credits">
+                      <span className="text-[13px] text-muted-foreground" data-testid="text-credits">
                         {usage?.tier === "pro" ? "무제한" : `${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
                       </span>
                     </div>
                     {usage?.tier === "pro" ? (
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-[13px] text-muted-foreground">
                         모든 기능과 모든 폰트 제공
                       </span>
                     ) : (
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-[13px] text-muted-foreground">
                         기본 및 일부 무료 폰트 제공
                       </span>
                     )}
@@ -445,13 +428,13 @@ export default function HomePage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">경험치</span>
-                  <span className="text-xs font-medium tabular-nums" data-testid="text-xp-progress">
+                  <span className="text-[13px] text-muted-foreground">경험치</span>
+                  <span className="text-[13px] font-medium tabular-nums" data-testid="text-xp-progress">
                     {xp.nextTier ? `${Math.round(xp.progress)}%` : "MAX"}
                   </span>
                 </div>
                 <Progress value={xp.progress} className="h-2" data-testid="progress-xp" />
-                <p className="text-xs text-muted-foreground" data-testid="text-xp-hint">
+                <p className="text-[13px] text-muted-foreground" data-testid="text-xp-hint">
                   {xp.nextTier && xp.remaining > 0 ? (
                     <><span className="font-medium text-primary">{xp.nextTier}</span>까지 {xp.remaining}개 더 생성하면 혜택 업그레이드</>
                   ) : (
@@ -464,15 +447,15 @@ export default function HomePage() {
                 <div className="flex items-start gap-2.5 mt-3 rounded-lg bg-primary/5 p-3" data-testid="section-next-unlock">
                   <Gift className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-primary mb-0.5">다음 등급 혜택</p>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
+                    <p className="text-[13px] font-semibold text-primary mb-0.5">다음 등급 혜택</p>
+                    <p className="text-[13px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
                   </div>
                 </div>
               )}
 
               <button
                 onClick={() => setShowTierGuide((v) => !v)}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover-elevate rounded-md px-2 py-1.5 -mx-1 w-fit mt-3"
+                className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover-elevate rounded-md px-2 py-1.5 -mx-1 w-fit mt-3"
                 data-testid="button-tier-guide-toggle"
               >
                 <Info className="h-3.5 w-3.5" />
@@ -488,7 +471,7 @@ export default function HomePage() {
                     return (
                       <div
                         key={t.name}
-                        className={`rounded-lg border p-3 text-xs transition-colors ${isCurrent ? "border-primary/30 bg-primary/5" : isUnlocked ? "border-border" : "border-border opacity-60"}`}
+                        className={`rounded-lg border p-3 text-[13px] transition-colors ${isCurrent ? "border-primary/30 bg-primary/5" : isUnlocked ? "border-border" : "border-border opacity-60"}`}
                         data-testid={`tier-info-${i}`}
                       >
                         <div className="flex items-center gap-2.5 mb-2.5">
@@ -497,8 +480,8 @@ export default function HomePage() {
                           </div>
                           <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                             <span className="font-semibold">{t.name}</span>
-                            <Badge variant="secondary" className="text-[10px]">{t.badge}</Badge>
-                            {isCurrent && <Badge variant="default" className="text-[10px]">현재</Badge>}
+                            <Badge variant="secondary" className="text-[13px]">{t.badge}</Badge>
+                            {isCurrent && <Badge variant="default" className="text-[13px]">현재</Badge>}
                             {isUnlocked && !isCurrent && <Check className="h-3.5 w-3.5 text-green-500" />}
                             {!isUnlocked && <Lock className="h-3 w-3 text-muted-foreground" />}
                           </div>
@@ -527,7 +510,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-4 gap-2">
                   <h2 className="text-lg font-bold">최근 작품</h2>
                   <Link to="/gallery">
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs" data-testid="button-view-all-gallery">
+                    <Button variant="ghost" size="sm" className="gap-1 text-[13px]" data-testid="button-view-all-gallery">
                       전체보기 <ArrowRight className="h-3 w-3" />
                     </Button>
                   </Link>
@@ -543,7 +526,7 @@ export default function HomePage() {
                         />
                       </div>
                       <div className="p-2.5">
-                        <p className="text-xs truncate text-muted-foreground">{gen.prompt}</p>
+                        <p className="text-[13px] truncate text-muted-foreground">{gen.prompt}</p>
                       </div>
                     </Card>
                   ))}
@@ -553,61 +536,6 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-6">
-            <Card className="p-5" data-testid="card-ranking">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold leading-tight" data-testid="text-ranking-title">
-                    인기 크리에이터
-                  </h2>
-                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
-                    팔로워 & 좋아요 기반 랭킹
-                  </p>
-                </div>
-              </div>
-              {topCreators.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">
-                  아직 랭킹 데이터가 없어요
-                </p>
-              ) : (
-                <div className="space-y-0.5">
-                  {topCreators.map((creator, idx) => (
-                    <div
-                      key={creator.id}
-                      className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover-elevate"
-                    >
-                      <RankMedal rank={idx + 1} />
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                          {(creator.authorName || creator.firstName || "U").charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm truncate">
-                            {creator.authorName || creator.firstName || "유저"}
-                          </span>
-                          {creator.genre && (
-                            <Badge variant="secondary" className="text-[10px] shrink-0">
-                              {creator.genre === "daily" ? "일상" : creator.genre === "gag" ? "개그" : creator.genre === "romance" ? "로맨스" : creator.genre === "fantasy" ? "판타지" : creator.genre}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Heart className="h-3 w-3" />
-                            {creator.followerCount} 팔로워
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-
             {usage?.tier !== "pro" && (
               <Link to="/pricing">
                 <Card
@@ -620,7 +548,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm">Pro로 업그레이드</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">무제한 생성 & 모든 기능·모든 폰트 해제</p>
+                      <p className="text-[13px] text-muted-foreground mt-0.5">무제한 생성 & 모든 기능·모든 폰트 해제</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-primary shrink-0" />
                   </div>
@@ -639,7 +567,7 @@ export default function HomePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm">크레딧 충전</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">₩4,900 / 50 크레딧</p>
+                    <p className="text-[13px] text-muted-foreground mt-0.5">₩4,900 / 50 크레딧</p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-primary shrink-0" />
                 </div>
@@ -654,7 +582,7 @@ export default function HomePage() {
               <h2 className="text-lg font-bold mb-4" data-testid={`text-section-${section.label}`}>{section.label}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {section.items.map((tool) => (
-                  <Link key={tool.testId} href={tool.href}>
+                  <Link key={tool.testId} to={tool.href}>
                     <div
                       className="group relative cursor-pointer h-full"
                       data-testid={tool.testId}
@@ -670,7 +598,7 @@ export default function HomePage() {
                               <h3 className="font-semibold text-sm dark:text-white">{tool.title}</h3>
                               {/* PRO 배지 제거 */}
                             </div>
-                            <p className="text-xs text-muted-foreground dark:text-white/60 mt-1 leading-relaxed">{tool.desc}</p>
+                            <p className="text-[13px] text-muted-foreground dark:text-white/60 mt-1 leading-relaxed">{tool.desc}</p>
                           </div>
                         </div>
                       </div>
@@ -691,14 +619,14 @@ export default function HomePage() {
               <div className="relative flex h-full flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
-                  <span className="text-[11px] text-slate-400 dark:text-slate-400">영구 무료</span>
+                  <span className="text-[13px] text-slate-400 dark:text-slate-400">영구 무료</span>
                 </div>
                 <div className="mb-2">
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-black tracking-tight">₩0</span>
                     <span className="text-sm text-slate-400">/월</span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
+                  <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
                 </div>
                 <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
@@ -738,16 +666,16 @@ export default function HomePage() {
             <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
               <div className="relative flex h-full flex-col">
                 <div className="flex items-center justify-between mb-6">
-                  <Badge className="bg-primary-foreground/15 text-primary-foreground text-[11px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
-                  <span className="text-[11px] text-primary-foreground/70">/월</span>
+                  <Badge className="bg-primary-foreground/15 text-primary-foreground text-[13px] px-3 py-1 border border-primary-foreground/20">Pro</Badge>
+                  <span className="text-[13px] text-primary-foreground/70">/월</span>
                 </div>
                 <div className="mb-2">
-                  <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
+                  <p className="text-[13px] uppercase tracking-[0.22em] text-primary-foreground/70 mb-1">크리에이터 추천</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-black tracking-tight">₩29,900</span>
                     <span className="text-sm text-primary-foreground/70">/월</span>
                   </div>
-                  <p className="mt-2 text-xs text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
+                  <p className="mt-2 text-[13px] text-primary-foreground/80">본격적인 크리에이터를 위한 플랜</p>
                 </div>
                 <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
@@ -798,7 +726,7 @@ export default function HomePage() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-2xl font-black text-primary">₩4,900</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
+                    <div className="text-[13px] text-slate-500 dark:text-slate-400">50 크레딧</div>
                   </div>
                 </div>
               </Card>
@@ -820,7 +748,7 @@ export default function HomePage() {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-2xl font-black text-primary">₩4,900</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">50 크레딧</div>
+                  <div className="text-[13px] text-slate-500 dark:text-slate-400">50 크레딧</div>
                 </div>
               </div>
             </Card>

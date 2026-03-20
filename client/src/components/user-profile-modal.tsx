@@ -73,7 +73,7 @@ export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
                   {profile.authorName || profile.firstName || "User"}
                 </h3>
                 {profile.genre && (
-                  <Badge variant="secondary" className="text-xs mt-1">
+                  <Badge variant="secondary" className="text-[13px] mt-1">
                     {GENRE_LABELS[profile.genre] || profile.genre}
                   </Badge>
                 )}
@@ -110,7 +110,7 @@ export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
               ].map((stat) => (
                 <div key={stat.label} className="text-center p-2 rounded-lg bg-muted/50">
                   <div className="text-lg font-bold">{stat.value}</div>
-                  <div className="text-[10px] text-muted-foreground">{stat.label}</div>
+                  <div className="text-[13px] text-muted-foreground">{stat.label}</div>
                 </div>
               ))}
             </div>

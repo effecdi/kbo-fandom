@@ -32,6 +32,7 @@ import {
   ArrowDownRight,
   Spline,
   Minus,
+  Waves,
   MoreHorizontal,
   Circle,
   Palette,
@@ -96,6 +97,7 @@ export interface CanvasLineElement {
   zIndex: number;
   visible?: boolean;
   locked?: boolean;
+  borderStyle?: "wobbly" | "simple";
 }
 
 export type ShapeType = "rectangle" | "circle" | "triangle" | "diamond" | "star" | "arrow";
@@ -612,6 +614,27 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>
+
+      {/* Border style toggle — 컷 보더 라인 전용 */}
+      {element.borderStyle && (
+        <>
+          <div className="context-toolbar__divider" />
+          <button
+            className={`context-toolbar__btn ${element.borderStyle === "wobbly" ? "context-toolbar__btn--active" : ""}`}
+            onClick={() => update({ borderStyle: "wobbly" })}
+            title="꾹꾹체"
+          >
+            <Waves className="h-4 w-4" />
+          </button>
+          <button
+            className={`context-toolbar__btn ${element.borderStyle === "simple" ? "context-toolbar__btn--active" : ""}`}
+            onClick={() => update({ borderStyle: "simple" })}
+            title="심플라인"
+          >
+            <Minus className="h-4 w-4" />
+          </button>
+        </>
+      )}
 
       {/* Animation */}
       <button className="context-toolbar__btn" title="애니메이션">

@@ -7,12 +7,12 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Link, useLocation, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Upload, Download, RotateCcw, Eye, ArrowRight, ArrowLeft } from "lucide-react";
 import { useLoginGuard } from "@/hooks/use-login-guard";
 import { LoginRequiredDialog } from "@/components/login-required-dialog";
 import { FlowStepper } from "@/components/flow-stepper";
-import { getFlowState } from "@/lib/flow";
+import { getFlowState, setFlowState } from "@/lib/flow";
 
 type BlurType = "gaussian" | "motion" | "radial";
 
@@ -29,7 +29,7 @@ export default function EffectsPage() {
   const [searchParams] = useSearchParams(); const search = searchParams.toString();
   const effectsParams = new URLSearchParams(search);
   const isFlow = effectsParams.get("flow") === "1";
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [blurType, setBlurType] = useState<BlurType>("gaussian");
   const [strength, setStrength] = useState(0);
@@ -40,7 +40,7 @@ export default function EffectsPage() {
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   const { data: usageData } = useQuery<{creatorTier: number; totalGenerations: number; tier: string}>({ queryKey: ["/api/usage"] });
-  const isPro = usageData?.tier === "pro";
+  const isPro = usageData?.tier === "pro" || usageData?.tier === "premium";
 
   useEffect(() => {
     if (isFlow && !uploadedImage) {
@@ -246,7 +246,7 @@ export default function EffectsPage() {
                       data-testid={`button-blur-${bt.value}`}
                     >
                       <span className="font-semibold">{bt.label}</span>
-                      <span className="text-xs opacity-70">{bt.labelKo}</span>
+                      <span className="text-[13px] opacity-70">{bt.labelKo}</span>
                     </Button>
                   ))}
                 </div>
@@ -267,8 +267,8 @@ export default function EffectsPage() {
                   data-testid="slider-strength"
                 />
                 <div className="flex justify-between mt-1">
-                  <span className="text-xs text-muted-foreground">0</span>
-                  <span className="text-xs text-muted-foreground">20</span>
+                  <span className="text-[13px] text-muted-foreground">0</span>
+                  <span className="text-[13px] text-muted-foreground">20</span>
                 </div>
               </Card>
 
@@ -329,7 +329,15 @@ export default function EffectsPage() {
             <ArrowLeft className="h-4 w-4" /> 배경/아이템
           </Button>
           <div className="flex-1" />
-          <Button className="gap-2" onClick={() => navigate("/story?flow=1")} data-testid="button-flow-next">
+          <Button className="gap-2" onClick={() => {
+            // 현재 캔버스 이미지(블러 적용됨)를 FlowState에 저장
+            const canvas = canvasRef.current;
+            if (canvas) {
+              const dataUrl = canvas.toDataURL("image/png");
+              setFlowState({ lastPoseImageUrl: dataUrl });
+            }
+            navigate("/story?flow=1");
+          }} data-testid="button-flow-next">
             스토리 편집 <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

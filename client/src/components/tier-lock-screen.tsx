@@ -37,7 +37,7 @@ export function TierLockScreen({ featureKey, currentTier, totalGenerations }: Ti
             <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           현재 등급: {TIERS[currentTier]?.name ?? "입문 작가"} ({totalGenerations}회 생성)
         </p>
       </div>

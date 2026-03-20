@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo, startTransition } from "react";
 import { useSearchParams } from "react-router";
+import { regenerateBorderPoints } from "@/lib/webtoon-layout";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,6 +67,7 @@ import {
   ChevronDown,
   UploadCloud,
   ImagePlus,
+  Check,
   CheckCircle2,
   Zap,
   Star,
@@ -89,15 +91,31 @@ import {
   Triangle,
   Diamond,
   ArrowRight as ArrowRightIcon,
+  Sparkles,
+  FolderPlus,
+  Paintbrush,
+  ZoomIn as ZoomInIcon,
+  CircleDot,
+  PlusCircle,
+  MinusCircle,
+  Scaling,
+  ScanSearch,
+  Palette,
+  MousePointerClick,
 } from "lucide-react";
 import DrawingCanvas, { type DrawingToolState, type DrawingCanvasHandle } from "@/components/drawing-canvas";
+import SelectionCanvas, { type SelectionCanvasHandle, type SelectionMode } from "@/components/selection-canvas";
+import ExpandCanvas from "@/components/expand-canvas";
 import "@/components/drawing-tools-panel.scss";
 import { FlowStepper } from "@/components/flow-stepper";
 import { AutoWebtoonPanel } from "@/components/auto-webtoon-panel";
-import { EditorOnboarding } from "@/components/editor-onboarding";
+import { CharacterPicker, type CharacterImage } from "@/components/character-picker";
+import { EditorChecklistPopover } from "@/components/editor-checklist-popover";
+import { StoryGuidePanel } from "@/components/story-guide-panel";
+import { startStoryTour } from "@/lib/story-tour";
 import { InstagramPublishDialog } from "@/components/instagram-publish-dialog";
 import { getFlowState, clearFlowState } from "@/lib/flow";
-import type { StoryPanelScript, Generation, GenerationLight } from "@shared/schema";
+import type { StoryPanelScript, Generation, GenerationLight, CharacterFolder } from "@shared/schema";
 import { Instagram } from "lucide-react";
 import ReactFlow, { Background, Controls, type Node, type NodeChange, applyNodeChanges } from "reactflow";
 import {
@@ -145,32 +163,6 @@ const BUBBLE_TEMPLATE_CATEGORIES: TemplateCategory[] = [
 ];
 
 type ScriptStyle = "filled" | "box" | "handwritten-box" | "no-bg" | "no-border";
-type DragMode =
-  | null
-  | "move"
-  | "resize-br"
-  | "resize-bl"
-  | "resize-tr"
-  | "resize-tl"
-  | "resize-r"
-  | "resize-l"
-  | "resize-t"
-  | "resize-b"
-  | "move-char"
-  | "resize-char-tl"
-  | "resize-char-tr"
-  | "resize-char-bl"
-  | "resize-char-br"
-  | "rotate-char"
-  | "move-script-top"
-  | "move-script-bottom"
-  | "resize-script-top"
-  | "resize-script-bottom"
-  | "move-tail"
-  | "tail-ctrl1"
-  | "tail-ctrl2"
-  | "tail-ctrl3"
-  | "tail-ctrl4";
 
 const SCRIPT_STYLE_OPTIONS: { value: ScriptStyle; label: string }[] = [
   { value: "filled", label: "채움" },
@@ -291,10 +283,14 @@ interface CharacterPlacement {
   height?: number;  // explicit pixel height
   rotation?: number;
   flipX?: boolean;  // 좌우 반전
+  flipY?: boolean;  // 상하 반전
   imageEl: HTMLImageElement | null;
   zIndex?: number;
   locked?: boolean;
   visible?: boolean;
+  name?: string;
+  generationId?: number;
+  prompt?: string;
 }
 
 interface ScriptData {
@@ -618,7 +614,7 @@ function getScriptRect(
   canvasW: number,
   canvasH: number,
 ) {
-  const fs = script.fontSize || 20;
+  const fs = script.fontSize || 16;
   const padX = Math.max(14, fs * 0.8);
   const padY = Math.max(6, fs * 0.4);
   const fontFamily = getFontFamily(script.fontKey || "default");
@@ -899,8 +895,43 @@ function rectsIntersect(a: BBox, b: BBox): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
+// ─── HSL color utilities ─────────────────────────────────────────────────
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    else if (max === g) h = ((b - r) / d + 2) / 6;
+    else h = ((r - g) / d + 4) / 6;
+  }
+  return [h, s, l];
+}
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  if (s === 0) { const v = Math.round(l * 255); return [v, v, v]; }
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  return [
+    Math.round(hue2rgb(p, q, h + 1/3) * 255),
+    Math.round(hue2rgb(p, q, h) * 255),
+    Math.round(hue2rgb(p, q, h - 1/3) * 255),
+  ];
+}
+
 const CANVAS_W = 540;
-const CANVAS_H = 675;
+let CANVAS_H = 675;
+type CanvasRatio = "3:4" | "1:1";
 
 function PanelCanvas({
   panel,
@@ -926,6 +957,7 @@ function PanelCanvas({
   onEditScriptPositionChange,
   externalSelectedScriptPosition,
   isGenerating,
+  canvasH,
 }: {
   panel: PanelData;
   onUpdate: (updated: PanelData) => void;
@@ -950,17 +982,11 @@ function PanelCanvas({
   onEditScriptPositionChange?: (position: "top" | "bottom" | null) => void;
   externalSelectedScriptPosition?: "top" | "bottom" | null;
   isGenerating?: boolean;
+  canvasH?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
-  const dragModeRef = useRef<DragMode>(null);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-  const dragBubbleStartRef = useRef({ x: 0, y: 0, w: 0, h: 0 });
-  const dragCharStartRef = useRef({ x: 0, y: 0, scale: 1 });
-  const dragScriptStartRef = useRef({ x: 0, y: 0 });
-  const dragScriptFontStartRef = useRef(20);
-  const dragScriptSizeStartRef = useRef({ w: 0, h: 0 });
   const selectedBubbleIdRef = useRef(selectedBubbleId);
   const selectedCharIdRef = useRef(selectedCharId);
   const selectedShapeIdRef = useRef(selectedShapeId);
@@ -1231,41 +1257,7 @@ function PanelCanvas({
           }
         }
 
-        // Selection box + resize handles (선택된 경우에만)
-        if (selectedTextIdRef.current === te.id) {
-          const drawTextSelection = () => {
-            ctx.save();
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = HANDLE_COLOR;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 3]);
-            ctx.strokeRect(te.x - 3, te.y - 3, te.width + 6, te.height + 6);
-            ctx.setLineDash([]);
-            // Resize handles
-            const hs = 8;
-            const textHandles = [
-              { x: te.x - hs / 2, y: te.y - hs / 2 },
-              { x: te.x + te.width - hs / 2, y: te.y - hs / 2 },
-              { x: te.x - hs / 2, y: te.y + te.height - hs / 2 },
-              { x: te.x + te.width - hs / 2, y: te.y + te.height - hs / 2 },
-              { x: te.x + te.width / 2 - hs / 2, y: te.y - hs / 2 },
-              { x: te.x + te.width / 2 - hs / 2, y: te.y + te.height - hs / 2 },
-              { x: te.x - hs / 2, y: te.y + te.height / 2 - hs / 2 },
-              { x: te.x + te.width - hs / 2, y: te.y + te.height / 2 - hs / 2 },
-            ];
-            textHandles.forEach((c) => {
-              ctx.beginPath();
-              ctx.fillStyle = "#ffffff";
-              ctx.fillRect(c.x, c.y, hs, hs);
-              ctx.strokeStyle = HANDLE_COLOR;
-              ctx.lineWidth = 1.5;
-              ctx.strokeRect(c.x, c.y, hs, hs);
-            });
-            ctx.restore();
-          };
-          if (maskShape) deferredSelections.push(drawTextSelection);
-          else drawTextSelection();
-        }
+        // Selection indicator is rendered by HTML overlay (circle handles)
         ctx.restore();
       } else if (d.type === "line") {
         const le = d.le;
@@ -1273,8 +1265,13 @@ function PanelCanvas({
         ctx.globalAlpha = le.opacity;
         ctx.strokeStyle = le.color;
         ctx.lineWidth = le.strokeWidth;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
+        if ((le as any).borderStyle === "simple") {
+          ctx.lineCap = "square";
+          ctx.lineJoin = "miter";
+        } else {
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+        }
 
         // Dash pattern
         if (le.dashPattern === "dashed") ctx.setLineDash([8, 4]);
@@ -1390,38 +1387,7 @@ function PanelCanvas({
           }
 
           // Selection indicator — always drawn for selected shape
-          if (se.id === selectedShapeIdRef.current) {
-            ctx.beginPath();
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = HANDLE_COLOR;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([5, 4]);
-            ctx.strokeRect(se.x - 3, se.y - 3, se.width + 6, se.height + 6);
-            ctx.setLineDash([]);
-
-            // Resize handles: 4 corners + 4 edges = 8 handles
-            const hs = 8;
-            const handles = [
-              // corners
-              { x: se.x - hs / 2, y: se.y - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y - hs / 2 },
-              { x: se.x - hs / 2, y: se.y + se.height - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y + se.height - hs / 2 },
-              // edges
-              { x: se.x + se.width / 2 - hs / 2, y: se.y - hs / 2 },
-              { x: se.x + se.width / 2 - hs / 2, y: se.y + se.height - hs / 2 },
-              { x: se.x - hs / 2, y: se.y + se.height / 2 - hs / 2 },
-              { x: se.x + se.width - hs / 2, y: se.y + se.height / 2 - hs / 2 },
-            ];
-            handles.forEach((c) => {
-              ctx.beginPath();
-              ctx.fillStyle = "#ffffff";
-              ctx.fillRect(c.x, c.y, hs, hs);
-              ctx.strokeStyle = HANDLE_COLOR;
-              ctx.lineWidth = 1.5;
-              ctx.strokeRect(c.x, c.y, hs, hs);
-            });
-          }
+          // Selection indicator is rendered by HTML overlay (circle handles)
 
           ctx.restore();
         }
@@ -1453,45 +1419,14 @@ function PanelCanvas({
           }
           ctx.translate(ch.x, ch.y);
           ctx.rotate(ch.rotation || 0);
-          if (ch.flipX) ctx.scale(-1, 1);
+          ctx.scale(ch.flipX ? -1 : 1, ch.flipY ? -1 : 1);
           ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
           ctx.restore();
 
           // Selection indicator for selected character — use clip dimensions if available
           const displayW = hasClip ? ch.width! : w;
           const displayH = hasClip ? ch.height! : h;
-          if (ch.id === selectedCharIdRef.current) {
-            const drawCharSelection = () => {
-              const cx = ch.x - displayW / 2;
-              const cy = ch.y - displayH / 2;
-              ctx.save();
-              ctx.globalAlpha = 1;
-              ctx.strokeStyle = HANDLE_COLOR;
-              ctx.lineWidth = 1.5;
-              ctx.setLineDash([5, 4]);
-              ctx.strokeRect(cx - 3, cy - 3, displayW + 6, displayH + 6);
-              ctx.setLineDash([]);
-
-              const handleSize = 8;
-              const corners = [
-                { x: cx - handleSize / 2, y: cy - handleSize / 2 },
-                { x: cx + displayW - handleSize / 2, y: cy - handleSize / 2 },
-                { x: cx - handleSize / 2, y: cy + displayH - handleSize / 2 },
-                { x: cx + displayW - handleSize / 2, y: cy + displayH - handleSize / 2 },
-              ];
-              corners.forEach((c) => {
-                ctx.beginPath();
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(c.x, c.y, handleSize, handleSize);
-                ctx.strokeStyle = HANDLE_COLOR;
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(c.x, c.y, handleSize, handleSize);
-              });
-              ctx.restore();
-            };
-            if (maskShape) deferredSelections.push(drawCharSelection);
-            else drawCharSelection();
-          }
+          // Selection indicator is rendered by HTML overlay (circle handles)
         } else if (ch.imageUrl) {
           // Show loading placeholder while imageEl is loading
           const ph = 80;
@@ -1579,66 +1514,9 @@ function PanelCanvas({
   redrawRef.current = redraw;
 
   useEffect(() => {
-    redraw();
-  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, selectedTextId, redraw, fontsReady, hideDrawingLayers, isGenerating]);
-
-  const getCanvasPos = useCallback((clientX: number, clientY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: (clientX - rect.left) * (CANVAS_W / rect.width),
-      y: (clientY - rect.top) * (CANVAS_H / rect.height),
-    };
-  }, []);
-
-  const getHandleAtPos = useCallback(
-    (x: number, y: number, b: SpeechBubble): DragMode => {
-      const hs = 10;
-
-      if (b.tailStyle !== "none") {
-        const geo = getTailGeometry(b);
-        if (Math.abs(x - geo.tipX) < hs && Math.abs(y - geo.tipY) < hs) {
-          return "move-tail";
-        }
-        const baseMidX = (geo.baseAx + geo.baseBx) / 2;
-        const baseMidY = (geo.baseAy + geo.baseBy) / 2;
-        const pull = 0.5 + (b.tailCurve ?? 0.5) * 0.45;
-        const tipPull = 0.3;
-
-        const cp1x = b.tailCtrl1X ?? (geo.baseAx + (baseMidX - geo.baseAx) * pull);
-        const cp1y = b.tailCtrl1Y ?? (geo.baseAy + (baseMidY - geo.baseAy) * pull);
-        const cp2x = b.tailCtrl2X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
-        const cp2y = b.tailCtrl2Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
-        const cp3x = b.tailCtrl3X ?? (geo.tipX + (baseMidX - geo.tipX) * tipPull);
-        const cp3y = b.tailCtrl3Y ?? (geo.tipY + (baseMidY - geo.tipY) * tipPull);
-        const cp4x = b.tailCtrl4X ?? (geo.baseBx + (baseMidX - geo.baseBx) * pull);
-        const cp4y = b.tailCtrl4Y ?? (geo.baseBy + (baseMidY - geo.baseBy) * pull);
-
-        const hitRadius = 12;
-        if (Math.hypot(x - cp1x, y - cp1y) < hitRadius) return "tail-ctrl1";
-        if (Math.hypot(x - cp2x, y - cp2y) < hitRadius) return "tail-ctrl2";
-        if (Math.hypot(x - cp3x, y - cp3y) < hitRadius) return "tail-ctrl3";
-        if (Math.hypot(x - cp4x, y - cp4y) < hitRadius) return "tail-ctrl4";
-      }
-
-      const handles: { mode: DragMode; hx: number; hy: number }[] = [
-        { mode: "resize-tl", hx: b.x - 4, hy: b.y - 4 },
-        { mode: "resize-t", hx: b.x + b.width / 2, hy: b.y - 4 },
-        { mode: "resize-tr", hx: b.x + b.width + 4, hy: b.y - 4 },
-        { mode: "resize-r", hx: b.x + b.width + 4, hy: b.y + b.height / 2 },
-        { mode: "resize-br", hx: b.x + b.width + 4, hy: b.y + b.height + 4 },
-        { mode: "resize-b", hx: b.x + b.width / 2, hy: b.y + b.height + 4 },
-        { mode: "resize-bl", hx: b.x - 4, hy: b.y + b.height + 4 },
-        { mode: "resize-l", hx: b.x - 4, hy: b.y + b.height / 2 },
-      ];
-      for (const h of handles) {
-        if (Math.abs(x - h.hx) < hs && Math.abs(y - h.hy) < hs) return h.mode;
-      }
-      return null;
-    },
-    [],
-  );
+    const raf = requestAnimationFrame(() => redraw());
+    return () => cancelAnimationFrame(raf);
+  }, [panel, selectedBubbleId, selectedCharId, selectedShapeId, selectedTextId, editingBubbleId, redraw, fontsReady, hideDrawingLayers, isGenerating, canvasH]);
 
   const updateBubbleInPanel = useCallback(
     (bubbleId: string, updates: Partial<SpeechBubble>) => {
@@ -1660,573 +1538,6 @@ function PanelCanvas({
       onUpdate({ ...p, characters: newChars });
     },
     [onUpdate],
-  );
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<HTMLCanvasElement>) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      canvas.setPointerCapture(e.pointerId);
-      const pos = getCanvasPos(e.clientX, e.clientY);
-      const p = panelRef.current;
-      const sid = selectedBubbleIdRef.current;
-      if (sid) {
-        const selB = p.bubbles.find((b) => b.id === sid);
-        if (selB && !selB.locked) {
-          const handle = getHandleAtPos(pos.x, pos.y, selB);
-          if (handle) {
-            dragModeRef.current = handle;
-            dragStartRef.current = pos;
-            dragBubbleStartRef.current = {
-              x: selB.x,
-              y: selB.y,
-              w: selB.width,
-              h: selB.height,
-            };
-            return;
-          }
-        }
-      }
-
-      const selCid = selectedCharIdRef.current;
-      if (selCid) {
-        const selCh = p.characters.find((c) => c.id === selCid);
-        if (selCh && !selCh.locked) {
-          const cw = selCh.imageEl ? selCh.imageEl.naturalWidth * selCh.scale : 80;
-          const ch2 = selCh.imageEl ? selCh.imageEl.naturalHeight * selCh.scale : 80;
-          const cx = selCh.x - cw / 2;
-          const cy = selCh.y - ch2 / 2;
-          // Larger handle hit zone for full-canvas images
-          const hs = Math.max(18, Math.min(40, cw * 0.08));
-          const charHandles: { mode: DragMode; hx: number; hy: number }[] = [
-            { mode: "resize-char-tl", hx: cx, hy: cy },
-            { mode: "resize-char-tr", hx: cx + cw, hy: cy },
-            { mode: "resize-char-bl", hx: cx, hy: cy + ch2 },
-            { mode: "resize-char-br", hx: cx + cw, hy: cy + ch2 },
-          ];
-          for (const handle of charHandles) {
-            if (
-              Math.abs(pos.x - handle.hx) < hs &&
-              Math.abs(pos.y - handle.hy) < hs
-            ) {
-              dragModeRef.current = handle.mode;
-              dragStartRef.current = pos;
-              dragCharStartRef.current = {
-                x: selCh.x,
-                y: selCh.y,
-                scale: selCh.scale,
-              };
-              return;
-            }
-          }
-          const rx = selCh.x;
-          const ry = cy - 18;
-          if (Math.hypot(pos.x - rx, pos.y - ry) <= 10) {
-            dragModeRef.current = "rotate-char";
-            dragStartRef.current = pos;
-            dragCharStartRef.current = {
-              x: selCh.x,
-              y: selCh.y,
-              scale: selCh.scale,
-              rotation: selCh.rotation || 0,
-              angleStart: Math.atan2(pos.y - selCh.y, pos.x - selCh.x),
-            } as any;
-            return;
-          }
-        }
-      }
-
-      // 스크립트(상/하단)는 캔버스 최상위에 렌더링되므로 히트 감지도 가장 먼저 처리
-      const scriptCtx = canvas.getContext("2d");
-      if (scriptCtx) {
-        for (const scriptType of ["top", "bottom"] as const) {
-          const sd = scriptType === "top" ? p.topScript : p.bottomScript;
-          if (sd && sd.text && sd.visible !== false) {
-            const rect = getScriptRect(
-              scriptCtx,
-              sd,
-              scriptType,
-              CANVAS_W,
-              CANVAS_H,
-            );
-            const hs = 8;
-            const corners = [
-              { x: rect.bx - 2, y: rect.by - 2 },
-              { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
-              { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
-              { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
-            ];
-            const nearHandle = (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) && corners.some(
-              (c) => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs
-            );
-            if (nearHandle) {
-              dragModeRef.current =
-                scriptType === "top" ? "resize-script-top" : "resize-script-bottom";
-              dragStartRef.current = pos;
-              dragScriptFontStartRef.current = sd.fontSize || 20;
-              dragScriptSizeStartRef.current = { w: rect.bw, h: rect.bh };
-              onSelectBubble(null);
-              onSelectChar(null);
-              selectedBubbleIdRef.current = null;
-              selectedCharIdRef.current = null;
-              onSelectScript?.(scriptType);
-              return;
-            } else if (
-              pos.x >= rect.bx &&
-              pos.x <= rect.bx + rect.bw &&
-              pos.y >= rect.by &&
-              pos.y <= rect.by + rect.bh
-            ) {
-              onSelectBubble(null);
-              onSelectChar(null);
-              selectedBubbleIdRef.current = null;
-              selectedCharIdRef.current = null;
-              // 클릭 즉시 선택 + 드래그 이동 가능 (말풍선과 동일)
-              setSelectedScriptPos(scriptType);
-              dragModeRef.current =
-                scriptType === "top" ? "move-script-top" : "move-script-bottom";
-              dragStartRef.current = pos;
-              dragScriptStartRef.current = { x: sd.x ?? rect.bx, y: sd.y ?? rect.by };
-              onSelectScript?.(scriptType);
-              return;
-            }
-          }
-        }
-      }
-
-      // 캐릭터 + 말풍선 히트 감지 (z-order 역순)
-      {
-        const drawables: Array<
-          | { type: "char"; z: number; ch: CharacterPlacement }
-          | { type: "bubble"; z: number; b: SpeechBubble }
-        > = [
-            ...p.characters.map((ch) => ({ type: "char" as const, z: ch.zIndex ?? 0, ch })),
-            ...p.bubbles.map((b) => ({ type: "bubble" as const, z: b.zIndex ?? 10, b })),
-          ];
-        drawables.sort((a, b) => a.z - b.z);
-        for (let i = drawables.length - 1; i >= 0; i--) {
-          const d = drawables[i];
-          if (d.type === "bubble") {
-            const b = d.b;
-            if (pos.x >= b.x && pos.x <= b.x + b.width && pos.y >= b.y && pos.y <= b.y + b.height) {
-              if (selectedBubbleIdRef.current === b.id) {
-                const charUnderneath = p.characters.find(ch => {
-                  if (!ch.imageEl) return false;
-                  const cw = ch.imageEl.naturalWidth * ch.scale;
-                  const ch2 = ch.imageEl.naturalHeight * ch.scale;
-                  return pos.x >= ch.x - cw/2 && pos.x <= ch.x + cw/2 &&
-                         pos.y >= ch.y - ch2/2 && pos.y <= ch.y + ch2/2;
-                });
-                if (charUnderneath) {
-                  onSelectChar(charUnderneath.id);
-                  onSelectBubble(null);
-                  selectedCharIdRef.current = charUnderneath.id;
-                  selectedBubbleIdRef.current = null;
-                  onSelectScript?.(null);
-                  setSelectedScriptPos(null);
-                  setEditingScriptPos(null);
-                  dragModeRef.current = "move-char";
-                  dragStartRef.current = pos;
-                  dragCharStartRef.current = { x: charUnderneath.x, y: charUnderneath.y, scale: charUnderneath.scale };
-                  return;
-                }
-              }
-              onSelectBubble(b.id);
-              onSelectChar(null);
-              selectedBubbleIdRef.current = b.id;
-              selectedCharIdRef.current = null;
-              onSelectScript?.(null);
-              setSelectedScriptPos(null);
-              setEditingScriptPos(null);
-              if (editingBubbleIdRef.current && editingBubbleIdRef.current !== b.id) {
-                setEditingBubbleId(null);
-              }
-              dragModeRef.current = "move";
-              dragStartRef.current = pos;
-              dragBubbleStartRef.current = { x: b.x, y: b.y, w: b.width, h: b.height };
-              return;
-            }
-          } else if (d.type === "char") {
-            const ch = d.ch;
-            const naturalW = ch.imageEl && ch.imageEl.naturalWidth ? ch.imageEl.naturalWidth * ch.scale : 80;
-            const naturalH = ch.imageEl && ch.imageEl.naturalHeight ? ch.imageEl.naturalHeight * ch.scale : 80;
-            const cw2 = Math.min(naturalW, CANVAS_W * 2);
-            const ch2h = Math.min(naturalH, CANVAS_H * 2);
-            if (
-              pos.x >= ch.x - cw2 / 2 &&
-              pos.x <= ch.x + cw2 / 2 &&
-              pos.y >= ch.y - ch2h / 2 &&
-              pos.y <= ch.y + ch2h / 2
-            ) {
-              onSelectChar(ch.id);
-              onSelectBubble(null);
-              selectedBubbleIdRef.current = null;
-              selectedCharIdRef.current = ch.id;
-              setEditingBubbleId(null);
-              setSelectedScriptPos(null);
-              setEditingScriptPos(null);
-              onSelectScript?.(null);
-              dragStartRef.current = pos;
-              dragCharStartRef.current = { x: ch.x, y: ch.y, scale: ch.scale };
-              const isFullCanvas = naturalW >= CANVAS_W * 0.8;
-              const cxL = ch.x - cw2 / 2;
-              const cyT = ch.y - ch2h / 2;
-              const cornerHitZone = isFullCanvas ? 36 : 20;
-              const inOff = isFullCanvas ? 20 : 0;
-              const corners2: { mode: DragMode; hx: number; hy: number }[] = [
-                { mode: "resize-char-tl", hx: cxL + inOff, hy: cyT + inOff },
-                { mode: "resize-char-tr", hx: cxL + cw2 - inOff, hy: cyT + inOff },
-                { mode: "resize-char-bl", hx: cxL + inOff, hy: cyT + ch2h - inOff },
-                { mode: "resize-char-br", hx: cxL + cw2 - inOff, hy: cyT + ch2h - inOff },
-              ];
-              let foundCorner = false;
-              for (const corner of corners2) {
-                if (Math.abs(pos.x - corner.hx) < cornerHitZone && Math.abs(pos.y - corner.hy) < cornerHitZone) {
-                  dragModeRef.current = corner.mode;
-                  foundCorner = true;
-                  break;
-                }
-              }
-              if (!foundCorner) dragModeRef.current = "move-char";
-              return;
-            }
-          }
-        }
-      }
-
-      onSelectBubble(null);
-      onSelectChar(null);
-      selectedBubbleIdRef.current = null;
-      selectedCharIdRef.current = null;
-      setEditingBubbleId(null);
-      setEditingScriptPos(null);
-      setSelectedScriptPos(null);
-      onSelectScript?.(null);
-    },
-    [getCanvasPos, getHandleAtPos, onSelectBubble, onSelectChar],
-  );
-
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent<HTMLCanvasElement>) => {
-      const pos = getCanvasPos(e.clientX, e.clientY);
-      const mode = dragModeRef.current;
-
-      if (!mode) {
-        const canvas = canvasRef.current;
-        if (canvas) canvas.style.cursor = "default";
-        const p = panelRef.current;
-
-        const scid = selectedCharIdRef.current;
-        if (scid) {
-          const sch = p.characters.find((c) => c.id === scid);
-          if (sch) {
-            const cw = sch.imageEl ? sch.imageEl.naturalWidth * sch.scale : 80;
-            const ch2 = sch.imageEl ? sch.imageEl.naturalHeight * sch.scale : 80;
-            const cx = sch.x - cw / 2;
-            const cy = sch.y - ch2 / 2;
-            const hs = 12;
-            const charCorners = [
-              { hx: cx, hy: cy, cur: "nwse-resize" },
-              { hx: cx + cw, hy: cy, cur: "nesw-resize" },
-              { hx: cx, hy: cy + ch2, cur: "nesw-resize" },
-              { hx: cx + cw, hy: cy + ch2, cur: "nwse-resize" },
-            ];
-            for (const hc of charCorners) {
-              if (
-                Math.abs(pos.x - hc.hx) < hs &&
-                Math.abs(pos.y - hc.hy) < hs
-              ) {
-                if (canvas) canvas.style.cursor = hc.cur;
-                return;
-              }
-            }
-          }
-        }
-
-        // 스크립트 커서를 먼저 체크 (최상위 렌더링)
-        {
-          const cvs = canvasRef.current;
-          if (cvs) {
-            const sCtx = cvs.getContext("2d");
-            if (sCtx) {
-              let scriptHit = false;
-              for (const scriptType of ["top", "bottom"] as const) {
-                const sd = scriptType === "top" ? p.topScript : p.bottomScript;
-                if (sd && sd.text && sd.visible !== false) {
-                  const rect = getScriptRect(
-                    sCtx,
-                    sd,
-                    scriptType,
-                    CANVAS_W,
-                    CANVAS_H,
-                  );
-                  if (selectedScriptPosRef.current === scriptType || editingScriptPosRef.current === scriptType) {
-                    const hs = 8;
-                    const corners = [
-                      { x: rect.bx - 2, y: rect.by - 2 },
-                      { x: rect.bx + rect.bw + 2, y: rect.by - 2 },
-                      { x: rect.bx - 2, y: rect.by + rect.bh + 2 },
-                      { x: rect.bx + rect.bw + 2, y: rect.by + rect.bh + 2 },
-                    ];
-                    if (corners.some(c => Math.abs(pos.x - c.x) <= hs && Math.abs(pos.y - c.y) <= hs)) {
-                      cvs.style.cursor = "nwse-resize";
-                      scriptHit = true;
-                      break;
-                    }
-                  }
-                  if (
-                    pos.x >= rect.bx &&
-                    pos.x <= rect.bx + rect.bw &&
-                    pos.y >= rect.by &&
-                    pos.y <= rect.by + rect.bh
-                  ) {
-                    cvs.style.cursor = "move";
-                    scriptHit = true;
-                    break;
-                  }
-                }
-              }
-              if (scriptHit) return;
-            }
-          }
-        }
-
-        // 캐릭터/말풍선 커서
-        {
-          const drawables: Array<
-            | { type: "char"; z: number; ch: CharacterPlacement }
-            | { type: "bubble"; z: number; b: SpeechBubble }
-          > = [
-              ...p.characters.map((ch) => ({ type: "char" as const, z: ch.zIndex ?? 0, ch })),
-              ...p.bubbles.map((b) => ({ type: "bubble" as const, z: b.zIndex ?? 10, b })),
-            ];
-          drawables.sort((a, b) => a.z - b.z);
-          for (let i = drawables.length - 1; i >= 0; i--) {
-            const d = drawables[i];
-            if (d.type === "bubble") {
-              const b = d.b;
-              if (pos.x >= b.x && pos.x <= b.x + b.width && pos.y >= b.y && pos.y <= b.y + b.height) {
-                if (canvas) canvas.style.cursor = "move";
-                return;
-              }
-            } else if (d.type === "char") {
-              const ch = d.ch;
-              const naturalW = ch.imageEl ? ch.imageEl.naturalWidth * ch.scale : 80;
-              const naturalH = ch.imageEl ? ch.imageEl.naturalHeight * ch.scale : 80;
-              const cw2 = Math.min(naturalW, CANVAS_W * 2);
-              const ch2h = Math.min(naturalH, CANVAS_H * 2);
-              if (pos.x >= ch.x - cw2 / 2 && pos.x <= ch.x + cw2 / 2 &&
-                  pos.y >= ch.y - ch2h / 2 && pos.y <= ch.y + ch2h / 2) {
-                if (canvas) canvas.style.cursor = "move";
-                return;
-              }
-            }
-          }
-        }
-        return;
-      }
-
-      const dx = pos.x - dragStartRef.current.x;
-      const dy = pos.y - dragStartRef.current.y;
-
-      if (mode === "move-script-top" || mode === "move-script-bottom") {
-        const p = panelRef.current;
-        const sd = mode === "move-script-top" ? p.topScript : p.bottomScript;
-        if (sd) {
-          const newX = dragScriptStartRef.current.x + dx;
-          const newY = dragScriptStartRef.current.y + dy;
-          const key = mode === "move-script-top" ? "topScript" : "bottomScript";
-          onUpdate({ ...p, [key]: { ...sd, x: newX, y: newY } });
-        }
-        return;
-      }
-
-      if (mode === "resize-script-top" || mode === "resize-script-bottom") {
-        const p = panelRef.current;
-        const sd = mode === "resize-script-top" ? p.topScript : p.bottomScript;
-        if (sd) {
-          const startW = dragScriptSizeStartRef.current.w;
-          const startH = dragScriptSizeStartRef.current.h;
-          const newW = Math.max(60, startW + dx);
-          const newH = Math.max(30, startH + dy);
-          const key = mode === "resize-script-top" ? "topScript" : "bottomScript";
-          onUpdate({ ...p, [key]: { ...sd, width: newW, height: newH } });
-        }
-        return;
-      }
-
-      if (mode === "move-char") {
-        const cid = selectedCharIdRef.current;
-        if (cid) {
-          updateCharInPanel(cid, {
-            x: dragCharStartRef.current.x + dx,
-            y: dragCharStartRef.current.y + dy,
-          });
-        }
-        return;
-      }
-
-      if (mode === "rotate-char") {
-        const cid = selectedCharIdRef.current;
-        if (cid) {
-          const p = panelRef.current;
-          const ch = p.characters.find((c) => c.id === cid);
-          if (ch) {
-            const currentAngle = Math.atan2(pos.y - ch.y, pos.x - ch.x);
-            const startAngle = (dragCharStartRef.current as any).angleStart ?? 0;
-            const baseRotation = (dragCharStartRef.current as any).rotation ?? (ch.rotation || 0);
-            const nextRotation = baseRotation + (currentAngle - startAngle);
-            updateCharInPanel(cid, { rotation: nextRotation });
-          }
-        }
-        return;
-      }
-
-      if (mode?.startsWith("resize-char")) {
-        const cid = selectedCharIdRef.current;
-        if (cid) {
-          const p = panelRef.current;
-          const ch = p.characters.find((c) => c.id === cid);
-          if (ch) {
-            const origW = ch.imageEl
-              ? ch.imageEl.naturalWidth * dragCharStartRef.current.scale
-              : 80 * dragCharStartRef.current.scale;
-            const origH = ch.imageEl
-              ? ch.imageEl.naturalHeight * dragCharStartRef.current.scale
-              : 80 * dragCharStartRef.current.scale;
-            let newW = origW;
-            let newH = origH;
-            if (mode === "resize-char-br") {
-              newW = origW + dx;
-              newH = origH + dy;
-            } else if (mode === "resize-char-bl") {
-              newW = origW - dx;
-              newH = origH + dy;
-            } else if (mode === "resize-char-tr") {
-              newW = origW + dx;
-              newH = origH - dy;
-            } else if (mode === "resize-char-tl") {
-              newW = origW - dx;
-              newH = origH - dy;
-            }
-            const avgRatio = (newW / origW + newH / origH) / 2;
-            const newScale = Math.max(
-              0.05,
-              Math.min(5, dragCharStartRef.current.scale * avgRatio),
-            );
-            updateCharInPanel(cid, { scale: newScale });
-          }
-        }
-        return;
-      }
-
-
-      const sid = selectedBubbleIdRef.current;
-      if (!sid) return;
-      const bs = dragBubbleStartRef.current;
-      const minSize = 40;
-
-      if (mode === "tail-ctrl1") {
-        updateBubbleInPanel(sid, { tailCtrl1X: pos.x, tailCtrl1Y: pos.y });
-      } else if (mode === "tail-ctrl2") {
-        updateBubbleInPanel(sid, { tailCtrl2X: pos.x, tailCtrl2Y: pos.y });
-      } else if (mode === "tail-ctrl3") {
-        updateBubbleInPanel(sid, { tailCtrl3X: pos.x, tailCtrl3Y: pos.y });
-      } else if (mode === "tail-ctrl4") {
-        updateBubbleInPanel(sid, { tailCtrl4X: pos.x, tailCtrl4Y: pos.y });
-      } else if (mode === "move-tail") {
-        updateBubbleInPanel(sid, { tailTipX: pos.x, tailTipY: pos.y });
-      } else if (mode === "move") {
-        updateBubbleInPanel(sid, { x: bs.x + dx, y: bs.y + dy });
-      } else if (mode === "resize-br") {
-        updateBubbleInPanel(sid, {
-          width: Math.max(minSize, bs.w + dx),
-          height: Math.max(minSize, bs.h + dy),
-        });
-      } else if (mode === "resize-bl") {
-        const newW = Math.max(minSize, bs.w - dx);
-        updateBubbleInPanel(sid, {
-          x: bs.x + bs.w - newW,
-          width: newW,
-          height: Math.max(minSize, bs.h + dy),
-        });
-      } else if (mode === "resize-tr") {
-        const newH = Math.max(minSize, bs.h - dy);
-        updateBubbleInPanel(sid, {
-          y: bs.y + bs.h - newH,
-          width: Math.max(minSize, bs.w + dx),
-          height: newH,
-        });
-      } else if (mode === "resize-tl") {
-        const newW = Math.max(minSize, bs.w - dx);
-        const newH = Math.max(minSize, bs.h - dy);
-        updateBubbleInPanel(sid, {
-          x: bs.x + bs.w - newW,
-          y: bs.y + bs.h - newH,
-          width: newW,
-          height: newH,
-        });
-      } else if (mode === "resize-r") {
-        updateBubbleInPanel(sid, { width: Math.max(minSize, bs.w + dx) });
-      } else if (mode === "resize-l") {
-        const newW = Math.max(minSize, bs.w - dx);
-        updateBubbleInPanel(sid, { x: bs.x + bs.w - newW, width: newW });
-      } else if (mode === "resize-b") {
-        updateBubbleInPanel(sid, { height: Math.max(minSize, bs.h + dy) });
-      } else if (mode === "resize-t") {
-        const newH = Math.max(minSize, bs.h - dy);
-        updateBubbleInPanel(sid, { y: bs.y + bs.h - newH, height: newH });
-      }
-    },
-    [getCanvasPos, updateBubbleInPanel, updateCharInPanel],
-  );
-
-  const handlePointerUp = useCallback(() => {
-    dragModeRef.current = null;
-  }, []);
-
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const pos = getCanvasPos(e.clientX, e.clientY);
-      const p = panelRef.current;
-      // Check scripts first (they render on top)
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          for (const scriptType of ["top", "bottom"] as const) {
-            const sd = scriptType === "top" ? p.topScript : p.bottomScript;
-            if (sd && sd.text !== undefined && sd.visible !== false) {
-              const rect = getScriptRect(ctx, sd, scriptType, CANVAS_W, CANVAS_H);
-              if (
-                pos.x >= rect.bx &&
-                pos.x <= rect.bx + rect.bw &&
-                pos.y >= rect.by &&
-                pos.y <= rect.by + rect.bh
-              ) {
-                setEditingScriptPos(scriptType);
-                onSelectScript?.(scriptType);
-                return;
-              }
-            }
-          }
-        }
-      }
-      for (let i = p.bubbles.length - 1; i >= 0; i--) {
-        const b = p.bubbles[i];
-        if (
-          pos.x >= b.x &&
-          pos.x <= b.x + b.width &&
-          pos.y >= b.y &&
-          pos.y <= b.y + b.height
-        ) {
-          onSelectBubble(b.id);
-          setEditingBubbleId(b.id);
-          return;
-        }
-      }
-    },
-    [getCanvasPos, onSelectBubble, onSelectScript],
   );
 
   const hasZoom = zoom !== undefined;
@@ -2568,126 +1879,8 @@ function PanelCanvas({
                 }
             }
             className="rounded-md border border-border"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-            onDoubleClick={handleDoubleClick}
             data-testid="panel-canvas"
           />
-
-          {/* SVG handle overlay — rendered outside canvas so handles are visible beyond canvas bounds */}
-          {(() => {
-            const canvas = canvasRef.current;
-            if (!canvas) return null;
-            const rect = canvas.getBoundingClientRect();
-            const wrapRect = canvasWrapperRef.current?.getBoundingClientRect();
-            if (!wrapRect) return null;
-            const scaleX = rect.width / CANVAS_W;
-            const scaleY = rect.height / CANVAS_H;
-            const offsetX = rect.left - wrapRect.left;
-            const offsetY = rect.top - wrapRect.top;
-
-            const toSvgX = (cx: number) => offsetX + cx * scaleX;
-            const toSvgY = (cy: number) => offsetY + cy * scaleY;
-
-            const selBubble = selectedBubbleId ? panel.bubbles.find(b => b.id === selectedBubbleId) : null;
-            const selChar = selectedCharId ? panel.characters.find(c => c.id === selectedCharId) : null;
-
-            const HANDLE_R = 5;
-
-            const handles: { x: number; y: number; cursor: string; mode: string }[] = [];
-
-            if (selBubble) {
-              const b = selBubble;
-              handles.push(
-                { x: toSvgX(b.x - 4), y: toSvgY(b.y - 4), cursor: "nwse-resize", mode: "resize-tl" },
-                { x: toSvgX(b.x + b.width / 2), y: toSvgY(b.y - 4), cursor: "ns-resize", mode: "resize-t" },
-                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y - 4), cursor: "nesw-resize", mode: "resize-tr" },
-                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y + b.height / 2), cursor: "ew-resize", mode: "resize-r" },
-                { x: toSvgX(b.x + b.width + 4), y: toSvgY(b.y + b.height + 4), cursor: "nwse-resize", mode: "resize-br" },
-                { x: toSvgX(b.x + b.width / 2), y: toSvgY(b.y + b.height + 4), cursor: "ns-resize", mode: "resize-b" },
-                { x: toSvgX(b.x - 4), y: toSvgY(b.y + b.height + 4), cursor: "nesw-resize", mode: "resize-bl" },
-                { x: toSvgX(b.x - 4), y: toSvgY(b.y + b.height / 2), cursor: "ew-resize", mode: "resize-l" },
-              );
-            }
-
-            if (selChar) {
-              const cw = selChar.imageEl ? selChar.imageEl.naturalWidth * selChar.scale : 80;
-              const ch2 = selChar.imageEl ? selChar.imageEl.naturalHeight * selChar.scale : 80;
-              const cx = selChar.x - cw / 2;
-              const cy = selChar.y - ch2 / 2;
-              // Offset handles slightly inward for full-canvas images (corners may be off-screen)
-              const hOff = cw > CANVAS_W * 0.8 ? 8 : 4;
-              handles.push(
-                { x: toSvgX(cx + hOff), y: toSvgY(cy + hOff), cursor: "nwse-resize", mode: "resize-char-tl" },
-                { x: toSvgX(cx + cw - hOff), y: toSvgY(cy + hOff), cursor: "nesw-resize", mode: "resize-char-tr" },
-                { x: toSvgX(cx + hOff), y: toSvgY(cy + ch2 - hOff), cursor: "nesw-resize", mode: "resize-char-bl" },
-                { x: toSvgX(cx + cw - hOff), y: toSvgY(cy + ch2 - hOff), cursor: "nwse-resize", mode: "resize-char-br" },
-              );
-            }
-
-            if (handles.length === 0) return null;
-
-            return (
-              <svg
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  overflow: "visible",
-                  pointerEvents: "none",
-                  zIndex: 10,
-                }}
-              >
-                {/* Selection dashed box */}
-                {selBubble && (() => {
-                  const b = selBubble;
-                  const x1 = toSvgX(b.x - 4), y1 = toSvgY(b.y - 4);
-                  const x2 = toSvgX(b.x + b.width + 4), y2 = toSvgY(b.y + b.height + 4);
-                  return <rect x={x1} y={y1} width={x2 - x1} height={y2 - y1} fill="none" stroke={HANDLE_COLOR} strokeWidth="1.5" strokeDasharray="5,3" />;
-                })()}
-                {selChar && (() => {
-                  const cw = selChar.imageEl ? selChar.imageEl.naturalWidth * selChar.scale : 80;
-                  const ch2 = selChar.imageEl ? selChar.imageEl.naturalHeight * selChar.scale : 80;
-                  const x1 = toSvgX(selChar.x - cw / 2 - 4), y1 = toSvgY(selChar.y - ch2 / 2 - 4);
-                  const x2 = toSvgX(selChar.x + cw / 2 + 4), y2 = toSvgY(selChar.y + ch2 / 2 + 4);
-                  return <rect x={x1} y={y1} width={x2 - x1} height={y2 - y1} fill="none" stroke={HANDLE_COLOR} strokeWidth="1.5" strokeDasharray="5,3" />;
-                })()}
-                {/* Handle circles — onPointerDown initiates drag via canvas capture */}
-                {handles.map((h, i) => (
-                  <circle
-                    key={i}
-                    cx={h.x}
-                    cy={h.y}
-                    r={HANDLE_R + 2}
-                    fill="white"
-                    stroke={HANDLE_COLOR}
-                    strokeWidth="1.8"
-                    style={{ pointerEvents: "all", cursor: h.cursor }}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      const canvas = canvasRef.current;
-                      if (!canvas) return;
-                      canvas.setPointerCapture(e.pointerId);
-                      const pos = getCanvasPos(e.clientX, e.clientY);
-                      dragModeRef.current = h.mode as DragMode;
-                      dragStartRef.current = pos;
-                      const sB = selectedBubbleId ? panel.bubbles.find(b2 => b2.id === selectedBubbleId) : null;
-                      const sC = selectedCharId ? panel.characters.find(c2 => c2.id === selectedCharId) : null;
-                      if (sB) {
-                        dragBubbleStartRef.current = { x: sB.x, y: sB.y, w: sB.width, h: sB.height };
-                      } else if (sC) {
-                        dragCharStartRef.current = { x: sC.x, y: sC.y, scale: sC.scale };
-                      }
-                    }}
-                  />
-                ))}
-              </svg>
-            );
-          })()}
 
           {/* Inline text editing overlay for bubbles */}
           {editingBubbleId && (() => {
@@ -2759,7 +1952,7 @@ function PanelCanvas({
             const ctx = canvas.getContext("2d");
             if (!ctx) return null;
             const sr = getScriptRect(ctx, sd, editingScriptPos, CANVAS_W, CANVAS_H);
-            const fs = sd.fontSize || 20;
+            const fs = sd.fontSize || 16;
             return (
               <textarea
                 autoFocus
@@ -2846,6 +2039,10 @@ function EditorPanel({
   mode = "image",
   bubbleTextareaRef,
   forceRerender,
+  characterFolders = [],
+  activeGalleryFolderId = null,
+  setActiveGalleryFolderId,
+  markChecklistDone,
 }: {
   panel: PanelData;
   index: number;
@@ -2866,13 +2063,21 @@ function EditorPanel({
   mode?: "image" | "bubble" | "template";
   bubbleTextareaRef?: React.MutableRefObject<HTMLTextAreaElement | null>;
   forceRerender?: () => void;
+  characterFolders?: { id: number; name: string; items: { generationId: number }[] }[];
+  activeGalleryFolderId?: number | null;
+  setActiveGalleryFolderId?: (id: number | null) => void;
+  markChecklistDone?: (id: string) => void;
 }) {
   const [showCharPicker, setShowCharPicker] = useState(false);
   const isTemplateMode = mode === "template";
   const [showBubbleTemplatePicker, setShowBubbleTemplatePicker] = useState(isTemplateMode);
   const [templateCatIdx, setTemplateCatIdx] = useState(0);
   const [removingBg, setRemovingBg] = useState(false);
+  const [selectedGalleryIds, setSelectedGalleryIds] = useState<Set<number>>(new Set());
+  const [addingFromGallery, setAddingFromGallery] = useState(false);
   const { toast } = useToast();
+  const panelRef = useRef(panel);
+  useEffect(() => { panelRef.current = panel; }, [panel]);
 
   const canBubbleEdit = true;
   const canAllFonts = isPro || creatorTier >= 3;
@@ -2953,6 +2158,7 @@ function EditorPanel({
     onUpdate({ ...panel, bubbles: [...panel.bubbles, newB] });
     setSelectedBubbleId(newB.id);
     setSelectedCharId(null);
+    markChecklistDone?.("add-bubble");
   };
 
   const deleteBubble = (id: string) => {
@@ -2994,6 +2200,7 @@ function EditorPanel({
       setSelectedCharId(null);
       setShowBubbleTemplatePicker(false);
       toast({ title: "말풍선 추가됨" });
+      markChecklistDone?.("apply-template");
     };
     img.onerror = () => toast({ title: "템플릿 로드 실패", variant: "destructive" });
     img.src = templatePath;
@@ -3028,6 +2235,44 @@ function EditorPanel({
     }] });
     setSelectedCharId(charId);
     setSelectedBubbleId(null);
+    markChecklistDone?.("add-image");
+
+    // 백그라운드에서 AI 캐릭터 이름 분석
+    apiRequest("POST", "/api/analyze-character", { imageUrl: url })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.names?.[0]) {
+          const p = panelRef.current;
+          onUpdate({
+            ...p,
+            characters: p.characters.map((c: CharacterPlacement) =>
+              c.id === charId ? { ...c, name: data.names[0] } : c
+            ),
+          });
+        }
+      })
+      .catch(() => { /* 분석 실패 시 기본 이름 유지 */ });
+  };
+
+  const toggleGallerySelect = (genId: number) => {
+    setSelectedGalleryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(genId)) next.delete(genId);
+      else next.add(genId);
+      return next;
+    });
+  };
+
+  const addSelectedFromGallery = async () => {
+    if (selectedGalleryIds.size === 0) return;
+    setAddingFromGallery(true);
+    const ids = Array.from(selectedGalleryIds);
+    for (const genId of ids) {
+      const gen = galleryImages.find((g) => g.id === genId);
+      if (gen) await addCharacter(gen);
+    }
+    setSelectedGalleryIds(new Set());
+    setAddingFromGallery(false);
   };
 
   const removeCharacter = (id: string) => {
@@ -3049,7 +2294,7 @@ function EditorPanel({
           type: "char" as const,
           id: c.id,
           z: c.zIndex ?? 0,
-          label: "캐릭터",
+          label: c.name || "캐릭터",
           thumb: c.imageUrl,
         })),
         ...panel.bubbles.map((b, i) => ({
@@ -3162,15 +2407,13 @@ function EditorPanel({
         if (typeof src !== "string") return;
         const img = new Image();
         img.onload = () => {
-          // Scale to fit within 65% of canvas height or 70% of canvas width
-          const maxH = CANVAS_H * 0.65;
-          const maxW = CANVAS_W * 0.70;
-          const s = Math.min(maxH / img.naturalHeight, maxW / img.naturalWidth, 1);
+          // Scale to fill canvas (cover scaling)
+          const s = Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight);
           const newChar: CharacterPlacement = {
             id: generateId(),
             imageUrl: src,
             x: CANVAS_W / 2,
-            y: Math.round(CANVAS_H * 0.5),
+            y: CANVAS_H / 2,
             scale: s,
             imageEl: img,
             zIndex: 0,
@@ -3292,10 +2535,10 @@ function EditorPanel({
         <div className="rounded-md space-y-3">
           {/* 캔버스 배경 섹션 */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">캔버스 배경</Label>
+            <Label className="text-[13px] text-muted-foreground">캔버스 배경</Label>
 
             <div className="flex gap-1 flex-wrap items-center">
-              <span className="text-[11px] text-muted-foreground mr-0.5">배경색</span>
+              <span className="text-[13px] text-muted-foreground mr-0.5">배경색</span>
               {CANVAS_BG_COLORS.map((c) => (
                 <button
                   key={c.value}
@@ -3329,57 +2572,16 @@ function EditorPanel({
               </div>
             )}
 
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover-elevate"
-              onClick={() =>
-                document.getElementById(`story-bg-upload-${index}`)?.click()
-              }
-              data-testid={`button-upload-bg-${index}`}
-            >
-              <FolderOpen className="h-3.5 w-3.5" />
-              <span>배경 이미지 업로드</span>
-            </button>
-            <input
-              id={`story-bg-upload-${index}`}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleBackgroundImageUpload}
-            />
-
-            {charImages.length > 0 && (
-              <>
-                <p className="text-[11px] text-muted-foreground pt-1">내 갤러리에서 선택:</p>
-                <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
-                  {charImages.map((gen) => (
-                    <button
-                      key={gen.id}
-                      className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
-                      onClick={() => handleBackgroundFromGallery(gen)}
-                      data-testid={`button-pick-bg-${gen.id}`}
-                    >
-                      <img
-                        src={gen.thumbnailUrl || gen.resultImageUrl}
-                        alt={gen.prompt}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
           </div>
 
           <hr className="border-border" />
 
-          {/* 이미지 업로드 섹션 (기존) */}
+          {/* 이미지 업로드 섹션 */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
+            <Label className="text-[13px] text-muted-foreground">이미지 업로드 (여러 장 가능)</Label>
             <button
               type="button"
-              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover-elevate"
+              className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-[13px] text-muted-foreground hover-elevate"
               onClick={() =>
                 document.getElementById(`story-image-upload-${index}`)?.click()
               }
@@ -3398,29 +2600,17 @@ function EditorPanel({
             />
           </div>
 
-          {galleryLoading ? (
-            <div className="flex justify-center py-4">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : charImages.length === 0 ? (
-            <p
-              className="text-sm text-muted-foreground py-4 text-center"
-              data-testid="text-no-characters"
-            >
-              생성된 이미지가 없습니다. 먼저 캐릭터나 배경을 만들어주세요.
-            </p>
-          ) : (
-            <>
-              <div
-                className="grid grid-cols-3 gap-1.5 overflow-y-auto"
-                data-testid="character-picker-grid"
-              >
+          {/* 내 생성 이미지에서 추가 */}
+          {charImages.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-[13px] text-muted-foreground">내 이미지에서 추가</Label>
+              <div className="grid grid-cols-3 gap-1.5 max-h-[200px] overflow-y-auto">
                 {charImages.map((gen) => (
                   <button
                     key={gen.id}
-                    className="aspect-square rounded-md overflow-hidden border border-border hover-elevate cursor-pointer"
+                    className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary/50 cursor-pointer transition-all"
                     onClick={() => addCharacter(gen)}
-                    data-testid={`button-pick-character-${gen.id}`}
+                    data-testid={`button-pick-gen-${gen.id}`}
                   >
                     <img
                       src={gen.thumbnailUrl || gen.resultImageUrl}
@@ -3433,20 +2623,20 @@ function EditorPanel({
               </div>
               {galleryHasMore && (
                 <button
-                  className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="w-full py-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                   onClick={onLoadMoreGallery}
                 >
                   더 보기
                 </button>
               )}
-            </>
+            </div>
           )}
         </div>
       )}
 
       {/* Character placement note - images are added as moveable characters */}
       {isImageMode && panel.characters.length === 0 && (
-        <div className="rounded-md bg-muted/40 p-3 text-[11px] text-muted-foreground text-center">
+        <div className="rounded-md bg-muted/40 p-3 text-[13px] text-muted-foreground text-center">
           <ImageIcon className="h-4 w-4 mx-auto mb-1 opacity-50" />
           이미지를 추가하면 캔버스에서<br/>이동·크기·회전 편집이 가능합니다
         </div>
@@ -3455,11 +2645,11 @@ function EditorPanel({
       {isImageMode && selectedChar && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2 mt-3">
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-[13px] font-medium text-muted-foreground">
               이미지 도구
             </span>
             {!isPro && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              <Badge variant="outline" className="text-[13px] px-1.5 py-0">
                 Pro
               </Badge>
             )}
@@ -3478,7 +2668,7 @@ function EditorPanel({
             }}
           >
             <FlipHorizontal2 className="h-3.5 w-3.5" />
-            <span className="text-xs">좌우 반전</span>
+            <span className="text-[13px]">좌우 반전</span>
           </Button>
           <Button
             size="sm"
@@ -3492,7 +2682,7 @@ function EditorPanel({
             ) : (
               <Wand2 className="h-3.5 w-3.5" />
             )}
-            <span className="text-xs">AI 배경제거 (Pro)</span>
+            <span className="text-[13px]">AI 배경제거 (Pro)</span>
           </Button>
         </div>
       )}
@@ -3501,10 +2691,10 @@ function EditorPanel({
       {(isBubbleMode || isTemplateMode) && selectedBubble && (
         <div className="space-y-3 pt-4">
           <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               선택된 말풍선: <span className="font-medium text-foreground">{selectedBubble.text || "(텍스트 없음)"}</span>
             </p>
-            <p className="text-[10px] text-muted-foreground/70 mt-1">
+            <p className="text-[13px] text-muted-foreground/70 mt-1">
               우측 속성 패널에서 편집하세요
             </p>
           </div>
@@ -3546,21 +2736,17 @@ export default function StoryPage() {
   };
 
   // 인스타툰 자동화 생성용 - 기준 캐릭터 이미지 (복수, 최대 4개)
-  const [autoRefImages, setAutoRefImages] = useState<{ url: string; name: string }[]>([]);
-  const [showAutoGalleryPicker, setShowAutoGalleryPicker] = useState(false);
+  const [autoRefImages, setAutoRefImages] = useState<CharacterImage[]>([]);
   // Style detection for visual consistency
   const [detectedStyle, setDetectedStyle] = useState<string>("auto");    // auto | style key
   const [isDetectingStyle, setIsDetectingStyle] = useState(false);
   // 프롬프트 자동작성용 - 기준 캐릭터 이미지
-  const [promptRefImageUrl, setPromptRefImageUrl] = useState<string | null>(null);
-  const [promptRefImageName, setPromptRefImageName] = useState<string>("");
-  const [showPromptGalleryPicker, setShowPromptGalleryPicker] = useState(false);
-  const autoRefInputRef = useRef<HTMLInputElement>(null);
-  const promptRefInputRef = useRef<HTMLInputElement>(null);
+  const [promptRefImages, setPromptRefImages] = useState<CharacterImage[]>([]);
   const [panels, setPanelsRaw] = useState<PanelData[]>([createPanel()]);
   const [activePanelIndex, setActivePanelIndex] = useState(0);
   const [fontsReady, setFontsReady] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSavedConfirm, setShowSavedConfirm] = useState(false);
   const [showInstagramPublish, setShowInstagramPublish] = useState(false);
   const [posePrompt, setPosePrompt] = useState("");
   const [expressionPrompt, setExpressionPrompt] = useState("");
@@ -3572,6 +2758,26 @@ export default function StoryPage() {
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
   const [savingProject, setSavingProject] = useState(false);
   const [aiLimitOpen, setAiLimitOpen] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [showNewFolderInput, setShowNewFolderInput] = useState(false);
+  const [canvasRatio, setCanvasRatio] = useState<CanvasRatio>("3:4");
+
+  // ─── Editor checklist state ──────────────────────────────────────────
+  const CHECKLIST_KEY = "olli_editor_checklist_completed";
+  const [checklistCompleted, setChecklistCompleted] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem(CHECKLIST_KEY);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const markChecklistDone = useCallback((id: string) => {
+    setChecklistCompleted(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev).add(id);
+      localStorage.setItem(CHECKLIST_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  }, []);
 
   const historyRef = useRef<PanelData[][]>([]);
   const futureRef = useRef<PanelData[][]>([]);
@@ -3582,6 +2788,9 @@ export default function StoryPage() {
   const instatoonAbortRef = useRef<AbortController | null>(null);
   const generateAbortRef = useRef<AbortController | null>(null);
   const promptAbortRef = useRef<AbortController | null>(null);
+
+  // Sync CANVAS_H immediately on every render so canvas uses correct size
+  CANVAS_H = canvasRatio === "3:4" ? 675 : 540;
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -3602,6 +2811,19 @@ export default function StoryPage() {
     }
   }, []);
 
+  // localStorage: restore instatoonScenePrompt on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("olli_instatoon_scene");
+    if (saved) setInstatoonScenePrompt(saved);
+  }, []);
+
+  // localStorage: save instatoonScenePrompt on change
+  useEffect(() => {
+    if (instatoonScenePrompt) {
+      localStorage.setItem("olli_instatoon_scene", instatoonScenePrompt);
+    }
+  }, [instatoonScenePrompt]);
+
   const clonePanels = useCallback((src: PanelData[]): PanelData[] => {
     return src.map((p) => ({
       ...p,
@@ -3614,6 +2836,11 @@ export default function StoryPage() {
       backgroundImageEl: p.backgroundImageEl,
       drawingLayers: (p.drawingLayers || []).map((dl) => ({ ...dl })),
       shapeElements: (p.shapeElements || []).map((s) => ({ ...s })),
+      textElements: (p.textElements || []).map((te) => ({ ...te })),
+      lineElements: (p.lineElements || []).map((le) => ({
+        ...le,
+        points: le.points.map((pt) => ({ ...pt })),
+      })),
     }));
   }, []);
 
@@ -3889,6 +3116,36 @@ export default function StoryPage() {
 
   const { data: usageData } = useQuery<UsageData>({ queryKey: ["/api/usage"] });
   const maxPanels = usageData?.maxStoryPanels ?? 3;
+
+  const { data: projectFolders = [] } = useQuery<{ id: number; name: string }[]>({
+    queryKey: ["/api/project-folders"],
+    enabled: isAuthenticated,
+  });
+
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [loadFolderId, setLoadFolderId] = useState<number | null>(null);
+  const { data: savedProjects = [] } = useQuery<{ id: number; name: string; folderId: number | null; updatedAt: string; editorType: string; thumbnailUrl: string | null }[]>({
+    queryKey: ["/api/bubble-projects"],
+    enabled: isAuthenticated && (showSaveModal || showLoadModal),
+  });
+
+  const createFolderMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const res = await apiRequest("POST", "/api/project-folders", { name });
+      return res.json();
+    },
+    onSuccess: (folder: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-folders"] });
+      setSelectedFolderId(folder.id);
+      setNewFolderName("");
+      setShowNewFolderInput(false);
+      setCreatingFolder(false);
+    },
+    onError: (err: any) => {
+      toast({ title: "폴더 생성 실패", description: err.message, variant: "destructive" });
+      setCreatingFolder(false);
+    },
+  });
   useEffect(() => {
     if (typeof document === "undefined" || !document.fonts || typeof document.fonts.ready?.then !== "function") {
       setFontsReady(true);
@@ -3902,10 +3159,11 @@ export default function StoryPage() {
   }, []);
 
   const [galleryLimit, setGalleryLimit] = useState(30);
+  const [activeGalleryFolderId, setActiveGalleryFolderId] = useState<number | null>(null);
   const { data: galleryRaw, isLoading: galleryLoading } = useQuery<
     { items: GenerationLight[]; total: number; hasMore: boolean }
   >({
-    queryKey: ["/api/gallery", galleryLimit],
+    queryKey: ["/api/gallery", galleryLimit, activeGalleryFolderId],
     refetchOnMount: "always",
     staleTime: 0,
     queryFn: async () => {
@@ -3913,13 +3171,35 @@ export default function StoryPage() {
       const { supabase: sb } = await import("@/lib/supabase");
       const { data: sess } = await sb.auth.getSession();
       if (sess.session?.access_token) authHeaders["Authorization"] = `Bearer ${sess.session.access_token}`;
-      const res = await fetch(`/api/gallery?limit=${galleryLimit}&offset=0`, { headers: authHeaders });
+      const folderParam = activeGalleryFolderId ? `&folderId=${activeGalleryFolderId}` : "";
+      const res = await fetch(`/api/gallery?limit=${galleryLimit}&offset=0${folderParam}`, { headers: authHeaders });
       if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
       return res.json();
     },
   });
   const galleryData = galleryRaw?.items ?? [];
   const galleryHasMore = galleryRaw?.hasMore ?? false;
+
+  // Character-only query for quick-select strips (캐릭터 전용)
+  const { data: characterStripRaw } = useQuery<{ items: GenerationLight[] }>({
+    queryKey: ["/api/gallery", "character-strip"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const authHeaders: Record<string, string> = {};
+      const { supabase: sb } = await import("@/lib/supabase");
+      const { data: sess } = await sb.auth.getSession();
+      if (sess.session?.access_token) authHeaders["Authorization"] = `Bearer ${sess.session.access_token}`;
+      const res = await fetch("/api/gallery?type=character&limit=12", { headers: authHeaders });
+      if (!res.ok) throw new Error("Failed to load character strip");
+      return res.json();
+    },
+  });
+  const characterStripData = characterStripRaw?.items ?? [];
+
+  type CharacterFolderWithItems = CharacterFolder & { items: { generationId: number; thumbnailUrl?: string | null; characterName?: string | null; prompt?: string | null }[] };
+  const { data: storyCharacterFolders = [] } = useQuery<CharacterFolderWithItems[]>({
+    queryKey: ["/api/character-folders"],
+  });
 
   const fetchFullGeneration = useCallback(async (id: number): Promise<Generation | null> => {
     try {
@@ -3961,6 +3241,9 @@ export default function StoryPage() {
         topic,
         panelCount: isCurrent ? 1 : panels.length,
       };
+      // 캐릭터 이름이 있으면 스토리 생성에 반영
+      const charNames = autoRefImages.map(img => img.name).filter(Boolean);
+      if (charNames.length > 0) body.characterNames = charNames;
       if (variables.mode === "full") {
         if (instatoonScenePrompt.trim()) {
           body.backgroundPrompt = instatoonScenePrompt.trim();
@@ -3970,7 +3253,7 @@ export default function StoryPage() {
           if (itemPrompt.trim()) body.itemPrompt = itemPrompt.trim();
           if (backgroundPrompt.trim()) body.backgroundPrompt = backgroundPrompt.trim();
         }
-        if (autoRefImages.length > 0) body.referenceImageUrl = autoRefImages[0].url;
+        if (autoRefImages.length > 0) body.referenceImageUrl = autoRefImages[0].imageUrl;
       }
       const res = await apiRequest("POST", "/api/story-scripts", body, { signal: ac.signal });
       const result = await res.json() as { panels: StoryPanelScript[] };
@@ -4016,10 +3299,10 @@ export default function StoryPage() {
         return {
           ...panel,
           topScript: aiPanel.top
-            ? { text: aiPanel.top, style: "no-border" as const, color: "dark", y: 20 }
+            ? { text: aiPanel.top, style: "no-border" as const, color: "dark", fontSize: 16, bold: true, y: 20 }
             : null,
           bottomScript: aiPanel.bottom
-            ? { text: aiPanel.bottom, style: "no-border" as const, color: "white", textColor: "#1a1a1a", y: CANVAS_H - 100 }
+            ? { text: aiPanel.bottom, style: "no-border" as const, color: "white", textColor: "#1a1a1a", fontSize: 16, bold: true, y: CANVAS_H - 100 }
             : null,
           bubbles: newBubbles.length > 0 ? newBubbles : panel.bubbles,
         };
@@ -4057,6 +3340,8 @@ export default function StoryPage() {
           description: `${data.panels.length}개 패널, ${totalBubbles}개 말풍선이 생성되었습니다`,
         });
       }
+      markChecklistDone("ai-generate");
+      markChecklistDone("add-subtitle");
     },
     onSettled: () => { generateAbortRef.current = null; },
     onError: (error: any) => {
@@ -4091,7 +3376,7 @@ export default function StoryPage() {
       instatoonAbortRef.current = ac;
       const scope = variables?.scope ?? "all";
       const currentPanels = panels;
-      const currentRefImages = autoRefImages.map(img => img.url);
+      const currentRefImages = autoRefImages.map(img => img.imageUrl);
       if (currentRefImages.length === 0) {
         throw new Error("먼저 기준 캐릭터 이미지를 선택해주세요.");
       }
@@ -4100,6 +3385,10 @@ export default function StoryPage() {
       const targetIndices = scope === "current"
         ? [activePanelIndex]
         : currentPanels.map((_, i) => i);
+
+      // 캐릭터 이름을 장면 프롬프트에 포함
+      const charNameCtx = autoRefImages.map(img => img.name).filter(Boolean);
+      const charNamePrefix = charNameCtx.length > 0 ? `characters: ${charNameCtx.join(", ")}. ` : "";
 
       const results: { panelId: string; imageUrl: string }[] = [];
       const errors: string[] = [];
@@ -4114,6 +3403,7 @@ export default function StoryPage() {
           const sceneParts: string[] = [];
           const styleKey2 = detectedStyle && detectedStyle !== "auto" ? detectedStyle : null;
           if (styleKey2 && ART_STYLES[styleKey2]) sceneParts.push(ART_STYLES[styleKey2].promptKeyword);
+          if (charNamePrefix) sceneParts.push(charNamePrefix.trim());
           if (poseStr) sceneParts.push(poseStr);
           sceneParts.push(instatoonScenePrompt.trim());
           if (i > 0) sceneParts.push(`scene ${i + 1}`);
@@ -4127,7 +3417,7 @@ export default function StoryPage() {
             itemPrompt.trim(),
             i,
           );
-          scenePrompt = built.backgroundPrompt;
+          scenePrompt = charNamePrefix + built.backgroundPrompt;
           finalItems = built.itemsPrompt;
         }
 
@@ -4341,7 +3631,7 @@ export default function StoryPage() {
 
       // Auto-generate character image if reference image is available
       // backgroundPromptMutation is used in instatoonFull flow (autoRefImages)
-      const refImgs = autoRefImages.length > 0 ? autoRefImages.map(i => i.url) : promptRefImageUrl ? [promptRefImageUrl] : [];
+      const refImgs = autoRefImages.length > 0 ? autoRefImages.map(i => i.imageUrl) : promptRefImages[0]?.imageUrl ? [promptRefImages[0].imageUrl] : [];
       if (refImgs.length > 0) {
         toast({
           title: "배경/아이템 완성 — 이미지 생성 시작",
@@ -4356,6 +3646,7 @@ export default function StoryPage() {
           pose: posePrompt,
           expression: expressionPrompt,
           topic: topic.trim() || undefined,
+          characterNames: autoRefImages.map(img => img.name).filter(Boolean),
         }, currentPanelIds).then((count) => {
           toast({
             title: "캐릭터 이미지 추가 완료",
@@ -4405,7 +3696,7 @@ export default function StoryPage() {
       const scope = variables?.scope ?? "all";
       const res = await apiRequest("POST", "/api/ai-prompt", {
         type: "background",
-        referenceImageUrl: promptRefImageUrl ?? undefined,
+        referenceImageUrl: promptRefImages[0]?.imageUrl ?? undefined,
       }, { signal: ac.signal });
       const data = (await res.json()) as { prompt: string };
       return { prompt: data.prompt, scope };
@@ -4434,7 +3725,7 @@ export default function StoryPage() {
       setInstatoonScenePrompt(scene || rawPrompt);
 
       // If a reference character image is provided, auto-generate and place on canvas
-      const refImgs2 = autoRefImages.length > 0 ? autoRefImages.map(i => i.url) : promptRefImageUrl ? [promptRefImageUrl] : [];
+      const refImgs2 = autoRefImages.length > 0 ? autoRefImages.map(i => i.imageUrl) : promptRefImages.length > 0 ? promptRefImages.map(i => i.imageUrl) : [];
       if (refImgs2.length > 0) {
         const isCurrent = scope === "current";
         const targetPanelIds = isCurrent
@@ -4452,6 +3743,7 @@ export default function StoryPage() {
           pose: posePrompt,
           expression: expressionPrompt,
           topic: topic.trim() || undefined,
+          characterNames: (autoRefImages.length > 0 ? autoRefImages : promptRefImages).map(img => img.name).filter(Boolean),
         }, targetPanelIds).then((count) => {
           toast({
             title: "캐릭터 이미지 추가 완료",
@@ -4546,7 +3838,7 @@ export default function StoryPage() {
   // Helper: generate character images per panel and add as CharacterPlacements on canvas
   const generateAndAddCharacterImages = async (
     sourceImageUrls: string[],
-    promptParts: { bg?: string; items?: string; pose?: string; expression?: string; topic?: string },
+    promptParts: { bg?: string; items?: string; pose?: string; expression?: string; topic?: string; characterNames?: string[] },
     panelIds?: string[]
   ) => {
     const ids = panelIds ?? panels.map(p => p.id);
@@ -4584,12 +3876,15 @@ export default function StoryPage() {
         promptParts.items,
         i,
       );
+      // 캐릭터 이름을 장면 프롬프트에 포함
+      const charCtx = promptParts.characterNames?.length ? `characters: ${promptParts.characterNames.join(", ")}. ` : "";
 
       try {
         const res = await apiRequest("POST", "/api/generate-background", {
           sourceImageDataList: sourceImageUrls,
-          backgroundPrompt: scenePrompt,
+          backgroundPrompt: charCtx + scenePrompt,
           itemsPrompt: sceneItems,
+          characterNames: promptParts.characterNames,
         });
         const data = await res.json() as { imageUrl: string };
         const imageUrl = data.imageUrl;
@@ -4618,6 +3913,16 @@ export default function StoryPage() {
           const gen = generated.find((g) => g.panelId === p.id);
           if (!gen) return p;
           const cid = charIdMap[gen.panelId];
+          const genIdx = ids.indexOf(gen.panelId);
+          const { backgroundPrompt: genPrompt } = buildScenePrompt(
+            promptParts.topic,
+            promptParts.pose,
+            promptParts.expression,
+            promptParts.bg,
+            promptParts.items,
+            genIdx,
+          );
+          const charCtxStr = promptParts.characterNames?.length ? `characters: ${promptParts.characterNames.join(", ")}. ` : "";
           const char: CharacterPlacement = {
             id: cid,
             imageUrl: gen.imageUrl,
@@ -4626,6 +3931,7 @@ export default function StoryPage() {
             scale: gen.coverScale,
             imageEl: gen.img,
             zIndex: 0,
+            prompt: charCtxStr + genPrompt,
           };
           return { ...p, characters: [char, ...p.characters] };
         })
@@ -4672,44 +3978,6 @@ export default function StoryPage() {
   };
 
   // 이미지 파일 → base64 변환 후 state에 추가 (최대 4개)
-  const handleAutoRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (autoRefImages.length >= 4) {
-      toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      setAutoRefImages(prev => [...prev, { url: dataUrl, name: file.name }]);
-      // 스타일 감지는 첫 번째 이미지에서만 수행
-      if (autoRefImages.length === 0) {
-        setDetectedStyle("auto");
-        detectArtStyle(dataUrl).finally(() => setIsDetectingStyle(false));
-      }
-    };
-    reader.readAsDataURL(file);
-    // reset input so same file can be re-selected
-    e.target.value = "";
-  };
-
-  const handlePromptRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      setPromptRefImageUrl(dataUrl);
-      setPromptRefImageName(file.name);
-      setShowPromptGalleryPicker(false);
-      setDetectedStyle("auto");
-      // Auto-detect style for this image too
-      detectArtStyle(dataUrl).finally(() => setIsDetectingStyle(false));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const TIER_NAMES = ["입문 작가", "신인 작가", "인기 작가", "프로 연재러"];
   const TIER_PANEL_LIMITS = [3, 5, 8, 14];
 
@@ -4736,6 +4004,7 @@ export default function StoryPage() {
     const newPanels = [...panels, createPanel()];
     setPanels(newPanels);
     setActivePanelIndex(newPanels.length - 1);
+    markChecklistDone("add-panel");
   };
 
   const removePanel = (idx: number) => {
@@ -4795,6 +4064,11 @@ export default function StoryPage() {
     setPanels((prev) => prev.map((p, i) => (i === idx ? updated : p)));
   };
 
+  // Update panel without pushing undo history (for continuous drag moves)
+  const updatePanelNoHistory = useCallback((idx: number, updated: PanelData) => {
+    setPanelsNoHistory((prev) => prev.map((p, i) => (i === idx ? updated : p)));
+  }, [setPanelsNoHistory]);
+
   const resetAll = () => {
     setPanels([createPanel()]);
     setActivePanelIndex(0);
@@ -4809,11 +4083,25 @@ export default function StoryPage() {
   const [showCharRegenPanel, setShowCharRegenPanel] = useState(false);
   const [charRegenPrompt, setCharRegenPrompt] = useState("");
   const [charRegenLoading, setCharRegenLoading] = useState(false);
+  // ─── Character inpaint (부분 수정) state ──────────────────────────
+  const [charInpaintMode, setCharInpaintMode] = useState(false);
+  const [charInpaintSelectionMode, setCharInpaintSelectionMode] = useState<SelectionMode>("brush");
+  const [charInpaintToolMode, setCharInpaintToolMode] = useState<"brush" | "lasso" | "quick" | "object">("brush");
+  const [charInpaintBrushSize, setCharInpaintBrushSize] = useState(30);
+  const [charInpaintPrompt, setCharInpaintPrompt] = useState("");
+  const [charInpaintLoading, setCharInpaintLoading] = useState(false);
+  const charInpaintSelectionRef = useRef<SelectionCanvasHandle | null>(null);
+  const [charInpaintImageCanvas, setCharInpaintImageCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [charRegenTab, setCharRegenTab] = useState<"full" | "inpaint">("full");
+  const [charInpaintAction, setCharInpaintAction] = useState<"fill" | "color">("fill");
+  // ─── AI 재생성 모달 드래그 state ─────────────────────────────────
+  const [charRegenDragPos, setCharRegenDragPos] = useState<{ x: number; y: number } | null>(null);
+  const charRegenDragRef = useRef<{ startMouseX: number; startMouseY: number; startX: number; startY: number } | null>(null);
   const [selectedDrawingLayerId, setSelectedDrawingLayerId] = useState<string | null>(null);
   const panelCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
   const bubbleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  type LeftTab = "image" | "ai" | "elements" | "tools" | null;
+  type LeftTab = "image" | "ai" | "elements" | "tools" | "generative" | "guide" | null;
   const [activeLeftTab, setActiveLeftTab] = useState<LeftTab>(null);
   type ElementsSubTab = "script" | "bubble" | "template";
   const [elementsSubTab, setElementsSubTab] = useState<ElementsSubTab>("script");
@@ -4833,6 +4121,211 @@ export default function StoryPage() {
     opacity: 1,
   });
   const drawingCanvasRef = useRef<DrawingCanvasHandle | null>(null);
+
+  // ─── Generative tool state ──────────────────────────────────────────────
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>("brush");
+  const [selectionBrushSize, setSelectionBrushSize] = useState(40);
+  const [genPrompt, setGenPrompt] = useState("");
+  const [genLoading, setGenLoading] = useState(false);
+  const selectionCanvasRef = useRef<SelectionCanvasHandle | null>(null);
+  type GenTool = "fill" | "expand" | "upscale" | "generate" | "object" | null;
+  const [selectedGenTool, setSelectedGenTool] = useState<GenTool>("fill");
+  const [expandTop, setExpandTop] = useState(0);
+  const [expandRight, setExpandRight] = useState(0);
+  const [expandBottom, setExpandBottom] = useState(0);
+  const [expandLeft, setExpandLeft] = useState(0);
+  const [selectedObjectColor, setSelectedObjectColor] = useState("#ef4444");
+  const [floodFillTolerance, setFloodFillTolerance] = useState(32);
+  type ObjectAction = "color" | "fill";
+  const [objectAction, setObjectAction] = useState<ObjectAction>("fill");
+  const isGenerativeMode = activeLeftTab === "generative" && (selectedGenTool === "fill" || selectedGenTool === "object");
+  const isExpandMode = activeLeftTab === "generative" && selectedGenTool === "expand";
+
+  // Helper: capture panel canvas at logical 540×675 (clean, no selection artifacts)
+  const capturePanelClean = useCallback((panelId: string): string | null => {
+    const canvas = panelCanvasRefs.current.get(panelId);
+    if (!canvas) return null;
+    // Render to an offscreen canvas at logical size to avoid DPR scaling
+    const off = document.createElement("canvas");
+    off.width = CANVAS_W;
+    off.height = CANVAS_H;
+    const ctx = off.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(canvas, 0, 0, CANVAS_W, CANVAS_H);
+    return off.toDataURL("image/png");
+  }, []);
+
+  // Client-side flood fill object selection: click a point → instant mask via BFS
+  const handleObjectSelectClick = useCallback((clickX: number, clickY: number) => {
+    if (!activePanel) return;
+    selectionCanvasRef.current?.floodFillAt(clickX, clickY, floodFillTolerance);
+  }, [activePanel, floodFillTolerance]);
+
+  // Helper: composite AI result with original using mask (only apply AI pixels where mask is white)
+  const compositeWithMask = useCallback((originalDataUrl: string, aiResultDataUrl: string, maskDataUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const origImg = new Image();
+      const aiImg = new Image();
+      const maskImg = new Image();
+      let loaded = 0;
+      const onLoad = () => {
+        loaded++;
+        if (loaded < 3) return;
+        try {
+          // Draw AI result onto a canvas
+          const aiCanvas = document.createElement("canvas");
+          aiCanvas.width = CANVAS_W;
+          aiCanvas.height = CANVAS_H;
+          const aiCtx = aiCanvas.getContext("2d")!;
+          aiCtx.drawImage(aiImg, 0, 0, CANVAS_W, CANVAS_H);
+          // Read mask pixels to determine which AI pixels to keep
+          const maskCanvas = document.createElement("canvas");
+          maskCanvas.width = CANVAS_W;
+          maskCanvas.height = CANVAS_H;
+          const mCtx = maskCanvas.getContext("2d")!;
+          mCtx.drawImage(maskImg, 0, 0, CANVAS_W, CANVAS_H);
+          const maskPixels = mCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+          // Set AI result alpha based on mask brightness (white=keep, black=discard)
+          const aiPixels = aiCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+          for (let i = 0; i < maskPixels.data.length; i += 4) {
+            const brightness = maskPixels.data[i]; // R channel (0=black, 255=white)
+            aiPixels.data[i + 3] = brightness > 128 ? 255 : 0;
+          }
+          aiCtx.putImageData(aiPixels, 0, 0);
+          // Composite: original as base + masked AI result on top
+          const off = document.createElement("canvas");
+          off.width = CANVAS_W;
+          off.height = CANVAS_H;
+          const ctx = off.getContext("2d")!;
+          ctx.drawImage(origImg, 0, 0, CANVAS_W, CANVAS_H);
+          ctx.drawImage(aiCanvas, 0, 0);
+          resolve(off.toDataURL("image/png"));
+        } catch (err) {
+          reject(err);
+        }
+      };
+      origImg.onload = onLoad;
+      aiImg.onload = onLoad;
+      maskImg.onload = onLoad;
+      origImg.onerror = reject;
+      aiImg.onerror = reject;
+      maskImg.onerror = reject;
+      origImg.src = originalDataUrl;
+      aiImg.src = aiResultDataUrl;
+      maskImg.src = maskDataUrl;
+    });
+  }, []);
+
+  // Helper: load data URL into panel as background image
+  const applyImageToPanel = useCallback((panelIdx: number, dataUrl: string) => {
+    const panel = panels[panelIdx];
+    if (!panel) return;
+    const img = new Image();
+    img.onload = () => {
+      updatePanel(panelIdx, { ...panel, backgroundImageUrl: dataUrl, backgroundImageEl: img });
+    };
+    img.src = dataUrl;
+  }, [panels, updatePanel]);
+
+  const WEBTOON_COLOR_PRESETS = [
+    "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6",
+    "#fca5a5", "#fdba74", "#fde047", "#86efac", "#93c5fd", "#c4b5fd",
+    "#fde8d4", "#f5d0b0", "#e8b88a", "#d4956b", "#b87449", "#8b5e3c",
+    "#1e293b", "#334155", "#6b7280", "#9ca3af", "#d1d5db", "#ffffff",
+    "#ec4899", "#f472b6", "#a78bfa", "#67e8f9", "#2dd4bf", "#a3e635",
+  ];
+
+  const applyColorToSelection = useCallback(async () => {
+    const mask = selectionCanvasRef.current?.exportMask();
+    if (!mask) {
+      toast({ title: "영역을 먼저 선택해주세요", variant: "destructive" });
+      return;
+    }
+    if (!activePanel) return;
+    const imageData = capturePanelClean(activePanel.id);
+    if (!imageData) return;
+
+    // Parse target color hex → HSL
+    const hexToRgb = (hex: string) => {
+      const h = hex.replace("#", "");
+      return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)] as [number, number, number];
+    };
+    const [tR, tG, tB] = hexToRgb(selectedObjectColor);
+    const [targetH, targetS] = rgbToHsl(tR, tG, tB);
+
+    // Load image and mask
+    const loadImg = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+
+    try {
+      setGenLoading(true);
+      const [imgEl, maskEl] = await Promise.all([loadImg(imageData), loadImg(mask)]);
+
+      const off = document.createElement("canvas");
+      off.width = CANVAS_W;
+      off.height = CANVAS_H;
+      const ctx = off.getContext("2d")!;
+
+      // Draw original image
+      ctx.drawImage(imgEl, 0, 0, CANVAS_W, CANVAS_H);
+      const imgData = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+
+      // Draw mask
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = CANVAS_W;
+      maskCanvas.height = CANVAS_H;
+      const maskCtx = maskCanvas.getContext("2d")!;
+      maskCtx.drawImage(maskEl, 0, 0, CANVAS_W, CANVAS_H);
+      const maskData = maskCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+
+      // Apply color: for white mask pixels, replace H/S while keeping L
+      const pixels = imgData.data;
+      const maskPx = maskData.data;
+      for (let i = 0; i < pixels.length; i += 4) {
+        const mBright = (maskPx[i] + maskPx[i + 1] + maskPx[i + 2]) / 3;
+        if (mBright < 128) continue; // not in mask
+
+        const [, , l] = rgbToHsl(pixels[i], pixels[i + 1], pixels[i + 2]);
+        if (l < 0.08 || l > 0.95) continue; // skip outlines and near-white
+
+        const [r, g, b] = hslToRgb(targetH, targetS, l);
+        pixels[i] = r;
+        pixels[i + 1] = g;
+        pixels[i + 2] = b;
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      const resultUrl = off.toDataURL("image/png");
+      // Flatten characters & drawing layers into the background
+      // (they are already baked into the captured image, so clearing them
+      //  prevents originals from rendering on top and hiding the color change)
+      const panel = panels[activePanelIndex];
+      if (panel) {
+        const img = new Image();
+        img.onload = () => {
+          updatePanel(activePanelIndex, {
+            ...panel,
+            backgroundImageUrl: resultUrl,
+            backgroundImageEl: img,
+            characters: [],
+            drawingLayers: [],
+          });
+        };
+        img.src = resultUrl;
+      }
+      selectionCanvasRef.current?.clearSelection();
+      toast({ title: "색상 변경 완료" });
+    } catch (err: any) {
+      toast({ title: "색상 변경 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setGenLoading(false);
+    }
+  }, [activePanel, activePanelIndex, selectedObjectColor, capturePanelClean, panels, updatePanel, toast]);
+
   const isDrawingMode = activeLeftTab === "tools" && selectedToolItem === "drawing";
   const isTextMode = activeLeftTab === "tools" && selectedToolItem === "text";
   const isLineMode = activeLeftTab === "tools" && selectedToolItem === "line";
@@ -4861,10 +4354,12 @@ export default function StoryPage() {
     try {
       const bgPrompt = mode === "prompt"
         ? prompt
-        : "same character in a completely different dynamic pose and expression";
+        : "same character in a completely different dynamic pose and expression, keeping exact same art style and character features";
       const res = await apiRequest("POST", "/api/generate-background", {
         sourceImageDataList: [char.imageUrl],
         backgroundPrompt: bgPrompt,
+        noBackground: true,
+        skipGallery: true,
       });
       const data = await res.json();
       if (data.imageUrl) {
@@ -4894,6 +4389,306 @@ export default function StoryPage() {
     }
   }, [panels, setPanels]);
 
+  // ─── Character inpaint (부분 수정) generate ─────────────────────────
+  const charInpaintGenerate = useCallback(async (charId: string, panelIdx: number, prompt: string) => {
+    const p = panels[panelIdx];
+    if (!p) return;
+    const char = p.characters.find(c => c.id === charId);
+    if (!char || !char.imageUrl || !char.imageEl) return;
+
+    const mask = charInpaintSelectionRef.current?.exportMask();
+    if (!mask) {
+      toast({ title: "수정할 영역을 먼저 선택해주세요", variant: "destructive" });
+      return;
+    }
+
+    setCharInpaintLoading(true);
+    try {
+      // Get character image as data URL
+      let charImageData: string;
+      if (char.imageUrl.startsWith("data:")) {
+        charImageData = char.imageUrl;
+      } else {
+        const tmpCanvas = document.createElement("canvas");
+        tmpCanvas.width = char.imageEl.naturalWidth;
+        tmpCanvas.height = char.imageEl.naturalHeight;
+        const tmpCtx = tmpCanvas.getContext("2d")!;
+        tmpCtx.drawImage(char.imageEl, 0, 0);
+        charImageData = tmpCanvas.toDataURL("image/png");
+      }
+
+      // If flipX, flip the mask horizontally
+      let finalMask = mask;
+      if (char.flipX) {
+        const flipCanvas = document.createElement("canvas");
+        const maskImg = await loadImage(mask);
+        flipCanvas.width = maskImg.naturalWidth;
+        flipCanvas.height = maskImg.naturalHeight;
+        const flipCtx = flipCanvas.getContext("2d")!;
+        flipCtx.translate(flipCanvas.width, 0);
+        flipCtx.scale(-1, 1);
+        flipCtx.drawImage(maskImg, 0, 0);
+        finalMask = flipCanvas.toDataURL("image/png");
+      }
+
+      const resp = await apiRequest("POST", "/api/generative-fill", {
+        imageData: charImageData,
+        maskData: finalMask,
+        prompt,
+      });
+      const data = await resp.json();
+      if (data.imageUrl) {
+        // Composite: original image as base, AI result only in masked area
+        const compositeCharWithMask = (origSrc: string, aiSrc: string, maskSrc: string): Promise<string> => {
+          return new Promise((resolve, reject) => {
+            const origEl = new Image();
+            const aiEl = new Image();
+            const maskEl = new Image();
+            let loaded = 0;
+            const onLoad = () => {
+              loaded++;
+              if (loaded < 3) return;
+              try {
+                const w = origEl.naturalWidth;
+                const h = origEl.naturalHeight;
+                // Draw AI result, apply mask as alpha
+                const aiCanvas = document.createElement("canvas");
+                aiCanvas.width = w;
+                aiCanvas.height = h;
+                const aiCtx = aiCanvas.getContext("2d")!;
+                aiCtx.drawImage(aiEl, 0, 0, w, h);
+                const maskCanvas = document.createElement("canvas");
+                maskCanvas.width = w;
+                maskCanvas.height = h;
+                const mCtx = maskCanvas.getContext("2d")!;
+                mCtx.drawImage(maskEl, 0, 0, w, h);
+                const maskPixels = mCtx.getImageData(0, 0, w, h);
+                const aiPixels = aiCtx.getImageData(0, 0, w, h);
+                for (let px = 0; px < maskPixels.data.length; px += 4) {
+                  const brightness = maskPixels.data[px]; // R channel
+                  aiPixels.data[px + 3] = brightness > 128 ? aiPixels.data[px + 3] : 0;
+                }
+                aiCtx.putImageData(aiPixels, 0, 0);
+                // Composite: original base + masked AI on top
+                const off = document.createElement("canvas");
+                off.width = w;
+                off.height = h;
+                const ctx = off.getContext("2d")!;
+                ctx.drawImage(origEl, 0, 0, w, h);
+                ctx.drawImage(aiCanvas, 0, 0);
+                resolve(off.toDataURL("image/png"));
+              } catch (err) { reject(err); }
+            };
+            origEl.onload = onLoad;
+            aiEl.onload = onLoad;
+            maskEl.onload = onLoad;
+            origEl.onerror = reject;
+            aiEl.onerror = reject;
+            maskEl.onerror = reject;
+            origEl.src = origSrc;
+            aiEl.src = aiSrc;
+            maskEl.src = maskSrc;
+          });
+        };
+
+        const compositedUrl = await compositeCharWithMask(charImageData, data.imageUrl, finalMask);
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          setPanels(prev => prev.map((pan, idx) => {
+            if (idx !== panelIdx) return pan;
+            return {
+              ...pan,
+              characters: pan.characters.map(c =>
+                c.id === charId ? { ...c, imageUrl: compositedUrl, imageEl: img } : c
+              ),
+            };
+          }));
+          setCharInpaintLoading(false);
+          charInpaintSelectionRef.current?.clearSelection();
+          setCharInpaintPrompt("");
+          toast({ title: "부분 수정 완료" });
+          queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+        };
+        img.onerror = () => setCharInpaintLoading(false);
+        img.src = compositedUrl;
+      } else {
+        setCharInpaintLoading(false);
+      }
+    } catch (err: any) {
+      toast({ title: "부분 수정 실패", description: err.message, variant: "destructive" });
+      setCharInpaintLoading(false);
+    }
+  }, [panels, setPanels, toast]);
+
+  // Helper: load image as promise
+  const loadImage = useCallback((src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }, []);
+
+  // Character inpaint: 빠른선택/개체선택 (local flood fill on character image)
+  const handleCharInpaintQuickSelect = useCallback((clickX: number, clickY: number) => {
+    charInpaintSelectionRef.current?.floodFillAt(clickX, clickY, floodFillTolerance);
+  }, [floodFillTolerance]);
+
+  // Character inpaint: 색상 변경 (apply color to selected area of character)
+  const applyColorToCharSelection = useCallback(async () => {
+    const mask = charInpaintSelectionRef.current?.exportMask();
+    if (!mask) {
+      toast({ title: "영역을 먼저 선택해주세요", variant: "destructive" });
+      return;
+    }
+    const p = panels[activePanelIndex];
+    if (!p || !selectedCharId) return;
+    const char = p.characters.find(c => c.id === selectedCharId);
+    if (!char?.imageEl) return;
+
+    const hexToRgb = (hex: string) => {
+      const h = hex.replace("#", "");
+      return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)] as [number, number, number];
+    };
+    const [tR, tG, tB] = hexToRgb(selectedObjectColor);
+    const [targetH, targetS] = rgbToHsl(tR, tG, tB);
+
+    const loadImg = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+
+    try {
+      const natW = char.imageEl.naturalWidth;
+      const natH = char.imageEl.naturalHeight;
+
+      // Use crossOrigin image to avoid tainted canvas
+      let srcImg = char.imageEl;
+      if (char.imageUrl && !char.imageUrl.startsWith("data:")) {
+        try {
+          const tmpCanvas = document.createElement("canvas");
+          tmpCanvas.width = 1; tmpCanvas.height = 1;
+          const tmpCtx = tmpCanvas.getContext("2d")!;
+          tmpCtx.drawImage(char.imageEl, 0, 0);
+          tmpCtx.getImageData(0, 0, 1, 1); // test taint
+        } catch {
+          // Tainted — reload with CORS
+          srcImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = char.imageUrl!;
+          });
+        }
+      }
+
+      const charCanvas = document.createElement("canvas");
+      charCanvas.width = natW;
+      charCanvas.height = natH;
+      const charCtx = charCanvas.getContext("2d")!;
+      charCtx.drawImage(srcImg, 0, 0);
+      const imgData = charCtx.getImageData(0, 0, natW, natH);
+
+      const maskEl = await loadImg(mask);
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = natW;
+      maskCanvas.height = natH;
+      const maskCtx = maskCanvas.getContext("2d")!;
+      maskCtx.drawImage(maskEl, 0, 0, natW, natH);
+      const maskImgData = maskCtx.getImageData(0, 0, natW, natH);
+
+      const pixels = imgData.data;
+      const maskPx = maskImgData.data;
+      for (let idx = 0; idx < pixels.length; idx += 4) {
+        const mBright = (maskPx[idx] + maskPx[idx + 1] + maskPx[idx + 2]) / 3;
+        if (mBright < 128) continue;
+        const [, , l] = rgbToHsl(pixels[idx], pixels[idx + 1], pixels[idx + 2]);
+        if (l < 0.08 || l > 0.95) continue;
+        const [r, g, b] = hslToRgb(targetH, targetS, l);
+        pixels[idx] = r;
+        pixels[idx + 1] = g;
+        pixels[idx + 2] = b;
+      }
+
+      charCtx.putImageData(imgData, 0, 0);
+      const resultUrl = charCanvas.toDataURL("image/png");
+      const newImg = await loadImg(resultUrl);
+
+      updatePanel(activePanelIndex, {
+        ...p,
+        characters: p.characters.map(c =>
+          c.id === selectedCharId ? { ...c, imageUrl: resultUrl, imageEl: newImg } : c
+        ),
+      });
+
+      charInpaintSelectionRef.current?.clearSelection();
+      // Rebuild imageSource canvas with new image
+      const newCanvas = document.createElement("canvas");
+      newCanvas.width = natW;
+      newCanvas.height = natH;
+      newCanvas.getContext("2d")!.drawImage(newImg, 0, 0);
+      setCharInpaintImageCanvas(newCanvas);
+
+      toast({ title: "색상 변경 완료" });
+    } catch (err: any) {
+      toast({ title: "색상 변경 실패", description: err.message, variant: "destructive" });
+    }
+  }, [panels, activePanelIndex, selectedCharId, selectedObjectColor, updatePanel, toast]);
+
+  // Build character image canvas for flood fill imageSource
+  useEffect(() => {
+    if (!charInpaintMode || !selectedCharId) {
+      setCharInpaintImageCanvas(null);
+      return;
+    }
+    const p = panels[activePanelIndex];
+    if (!p) return;
+    const char = p.characters.find(c => c.id === selectedCharId);
+    if (!char?.imageEl) return;
+
+    const buildCanvas = (imgEl: HTMLImageElement) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(imgEl, 0, 0);
+      // Test if canvas is tainted
+      try {
+        ctx.getImageData(0, 0, 1, 1);
+        setCharInpaintImageCanvas(canvas);
+      } catch {
+        // Canvas tainted — reload with crossOrigin
+        const src = char.imageUrl || imgEl.src;
+        if (!src || src.startsWith("data:")) {
+          // data URL should never be tainted, fallback anyway
+          setCharInpaintImageCanvas(canvas);
+          return;
+        }
+        const corsImg = new Image();
+        corsImg.crossOrigin = "anonymous";
+        corsImg.onload = () => {
+          const c2 = document.createElement("canvas");
+          c2.width = corsImg.naturalWidth;
+          c2.height = corsImg.naturalHeight;
+          c2.getContext("2d")!.drawImage(corsImg, 0, 0);
+          setCharInpaintImageCanvas(c2);
+        };
+        corsImg.onerror = () => {
+          // Last resort: use tainted canvas (flood fill won't work, but brush/lasso will)
+          setCharInpaintImageCanvas(canvas);
+        };
+        corsImg.src = src;
+      }
+    };
+
+    buildCanvas(char.imageEl);
+  }, [charInpaintMode, selectedCharId, panels, activePanelIndex]);
+
   // ─── Multi-select state ────────────────────────────────────────────
   const [canvasMultiSelected, setCanvasMultiSelected] = useState<Set<string>>(new Set());
   const canvasMultiSelectedRef = useRef<Set<string>>(canvasMultiSelected);
@@ -4901,6 +4696,8 @@ export default function StoryPage() {
 
   const rubberBandRef = useRef<{ active: boolean; startX: number; startY: number; curX: number; curY: number; panelIdx: number } | null>(null);
   const [rubberBandRect, setRubberBandRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const dragRafRef = useRef<number>(0);
+  const pendingDragRef = useRef<{ canvasX: number; canvasY: number; panelIdx: number } | null>(null);
 
   const multiDragRef = useRef<{
     startMouseX: number;
@@ -4964,6 +4761,22 @@ export default function StoryPage() {
   const handleUpdateLineElement = useCallback((updated: CanvasLineElement) => {
     const p = panels[activePanelIndex];
     if (!p) return;
+    // borderStyle 변경 감지 → 포인트 재생성
+    const prev = (p.lineElements || []).find((l) => l.id === updated.id);
+    if (prev && (prev as any).borderStyle && (updated as any).borderStyle && (prev as any).borderStyle !== (updated as any).borderStyle) {
+      const pts = updated.points;
+      if (pts.length > 2) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const pt of pts) {
+          if (pt.x < minX) minX = pt.x;
+          if (pt.y < minY) minY = pt.y;
+          if (pt.x > maxX) maxX = pt.x;
+          if (pt.y > maxY) maxY = pt.y;
+        }
+        const newPts = regenerateBorderPoints(minX, minY, maxX - minX, maxY - minY, (updated as any).borderStyle);
+        updated = { ...updated, points: newPts };
+      }
+    }
     const newLines = (p.lineElements || []).map((l) => l.id === updated.id ? updated : l);
     updatePanel(activePanelIndex, { ...p, lineElements: newLines });
   }, [panels, activePanelIndex, updatePanel]);
@@ -5057,10 +4870,12 @@ export default function StoryPage() {
     startMouseX: number;
     startMouseY: number;
     startPositions: { x: number; y: number }[];
-    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4";
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4" | "rotate";
     startW?: number;
     startH?: number;
     startScale?: number;
+    startRotation?: number;
+    rotateAngleStart?: number;
     // For mask group movement: linked layer start positions
     linkedStarts?: Map<string, { x: number; y: number } | { points: { x: number; y: number }[] }>;
   } | null>(null);
@@ -5085,8 +4900,15 @@ export default function StoryPage() {
     mouseX: number,
     mouseY: number,
     panel: PanelData,
-    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4",
+    resizeMode?: "tl" | "tr" | "bl" | "br" | "t" | "b" | "l" | "r" | "move-tail" | "tail-ctrl1" | "tail-ctrl2" | "tail-ctrl3" | "tail-ctrl4" | "rotate",
   ) => {
+    // Push one undo snapshot at drag start
+    historyRef.current = [
+      ...historyRef.current.slice(-(MAX_HISTORY - 1)),
+      clonePanels(panels),
+    ];
+    futureRef.current = [];
+
     if (type === "bubble") {
       const b = panel.bubbles.find(bb => bb.id === id);
       if (b) {
@@ -5116,6 +4938,8 @@ export default function StoryPage() {
           startScale: ch.scale,
           startW: cw,
           startH: chH,
+          startRotation: ch.rotation || 0,
+          rotateAngleStart: resizeMode === "rotate" ? Math.atan2(mouseY - ch.y, mouseX - ch.x) : undefined,
         };
       }
     } else if (type === "text") {
@@ -5194,7 +5018,7 @@ export default function StoryPage() {
         };
       }
     }
-  }, []);
+  }, [panels]);
 
   const handleElementDragMove = useCallback((mouseX: number, mouseY: number, panelIdx: number) => {
     const drag = dragElementRef.current;
@@ -5216,7 +5040,7 @@ export default function StoryPage() {
           if (drag.resizeMode === "tail-ctrl4") return { ...b, tailCtrl4X: mouseX, tailCtrl4Y: mouseY };
           return b;
         });
-        updatePanel(panelIdx, { ...p, bubbles: newBubbles });
+        updatePanelNoHistory(panelIdx, { ...p, bubbles: newBubbles });
         return;
       }
       const newBubbles = p.bubbles.map(b => {
@@ -5241,28 +5065,31 @@ export default function StoryPage() {
         }
         return { ...b, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, bubbles: newBubbles });
+      updatePanelNoHistory(panelIdx, { ...p, bubbles: newBubbles });
     } else if (drag.type === "char") {
       const newChars = p.characters.map(ch => {
         if (ch.id !== drag.id) return ch;
+        if (drag.resizeMode === "rotate") {
+          const cx = drag.startPositions[0].x;
+          const cy = drag.startPositions[0].y;
+          const currentAngle = Math.atan2(mouseY - cy, mouseX - cx);
+          const startAngle = drag.rotateAngleStart ?? 0;
+          const baseRotation = drag.startRotation ?? (ch.rotation || 0);
+          return { ...ch, rotation: baseRotation + (currentAngle - startAngle) };
+        }
         if (drag.resizeMode) {
-          const origW = drag.startW ?? 80;
-          const origH = drag.startH ?? 80;
-          let newW = origW;
-          let newH = origH;
-          switch (drag.resizeMode) {
-            case "br": newW = origW + dx; newH = origH + dy; break;
-            case "bl": newW = origW - dx; newH = origH + dy; break;
-            case "tr": newW = origW + dx; newH = origH - dy; break;
-            case "tl": newW = origW - dx; newH = origH - dy; break;
-          }
-          const avgRatio = (newW / origW + newH / origH) / 2;
-          const newScale = Math.max(0.05, Math.min(5, (drag.startScale ?? ch.scale) * avgRatio));
+          // Smooth proportional scaling via distance from element center
+          const cx = drag.startPositions[0].x;
+          const cy = drag.startPositions[0].y;
+          const d0 = Math.max(1, Math.sqrt((drag.startMouseX - cx) ** 2 + (drag.startMouseY - cy) ** 2));
+          const d1 = Math.sqrt((mouseX - cx) ** 2 + (mouseY - cy) ** 2);
+          const ratio = d1 / d0;
+          const newScale = Math.max(0.05, Math.min(5, (drag.startScale ?? ch.scale) * ratio));
           return { ...ch, scale: newScale };
         }
         return { ...ch, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, characters: newChars });
+      updatePanelNoHistory(panelIdx, { ...p, characters: newChars });
     } else if (drag.type === "text") {
       const newTexts = (p.textElements || []).map(te => {
         if (te.id !== drag.id) return te;
@@ -5286,7 +5113,7 @@ export default function StoryPage() {
         }
         return { ...te, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, textElements: newTexts });
+      updatePanelNoHistory(panelIdx, { ...p, textElements: newTexts });
     } else if (drag.type === "line") {
       const newLines = (p.lineElements || []).map(le => {
         if (le.id !== drag.id) return le;
@@ -5298,7 +5125,7 @@ export default function StoryPage() {
           })),
         };
       });
-      updatePanel(panelIdx, { ...p, lineElements: newLines });
+      updatePanelNoHistory(panelIdx, { ...p, lineElements: newLines });
     } else if (drag.type === "drawing") {
       const newLayers = (p.drawingLayers || []).map(dl => {
         if (dl.id !== drag.id) return dl;
@@ -5334,7 +5161,7 @@ export default function StoryPage() {
         }
         return { ...dl, x: drag.startPositions[0].x + dx, y: drag.startPositions[0].y + dy };
       });
-      updatePanel(panelIdx, { ...p, drawingLayers: newLayers });
+      updatePanelNoHistory(panelIdx, { ...p, drawingLayers: newLayers });
     } else if (drag.type === "shape") {
       const draggedShape = (p.shapeElements || []).find(se => se.id === drag.id);
       const newShapes = (p.shapeElements || []).map(se => {
@@ -5401,9 +5228,9 @@ export default function StoryPage() {
           return s && "points" in s ? { ...le, points: s.points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy })) } : le;
         });
       }
-      updatePanel(panelIdx, { ...p, ...updated });
+      updatePanelNoHistory(panelIdx, { ...p, ...updated });
     }
-  }, [panels, updatePanel]);
+  }, [panels, updatePanelNoHistory]);
 
   const handleElementDragEnd = useCallback(() => {
     dragElementRef.current = null;
@@ -6096,6 +5923,7 @@ export default function StoryPage() {
       return;
     }
     withCleanCanvas(() => captureCanvas(canvas, `panel_${idx + 1}.png`));
+    markChecklistDone("download");
   };
 
   const downloadAll = () => {
@@ -6108,11 +5936,12 @@ export default function StoryPage() {
         }
       });
     });
+    markChecklistDone("download");
   };
 
   const DOWNLOAD_SIZES = [
-    { label: "Original (540×675)", w: 540, h: 675 },
-    { label: "2x (1080×1350)", w: 1080, h: 1350 },
+    { label: `Original (${CANVAS_W}×${CANVAS_H})`, w: CANVAS_W, h: CANVAS_H },
+    { label: `2x (${CANVAS_W * 2}×${CANVAS_H * 2})`, w: CANVAS_W * 2, h: CANVAS_H * 2 },
   ];
 
   const downloadPanelSized = (idx: number, targetW: number, targetH: number) => {
@@ -6167,11 +5996,11 @@ export default function StoryPage() {
           setTimeout(() => {
             try {
               const offscreen = document.createElement("canvas");
-              offscreen.width = 1080;
-              offscreen.height = 1350;
+              offscreen.width = CANVAS_W * 2;
+              offscreen.height = CANVAS_H * 2;
               const ctx = offscreen.getContext("2d");
               if (!ctx) { reject(new Error("Canvas context 생성 실패")); return; }
-              ctx.drawImage(srcCanvas, 0, 0, 1080, 1350);
+              ctx.drawImage(srcCanvas, 0, 0, CANVAS_W * 2, CANVAS_H * 2);
               resolve(offscreen.toDataURL("image/png"));
             } catch (err) {
               reject(err);
@@ -6283,7 +6112,7 @@ export default function StoryPage() {
       ctx.save();
       ctx.translate(ch.x, ch.y);
       ctx.rotate(ch.rotation || 0);
-      if (ch.flipX) ctx.scale(-1, 1);
+      ctx.scale(ch.flipX ? -1 : 1, ch.flipY ? -1 : 1);
       ctx.drawImage(ch.imageEl, -w / 2, -h / 2, w, h);
       ctx.restore();
     } else if (item.type === "bubble") {
@@ -6473,6 +6302,11 @@ export default function StoryPage() {
   };
 
   const serializeStoryData = useCallback(() => {
+    // 참조 캐릭터 정보 저장 (인스타툰 기준 캐릭터)
+    const refCharacters = autoRefImages.map(img => ({
+      url: img.imageUrl,
+      name: img.name,
+    }));
     return JSON.stringify({
       panels: panels.map((p) => ({
         id: p.id,
@@ -6492,7 +6326,10 @@ export default function StoryPage() {
           scale: c.scale,
           rotation: c.rotation ?? 0,
           flipX: c.flipX ?? false,
+          flipY: c.flipY ?? false,
           zIndex: c.zIndex ?? 0,
+          name: c.name,
+          generationId: c.generationId,
         })),
         drawingLayers: (p.drawingLayers || []).map((dl) => ({
           id: dl.id,
@@ -6508,8 +6345,9 @@ export default function StoryPage() {
         shapeElements: p.shapeElements || [],
       })),
       topic,
+      refCharacters: refCharacters.length > 0 ? refCharacters : undefined,
     });
-  }, [panels, topic]);
+  }, [panels, topic, autoRefImages]);
 
   const getStoryThumbnail = useCallback(() => {
     try {
@@ -6545,22 +6383,24 @@ export default function StoryPage() {
           name: projectName.trim(),
           canvasData,
           thumbnailUrl,
+          folderId: selectedFolderId,
         });
         queryClient.invalidateQueries({ queryKey: ["/api/bubble-projects"] });
-        toast({ title: "프로젝트 저장됨", description: `"${projectName.trim()}" 업데이트 완료` });
       } else {
         const res = await apiRequest("POST", "/api/bubble-projects", {
           name: projectName.trim(),
           canvasData,
           thumbnailUrl,
           editorType: "story",
+          folderId: selectedFolderId,
         });
         const newProject = await res.json();
         setCurrentProjectId(newProject.id);
         queryClient.invalidateQueries({ queryKey: ["/api/bubble-projects"] });
-        toast({ title: "프로젝트 저장됨", description: `"${projectName.trim()}" 생성 완료` });
       }
       setShowSaveModal(false);
+      setShowSavedConfirm(true);
+      setTimeout(() => setShowSavedConfirm(false), 1500);
     } catch (e: any) {
       toast({ title: "저장 실패", description: e.message || "프로젝트를 저장할 수 없습니다.", variant: "destructive" });
     } finally {
@@ -6584,68 +6424,162 @@ export default function StoryPage() {
     }
   }, [isLoadProjectError, loadProjectError]);
 
+  const restoreProject = useCallback((project: any) => {
+    setCurrentProjectId(project.id);
+    setProjectName(project.name);
+    setSelectedFolderId(project.folderId ?? null);
+
+    // 프로젝트 로딩 시 선택 상태 초기화
+    setSelectedBubbleId(null);
+    setSelectedCharId(null);
+    setSelectedTextId(null);
+    setSelectedLineId(null);
+    setSelectedShapeId(null);
+    setSelectedDrawingLayerId(null);
+    setSelectedScriptPosition(null);
+
+    try {
+      const data = typeof project.canvasData === "string"
+        ? JSON.parse(project.canvasData)
+        : project.canvasData;
+      if (data.topic) setTopic(data.topic);
+      if (data.panels && Array.isArray(data.panels)) {
+        const restoredPanels: PanelData[] = data.panels.map((p: any) => ({
+          id: p.id || generateId(),
+          topScript: p.topScript ?? null,
+          bottomScript: p.bottomScript ?? null,
+          backgroundColor: p.backgroundColor || "#ffffff",
+          backgroundImageUrl: p.backgroundImageUrl || undefined,
+          backgroundImageEl: null,
+          bubbles: (p.bubbles || []).map((b: any) => ({
+            ...b,
+            templateImg: undefined,
+          })),
+          characters: (p.characters || []).map((c: any) => ({
+            ...c,
+            imageEl: null,
+          })),
+          drawingLayers: (p.drawingLayers || []).map((dl: any) => ({
+            ...dl,
+            imageEl: null,
+          })),
+          textElements: p.textElements || [],
+          lineElements: p.lineElements || [],
+          shapeElements: p.shapeElements || [],
+        }));
+        setPanelsRaw(restoredPanels);
+        setActivePanelIndex(0);
+        requestAnimationFrame(() => {
+          rehydrateImages(restoredPanels);
+        });
+      } else {
+        console.warn("Project canvasData has no panels:", Object.keys(data));
+      }
+      if (data.refCharacters && Array.isArray(data.refCharacters)) {
+        setAutoRefImages(data.refCharacters.map((rc: any) => ({
+          id: rc.id || rc.url?.slice(-16) || Math.random().toString(36).slice(2, 10),
+          imageUrl: rc.url || rc.imageUrl || "",
+          name: rc.name || "캐릭터",
+        })).filter((rc: any) => rc.imageUrl));
+      }
+    } catch (e) {
+      console.error("Project canvasData parse error:", e);
+      toast({ title: "프로젝트 로드 실패", variant: "destructive" });
+    }
+  }, [rehydrateImages, toast]);
+
   const projectLoadedRef = useRef<number | null>(null);
   useEffect(() => {
     if (loadedProject && projectLoadedRef.current !== loadedProject.id) {
       projectLoadedRef.current = loadedProject.id;
-      setCurrentProjectId(loadedProject.id);
-      setProjectName(loadedProject.name);
-
-      // 프로젝트 로딩 시 선택 상태 초기화
-      setSelectedBubbleId(null);
-      setSelectedCharId(null);
-      setSelectedTextId(null);
-      setSelectedLineId(null);
-      setSelectedShapeId(null);
-      setSelectedDrawingLayerId(null);
-      setSelectedScriptPosition(null);
-
-      try {
-        const data = typeof loadedProject.canvasData === "string"
-          ? JSON.parse(loadedProject.canvasData)
-          : loadedProject.canvasData;
-        if (data.topic) setTopic(data.topic);
-        if (data.panels && Array.isArray(data.panels)) {
-          const restoredPanels: PanelData[] = data.panels.map((p: any) => ({
-            id: p.id || generateId(),
-            topScript: p.topScript ?? null,
-            bottomScript: p.bottomScript ?? null,
-            backgroundColor: p.backgroundColor || "#ffffff",
-            backgroundImageUrl: p.backgroundImageUrl || undefined,
-            backgroundImageEl: null,
-            bubbles: (p.bubbles || []).map((b: any) => ({
-              ...b,
-              templateImg: undefined,
-            })),
-            characters: (p.characters || []).map((c: any) => ({
-              ...c,
-              imageEl: null,
-            })),
-            drawingLayers: (p.drawingLayers || []).map((dl: any) => ({
-              ...dl,
-              imageEl: null,
-            })),
-            textElements: p.textElements || [],
-            lineElements: p.lineElements || [],
-            shapeElements: p.shapeElements || [],
-          }));
-          setPanelsRaw(restoredPanels);
-          setActivePanelIndex(0);
-          // rehydrateImages는 상태 설정 후 실행 (이미지 로드 콜백이 최신 상태 참조)
-          requestAnimationFrame(() => {
-            rehydrateImages(restoredPanels);
-          });
-        } else {
-          console.warn("Project canvasData has no panels:", Object.keys(data));
-        }
-      } catch (e) {
-        console.error("Project canvasData parse error:", e);
-        toast({ title: "프로젝트 로드 실패", variant: "destructive" });
-      }
+      restoreProject(loadedProject);
     }
-  }, [loadedProject]);
+  }, [loadedProject, restoreProject]);
 
-  const isPro = usageData?.tier === "pro";
+  const handleLoadProject = useCallback(async (projectId: number) => {
+    try {
+      const res = await apiRequest("GET", `/api/bubble-projects/${projectId}`);
+      const project = await res.json();
+      projectLoadedRef.current = project.id;
+      restoreProject(project);
+      toast({ title: "프로젝트 불러오기 완료", description: `"${project.name}" 로드됨` });
+    } catch (e: any) {
+      toast({ title: "프로젝트 불러오기 실패", description: e.message || "", variant: "destructive" });
+    }
+  }, [restoreProject, toast]);
+
+  // Flow에서 넘어온 이미지를 첫 패널에 자동 추가
+  const flowLoadedRef = useRef(false);
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get("flow") !== "1" || flowLoadedRef.current) return;
+    const flow = getFlowState();
+    if (!flow.lastPoseImageUrl) return;
+    flowLoadedRef.current = true;
+    const imageUrl = flow.lastPoseImageUrl;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const maxDim = 300;
+      const s = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight, 1);
+      const charId = generateId();
+      setPanelsRaw((prev) => {
+        const first = prev[0];
+        if (!first) return prev;
+        return [
+          {
+            ...first,
+            characters: [...first.characters, {
+              id: charId,
+              imageUrl,
+              x: CANVAS_W / 2,
+              y: CANVAS_H / 2,
+              scale: s,
+              imageEl: img,
+              zIndex: (first.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0)) + 1,
+            }],
+          },
+          ...prev.slice(1),
+        ];
+      });
+      setActivePanelIndex(0);
+      clearFlowState();
+    };
+    img.onerror = () => {
+      // CORS 실패 시 crossOrigin 없이 재시도
+      const img2 = new Image();
+      img2.onload = () => {
+        const maxDim = 300;
+        const s2 = Math.min(maxDim / img2.naturalWidth, maxDim / img2.naturalHeight, 1);
+        const charId2 = generateId();
+        setPanelsRaw((prev) => {
+          const first = prev[0];
+          if (!first) return prev;
+          return [
+            {
+              ...first,
+              characters: [...first.characters, {
+                id: charId2,
+                imageUrl,
+                x: CANVAS_W / 2,
+                y: CANVAS_H / 2,
+                scale: s2,
+                imageEl: img2,
+                zIndex: (first.characters.reduce((m, c) => Math.max(m, c.zIndex ?? 0), 0)) + 1,
+              }],
+            },
+            ...prev.slice(1),
+          ];
+        });
+        setActivePanelIndex(0);
+        clearFlowState();
+      };
+      img2.src = imageUrl;
+    };
+    img.src = imageUrl;
+  }, [searchString]);
+
+  const isPro = usageData?.tier === "pro" || usageData?.tier === "premium";
   const canAllFontsStory = isPro || (usageData?.creatorTier ?? 0) >= 3;
   const availableFonts = canAllFontsStory ? KOREAN_FONTS : KOREAN_FONTS.slice(0, 3);
 
@@ -6687,167 +6621,51 @@ export default function StoryPage() {
 
   const handleRemoveBackground = useCallback(async () => {
     const selChar = selectedCharId ? activePanel?.characters.find(c => c.id === selectedCharId) : null;
-    if (!selChar) return;
+    if (!selChar) {
+      toast({ title: "이미지를 먼저 선택해주세요", variant: "destructive" });
+      return;
+    }
     if (!isPro) {
       toast({ title: "Pro 전용 기능", description: "배경제거는 Pro 멤버십 전용 기능입니다.", variant: "destructive" });
       return;
     }
     setRemovingBg(true);
     try {
-      const res = await apiRequest("POST", "/api/remove-background", { imageUrl: selChar.imageUrl });
+      const res = await apiRequest("POST", "/api/remove-background", { sourceImageData: selChar.imageUrl });
       const data = await res.json();
-      if (data.resultUrl) {
+      if (data.imageUrl) {
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = data.resultUrl;
-        updatePanel(activePanelIndex, {
-          ...activePanel,
-          characters: activePanel.characters.map(c => c.id === selChar.id ? { ...c, imageUrl: data.resultUrl, imgElement: img } : c),
-        });
+        img.src = data.imageUrl;
+        img.onload = () => {
+          updatePanel(activePanelIndex, {
+            ...activePanel,
+            characters: activePanel.characters.map(c => c.id === selChar.id ? { ...c, imageUrl: data.imageUrl, imageEl: img } : c),
+          });
+        };
+        img.onerror = () => {
+          toast({ title: "배경 제거 결과 이미지 로드 실패", variant: "destructive" });
+        };
         toast({ title: "배경 제거 완료" });
+      } else {
+        toast({ title: "배경 제거 실패", description: "결과 이미지가 없습니다.", variant: "destructive" });
       }
-    } catch (e) {
-      toast({ title: "배경 제거 실패", variant: "destructive" });
+    } catch (e: any) {
+      toast({ title: "배경 제거 실패", description: e?.message || "잠시 후 다시 시도해주세요.", variant: "destructive" });
     } finally {
       setRemovingBg(false);
     }
   }, [selectedCharId, activePanel, activePanelIndex, updatePanel, isPro, toast]);
 
-  const startStoryTour = useCallback(() => {
-    const ensureDriver = () =>
-      new Promise<void>((resolve) => {
-        const hasDriver = (window as any)?.driver?.js?.driver;
-        if (hasDriver) {
-          resolve();
-          return;
-        }
-        const cssId = "driverjs-css";
-        if (!document.getElementById(cssId)) {
-          const link = document.createElement("link");
-          link.id = cssId;
-          link.rel = "stylesheet";
-          link.href = "https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css";
-          document.head.appendChild(link);
-        }
-        const scriptId = "driverjs-script";
-        if (!document.getElementById(scriptId)) {
-          const script = document.createElement("script");
-          script.id = scriptId;
-          script.src = "https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js";
-          script.onload = () => resolve();
-          document.body.appendChild(script);
-        } else {
-          resolve();
-        }
-      });
-    ensureDriver().then(() => {
-      const driver = (window as any).driver.js.driver;
-      const driverObj = driver({
-        overlayColor: "rgba(0,0,0,0.55)",
-        showProgress: true,
-        progressText: "{{current}} / {{total}}",
-        nextBtnText: "다음",
-        prevBtnText: "이전",
-        doneBtnText: "완료",
-        steps: [
-          {
-            element: '[data-testid="left-icon-sidebar"]',
-            popover: {
-              title: "좌측 탭 메뉴",
-              description: "4가지 탭으로 에디터 기능을 전환합니다.\n\n• 이미지 선택: 갤러리/업로드로 캐릭터 이미지 배치\n• AI 프롬프트: AI 자동 스크립트 & 이미지 생성\n• 도구: 드로잉, 선, 텍스트, 도형 도구\n• 요소: 자막, 말풍선, 템플릿 관리",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="button-left-tab-image"]',
-            popover: {
-              title: "이미지 선택/업로드",
-              description: "갤러리에서 캐릭터를 클릭하면 캔버스에 바로 배치됩니다. 파일을 직접 업로드하거나 배경 제거(Pro) 기능도 사용할 수 있어요.",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="button-left-tab-ai"]',
-            popover: {
-              title: "AI 프롬프트 (자동 생성)",
-              description: "주제를 입력하고 AI가 자막/말풍선을 자동 생성합니다.\n\n• 인스타툰 자동화 생성: 캐릭터 기준 이미지 + 주제로 이미지까지 한번에\n• 인스타툰 이미지 생성: 포즈/표정/배경 프롬프트 자동 생성\n• 자동화툰 멀티컷: 여러 장면을 한번에 생성",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="button-left-tab-tools"]',
-            popover: {
-              title: "도구 모음",
-              description: "• 선택: 요소 선택/이동/크기 조절\n• 드로잉: 펜, 마커, 형광펜으로 자유 드로잉\n• 선: 직선/곡선 추가, 화살표/점선 지원\n• 텍스트: 자유 위치 텍스트 추가\n• 도형: 사각형, 원, 삼각형, 별 등 + 마스크",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="button-left-tab-elements"]',
-            popover: {
-              title: "요소 관리",
-              description: "• 자막 설정: 상단/하단 자막 텍스트, 폰트, 색상, 배경 스타일 설정\n• 말풍선: 말풍선 추가 및 스타일/텍스트/꼬리 편집\n• 템플릿: 미리 디자인된 말풍선 템플릿 가져오기",
-              side: "right",
-            },
-          },
-          {
-            element: '[data-testid="canvas-toolbar"]',
-            popover: {
-              title: "상단 툴바",
-              description: "패널 추가(+), 좌우 이동, 실행 취소/다시 실행, 줌 조절을 할 수 있어요.",
-              side: "bottom",
-            },
-          },
-          {
-            element: '[data-testid="button-add-panel"]',
-            popover: {
-              title: "패널 추가",
-              description: "새 스토리 패널을 추가합니다. Pro 등급에 따라 최대 14개까지 가능해요.",
-              side: "bottom",
-            },
-          },
-          {
-            element: '[data-testid="story-canvas-area"]',
-            popover: {
-              title: "캔버스 영역",
-              description: "스토리 패널을 편집하는 메인 영역이에요.\n\n• 요소 클릭: 선택 → 우측에 설정 표시\n• 드래그: 위치 이동\n• 모서리 드래그: 크기 조절\n• 우클릭: 레이어 순서, 복제, 삭제 메뉴\n• 상/하단 자막 클릭: 바로 텍스트 편집",
-              side: "left",
-            },
-          },
-          {
-            element: '[data-testid="button-story-help"]',
-            popover: {
-              title: "도움말 (이 가이드)",
-              description: "언제든 이 버튼을 클릭하면 에디터 기능 가이드를 다시 볼 수 있어요.",
-              side: "bottom",
-            },
-          },
-          {
-            element: '[data-testid="button-download-panel"]',
-            popover: {
-              title: "다운로드",
-              description: "현재 패널 1장 또는 전체 패널을 하나의 세로 이미지로 다운로드할 수 있어요.",
-              side: "bottom",
-            },
-          },
-          {
-            element: '[data-testid="button-save-story-project"]',
-            popover: {
-              title: "프로젝트 저장 (Pro)",
-              description: "현재 작업을 프로젝트로 저장합니다. '내 편집' 페이지에서 언제든 불러올 수 있어요. Instagram 공유 기능도 지원합니다.",
-              side: "bottom",
-            },
-          },
-        ],
-      });
-      driverObj.drive();
-    });
+  const toggleGuidePanel = useCallback(() => {
+    setActiveLeftTab((prev) => (prev === "guide" ? null : "guide"));
   }, []);
   const LEFT_TABS: { id: LeftTab; icon: typeof Wand2; label: string }[] = [
     { id: "image", icon: ImageIcon as any, label: "이미지 선택" },
     { id: "ai", icon: Wand2, label: "AI 프롬프트" },
     { id: "tools", icon: Pen as any, label: "도구" },
     { id: "elements", icon: Boxes as any, label: "요소" },
+    { id: "generative", icon: Sparkles as any, label: "생성형" },
   ];
 
   // ─── Tool items for compact tools panel ─────────────────────────────
@@ -6866,6 +6684,14 @@ export default function StoryPage() {
     { id: "template", icon: LayoutGrid, label: "템플릿 가져오기", color: "#8b5cf6" },
   ];
 
+  // ─── AI items for compact AI panel ─────────────────────────────────
+  const AI_ITEMS: { id: string; icon: typeof Pen; label: string; color?: string }[] = [
+    { id: "subtitle", icon: Wand2, label: "AI 프롬프트 자막", color: "#8b5cf6" },
+    { id: "instatoonFull", icon: Sparkles, label: "인스타툰 자동화", color: "#f59e0b" },
+    { id: "instatoonPrompt", icon: ImagePlus, label: "인스타툰 이미지", color: "#3b82f6" },
+    { id: "autoWebtoon", icon: LayoutGrid, label: "자동화툰 멀티컷", color: "#10b981" },
+  ];
+
   // ─── Drawing brush items for sub-panel ──────────────────────────────
   const DRAWING_BRUSH_ITEMS: { id: string; icon: typeof Pen; label: string; color?: string }[] = [
     { id: "ballpoint", icon: Pen, label: "펜", color: "#3b82f6" },
@@ -6874,22 +6700,25 @@ export default function StoryPage() {
   ];
 
   return (
-    <div className="editor-page h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative">
-      <EditorOnboarding editor="story" />
+    <div className="editor-page h-full min-h-[calc(100vh-3.5rem)] flex overflow-hidden bg-background relative" data-lenis-prevent>
+      <EditorChecklistPopover
+        completedItems={checklistCompleted}
+        onDismiss={() => localStorage.setItem("olli_editor_checklist_dismissed", "1")}
+      />
       <div
-        className="flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-background/80 border-r"
-        style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "50px" }}
+        className="left-icon-sidebar flex flex-col items-center py-3 px-1.5 gap-1 shrink-0 bg-background/80 border-r"
+        style={{ margin: "0.3rem", borderRadius: "0.4rem", width: "80px", zIndex: 20 }}
         data-testid="left-icon-sidebar"
       >
         {LEFT_TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => toggleLeftTab(tab.id)}
-            className={`flex items-center justify-center rounded-full transition-colors w-[40px] h-[40px] pt-[10px] pb-[10px] ${activeLeftTab === tab.id ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover-elevate"}`}
+            className={`left-icon-sidebar__btn flex items-center justify-center rounded-full transition-colors w-[40px] h-[40px] pt-[10px] pb-[10px] ${activeLeftTab === tab.id ? "bg-primary/10 text-primary font-semibold left-icon-sidebar__btn--active" : "text-muted-foreground hover-elevate"}`}
             data-testid={`button-left-tab-${tab.id}`}
-            title={tab.label}
           >
-            <tab.icon className="h-[18px] w-[18px]" />
+            <tab.icon className="h-[24px] w-[24px]" />
+            <span className="left-icon-sidebar__label">{tab.label}</span>
           </button>
         ))}
       </div>
@@ -6897,799 +6726,62 @@ export default function StoryPage() {
       <div className="flex flex-1 h-full">
         {activeLeftTab && (
           <div
-            className={`h-full bg-background/80 overflow-y-auto border-r ${(activeLeftTab === "tools" || activeLeftTab === "elements") ? "w-auto" : "w-[320px]"}`}
+            className={`h-full bg-background/80 overflow-y-auto border-r ${(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai" || activeLeftTab === "generative" || activeLeftTab === "guide") ? "w-auto" : "w-[320px]"}`}
             data-testid="left-panel-content"
           >
-            <div className={(activeLeftTab === "tools" || activeLeftTab === "elements") ? "" : "p-3 space-y-5"}>
+            {/* ─── Guide Panel ─────────────────────────── */}
+            {activeLeftTab === "guide" && (
+              <StoryGuidePanel
+                onClose={() => setActiveLeftTab(null)}
+                onNavigateToTab={(tab, subTab) => {
+                  setActiveLeftTab(tab as LeftTab);
+                  if (tab === "ai" && subTab) setAiMode(subTab as any);
+                  if (tab === "elements" && subTab) setElementsSubTab(subTab as any);
+                }}
+              />
+            )}
+            <div className={(activeLeftTab === "tools" || activeLeftTab === "elements" || activeLeftTab === "ai" || activeLeftTab === "generative") ? "" : (activeLeftTab === "guide" ? "hidden" : "p-3 space-y-5")}>
+                  {/* ─── Compact AI Panel ─────────────────────────── */}
                   {activeLeftTab === "ai" && (
-                    <>
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-sm font-semibold">AI 프롬프트 / 인스타툰 생성</h3>
+                    <div className="tools-compact-panel">
+                      <div className="tools-compact-panel__strip">
                         <button
                           onClick={() => setActiveLeftTab(null)}
-                          className="text-muted-foreground hover-elevate rounded-md p-1"
+                          className="tools-compact-panel__close-btn"
+                          title="닫기"
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <X className="h-4 w-4" />
                         </button>
-                      </div>
-
-                      <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
-                        인스타툰 자동화 생성 · 프롬프트 자동 작성: 각 10 크레딧 소모
-                      </p>
-
-                      <div className="grid grid-cols-1 gap-2 mt-3">
-                        <Button
-                          variant={aiMode === "subtitle" ? "default" : "outline"}
-                          size="sm"
-                          className="justify-start"
-                          onClick={() => setAiMode("subtitle")}
-                        >
-                          <Wand2 className="h-4 w-4 mr-2" />
-                          AI 프롬프트 자막 생성
-                        </Button>
-                        <Button
-                          variant={aiMode === "instatoonFull" ? "default" : "outline"}
-                          size="sm"
-                          className="justify-start"
-                          onClick={() => {
-                            if (!isPro) { toast({ title: "Pro 전용 기능", description: "인스타툰 자동화 생성은 Pro 멤버십 전용입니다.", variant: "destructive" }); return; }
-                            setAiMode("instatoonFull");
-                          }}
-                        >
-                          <Wand2 className="h-4 w-4 mr-2" />
-                          인스타툰 자동화 생성
-                          {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
-                        </Button>
-                        <Button
-                          variant={aiMode === "instatoonPrompt" ? "default" : "outline"}
-                          size="sm"
-                          className="justify-start"
-                          onClick={() => {
-                            if (!isPro) { toast({ title: "Pro 전용 기능", description: "인스타툰 이미지 생성은 Pro 멤버십 전용입니다.", variant: "destructive" }); return; }
-                            setAiMode("instatoonPrompt");
-                          }}
-                        >
-                          <Wand2 className="h-4 w-4 mr-2" />
-                          인스타툰 이미지 생성
-                          {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
-                        </Button>
-                        <Button
-                          variant={aiMode === "autoWebtoon" ? "default" : "outline"}
-                          size="sm"
-                          className="justify-start"
-                          onClick={() => {
-                            setAiMode("autoWebtoon");
-                          }}
-                        >
-                          <Wand2 className="h-4 w-4 mr-2" />
-                          자동화툰 멀티컷 생성
-                        </Button>
-                      </div>
-
-                      {aiMode === "subtitle" && (
-                        <div className="mt-4 space-y-3">
-                          <div className="flex gap-2">
-                            <Input
-                              value={topic}
-                              onChange={(e) => setTopic(e.target.value)}
-                              placeholder="주제 입력 (예: 월요일 출근길)"
-                              className="text-sm"
-                              data-testid="input-story-topic"
-                            />
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              onClick={() => suggestMutation.mutate()}
-                              disabled={suggestMutation.isPending}
-                              data-testid="button-suggest-topic"
-                            >
-                              {suggestMutation.isPending ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                              ) : (
-                                <Lightbulb className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-
-                          {generateMutation.isPending ? (
-                            <Button
-                              className="w-full"
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => generateAbortRef.current?.abort()}
-                            >
-                              <X className="h-4 w-4 mr-1.5" />
-                              생성 취소
-                            </Button>
-                          ) : (
-                            <div className="flex gap-2">
-                              <Button
-                                className="flex-1"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  generateMutation.mutate({ mode: "basic", scope: "current" });
-                                }}
-                                disabled={!topic.trim()}
-                              >
-                                <Wand2 className="h-4 w-4 mr-1.5" />
-                                선택 컷 생성
-                              </Button>
-                              <Button
-                                className="flex-1"
-                                size="sm"
-                                onClick={() => {
-                                  generateMutation.mutate({ mode: "basic", scope: "all" });
-                                }}
-                                disabled={!topic.trim()}
-                                data-testid="button-generate-scripts"
-                              >
-                                <Wand2 className="h-4 w-4 mr-1.5" />
-                                전체 생성 ({panels.length}컷)
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {aiMode === "instatoonFull" && (
-                        <div className="mt-4 space-y-4">
-                          {/* STEP 1 : 기준 캐릭터 이미지 */}
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-foreground">① 기준 캐릭터 이미지</span>
-                              <span className="text-[10px] text-destructive font-medium">필수</span>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed">
-                              이 캐릭터 이미지를 기반으로 포즈·표정·배경이 자동 변형됩니다.
-                            </p>
-                            {/* Style consistency notice */}
-                            <p className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1">
-                              🎨 이미지 업로드 시 그림 스타일을 자동 감지 → 배경·아이템도 같은 스타일로 생성됩니다
-                            </p>
-
-                            {/* 선택된 이미지 썸네일 목록 */}
-                            {autoRefImages.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {autoRefImages.map((img, idx) => (
-                                  <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-muted">
-                                    <img src={img.url} alt={`캐릭터 ${idx + 1}`} className="w-full h-full object-cover" />
-                                    <button
-                                      onClick={() => {
-                                        const remaining = autoRefImages.filter((_, i) => i !== idx);
-                                        setAutoRefImages(remaining);
-                                        // 첫 번째 이미지 제거 시 스타일 재감지
-                                        if (idx === 0 && remaining.length > 0) {
-                                          setDetectedStyle("auto");
-                                          detectArtStyle(remaining[0].url).finally(() => setIsDetectingStyle(false));
-                                        }
-                                        if (remaining.length === 0) {
-                                          setDetectedStyle("auto");
-                                        }
-                                      }}
-                                      className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
-                                    >
-                                      <X className="h-2.5 w-2.5" />
-                                    </button>
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] px-0.5 py-0.5 truncate text-center">
-                                      {img.name?.slice(0, 8) || `캐릭터${idx + 1}`}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* 업로드/갤러리 버튼: 4개 미만일 때만 표시 */}
-                            {autoRefImages.length < 4 && (
-                              <div className="grid grid-cols-2 gap-2">
-                                {/* 직접 업로드 */}
-                                <button
-                                  onClick={() => autoRefInputRef.current?.click()}
-                                  className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground hover:border-primary/50 hover:bg-muted/70 transition-colors"
-                                >
-                                  <UploadCloud className="h-5 w-5 text-muted-foreground/70" />
-                                  <span className="text-[11px] font-medium">이미지 업로드</span>
-                                  <span className="text-[10px] opacity-70">JPG·PNG ({autoRefImages.length}/4)</span>
-                                </button>
-                                {/* 갤러리에서 가져오기 */}
-                                <button
-                                  onClick={() => setShowAutoGalleryPicker((v) => !v)}
-                                  className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-3 text-xs transition-colors ${showAutoGalleryPicker ? "border-primary bg-primary/5 text-primary" : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/70"}`}
-                                >
-                                  <ImagePlus className="h-5 w-5 opacity-70" />
-                                  <span className="text-[11px] font-medium">갤러리에서</span>
-                                  <span className="text-[10px] opacity-70">생성 이미지 ({autoRefImages.length}/4)</span>
-                                </button>
-                              </div>
-                            )}
-
-                            <input
-                              ref={autoRefInputRef}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={handleAutoRefImageUpload}
-                            />
-
-                            {/* Style detector & manual override */}
-                            {autoRefImages.length > 0 && (
-                              <div className="space-y-1.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] font-semibold text-muted-foreground">그림 스타일</span>
-                                  {isDetectingStyle ? (
-                                    <span className="text-[10px] text-blue-500 flex items-center gap-1">
-                                      <div className="h-2.5 w-2.5 animate-spin rounded-full border border-blue-500 border-t-transparent" />
-                                      분석 중...
-                                    </span>
-                                  ) : detectedStyle !== "auto" ? (
-                                    <span className="text-[10px] bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full px-2 py-0.5 font-medium">
-                                      ✓ {ART_STYLES[detectedStyle]?.label}
-                                    </span>
-                                  ) : (
-                                    <span className="text-[10px] text-muted-foreground">(직접 선택)</span>
-                                  )}
-                                </div>
-                                {/* Manual style buttons */}
-                                <div className="flex flex-wrap gap-1">
-                                  {Object.entries(ART_STYLES).filter(([k]) => k !== "auto").map(([key, s]) => (
-                                    <button
-                                      key={key}
-                                      onClick={() => setDetectedStyle(key)}
-                                      title={s.description}
-                                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                                        detectedStyle === key
-                                          ? "bg-primary text-primary-foreground border-primary"
-                                          : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                                      }`}
-                                    >
-                                      {s.label}
-                                    </button>
-                                  ))}
-                                </div>
-                                <p className="text-[9px] text-muted-foreground">
-                                  선택한 스타일로 배경·아이템이 통일됩니다
-                                </p>
-                              </div>
-                            )}
-
-                            {/* 갤러리 그리드 */}
-                            {showAutoGalleryPicker && (
-                              <div className="space-y-1.5">
-                                <p className="text-[11px] text-muted-foreground">생성된 이미지 선택 (최대 4개, 클릭으로 토글):</p>
-                                {galleryLoading ? (
-                                  <div className="flex justify-center py-4">
-                                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                  </div>
-                                ) : !galleryData?.length ? (
-                                  <p className="text-[11px] text-muted-foreground text-center py-3">
-                                    생성된 이미지가 없어요.<br />먼저 캐릭터를 만들어주세요.
-                                  </p>
-                                ) : (
-                                  <>
-                                    <div className="grid grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto">
-                                      {galleryData.map((gen) => {
-                                        const isSelected = autoRefImages.some(img => img.url === (gen.resultImageUrl));
-                                        return (
-                                        <button
-                                          key={gen.id}
-                                          className={`relative aspect-square rounded-md overflow-hidden border-2 transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
-                                          onClick={async () => {
-                                            if (isSelected) {
-                                              // 선택 해제
-                                              setAutoRefImages(prev => prev.filter(img => img.url !== gen.resultImageUrl));
-                                              return;
-                                            }
-                                            if (autoRefImages.length >= 4) {
-                                              toast({ title: "최대 4개", description: "기준 캐릭터 이미지는 최대 4개까지 선택 가능합니다.", variant: "destructive" });
-                                              return;
-                                            }
-                                            const full = await fetchFullGeneration(gen.id);
-                                            if (!full) return;
-                                            const imgName = gen.prompt?.slice(0, 20) ?? "갤러리 이미지";
-                                            setAutoRefImages(prev => [...prev, { url: full.resultImageUrl, name: imgName }]);
-                                            // 스타일 감지는 첫 번째 이미지에서만 수행
-                                            if (autoRefImages.length === 0) {
-                                              setDetectedStyle("auto");
-                                              detectArtStyle(full.resultImageUrl).finally(() => setIsDetectingStyle(false));
-                                            }
-                                          }}
-                                        >
-                                          <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
-                                          {isSelected && (
-                                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                              <CheckCircle2 className="h-5 w-5 text-primary drop-shadow" />
-                                            </div>
-                                          )}
-                                        </button>
-                                        );
-                                      })}
-                                    </div>
-                                    {galleryHasMore && (
-                                      <button
-                                        className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                                        onClick={() => setGalleryLimit((prev) => prev + 30)}
-                                      >
-                                        더 보기
-                                      </button>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* STEP 2 : 주제 */}
-                          <div className="space-y-1.5">
-                            <span className="text-xs font-semibold text-foreground">② 인스타툰 주제</span>
-                            <div className="flex gap-2">
-                              <Input
-                                value={topic}
-                                onChange={(e) => setTopic(e.target.value)}
-                                placeholder="주제 입력 (예: 월요일 출근길)"
-                                className="text-sm"
-                                data-testid="input-story-topic"
-                              />
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                onClick={() => suggestMutation.mutate()}
-                                disabled={suggestMutation.isPending}
-                                data-testid="button-suggest-topic"
-                              >
-                                {suggestMutation.isPending ? (
-                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                ) : (
-                                  <Lightbulb className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* STEP 3 : 전체 인스타툰 프롬프트 (선택) */}
-                          <div className="space-y-1.5">
-                            <span className="text-xs font-semibold text-foreground">
-                              ③ 인스타툰 전체 프롬프트{" "}
-                              <span className="text-[10px] font-normal text-muted-foreground">
-                                (선택 — 포즈·표정·배경·아이템을 한 번에 적어도 돼요)
-                              </span>
-                            </span>
-                            <Textarea
-                              value={instatoonScenePrompt}
-                              onChange={(e) => setInstatoonScenePrompt(e.target.value)}
-                              placeholder="예: 비 오는 월요일 출근길, 주인공은 커피를 들고 지하철 안에서 멍한 표정으로 서 있고, 뒤에는 붐비는 사람들과 형광 조명이 보인다"
-                              className="text-xs resize-none"
-                              rows={3}
-                            />
-                            <p className="text-[10px] text-muted-foreground">
-                              빈칸으로 두면 아래 포즈/표정·배경/아이템 칸을 기준으로 생성돼요.
-                            </p>
-                          </div>
-
-                          {/* STEP 4 : 포즈/표정 (선택) */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-foreground">
-                                ④ 포즈 / 표정{" "}
-                                <span className="text-[10px] font-normal text-muted-foreground">
-                                  (선택 — 비우면 AI가 자동 결정)
-                                </span>
-                              </span>
-                              <Button
-                                size="sm"
-                                variant={posePromptMutation.isPending ? "destructive" : "outline"}
-                                onClick={() => posePromptMutation.isPending ? promptAbortRef.current?.abort() : posePromptMutation.mutate()}
-                              >
-                                {posePromptMutation.isPending ? (
-                                  <span className="text-[11px]">취소</span>
-                                ) : (
-                                  <span className="text-[11px]">AI 추천</span>
-                                )}
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Textarea
-                                value={posePrompt}
-                                onChange={(e) => setPosePrompt(e.target.value)}
-                                placeholder="포즈 (예: 여고생 팬과 나란히 서서 브이포즈로 사진 찍기)"
-                                className="text-xs resize-none"
-                                rows={2}
-                              />
-                              <Textarea
-                                value={expressionPrompt}
-                                onChange={(e) => setExpressionPrompt(e.target.value)}
-                                placeholder="표정 (예: 부끄러우면서도 기뻐하는 표정, 볼이 붉어짐)"
-                                className="text-xs resize-none"
-                                rows={2}
-                              />
-                            </div>
-                            <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-relaxed bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1.5">
-                              💡 다른 인물이 등장하는 장면은 포즈에 함께 묘사하세요<br/>
-                              예: <b>"여고생 팬과 나란히 브이포즈"</b> → 여고생도 자동 생성
-                            </p>
-                          </div>
-
-                          {/* STEP 5 : 배경/아이템 (선택) */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-foreground">
-                                ④ 배경 / 아이템 <span className="text-[10px] font-normal text-muted-foreground">(선택)</span>
-                              </span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={backgroundPromptMutation.isPending}
-                                onClick={() => backgroundPromptMutation.mutate()}
-                              >
-                                {backgroundPromptMutation.isPending ? (
-                                  <span className="text-[11px] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />생성 중</span>
-                                ) : (
-                                  <span className="text-[11px]">AI 추천</span>
-                                )}
-                              </Button>
-                              {backgroundPromptMutation.isPending && (
-                                <button
-                                  type="button"
-                                  className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
-                                  onClick={() => promptAbortRef.current?.abort()}
-                                >
-                                  취소
-                                </button>
-                              )}
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Textarea
-                                value={backgroundPrompt}
-                                onChange={(e) => setBackgroundPrompt(e.target.value)}
-                                placeholder="배경 (예: 퇴근길 지하철 안, 붐비는 플랫폼)"
-                                className="text-xs resize-none"
-                                rows={2}
-                              />
-                              <Textarea
-                                value={itemPrompt}
-                                onChange={(e) => setItemPrompt(e.target.value)}
-                                placeholder="아이템/소품 (예: 커피컵, 스마트폰)"
-                                className="text-xs resize-none"
-                                rows={2}
-                              />
-                            </div>
-                          </div>
-
-                          {autoRefImages.length === 0 && (
-                            <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-md px-2.5 py-1.5">
-                              ⚠️ 기준 캐릭터 이미지를 선택해야 포즈·표정이 자동 변형됩니다.
-                            </p>
-                          )}
-
-                          {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
-                            <Button
-                              className="w-full"
-                              size="sm"
-                              variant="destructive"
+                        {AI_ITEMS.map((item) => {
+                          const isLocked = (item.id === "instatoonFull" || item.id === "instatoonPrompt") && !isPro;
+                          return (
+                            <button
+                              key={item.id}
                               onClick={() => {
-                                generateAbortRef.current?.abort();
-                                instatoonAbortRef.current?.abort();
-                              }}
-                            >
-                              <X className="h-4 w-4 mr-1.5" />
-                              생성 취소
-                            </Button>
-                          ) : (
-                            <div className="flex gap-2">
-                              <Button
-                                className="flex-1"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  if (autoRefImages.length === 0) {
-                                    toast({
-                                      title: "기준 이미지 필요",
-                                      description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
-                                      variant: "destructive",
-                                    });
-                                    return;
-                                  }
-                                  generateMutation.mutate({ mode: "full", scope: "current" });
-                                  instatoonImageMutation.mutate({ scope: "current" });
-                                }}
-                                disabled={!topic.trim()}
-                              >
-                                <Wand2 className="h-4 w-4 mr-1.5" />
-                                선택 컷 생성
-                              </Button>
-                              <Button
-                                className="flex-1"
-                                size="sm"
-                                onClick={() => {
-                                  if (autoRefImages.length === 0) {
-                                    toast({
-                                      title: "기준 이미지 필요",
-                                      description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.",
-                                      variant: "destructive",
-                                    });
-                                    return;
-                                  }
-                                  generateMutation.mutate({ mode: "full", scope: "all" });
-                                  instatoonImageMutation.mutate({ scope: "all" });
-                                }}
-                                disabled={!topic.trim()}
-                              >
-                                <Wand2 className="h-4 w-4 mr-1.5" />
-                                전체 생성 ({panels.length}컷)
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {aiMode === "instatoonPrompt" && (
-                        <div className="mt-4 space-y-4">
-                          {/* 기준 이미지 선택 */}
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-foreground">기준 캐릭터 이미지</span>
-                              <span className="text-[10px] text-muted-foreground">(선택 — 있으면 더 정확해요)</span>
-                            </div>
-
-                            {promptRefImageUrl ? (
-                              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-2">
-                                <img src={promptRefImageUrl} alt="기준" className="h-10 w-10 rounded object-cover border border-border flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[11px] font-medium truncate">{promptRefImageName || "선택된 이미지"}</p>
-                                  <p className="text-[10px] text-muted-foreground">이 캐릭터 기반으로 프롬프트 자동 작성</p>
-                                </div>
-                                <button
-                                  onClick={() => { setPromptRefImageUrl(null); setPromptRefImageName(""); }}
-                                  className="text-muted-foreground hover:text-foreground flex-shrink-0"
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="grid grid-cols-2 gap-2">
-                                <button
-                                  onClick={() => promptRefInputRef.current?.click()}
-                                  className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-2.5 text-xs text-muted-foreground hover:border-primary/50 hover:bg-muted/70 transition-colors"
-                                >
-                                  <UploadCloud className="h-4 w-4 opacity-70" />
-                                  <span className="text-[11px]">이미지 업로드</span>
-                                </button>
-                                <button
-                                  onClick={() => setShowPromptGalleryPicker((v) => !v)}
-                                  className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-2.5 text-xs transition-colors ${showPromptGalleryPicker ? "border-primary bg-primary/5 text-primary" : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/70"}`}
-                                >
-                                  <ImagePlus className="h-4 w-4 opacity-70" />
-                                  <span className="text-[11px]">갤러리에서</span>
-                                </button>
-                              </div>
-                            )}
-
-                            <input
-                              ref={promptRefInputRef}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={handlePromptRefImageUpload}
-                            />
-
-                            {showPromptGalleryPicker && (
-                              <div className="space-y-1.5">
-                                {galleryLoading ? (
-                                  <div className="flex justify-center py-3"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-                                ) : !galleryData?.length ? (
-                                  <p className="text-[11px] text-muted-foreground text-center py-2">생성된 이미지가 없어요.</p>
-                                ) : (
-                                  <>
-                                    <div className="grid grid-cols-3 gap-1.5 max-h-[150px] overflow-y-auto">
-                                      {galleryData.map((gen) => (
-                                        <button
-                                          key={gen.id}
-                                          className="aspect-square rounded-md overflow-hidden border border-border hover:border-primary transition-colors"
-                                          onClick={async () => {
-                                            const full = await fetchFullGeneration(gen.id);
-                                            if (!full) return;
-                                            setPromptRefImageUrl(full.resultImageUrl);
-                                            setPromptRefImageName(gen.prompt?.slice(0, 20) ?? "갤러리 이미지");
-                                            setShowPromptGalleryPicker(false);
-                                          }}
-                                        >
-                                          <img src={gen.thumbnailUrl || gen.resultImageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
-                                        </button>
-                                      ))}
-                                    </div>
-                                    {galleryHasMore && (
-                                      <button
-                                        className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                                        onClick={() => setGalleryLimit((prev) => prev + 30)}
-                                      >
-                                        더 보기
-                                      </button>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Style selector for promptRef mode */}
-                          {(promptRefImageUrl || autoRefImages.length > 0) && (
-                            <div className="space-y-1.5 border border-border/60 rounded-lg p-2.5 bg-muted/30">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-semibold text-foreground">🎨 그림 스타일 통일</span>
-                                {isDetectingStyle && (
-                                  <div className="h-2.5 w-2.5 animate-spin rounded-full border border-primary border-t-transparent" />
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-1">
-                                <button
-                                  onClick={() => setDetectedStyle("auto")}
-                                  className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                                    detectedStyle === "auto"
-                                      ? "bg-primary text-primary-foreground border-primary"
-                                      : "border-border text-muted-foreground hover:border-primary/50"
-                                  }`}
-                                >자동</button>
-                                {Object.entries(ART_STYLES).filter(([k]) => k !== "auto").map(([key, s]) => (
-                                  <button
-                                    key={key}
-                                    onClick={() => setDetectedStyle(key)}
-                                    title={s.description}
-                                    className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                                      detectedStyle === key
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                                    }`}
-                                  >
-                                    {s.label}
-                                  </button>
-                                ))}
-                              </div>
-                              <p className="text-[9px] text-muted-foreground">선택한 스타일로 배경·아이템이 캐릭터와 통일됩니다</p>
-                            </div>
-                          )}
-
-                          {/* 포즈/표정 - 입력하면 배경/아이템은 자동 */}
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs font-semibold text-foreground">포즈 / 표정</span>
-                              <span className="text-[10px] text-muted-foreground ml-1">— 입력하면 배경이 자동 완성됩니다</span>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Textarea
-                                value={posePrompt}
-                                onChange={(e) => setPosePrompt(e.target.value)}
-                                placeholder="포즈 (예: 팬과 나란히 카메라 향해 브이포즈 취하기)"
-                                className="text-xs resize-none"
-                                rows={2}
-                              />
-                              <Textarea
-                                value={expressionPrompt}
-                                onChange={(e) => setExpressionPrompt(e.target.value)}
-                                placeholder="표정 (예: 수줍어하면서 기뻐하는 표정)"
-                                className="text-xs resize-none"
-                                rows={2}
-                              />
-                            </div>
-                          </div>
-
-                          {/* 배경/아이템 - 자동 생성 or 수동 입력 */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-foreground">
-                                배경 / 아이템
-                                {(posePrompt.trim() || expressionPrompt.trim()) && (
-                                  <span className="ml-1.5 text-[10px] font-normal text-primary">← 자동 생성 가능</span>
-                                )}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Textarea
-                                value={backgroundPrompt}
-                                onChange={(e) => setBackgroundPrompt(e.target.value)}
-                                placeholder="배경 프롬프트 — 비워도 AI가 자동으로 채워줍니다"
-                                className="text-xs resize-none"
-                                rows={2}
-                              />
-                              <Textarea
-                                value={itemPrompt}
-                                onChange={(e) => setItemPrompt(e.target.value)}
-                                placeholder="아이템/소품 프롬프트 — 비워도 자동 생성됩니다"
-                                className="text-xs resize-none"
-                                rows={2}
-                              />
-                            </div>
-                          </div>
-
-                          {instatoonPromptMutation.isPending ? (
-                            <div className="space-y-1">
-                              <Button className="w-full" size="sm" disabled>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                {instatoonPromptMutation.variables?.scope === "current"
-                                  ? "선택 컷 생성 중..."
-                                  : "전체 생성 중..."}
-                              </Button>
-                              <button
-                                type="button"
-                                className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors py-1"
-                                onClick={() => promptAbortRef.current?.abort()}
-                              >
-                                취소
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex gap-2">
-                              <Button
-                                className="flex-1"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => instatoonPromptMutation.mutate({ scope: "current" })}
-                              >
-                                <Wand2 className="h-4 w-4 mr-1.5" />
-                                선택 컷 생성
-                              </Button>
-                              <Button
-                                className="flex-1"
-                                size="sm"
-                                onClick={() => instatoonPromptMutation.mutate({ scope: "all" })}
-                              >
-                                <Wand2 className="h-4 w-4 mr-1.5" />
-                                전체 생성 ({panels.length}컷)
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {aiMode === "autoWebtoon" && (
-                        <div className="mt-4">
-                          <AutoWebtoonPanel
-                            isAuthenticated={isAuthenticated}
-                            isPro={isPro}
-                            maxPanels={maxPanels}
-                            currentPanelCount={panels.length}
-                            galleryData={galleryData}
-                            galleryLoading={galleryLoading}
-                            onPanelsGenerated={(newPanels) => {
-                              // 기존 패널이 빈 기본 패널 1개뿐이면 교체, 아니면 뒤에 추가
-                              const isDefaultEmpty = panels.length === 1
-                                && panels[0].characters.length === 0
-                                && panels[0].bubbles.length === 0
-                                && !panels[0].backgroundImageUrl
-                                && (panels[0].textElements?.length ?? 0) === 0
-                                && (panels[0].lineElements?.length ?? 0) === 0;
-
-                              if (isDefaultEmpty) {
-                                // maxPanels 제한 적용
-                                const limited = (newPanels as any[]).slice(0, maxPanels);
-                                setActivePanelIndex(0);
-                                setPanels(limited as any);
-                                rehydrateImages(limited as any);
-                              } else {
-                                // 기존 패널 뒤에 추가 (maxPanels 제한)
-                                const available = maxPanels - panels.length;
-                                if (available <= 0) {
-                                  toast({ title: `패널 ${maxPanels}개 제한`, description: "추가할 수 있는 패널이 없습니다.", variant: "destructive" });
+                                if (isLocked) {
+                                  toast({ title: "Pro 전용 기능", description: `${item.label}은(는) Pro 멤버십 전용입니다.`, variant: "destructive" });
                                   return;
                                 }
-                                const toAdd = (newPanels as any[]).slice(0, available);
-                                const merged = [...panels, ...toAdd] as any;
-                                setActivePanelIndex(panels.length); // 첫 번째 새 패널로 이동
-                                setPanels(merged);
-                                rehydrateImages(toAdd as any);
-                                if (toAdd.length < newPanels.length) {
-                                  toast({ title: `${toAdd.length}/${newPanels.length}개 패널만 추가됨`, description: `패널 최대 ${maxPanels}개 제한`, variant: "destructive" });
-                                }
-                              }
-                              setAiMode(null);
-                            }}
-                            onClose={() => setAiMode(null)}
-                          />
-                        </div>
-                      )}
-                    </>
+                                setAiMode(aiMode === item.id as any ? null : item.id as any);
+                              }}
+                              className={`tools-compact-panel__tool-btn ${aiMode === item.id ? "tools-compact-panel__tool-btn--active" : ""}`}
+                              title={item.label}
+                            >
+                              <item.icon className="h-5 w-5" style={item.color && aiMode !== item.id ? { color: item.color } : undefined} />
+                              {isLocked && <Crown className="h-2.5 w-2.5 absolute -top-0.5 -right-0.5 text-yellow-500" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                   )}
+
+                  {/* AI mode forms moved to right panel — see right panel section below */}
+
                   {activeLeftTab === "image" && activePanel && (
                     <>
-                      <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center justify-between gap-2 mb-2 sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-1">
                         <h3 className="text-sm font-semibold">이미지선택/업로드</h3>
                         <button
                           onClick={() => setActiveLeftTab(null)}
@@ -7717,6 +6809,10 @@ export default function StoryPage() {
                         isPro={isPro}
                         mode="image"
                         forceRerender={() => setPanelsRaw((cur) => cur.map(pp => ({ ...pp })))}
+                        characterFolders={storyCharacterFolders}
+                        activeGalleryFolderId={activeGalleryFolderId}
+                        setActiveGalleryFolderId={setActiveGalleryFolderId}
+                        markChecklistDone={markChecklistDone}
                       />
                     </>
                   )}
@@ -7741,6 +6837,7 @@ export default function StoryPage() {
                               setSelectedDrawingLayerId(null);
                               if (item.id === "drawing") {
                                 setDrawingToolState(s => ({ ...s, tool: "brush" }));
+                                markChecklistDone("use-drawing");
                               }
                               if (item.id === "text") {
                                 handleAddText();
@@ -7815,8 +6912,8 @@ export default function StoryPage() {
                         <div className="tools-compact-panel__settings">
                           <div className="tools-compact-panel__settings-section">
                             <div className="tools-compact-panel__settings-row">
-                              <span className="text-[11px] text-muted-foreground font-medium">굵기</span>
-                              <span className="text-[11px] text-primary font-medium tabular-nums">{drawingToolState.size}px</span>
+                              <span className="text-[13px] text-muted-foreground font-medium">굵기</span>
+                              <span className="text-[13px] text-primary font-medium tabular-nums">{drawingToolState.size}px</span>
                             </div>
                             <Slider
                               min={1}
@@ -7829,8 +6926,8 @@ export default function StoryPage() {
                           </div>
                           <div className="tools-compact-panel__settings-section">
                             <div className="tools-compact-panel__settings-row">
-                              <span className="text-[11px] text-muted-foreground font-medium">불투명도</span>
-                              <span className="text-[11px] text-primary font-medium tabular-nums">{Math.round(drawingToolState.opacity * 100)}%</span>
+                              <span className="text-[13px] text-muted-foreground font-medium">불투명도</span>
+                              <span className="text-[13px] text-primary font-medium tabular-nums">{Math.round(drawingToolState.opacity * 100)}%</span>
                             </div>
                             <Slider
                               min={5}
@@ -7983,11 +7080,445 @@ export default function StoryPage() {
                   </div>
                 )}
 
+                {/* ─── Compact Generative Panel ────────────────── */}
+                {activeLeftTab === "generative" && activePanel && (
+                  <div className="tools-compact-panel">
+                    {/* Main tool strip */}
+                    <div className="tools-compact-panel__strip">
+                      <button onClick={() => setActiveLeftTab(null)} className="tools-compact-panel__close-btn" title="닫기">
+                        <X className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedGenTool("fill")}
+                        className={`tools-compact-panel__tool-btn ${selectedGenTool === "fill" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                        title="생성형 채우기"
+                      >
+                        <Paintbrush className="h-5 w-5" style={selectedGenTool !== "fill" ? { color: "#8b5cf6" } : undefined} />
+                      </button>
+                      <button
+                        onClick={() => setSelectedGenTool("expand")}
+                        className={`tools-compact-panel__tool-btn ${selectedGenTool === "expand" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                        title="생성형 확장"
+                      >
+                        <Maximize className="h-5 w-5" style={selectedGenTool !== "expand" ? { color: "#3b82f6" } : undefined} />
+                      </button>
+                      <button
+                        onClick={() => setSelectedGenTool("upscale")}
+                        className={`tools-compact-panel__tool-btn ${selectedGenTool === "upscale" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                        title="생성형 업스케일"
+                      >
+                        <Scaling className="h-5 w-5" style={selectedGenTool !== "upscale" ? { color: "#10b981" } : undefined} />
+                      </button>
+                      <button
+                        onClick={() => { setSelectedGenTool("object"); setSelectionMode("click"); }}
+                        className={`tools-compact-panel__tool-btn ${selectedGenTool === "object" ? "tools-compact-panel__tool-btn--active" : ""}`}
+                        title="개체 선택"
+                      >
+                        <ScanSearch className="h-5 w-5" style={selectedGenTool !== "object" ? { color: "#f59e0b" } : undefined} />
+                      </button>
+                    </div>
+
+                    {/* Sub-panel for fill: selection mode + prompt */}
+                    {selectedGenTool === "fill" && (
+                      <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 2 }}>선택 도구</span>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "2px 4px" }}>
+                          <button onClick={() => setSelectionMode("brush")} className={`tools-compact-panel__tool-btn ${selectionMode === "brush" ? "tools-compact-panel__tool-btn--active" : ""}`} title="선택 브러시">
+                            <Paintbrush className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("lasso")} className={`tools-compact-panel__tool-btn ${selectionMode === "lasso" ? "tools-compact-panel__tool-btn--active" : ""}`} title="올가미">
+                            <Spline className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("rectangle")} className={`tools-compact-panel__tool-btn ${selectionMode === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`} title="사각형 선택">
+                            <Square className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("ellipse")} className={`tools-compact-panel__tool-btn ${selectionMode === "ellipse" ? "tools-compact-panel__tool-btn--active" : ""}`} title="원형 선택">
+                            <Circle className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                        </div>
+
+                        {selectionMode === "brush" && (
+                          <div style={{ padding: "4px 8px", width: "100%" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))" }}>크기</span>
+                              <span style={{ fontSize: 10, fontWeight: 500, color: "hsl(var(--primary))" }}>{selectionBrushSize}px</span>
+                            </div>
+                            <Slider min={5} max={100} step={1} value={[selectionBrushSize]} onValueChange={([v]) => setSelectionBrushSize(v)} />
+                          </div>
+                        )}
+
+                        <div style={{ display: "flex", gap: 4, padding: "4px 4px 0" }}>
+                          <button onClick={() => selectionCanvasRef.current?.expandSelection(3)} className="tools-compact-panel__tool-btn" title="선택 확대" style={{ width: 36, height: 36 }}>
+                            <PlusCircle className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => selectionCanvasRef.current?.shrinkSelection(3)} className="tools-compact-panel__tool-btn" title="선택 축소" style={{ width: 36, height: 36 }}>
+                            <MinusCircle className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => selectionCanvasRef.current?.clearSelection()} className="tools-compact-panel__tool-btn" title="선택 초기화" style={{ width: 36, height: 36 }}>
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="generative-prompt-area" style={{ padding: "8px 4px", width: "100%" }}>
+                          <Textarea
+                            placeholder="채울 내용을 입력..."
+                            value={genPrompt}
+                            onChange={(e) => setGenPrompt(e.target.value)}
+                            rows={2}
+                            style={{ fontSize: 12, resize: "none", marginBottom: 6 }}
+                          />
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={genLoading || !genPrompt.trim()}
+                            onClick={async () => {
+                              const mask = selectionCanvasRef.current?.exportMask();
+                              if (!mask) {
+                                toast({ title: "영역을 먼저 선택해주세요", variant: "destructive" });
+                                return;
+                              }
+                              const imageData = capturePanelClean(activePanel.id);
+                              if (!imageData) return;
+                              setGenLoading(true);
+                              try {
+                                const resp = await apiRequest("POST", "/api/generative-fill", {
+                                  imageData, maskData: mask, prompt: genPrompt,
+                                });
+                                const data = await resp.json();
+                                if (data.imageUrl) {
+                                  const composited = await compositeWithMask(imageData, data.imageUrl, mask);
+                                  applyImageToPanel(activePanelIndex, composited);
+                                  selectionCanvasRef.current?.clearSelection();
+                                  setGenPrompt("");
+                                  toast({ title: "생성형 채우기 완료" });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+                                }
+                              } catch (err: any) {
+                                toast({ title: "생성형 채우기 실패", description: err.message, variant: "destructive" });
+                              } finally {
+                                setGenLoading(false);
+                              }
+                            }}
+                          >
+                            {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                            생성
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-panel for expand */}
+                    {selectedGenTool === "expand" && (
+                      <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 2 }}>생성형 확장</span>
+                        <div style={{ padding: "4px 8px", width: "100%", fontSize: 11, color: "hsl(var(--muted-foreground))" }}>
+                          캔버스 가장자리 핸들을 드래그하여 확장 영역을 지정하세요.
+                        </div>
+                        {(expandTop + expandRight + expandBottom + expandLeft > 0) && (
+                          <div style={{ padding: "2px 8px", width: "100%", display: "flex", flexWrap: "wrap", gap: 4, fontSize: 10 }}>
+                            {expandTop > 0 && <Badge variant="secondary" className="text-[13px] px-1.5 py-0">상 {expandTop}px</Badge>}
+                            {expandRight > 0 && <Badge variant="secondary" className="text-[13px] px-1.5 py-0">우 {expandRight}px</Badge>}
+                            {expandBottom > 0 && <Badge variant="secondary" className="text-[13px] px-1.5 py-0">하 {expandBottom}px</Badge>}
+                            {expandLeft > 0 && <Badge variant="secondary" className="text-[13px] px-1.5 py-0">좌 {expandLeft}px</Badge>}
+                          </div>
+                        )}
+                        <div style={{ padding: "2px 8px", width: "100%" }}>
+                          <button
+                            onClick={() => { setExpandTop(0); setExpandRight(0); setExpandBottom(0); setExpandLeft(0); }}
+                            className="tools-compact-panel__tool-btn"
+                            style={{ width: "100%", height: 32, fontSize: 11 }}
+                            title="초기화"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1" /> 초기화
+                          </button>
+                        </div>
+                        <div className="generative-prompt-area" style={{ padding: "8px 4px", width: "100%" }}>
+                          <Textarea
+                            placeholder="확장 영역 설명 (선택사항)..."
+                            value={genPrompt}
+                            onChange={(e) => setGenPrompt(e.target.value)}
+                            rows={2}
+                            style={{ fontSize: 12, resize: "none", marginBottom: 6 }}
+                          />
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={genLoading || (expandTop + expandRight + expandBottom + expandLeft === 0)}
+                            onClick={async () => {
+                              const imageData = capturePanelClean(activePanel.id);
+                              if (!imageData) return;
+                              setGenLoading(true);
+                              try {
+                                const resp = await apiRequest("POST", "/api/generative-expand", {
+                                  imageData, top: expandTop, right: expandRight, bottom: expandBottom, left: expandLeft, prompt: genPrompt,
+                                });
+                                const data = await resp.json();
+                                if (data.imageUrl) {
+                                  applyImageToPanel(activePanelIndex, data.imageUrl);
+                                  setExpandTop(0); setExpandRight(0); setExpandBottom(0); setExpandLeft(0);
+                                  toast({ title: "생성형 확장 완료" });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+                                }
+                              } catch (err: any) {
+                                toast({ title: "생성형 확장 실패", description: err.message, variant: "destructive" });
+                              } finally {
+                                setGenLoading(false);
+                              }
+                            }}
+                          >
+                            {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Maximize className="h-3.5 w-3.5 mr-1" />}
+                            확장
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-panel for upscale */}
+                    {selectedGenTool === "upscale" && (
+                      <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 4 }}>업스케일</span>
+                        <div style={{ padding: "4px 8px", width: "100%", fontSize: 11, color: "hsl(var(--muted-foreground))" }}>
+                          현재 패널 이미지를 2배 해상도로 업스케일합니다.
+                        </div>
+                        <div className="generative-prompt-area" style={{ padding: "8px 4px", width: "100%" }}>
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={genLoading}
+                            onClick={async () => {
+                              const imageData = capturePanelClean(activePanel.id);
+                              if (!imageData) return;
+                              setGenLoading(true);
+                              try {
+                                const resp = await apiRequest("POST", "/api/generative-upscale", {
+                                  imageData, scale: 2,
+                                });
+                                const data = await resp.json();
+                                if (data.imageUrl) {
+                                  applyImageToPanel(activePanelIndex, data.imageUrl);
+                                  toast({ title: "업스케일 완료 (2x)" });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+                                }
+                              } catch (err: any) {
+                                toast({ title: "업스케일 실패", description: err.message, variant: "destructive" });
+                              } finally {
+                                setGenLoading(false);
+                              }
+                            }}
+                          >
+                            {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Scaling className="h-3.5 w-3.5 mr-1" />}
+                            2x 업스케일
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-panel for object selection */}
+                    {selectedGenTool === "object" && (
+                      <div className="tools-compact-panel__strip tools-compact-panel__strip--sub" style={{ minWidth: 160 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0 4px", marginBottom: 2 }}>개체 선택</span>
+
+                        {/* Click-to-select info */}
+                        <div style={{ padding: "4px 8px", width: "100%", fontSize: 10, color: "hsl(var(--muted-foreground))", lineHeight: 1.4 }}>
+                          클릭하면 같은 색상 영역이 즉시 선택됩니다.
+                        </div>
+                        {/* Tolerance slider */}
+                        <div style={{ padding: "4px 8px", width: "100%" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+                            <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))" }}>허용 범위</span>
+                            <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", fontFamily: "monospace" }}>{floodFillTolerance}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={floodFillTolerance}
+                            onChange={(e) => setFloodFillTolerance(Number(e.target.value))}
+                            style={{ width: "100%", height: 4, cursor: "pointer" }}
+                          />
+                        </div>
+
+                        {/* Selection refinement tools */}
+                        <div style={{ display: "flex", gap: 4, padding: "4px 4px 0" }}>
+                          <button onClick={() => selectionCanvasRef.current?.expandSelection(3)} className="tools-compact-panel__tool-btn" title="선택 확대" style={{ width: 36, height: 36 }}>
+                            <PlusCircle className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => selectionCanvasRef.current?.shrinkSelection(3)} className="tools-compact-panel__tool-btn" title="선택 축소" style={{ width: 36, height: 36 }}>
+                            <MinusCircle className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => { selectionCanvasRef.current?.clearSelection(); }} className="tools-compact-panel__tool-btn" title="선택 초기화" style={{ width: 36, height: 36 }}>
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* Selection tools */}
+                        <span style={{ fontSize: 13, color: "hsl(var(--muted-foreground))", padding: "4px 8px 0", width: "100%" }}>선택 도구</span>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "2px 4px" }}>
+                          <button onClick={() => setSelectionMode("click")} className={`tools-compact-panel__tool-btn ${selectionMode === "click" ? "tools-compact-panel__tool-btn--active" : ""}`} title="클릭 선택 (마법봉)">
+                            <MousePointerClick className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("brush")} className={`tools-compact-panel__tool-btn ${selectionMode === "brush" ? "tools-compact-panel__tool-btn--active" : ""}`} title="브러시">
+                            <Paintbrush className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("lasso")} className={`tools-compact-panel__tool-btn ${selectionMode === "lasso" ? "tools-compact-panel__tool-btn--active" : ""}`} title="올가미">
+                            <Spline className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("rectangle")} className={`tools-compact-panel__tool-btn ${selectionMode === "rectangle" ? "tools-compact-panel__tool-btn--active" : ""}`} title="사각형">
+                            <Square className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                          <button onClick={() => setSelectionMode("ellipse")} className={`tools-compact-panel__tool-btn ${selectionMode === "ellipse" ? "tools-compact-panel__tool-btn--active" : ""}`} title="원형">
+                            <Circle className="h-[1.4rem] w-[1.4rem]" />
+                          </button>
+                        </div>
+
+                        {/* Action toggle: Color vs AI Fill */}
+                        <div style={{ display: "flex", gap: 4, padding: "8px 4px 4px", width: "100%" }}>
+                          <button
+                            onClick={() => setObjectAction("color")}
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
+                              padding: "6px 0",
+                              borderRadius: 6,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              border: objectAction === "color" ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                              background: objectAction === "color" ? "hsl(var(--primary) / 0.1)" : "hsl(var(--card))",
+                              color: objectAction === "color" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Palette className="h-3.5 w-3.5" /> 색상 변경
+                          </button>
+                          <button
+                            onClick={() => setObjectAction("fill")}
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
+                              padding: "6px 0",
+                              borderRadius: 6,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              border: objectAction === "fill" ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                              background: objectAction === "fill" ? "hsl(var(--primary) / 0.1)" : "hsl(var(--card))",
+                              color: objectAction === "fill" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Sparkles className="h-3.5 w-3.5" /> AI 생성
+                          </button>
+                        </div>
+
+                        {/* Color change mode */}
+                        {objectAction === "color" && (
+                          <div style={{ padding: "4px 4px 8px", width: "100%" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 3, marginBottom: 8 }}>
+                              {WEBTOON_COLOR_PRESETS.map((color) => (
+                                <button
+                                  key={color}
+                                  onClick={() => setSelectedObjectColor(color)}
+                                  style={{
+                                    width: "100%",
+                                    aspectRatio: "1",
+                                    borderRadius: 4,
+                                    background: color,
+                                    border: selectedObjectColor === color ? "2px solid hsl(var(--primary))" : color === "#ffffff" ? "1px solid hsl(var(--border))" : "1px solid transparent",
+                                    cursor: "pointer",
+                                    boxShadow: selectedObjectColor === color ? "0 0 0 1px hsl(var(--primary))" : "none",
+                                  }}
+                                  title={color}
+                                />
+                              ))}
+                            </div>
+                            <div style={{ display: "flex", gap: 4, alignItems: "center", marginBottom: 8 }}>
+                              <label style={{ position: "relative", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                                <Palette className="h-3.5 w-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
+                                <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))" }}>커스텀</span>
+                                <input
+                                  type="color"
+                                  value={selectedObjectColor}
+                                  onChange={(e) => setSelectedObjectColor(e.target.value)}
+                                  style={{ width: 24, height: 24, border: "none", padding: 0, cursor: "pointer", borderRadius: 4 }}
+                                />
+                              </label>
+                              <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", fontFamily: "monospace" }}>{selectedObjectColor}</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              disabled={genLoading}
+                              onClick={() => applyColorToSelection()}
+                            >
+                              {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Palette className="h-3.5 w-3.5 mr-1" />}
+                              색상 적용
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* AI generative fill mode */}
+                        {objectAction === "fill" && (
+                          <div className="generative-prompt-area" style={{ padding: "8px 4px", width: "100%" }}>
+                            <Textarea
+                              placeholder="채울 내용을 입력..."
+                              value={genPrompt}
+                              onChange={(e) => setGenPrompt(e.target.value)}
+                              rows={2}
+                              style={{ fontSize: 12, resize: "none", marginBottom: 6 }}
+                            />
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              disabled={genLoading || !genPrompt.trim()}
+                              onClick={async () => {
+                                const mask = selectionCanvasRef.current?.exportMask();
+                                if (!mask) {
+                                  toast({ title: "영역을 먼저 선택해주세요", variant: "destructive" });
+                                  return;
+                                }
+                                const imageData = capturePanelClean(activePanel!.id);
+                                if (!imageData) return;
+                                setGenLoading(true);
+                                try {
+                                  const resp = await apiRequest("POST", "/api/generative-fill", {
+                                    imageData, maskData: mask, prompt: genPrompt,
+                                  });
+                                  const data = await resp.json();
+                                  if (data.imageUrl) {
+                                    const composited = await compositeWithMask(imageData, data.imageUrl, mask);
+                                    applyImageToPanel(activePanelIndex, composited);
+                                    selectionCanvasRef.current?.clearSelection();
+                                    setGenPrompt("");
+                                    toast({ title: "생성형 채우기 완료" });
+                                    queryClient.invalidateQueries({ queryKey: ["/api/usage"] });
+                                  }
+                                } catch (err: any) {
+                                  toast({ title: "생성형 채우기 실패", description: err.message, variant: "destructive" });
+                                } finally {
+                                  setGenLoading(false);
+                                }
+                              }}
+                            >
+                              {genLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                              생성
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 </div>
               </div>
           )}
 
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <div
               className="w-full relative"
@@ -8027,17 +7558,20 @@ export default function StoryPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
-                      <DropdownMenuLabel className="text-[11px]">PNG 다운로드</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => guard(() => withCleanCanvas(() => downloadPanelSized(activePanelIndex, 540, 675)))}>
-                        <span className="text-xs">Original (540×675)</span>
+                      <DropdownMenuLabel className="text-[13px]">PNG 다운로드</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => guard(() => downloadPanelSized(activePanelIndex, CANVAS_W, CANVAS_H))}>
+
+                        <span className="text-[13px]">Original ({CANVAS_W}×{CANVAS_H})</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => withCleanCanvas(() => downloadPanelSized(activePanelIndex, 1080, 1350)))}>
-                        <span className="text-xs">Instagram 2x (1080×1350)</span>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSized(activePanelIndex, CANVAS_W * 2, CANVAS_H * 2))}>
+
+                        <span className="text-[13px]">Instagram 2x ({CANVAS_W * 2}×{CANVAS_H * 2})</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => withCleanCanvas(() => downloadPanelSvg(activePanelIndex)))}>
-                        <span className="text-xs">SVG</span>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadPanelSvg(activePanelIndex))}>
+
+                        <span className="text-[13px]">SVG</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -8047,7 +7581,7 @@ export default function StoryPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 h-7 text-xs px-2"
+                        className="gap-1 h-7 text-[13px] px-2"
                         data-testid="button-download-all-panels"
                       >
                         <Download className="h-3 w-3" />
@@ -8055,23 +7589,23 @@ export default function StoryPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[200px]">
-                      <DropdownMenuLabel className="text-[11px]">PNG 전체 다운로드</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => guard(() => downloadAllSized(540, 675))}>
-                        <span className="text-xs">Original (540×675)</span>
+                      <DropdownMenuLabel className="text-[13px]">PNG 전체 다운로드</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => guard(() => downloadAllSized(CANVAS_W, CANVAS_H))}>
+                        <span className="text-[13px]">Original ({CANVAS_W}×{CANVAS_H})</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(1080, 1350))}>
-                        <span className="text-xs">Instagram 2x (1080×1350)</span>
+                      <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSized(CANVAS_W * 2, CANVAS_H * 2))}>
+                        <span className="text-[13px]">Instagram 2x ({CANVAS_W * 2}×{CANVAS_H * 2})</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem disabled={!isPro} onClick={() => guard(() => downloadAllSvg())}>
-                        <span className="text-xs">SVG</span>
+                        <span className="text-[13px]">SVG</span>
                         {!isPro && <Crown className="h-3 w-3 ml-auto text-yellow-500" />}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <Button size="sm" onClick={() => guard(() => setShowSaveModal(true))} className="gap-1 h-7 text-xs px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
+                  <Button size="sm" onClick={() => guard(() => setShowSaveModal(true))} className="gap-1 h-7 text-[13px] px-2.5 bg-primary text-primary-foreground border-primary" data-testid="button-save-story-project">
                     <Save className="h-3 w-3" />
                     저장
                     {!isPro && <Crown className="h-2.5 w-2.5 ml-0.5 text-yellow-300" />}
@@ -8079,7 +7613,7 @@ export default function StoryPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1 h-7 text-xs px-2"
+                    className="gap-1 h-7 text-[13px] px-2"
                     onClick={() => guard(() => setShowInstagramPublish(true))}
                     title="Instagram에 게시"
                     data-testid="button-instagram-publish"
@@ -8087,7 +7621,7 @@ export default function StoryPage() {
                     <Instagram className="h-3 w-3" />
                     게시
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigate("/edits")} title="내 편집" data-testid="button-story-my-edits">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" title="불러오기" data-testid="button-story-load-project" onClick={() => { setLoadFolderId(null); setShowLoadModal(true); }}>
                     <FolderOpen className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -8101,13 +7635,16 @@ export default function StoryPage() {
               className={`flex-1 overflow-y-auto bg-muted/20 dark:bg-muted/10 ${zoom >= 200 ? "p-0" : "p-8"}`}
               data-testid="story-canvas-area"
               onMouseDown={(e) => {
-                if (e.target === e.currentTarget) {
+                const target = e.target as HTMLElement;
+                // 버튼, 입력, 캔버스 등 인터랙티브 요소가 아닌 빈 영역 클릭 시 선택 해제
+                if (!target.closest('canvas') && !target.closest('button') && !target.closest('input') && !target.closest('textarea') && !target.closest('svg') && !target.closest('[role="menuitem"]') && !target.closest('[data-radix-collection-item]')) {
                   setSelectedBubbleId(null);
                   setSelectedCharId(null);
                   setSelectedTextId(null);
                   setSelectedLineId(null);
                   setSelectedShapeId(null);
                   setSelectedDrawingLayerId(null);
+                  setSelectedScriptPosition(null);
                 }
               }}
             >
@@ -8342,58 +7879,311 @@ export default function StoryPage() {
                                     });
                                     setSelectedCharId(null);
                                     setShowCharRegenPanel(false);
+                                    setCharInpaintMode(false);
                                   }}
-                                  onRegenerate={() => setShowCharRegenPanel(v => !v)}
+                                  onRegenerate={() => {
+                                    setShowCharRegenPanel(v => !v);
+                                    setCharRegenTab("full");
+                                    setCharRegenDragPos(null);
+                                    if (!showCharRegenPanel && selChar.prompt) {
+                                      setCharRegenPrompt(selChar.prompt);
+                                    }
+                                  }}
                                   showRegenPanel={showCharRegenPanel}
                                 />
                               </div>
                               {showCharRegenPanel && (
-                                <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 55 }}>
-                                  <div className="floating-settings-modal" style={{ minWidth: 280, padding: 12 }}>
-                                    <div className="floating-settings-modal__header">
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    ...(charRegenDragPos
+                                      ? { left: charRegenDragPos.x, top: charRegenDragPos.y, transform: "none" }
+                                      : { top: 8, left: "50%", transform: "translateX(-50%)" }),
+                                    zIndex: 55,
+                                  }}
+                                >
+                                  <div className="floating-settings-modal" style={{ minWidth: 300, padding: 12 }}>
+                                    <div
+                                      className="floating-settings-modal__header"
+                                      style={{ cursor: "grab", userSelect: "none" }}
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        const modalEl = e.currentTarget.closest(".floating-settings-modal")?.parentElement;
+                                        if (!modalEl) return;
+                                        const rect = (modalEl as HTMLElement).getBoundingClientRect();
+                                        const parentRect = (modalEl as HTMLElement).offsetParent?.getBoundingClientRect() ?? rect;
+                                        const currentX = rect.left - parentRect.left;
+                                        const currentY = rect.top - parentRect.top;
+                                        charRegenDragRef.current = { startMouseX: e.clientX, startMouseY: e.clientY, startX: currentX, startY: currentY };
+                                        const onMove = (ev: MouseEvent) => {
+                                          if (!charRegenDragRef.current) return;
+                                          const dx = ev.clientX - charRegenDragRef.current.startMouseX;
+                                          const dy = ev.clientY - charRegenDragRef.current.startMouseY;
+                                          setCharRegenDragPos({ x: charRegenDragRef.current.startX + dx, y: charRegenDragRef.current.startY + dy });
+                                        };
+                                        const onUp = () => {
+                                          charRegenDragRef.current = null;
+                                          document.removeEventListener("mousemove", onMove);
+                                          document.removeEventListener("mouseup", onUp);
+                                        };
+                                        document.addEventListener("mousemove", onMove);
+                                        document.addEventListener("mouseup", onUp);
+                                      }}
+                                    >
                                       <span className="floating-settings-modal__title">AI 재생성</span>
-                                      <button className="floating-settings-modal__close" onClick={() => setShowCharRegenPanel(false)}>
+                                      <button className="floating-settings-modal__close" onClick={() => { setShowCharRegenPanel(false); setCharInpaintMode(false); charInpaintSelectionRef.current?.clearSelection(); setCharRegenDragPos(null); }}>
                                         <X className="h-3.5 w-3.5" />
                                       </button>
                                     </div>
-                                    <textarea
-                                      value={charRegenPrompt}
-                                      onChange={(e) => setCharRegenPrompt(e.target.value)}
-                                      placeholder="원하는 장면을 설명하세요..."
-                                      disabled={charRegenLoading}
-                                      style={{
-                                        width: "100%", minHeight: 60, resize: "vertical",
-                                        padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
-                                        fontSize: 13, fontFamily: "inherit", marginBottom: 8,
-                                        background: "hsl(var(--background))", color: "hsl(var(--foreground))",
-                                      }}
-                                    />
-                                    <div style={{ display: "flex", gap: 6 }}>
+                                    {/* Tab buttons */}
+                                    <div style={{ display: "flex", gap: 0, marginBottom: 10, borderRadius: 6, overflow: "hidden", border: "1px solid hsl(var(--border))" }}>
                                       <button
-                                        disabled={charRegenLoading || !charRegenPrompt.trim()}
-                                        onClick={() => regenerateCharImage(selectedCharId, i, charRegenPrompt.trim(), "prompt")}
+                                        onClick={() => { setCharRegenTab("full"); setCharInpaintMode(false); charInpaintSelectionRef.current?.clearSelection(); }}
                                         style={{
-                                          flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                                          background: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
-                                          color: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
-                                          border: "none", cursor: charRegenLoading || !charRegenPrompt.trim() ? "not-allowed" : "pointer",
+                                          flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
+                                          background: charRegenTab === "full" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                          color: charRegenTab === "full" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
                                         }}
                                       >
-                                        {charRegenLoading ? "생성 중..." : "프롬프트로 재생성"}
+                                        전체 재생성
                                       </button>
                                       <button
-                                        disabled={charRegenLoading}
-                                        onClick={() => regenerateCharImage(selectedCharId, i, "", "variation")}
+                                        onClick={() => { setCharRegenTab("inpaint"); setCharInpaintMode(true); }}
                                         style={{
-                                          flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                                          background: charRegenLoading ? "hsl(var(--muted))" : "hsl(var(--secondary))",
-                                          color: charRegenLoading ? "hsl(var(--muted-foreground))" : "hsl(var(--secondary-foreground))",
-                                          border: "none", cursor: charRegenLoading ? "not-allowed" : "pointer",
+                                          flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
+                                          background: charRegenTab === "inpaint" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                          color: charRegenTab === "inpaint" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
                                         }}
                                       >
-                                        {charRegenLoading ? "생성 중..." : "다른 포즈/표정"}
+                                        부분 수정
                                       </button>
                                     </div>
+
+                                    {/* Full regeneration tab (existing) */}
+                                    {charRegenTab === "full" && (
+                                      <>
+                                        <textarea
+                                          value={charRegenPrompt}
+                                          onChange={(e) => setCharRegenPrompt(e.target.value)}
+                                          placeholder="원하는 장면을 설명하세요..."
+                                          disabled={charRegenLoading}
+                                          style={{
+                                            width: "100%", minHeight: 60, resize: "vertical",
+                                            padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
+                                            fontSize: 13, fontFamily: "inherit", marginBottom: 8,
+                                            background: "hsl(var(--background))", color: "hsl(var(--foreground))",
+                                          }}
+                                        />
+                                        <div style={{ display: "flex", gap: 6 }}>
+                                          <button
+                                            disabled={charRegenLoading || !charRegenPrompt.trim()}
+                                            onClick={() => regenerateCharImage(selectedCharId, i, charRegenPrompt.trim(), "prompt")}
+                                            style={{
+                                              flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                              background: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
+                                              color: charRegenLoading || !charRegenPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
+                                              border: "none", cursor: charRegenLoading || !charRegenPrompt.trim() ? "not-allowed" : "pointer",
+                                            }}
+                                          >
+                                            {charRegenLoading ? "생성 중..." : "프롬프트로 재생성"}
+                                          </button>
+                                          <button
+                                            disabled={charRegenLoading}
+                                            onClick={() => regenerateCharImage(selectedCharId, i, "", "variation")}
+                                            style={{
+                                              flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                              background: charRegenLoading ? "hsl(var(--muted))" : "hsl(var(--secondary))",
+                                              color: charRegenLoading ? "hsl(var(--muted-foreground))" : "hsl(var(--secondary-foreground))",
+                                              border: "none", cursor: charRegenLoading ? "not-allowed" : "pointer",
+                                            }}
+                                          >
+                                            {charRegenLoading ? "생성 중..." : "다른 포즈/표정"}
+                                          </button>
+                                        </div>
+                                      </>
+                                    )}
+
+                                    {/* Inpaint tab (new) */}
+                                    {charRegenTab === "inpaint" && (
+                                      <>
+                                        {/* Selection tool buttons */}
+                                        <div style={{ display: "flex", gap: 3, marginBottom: 8 }}>
+                                          {([
+                                            { key: "brush" as const, icon: "🖌️", label: "브러시", mode: "brush" as SelectionMode },
+                                            { key: "lasso" as const, icon: "🔺", label: "올가미", mode: "lasso" as SelectionMode },
+                                            { key: "quick" as const, icon: "✨", label: "빠른선택", mode: "click" as SelectionMode },
+                                            { key: "object" as const, icon: "🎯", label: "개체선택", mode: "click" as SelectionMode },
+                                          ] as const).map((tool) => (
+                                            <button
+                                              key={tool.key}
+                                              onClick={() => { setCharInpaintToolMode(tool.key); setCharInpaintSelectionMode(tool.mode); }}
+                                              style={{
+                                                flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 10, fontWeight: 600, border: "none", cursor: "pointer",
+                                                background: charInpaintToolMode === tool.key ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                                color: charInpaintToolMode === tool.key ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                              }}
+                                              title={tool.label}
+                                            >
+                                              {tool.icon} {tool.label}
+                                            </button>
+                                          ))}
+                                        </div>
+
+                                        {/* Brush size slider (only for brush mode) */}
+                                        {charInpaintSelectionMode === "brush" && (
+                                          <div style={{ marginBottom: 8 }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "hsl(var(--muted-foreground))", marginBottom: 4 }}>
+                                              <span>브러시 크기</span>
+                                              <span>{charInpaintBrushSize}px</span>
+                                            </div>
+                                            <Slider
+                                              min={5}
+                                              max={100}
+                                              step={1}
+                                              value={[charInpaintBrushSize]}
+                                              onValueChange={([v]) => setCharInpaintBrushSize(v)}
+                                              className="w-full"
+                                            />
+                                          </div>
+                                        )}
+
+                                        {/* Tolerance slider (for click-based modes: quick/object select) */}
+                                        {charInpaintSelectionMode === "click" && (
+                                          <div style={{ marginBottom: 8 }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "hsl(var(--muted-foreground))", marginBottom: 4 }}>
+                                              <span>허용 범위</span>
+                                              <span>{floodFillTolerance}</span>
+                                            </div>
+                                            <Slider
+                                              min={0}
+                                              max={100}
+                                              step={1}
+                                              value={[floodFillTolerance]}
+                                              onValueChange={([v]) => setFloodFillTolerance(v)}
+                                              className="w-full"
+                                            />
+                                          </div>
+                                        )}
+
+                                        {/* Selection controls */}
+                                        <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                                          <button onClick={() => charInpaintSelectionRef.current?.expandSelection(3)} title="선택 확대"
+                                            style={{ flex: 1, padding: "4px 0", borderRadius: 6, fontSize: 11, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", color: "hsl(var(--foreground))", cursor: "pointer" }}>
+                                            <PlusCircle className="h-3.5 w-3.5 inline mr-1" />확대
+                                          </button>
+                                          <button onClick={() => charInpaintSelectionRef.current?.shrinkSelection(3)} title="선택 축소"
+                                            style={{ flex: 1, padding: "4px 0", borderRadius: 6, fontSize: 11, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", color: "hsl(var(--foreground))", cursor: "pointer" }}>
+                                            <MinusCircle className="h-3.5 w-3.5 inline mr-1" />축소
+                                          </button>
+                                          <button onClick={() => charInpaintSelectionRef.current?.clearSelection()} title="선택 초기화"
+                                            style={{ flex: 1, padding: "4px 0", borderRadius: 6, fontSize: 11, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", color: "hsl(var(--foreground))", cursor: "pointer" }}>
+                                            <RotateCcw className="h-3.5 w-3.5 inline mr-1" />초기화
+                                          </button>
+                                        </div>
+
+                                        {/* Action toggle: color change vs AI fill */}
+                                        <div style={{ display: "flex", gap: 0, marginBottom: 8, borderRadius: 6, overflow: "hidden", border: "1px solid hsl(var(--border))" }}>
+                                          <button
+                                            onClick={() => setCharInpaintAction("color")}
+                                            style={{
+                                              flex: 1, padding: "5px 0", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                                              background: charInpaintAction === "color" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                              color: charInpaintAction === "color" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                            }}
+                                          >
+                                            색상 변경
+                                          </button>
+                                          <button
+                                            onClick={() => setCharInpaintAction("fill")}
+                                            style={{
+                                              flex: 1, padding: "5px 0", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                                              background: charInpaintAction === "fill" ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                              color: charInpaintAction === "fill" ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                            }}
+                                          >
+                                            AI 수정
+                                          </button>
+                                        </div>
+
+                                        {/* Color change UI */}
+                                        {charInpaintAction === "color" && (
+                                          <div>
+                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4, marginBottom: 8 }}>
+                                              {[
+                                                "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6",
+                                                "#fca5a5", "#fdba74", "#fde047", "#86efac", "#93c5fd", "#c4b5fd",
+                                                "#fde8d4", "#f5d0b0", "#e8b88a", "#d4956b", "#b87449", "#8b5e3c",
+                                                "#1e293b", "#334155", "#6b7280", "#9ca3af", "#d1d5db", "#ffffff",
+                                              ].map((color) => (
+                                                <button
+                                                  key={color}
+                                                  onClick={() => setSelectedObjectColor(color)}
+                                                  style={{
+                                                    width: "100%", aspectRatio: "1", borderRadius: 6, border: selectedObjectColor === color ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                                                    background: color, cursor: "pointer",
+                                                  }}
+                                                />
+                                              ))}
+                                            </div>
+                                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
+                                              <input
+                                                type="color"
+                                                value={selectedObjectColor}
+                                                onChange={(e) => setSelectedObjectColor(e.target.value)}
+                                                style={{ width: 32, height: 32, border: "none", padding: 0, cursor: "pointer", borderRadius: 4 }}
+                                              />
+                                              <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))" }}>{selectedObjectColor}</span>
+                                            </div>
+                                            <button
+                                              onClick={applyColorToCharSelection}
+                                              style={{
+                                                width: "100%", padding: "7px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                                background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))",
+                                                border: "none", cursor: "pointer",
+                                                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                                              }}
+                                            >
+                                              <Paintbrush className="h-3.5 w-3.5" /> 색상 적용
+                                            </button>
+                                          </div>
+                                        )}
+
+                                        {/* AI fill UI */}
+                                        {charInpaintAction === "fill" && (
+                                          <div>
+                                            <textarea
+                                              value={charInpaintPrompt}
+                                              onChange={(e) => setCharInpaintPrompt(e.target.value)}
+                                              placeholder="수정할 내용을 입력하세요..."
+                                              disabled={charInpaintLoading}
+                                              style={{
+                                                width: "100%", minHeight: 50, resize: "vertical",
+                                                padding: 8, borderRadius: 6, border: "1px solid hsl(var(--border))",
+                                                fontSize: 13, fontFamily: "inherit", marginBottom: 8,
+                                                background: "hsl(var(--background))", color: "hsl(var(--foreground))",
+                                              }}
+                                            />
+                                            <button
+                                              disabled={charInpaintLoading || !charInpaintPrompt.trim()}
+                                              onClick={() => charInpaintGenerate(selectedCharId!, i, charInpaintPrompt.trim())}
+                                              style={{
+                                                width: "100%", padding: "7px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                                                background: charInpaintLoading || !charInpaintPrompt.trim() ? "hsl(var(--muted))" : "hsl(var(--primary))",
+                                                color: charInpaintLoading || !charInpaintPrompt.trim() ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))",
+                                                border: "none", cursor: charInpaintLoading || !charInpaintPrompt.trim() ? "not-allowed" : "pointer",
+                                                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                                              }}
+                                            >
+                                              {charInpaintLoading ? (
+                                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> 수정 중...</>
+                                              ) : (
+                                                <><Sparkles className="h-3.5 w-3.5" /> 선택 영역 AI 수정</>
+                                              )}
+                                            </button>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -8503,8 +8293,7 @@ export default function StoryPage() {
                             setActivePanelIndex(i);
                             setShowBubbleSettings(false);
                             if (!id) { setShowCharRegenPanel(false); setCharRegenPrompt(""); }
-                            // Auto-switch to image tab when character is clicked on canvas
-                            if (id) setActiveLeftTab("image");
+                            // 캐릭터 선택 시 패널 자동 열림 제거
                           }}
                           canvasRef={(el) => {
                             if (el) panelCanvasRefs.current.set(panel.id, el);
@@ -8541,6 +8330,7 @@ export default function StoryPage() {
                               (instatoonImageMutation.variables?.scope === "current" && activePanelIndex === i)
                             )
                           }
+                          canvasH={CANVAS_H}
                         />
 
                         {/* Canva-style drawing editor overlay — only in drawing mode */}
@@ -8590,15 +8380,98 @@ export default function StoryPage() {
                           </div>
                         )}
 
+                        {/* Generative expand overlay — drag edges to expand */}
+                        {isExpandMode && activePanelIndex === i && (
+                          <ExpandCanvas
+                            width={CANVAS_W}
+                            height={CANVAS_H}
+                            top={expandTop}
+                            right={expandRight}
+                            bottom={expandBottom}
+                            left={expandLeft}
+                            onExpand={(t, r, b, l) => { setExpandTop(t); setExpandRight(r); setExpandBottom(b); setExpandLeft(l); }}
+                          />
+                        )}
+
+                        {/* Generative selection overlay — zIndex 25 to sit above select-mode overlay (22) */}
+                        {isGenerativeMode && activePanelIndex === i && (
+                          <div
+                            className="selection-canvas-wrapper selection-canvas-wrapper--active"
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              width: "100%",
+                              height: "100%",
+                              zIndex: 25,
+                            }}
+                          >
+                            <SelectionCanvas
+                              ref={selectionCanvasRef}
+                              width={CANVAS_W}
+                              height={CANVAS_H}
+                              mode={selectionMode}
+                              brushSize={selectionBrushSize}
+                              className="rounded-md"
+                              onClickPoint={selectionMode === "click" ? handleObjectSelectClick : undefined}
+                              imageSource={panelCanvasRefs.current.get(panel.id) ?? null}
+                            />
+                            <div className="drawing-mode-indicator" style={{ background: "hsl(var(--primary) / 0.9)" }}>
+                              <span className="drawing-mode-indicator__dot" />
+                              {selectedGenTool === "object" ? "개체 선택" : "생성형 채우기"}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Character inpaint selection overlay — zIndex 26 to sit above generative fill (25) */}
+                        {charInpaintMode && selectedCharId && activePanelIndex === i && (() => {
+                          const inpaintChar = panel.characters.find(c => c.id === selectedCharId);
+                          if (!inpaintChar || !inpaintChar.imageEl) return null;
+                          const natW = inpaintChar.imageEl.naturalWidth;
+                          const natH = inpaintChar.imageEl.naturalHeight;
+                          const cw = natW * inpaintChar.scale;
+                          const chH = natH * inpaintChar.scale;
+                          const leftPct = ((inpaintChar.x - cw / 2) / CANVAS_W) * 100;
+                          const topPct = ((inpaintChar.y - chH / 2) / CANVAS_H) * 100;
+                          const widthPct = (cw / CANVAS_W) * 100;
+                          const heightPct = (chH / CANVAS_H) * 100;
+                          return (
+                            <div
+                              className="selection-canvas-wrapper selection-canvas-wrapper--active"
+                              style={{
+                                position: "absolute",
+                                left: `${leftPct}%`,
+                                top: `${topPct}%`,
+                                width: `${widthPct}%`,
+                                height: `${heightPct}%`,
+                                zIndex: 26,
+                                transform: inpaintChar.flipX ? "scaleX(-1)" : undefined,
+                              }}
+                            >
+                              <SelectionCanvas
+                                ref={charInpaintSelectionRef}
+                                width={natW}
+                                height={natH}
+                                mode={charInpaintSelectionMode}
+                                brushSize={charInpaintBrushSize}
+                                className="rounded-sm"
+                                onClickPoint={
+                                  charInpaintSelectionMode === "click"
+                                    ? handleCharInpaintQuickSelect
+                                    : undefined
+                                }
+                                imageSource={charInpaintImageCanvas}
+                              />
+                              <div className="drawing-mode-indicator" style={{ background: "hsl(var(--primary) / 0.9)", transform: inpaintChar.flipX ? "scaleX(-1)" : undefined }}>
+                                <span className="drawing-mode-indicator__dot" />
+                                부분 수정
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         {/* Select-mode: click/drag/dblclick to interact with drawing/text/line layers */}
                         {(selectedToolItem === "select" || selectedToolItem === "text" || selectedToolItem === "line" || selectedToolItem === "shapes") && activePanelIndex === i && (
-                          (panel.drawingLayers || []).length > 0 ||
-                          (panel.textElements || []).length > 0 ||
-                          (panel.lineElements || []).length > 0 ||
-                          (panel.shapeElements || []).length > 0 ||
-                          panel.bubbles.length > 0 ||
-                          panel.characters.length > 0
-                        ) && (
                           <div
                             style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 22, pointerEvents: "auto", cursor: rubberBandRef.current?.active ? "crosshair" : multiDragRef.current ? "grabbing" : dragElementRef.current ? "grabbing" : "default" }}
                             onContextMenu={(e) => {
@@ -8611,6 +8484,7 @@ export default function StoryPage() {
                               }
                             }}
                             onMouseDown={(e) => {
+                              e.stopPropagation();
                               if (overlayContextMenu) setOverlayContextMenu(null);
                               const rect = e.currentTarget.getBoundingClientRect();
                               const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
@@ -8661,7 +8535,7 @@ export default function StoryPage() {
                                   }
                                 }
                               }
-                              if (selectedCharId) {
+                              if (selectedCharId && !charInpaintMode) {
                                 const selCh = panel.characters.find(c => c.id === selectedCharId);
                                 if (selCh && selCh.imageEl instanceof HTMLImageElement) {
                                   const cw = selCh.imageEl.naturalWidth * selCh.scale;
@@ -8679,6 +8553,13 @@ export default function StoryPage() {
                                       handleElementDragStart("char", selCh.id, canvasX, canvasY, panel, corner.mode);
                                       return;
                                     }
+                                  }
+                                  // Rotate handle: top-center, 18px above character
+                                  const rotateHx = selCh.x;
+                                  const rotateHy = cy - 18;
+                                  if (Math.hypot(canvasX - rotateHx, canvasY - rotateHy) <= HANDLE_HIT) {
+                                    handleElementDragStart("char", selCh.id, canvasX, canvasY, panel, "rotate");
+                                    return;
                                   }
                                 }
                               }
@@ -8776,6 +8657,12 @@ export default function StoryPage() {
                                       else if (etype === "drawing") { const d = (p.drawingLayers || []).find(dd => dd.id === eid); if (d) starts.set(key, { x: d.x ?? 0, y: d.y ?? 0 }); }
                                       else if (etype === "shape") { const s = (p.shapeElements || []).find(ss => ss.id === eid); if (s) starts.set(key, { x: s.x, y: s.y }); }
                                     }
+                                    // Push one undo snapshot before multi-drag
+                                    historyRef.current = [
+                                      ...historyRef.current.slice(-(MAX_HISTORY - 1)),
+                                      clonePanels(panels),
+                                    ];
+                                    futureRef.current = [];
                                     multiDragRef.current = { startMouseX: canvasX, startMouseY: canvasY, panelIdx: i, startPositions: starts };
                                     return;
                                   }
@@ -8811,6 +8698,8 @@ export default function StoryPage() {
                                         clearAllSel();
                                         setSelectedScriptPosition(scriptType);
                                         setActiveScriptSection(scriptType);
+                                        historyRef.current = [...historyRef.current.slice(-(MAX_HISTORY - 1)), clonePanels(panels)];
+                                        futureRef.current = [];
                                         dragScriptOverlayRef.current = {
                                           position: scriptType,
                                           mode: "resize",
@@ -8818,7 +8707,7 @@ export default function StoryPage() {
                                           startMouseY: canvasY,
                                           startX: sd.x ?? sRect.bx,
                                           startY: sd.y ?? sRect.by,
-                                          startFontSize: sd.fontSize || 20,
+                                          startFontSize: sd.fontSize || 16,
                                           startW: sRect.bw,
                                           startH: sRect.bh,
                                           panelIdx: i,
@@ -8834,6 +8723,8 @@ export default function StoryPage() {
                                         clearAllSel();
                                         setSelectedScriptPosition(scriptType);
                                         setActiveScriptSection(scriptType);
+                                        historyRef.current = [...historyRef.current.slice(-(MAX_HISTORY - 1)), clonePanels(panels)];
+                                        futureRef.current = [];
                                         dragScriptOverlayRef.current = {
                                           position: scriptType,
                                           mode: "move",
@@ -8841,7 +8732,7 @@ export default function StoryPage() {
                                           startMouseY: canvasY,
                                           startX: sd.x ?? sRect.bx,
                                           startY: sd.y ?? sRect.by,
-                                          startFontSize: sd.fontSize || 20,
+                                          startFontSize: sd.fontSize || 16,
                                           startW: sRect.bw,
                                           startH: sRect.bh,
                                           panelIdx: i,
@@ -8877,6 +8768,8 @@ export default function StoryPage() {
                                 setSelectedDrawingLayerId(null); setSelectedCharId(null); setSelectedBubbleId(null);
                                 setSelectedScriptPosition(null);
                                 setCanvasMultiSelected(new Set());
+                                setCharInpaintMode(false);
+                                charInpaintSelectionRef.current?.clearSelection();
                               };
 
                               for (const item of allItems) {
@@ -8951,7 +8844,9 @@ export default function StoryPage() {
                                   if (canvasX >= ch.x - cw / 2 && canvasX <= ch.x + cw / 2 &&
                                       canvasY >= ch.y - chH / 2 && canvasY <= ch.y + chH / 2) {
                                     clearSelections(); setSelectedCharId(ch.id);
-                                    handleElementDragStart("char", ch.id, canvasX, canvasY, panel);
+                                    if (!charInpaintMode) {
+                                      handleElementDragStart("char", ch.id, canvasX, canvasY, panel);
+                                    }
                                     return;
                                   }
                                 }
@@ -8969,87 +8864,104 @@ export default function StoryPage() {
                               const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
                               const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
 
-                              // 1) Rubber band drag
+                              // Always keep rubber band ref in sync (lightweight, no state)
                               if (rubberBandRef.current?.active) {
                                 rubberBandRef.current.curX = canvasX;
                                 rubberBandRef.current.curY = canvasY;
-                                const rb = rubberBandRef.current;
-                                const rx = Math.min(rb.startX, rb.curX);
-                                const ry = Math.min(rb.startY, rb.curY);
-                                const rw = Math.abs(rb.curX - rb.startX);
-                                const rh = Math.abs(rb.curY - rb.startY);
-                                setRubberBandRect({ x: rx, y: ry, w: rw, h: rh });
-                                return;
                               }
 
-                              // 2) Multi-select group drag
-                              if (multiDragRef.current) {
-                                const md = multiDragRef.current;
-                                const dx = canvasX - md.startMouseX;
-                                const dy = canvasY - md.startMouseY;
-                                const p = panels[md.panelIdx];
-                                if (!p) return;
-                                const updated: Record<string, any> = {};
-                                updated.characters = p.characters.map(c => {
-                                  const s = md.startPositions.get(`char:${c.id}`);
-                                  return s && "x" in s ? { ...c, x: s.x + dx, y: s.y + dy } : c;
-                                });
-                                updated.bubbles = p.bubbles.map(b => {
-                                  const s = md.startPositions.get(`bubble:${b.id}`);
-                                  return s && "x" in s ? { ...b, x: s.x + dx, y: s.y + dy } : b;
-                                });
-                                updated.textElements = (p.textElements || []).map((te: any) => {
-                                  const s = md.startPositions.get(`text:${te.id}`);
-                                  return s && "x" in s ? { ...te, x: s.x + dx, y: s.y + dy } : te;
-                                });
-                                updated.lineElements = (p.lineElements || []).map((le: any) => {
-                                  const s = md.startPositions.get(`line:${le.id}`);
-                                  return s && "points" in s ? { ...le, points: s.points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy })) } : le;
-                                });
-                                updated.drawingLayers = (p.drawingLayers || []).map((dl: any) => {
-                                  const s = md.startPositions.get(`drawing:${dl.id}`);
-                                  return s && "x" in s ? { ...dl, x: s.x + dx, y: s.y + dy } : dl;
-                                });
-                                updated.shapeElements = (p.shapeElements || []).map((se: any) => {
-                                  const s = md.startPositions.get(`shape:${se.id}`);
-                                  return s && "x" in s ? { ...se, x: s.x + dx, y: s.y + dy } : se;
-                                });
-                                updatePanel(md.panelIdx, { ...p, ...updated });
-                                return;
-                              }
+                              // Batch all heavy state updates via requestAnimationFrame
+                              pendingDragRef.current = { canvasX, canvasY, panelIdx: i };
+                              if (dragRafRef.current) return; // RAF already scheduled
+                              dragRafRef.current = requestAnimationFrame(() => {
+                                dragRafRef.current = 0;
+                                const pending = pendingDragRef.current;
+                                if (!pending) return;
+                                const { canvasX: cx, canvasY: cy, panelIdx: pi } = pending;
 
-                              // 2.5) Script drag from overlay
-                              if (dragScriptOverlayRef.current) {
-                                const ds = dragScriptOverlayRef.current;
-                                const dx = canvasX - ds.startMouseX;
-                                const dy = canvasY - ds.startMouseY;
-                                const p = panels[ds.panelIdx];
-                                if (!p) return;
-                                const key = ds.position === "top" ? "topScript" : "bottomScript";
-                                const sd = p[key];
-                                if (!sd) return;
-                                if (ds.mode === "move") {
-                                  updatePanel(ds.panelIdx, {
-                                    ...p,
-                                    [key]: { ...sd, x: ds.startX + dx, y: ds.startY + dy },
-                                  });
-                                } else {
-                                  // Resize — scale font size proportionally
-                                  const scaleFactor = Math.max(0.3, (ds.startW + dx) / ds.startW);
-                                  const newFontSize = Math.round(Math.max(8, Math.min(80, ds.startFontSize * scaleFactor)));
-                                  updatePanel(ds.panelIdx, {
-                                    ...p,
-                                    [key]: { ...sd, fontSize: newFontSize, width: Math.max(40, ds.startW + dx), height: Math.max(20, ds.startH + dy) },
-                                  });
+                                // 1) Rubber band drag
+                                if (rubberBandRef.current?.active) {
+                                  const rb = rubberBandRef.current;
+                                  const rx = Math.min(rb.startX, rb.curX);
+                                  const ry = Math.min(rb.startY, rb.curY);
+                                  const rw = Math.abs(rb.curX - rb.startX);
+                                  const rh = Math.abs(rb.curY - rb.startY);
+                                  setRubberBandRect({ x: rx, y: ry, w: rw, h: rh });
+                                  return;
                                 }
-                                return;
-                              }
 
-                              // 3) Single element drag (existing)
-                              if (!dragElementRef.current) return;
-                              handleElementDragMove(canvasX, canvasY, i);
+                                // 2) Multi-select group drag
+                                if (multiDragRef.current) {
+                                  const md = multiDragRef.current;
+                                  const dx = cx - md.startMouseX;
+                                  const dy = cy - md.startMouseY;
+                                  const p = panels[md.panelIdx];
+                                  if (!p) return;
+                                  const updated: Record<string, any> = {};
+                                  updated.characters = p.characters.map(c => {
+                                    const s = md.startPositions.get(`char:${c.id}`);
+                                    return s && "x" in s ? { ...c, x: s.x + dx, y: s.y + dy } : c;
+                                  });
+                                  updated.bubbles = p.bubbles.map(b => {
+                                    const s = md.startPositions.get(`bubble:${b.id}`);
+                                    return s && "x" in s ? { ...b, x: s.x + dx, y: s.y + dy } : b;
+                                  });
+                                  updated.textElements = (p.textElements || []).map((te: any) => {
+                                    const s = md.startPositions.get(`text:${te.id}`);
+                                    return s && "x" in s ? { ...te, x: s.x + dx, y: s.y + dy } : te;
+                                  });
+                                  updated.lineElements = (p.lineElements || []).map((le: any) => {
+                                    const s = md.startPositions.get(`line:${le.id}`);
+                                    return s && "points" in s ? { ...le, points: s.points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy })) } : le;
+                                  });
+                                  updated.drawingLayers = (p.drawingLayers || []).map((dl: any) => {
+                                    const s = md.startPositions.get(`drawing:${dl.id}`);
+                                    return s && "x" in s ? { ...dl, x: s.x + dx, y: s.y + dy } : dl;
+                                  });
+                                  updated.shapeElements = (p.shapeElements || []).map((se: any) => {
+                                    const s = md.startPositions.get(`shape:${se.id}`);
+                                    return s && "x" in s ? { ...se, x: s.x + dx, y: s.y + dy } : se;
+                                  });
+                                  updatePanelNoHistory(md.panelIdx, { ...p, ...updated });
+                                  return;
+                                }
+
+                                // 2.5) Script drag from overlay
+                                if (dragScriptOverlayRef.current) {
+                                  const ds = dragScriptOverlayRef.current;
+                                  const dx = cx - ds.startMouseX;
+                                  const dy = cy - ds.startMouseY;
+                                  const p = panels[ds.panelIdx];
+                                  if (!p) return;
+                                  const key = ds.position === "top" ? "topScript" : "bottomScript";
+                                  const sd = p[key];
+                                  if (!sd) return;
+                                  if (ds.mode === "move") {
+                                    updatePanelNoHistory(ds.panelIdx, {
+                                      ...p,
+                                      [key]: { ...sd, x: ds.startX + dx, y: ds.startY + dy },
+                                    });
+                                  } else {
+                                    const scaleFactor = Math.max(0.3, (ds.startW + dx) / ds.startW);
+                                    const newFontSize = Math.round(Math.max(8, Math.min(80, ds.startFontSize * scaleFactor)));
+                                    updatePanelNoHistory(ds.panelIdx, {
+                                      ...p,
+                                      [key]: { ...sd, fontSize: newFontSize, width: Math.max(40, ds.startW + dx), height: Math.max(20, ds.startH + dy) },
+                                    });
+                                  }
+                                  return;
+                                }
+
+                                // 3) Single element drag
+                                if (!dragElementRef.current) return;
+                                handleElementDragMove(cx, cy, pi);
+                              });
                             }}
                             onMouseUp={(e) => {
+                              // Cancel pending RAF to avoid stale updates after mouseup
+                              if (dragRafRef.current) { cancelAnimationFrame(dragRafRef.current); dragRafRef.current = 0; }
+                              pendingDragRef.current = null;
+
                               // 1) Rubber band end — select intersecting elements
                               if (rubberBandRef.current?.active) {
                                 const rb = rubberBandRef.current;
@@ -9061,65 +8973,65 @@ export default function StoryPage() {
                                 setRubberBandRect(null);
 
                                 // Only select if rubber band is large enough (avoid accidental clicks)
-                                if (rw < 4 && rh < 4) return;
+                                if (rw >= 4 || rh >= 4) {
+                                  const selRect: BBox = { x: rx, y: ry, w: rw, h: rh };
+                                  const p = panels[rb.panelIdx];
+                                  if (p) {
+                                    const newSel = new Set<string>();
 
-                                const selRect: BBox = { x: rx, y: ry, w: rw, h: rh };
-                                const p = panels[rb.panelIdx];
-                                if (!p) return;
-                                const newSel = new Set<string>();
+                                    for (const b of p.bubbles) {
+                                      if (b.locked || b.visible === false) continue;
+                                      const bb = getElementBoundingBox("bubble", b);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`bubble:${b.id}`);
+                                    }
+                                    for (const c of p.characters) {
+                                      if (c.locked || c.visible === false) continue;
+                                      const bb = getElementBoundingBox("char", c);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`char:${c.id}`);
+                                    }
+                                    for (const te of (p.textElements || [])) {
+                                      if (te.locked || te.visible === false) continue;
+                                      const bb = getElementBoundingBox("text", te);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`text:${te.id}`);
+                                    }
+                                    for (const le of (p.lineElements || [])) {
+                                      if (le.locked || le.visible === false) continue;
+                                      const bb = getElementBoundingBox("line", le);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`line:${le.id}`);
+                                    }
+                                    for (const dl of (p.drawingLayers || [])) {
+                                      if (!dl.visible || dl.locked) continue;
+                                      const bb = getElementBoundingBox("drawing", dl);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`drawing:${dl.id}`);
+                                    }
+                                    for (const se of (p.shapeElements || [])) {
+                                      if (se.locked || se.visible === false) continue;
+                                      if (se.maskEnabled) continue; // exclude mask shapes
+                                      const bb = getElementBoundingBox("shape", se);
+                                      if (bb && rectsIntersect(selRect, bb)) newSel.add(`shape:${se.id}`);
+                                    }
 
-                                for (const b of p.bubbles) {
-                                  if (b.locked || b.visible === false) continue;
-                                  const bb = getElementBoundingBox("bubble", b);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`bubble:${b.id}`);
+                                    setCanvasMultiSelected(newSel);
+                                  }
                                 }
-                                for (const c of p.characters) {
-                                  if (c.locked || c.visible === false) continue;
-                                  const bb = getElementBoundingBox("char", c);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`char:${c.id}`);
-                                }
-                                for (const te of (p.textElements || [])) {
-                                  if (te.locked || te.visible === false) continue;
-                                  const bb = getElementBoundingBox("text", te);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`text:${te.id}`);
-                                }
-                                for (const le of (p.lineElements || [])) {
-                                  if (le.locked || le.visible === false) continue;
-                                  const bb = getElementBoundingBox("line", le);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`line:${le.id}`);
-                                }
-                                for (const dl of (p.drawingLayers || [])) {
-                                  if (!dl.visible || dl.locked) continue;
-                                  const bb = getElementBoundingBox("drawing", dl);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`drawing:${dl.id}`);
-                                }
-                                for (const se of (p.shapeElements || [])) {
-                                  if (se.locked || se.visible === false) continue;
-                                  if (se.maskEnabled) continue; // exclude mask shapes
-                                  const bb = getElementBoundingBox("shape", se);
-                                  if (bb && rectsIntersect(selRect, bb)) newSel.add(`shape:${se.id}`);
-                                }
-
-                                setCanvasMultiSelected(newSel);
-                                return;
                               }
 
                               // 2) Multi-select group drag end
                               if (multiDragRef.current) {
                                 multiDragRef.current = null;
-                                return;
                               }
 
                               // 2.5) Script drag end
                               if (dragScriptOverlayRef.current) {
                                 dragScriptOverlayRef.current = null;
-                                return;
                               }
 
-                              // 3) Single element drag end (existing)
+                              // Always clear element drag state
                               handleElementDragEnd();
                             }}
                             onMouseLeave={() => {
+                              if (dragRafRef.current) { cancelAnimationFrame(dragRafRef.current); dragRafRef.current = 0; }
+                              pendingDragRef.current = null;
                               if (rubberBandRef.current?.active) {
                                 rubberBandRef.current = null;
                                 setRubberBandRect(null);
@@ -9188,6 +9100,181 @@ export default function StoryPage() {
                           />
                         )}
 
+                        {/* ─── Selection indicator overlay (dashed border + circle handles) ─── */}
+                        {activePanelIndex === i && (() => {
+                          const selChar = selectedCharId ? panel.characters.find(c => c.id === selectedCharId) : null;
+                          const selBubble = selectedBubbleId ? panel.bubbles.find(b => b.id === selectedBubbleId) : null;
+                          const selText = selectedTextId ? (panel.textElements || []).find((t: any) => t.id === selectedTextId) : null;
+                          const selShape = selectedShapeId ? (panel.shapeElements || []).find((s: any) => s.id === selectedShapeId) : null;
+                          const selDrawing = selectedDrawingLayerId ? (panel.drawingLayers || []).find((d: any) => d.id === selectedDrawingLayerId) : null;
+
+                          type SelBox = { x: number; y: number; w: number; h: number };
+                          let box: SelBox | null = null;
+                          let cornerHandles: { x: number; y: number; mode: string; cursor: string }[] = [];
+
+                          let showRotateHandle = false;
+                          let rotateHandlePos = { x: 0, y: 0 };
+
+                          if (selChar) {
+                            const cw = selChar.imageEl ? selChar.imageEl.naturalWidth * selChar.scale : 80;
+                            const chH = selChar.imageEl ? selChar.imageEl.naturalHeight * selChar.scale : 80;
+                            box = { x: selChar.x - cw / 2 - 3, y: selChar.y - chH / 2 - 3, w: cw + 6, h: chH + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                            ];
+                            showRotateHandle = true;
+                            rotateHandlePos = { x: selChar.x, y: selChar.y - chH / 2 - 18 };
+                          } else if (selBubble) {
+                            box = { x: selBubble.x - 3, y: selBubble.y - 3, w: selBubble.width + 6, h: selBubble.height + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x + box.w / 2, y: box.y, mode: "t", cursor: "ns-resize" },
+                              { x: box.x + box.w, y: box.y + box.h / 2, mode: "r", cursor: "ew-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                              { x: box.x + box.w / 2, y: box.y + box.h, mode: "b", cursor: "ns-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                              { x: box.x, y: box.y + box.h / 2, mode: "l", cursor: "ew-resize" },
+                            ];
+                          } else if (selText) {
+                            const te = selText as any;
+                            box = { x: te.x - 3, y: te.y - 3, w: te.width + 6, h: te.height + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x + box.w / 2, y: box.y, mode: "t", cursor: "ns-resize" },
+                              { x: box.x + box.w, y: box.y + box.h / 2, mode: "r", cursor: "ew-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                              { x: box.x + box.w / 2, y: box.y + box.h, mode: "b", cursor: "ns-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                              { x: box.x, y: box.y + box.h / 2, mode: "l", cursor: "ew-resize" },
+                            ];
+                          } else if (selShape && !(selShape as any).maskEnabled) {
+                            const se = selShape as any;
+                            box = { x: se.x - 3, y: se.y - 3, w: se.width + 6, h: se.height + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x + box.w / 2, y: box.y, mode: "t", cursor: "ns-resize" },
+                              { x: box.x + box.w, y: box.y + box.h / 2, mode: "r", cursor: "ew-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                              { x: box.x + box.w / 2, y: box.y + box.h, mode: "b", cursor: "ns-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                              { x: box.x, y: box.y + box.h / 2, mode: "l", cursor: "ew-resize" },
+                            ];
+                          } else if (selDrawing) {
+                            const dl = selDrawing as any;
+                            const dlX = dl.x ?? 0, dlY = dl.y ?? 0;
+                            const dlW = dl.width ?? CANVAS_W, dlH = dl.height ?? CANVAS_H;
+                            box = { x: dlX - 3, y: dlY - 3, w: dlW + 6, h: dlH + 6 };
+                            cornerHandles = [
+                              { x: box.x, y: box.y, mode: "tl", cursor: "nwse-resize" },
+                              { x: box.x + box.w, y: box.y, mode: "tr", cursor: "nesw-resize" },
+                              { x: box.x + box.w, y: box.y + box.h, mode: "br", cursor: "nwse-resize" },
+                              { x: box.x, y: box.y + box.h, mode: "bl", cursor: "nesw-resize" },
+                            ];
+                          }
+
+                          if (!box) return null;
+                          const HANDLE_R = 5;
+                          return (
+                            <>
+                              {/* Dashed selection border */}
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  left: `${(box.x / CANVAS_W) * 100}%`,
+                                  top: `${(box.y / CANVAS_H) * 100}%`,
+                                  width: `${(box.w / CANVAS_W) * 100}%`,
+                                  height: `${(box.h / CANVAS_H) * 100}%`,
+                                  border: `1.5px dashed ${HANDLE_COLOR}`,
+                                  pointerEvents: "none",
+                                  zIndex: 23,
+                                  boxSizing: "border-box",
+                                }}
+                              />
+                              {/* Resize circle handles */}
+                              {cornerHandles.map((h, idx) => (
+                                <div
+                                  key={`sel-handle-${idx}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: `${(h.x / CANVAS_W) * 100}%`,
+                                    top: `${(h.y / CANVAS_H) * 100}%`,
+                                    width: HANDLE_R * 2 + 2,
+                                    height: HANDLE_R * 2 + 2,
+                                    transform: "translate(-50%, -50%)",
+                                    borderRadius: "50%",
+                                    background: "white",
+                                    border: `1.8px solid ${HANDLE_COLOR}`,
+                                    cursor: h.cursor,
+                                    pointerEvents: "auto",
+                                    zIndex: 24,
+                                    boxSizing: "border-box",
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.parentElement!.getBoundingClientRect();
+                                    const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
+                                    const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
+                                    const elType = selChar ? "char" : selBubble ? "bubble" : selText ? "text" : selShape ? "shape" : "drawing";
+                                    const elId = selChar?.id || selectedBubbleId || selectedTextId || selectedShapeId || selectedDrawingLayerId || "";
+                                    handleElementDragStart(elType as any, elId, canvasX, canvasY, panel, h.mode as any);
+                                  }}
+                                  onMouseUp={() => handleElementDragEnd()}
+                                />
+                              ))}
+                              {/* Rotate handle for characters */}
+                              {showRotateHandle && (
+                                <>
+                                  {/* Connector line from top center to rotate handle */}
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      left: `${(rotateHandlePos.x / CANVAS_W) * 100}%`,
+                                      top: `${((rotateHandlePos.y + 18) / CANVAS_H) * 100}%`,
+                                      width: 1.5,
+                                      height: `${(18 / CANVAS_H) * 100}%`,
+                                      background: HANDLE_COLOR,
+                                      transform: "translateX(-50%)",
+                                      pointerEvents: "none",
+                                      zIndex: 23,
+                                    }}
+                                  />
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      left: `${(rotateHandlePos.x / CANVAS_W) * 100}%`,
+                                      top: `${(rotateHandlePos.y / CANVAS_H) * 100}%`,
+                                      width: HANDLE_R * 2 + 2,
+                                      height: HANDLE_R * 2 + 2,
+                                      transform: "translate(-50%, -50%)",
+                                      borderRadius: "50%",
+                                      background: "white",
+                                      border: `1.8px solid ${HANDLE_COLOR}`,
+                                      cursor: "grab",
+                                      pointerEvents: "auto",
+                                      zIndex: 24,
+                                      boxSizing: "border-box",
+                                    }}
+                                    onMouseDown={(e) => {
+                                      e.stopPropagation();
+                                      const rect = e.currentTarget.parentElement!.getBoundingClientRect();
+                                      const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_W;
+                                      const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_H;
+                                      handleElementDragStart("char", selChar!.id, canvasX, canvasY, panel, "rotate");
+                                    }}
+                                    onMouseUp={() => handleElementDragEnd()}
+                                  />
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
+
                         {/* Canvas overlay context menu */}
                         {activePanelIndex === i && overlayContextMenu && (() => {
                           const ctxInfo = getSelectedElementInfo();
@@ -9198,8 +9285,8 @@ export default function StoryPage() {
                             if (!maskShape) return false;
                             return ((maskShape as any).maskedLayerIds || []).includes(ctxInfo!.id);
                           })();
-                          const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] hover:bg-accent hover:text-accent-foreground transition-colors";
-                          const ctxShortcut = "text-[10px] text-muted-foreground ml-4";
+                          const ctxBtnClass = "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[13px] hover:bg-accent hover:text-accent-foreground transition-colors";
+                          const ctxShortcut = "text-[13px] text-muted-foreground ml-4";
                           return (
                           <>
                             <div
@@ -9282,7 +9369,7 @@ export default function StoryPage() {
 
                               {/* Delete */}
                               <button type="button"
-                                className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[12px] text-red-500 hover:bg-red-500/10 transition-colors"
+                                className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-[13px] text-red-500 hover:bg-red-500/10 transition-colors"
                                 disabled={!hasSelection}
                                 onClick={() => { handleOverlayDelete(); setOverlayContextMenu(null); }}>
                                 <span>삭제</span><span className={ctxShortcut}>Del</span>
@@ -9556,7 +9643,7 @@ export default function StoryPage() {
           </div>
 
 
-          <div className="flex items-center justify-center gap-3 px-4 py-2 border-t border-border bg-background shrink-0" data-testid="story-bottom-toolbar">
+          <div className="flex items-center justify-center gap-3 px-4 py-2 border border-border bg-background shrink-0" style={{ position: "absolute", bottom: 20, borderRadius: 20, left: "50%", transform: "translateX(-50%)" }} data-testid="story-bottom-toolbar">
             <div className="flex items-center gap-1.5">
               <Button
                 size="icon"
@@ -9585,7 +9672,7 @@ export default function StoryPage() {
               >
                 <ZoomIn className="h-3.5 w-3.5" />
               </Button>
-              <span className="text-xs text-muted-foreground tabular-nums w-9 text-right" data-testid="text-story-zoom-value">{zoom}%</span>
+              <span className="text-[13px] text-muted-foreground tabular-nums w-9 text-right" data-testid="text-story-zoom-value">{zoom}%</span>
             </div>
             <div className="h-4 w-px bg-border" />
             <Button
@@ -9606,6 +9693,21 @@ export default function StoryPage() {
             >
               <Maximize className="h-3.5 w-3.5" />
             </Button>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-1 bg-muted rounded-md p-0.5">
+              <button
+                className={`px-2 py-0.5 rounded text-[13px] font-medium transition-colors ${canvasRatio === "3:4" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setCanvasRatio("3:4")}
+              >
+                3:4
+              </button>
+              <button
+                className={`px-2 py-0.5 rounded text-[13px] font-medium transition-colors ${canvasRatio === "1:1" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setCanvasRatio("1:1")}
+              >
+                1:1
+              </button>
+            </div>
           </div>
         </div>
 
@@ -9640,7 +9742,7 @@ export default function StoryPage() {
               type: "char" as const,
               id: c.id,
               z: c.zIndex ?? 0,
-              label: "캐릭터",
+              label: c.name || "캐릭터",
               thumb: c.imageUrl,
               visible: c.visible,
               locked: c.locked,
@@ -9767,8 +9869,8 @@ export default function StoryPage() {
                 <ResizablePanel defaultSize={50} minSize={20}>
                   {activeLeftTab === "elements" && elementsSubTab === "script" ? (
                     <div className="h-full overflow-y-auto p-3 space-y-3">
-                      <h4 className="text-xs font-semibold">자막 설정</h4>
-                      <p className="text-[10px] text-muted-foreground">패널 {activePanelIndex + 1}</p>
+                      <h4 className="text-[13px] font-semibold">자막 설정</h4>
+                      <p className="text-[13px] text-muted-foreground">패널 {activePanelIndex + 1}</p>
 
                       <div className="flex gap-1 flex-wrap">
                         <Button
@@ -9780,7 +9882,7 @@ export default function StoryPage() {
                             updatePanel(activePanelIndex, {
                               ...p,
                               topScript:
-                                p.topScript ?? { text: "", style: "no-bg", color: "yellow" },
+                                p.topScript ?? { text: "", style: "no-bg", color: "yellow", fontSize: 16, bold: true },
                             });
                             setActiveScriptSection("top");
                             if (isNew) {
@@ -9801,7 +9903,7 @@ export default function StoryPage() {
                             updatePanel(activePanelIndex, {
                               ...p,
                               bottomScript:
-                                p.bottomScript ?? { text: "", style: "no-bg", color: "sky" },
+                                p.bottomScript ?? { text: "", style: "no-bg", color: "sky", fontSize: 16, bold: true },
                             });
                             setActiveScriptSection("bottom");
                             if (isNew) {
@@ -9820,7 +9922,7 @@ export default function StoryPage() {
                           <div className="flex items-center gap-2">
                             <Badge
                               variant="secondary"
-                              className="text-[11px] shrink-0 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400"
+                              className="text-[13px] shrink-0 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400"
                             >
                               상단
                             </Badge>
@@ -9868,7 +9970,7 @@ export default function StoryPage() {
                                     },
                                   });
                                 }}
-                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.topScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                                className={`px-2.5 py-1 text-[13px] rounded-lg transition-colors ${activePanel.topScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                                 data-testid={`button-top-script-style-${opt.value}-${activePanelIndex}`}
                               >
                                 {opt.label}
@@ -9876,7 +9978,7 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                            <span className="text-[13px] text-muted-foreground mr-0.5">
                               색상
                             </span>
                             {SCRIPT_COLOR_OPTIONS.map((c) => (
@@ -9897,7 +9999,7 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
+                            <span className="text-[13px] text-muted-foreground shrink-0">
                               글씨 크기
                             </span>
                             <Slider
@@ -9915,12 +10017,12 @@ export default function StoryPage() {
                               className="flex-1"
                               data-testid={`slider-top-script-fontsize-${activePanelIndex}`}
                             />
-                            <span className="text-[11px] text-muted-foreground w-6 text-right">
+                            <span className="text-[13px] text-muted-foreground w-6 text-right">
                               {activePanel.topScript.fontSize || 20}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
+                            <span className="text-[13px] text-muted-foreground shrink-0">
                               글꼴
                             </span>
                             <Select
@@ -9933,12 +10035,12 @@ export default function StoryPage() {
                                 });
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[11px] flex-1" data-testid={`select-top-script-font-${activePanelIndex}`}>
+                              <SelectTrigger className="h-7 text-[13px] flex-1" data-testid={`select-top-script-font-${activePanelIndex}`}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 {availableFonts.map((f) => (
-                                  <SelectItem key={f.value} value={f.value} className="text-[11px]">
+                                  <SelectItem key={f.value} value={f.value} className="text-[13px]">
                                     <span style={{ fontFamily: f.family }}>{f.label}</span>
                                   </SelectItem>
                                 ))}
@@ -9946,7 +10048,7 @@ export default function StoryPage() {
                             </Select>
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                            <span className="text-[13px] text-muted-foreground mr-0.5">
                               글자색
                             </span>
                             {SCRIPT_TEXT_COLORS.map((c) => (
@@ -9973,13 +10075,13 @@ export default function StoryPage() {
                                   topScript: { ...p.topScript!, bold: !(p.topScript!.bold !== false) },
                                 });
                               }}
-                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.topScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              className={`px-1.5 py-0.5 text-[13px] rounded-lg transition-colors font-bold ${activePanel.topScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                               data-testid={`button-top-script-bold-${activePanelIndex}`}
                             >
                               B
                             </button>
                           </div>
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             캔버스에서 드래그하여 위치를 이동할 수 있습니다
                           </p>
                         </div>
@@ -9990,7 +10092,7 @@ export default function StoryPage() {
                           <div className="flex items-center gap-2">
                             <Badge
                               variant="secondary"
-                              className="text-[11px] shrink-0 bg-sky-400/20 text-sky-700 dark:text-sky-400"
+                              className="text-[13px] shrink-0 bg-sky-400/20 text-sky-700 dark:text-sky-400"
                             >
                               하단
                             </Badge>
@@ -10038,7 +10140,7 @@ export default function StoryPage() {
                                     },
                                   });
                                 }}
-                                className={`px-2.5 py-1 text-[11px] rounded-lg transition-colors ${activePanel.bottomScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                                className={`px-2.5 py-1 text-[13px] rounded-lg transition-colors ${activePanel.bottomScript!.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                                 data-testid={`button-bottom-script-style-${opt.value}-${activePanelIndex}`}
                               >
                                 {opt.label}
@@ -10046,7 +10148,7 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                            <span className="text-[13px] text-muted-foreground mr-0.5">
                               색상
                             </span>
                             {SCRIPT_COLOR_OPTIONS.map((c) => (
@@ -10070,7 +10172,7 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
+                            <span className="text-[13px] text-muted-foreground shrink-0">
                               글씨 크기
                             </span>
                             <Slider
@@ -10088,12 +10190,12 @@ export default function StoryPage() {
                               className="flex-1"
                               data-testid={`slider-bottom-script-fontsize-${activePanelIndex}`}
                             />
-                            <span className="text-[11px] text-muted-foreground w-6 text-right">
+                            <span className="text-[13px] text-muted-foreground w-6 text-right">
                               {activePanel.bottomScript.fontSize || 20}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground shrink-0">
+                            <span className="text-[13px] text-muted-foreground shrink-0">
                               글꼴
                             </span>
                             <Select
@@ -10106,12 +10208,12 @@ export default function StoryPage() {
                                 });
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[11px] flex-1" data-testid={`select-bottom-script-font-${activePanelIndex}`}>
+                              <SelectTrigger className="h-7 text-[13px] flex-1" data-testid={`select-bottom-script-font-${activePanelIndex}`}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 {availableFonts.map((f) => (
-                                  <SelectItem key={f.value} value={f.value} className="text-[11px]">
+                                  <SelectItem key={f.value} value={f.value} className="text-[13px]">
                                     <span style={{ fontFamily: f.family }}>{f.label}</span>
                                   </SelectItem>
                                 ))}
@@ -10119,7 +10221,7 @@ export default function StoryPage() {
                             </Select>
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[11px] text-muted-foreground mr-0.5">
+                            <span className="text-[13px] text-muted-foreground mr-0.5">
                               글자색
                             </span>
                             {SCRIPT_TEXT_COLORS.map((c) => (
@@ -10146,13 +10248,13 @@ export default function StoryPage() {
                                   bottomScript: { ...p.bottomScript!, bold: !(p.bottomScript!.bold !== false) },
                                 });
                               }}
-                              className={`px-1.5 py-0.5 text-[11px] rounded-lg transition-colors font-bold ${activePanel.bottomScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              className={`px-1.5 py-0.5 text-[13px] rounded-lg transition-colors font-bold ${activePanel.bottomScript!.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                               data-testid={`button-bottom-script-bold-${activePanelIndex}`}
                             >
                               B
                             </button>
                           </div>
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             캔버스에서 드래그하여 위치를 이동할 수 있습니다
                           </p>
                         </div>
@@ -10161,7 +10263,7 @@ export default function StoryPage() {
                   ) : activeLeftTab === "elements" && elementsSubTab === "bubble" ? (
                     <div className="h-full overflow-y-auto flex flex-col">
                       <div className="p-3 border-b border-border space-y-2">
-                        <h4 className="text-xs font-semibold">말풍선</h4>
+                        <h4 className="text-[13px] font-semibold">말풍선</h4>
                         <Button size="sm" variant="ghost" className="w-full bg-muted/40 hover:bg-muted/60"
                           onClick={() => {
                             if (activePanel.bubbles.length >= 5) return;
@@ -10184,6 +10286,8 @@ export default function StoryPage() {
                           selectedChar={selChar ?? null}
                           selectedText={selText ?? null}
                           selectedLine={selLine ?? null}
+                          canvasWidth={CANVAS_W}
+                          canvasHeight={CANVAS_H}
                           onUpdateBubble={(id, updates) => {
                             updatePanel(activePanelIndex, {
                               ...activePanel,
@@ -10211,12 +10315,229 @@ export default function StoryPage() {
                         />
                       </div>
                     </div>
+                  ) : activeLeftTab === "ai" && aiMode ? (
+                    <div className="h-full overflow-y-auto p-3 space-y-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-[13px] font-semibold">
+                          {aiMode === "subtitle" && "AI 프롬프트 자막 생성"}
+                          {aiMode === "instatoonFull" && "인스타툰 자동화 생성"}
+                          {aiMode === "instatoonPrompt" && "인스타툰 이미지 생성"}
+                          {aiMode === "autoWebtoon" && "자동화툰 멀티컷 생성"}
+                        </h4>
+                        <button onClick={() => setAiMode(null)} className="text-muted-foreground hover:text-foreground rounded-md p-1">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-[13px] text-muted-foreground leading-relaxed">
+                        인스타툰 자동화 생성 · 프롬프트 자동 작성: 각 10 크레딧 소모
+                      </p>
+
+                      {aiMode === "subtitle" && (
+                        <div className="space-y-3">
+                          <div className="flex gap-2">
+                            <Input
+                              value={topic}
+                              onChange={(e) => setTopic(e.target.value)}
+                              placeholder="주제 입력 (예: 월요일 출근길)"
+                              className="text-sm"
+                              data-testid="input-story-topic"
+                            />
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => suggestMutation.mutate()}
+                              disabled={suggestMutation.isPending}
+                              data-testid="button-suggest-topic"
+                            >
+                              {suggestMutation.isPending ? (
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              ) : (
+                                <Lightbulb className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                          {generateMutation.isPending ? (
+                            <Button className="w-full" size="sm" variant="destructive" onClick={() => generateAbortRef.current?.abort()}>
+                              <X className="h-4 w-4 mr-1.5" />생성 취소
+                            </Button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button className="flex-1" size="sm" variant="outline" onClick={() => generateMutation.mutate({ mode: "basic", scope: "current" })} disabled={!topic.trim()}>
+                                <Wand2 className="h-4 w-4 mr-1.5" />선택 컷 생성
+                              </Button>
+                              <Button className="flex-1" size="sm" onClick={() => generateMutation.mutate({ mode: "basic", scope: "all" })} disabled={!topic.trim()} data-testid="button-generate-scripts">
+                                <Wand2 className="h-4 w-4 mr-1.5" />전체 생성 ({panels.length}컷)
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {aiMode === "instatoonFull" && (
+                        <div className="space-y-4">
+                          <CharacterPicker
+                            mode="multi"
+                            maxImages={4}
+                            required
+                            label="① 기준 캐릭터 이미지"
+                            description="이 캐릭터 이미지를 기반으로 포즈·표정·배경이 자동 변형됩니다."
+                            showStyleHint
+                            selectedImages={autoRefImages}
+                            onSelectedImagesChange={setAutoRefImages}
+                            characterStripData={characterStripData}
+                            galleryData={galleryData}
+                            galleryLoading={galleryLoading}
+                            galleryHasMore={galleryHasMore}
+                            characterFolders={storyCharacterFolders}
+                            activeGalleryFolderId={activeGalleryFolderId}
+                            onActiveGalleryFolderIdChange={setActiveGalleryFolderId}
+                            onLoadMoreGallery={() => setGalleryLimit(p => p + 30)}
+                            fetchFullGeneration={fetchFullGeneration}
+                            onFirstImageSelected={(img) => { setDetectedStyle("auto"); detectArtStyle(img.imageUrl).finally(() => setIsDetectingStyle(false)); }}
+                          />
+                          <div className="space-y-1.5">
+                            <span className="text-[13px] font-semibold text-foreground">② 인스타툰 주제</span>
+                            <div className="flex gap-2">
+                              <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="주제 입력 (예: 월요일 출근길)" className="text-sm" data-testid="input-story-topic" />
+                              <Button size="icon" variant="outline" onClick={() => suggestMutation.mutate()} disabled={suggestMutation.isPending} data-testid="button-suggest-topic">
+                                {suggestMutation.isPending ? (<div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />) : (<Lightbulb className="h-4 w-4" />)}
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <span className="text-[13px] font-semibold text-foreground">③ 인스타툰 전체 프롬프트 <span className="text-[13px] font-normal text-muted-foreground">(선택 — 포즈·표정·배경·아이템을 한 번에 적어도 돼요)</span></span>
+                            <Textarea value={instatoonScenePrompt} onChange={(e) => setInstatoonScenePrompt(e.target.value)} placeholder="예: 비 오는 월요일 출근길, 주인공은 커피를 들고 지하철 안에서 멍한 표정으로 서 있고, 뒤에는 붐비는 사람들과 형광 조명이 보인다" className="text-[13px] resize-none" rows={3} />
+                            <p className="text-[13px] text-muted-foreground">빈칸으로 두면 아래 포즈/표정·배경/아이템 칸을 기준으로 생성돼요.</p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[13px] font-semibold text-foreground">④ 포즈 / 표정 <span className="text-[13px] font-normal text-muted-foreground">(선택 — 비우면 AI가 자동 결정)</span></span>
+                              <Button size="sm" variant={posePromptMutation.isPending ? "destructive" : "outline"} onClick={() => posePromptMutation.isPending ? promptAbortRef.current?.abort() : posePromptMutation.mutate()}>
+                                {posePromptMutation.isPending ? (<span className="text-[13px]">취소</span>) : (<span className="text-[13px]">AI 추천</span>)}
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Textarea value={posePrompt} onChange={(e) => setPosePrompt(e.target.value)} placeholder="포즈 (예: 여고생 팬과 나란히 서서 브이포즈로 사진 찍기)" className="text-[13px] resize-none" rows={2} />
+                              <Textarea value={expressionPrompt} onChange={(e) => setExpressionPrompt(e.target.value)} placeholder="표정 (예: 부끄러우면서도 기뻐하는 표정, 볼이 붉어짐)" className="text-[13px] resize-none" rows={2} />
+                            </div>
+                            <p className="text-[13px] text-amber-600 dark:text-amber-400 leading-relaxed bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1.5">💡 다른 인물이 등장하는 장면은 포즈에 함께 묘사하세요</p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[13px] font-semibold text-foreground">⑤ 배경 / 아이템 <span className="text-[13px] font-normal text-muted-foreground">(선택)</span></span>
+                              <Button size="sm" variant="outline" disabled={backgroundPromptMutation.isPending} onClick={() => backgroundPromptMutation.mutate()}>
+                                {backgroundPromptMutation.isPending ? (<span className="text-[13px] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />생성 중</span>) : (<span className="text-[13px]">AI 추천</span>)}
+                              </Button>
+                              {backgroundPromptMutation.isPending && (<button type="button" className="text-[13px] text-muted-foreground hover:text-destructive transition-colors" onClick={() => promptAbortRef.current?.abort()}>취소</button>)}
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Textarea value={backgroundPrompt} onChange={(e) => setBackgroundPrompt(e.target.value)} placeholder="배경 (예: 퇴근길 지하철 안, 붐비는 플랫폼)" className="text-[13px] resize-none" rows={2} />
+                              <Textarea value={itemPrompt} onChange={(e) => setItemPrompt(e.target.value)} placeholder="아이템/소품 (예: 커피컵, 스마트폰)" className="text-[13px] resize-none" rows={2} />
+                            </div>
+                          </div>
+                          {autoRefImages.length === 0 && (<p className="text-[13px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-md px-2.5 py-1.5">⚠️ 기준 캐릭터 이미지를 선택해야 포즈·표정이 자동 변형됩니다.</p>)}
+                          {(generateMutation.isPending || instatoonImageMutation.isPending) ? (
+                            <Button className="w-full" size="sm" variant="destructive" onClick={() => { generateAbortRef.current?.abort(); instatoonAbortRef.current?.abort(); }}><X className="h-4 w-4 mr-1.5" />생성 취소</Button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button className="flex-1" size="sm" variant="outline" onClick={() => { if (autoRefImages.length === 0) { toast({ title: "기준 이미지 필요", description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.", variant: "destructive" }); return; } generateMutation.mutate({ mode: "full", scope: "current" }); instatoonImageMutation.mutate({ scope: "current" }); }} disabled={!topic.trim()}><Wand2 className="h-4 w-4 mr-1.5" />선택 컷 생성</Button>
+                              <Button className="flex-1" size="sm" onClick={() => { if (autoRefImages.length === 0) { toast({ title: "기준 이미지 필요", description: "먼저 기준 캐릭터 이미지를 업로드하거나 갤러리에서 선택해주세요.", variant: "destructive" }); return; } generateMutation.mutate({ mode: "full", scope: "all" }); instatoonImageMutation.mutate({ scope: "all" }); }} disabled={!topic.trim()}><Wand2 className="h-4 w-4 mr-1.5" />전체 생성 ({panels.length}컷)</Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {aiMode === "instatoonPrompt" && (
+                        <div className="space-y-4">
+                          <CharacterPicker
+                            mode="multi"
+                            maxImages={4}
+                            label="기준 캐릭터 이미지"
+                            description="여러 캐릭터를 선택하면 더 정확해요 (최대 4개)"
+                            selectedImages={promptRefImages}
+                            onSelectedImagesChange={setPromptRefImages}
+                            characterStripData={characterStripData}
+                            galleryData={galleryData}
+                            galleryLoading={galleryLoading}
+                            galleryHasMore={galleryHasMore}
+                            characterFolders={storyCharacterFolders}
+                            activeGalleryFolderId={activeGalleryFolderId}
+                            onActiveGalleryFolderIdChange={setActiveGalleryFolderId}
+                            onLoadMoreGallery={() => setGalleryLimit(p => p + 30)}
+                            fetchFullGeneration={fetchFullGeneration}
+                            onFirstImageSelected={(img) => { setDetectedStyle("auto"); detectArtStyle(img.imageUrl).finally(() => setIsDetectingStyle(false)); }}
+                          />
+                          {(promptRefImages.length > 0 || autoRefImages.length > 0) && (
+                            <div className="space-y-1.5 border border-border/60 rounded-lg p-2.5 bg-muted/30">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[13px] font-semibold text-foreground">🎨 그림 스타일 통일</span>
+                                {isDetectingStyle && (<div className="h-2.5 w-2.5 animate-spin rounded-full border border-primary border-t-transparent" />)}
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                <button onClick={() => setDetectedStyle("auto")} className={`text-[13px] px-2 py-0.5 rounded-full border transition-colors ${detectedStyle === "auto" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>자동</button>
+                                {Object.entries(ART_STYLES).filter(([k]) => k !== "auto").map(([key, s]) => (<button key={key} onClick={() => setDetectedStyle(key)} title={s.description} className={`text-[13px] px-2 py-0.5 rounded-full border transition-colors ${detectedStyle === key ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>{s.label}</button>))}
+                              </div>
+                              <p className="text-[9px] text-muted-foreground">선택한 스타일로 배경·아이템이 캐릭터와 통일됩니다</p>
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1"><span className="text-[13px] font-semibold text-foreground">포즈 / 표정</span><span className="text-[13px] text-muted-foreground ml-1">— 입력하면 배경이 자동 완성됩니다</span></div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Textarea value={posePrompt} onChange={(e) => setPosePrompt(e.target.value)} placeholder="포즈 (예: 팬과 나란히 카메라 향해 브이포즈 취하기)" className="text-[13px] resize-none" rows={2} />
+                              <Textarea value={expressionPrompt} onChange={(e) => setExpressionPrompt(e.target.value)} placeholder="표정 (예: 수줍어하면서 기뻐하는 표정)" className="text-[13px] resize-none" rows={2} />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2"><span className="text-[13px] font-semibold text-foreground">배경 / 아이템{(posePrompt.trim() || expressionPrompt.trim()) && (<span className="ml-1.5 text-[13px] font-normal text-primary">← 자동 생성 가능</span>)}</span></div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Textarea value={backgroundPrompt} onChange={(e) => setBackgroundPrompt(e.target.value)} placeholder="배경 프롬프트 — 비워도 AI가 자동으로 채워줍니다" className="text-[13px] resize-none" rows={2} />
+                              <Textarea value={itemPrompt} onChange={(e) => setItemPrompt(e.target.value)} placeholder="아이템/소품 프롬프트 — 비워도 자동 생성됩니다" className="text-[13px] resize-none" rows={2} />
+                            </div>
+                          </div>
+                          {instatoonPromptMutation.isPending ? (
+                            <div className="space-y-1">
+                              <Button className="w-full" size="sm" disabled><Loader2 className="h-4 w-4 mr-2 animate-spin" />{instatoonPromptMutation.variables?.scope === "current" ? "선택 컷 생성 중..." : "전체 생성 중..."}</Button>
+                              <button type="button" className="w-full text-center text-[13px] text-muted-foreground hover:text-destructive transition-colors py-1" onClick={() => promptAbortRef.current?.abort()}>취소</button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button className="flex-1" size="sm" variant="outline" onClick={() => instatoonPromptMutation.mutate({ scope: "current" })}><Wand2 className="h-4 w-4 mr-1.5" />선택 컷 생성</Button>
+                              <Button className="flex-1" size="sm" onClick={() => instatoonPromptMutation.mutate({ scope: "all" })}><Wand2 className="h-4 w-4 mr-1.5" />전체 생성 ({panels.length}컷)</Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {aiMode === "autoWebtoon" && (
+                        <AutoWebtoonPanel
+                          isAuthenticated={isAuthenticated}
+                          isPro={isPro}
+                          maxPanels={maxPanels}
+                          currentPanelCount={panels.length}
+                          galleryData={galleryData}
+                          galleryLoading={galleryLoading}
+                          canvasWidth={CANVAS_W}
+                          canvasHeight={CANVAS_H}
+                          characterStripData={characterStripData}
+                          characterFolders={storyCharacterFolders}
+                          fetchFullGeneration={fetchFullGeneration}
+                          onPanelsGenerated={(newPanels) => {
+                            const isDefaultEmpty = panels.length === 1 && panels[0].characters.length === 0 && panels[0].bubbles.length === 0 && !panels[0].backgroundImageUrl && (panels[0].textElements?.length ?? 0) === 0 && (panels[0].lineElements?.length ?? 0) === 0;
+                            if (isDefaultEmpty) { const limited = (newPanels as any[]).slice(0, maxPanels); setActivePanelIndex(0); setPanels(limited as any); rehydrateImages(limited as any); } else { const available = maxPanels - panels.length; if (available <= 0) { toast({ title: `패널 ${maxPanels}개 제한`, description: "추가할 수 있는 패널이 없습니다.", variant: "destructive" }); return; } const toAdd = (newPanels as any[]).slice(0, available); const merged = [...panels, ...toAdd] as any; setActivePanelIndex(panels.length); setPanels(merged); rehydrateImages(toAdd as any); if (toAdd.length < newPanels.length) { toast({ title: `${toAdd.length}/${newPanels.length}개 패널만 추가됨`, description: `패널 최대 ${maxPanels}개 제한`, variant: "destructive" }); } }
+                            setAiMode(null);
+                          }}
+                          onClose={() => setAiMode(null)}
+                        />
+                      )}
+                    </div>
                   ) : (
                     <ElementPropertiesPanel
                       selectedBubble={selBubble ?? null}
                       selectedChar={selChar ?? null}
                       selectedText={selText ?? null}
                       selectedLine={selLine ?? null}
+                      canvasWidth={CANVAS_W}
+                      canvasHeight={CANVAS_H}
                       onUpdateBubble={(id, updates) => {
                         updatePanel(activePanelIndex, {
                           ...activePanel,
@@ -10253,10 +10574,10 @@ export default function StoryPage() {
                       return (
                         <div className="p-2 border-t border-border space-y-1.5 overflow-y-auto">
                           <div className="flex items-center gap-1.5">
-                            <Badge variant="secondary" className={`text-[10px] shrink-0 ${isTop ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-400" : "bg-sky-400/20 text-sky-700 dark:text-sky-400"}`}>
+                            <Badge variant="secondary" className={`text-[13px] shrink-0 ${isTop ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-400" : "bg-sky-400/20 text-sky-700 dark:text-sky-400"}`}>
                               {isTop ? "상단" : "하단"}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground">자막 편집</span>
+                            <span className="text-[13px] text-muted-foreground">자막 편집</span>
                             <Button
                               size="icon"
                               variant="ghost"
@@ -10286,14 +10607,14 @@ export default function StoryPage() {
                               <button
                                 key={opt.value}
                                 onClick={() => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, style: opt.value } })}
-                                className={`px-2 py-0.5 text-[10px] rounded-lg transition-colors ${sd.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                                className={`px-2 py-0.5 text-[13px] rounded-lg transition-colors ${sd.style === opt.value ? "bg-primary/12 text-primary font-medium" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                               >
                                 {opt.label}
                               </button>
                             ))}
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[10px] text-muted-foreground mr-0.5">색상</span>
+                            <span className="text-[13px] text-muted-foreground mr-0.5">색상</span>
                             {SCRIPT_COLOR_OPTIONS.map((c) => (
                               <button
                                 key={c.value}
@@ -10305,27 +10626,27 @@ export default function StoryPage() {
                             ))}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground shrink-0">크기</span>
+                            <span className="text-[13px] text-muted-foreground shrink-0">크기</span>
                             <Slider
                               min={8} max={36} step={1}
-                              value={[sd.fontSize || 20]}
+                              value={[sd.fontSize || 16]}
                               onValueChange={([v]) => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, fontSize: v } })}
                               className="flex-1"
                             />
-                            <span className="text-[10px] text-muted-foreground w-5 text-right">{sd.fontSize || 20}</span>
+                            <span className="text-[13px] text-muted-foreground w-5 text-right">{sd.fontSize || 16}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground shrink-0">글꼴</span>
+                            <span className="text-[13px] text-muted-foreground shrink-0">글꼴</span>
                             <Select
                               value={sd.fontKey || "default"}
                               onValueChange={(v) => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, fontKey: v } })}
                             >
-                              <SelectTrigger className="h-6 text-[10px] flex-1">
+                              <SelectTrigger className="h-6 text-[13px] flex-1">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 {availableFonts.map((f) => (
-                                  <SelectItem key={f.value} value={f.value} className="text-[10px]">
+                                  <SelectItem key={f.value} value={f.value} className="text-[13px]">
                                     <span style={{ fontFamily: f.family }}>{f.label}</span>
                                   </SelectItem>
                                 ))}
@@ -10333,7 +10654,7 @@ export default function StoryPage() {
                             </Select>
                           </div>
                           <div className="flex gap-1 flex-wrap items-center">
-                            <span className="text-[10px] text-muted-foreground mr-0.5">글자색</span>
+                            <span className="text-[13px] text-muted-foreground mr-0.5">글자색</span>
                             {SCRIPT_TEXT_COLORS.map((c) => (
                               <button
                                 key={c.value || "auto"}
@@ -10345,7 +10666,7 @@ export default function StoryPage() {
                             ))}
                             <button
                               onClick={() => updatePanel(activePanelIndex, { ...activePanel, [scriptKey]: { ...sd, bold: !(sd.bold !== false) } })}
-                              className={`px-1.5 py-0.5 text-[10px] rounded-lg transition-colors font-bold ${sd.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
+                              className={`px-1.5 py-0.5 text-[13px] rounded-lg transition-colors font-bold ${sd.bold !== false ? "bg-primary/12 text-primary" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}`}
                             >
                               B
                             </button>
@@ -10363,7 +10684,7 @@ export default function StoryPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                           onClick={() => guard(() => {
                             setElementsSubTab("bubble");
                             setActiveLeftTab("elements");
@@ -10375,7 +10696,7 @@ export default function StoryPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                           onClick={() => guard(() => {
                             setActiveLeftTab("image");
                           })}
@@ -10386,7 +10707,7 @@ export default function StoryPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="flex-1 justify-center gap-1 h-7 text-[11px] bg-muted/40 hover:bg-muted/60"
+                          className="flex-1 justify-center gap-1 h-7 text-[13px] bg-muted/40 hover:bg-muted/60"
                           onClick={() => guard(() => {
                             setElementsSubTab("template");
                             setActiveLeftTab("elements");
@@ -10638,8 +10959,8 @@ export default function StoryPage() {
                       });
                     }}
                     isPro={isPro}
-                    onDownloadLayerPng={(item) => guard(() => downloadLayerPng(item))}
-                    onDownloadLayerSvg={(item) => guard(() => downloadLayerSvg(item))}
+                    onDownloadLayerPng={(item) => guard(() => withCleanCanvas(() => downloadLayerPng(item)))}
+                    onDownloadLayerSvg={(item) => guard(() => withCleanCanvas(() => downloadLayerSvg(item)))}
                   />
                     </div>
                   </div>
@@ -10685,6 +11006,60 @@ export default function StoryPage() {
                       onChange={(e) => setProjectName(e.target.value)}
                       data-testid="input-story-project-name"
                     />
+                    <Select
+                      value={selectedFolderId ? String(selectedFolderId) : "none"}
+                      onValueChange={(v) => setSelectedFolderId(v === "none" ? null : Number(v))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="폴더 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">폴더 없음</SelectItem>
+                        {projectFolders.map((f) => (
+                          <SelectItem key={f.id} value={String(f.id)}>{f.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {showNewFolderInput ? (
+                      <div className="flex gap-2 items-center">
+                        <Input
+                          placeholder="새 폴더 이름"
+                          value={newFolderName}
+                          onChange={(e) => setNewFolderName(e.target.value)}
+                          className="flex-1"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && newFolderName.trim()) {
+                              setCreatingFolder(true);
+                              createFolderMutation.mutate(newFolderName.trim());
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="outline"
+                          className="h-[3.125rem] px-3 text-[13px] shrink-0"
+                          disabled={creatingFolder || !newFolderName.trim()}
+                          onClick={() => {
+                            setCreatingFolder(true);
+                            createFolderMutation.mutate(newFolderName.trim());
+                          }}
+                        >
+                          {creatingFolder ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "추가"}
+                        </Button>
+                        <Button variant="ghost" className="h-9 w-9 p-0 shrink-0" onClick={() => { setShowNewFolderInput(false); setNewFolderName(""); }}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-1.5"
+                        onClick={() => setShowNewFolderInput(true)}
+                      >
+                        <FolderPlus className="h-3.5 w-3.5" />
+                        새 폴더 만들기
+                      </Button>
+                    )}
                     <div className="space-y-2">
                       <Button
                         className="w-full gap-1.5"
@@ -10698,10 +11073,41 @@ export default function StoryPage() {
 
                     </div>
                     {currentProjectId && (
-                      <p className="text-[11px] text-muted-foreground text-center">
+                      <p className="text-[13px] text-muted-foreground text-center">
                         기존 프로젝트를 덮어씁니다
                       </p>
                     )}
+                    {/* 현재 폴더에 저장된 프로젝트 목록 */}
+                    {(() => {
+                      const folderProjects = savedProjects
+                        .filter((p) => p.editorType === "story" && (selectedFolderId ? p.folderId === selectedFolderId : !p.folderId))
+                        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+                      if (folderProjects.length === 0) return null;
+                      return (
+                        <div className="pt-2 border-t">
+                          <p className="text-[13px] text-muted-foreground mb-1.5">
+                            {selectedFolderId ? projectFolders.find(f => f.id === selectedFolderId)?.name : "폴더 없음"} ({folderProjects.length})
+                          </p>
+                          <div className="max-h-28 overflow-y-auto space-y-0.5">
+                            {folderProjects.map((p) => (
+                              <div
+                                key={p.id}
+                                className={`flex items-center justify-between gap-2 px-2 py-1 rounded text-[13px] cursor-pointer hover:bg-muted/50 transition-colors ${currentProjectId === p.id ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
+                                onClick={() => {
+                                  setCurrentProjectId(p.id);
+                                  setProjectName(p.name);
+                                }}
+                              >
+                                <span className="truncate">{p.name}</span>
+                                <span className="shrink-0 text-[13px] opacity-60">
+                                  {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="text-center py-4 space-y-3">
@@ -10710,7 +11116,7 @@ export default function StoryPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium mb-1">Pro 전용 기능</p>
-                      <p className="text-xs text-muted-foreground">프로젝트 저장/관리는 Pro 멤버십 전용 기능입니다.</p>
+                      <p className="text-[13px] text-muted-foreground">프로젝트 저장/관리는 Pro 멤버십 전용 기능입니다.</p>
                     </div>
                     <div className="flex flex-col gap-2">
                       <Button asChild className="w-full gap-1.5" data-testid="button-upgrade-pro-story">
@@ -10725,6 +11131,104 @@ export default function StoryPage() {
                 )}
               </DialogContent>
             </Dialog>
+            {/* ── 불러오기 팝업 ── */}
+            <Dialog open={showLoadModal} onOpenChange={(open) => { setShowLoadModal(open); if (!open) setLoadFolderId(null); }}>
+              <DialogContent className="max-w-[820px] w-[95vw] p-0 gap-0 overflow-hidden rounded-2xl border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl" data-testid="modal-load-story">
+                {/* Header */}
+                <div className="px-6 pt-5 pb-4 border-b border-border/40">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg font-semibold tracking-tight">프로젝트 불러오기</DialogTitle>
+                    <p className="text-[13px] text-muted-foreground mt-0.5">
+                      {savedProjects.filter(p => p.editorType === "story").length}개의 스토리
+                    </p>
+                  </DialogHeader>
+                  {/* 폴더 가로 스크롤 칩 */}
+                  {projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).length > 0 && (
+                    <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+                      <button
+                        className={`shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all ${loadFolderId === null ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
+                        onClick={() => setLoadFolderId(null)}
+                      >
+                        전체
+                      </button>
+                      {projectFolders.filter(f => savedProjects.some(p => p.editorType === "story" && p.folderId === f.id)).map((folder) => (
+                        <button
+                          key={folder.id}
+                          className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all ${loadFolderId === folder.id ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
+                          onClick={() => setLoadFolderId(folder.id)}
+                        >
+                          <FolderOpen className="h-3 w-3" />
+                          {folder.name}
+                          <span className="opacity-60">
+                            {savedProjects.filter(p => p.editorType === "story" && p.folderId === folder.id).length}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* 프로젝트 그리드 */}
+                <div className="px-6 py-4 max-h-[60vh] overflow-y-auto">
+                  {(() => {
+                    const filtered = savedProjects.filter(p => p.editorType === "story" && (loadFolderId === null ? true : p.folderId === loadFolderId));
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                          <FolderOpen className="h-12 w-12 mb-3 opacity-40" />
+                          <p className="text-sm font-medium">{loadFolderId !== null ? "이 폴더에 스토리가 없습니다" : "저장된 스토리가 없습니다"}</p>
+                          <p className="text-[13px] mt-1 opacity-60">새 스토리를 만들어보세요</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                        {filtered.map((p) => (
+                          <button
+                            key={p.id}
+                            className={`group relative flex flex-col rounded-xl overflow-hidden transition-all duration-200 hover:ring-2 hover:ring-primary/40 hover:shadow-lg hover:-translate-y-0.5 ${currentProjectId === p.id ? "ring-2 ring-primary shadow-md" : "ring-1 ring-border/30"}`}
+                            onClick={() => { setShowLoadModal(false); handleLoadProject(p.id); }}
+                          >
+                            {/* 썸네일 */}
+                            <div className="relative aspect-[3/4] bg-muted/40 overflow-hidden">
+                              {p.thumbnailUrl ? (
+                                <img src={p.thumbnailUrl} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/60 to-muted">
+                                  <BookOpen className="h-8 w-8 text-muted-foreground/40" />
+                                </div>
+                              )}
+                              {currentProjectId === p.id && (
+                                <div className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                                  <Check className="h-3 w-3 text-primary-foreground" />
+                                </div>
+                              )}
+                              {/* 호버 오버레이 */}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
+                            </div>
+                            {/* 정보 */}
+                            <div className="px-2 py-2 bg-background">
+                              <p className="text-[13px] font-medium truncate leading-tight">{p.name}</p>
+                              <p className="text-[13px] text-muted-foreground mt-0.5">
+                                {new Date(p.updatedAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {showSavedConfirm && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 animate-in fade-in duration-200">
+                <div className="bg-background rounded-xl shadow-lg px-8 py-6 flex flex-col items-center gap-2 animate-in zoom-in-95 duration-200">
+                  <CheckCircle2 className="h-10 w-10 text-green-500" />
+                  <p className="text-sm font-medium">저장되었습니다</p>
+                </div>
+              </div>
+            )}
           <InstagramPublishDialog
             open={showInstagramPublish}
             onOpenChange={setShowInstagramPublish}

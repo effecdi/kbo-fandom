@@ -52,7 +52,7 @@ export default function ChatPage() {
 
   const selectedCharacter = characters?.find((c: Character) => c.id === selectedCharId);
 
-  const isPro = credits?.tier === "pro";
+  const isPro = credits?.tier === "pro" || credits?.tier === "premium";
   const [limitOpen, setLimitOpen] = useState(false);
 
   const getDailyKey = (feature: string) => {
@@ -236,7 +236,7 @@ export default function ChatPage() {
               <div className="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex items-center gap-2 text-sm py-1 px-2 rounded ${msg.sender === "me" ? "bg-amber-50 dark:bg-amber-950/30" : "bg-blue-50 dark:bg-blue-950/30"}`}>
-                    <span className={`text-xs font-medium ${msg.sender === "me" ? "text-amber-600 dark:text-amber-400" : "text-blue-600 dark:text-blue-400"}`}>
+                    <span className={`text-[13px] font-medium ${msg.sender === "me" ? "text-amber-600 dark:text-amber-400" : "text-blue-600 dark:text-blue-400"}`}>
                       {msg.sender === "me" ? "나" : otherName}
                     </span>
                     <span className="flex-1 truncate">{msg.text}</span>

@@ -31,6 +31,13 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    sourcemap: false,
+    minify: "esbuild",
+  },
+  esbuild: {
+    // 프로덕션 빌드에서 console/debugger 제거 (개발자 도구 정보 유출 방지)
+    // vite build는 자동으로 NODE_ENV=production 설정
+    ...(process.env.NODE_ENV === "production" ? { drop: ["console", "debugger"] } : {}),
   },
   server: {
     fs: {

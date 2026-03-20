@@ -343,7 +343,7 @@ export function LandingPage() {
             </p>
           </div>
 
-          <WebtoonShowcase />
+          <WebtoonShowcase theme={theme} />
         </div>
       </section>
 

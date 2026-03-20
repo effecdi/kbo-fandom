@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link } from "react-router";
 import {
   Wand2,
   ArrowRight,
@@ -28,6 +27,8 @@ import {
   Trophy,
   Star,
   Users,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import type { Generation, PopularCreator } from "@shared/schema";
 import { FAQCreditSection } from "@/components/faq-credit-section";
@@ -131,7 +132,7 @@ function RankMedal({ rank }: { rank: number }) {
   if (rank === 2) return <Star className="h-5 w-5 text-gray-400" />;
   if (rank === 3) return <Star className="h-5 w-5 text-amber-700 dark:text-amber-600" />;
   return (
-    <span className="flex h-5 w-5 items-center justify-center text-xs font-bold text-muted-foreground">
+    <span className="flex h-5 w-5 items-center justify-center text-[13px] font-bold text-muted-foreground">
       {rank}
     </span>
   );
@@ -253,8 +254,19 @@ export default function DashboardPage() {
   });
 
   const [showTierGuide, setShowTierGuide] = useState(false);
+  const [showTourBanner, setShowTourBanner] = useState(false);
   const { toast } = useToast();
-  const [searchParams] = useSearchParams(); const search = searchParams.toString();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const search = searchParams.toString();
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("olli_tour_completed")) {
+        setShowTourBanner(true);
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(search);
@@ -304,13 +316,138 @@ export default function DashboardPage() {
             오늘도 멋진 인스타툰을 만들어볼까요?
           </p>
         </div>
-        <Link to="/pricing">
-          <Avatar className="h-10 w-10 cursor-pointer" data-testid="avatar-profile">
-            <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
-              {(usage?.authorName || user?.firstName || "C").charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => navigate("/story")}
+            data-testid="button-start-guide"
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">사용 가이드</span>
+          </Button>
+          <Link to="/pricing">
+            <Avatar className="h-10 w-10 cursor-pointer" data-testid="avatar-profile">
+              <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                {(usage?.authorName || user?.firstName || "C").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+        </div>
+      </div>
+
+      {showTourBanner && (
+        <div
+          className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4"
+          data-testid="banner-tour"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <HelpCircle className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">처음이신가요?</p>
+              <p className="text-[13px] text-muted-foreground">
+                사용 가이드를 통해 주요 기능을 빠르게 둘러보세요.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              onClick={() => {
+                setShowTourBanner(false);
+                navigate("/story");
+              }}
+            >
+              가이드 시작
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                setShowTourBanner(false);
+                try { localStorage.setItem("olli_tour_completed", "true"); } catch {}
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* OLLI 사용법 안내 */}
+      <div>
+        <h2 className="text-lg font-bold mb-4">OLLI 사용법</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Link to="/create">
+            <Card className="p-5 h-full hover-elevate cursor-pointer border-violet-200 dark:border-violet-800/40">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-sm">
+                  <Wand2 className="h-5 w-5 text-white" />
+                </div>
+                <Badge variant="secondary" className="text-[13px]">Step 1</Badge>
+              </div>
+              <h3 className="font-semibold text-sm mb-1">캐릭터 생성</h3>
+              <p className="text-[13px] text-muted-foreground leading-relaxed">텍스트로 나만의 AI 캐릭터를 만들어보세요.</p>
+              <div className="flex items-center gap-1 mt-3 text-[13px] text-primary font-medium">
+                시작하기 <ArrowRight className="h-3 w-3" />
+              </div>
+            </Card>
+          </Link>
+          <Link to="/pose">
+            <Card className="p-5 h-full hover-elevate cursor-pointer border-blue-200 dark:border-blue-800/40">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm">
+                  <Layers className="h-5 w-5 text-white" />
+                </div>
+                <Badge variant="secondary" className="text-[13px]">Step 2</Badge>
+              </div>
+              <h3 className="font-semibold text-sm mb-1">포즈/배경 꾸미기</h3>
+              <p className="text-[13px] text-muted-foreground leading-relaxed">다양한 포즈, 표정, 배경을 추가하세요.</p>
+              <div className="flex items-center gap-1 mt-3 text-[13px] text-primary font-medium">
+                시작하기 <ArrowRight className="h-3 w-3" />
+              </div>
+            </Card>
+          </Link>
+          {(usage?.tier === "pro" || usage?.tier === "premium") ? (
+            <Link to="/story">
+              <Card className="p-5 h-full hover-elevate cursor-pointer border-indigo-200 dark:border-indigo-800/40">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 shadow-sm">
+                    <BookOpen className="h-5 w-5 text-white" />
+                  </div>
+                  <Badge variant="secondary" className="text-[13px]">Step 3</Badge>
+                </div>
+                <h3 className="font-semibold text-sm mb-1">스토리 에디터로 완성</h3>
+                <p className="text-[13px] text-muted-foreground leading-relaxed">멀티패널 인스타툰을 제작하고 공유하세요.</p>
+                <div className="flex items-center gap-1 mt-3 text-[13px] text-primary font-medium">
+                  시작하기 <ArrowRight className="h-3 w-3" />
+                </div>
+              </Card>
+            </Link>
+          ) : (
+            <Card
+              className="p-5 h-full cursor-pointer border-indigo-200 dark:border-indigo-800/40 opacity-70"
+              onClick={() => toast({ title: "Pro 전용 기능", description: "스토리 에디터는 Pro 멤버십 전용입니다.", variant: "destructive" })}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 shadow-sm">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <Badge variant="secondary" className="text-[13px]">Step 3</Badge>
+                <Lock className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
+              </div>
+              <h3 className="font-semibold text-sm mb-1">스토리 에디터로 완성</h3>
+              <p className="text-[13px] text-muted-foreground leading-relaxed">멀티패널 인스타툰을 제작하고 공유하세요.</p>
+              <div className="flex items-center gap-1 mt-3 text-[13px] text-yellow-600 dark:text-yellow-400 font-medium">
+                Pro 전용 <Lock className="h-3 w-3" />
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -324,16 +461,16 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="font-bold text-lg">크리에이터 등급</h2>
-                    <Badge variant="outline" className="text-[11px]">
+                    <Badge variant="outline" className="text-[13px]">
                       {tier.badge}
                     </Badge>
                     {genreLabel && (
-                      <Badge variant="secondary" className="text-[11px]">
+                      <Badge variant="secondary" className="text-[13px]">
                         {genreLabel}
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-[13px] text-muted-foreground mt-0.5">
                     총 {totalGen}개 작품 생성
                   </p>
                 </div>
@@ -341,17 +478,17 @@ export default function DashboardPage() {
               <div className="text-right">
                 <div className="flex flex-col items-end gap-0.5">
                   <div className="flex items-center gap-2">
-                    {usage?.tier === "pro" ? (
-                      <Badge variant="default" className="text-[11px]">
-                        Pro
+                    {(usage?.tier === "pro" || usage?.tier === "premium") ? (
+                      <Badge variant="default" className="text-[13px]">
+                        {usage?.tier === "premium" ? "Premium" : "Pro"}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-[11px]">
+                      <Badge variant="secondary" className="text-[13px]">
                         Free
                       </Badge>
                     )}
-                    <span className="text-xs text-muted-foreground">
-                      {usage?.tier === "pro" ? "무제한" : `${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
+                    <span className="text-[13px] text-muted-foreground">
+                      {`${(usage?.credits ?? 0) + (usage?.dailyBonusCredits ?? 0)} 크레딧`}
                     </span>
                   </div>
                 </div>
@@ -360,13 +497,13 @@ export default function DashboardPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground">경험치</span>
-                <span className="text-xs font-medium tabular-nums">
+                <span className="text-[13px] text-muted-foreground">경험치</span>
+                <span className="text-[13px] font-medium tabular-nums">
                   {xp.nextTier ? `${Math.round(xp.progress)}%` : "MAX"}
                 </span>
               </div>
               <Progress value={xp.progress} className="h-2" />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {xp.nextTier && xp.remaining > 0 ? (
                   <>
                     <span className="font-medium text-primary">{xp.nextTier}</span>까지 {xp.remaining}개 더 생성하면
@@ -382,15 +519,15 @@ export default function DashboardPage() {
               <div className="flex items-start gap-2.5 mt-3 rounded-lg bg-primary/5 p-3">
                 <Gift className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-primary mb-0.5">다음 등급 혜택</p>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
+                  <p className="text-[13px] font-semibold text-primary mb-0.5">다음 등급 혜택</p>
+                  <p className="text-[13px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
                 </div>
               </div>
             )}
 
             <button
               onClick={() => setShowTierGuide((v) => !v)}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover-elevate rounded-md px-2 py-1.5 -mx-1 w-fit mt-3"
+              className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover-elevate rounded-md px-2 py-1.5 -mx-1 w-fit mt-3"
             >
               <Info className="h-3.5 w-3.5" />
               <span>등급별 혜택 보기</span>
@@ -405,7 +542,7 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={t.name}
-                      className={`rounded-lg border p-3 text-xs transition-colors ${
+                      className={`rounded-lg border p-3 text-[13px] transition-colors ${
                         isCurrent ? "border-primary/30 bg-primary/5" : isUnlocked ? "border-border" : "border-border opacity-60"
                       }`}
                     >
@@ -415,11 +552,11 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                           <span className="font-semibold">{t.name}</span>
-                          <Badge variant="secondary" className="text-[10px]">
+                          <Badge variant="secondary" className="text-[13px]">
                             {t.badge}
                           </Badge>
                           {isCurrent && (
-                            <Badge variant="default" className="text-[10px]">
+                            <Badge variant="default" className="text-[13px]">
                               현재
                             </Badge>
                           )}
@@ -451,7 +588,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-4 gap-2">
                 <h2 className="text-lg font-bold">최근 작품</h2>
                 <Link to="/gallery">
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs">
+                  <Button variant="ghost" size="sm" className="gap-1 text-[13px]">
                     전체보기 <ArrowRight className="h-3 w-3" />
                   </Button>
                 </Link>
@@ -463,7 +600,7 @@ export default function DashboardPage() {
                       <img src={gen.resultImageUrl} alt={gen.prompt} className="h-full w-full object-cover" />
                     </div>
                     <div className="p-2.5">
-                      <p className="text-xs truncate text-muted-foreground">{gen.prompt}</p>
+                      <p className="text-[13px] truncate text-muted-foreground">{gen.prompt}</p>
                     </div>
                   </Card>
                 ))}
@@ -482,7 +619,7 @@ export default function DashboardPage() {
                 <h2 className="text-base font-bold leading-tight">
                   인기 크리에이터
                 </h2>
-                <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                <p className="text-[13px] text-muted-foreground leading-tight mt-0.5">
                   팔로워 & 좋아요 기반 랭킹
                 </p>
               </div>
@@ -498,7 +635,7 @@ export default function DashboardPage() {
                   >
                     <RankMedal rank={idx + 1} />
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs">
+                      <AvatarFallback className="text-[13px]">
                         {(creator.authorName || creator.firstName || "U").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -508,17 +645,17 @@ export default function DashboardPage() {
                           {creator.authorName || creator.firstName || "유저"}
                         </span>
                         {creator.genre && (
-                          <Badge variant="secondary" className="text-[10px] shrink-0">
+                          <Badge variant="secondary" className="text-[13px] shrink-0">
                             {creator.genre === "daily" ? "일상" : creator.genre === "gag" ? "개그" : creator.genre === "romance" ? "로맨스" : creator.genre === "fantasy" ? "판타지" : creator.genre}
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span className="text-[13px] text-muted-foreground flex items-center gap-1">
                           <Users className="h-3 w-3" />
                           {creator.followerCount} 팔로워
                         </span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span className="text-[13px] text-muted-foreground flex items-center gap-1">
                           <Heart className="h-3 w-3" />
                           {creator.totalLikes} 좋아요
                         </span>
@@ -532,7 +669,7 @@ export default function DashboardPage() {
 
           <InstagramConnect />
 
-          {usage?.tier !== "pro" && (
+          {(usage?.tier !== "pro" && usage?.tier !== "premium") && (
             <Link to="/pricing">
               <Card className="p-5 hover-elevate cursor-pointer bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20 border-primary/20">
                 <div className="flex items-center gap-3">
@@ -541,7 +678,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm">Pro로 업그레이드</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">무제한 생성 & 모든 기능·모든 폰트 해제</p>
+                    <p className="text-[13px] text-muted-foreground mt-0.5">무제한 생성 & 모든 기능·모든 폰트 해제</p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-primary shrink-0" />
                 </div>
@@ -557,7 +694,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold mb-4">{section.label}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {section.items.map((tool) => (
-                <Link key={tool.testId} href={tool.href}>
+                <Link key={tool.testId} to={tool.href}>
                   <div className="group relative cursor-pointer h-full">
                     <div
                       className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${tool.lightGradient} p-5 h-full transition-all duration-200 group-hover:scale-[1.02] group-active:scale-[0.98] border border-black/[0.04] dark:border-white/[0.08]`}
@@ -573,7 +710,7 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <h3 className="font-semibold text-sm dark:text-white">{tool.title}</h3>
                           </div>
-                          <p className="text-xs text-muted-foreground dark:text-white/60 mt-1 leading-relaxed">
+                          <p className="text-[13px] text-muted-foreground dark:text-white/60 mt-1 leading-relaxed">
                             {tool.desc}
                           </p>
                         </div>

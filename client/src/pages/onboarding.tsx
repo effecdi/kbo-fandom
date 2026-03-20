@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import {
   Wand2,
   Building2,
@@ -17,7 +17,7 @@ import logoImg from "@assets/logo.png";
 type UserType = "creator" | "business" | null;
 
 export default function OnboardingPage() {
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
   const { setRole, setOnboardingData } = useUserRole();
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState<UserType>(null);

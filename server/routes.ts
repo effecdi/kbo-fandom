@@ -3,22 +3,35 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
 import { supabase } from "./supabaseClient";
-import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, generateThumbnail, applyWatermark } from "./imageGen";
-import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown } from "./aiText";
-import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
+import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, removeBackgroundAI, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint } from "./imageGen";
+import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown, analyzeCharacterImage } from "./aiText";
+import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, updateProjectFolderSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
+import { logger } from "./logger";
+import {
+  SUBSCRIPTION_PLANS, getSubscriptionPlan, getMonthlyCreditsForPlan,
+  getBillingKeyInfo, payWithBillingKey, schedulePayment, cancelScheduledPayment,
+  getPaymentInfo, calculateFirstPeriod, calculateNextPeriod, generatePaymentId,
+} from "./subscription";
 import {
   getOAuthUrl, exchangeCodeForToken, getInstagramBusinessAccount,
   refreshLongLivedToken, encryptToken, decryptToken,
   uploadImageToStorage, publishSingleImage, publishCarousel, publishStory,
 } from "./instagramService";
 
-// Product prices (must match client-side pricing)
+// 상품 정보 — 가격 + 크레딧 지급량을 서버 단일 소스로 관리
 const PRODUCT_PRICES = {
   pro: 29900,
   credits: 4900,
 } as const;
+
+const PRODUCT_CREDITS: Record<keyof typeof PRODUCT_PRICES, number> = {
+  pro: 0,       // Pro는 무제한이므로 크레딧 지급 없음
+  credits: 50,  // 4,900원 = 50크레딧
+};
+
+const VALID_PRODUCT_TYPES = Object.keys(PRODUCT_PRICES) as Array<keyof typeof PRODUCT_PRICES>;
 
 async function getPortoneAccessToken(): Promise<string> {
   const response = await axios.post("https://api.iamport.kr/users/getToken", {
@@ -32,6 +45,40 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // 공개: 가격 정보를 서버에서 제공 (클라이언트 하드코딩 방지)
+  app.get("/api/pricing", (_req, res) => {
+    res.json({
+      products: {
+        pro: { amount: PRODUCT_PRICES.pro, name: "OLLI Pro 멤버십 (월간)" },
+        credits: { amount: PRODUCT_PRICES.credits, name: "OLLI 크레딧 50개" },
+      },
+      // 구독 플랜 정보 (3티어)
+      plans: {
+        free: {
+          monthlyCredits: 30,
+          dailyBonus: 5,
+          priceUSD: { monthly: 0, yearly: 0 },
+          priceKRW: { monthly: 0, yearly: 0 },
+        },
+        pro: {
+          monthlyCredits: 3000,
+          dailyBonus: 0,
+          priceUSD: { monthly: 25, yearly: 255 },
+          priceKRW: { monthly: SUBSCRIPTION_PLANS.pro_monthly.amountKRW, yearly: SUBSCRIPTION_PLANS.pro_yearly.amountKRW },
+        },
+        premium: {
+          monthlyCredits: 20000,
+          dailyBonus: 0,
+          priceUSD: { monthly: 100, yearly: 1020 },
+          priceKRW: { monthly: SUBSCRIPTION_PLANS.premium_monthly.amountKRW, yearly: SUBSCRIPTION_PLANS.premium_yearly.amountKRW },
+        },
+      },
+      portoneV2StoreId: config.portoneV2StoreId,
+      portoneV2ChannelKeyInicis: config.portoneV2ChannelKeyInicis,
+      portoneV2ChannelKeyToss: config.portoneV2ChannelKeyToss,
+    });
+  });
 
   app.get("/api/auth/user", isAuthenticated, async (req: AuthRequest, res) => {
     try {
@@ -60,8 +107,8 @@ export async function registerRoutes(
         profileImageUrl,
       });
     } catch (error) {
-      console.error("User sync error:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+      logger.error("User sync error", error);
+      res.status(500).json({ message: "사용자 정보 조회에 실패했습니다." });
     }
   });
 
@@ -70,25 +117,23 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = generateCharacterSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { prompt, style, sourceImageData } = parsed.data;
 
       const FREE_STYLES = ["simple-line", "minimal", "doodle"];
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro" && !FREE_STYLES.includes(style)) {
-        return res.status(403).json({ message: "이 스타일은 Pro 멤버십 전용입니다. 심플 라인, 미니멀, 낙서풍 스타일은 무료로 사용 가능합니다." });
+      if (credits.tier === "free" && !FREE_STYLES.includes(style)) {
+        return res.status(403).json({ message: "이 스타일은 유료 멤버십 전용입니다. 심플 라인, 미니멀, 낙서풍 스타일은 무료로 사용 가능합니다." });
       }
 
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 2);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 10);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let imageDataUrl = await generateCharacterImage(prompt, style, sourceImageData);
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 
@@ -104,25 +149,37 @@ export async function registerRoutes(
         thumbnailUrl = await generateThumbnail(imageDataUrl) || null;
       } catch { /* thumbnail is optional */ }
 
+      let generation: any = null;
       try {
-        await storage.createGeneration({
+        generation = await storage.createGeneration({
           userId,
           characterId: character.id,
           type: "character",
           prompt,
           resultImageUrl: imageDataUrl,
           thumbnailUrl,
-          creditsUsed: 2,
+          creditsUsed: 10,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
-        console.error("Character generation DB save failed:", dbError?.message);
+        logger.error("Character generation DB save failed", dbError);
+      }
+
+      // Fire-and-forget: detect character name from prompt and save
+      if (generation?.id && prompt) {
+        (async () => {
+          try {
+            // Simple name extraction from prompt: use first meaningful segment
+            const name = prompt.length <= 30 ? prompt : prompt.slice(0, 30);
+            await storage.updateGenerationName(generation.id, userId, name);
+          } catch { /* ignore */ }
+        })();
       }
 
       res.json({ characterId: character.id, imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Character generation error:", error);
-      res.status(500).json({ message: error.message || "Failed to generate character" });
+      logger.error("Character generation error", error);
+      res.status(500).json({ message: "캐릭터 생성에 실패했습니다." });
     }
   });
 
@@ -131,7 +188,7 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = generatePoseSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { characterIds, prompt, referenceImageData } = parsed.data;
 
@@ -140,24 +197,22 @@ export async function registerRoutes(
       for (const cid of characterIds) {
         const character = await storage.getCharacter(cid);
         if (!character) {
-          return res.status(404).json({ message: `Character ${cid} not found` });
+          return res.status(404).json({ message: "캐릭터를 찾을 수 없습니다." });
         }
         if (character.userId !== userId) {
-          return res.status(403).json({ message: "Access denied" });
+          return res.status(403).json({ message: "접근 권한이 없습니다." });
         }
         characters.push(character);
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 5);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 25);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
       let imageDataUrl = await generatePoseImage(characters, prompt, referenceImageData);
-      if (credits.tier !== "pro") {
+      if (credits.tier === "free") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 
@@ -175,17 +230,17 @@ export async function registerRoutes(
           referenceImageUrl: referenceImageData || null,
           resultImageUrl: imageDataUrl,
           thumbnailUrl: poseThumbUrl,
-          creditsUsed: 5,
+          creditsUsed: 25,
         });
         await storage.incrementTotalGenerations(userId);
       } catch (dbError: any) {
-        console.error("Pose generation DB save failed:", dbError?.message);
+        logger.error("Pose generation DB save failed", dbError);
       }
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Pose generation error:", error);
-      res.status(500).json({ message: error.message || "Failed to generate pose" });
+      logger.error("Pose generation error", error);
+      res.status(500).json({ message: "포즈 생성에 실패했습니다." });
     }
   });
 
@@ -194,9 +249,10 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = generateBackgroundSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { sourceImageDataList, backgroundPrompt, itemsPrompt, characterIds, noBackground, aspectRatio } = parsed.data;
+      const characterNames: string[] | undefined = Array.isArray(req.body.characterNames) ? req.body.characterNames : undefined;
       const skipGallery = req.body.skipGallery === true;
 
       // 모든 캐릭터 소유권 검증
@@ -204,24 +260,22 @@ export async function registerRoutes(
         for (const cid of characterIds) {
           const character = await storage.getCharacter(cid);
           if (!character) {
-            return res.status(404).json({ message: `Character ${cid} not found` });
+            return res.status(404).json({ message: "캐릭터를 찾을 수 없습니다." });
           }
           if (character.userId !== userId) {
-            return res.status(403).json({ message: "Access denied" });
+            return res.status(403).json({ message: "접근 권한이 없습니다." });
           }
         }
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId, 5);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 25);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
       }
 
-      let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt, noBackground, aspectRatio);
-      if (credits.tier !== "pro") {
+      let imageDataUrl = await generateWithBackground(sourceImageDataList, backgroundPrompt, itemsPrompt, noBackground, aspectRatio, characterNames);
+      if (credits.tier === "free") {
         imageDataUrl = await applyWatermark(imageDataUrl);
       }
 
@@ -244,18 +298,18 @@ export async function registerRoutes(
             referenceImageUrl: null,
             resultImageUrl: imageDataUrl,
             thumbnailUrl: bgThumbUrl,
-            creditsUsed: 5,
+            creditsUsed: 25,
           });
         } catch (dbError: any) {
-          console.error("Background generation DB save failed:", dbError?.message);
+          logger.error("Background generation DB save failed", dbError);
         }
       }
       await storage.incrementTotalGenerations(userId);
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Background generation error:", error);
-      res.status(500).json({ message: error.message || "Failed to generate background" });
+      logger.error("Background generation error", error);
+      res.status(500).json({ message: "배경 생성에 실패했습니다." });
     }
   });
 
@@ -264,21 +318,210 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = removeBackgroundSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { sourceImageData } = parsed.data;
 
-      const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        return res.status(403).json({ message: "배경 제거는 Pro 멤버십 전용 기능입니다." });
+      if (!sourceImageData.startsWith("data:")) {
+        return res.status(400).json({ message: "유효하지 않은 이미지 형식입니다." });
       }
 
-      const imageDataUrl = await removeWhiteBackground(sourceImageData);
+      const credits = await storage.getUserCredits(userId);
+      if (credits.tier === "free") {
+        return res.status(403).json({ message: "배경 제거는 유료 멤버십 전용 기능입니다." });
+      }
+
+      // AI 기반 배경 제거 사용 (모든 배경색 지원)
+      const imageDataUrl = await removeBackgroundAI(sourceImageData);
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Remove background error:", error);
-      res.status(500).json({ message: error.message || "Failed to remove background" });
+      logger.error("Remove background error", error);
+      res.status(500).json({ message: "배경 제거에 실패했습니다." });
+    }
+  });
+
+  // ─── Generative Fill ─────────────────────────────────────────────────────
+  app.post("/api/generative-fill", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData, maskData, prompt } = req.body;
+      if (!imageData || !maskData || !prompt) {
+        return res.status(400).json({ message: "이미지, 마스크, 프롬프트가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      const canGenerate = await storage.deductCredit(userId, 25);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+      }
+
+      let resultUrl = await generativeFillImage(imageData, maskData, prompt);
+      if (credits.tier === "free") {
+        resultUrl = await applyWatermark(resultUrl);
+      }
+
+      let thumbUrl: string | null = null;
+      try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
+
+      try {
+        await storage.createGeneration({
+          userId,
+          characterId: null,
+          type: "background",
+          prompt: `[Generative Fill] ${prompt}`,
+          resultImageUrl: resultUrl,
+          thumbnailUrl: thumbUrl,
+          creditsUsed: 25,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        logger.error("Generative fill DB save failed", dbError);
+      }
+
+      res.json({ imageUrl: resultUrl });
+    } catch (error: any) {
+      logger.error("Generative fill error", error);
+      res.status(500).json({ message: "생성형 채우기에 실패했습니다." });
+    }
+  });
+
+  // ─── Generative Expand ──────────────────────────────────────────────────
+  app.post("/api/generative-expand", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData, top, right, bottom, left, prompt } = req.body;
+      if (!imageData) {
+        return res.status(400).json({ message: "이미지가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      const canGenerate = await storage.deductCredit(userId, 25);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+      }
+
+      let resultUrl = await generativeExpandImage(
+        imageData,
+        top || 0, right || 0, bottom || 0, left || 0,
+        prompt || ""
+      );
+      if (credits.tier === "free") {
+        resultUrl = await applyWatermark(resultUrl);
+      }
+
+      let thumbUrl: string | null = null;
+      try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
+
+      try {
+        await storage.createGeneration({
+          userId,
+          characterId: null,
+          type: "background",
+          prompt: `[Generative Expand] ${prompt || "auto"}`,
+          resultImageUrl: resultUrl,
+          thumbnailUrl: thumbUrl,
+          creditsUsed: 25,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        logger.error("Generative expand DB save failed", dbError);
+      }
+
+      res.json({ imageUrl: resultUrl });
+    } catch (error: any) {
+      logger.error("Generative expand error", error);
+      res.status(500).json({ message: "생성형 확장에 실패했습니다." });
+    }
+  });
+
+  // ─── Generative Upscale ─────────────────────────────────────────────────
+  app.post("/api/generative-upscale", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData, scale } = req.body;
+      if (!imageData) {
+        return res.status(400).json({ message: "이미지가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      const canGenerate = await storage.deductCredit(userId, 15);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+      }
+
+      let resultUrl = await generativeUpscaleImage(imageData, scale || 2);
+      if (credits.tier === "free") {
+        resultUrl = await applyWatermark(resultUrl);
+      }
+
+      let thumbUrl: string | null = null;
+      try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
+
+      try {
+        await storage.createGeneration({
+          userId,
+          characterId: null,
+          type: "background",
+          prompt: `[Generative Upscale] ${scale || 2}x`,
+          resultImageUrl: resultUrl,
+          thumbnailUrl: thumbUrl,
+          creditsUsed: 15,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch (dbError: any) {
+        logger.error("Generative upscale DB save failed", dbError);
+      }
+
+      res.json({ imageUrl: resultUrl });
+    } catch (error: any) {
+      logger.error("Generative upscale error", error);
+      res.status(500).json({ message: "업스케일에 실패했습니다." });
+    }
+  });
+
+  // ─── Object Segmentation ────────────────────────────────────────────────
+  app.post("/api/object-segment", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData } = req.body;
+      if (!imageData) {
+        return res.status(400).json({ message: "이미지가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      const canGenerate = await storage.deductCredit(userId, 15);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 크레딧을 충전해주세요." });
+      }
+
+      const segments = await segmentObjects(imageData);
+      res.json({ segments });
+    } catch (error: any) {
+      logger.error("Object segmentation error", error);
+      res.status(500).json({ message: "개체 감지에 실패했습니다." });
+    }
+  });
+
+  app.post("/api/object-select-at-point", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { imageData, clickX, clickY, imageWidth, imageHeight } = req.body;
+      if (!imageData || clickX === undefined || clickY === undefined) {
+        return res.status(400).json({ message: "이미지와 클릭 좌표가 필요합니다." });
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      const canGenerate = await storage.deductCredit(userId, 5);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
+      }
+
+      const maskDataUrl = await selectObjectAtPoint(imageData, clickX, clickY, imageWidth || 540, imageHeight || 675);
+      res.json({ maskDataUrl });
+    } catch (error: any) {
+      logger.error("Object selection at point error", error);
+      res.status(500).json({ message: "개체 선택에 실패했습니다." });
     }
   });
 
@@ -286,47 +529,85 @@ export async function registerRoutes(
     try {
       const userId = req.userId!;
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        return res.status(403).json({ message: "Pro membership required to use Advertiser Matching AI" });
+      if (credits.tier === "free") {
+        return res.status(403).json({ message: "광고 매칭 AI는 유료 멤버십 전용 기능입니다." });
       }
 
       const parsed = adMatchSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
 
       const result = await analyzeAdMatch(parsed.data);
       res.json(result);
     } catch (error: any) {
-      console.error("Ad match error:", error);
-      res.status(500).json({ message: error.message || "Failed to analyze ad match" });
+      logger.error("Ad match error", error);
+      res.status(500).json({ message: "광고 매칭 분석에 실패했습니다." });
+    }
+  });
+
+  app.post("/api/analyze-character", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const { imageUrl } = req.body;
+      if (!imageUrl || typeof imageUrl !== "string") {
+        return res.status(400).json({ message: "imageUrl이 필요합니다." });
+      }
+
+      let dataUrl = imageUrl;
+
+      // https URL인 경우 fetch해서 base64 변환
+      if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+        const resp = await axios.get(imageUrl, { responseType: "arraybuffer", timeout: 10000 });
+        const contentType = resp.headers["content-type"] || "image/png";
+        const base64 = Buffer.from(resp.data).toString("base64");
+        dataUrl = `data:${contentType};base64,${base64}`;
+      }
+
+      const names = await analyzeCharacterImage(dataUrl);
+      res.json({ names });
+    } catch (error: any) {
+      logger.error("Character analysis error", error);
+      res.status(500).json({ message: "캐릭터 분석에 실패했습니다.", names: ["캐릭터"] });
     }
   });
 
   app.post("/api/ai-prompt", isAuthenticated, async (req: AuthRequest, res) => {
     try {
-      const { type, context } = req.body;
-      if (!type || !["character", "pose", "background"].includes(type)) {
-        return res.status(400).json({ message: "Invalid type" });
+      const userId = req.userId!;
+      const { type, context, referenceImageUrl } = req.body;
+      if (!type || !["character", "pose", "background", "style-detect"].includes(type)) {
+        return res.status(400).json({ message: "잘못된 타입입니다." });
       }
-      const result = await generateAIPrompt(type, context);
+      // style-detect is a free utility call (no credit deduction)
+      if (type !== "style-detect") {
+        const canUse = await storage.deductCredit(userId, 5);
+        if (!canUse) {
+          return res.status(403).json({ message: "크레딧이 부족합니다." });
+        }
+      }
+      const result = await generateAIPrompt(type, context, referenceImageUrl);
       res.json({ prompt: result });
     } catch (error: any) {
-      res.status(500).json({ message: error.message || "Failed to generate AI prompt" });
+      res.status(500).json({ message: "AI 프롬프트 생성에 실패했습니다." });
     }
   });
 
   app.post("/api/enhance-bio", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      const userId = req.userId!;
       const { bio, profileName, category, followers, engagement } = req.body;
       if (!bio || typeof bio !== "string" || bio.trim().length < 3) {
-        return res.status(400).json({ message: "Please write at least a short description to enhance." });
+        return res.status(400).json({ message: "소개글을 3자 이상 입력해주세요." });
+      }
+      const canUse = await storage.deductCredit(userId, 5);
+      if (!canUse) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
       }
       const enhanced = await enhanceBio({ bio, profileName, category, followers, engagement });
       res.json({ enhancedBio: enhanced });
     } catch (error: any) {
-      console.error("Bio enhance error:", error);
-      res.status(500).json({ message: error.message || "Failed to enhance bio" });
+      logger.error("Bio enhance error", error);
+      res.status(500).json({ message: "소개글 개선에 실패했습니다." });
     }
   });
 
@@ -336,7 +617,7 @@ export async function registerRoutes(
       const chars = await storage.getCharactersByUser(userId);
       res.json(chars);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch characters" });
+      res.status(500).json({ message: "캐릭터 목록 조회에 실패했습니다." });
     }
   });
 
@@ -345,18 +626,18 @@ export async function registerRoutes(
       const userId = req.userId!;
       const id = parseInt(String(req.params.id));
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid character ID" });
+        return res.status(400).json({ message: "잘못된 캐릭터 ID입니다." });
       }
       const character = await storage.getCharacter(id);
       if (!character) {
-        return res.status(404).json({ message: "Character not found" });
+        return res.status(404).json({ message: "캐릭터를 찾을 수 없습니다." });
       }
       if (character.userId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
       }
       res.json(character);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch character" });
+      res.status(500).json({ message: "캐릭터 조회에 실패했습니다." });
     }
   });
 
@@ -370,11 +651,22 @@ export async function registerRoutes(
         const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 24, 1), 100);
         const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
         const type = (req.query.type as string) || "all";
+        const folderId = req.query.folderId ? parseInt(String(req.query.folderId)) : undefined;
 
-        const [items, total] = await Promise.all([
-          storage.getGenerationsLight(userId, limit, offset, type),
-          storage.getGalleryCount(userId, type),
-        ]);
+        let items: any[];
+        let total: number;
+
+        if (folderId && !isNaN(folderId)) {
+          [items, total] = await Promise.all([
+            storage.getGenerationsByFolder(folderId, userId, limit, offset),
+            storage.getGenerationsByFolderCount(folderId, userId),
+          ]);
+        } else {
+          [items, total] = await Promise.all([
+            storage.getGenerationsLight(userId, limit, offset, type),
+            storage.getGalleryCount(userId, type),
+          ]);
+        }
 
         res.json({
           items,
@@ -387,7 +679,7 @@ export async function registerRoutes(
         res.json(items);
       }
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch gallery" });
+      res.status(500).json({ message: "갤러리 조회에 실패했습니다." });
     }
   });
 
@@ -400,7 +692,7 @@ export async function registerRoutes(
       if (!gen) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
       res.json(gen);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch gallery item" });
+      res.status(500).json({ message: "갤러리 항목 조회에 실패했습니다." });
     }
   });
 
@@ -408,9 +700,16 @@ export async function registerRoutes(
     try {
       const userId = req.userId!;
       const credits = await storage.getUserCredits(userId);
-      const isPro = credits.tier === "pro";
-      const creatorTier = isPro ? 3 : 0;
+      const isPaid = credits.tier === "pro" || credits.tier === "premium";
+      const creatorTier = isPaid ? 3 : 0;
       const tierPanelLimits = [3, 5, 8, 14];
+
+      // 구독 정보 조회
+      let subscription: any = null;
+      try {
+        subscription = await storage.getSubscription(userId);
+      } catch { /* subscriptions table may not exist yet */ }
+
       res.json({
         credits: credits.credits,
         dailyBonusCredits: credits.dailyBonusCredits ?? 0,
@@ -418,16 +717,25 @@ export async function registerRoutes(
         authorName: credits.authorName,
         genre: credits.genre,
         totalGenerations: credits.totalGenerations,
-        dailyFreeCredits: isPro ? -1 : 30,
+        monthlyCreditsQuota: (credits as any).monthlyCreditsQuota ?? (isPaid ? 3000 : 30),
+        dailyFreeCredits: isPaid ? -1 : 30,
         bubbleUsesToday: credits.bubbleUsesToday,
         storyUsesToday: credits.storyUsesToday,
-        maxBubbleUses: isPro ? -1 : 3,
-        maxStoryUses: isPro ? -1 : 3,
+        maxBubbleUses: isPaid ? -1 : 3,
+        maxStoryUses: isPaid ? -1 : 3,
         maxStoryPanels: tierPanelLimits[creatorTier] ?? 3,
         creatorTier,
+        subscription: subscription ? {
+          plan: subscription.plan,
+          billingCycle: subscription.billingCycle,
+          status: subscription.status,
+          currentPeriodEnd: subscription.currentPeriodEnd,
+          nextPaymentAt: subscription.nextPaymentAt,
+          cancelledAt: subscription.cancelledAt,
+        } : null,
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch usage" });
+      res.status(500).json({ message: "사용량 조회에 실패했습니다." });
     }
   });
 
@@ -436,12 +744,12 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = creatorProfileSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const updated = await storage.updateCreatorProfile(userId, parsed.data);
       res.json({ authorName: updated.authorName, genre: updated.genre });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update profile" });
+      res.status(500).json({ message: "프로필 업데이트에 실패했습니다." });
     }
   });
 
@@ -450,7 +758,7 @@ export async function registerRoutes(
       const data = await storage.getAllTrending();
       res.json(data);
     } catch (error: any) {
-      console.error("Trending fetch error:", error);
+      logger.error("Trending fetch error", error);
       res.json({
         latest: [],
         mostViewed: [],
@@ -462,68 +770,66 @@ export async function registerRoutes(
   app.post("/api/payment/complete", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const { imp_uid, merchant_uid, product_type } = req.body;
+      const { paymentId, product_type } = req.body;
 
-      if (!imp_uid || !merchant_uid) {
-        return res.status(400).json({ message: "imp_uid와 merchant_uid가 필요합니다." });
+      // 1. 필수 필드 검증
+      if (!paymentId || typeof paymentId !== "string") {
+        return res.status(400).json({ message: "잘못된 결제 요청입니다." });
       }
 
-      const existingPayment = await storage.getPaymentByImpUid(imp_uid);
+      // 2. product_type 화이트리스트 검증
+      const resolvedProductType = (product_type || "credits") as string;
+      if (!VALID_PRODUCT_TYPES.includes(resolvedProductType as keyof typeof PRODUCT_PRICES)) {
+        return res.status(400).json({ message: "유효하지 않은 상품 타입입니다." });
+      }
+      const productKey = resolvedProductType as keyof typeof PRODUCT_PRICES;
+
+      // 3. 멱등성: 이미 처리된 결제인지 확인
+      const existingPayment = await storage.getPaymentByImpUid(paymentId);
       if (existingPayment) {
         return res.status(409).json({ message: "이미 처리된 결제입니다." });
       }
 
-      const accessToken = await getPortoneAccessToken();
-      const paymentResponse = await axios.get(`https://api.iamport.kr/payments/${imp_uid}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      // 4. PortOne V2 API로 실제 결제 데이터 검증 (서버 ↔ 서버)
+      const paymentResponse = await axios.get(
+        `https://api.portone.io/payments/${encodeURIComponent(paymentId)}`,
+        { headers: { Authorization: `PortOne ${config.portoneV2ApiSecret}` } },
+      );
 
-      const paymentData = paymentResponse.data.response;
-      if (paymentData.status !== "paid") {
+      const paymentData = paymentResponse.data;
+      if (!paymentData || paymentData.status !== "PAID") {
         return res.status(400).json({ message: "결제가 완료되지 않았습니다." });
       }
 
-      const amount = paymentData.amount;
-      let resolvedProductType = (product_type || "credits") as keyof typeof PRODUCT_PRICES;
-
-      // 금액 검증: 실제 결제 금액과 상품 가격이 일치하는지 확인
-      const expectedAmount = PRODUCT_PRICES[resolvedProductType];
-      if (!expectedAmount) {
-        return res.status(400).json({ message: "유효하지 않은 상품 타입입니다." });
-      }
-
+      // 5. 금액 검증: PortOne 실결제 금액 vs 서버 상품 가격
+      const amount = paymentData.amount?.total;
+      const expectedAmount = PRODUCT_PRICES[productKey];
       if (amount !== expectedAmount) {
-        console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${amount} for product ${resolvedProductType}`);
-        return res.status(400).json({
-          message: `결제 금액이 일치하지 않습니다. 예상: ${expectedAmount}원, 실제: ${amount}원`
-        });
+        return res.status(400).json({ message: "결제 금액이 일치하지 않습니다. 관리자에게 문의하세요." });
       }
 
-      // merchant_uid에서 product_type 추출하여 이중 검증
-      const merchantProductType = merchant_uid.split("_")[0];
-      if (merchantProductType !== resolvedProductType) {
+      // 6. paymentId에서 product_type 추출하여 이중 검증
+      const merchantProductType = paymentId.split("_")[0];
+      if (merchantProductType !== productKey) {
         return res.status(400).json({ message: "주문 정보가 일치하지 않습니다." });
       }
 
-      let creditsToAdd = 0;
-      if (resolvedProductType === "pro") {
+      // 7. 상품 처리 (서버 상수 기반)
+      const creditsToAdd = PRODUCT_CREDITS[productKey];
+      if (productKey === "pro") {
         await storage.updateUserTier(userId, "pro");
-        creditsToAdd = 0;
-      } else {
-        // 크레딧: 4900원 = 50크레딧
-        creditsToAdd = 50;
-        if (creditsToAdd > 0) {
-          await storage.addCredits(userId, creditsToAdd);
-        }
+      } else if (creditsToAdd > 0) {
+        await storage.addCredits(userId, creditsToAdd);
       }
 
+      // 8. 결제 기록 저장
       await storage.createPayment({
         userId,
-        impUid: imp_uid,
-        merchantUid: merchant_uid,
+        impUid: paymentId,
+        merchantUid: paymentId,
         amount,
         status: "paid",
-        productType: resolvedProductType,
+        productType: productKey,
         creditsAdded: creditsToAdd,
       });
 
@@ -531,11 +837,11 @@ export async function registerRoutes(
         success: true,
         amount,
         creditsAdded: creditsToAdd,
-        productType: resolvedProductType,
+        productType: productKey,
       });
     } catch (error: any) {
-      console.error("Payment verification error:", error);
-      res.status(500).json({ message: error.message || "결제 검증에 실패했습니다." });
+      logger.error("Payment verification error", error);
+      res.status(500).json({ message: "결제 검증에 실패했습니다." });
     }
   });
 
@@ -543,9 +849,11 @@ export async function registerRoutes(
     try {
       const userId = req.userId!;
       const payments = await storage.getPaymentsByUser(userId);
-      res.json(payments);
+      // 클라이언트에 불필요한 내부 필드(impUid, merchantUid, userId) 제거
+      const sanitized = payments.map(({ impUid, merchantUid, userId: _uid, ...safe }) => safe);
+      res.json(sanitized);
     } catch (error: any) {
-      console.error("Get payments error:", error);
+      logger.error("Get payments error", error);
       res.status(500).json({ message: "결제 내역 조회에 실패했습니다." });
     }
   });
@@ -554,46 +862,525 @@ export async function registerRoutes(
     try {
       const userId = req.userId!;
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        return res.status(400).json({ message: "현재 Pro 멤버십이 아닙니다." });
+      if (credits.tier !== "pro" && credits.tier !== "premium") {
+        return res.status(400).json({ message: "현재 유료 멤버십이 아닙니다." });
       }
       const updated = await storage.cancelPro(userId);
-      res.json({ success: true, tier: updated.tier, credits: updated.credits });
+      res.json({
+        success: true,
+        tier: updated.tier,
+        credits: updated.credits,
+        proExpiresAt: updated.proExpiresAt,
+      });
     } catch (error: any) {
-      console.error("Cancel pro error:", error);
+      logger.error("Cancel pro error", error);
       res.status(500).json({ message: "멤버십 해지에 실패했습니다." });
     }
   });
 
+  // ── 구독 관리 (PortOne V2 빌링키) ──
+
+  // 빌링키 등록 → 첫 결제 → 구독 생성 → 다음 결제 예약
+  app.post("/api/subscription/billing-key", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { billingKey, plan, billingCycle } = req.body;
+
+      if (!billingKey || !plan || !billingCycle) {
+        return res.status(400).json({ message: "빌링키, 플랜, 결제 주기가 필요합니다." });
+      }
+
+      const planInfo = getSubscriptionPlan(plan, billingCycle);
+      if (!planInfo) {
+        return res.status(400).json({ message: "유효하지 않은 플랜입니다." });
+      }
+
+      // 기존 구독 확인
+      const existing = await storage.getSubscription(userId);
+      if (existing && existing.status === "active") {
+        return res.status(409).json({ message: "이미 활성 구독이 있습니다. 플랜 변경을 이용해주세요." });
+      }
+
+      // 빌링키 검증
+      try {
+        await getBillingKeyInfo(billingKey);
+      } catch (err: any) {
+        logger.error("Billing key verification failed", err);
+        return res.status(400).json({ message: "유효하지 않은 빌링키입니다." });
+      }
+
+      // 첫 결제 실행
+      const paymentId = generatePaymentId(plan, billingCycle, userId);
+      try {
+        await payWithBillingKey({
+          paymentId,
+          billingKey,
+          amount: planInfo.amountKRW,
+          currency: "KRW",
+          orderName: planInfo.label,
+          customerId: userId,
+        });
+      } catch (err: any) {
+        logger.error("First subscription payment failed", err);
+        return res.status(402).json({ message: "첫 결제에 실패했습니다. 카드 정보를 확인해주세요." });
+      }
+
+      // 기간 계산
+      const { start, end } = calculateFirstPeriod(billingCycle);
+
+      // 구독 생성
+      if (existing) {
+        await storage.updateSubscription(userId, {
+          plan,
+          billingCycle,
+          billingKey,
+          status: "active",
+          currentPeriodStart: start,
+          currentPeriodEnd: end,
+          nextPaymentAt: end,
+          cancelledAt: null,
+          cancelReason: null,
+          retryCount: 0,
+          lastRetryAt: null,
+        });
+      } else {
+        await storage.createSubscription({
+          userId,
+          plan,
+          billingCycle,
+          billingKey,
+          pgProvider: "tosspayments",
+          status: "active",
+          currentPeriodStart: start,
+          currentPeriodEnd: end,
+          nextPaymentAt: end,
+        });
+      }
+
+      // 유저 티어 업데이트 + 크레딧 지급
+      await storage.updateUserTier(userId, plan);
+
+      // 결제 기록 저장
+      await storage.createPayment({
+        userId,
+        impUid: paymentId,
+        merchantUid: paymentId,
+        amount: planInfo.amountKRW,
+        status: "paid",
+        productType: `${plan}_subscription`,
+        creditsAdded: planInfo.monthlyCredits,
+        subscriptionId: null,
+        billingCycle,
+        currency: "KRW",
+      });
+
+      // 다음 결제 예약
+      const nextPaymentId = generatePaymentId(plan, billingCycle, userId);
+      try {
+        await schedulePayment({
+          paymentId: nextPaymentId,
+          billingKey,
+          amount: planInfo.amountKRW,
+          currency: "KRW",
+          orderName: planInfo.label,
+          timeToPay: end,
+          customerId: userId,
+        });
+        await storage.updateSubscription(userId, { portoneScheduleId: nextPaymentId });
+      } catch (err: any) {
+        logger.warn("Failed to schedule next payment (subscription is still active)", err);
+      }
+
+      res.json({
+        success: true,
+        plan,
+        billingCycle,
+        currentPeriodEnd: end,
+        credits: planInfo.monthlyCredits,
+      });
+    } catch (error: any) {
+      logger.error("Subscription billing-key error", error);
+      res.status(500).json({ message: "구독 생성에 실패했습니다." });
+    }
+  });
+
+  // 현재 구독 상태 조회
+  app.get("/api/subscription", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const sub = await storage.getSubscription(userId);
+      if (!sub) {
+        return res.json({ subscription: null });
+      }
+      res.json({
+        subscription: {
+          plan: sub.plan,
+          billingCycle: sub.billingCycle,
+          status: sub.status,
+          currentPeriodStart: sub.currentPeriodStart,
+          currentPeriodEnd: sub.currentPeriodEnd,
+          nextPaymentAt: sub.nextPaymentAt,
+          cancelledAt: sub.cancelledAt,
+          cancelReason: sub.cancelReason,
+        },
+      });
+    } catch (error: any) {
+      logger.error("Get subscription error", error);
+      res.status(500).json({ message: "구독 조회에 실패했습니다." });
+    }
+  });
+
+  // 구독 취소 (기간 끝까지 유지)
+  app.post("/api/subscription/cancel", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { reason } = req.body;
+
+      const sub = await storage.getSubscription(userId);
+      if (!sub || sub.status !== "active") {
+        return res.status(400).json({ message: "활성 구독이 없습니다." });
+      }
+
+      // 예약된 다음 결제 취소
+      if (sub.portoneScheduleId) {
+        try {
+          await cancelScheduledPayment(sub.portoneScheduleId);
+        } catch (err: any) {
+          logger.warn("Failed to cancel scheduled payment", err);
+        }
+      }
+
+      // 구독 상태 업데이트 (기간 끝까지 유지)
+      await storage.updateSubscription(userId, {
+        status: "cancelled",
+        cancelledAt: new Date(),
+        cancelReason: reason || null,
+        portoneScheduleId: null,
+        nextPaymentAt: null,
+      });
+
+      // proExpiresAt 설정 (기간 만료 시 free로 전환)
+      const db = (storage as any).getDb();
+      const { userCredits } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+      await db.update(userCredits)
+        .set({ proExpiresAt: sub.currentPeriodEnd })
+        .where(eq(userCredits.userId, userId));
+
+      res.json({
+        success: true,
+        currentPeriodEnd: sub.currentPeriodEnd,
+        message: `${new Date(sub.currentPeriodEnd).toLocaleDateString("ko-KR")}까지 구독 혜택이 유지됩니다.`,
+      });
+    } catch (error: any) {
+      logger.error("Subscription cancel error", error);
+      res.status(500).json({ message: "구독 취소에 실패했습니다." });
+    }
+  });
+
+  // 플랜 변경 (업/다운그레이드)
+  app.post("/api/subscription/change-plan", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { plan, billingCycle } = req.body;
+
+      const sub = await storage.getSubscription(userId);
+      if (!sub || (sub.status !== "active" && sub.status !== "cancelled")) {
+        return res.status(400).json({ message: "활성 구독이 없습니다." });
+      }
+
+      const newPlan = getSubscriptionPlan(plan, billingCycle);
+      if (!newPlan) {
+        return res.status(400).json({ message: "유효하지 않은 플랜입니다." });
+      }
+
+      // 같은 플랜이면 무시
+      if (sub.plan === plan && sub.billingCycle === billingCycle && sub.status === "active") {
+        return res.status(400).json({ message: "현재와 동일한 플랜입니다." });
+      }
+
+      // 기존 예약 결제 취소
+      if (sub.portoneScheduleId) {
+        try {
+          await cancelScheduledPayment(sub.portoneScheduleId);
+        } catch { /* ignore */ }
+      }
+
+      // 즉시 새 플랜으로 결제
+      const paymentId = generatePaymentId(plan, billingCycle, userId);
+      try {
+        await payWithBillingKey({
+          paymentId,
+          billingKey: sub.billingKey,
+          amount: newPlan.amountKRW,
+          currency: "KRW",
+          orderName: `${newPlan.label} (플랜 변경)`,
+          customerId: userId,
+        });
+      } catch (err: any) {
+        logger.error("Plan change payment failed", err);
+        return res.status(402).json({ message: "결제에 실패했습니다." });
+      }
+
+      const { start, end } = calculateFirstPeriod(billingCycle);
+
+      // 구독 업데이트
+      await storage.updateSubscription(userId, {
+        plan,
+        billingCycle,
+        status: "active",
+        currentPeriodStart: start,
+        currentPeriodEnd: end,
+        nextPaymentAt: end,
+        cancelledAt: null,
+        cancelReason: null,
+        retryCount: 0,
+      });
+
+      // 티어 + 크레딧 업데이트
+      await storage.updateUserTier(userId, plan);
+
+      // 결제 기록
+      await storage.createPayment({
+        userId,
+        impUid: paymentId,
+        merchantUid: paymentId,
+        amount: newPlan.amountKRW,
+        status: "paid",
+        productType: `${plan}_subscription`,
+        creditsAdded: newPlan.monthlyCredits,
+        billingCycle,
+        currency: "KRW",
+      });
+
+      // 다음 결제 예약
+      const nextPaymentId = generatePaymentId(plan, billingCycle, userId);
+      try {
+        await schedulePayment({
+          paymentId: nextPaymentId,
+          billingKey: sub.billingKey,
+          amount: newPlan.amountKRW,
+          currency: "KRW",
+          orderName: newPlan.label,
+          timeToPay: end,
+          customerId: userId,
+        });
+        await storage.updateSubscription(userId, { portoneScheduleId: nextPaymentId });
+      } catch { /* ignore */ }
+
+      res.json({ success: true, plan, billingCycle, credits: newPlan.monthlyCredits });
+    } catch (error: any) {
+      logger.error("Subscription change-plan error", error);
+      res.status(500).json({ message: "플랜 변경에 실패했습니다." });
+    }
+  });
+
+  // PortOne V2 웹훅 (정기결제 결과)
+  app.post("/api/subscription/webhook", async (req, res) => {
+    try {
+      const { type, data } = req.body;
+      const paymentId = data?.paymentId;
+
+      if (!paymentId) {
+        return res.status(200).json({ success: true });
+      }
+
+      logger.info(`Subscription webhook received: ${type} for ${paymentId}`);
+
+      // paymentId에서 userId 추출: sub_plan_cycle_userId8_ts
+      const parts = paymentId.split("_");
+      if (parts.length < 5 || parts[0] !== "sub") {
+        return res.status(200).json({ success: true }); // 일반 결제 웹훅은 무시
+      }
+
+      // PortOne V2로 결제 상태 확인
+      let paymentInfo: any;
+      try {
+        paymentInfo = await getPaymentInfo(paymentId);
+      } catch (err: any) {
+        logger.error("Webhook: failed to verify payment", err);
+        return res.status(200).json({ success: false });
+      }
+
+      const status = paymentInfo?.status;
+
+      if (status === "PAID" && type === "Transaction.Paid") {
+        // 결제 성공 → 구독 갱신, 크레딧 리셋
+        // customerId 에서 userId 가져오기
+        const customerId = paymentInfo?.customer?.id;
+        if (!customerId) {
+          logger.error("Webhook: no customerId in payment");
+          return res.status(200).json({ success: false });
+        }
+
+        const sub = await storage.getSubscription(customerId);
+        if (!sub) {
+          return res.status(200).json({ success: true });
+        }
+
+        const planInfo = getSubscriptionPlan(sub.plan, sub.billingCycle);
+        if (!planInfo) {
+          return res.status(200).json({ success: true });
+        }
+
+        // 기간 갱신
+        const { start, end } = calculateNextPeriod(sub.currentPeriodEnd, sub.billingCycle);
+        await storage.updateSubscription(customerId, {
+          status: "active",
+          currentPeriodStart: start,
+          currentPeriodEnd: end,
+          nextPaymentAt: end,
+          retryCount: 0,
+          lastRetryAt: null,
+        });
+
+        // 크레딧 리셋
+        await storage.updateUserTier(customerId, sub.plan);
+
+        // 결제 기록
+        await storage.createPayment({
+          userId: customerId,
+          impUid: paymentId,
+          merchantUid: paymentId,
+          amount: planInfo.amountKRW,
+          status: "paid",
+          productType: `${sub.plan}_subscription`,
+          creditsAdded: planInfo.monthlyCredits,
+          billingCycle: sub.billingCycle,
+          currency: "KRW",
+        });
+
+        // 다음 결제 예약
+        const nextId = generatePaymentId(sub.plan, sub.billingCycle, customerId);
+        try {
+          await schedulePayment({
+            paymentId: nextId,
+            billingKey: sub.billingKey,
+            amount: planInfo.amountKRW,
+            currency: "KRW",
+            orderName: planInfo.label,
+            timeToPay: end,
+            customerId,
+          });
+          await storage.updateSubscription(customerId, { portoneScheduleId: nextId });
+        } catch { /* ignore */ }
+
+      } else if (status === "FAILED" && type === "Transaction.Failed") {
+        // 결제 실패 → 재시도 또는 past_due
+        const customerId = paymentInfo?.customer?.id;
+        if (!customerId) return res.status(200).json({ success: false });
+
+        const sub = await storage.getSubscription(customerId);
+        if (!sub) return res.status(200).json({ success: true });
+
+        const maxRetries = 3;
+        const retryIntervalDays = 3;
+
+        if (sub.retryCount < maxRetries) {
+          // 재시도 예약 (3일 후)
+          const retryDate = new Date();
+          retryDate.setDate(retryDate.getDate() + retryIntervalDays);
+
+          const planInfo = getSubscriptionPlan(sub.plan, sub.billingCycle);
+          if (planInfo) {
+            const retryPaymentId = generatePaymentId(sub.plan, sub.billingCycle, customerId);
+            try {
+              await schedulePayment({
+                paymentId: retryPaymentId,
+                billingKey: sub.billingKey,
+                amount: planInfo.amountKRW,
+                currency: "KRW",
+                orderName: `${planInfo.label} (재시도 ${sub.retryCount + 1}/${maxRetries})`,
+                timeToPay: retryDate,
+                customerId,
+              });
+            } catch { /* ignore */ }
+          }
+
+          await storage.updateSubscription(customerId, {
+            status: "past_due",
+            retryCount: sub.retryCount + 1,
+            lastRetryAt: new Date(),
+            portoneScheduleId: null,
+          });
+        } else {
+          // 최대 재시도 초과 → 만료
+          await storage.updateSubscription(customerId, {
+            status: "expired",
+            retryCount: sub.retryCount + 1,
+            lastRetryAt: new Date(),
+          });
+          // free로 전환
+          await storage.updateUserTier(customerId, "free");
+        }
+      }
+
+      res.status(200).json({ success: true });
+    } catch (error: any) {
+      logger.error("Subscription webhook error", error);
+      res.status(200).json({ success: false });
+    }
+  });
+
+  // ── 회원 탈퇴 ──
+  app.post("/api/delete-account", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      await storage.deleteAccount(userId);
+
+      // Supabase Auth 에서도 사용자 삭제 (재로그인 방지)
+      try {
+        await supabase.auth.admin.deleteUser(userId);
+      } catch (e) {
+        // service_role 키가 없는 환경에서는 실패할 수 있음 — 데이터 삭제는 이미 완료
+        logger.warn("Supabase auth user deletion failed (data already deleted)", e);
+      }
+
+      logger.info(`Account deleted: ${userId}`);
+      res.json({ success: true, message: "회원 탈퇴가 완료되었습니다." });
+    } catch (error: any) {
+      logger.error("Delete account error", error);
+      res.status(500).json({ message: "회원 탈퇴에 실패했습니다. 고객센터로 문의해주세요." });
+    }
+  });
+
   // PortOne 웹훅 엔드포인트 (결제 상태 변경 알림)
-  // 인증 없이 접근 가능하지만, imp_uid로 검증하여 중복 처리 방지
+  // 인증 없이 접근 가능 — PortOne API로 imp_uid를 서버 간 검증하여 위조 방지
   app.post("/api/payment/webhook", async (req, res) => {
     try {
-      const { imp_uid, status, merchant_uid } = req.body;
+      const { imp_uid, status: webhookStatus, merchant_uid } = req.body;
 
-      if (!imp_uid) {
-        return res.status(400).json({ message: "imp_uid가 필요합니다." });
+      if (!imp_uid || typeof imp_uid !== "string") {
+        return res.status(400).json({ message: "잘못된 요청입니다." });
       }
 
       // 이미 처리된 결제인지 확인
       const existingPayment = await storage.getPaymentByImpUid(imp_uid);
       if (existingPayment) {
-        // 이미 처리된 경우 상태만 업데이트 (중복 처리 방지)
-        if (existingPayment.status !== status) {
-          await storage.updatePaymentStatus(existingPayment.id, status);
+        if (existingPayment.status !== webhookStatus) {
+          // PortOne API로 실제 상태를 검증한 후에만 업데이트
+          try {
+            const accessToken = await getPortoneAccessToken();
+            const verifyRes = await axios.get(
+              `https://api.iamport.kr/payments/${imp_uid}`,
+              { headers: { Authorization: `Bearer ${accessToken}` } },
+            );
+            const verified = verifyRes.data.response;
+            if (verified && verified.status !== existingPayment.status) {
+              await storage.updatePaymentStatus(existingPayment.id, verified.status);
+            }
+          } catch {
+            // 검증 실패 시 웹훅 데이터만으로는 업데이트하지 않음
+          }
         }
-        return res.json({ success: true, message: "이미 처리된 결제입니다." });
+        return res.json({ success: true });
       }
 
-      // 웹훅은 알림용이므로, 실제 결제 처리는 /api/payment/complete에서 처리
-      // 여기서는 로깅만 수행
-      console.log(`[PortOne Webhook] Payment status update: imp_uid=${imp_uid}, status=${status}, merchant_uid=${merchant_uid}`);
-
-      res.json({ success: true, message: "웹훅 수신 완료" });
+      res.json({ success: true });
     } catch (error: any) {
-      console.error("PortOne webhook error:", error);
+      logger.error("PortOne webhook error", error);
       // 웹훅 실패 시에도 200을 반환하여 PortOne이 재시도하지 않도록 함
-      res.status(200).json({ success: false, message: error.message });
+      res.status(200).json({ success: false });
     }
   });
 
@@ -602,35 +1389,39 @@ export async function registerRoutes(
       const userId = req.userId!;
       const parsed = storyScriptSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
 
-      const canUseStory = await storage.deductCredit(userId, 10);
+      const canUseStory = await storage.deductCredit(userId, 50);
       if (!canUseStory) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 자동화 생성에는 10 크레딧이 필요합니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 자동화 생성에는 50 크레딧이 필요합니다." });
       }
 
       const result = await generateStoryScripts(parsed.data);
       await storage.incrementTotalGenerations(userId);
       res.json(result);
     } catch (error: any) {
-      console.error("Story script generation error:", error);
-      res.status(500).json({ message: error.message || "스크립트 생성에 실패했습니다" });
+      logger.error("Story script generation error", error);
+      res.status(500).json({ message: "스크립트 생성에 실패했습니다." });
     }
   });
 
   app.post("/api/story-topic-suggest", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      const userId = req.userId!;
       const parsed = topicSuggestSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid input" });
+        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
-
+      const canUse = await storage.deductCredit(userId, 5);
+      if (!canUse) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
+      }
       const topics = await suggestStoryTopics(parsed.data.genre);
       res.json({ topics });
     } catch (error: any) {
-      console.error("Topic suggestion error:", error);
-      res.status(500).json({ message: error.message || "주제 추천에 실패했습니다" });
+      logger.error("Topic suggestion error", error);
+      res.status(500).json({ message: "주제 추천에 실패했습니다." });
     }
   });
 
@@ -649,10 +1440,10 @@ export async function registerRoutes(
         return res.status(400).json({ message: "캔버스 수(1~14), 컷/캔버스(1~4)를 올바르게 입력해주세요." });
       }
 
-      // 10 크레딧 차감
-      const ok = await storage.deductCredit(userId, 10);
+      // 50 크레딧 차감
+      const ok = await storage.deductCredit(userId, 50);
       if (!ok) {
-        return res.status(403).json({ message: "크레딧이 부족합니다. 프롬프트 작성에는 10 크레딧이 필요합니다." });
+        return res.status(403).json({ message: "크레딧이 부족합니다. 프롬프트 작성에는 50 크레딧이 필요합니다." });
       }
 
       const totalCuts = cc * cpc;
@@ -664,8 +1455,8 @@ export async function registerRoutes(
 
       res.json(result);
     } catch (error: any) {
-      console.error("Auto-webtoon breakdown error:", error);
-      res.status(500).json({ message: error.message || "장면 분해에 실패했습니다." });
+      logger.error("Auto-webtoon breakdown error", error);
+      res.status(500).json({ message: "장면 분해에 실패했습니다." });
     }
   });
 
@@ -673,18 +1464,16 @@ export async function registerRoutes(
   app.post("/api/auto-webtoon/generate-scene", isAuthenticated, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
-      const { sceneDescription, storyContext, sourceImageDataList, aspectRatio, sceneIndex, totalScenes, previousSceneDescription } = req.body;
+      const { sceneDescription, storyContext, sourceImageDataList, aspectRatio, sceneIndex, totalScenes, previousSceneDescription, characterNames } = req.body;
 
       if (!sceneDescription || typeof sceneDescription !== "string") {
-        return res.status(400).json({ message: "sceneDescription is required" });
+        return res.status(400).json({ message: "장면 설명이 필요합니다." });
       }
 
       const credits = await storage.getUserCredits(userId);
-      if (credits.tier !== "pro") {
-        const canGenerate = await storage.deductCredit(userId);
-        if (!canGenerate) {
-          return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
-        }
+      const canGenerate = await storage.deductCredit(userId, 5);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다. 충전 후 다시 시도해주세요." });
       }
 
       const imageDataUrl = await generateWebtoonScene(
@@ -695,6 +1484,7 @@ export async function registerRoutes(
         sceneIndex,
         totalScenes,
         previousSceneDescription,
+        characterNames,
       );
 
       // story에서 생성된 이미지는 갤러리에 저장하지 않음
@@ -702,8 +1492,81 @@ export async function registerRoutes(
 
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
-      console.error("Auto-webtoon scene generation error:", error);
-      res.status(500).json({ message: error.message || "장면 이미지 생성에 실패했습니다." });
+      logger.error("Auto-webtoon scene generation error", error);
+      res.status(500).json({ message: "장면 이미지 생성에 실패했습니다." });
+    }
+  });
+
+  // ── Project Folders ──
+
+  app.post("/api/project-folders", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { name } = req.body;
+      if (!name || typeof name !== "string" || !name.trim()) {
+        return res.status(400).json({ message: "폴더 이름을 입력해주세요." });
+      }
+      const folder = await storage.createProjectFolder({ userId, name: name.trim() });
+      res.json(folder);
+    } catch (error: any) {
+      logger.error("Create project folder error", error);
+      res.status(500).json({ message: "폴더 생성에 실패했습니다." });
+    }
+  });
+
+  app.get("/api/project-folders", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const folders = await storage.getProjectFoldersByUser(userId);
+      res.json(folders);
+    } catch (error: any) {
+      logger.error("List project folders error", error);
+      res.status(500).json({ message: "폴더 목록 조회에 실패했습니다." });
+    }
+  });
+
+  app.patch("/api/project-folders/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 폴더 ID입니다." });
+      const parsed = updateProjectFolderSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || "잘못된 입력입니다." });
+      }
+      const updated = await storage.updateProjectFolder(id, userId, parsed.data);
+      if (!updated) return res.status(404).json({ message: "폴더를 찾을 수 없습니다." });
+      res.json(updated);
+    } catch (error: any) {
+      logger.error("Update project folder error", error);
+      res.status(500).json({ message: "폴더 업데이트에 실패했습니다." });
+    }
+  });
+
+  app.delete("/api/project-folders/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 폴더 ID입니다." });
+      const deleted = await storage.deleteProjectFolder(id, userId);
+      if (!deleted) return res.status(404).json({ message: "폴더를 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error("Delete project folder error", error);
+      res.status(500).json({ message: "폴더 삭제에 실패했습니다." });
+    }
+  });
+
+  app.get("/api/project-folders/:id/projects", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 폴더 ID입니다." });
+      const projects = await storage.getBubbleProjectsByFolder(id, userId);
+      res.json(projects);
+    } catch (error: any) {
+      logger.error("Get folder projects error", error);
+      res.status(500).json({ message: "폴더 프로젝트 조회에 실패했습니다." });
     }
   });
 
@@ -714,7 +1577,7 @@ export async function registerRoutes(
       if (!canUseBubble) {
         return res.status(403).json({ message: "이번 달의 말풍선 편집기 무료 사용 횟수(3회)를 모두 사용했습니다." });
       }
-      const { name, thumbnailUrl, canvasData, editorType } = req.body;
+      const { name, thumbnailUrl, canvasData, editorType, folderId } = req.body;
       if (!name || !canvasData) {
         return res.status(400).json({ message: "이름과 캔버스 데이터가 필요합니다." });
       }
@@ -724,11 +1587,12 @@ export async function registerRoutes(
         thumbnailUrl: thumbnailUrl || null,
         canvasData,
         editorType: editorType || "bubble",
+        folderId: folderId || null,
       });
       res.json(project);
     } catch (error: any) {
-      console.error("Create bubble project error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 저장에 실패했습니다." });
+      logger.error("Create bubble project error", error);
+      res.status(500).json({ message: "프로젝트 저장에 실패했습니다." });
     }
   });
 
@@ -738,8 +1602,8 @@ export async function registerRoutes(
       const projects = await storage.getBubbleProjectsByUser(userId);
       res.json(projects);
     } catch (error: any) {
-      console.error("List bubble projects error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 목록 조회에 실패했습니다." });
+      logger.error("List bubble projects error", error);
+      res.status(500).json({ message: "프로젝트 목록 조회에 실패했습니다." });
     }
   });
 
@@ -752,8 +1616,8 @@ export async function registerRoutes(
       if (!project) return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
       res.json(project);
     } catch (error: any) {
-      console.error("Get bubble project error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 조회에 실패했습니다." });
+      logger.error("Get bubble project error", error);
+      res.status(500).json({ message: "프로젝트 조회에 실패했습니다." });
     }
   });
 
@@ -770,8 +1634,8 @@ export async function registerRoutes(
       if (!updated) return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
       res.json(updated);
     } catch (error: any) {
-      console.error("Update bubble project error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 업데이트에 실패했습니다." });
+      logger.error("Update bubble project error", error);
+      res.status(500).json({ message: "프로젝트 업데이트에 실패했습니다." });
     }
   });
 
@@ -787,8 +1651,8 @@ export async function registerRoutes(
       const count = await storage.deleteGenerationsBulk(numIds, userId);
       res.json({ success: true, deleted: count });
     } catch (error: any) {
-      console.error("Bulk delete gallery error:", error);
-      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+      logger.error("Bulk delete gallery error", error);
+      res.status(500).json({ message: "삭제에 실패했습니다." });
     }
   });
 
@@ -799,8 +1663,8 @@ export async function registerRoutes(
       const count = await storage.deleteAllGenerations(userId);
       res.json({ success: true, deleted: count });
     } catch (error: any) {
-      console.error("Delete all gallery error:", error);
-      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+      logger.error("Delete all gallery error", error);
+      res.status(500).json({ message: "삭제에 실패했습니다." });
     }
   });
 
@@ -811,13 +1675,174 @@ export async function registerRoutes(
       if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
       const deleted = await storage.deleteGeneration(id, userId);
       if (!deleted) {
-        console.warn(`Gallery delete failed: id=${id}, userId=${userId} — not found or not owned`);
+        logger.warn("Gallery delete failed: item not found or not owned");
         return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
       }
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Delete gallery item error:", error);
-      res.status(500).json({ message: error.message || "삭제에 실패했습니다." });
+      logger.error("Delete gallery item error", error);
+      res.status(500).json({ message: "삭제에 실패했습니다." });
+    }
+  });
+
+  // ── Character Name ──
+  app.patch("/api/gallery/:id/name", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const { name } = req.body;
+      if (typeof name !== "string" || name.length > 100) {
+        return res.status(400).json({ message: "이름은 100자 이하여야 합니다." });
+      }
+      const updated = await storage.updateGenerationName(id, userId, name);
+      if (!updated) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error("Update generation name error", error);
+      res.status(500).json({ message: "이름 변경에 실패했습니다." });
+    }
+  });
+
+  // ── Regenerate gallery character ──
+  app.post("/api/gallery/:id/regenerate", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+
+      const gen = await storage.getGenerationById(id, userId);
+      if (!gen) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+
+      const { prompt } = req.body;
+      if (prompt && (typeof prompt !== "string" || prompt.length > 500)) {
+        return res.status(400).json({ message: "프롬프트는 500자 이하여야 합니다." });
+      }
+
+      // Determine style from linked character or default
+      let style = "simple-line";
+      if (gen.characterId) {
+        const char = await storage.getCharacter(gen.characterId);
+        if (char) style = char.style;
+      }
+
+      const credits = await storage.getUserCredits(userId);
+      const canGenerate = await storage.deductCredit(userId, 10);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
+      }
+
+      // Use existing image as reference + optional prompt for modifications
+      const regenPrompt = prompt?.trim() || gen.prompt || "same character in a different pose and expression";
+      let imageDataUrl = await generateCharacterImage(regenPrompt, style, gen.resultImageUrl);
+      if (credits.tier === "free") {
+        imageDataUrl = await applyWatermark(imageDataUrl);
+      }
+
+      let thumbnailUrl: string | null = null;
+      try {
+        thumbnailUrl = await generateThumbnail(imageDataUrl) || null;
+      } catch { /* optional */ }
+
+      await storage.updateGenerationImage(id, userId, imageDataUrl, thumbnailUrl);
+      await storage.incrementTotalGenerations(userId);
+
+      res.json({ imageUrl: imageDataUrl, thumbnailUrl });
+    } catch (error: any) {
+      logger.error("Gallery regenerate error", error);
+      res.status(500).json({ message: "캐릭터 재생성에 실패했습니다." });
+    }
+  });
+
+  // ── Character Folders ──
+  app.post("/api/character-folders", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { name } = req.body;
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({ message: "폴더 이름을 입력해주세요." });
+      }
+      const folder = await storage.createCharacterFolder({ userId, name: name.trim() });
+      res.json(folder);
+    } catch (error: any) {
+      logger.error("Create character folder error", error);
+      res.status(500).json({ message: "폴더 생성에 실패했습니다." });
+    }
+  });
+
+  app.get("/api/character-folders", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const folders = await storage.getCharacterFoldersByUser(userId);
+      res.json(folders);
+    } catch (error: any) {
+      logger.error("Get character folders error", error);
+      res.status(500).json({ message: "폴더 목록 조회에 실패했습니다." });
+    }
+  });
+
+  app.patch("/api/character-folders/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const { name } = req.body;
+      if (!name || typeof name !== "string") {
+        return res.status(400).json({ message: "폴더 이름을 입력해주세요." });
+      }
+      const updated = await storage.updateCharacterFolder(id, userId, { name: name.trim() });
+      if (!updated) return res.status(404).json({ message: "폴더를 찾을 수 없습니다." });
+      res.json(updated);
+    } catch (error: any) {
+      logger.error("Update character folder error", error);
+      res.status(500).json({ message: "폴더 수정에 실패했습니다." });
+    }
+  });
+
+  app.delete("/api/character-folders/:id", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const deleted = await storage.deleteCharacterFolder(id, userId);
+      if (!deleted) return res.status(404).json({ message: "폴더를 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error("Delete character folder error", error);
+      res.status(500).json({ message: "폴더 삭제에 실패했습니다." });
+    }
+  });
+
+  app.post("/api/character-folders/:id/items", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const folderId = parseInt(String(req.params.id));
+      if (isNaN(folderId)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const { generationIds } = req.body;
+      if (!Array.isArray(generationIds) || generationIds.length === 0) {
+        return res.status(400).json({ message: "추가할 항목을 선택해주세요." });
+      }
+      const numIds = generationIds.map((id: any) => parseInt(String(id))).filter((id: number) => !isNaN(id));
+      const added = await storage.addCharacterFolderItems(folderId, userId, numIds);
+      res.json({ success: true, added });
+    } catch (error: any) {
+      logger.error("Add character folder items error", error);
+      res.status(500).json({ message: "폴더에 추가하는데 실패했습니다." });
+    }
+  });
+
+  app.delete("/api/character-folders/:id/items/:generationId", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const folderId = parseInt(String(req.params.id));
+      const generationId = parseInt(String(req.params.generationId));
+      if (isNaN(folderId) || isNaN(generationId)) return res.status(400).json({ message: "잘못된 ID입니다." });
+      const removed = await storage.removeCharacterFolderItem(folderId, userId, generationId);
+      if (!removed) return res.status(404).json({ message: "항목을 찾을 수 없습니다." });
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error("Remove character folder item error", error);
+      res.status(500).json({ message: "폴더에서 제거하는데 실패했습니다." });
     }
   });
 
@@ -830,8 +1855,8 @@ export async function registerRoutes(
       if (!deleted) return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Delete bubble project error:", error);
-      res.status(500).json({ message: error.message || "프로젝트 삭제에 실패했습니다." });
+      logger.error("Delete bubble project error", error);
+      res.status(500).json({ message: "프로젝트 삭제에 실패했습니다." });
     }
   });
 
@@ -846,8 +1871,8 @@ export async function registerRoutes(
       const url = getOAuthUrl(req.userId!);
       res.json({ url });
     } catch (error: any) {
-      console.error("Instagram connect error:", error);
-      res.status(500).json({ message: error.message || "Instagram 연결 URL 생성에 실패했습니다." });
+      logger.error("Instagram connect error", error);
+      res.status(500).json({ message: "Instagram 연결에 실패했습니다." });
     }
   });
 
@@ -882,8 +1907,8 @@ export async function registerRoutes(
 
       res.redirect("/dashboard?instagram_connected=true");
     } catch (error: any) {
-      console.error("Instagram callback error:", error);
-      res.redirect(`/dashboard?instagram_error=${encodeURIComponent(error.message || "연결 실패")}`);
+      logger.error("Instagram callback error", error);
+      res.redirect("/dashboard?instagram_error=연결에 실패했습니다");
     }
   });
 
@@ -916,7 +1941,7 @@ export async function registerRoutes(
         connectedAt: conn.connectedAt,
       });
     } catch (error: any) {
-      console.error("Instagram status error:", error);
+      logger.error("Instagram status error", error);
       res.status(500).json({ message: "Instagram 상태 조회에 실패했습니다." });
     }
   });
@@ -927,7 +1952,7 @@ export async function registerRoutes(
       await storage.deleteInstagramConnection(req.userId!);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Instagram disconnect error:", error);
+      logger.error("Instagram disconnect error", error);
       res.status(500).json({ message: "Instagram 연결 해제에 실패했습니다." });
     }
   });
@@ -945,8 +1970,8 @@ export async function registerRoutes(
 
       res.json({ success: true, tokenExpiresAt: refreshed.expiresAt });
     } catch (error: any) {
-      console.error("Instagram refresh token error:", error);
-      res.status(500).json({ message: error.message || "토큰 갱신에 실패했습니다." });
+      logger.error("Instagram refresh token error", error);
+      res.status(500).json({ message: "토큰 갱신에 실패했습니다." });
     }
   });
 
@@ -1038,9 +2063,8 @@ export async function registerRoutes(
         throw publishError;
       }
     } catch (error: any) {
-      console.error("Instagram publish error:", error);
-      const msg = error.response?.data?.error?.message || error.message || "게시에 실패했습니다.";
-      res.status(500).json({ message: msg });
+      logger.error("Instagram publish error", error);
+      res.status(500).json({ message: "Instagram 게시에 실패했습니다." });
     }
   });
 
@@ -1051,7 +2075,7 @@ export async function registerRoutes(
       const logs = await storage.getInstagramPublishLogs(req.userId!, limit);
       res.json(logs);
     } catch (error: any) {
-      console.error("Instagram publish history error:", error);
+      logger.error("Instagram publish history error", error);
       res.status(500).json({ message: "게시 이력 조회에 실패했습니다." });
     }
   });
@@ -1085,7 +2109,7 @@ export async function registerRoutes(
       const result = await storage.getFeedPosts({ limit, offset, sort, viewerId, followingOnly });
       res.json(result);
     } catch (error: any) {
-      console.error("Feed list error:", error);
+      logger.error("Feed list error", error);
       res.status(500).json({ message: "피드를 불러오는데 실패했습니다." });
     }
   });
@@ -1129,8 +2153,8 @@ export async function registerRoutes(
 
       res.json(post);
     } catch (error: any) {
-      console.error("Feed publish error:", error);
-      res.status(500).json({ message: error.message || "게시에 실패했습니다." });
+      logger.error("Feed publish error", error);
+      res.status(500).json({ message: "게시에 실패했습니다." });
     }
   });
 
@@ -1144,7 +2168,7 @@ export async function registerRoutes(
       if (!post) return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
       res.json(post);
     } catch (error: any) {
-      console.error("Feed post detail error:", error);
+      logger.error("Feed post detail error", error);
       res.status(500).json({ message: "게시물을 불러오는데 실패했습니다." });
     }
   });
@@ -1158,7 +2182,7 @@ export async function registerRoutes(
       if (!deleted) return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Feed delete error:", error);
+      logger.error("Feed delete error", error);
       res.status(500).json({ message: "삭제에 실패했습니다." });
     }
   });
@@ -1171,7 +2195,7 @@ export async function registerRoutes(
       await storage.likePost(req.userId!, postId);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Like error:", error);
+      logger.error("Like error", error);
       res.status(500).json({ message: "좋아요에 실패했습니다." });
     }
   });
@@ -1184,7 +2208,7 @@ export async function registerRoutes(
       await storage.unlikePost(req.userId!, postId);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Unlike error:", error);
+      logger.error("Unlike error", error);
       res.status(500).json({ message: "좋아요 취소에 실패했습니다." });
     }
   });
@@ -1197,7 +2221,7 @@ export async function registerRoutes(
       await storage.followUser(req.userId!, followingId);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Follow error:", error);
+      logger.error("Follow error", error);
       res.status(500).json({ message: "팔로우에 실패했습니다." });
     }
   });
@@ -1209,7 +2233,7 @@ export async function registerRoutes(
       await storage.unfollowUser(req.userId!, followingId);
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Unfollow error:", error);
+      logger.error("Unfollow error", error);
       res.status(500).json({ message: "언팔로우에 실패했습니다." });
     }
   });
@@ -1223,7 +2247,7 @@ export async function registerRoutes(
       if (!profile) return res.status(404).json({ message: "유저를 찾을 수 없습니다." });
       res.json(profile);
     } catch (error: any) {
-      console.error("User profile error:", error);
+      logger.error("User profile error", error);
       res.status(500).json({ message: "프로필을 불러오는데 실패했습니다." });
     }
   });
@@ -1237,7 +2261,7 @@ export async function registerRoutes(
       const result = await storage.getUserFeedPosts(userId, limit, offset);
       res.json(result);
     } catch (error: any) {
-      console.error("User posts error:", error);
+      logger.error("User posts error", error);
       res.status(500).json({ message: "게시물을 불러오는데 실패했습니다." });
     }
   });
@@ -1248,7 +2272,7 @@ export async function registerRoutes(
       const creators = await storage.getPopularCreators(10);
       res.json(creators);
     } catch (error: any) {
-      console.error("Popular creators error:", error);
+      logger.error("Popular creators error", error);
       res.json([]);
     }
   });
