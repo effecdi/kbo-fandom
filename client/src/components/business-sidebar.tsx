@@ -52,7 +52,7 @@ export function BusinessSidebar() {
       <nav className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-1">
           {navItems.map((item) => (
-            <Link key={item.path} href={item.path}>
+            <Link key={item.path} to={item.path}>
               <div
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer ${
                   isActive(item)
