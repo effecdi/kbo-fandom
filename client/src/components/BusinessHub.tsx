@@ -161,7 +161,7 @@ export function BusinessHub() {
             {/* Media Kit Preview */}
             <div className="space-y-6">
               {/* Growth Chart */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 rounded-2xl p-6 border-2 border-indigo-200">
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 rounded-2xl p-6 border-2 border-indigo-200 dark:border-indigo-800">
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-indigo-600" />
                   <h4 className="font-bold text-foreground">
@@ -190,7 +190,7 @@ export function BusinessHub() {
               </div>
 
               {/* Previous Toon Examples */}
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border-2 border-purple-200">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800">
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-5 h-5 text-purple-600" />
                   <h4 className="font-bold text-foreground">Top Performing Toons</h4>
@@ -199,7 +199,7 @@ export function BusinessHub() {
                   {[1, 2, 3].map((toon) => (
                     <div
                       key={toon}
-                      className="bg-white rounded-xl p-3 border-2 border-purple-200 hover:border-purple-400 transition-all cursor-pointer"
+                      className="bg-white dark:bg-card rounded-xl p-3 border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 transition-all cursor-pointer"
                     >
                       <img
                         src={olliMascot}

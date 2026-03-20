@@ -253,7 +253,7 @@ export function CreatorSearch() {
                     className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all"
                   >
                     {/* Match Score Badge */}
-                    <div className="relative bg-gradient-to-br from-indigo-50 to-blue-50 p-6">
+                    <div className="relative bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 p-6">
                       <div className="absolute top-4 right-4 bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                         <Star className="w-3 h-3 fill-white" />
                         {creator.matchScore}%

@@ -98,7 +98,7 @@ export function CreatorCampaignDetail() {
             </p>
 
             {/* Campaign Info Summary */}
-            <div className="bg-card rounded-2xl p-6 mb-8 border border-green-200">
+            <div className="bg-card rounded-2xl p-6 mb-8 border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-4 mb-4">
                 <img
                   src={campaign.companyLogo}
@@ -117,7 +117,7 @@ export function CreatorCampaignDetail() {
               </div>
               
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-3 border border-purple-200">
+                <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
                   <div className="flex items-center gap-1 text-xs text-purple-600 mb-1">
                     <DollarSign className="w-3 h-3" />
                     <span className="font-semibold">예산</span>
@@ -126,7 +126,7 @@ export function CreatorCampaignDetail() {
                     {campaign.budget.split("-")[0].trim()}
                   </div>
                 </div>
-                <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 border border-blue-200">
+                <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-1 text-xs text-blue-600 mb-1">
                     <Calendar className="w-3 h-3" />
                     <span className="font-semibold">시작일</span>
@@ -135,7 +135,7 @@ export function CreatorCampaignDetail() {
                     {campaign.startDate}
                   </div>
                 </div>
-                <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3 border border-green-200">
+                <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
                   <div className="flex items-center gap-1 text-xs text-green-600 mb-1">
                     <FileText className="w-3 h-3" />
                     <span className="font-semibold">결과물</span>
@@ -148,7 +148,7 @@ export function CreatorCampaignDetail() {
             </div>
 
             {/* Next Steps */}
-            <div className="bg-card rounded-2xl p-6 border border-green-200 text-left mb-8">
+            <div className="bg-card rounded-2xl p-6 border border-green-200 dark:border-green-800 text-left mb-8">
               <h3 className="font-black text-lg text-foreground mb-4 flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-yellow-500" />
                 다음 단계
@@ -263,7 +263,7 @@ export function CreatorCampaignDetail() {
             </div>
 
             {/* Encouragement */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200 text-left mb-8">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border border-purple-200 dark:border-purple-800 text-left mb-8">
               <h3 className="font-black text-lg text-foreground mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-purple-600" />
                 포기하지 마세요!
@@ -378,7 +378,7 @@ export function CreatorCampaignDetail() {
             </p>
 
             {/* Campaign Info */}
-            <div className="bg-card rounded-2xl p-6 mb-8 border border-yellow-200">
+            <div className="bg-card rounded-2xl p-6 mb-8 border border-yellow-200 dark:border-yellow-800">
               <div className="flex items-center gap-4 mb-4">
                 <img
                   src={campaign.companyLogo}
@@ -401,17 +401,17 @@ export function CreatorCampaignDetail() {
             </div>
 
             {/* Status Info */}
-            <div className="bg-card rounded-2xl p-6 border border-yellow-200 text-left mb-8">
+            <div className="bg-card rounded-2xl p-6 border border-yellow-200 dark:border-yellow-800 text-left mb-8">
               <h3 className="font-black text-lg text-foreground mb-4">현재 상태</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                     <span className="font-semibold text-foreground">지원서 제출 완료</span>
                   </div>
                   <span className="text-sm text-muted-foreground">2024-03-08</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200">
+                <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
                   <div className="flex items-center gap-3">
                     <Clock className="w-5 h-5 text-yellow-600 animate-pulse" />
                     <span className="font-semibold text-foreground">선정 심사 중</span>
@@ -429,7 +429,7 @@ export function CreatorCampaignDetail() {
             </div>
 
             {/* Tips */}
-            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-6 border border-blue-200 text-left mb-8">
+            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800 text-left mb-8">
               <h3 className="font-black text-lg text-foreground mb-3 flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-blue-600" />
                 기다리는 동안...
@@ -526,28 +526,28 @@ export function CreatorCampaignDetail() {
 
           {/* Key Info Grid */}
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-4 border border-purple-200">
+            <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
               <div className="flex items-center gap-2 text-purple-600 mb-2">
                 <DollarSign className="w-4 h-4" />
                 <span className="text-xs font-semibold">예산</span>
               </div>
               <p className="text-sm font-bold text-purple-900">{campaign.budget}</p>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-4 border border-blue-200">
+            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
               <div className="flex items-center gap-2 text-blue-600 mb-2">
                 <Calendar className="w-4 h-4" />
                 <span className="text-xs font-semibold">마감일</span>
               </div>
               <p className="text-sm font-bold text-blue-900">{campaign.deadline}</p>
             </div>
-            <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-4 border border-green-200">
+            <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2 text-green-600 mb-2">
                 <Users className="w-4 h-4" />
                 <span className="text-xs font-semibold">지원자</span>
               </div>
               <p className="text-sm font-bold text-green-900">{campaign.applicants}명</p>
             </div>
-            <div className="bg-yellow-50 dark:bg-yellow-950/20 rounded-xl p-4 border border-yellow-200">
+            <div className="bg-yellow-50 dark:bg-yellow-950/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
               <div className="flex items-center gap-2 text-yellow-600 mb-2">
                 <FileText className="w-4 h-4" />
                 <span className="text-xs font-semibold">결과물</span>
@@ -583,7 +583,7 @@ export function CreatorCampaignDetail() {
             {/* Deliverables */}
             <div className="bg-card rounded-2xl border border-border p-6">
               <h2 className="text-xl font-black text-foreground mb-4">제공 결과물</h2>
-              <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-4 border border-purple-200">
+              <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
                 <p className="font-semibold text-foreground">{campaign.deliverables}</p>
               </div>
             </div>

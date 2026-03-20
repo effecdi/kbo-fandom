@@ -136,7 +136,7 @@ export function CreatorCampaigns() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200">
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-xl p-6 border-2 border-purple-200 dark:border-purple-800">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-white" />
@@ -269,7 +269,7 @@ export function CreatorCampaigns() {
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-3 border border-purple-200">
+                  <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
                     <div className="flex items-center gap-1 text-xs text-purple-600 mb-1">
                       <DollarSign className="w-3 h-3" />
                       <span className="font-semibold">예산</span>
@@ -278,7 +278,7 @@ export function CreatorCampaigns() {
                       {campaign.budget.split("-")[0].trim()}
                     </div>
                   </div>
-                  <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 border border-blue-200">
+                  <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-1 text-xs text-blue-600 mb-1">
                       <Calendar className="w-3 h-3" />
                       <span className="font-semibold">마감일</span>
@@ -287,7 +287,7 @@ export function CreatorCampaigns() {
                       {campaign.deadline}
                     </div>
                   </div>
-                  <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3 border border-green-200">
+                  <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
                     <div className="flex items-center gap-1 text-xs text-green-600 mb-1">
                       <Users className="w-3 h-3" />
                       <span className="font-semibold">지원자</span>

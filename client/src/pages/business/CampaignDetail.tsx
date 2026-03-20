@@ -231,7 +231,7 @@ export function CampaignDetail() {
 
           {/* Applicants Tab */}
           <TabsContent value="applicants" className="space-y-4">
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-xl p-4 mb-6">
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
               <div className="flex items-start gap-3">
                 <MessageSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-800">
@@ -321,7 +321,7 @@ export function CampaignDetail() {
                         </div>
 
                         {/* Cover Letter */}
-                        <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 rounded-lg p-4 mb-4">
+                        <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-4">
                           <h4 className="text-sm font-bold text-purple-900 mb-2">
                             📝 지원 메시지
                           </h4>

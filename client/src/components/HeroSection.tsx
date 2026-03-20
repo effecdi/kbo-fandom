@@ -61,7 +61,7 @@ export function HeroSection() {
                   ].map((panel, idx) => (
                     <div
                       key={idx}
-                      className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-purple-200"
+                      className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-purple-200 dark:border-purple-800"
                     >
                       <img
                         src={olliMascot}

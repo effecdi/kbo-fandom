@@ -270,7 +270,7 @@ export function BusinessSettings() {
                 </div>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-6 border-2 border-blue-200">
+              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-6 border-2 border-blue-200 dark:border-blue-800">
                 <h3 className="font-bold text-foreground mb-2">💡 멤버 권한 안내</h3>
                 <ul className="space-y-2 text-sm text-foreground">
                   <li className="flex items-start gap-2">

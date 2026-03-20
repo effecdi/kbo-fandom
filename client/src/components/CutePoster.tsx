@@ -173,7 +173,7 @@ export function CutePoster() {
             </div>
 
             {/* Bottom Decorative Text */}
-            <div className="mt-10 pt-8 border-t-4 border-dashed border-purple-200">
+            <div className="mt-10 pt-8 border-t-4 border-dashed border-purple-200 dark:border-purple-800">
               <div className="flex justify-center gap-8 text-center">
                 <div>
                   <p className="text-4xl font-black text-purple-600 mb-1">

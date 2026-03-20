@@ -296,7 +296,7 @@ export function Reports() {
                 {topMascots.map((mascot, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-4 p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl"
+                    className="flex items-center gap-4 p-4 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-xl"
                   >
                     <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-xl flex items-center justify-center text-white font-black text-lg">
                       #{idx + 1}
@@ -318,7 +318,7 @@ export function Reports() {
             </div>
 
             {/* Quick Insights */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800">
               <h3 className="font-black text-foreground mb-4">💡 인사이트</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-2">

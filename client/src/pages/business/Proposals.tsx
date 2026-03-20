@@ -251,7 +251,7 @@ export function BusinessProposals() {
 
                           {/* Response Message */}
                           {proposal.message && (
-                            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
                               <div className="flex items-start gap-2">
                                 <MessageSquare className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                                 <div>

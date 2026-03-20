@@ -55,7 +55,7 @@ export function MascotNew() {
           <p className="text-muted-foreground">
             AI로 초안을 만든 후 검토·수정·승인 과정을 거쳐 확정본을 완성하세요
           </p>
-          <div className="mt-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-xl p-4">
+          <div className="mt-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-800">
@@ -179,7 +179,7 @@ export function MascotNew() {
           {/* Right - Guide */}
           <div className="space-y-6">
             {/* Tips */}
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl p-6 border border-indigo-100">
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-800">
               <div className="flex items-center gap-2 mb-4">
                 <Lightbulb className="w-5 h-5 text-indigo-600" />
                 <h3 className="font-bold text-foreground">생성 팁</h3>

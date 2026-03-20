@@ -139,7 +139,7 @@ export function CreatorDetail() {
             </div>
 
             {/* Matching Reason */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-2xl p-6 border border-green-100">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-2xl p-6 border border-green-100 dark:border-green-800">
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle2 className="w-6 h-6 text-green-600" />
                 <h2 className="text-xl font-black text-foreground">
@@ -376,7 +376,7 @@ export function CreatorDetail() {
             </div>
 
             {/* Stats */}
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-2xl p-6 border border-indigo-100">
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-800">
               <h3 className="font-bold text-foreground mb-4">활동 지표</h3>
               <div className="space-y-4">
                 <div>

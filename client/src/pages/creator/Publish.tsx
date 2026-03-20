@@ -199,7 +199,7 @@ export function Publish() {
                   <Switch id="mediakit" defaultChecked />
                 </div>
 
-                <div className="flex items-start justify-between p-4 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200">
+                <div className="flex items-start justify-between p-4 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
                   <div className="flex-1">
                     <Label htmlFor="business" className="font-bold flex items-center gap-2">
                       <Users className="w-4 h-4 text-purple-600" />

@@ -74,7 +74,7 @@ export function MascotResult() {
       </div>
 
       {/* Status & Workflow */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-2xl p-6 mb-8 border border-blue-200">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-2xl p-6 mb-8 border border-blue-200 dark:border-blue-800">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-black text-foreground">검토·승인 워크플로우</h3>
           <span className="inline-flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-3 py-1 rounded-full text-sm font-semibold">
@@ -125,7 +125,7 @@ export function MascotResult() {
             className={`relative group cursor-pointer rounded-2xl overflow-hidden border-4 transition-all ${
               selected === result.id
                 ? "border-blue-600 shadow-2xl scale-105"
-                : "border-transparent hover:border-blue-200 hover:shadow-lg"
+                : "border-transparent hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-lg"
             }`}
           >
             <div className="aspect-square bg-muted relative">

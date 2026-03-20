@@ -81,7 +81,7 @@ export function CharacterResult() {
             className={`relative group cursor-pointer rounded-2xl overflow-hidden border-4 transition-all ${
               selected === result.id
                 ? "border-purple-600 shadow-2xl scale-105"
-                : "border-transparent hover:border-purple-200 hover:shadow-lg"
+                : "border-transparent hover:border-purple-200 dark:hover:border-purple-800 hover:shadow-lg"
             }`}
           >
             <div className="aspect-square bg-muted relative">

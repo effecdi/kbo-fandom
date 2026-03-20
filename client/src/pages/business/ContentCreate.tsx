@@ -65,7 +65,7 @@ export function ContentCreate() {
 
           <button
             onClick={() => navigate("/business/collaboration/new")}
-            className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 border-2 border-purple-200 hover:border-purple-600 hover:shadow-xl transition-all text-left group"
+            className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-8 border-2 border-purple-200 dark:border-purple-800 hover:border-purple-600 hover:shadow-xl transition-all text-left group"
           >
             <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
               <Users className="w-8 h-8 text-white" />
