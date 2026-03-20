@@ -427,7 +427,7 @@ export function PoseExpression() {
                 </Button>
               )}
             </div>
-            <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+            <div className="aspect-square bg-muted rounded-xl flex items-center justify-center overflow-hidden">
               {generateMutation.isPending ? (
                 <div className="flex flex-col items-center gap-4 w-full p-8">
                   <Skeleton className="w-full aspect-square rounded-lg" />
