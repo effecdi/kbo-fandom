@@ -95,7 +95,7 @@ export function Login() {
                         placeholder="your@email.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-12 h-12 text-base bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -113,7 +113,7 @@ export function Login() {
                         placeholder="비밀번호를 입력하세요"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-12 h-12 text-base bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -199,7 +199,7 @@ export function Login() {
                         id="business-email"
                         type="email"
                         placeholder="your@company.com"
-                        className="pl-12 h-12 text-base bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -215,7 +215,7 @@ export function Login() {
                         id="business-password"
                         type="password"
                         placeholder="비밀번호를 입력하세요"
-                        className="pl-12 h-12 text-base bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>

@@ -219,7 +219,7 @@ export function Profile() {
                         <input
                           type="text"
                           defaultValue="올리 작가"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -229,12 +229,12 @@ export function Profile() {
                         <input
                           type="text"
                           defaultValue="@olli_creator"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
                         <label className="block text-sm text-muted-foreground mb-2">카테고리</label>
-                        <select className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent">
+                        <select className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent">
                           <option>라이프스타일</option>
                           <option>음식</option>
                           <option>패션</option>
@@ -252,7 +252,7 @@ export function Profile() {
                         <textarea
                           rows={4}
                           defaultValue="따뜻하고 친근한 그림체로 일상과 공감 스토리를 그리는 작가입니다."
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent resize-none"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent resize-none"
                         />
                       </div>
                     </div>
@@ -267,7 +267,7 @@ export function Profile() {
                         <input
                           type="email"
                           defaultValue="olli@example.com"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -277,7 +277,7 @@ export function Profile() {
                         <input
                           type="text"
                           defaultValue="olli_kakao"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -297,7 +297,7 @@ export function Profile() {
                         <input
                           type="number"
                           defaultValue="10000"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -307,7 +307,7 @@ export function Profile() {
                         <input
                           type="number"
                           defaultValue="5000"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -317,7 +317,7 @@ export function Profile() {
                         <input
                           type="number"
                           defaultValue="50000"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -328,7 +328,7 @@ export function Profile() {
                           type="number"
                           step="0.1"
                           defaultValue="5.2"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -347,7 +347,7 @@ export function Profile() {
                             <input
                               type="number"
                               defaultValue={age === "13-17" ? "35" : age === "18-24" ? "30" : age === "25-34" ? "20" : "15"}
-                              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                              className="w-full px-3 py-2 bg-transparent border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                             />
                           </div>
                         ))}
@@ -367,7 +367,7 @@ export function Profile() {
                           <input
                             type="number"
                             defaultValue="35"
-                            className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                            className="w-full px-3 py-2 bg-transparent border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                           />
                         </div>
                         <div>
@@ -377,7 +377,7 @@ export function Profile() {
                           <input
                             type="number"
                             defaultValue="65"
-                            className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                            className="w-full px-3 py-2 bg-transparent border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                           />
                         </div>
                       </div>
@@ -397,7 +397,7 @@ export function Profile() {
                         <input
                           type="number"
                           defaultValue="100000"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -407,7 +407,7 @@ export function Profile() {
                         <input
                           type="number"
                           defaultValue="50000"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -417,7 +417,7 @@ export function Profile() {
                         <input
                           type="number"
                           defaultValue="200000"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -427,7 +427,7 @@ export function Profile() {
                         <input
                           type="number"
                           defaultValue="300000"
-                          className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                          className="w-full px-4 py-3 bg-transparent border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                         />
                       </div>
                     </div>

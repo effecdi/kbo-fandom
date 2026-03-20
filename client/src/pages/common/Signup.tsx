@@ -90,7 +90,7 @@ export function Signup() {
                   )}
                   <Input
                     placeholder={selectedTab === "creator" ? "홍길동" : "(주)올리코리아"}
-                    className="pl-12 h-12 text-base bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                    className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -104,7 +104,7 @@ export function Signup() {
                   <div className="relative">
                     <Briefcase className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <select
-                      className="w-full pl-12 h-12 text-base rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 bg-muted border-border text-foreground"
+                      className="w-full pl-12 h-12 text-base rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent border-border text-foreground"
                     >
                       <option value="">선택해주세요</option>
                       <option value="enterprise">기업</option>
@@ -126,7 +126,7 @@ export function Signup() {
                   <Input
                     type="email"
                     placeholder="example@email.com"
-                    className="pl-12 h-12 text-base bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                    className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -142,7 +142,7 @@ export function Signup() {
                     <Input
                       type="tel"
                       placeholder="010-1234-5678"
-                      className="pl-12 h-12 text-base bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                      className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>

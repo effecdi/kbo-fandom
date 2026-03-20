@@ -670,7 +670,7 @@ export function ElementPropertiesPanel({
                   tailCtrl2X: undefined, tailCtrl2Y: undefined,
                 })}
               >
-                <SelectTrigger className="h-7 text-[13px] bg-card border-border"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-7 text-[13px] bg-transparent border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="bottom">아래</SelectItem>
                   <SelectItem value="top">위</SelectItem>

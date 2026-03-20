@@ -410,7 +410,7 @@ export function ContentEditor() {
                     <textarea
                       placeholder="내용을 입력하세요..."
                       rows={4}
-                      className="w-full px-3 py-2 bg-[#252525] border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent resize-none"
+                      className="w-full px-3 py-2 bg-transparent border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent resize-none"
                     />
                   </div>
 
@@ -418,7 +418,7 @@ export function ContentEditor() {
                     <label className="text-sm font-bold text-white mb-2 block">
                       폰트
                     </label>
-                    <select className="w-full px-3 py-2 bg-[#252525] border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent">
+                    <select className="w-full px-3 py-2 bg-transparent border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent">
                       <option>본고딕</option>
                       <option>나눔고딕</option>
                       <option>배민 주아</option>
@@ -433,7 +433,7 @@ export function ContentEditor() {
                       <input
                         type="number"
                         defaultValue={16}
-                        className="w-full px-3 py-2 bg-[#252525] border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
+                        className="w-full px-3 py-2 bg-transparent border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -443,7 +443,7 @@ export function ContentEditor() {
                       <input
                         type="color"
                         defaultValue="#000000"
-                        className="w-full h-10 bg-[#252525] border border-border rounded-lg cursor-pointer"
+                        className="w-full h-10 bg-transparent border border-border rounded-lg cursor-pointer"
                       />
                     </div>
                   </div>
@@ -549,7 +549,7 @@ export function ContentEditor() {
                       <input
                         type="text"
                         placeholder="의견을 입력하세요..."
-                        className="flex-1 px-3 py-2 bg-[#0a0a0a] border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent text-sm"
+                        className="flex-1 px-3 py-2 bg-transparent border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent text-sm"
                       />
                       <Button
                         size="sm"
