@@ -226,7 +226,7 @@ export function CharacterNew() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="예: 민지, 토리, 뽀로로..."
-                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-3 bg-transparent border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
 
@@ -262,7 +262,7 @@ export function CharacterNew() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="캐릭터의 외모, 특징, 스타일을 자유롭게 설명해주세요.&#10;예: 20대 여성, 긴 생머리, 안경 착용, 캐주얼한 옷차림"
                   rows={6}
-                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 bg-transparent border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
                 />
                 <p className="text-sm text-muted-foreground mt-2">
                   상세할수록 더 정확한 결과를 얻을 수 있어요
@@ -483,7 +483,7 @@ export function CharacterNew() {
                 </div>
 
                 {/* Info */}
-                <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-6 border border-blue-100">
+                <div className="bg-card rounded-2xl p-6 border border-border">
                   <div className="flex items-center gap-2 mb-3">
                     <Info className="w-5 h-5 text-blue-600" />
                     <h3 className="font-bold text-foreground">안내</h3>
