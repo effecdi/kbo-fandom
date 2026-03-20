@@ -122,7 +122,7 @@ export function Mascots() {
             key={mascot.id}
             className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all group"
           >
-            <div className="aspect-square bg-gradient-to-br from-blue-100 to-indigo-100 relative overflow-hidden">
+            <div className="aspect-square bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 relative overflow-hidden">
               <img
                 src={mascot.image}
                 alt={mascot.name}
@@ -209,7 +209,7 @@ export function Mascots() {
       {/* Empty State (hidden when mascots exist) */}
       {mascots.length === 0 && (
         <div className="bg-card rounded-2xl p-12 border border-border text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-blue-600" />
           </div>
           <h3 className="text-xl font-black text-foreground mb-2">

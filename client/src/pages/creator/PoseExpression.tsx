@@ -335,7 +335,7 @@ export function PoseExpression() {
                       <Badge
                         key={emotion}
                         variant={selectedEmotions.includes(emotion) ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-purple-100"
+                        className="cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30"
                         onClick={() => toggleEmotion(emotion)}
                       >
                         {emotion}

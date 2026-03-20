@@ -35,7 +35,7 @@ export function BusinessDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="rounded-2xl p-6 border hover:shadow-lg transition-shadow bg-card border-border">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-indigo-600" />
             </div>
             <span className="text-2xl font-black text-foreground">5</span>
@@ -46,7 +46,7 @@ export function BusinessDashboard() {
 
         <div className="rounded-2xl p-6 border hover:shadow-lg transition-shadow bg-card border-border">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center">
               <Clock className="w-6 h-6 text-yellow-600" />
             </div>
             <span className="text-2xl font-black text-foreground">2</span>
@@ -57,7 +57,7 @@ export function BusinessDashboard() {
 
         <div className="rounded-2xl p-6 border hover:shadow-lg transition-shadow bg-card border-border">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
               <Target className="w-6 h-6 text-blue-600" />
             </div>
             <span className="text-2xl font-black text-foreground">3</span>
@@ -68,7 +68,7 @@ export function BusinessDashboard() {
 
         <div className="rounded-2xl p-6 border hover:shadow-lg transition-shadow bg-card border-border">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
               <Users className="w-6 h-6 text-purple-600" />
             </div>
             <span className="text-2xl font-black text-foreground">12</span>
@@ -227,10 +227,10 @@ export function BusinessDashboard() {
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       campaign.color === "green"
-                        ? "bg-green-100 text-green-700"
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
                         : campaign.color === "yellow"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-blue-100 text-blue-700"
+                        ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+                        : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                     }`}
                   >
                     {campaign.status}

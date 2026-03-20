@@ -220,7 +220,7 @@ export function Publish() {
             <div className="bg-card rounded-2xl p-6 border border-border sticky top-8">
               <h2 className="font-black text-foreground mb-4">미리보기</h2>
               
-              <div className="aspect-[3/4] bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl mb-4 overflow-hidden">
+              <div className="aspect-[3/4] bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl mb-4 overflow-hidden">
                 <img
                   src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=600&fit=crop"
                   alt="Thumbnail"

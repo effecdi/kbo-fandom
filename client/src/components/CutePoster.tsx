@@ -107,10 +107,10 @@ export function CutePoster() {
                 {/* Main Character Grid */}
                 <div className="relative grid grid-cols-2 gap-6">
                   {[
-                    { label: "행복해요!", emoji: "😊", rotate: "-rotate-6", bg: "from-yellow-100 to-orange-100" },
-                    { label: "깜짝!", emoji: "😲", rotate: "rotate-6", bg: "from-blue-100 to-cyan-100" },
-                    { label: "달려요!", emoji: "🏃", rotate: "rotate-3", bg: "from-green-100 to-emerald-100" },
-                    { label: "생각중..", emoji: "🤔", rotate: "-rotate-3", bg: "from-purple-100 to-pink-100" },
+                    { label: "행복해요!", emoji: "😊", rotate: "-rotate-6", bg: "from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30" },
+                    { label: "깜짝!", emoji: "😲", rotate: "rotate-6", bg: "from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30" },
+                    { label: "달려요!", emoji: "🏃", rotate: "rotate-3", bg: "from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30" },
+                    { label: "생각중..", emoji: "🤔", rotate: "-rotate-3", bg: "from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30" },
                   ].map((item, idx) => (
                     <div
                       key={idx}

@@ -165,7 +165,7 @@ export function CollaborationMatching() {
               </span>
             </div>
             <Button
-              className="bg-card text-purple-600 hover:bg-purple-50"
+              className="bg-white text-purple-600 hover:bg-purple-50"
               onClick={() => navigate("/business/proposals/new")}
             >
               <Send className="w-4 h-4 mr-2" />
@@ -207,11 +207,11 @@ export function CollaborationMatching() {
                           <h3 className="text-xl font-black text-foreground">
                             {creator.name}
                           </h3>
-                          <Badge className="bg-indigo-100 text-indigo-700">
+                          <Badge className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
                             {creator.genre}
                           </Badge>
                           {creator.rating >= 4.9 && (
-                            <Badge className="bg-yellow-100 text-yellow-700">
+                            <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
                               <Award className="w-3 h-3 mr-1" />
                               Top Rated
                             </Badge>

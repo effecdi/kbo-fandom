@@ -151,8 +151,8 @@ export function BusinessHub() {
               <h3 className="text-2xl font-bold text-foreground">
                 Automated Media Kit
               </h3>
-              <div className="bg-green-100 rounded-full px-4 py-1">
-                <span className="text-green-700 text-sm font-semibold">
+              <div className="bg-green-100 dark:bg-green-900/30 rounded-full px-4 py-1">
+                <span className="text-green-700 dark:text-green-300 text-sm font-semibold">
                   AI Generated
                 </span>
               </div>

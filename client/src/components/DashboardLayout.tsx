@@ -243,11 +243,11 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
             </div>
             <div className="flex-1 text-left">
               <p className={`text-sm font-semibold text-foreground`}>사용자</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {userType === "creator" ? "작가 모드" : "기업 모드"}
               </p>
             </div>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </button>
           {userMenuOpen && (
             <div className={`absolute left-4 right-4 bottom-20 rounded-xl shadow-xl overflow-hidden z-50 bg-card border border-border`}>
@@ -318,7 +318,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
             {/* Search */}
             <div className="flex-1 max-w-xl">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="검색..."
@@ -346,7 +346,7 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                 className={`p-2 rounded-lg transition-all hover:bg-muted`}
                 title="사용 가이드"
               >
-                <HelpCircle className="w-5 h-5 text-gray-400" />
+                <HelpCircle className="w-5 h-5 text-muted-foreground" />
               </button>
 
               {/* Dark Mode Toggle */}
@@ -356,15 +356,15 @@ export function DashboardLayout({ children, userType, noPadding }: DashboardLayo
                 title="다크모드 전환"
               >
                 {theme === "dark" ? (
-                  <Sun className="w-5 h-5 text-gray-400" />
+                  <Sun className="w-5 h-5 text-muted-foreground" />
                 ) : (
-                  <Moon className="w-5 h-5 text-gray-600" />
+                  <Moon className="w-5 h-5 text-muted-foreground" />
                 )}
               </button>
 
               {/* Notifications */}
               <button className={`relative p-2 rounded-lg transition-all hover:bg-muted`}>
-                <Bell className="w-5 h-5 text-gray-400" />
+                <Bell className="w-5 h-5 text-muted-foreground" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-[#00e5cc] rounded-full"></span>
               </button>
 

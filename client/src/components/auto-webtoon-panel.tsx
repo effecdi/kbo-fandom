@@ -69,7 +69,7 @@ function LayoutPreview({ cuts, size = 40, layoutType = "default", canvasW = CANV
   const scaleX = size / canvasW;
   const scaleY = (size * aspect) / canvasH;
   return (
-    <svg width={size} height={size * aspect} className="border rounded bg-white dark:bg-zinc-800">
+    <svg width={size} height={size * aspect} className="border rounded bg-card">
       {regions.map((r, i) => (
         <rect
           key={i}

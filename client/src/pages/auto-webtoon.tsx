@@ -443,7 +443,7 @@ export default function AutoWebtoonPage() {
     const scaleX = size / CANVAS_W;
     const scaleY = (size * 1.33) / CANVAS_H;
     return (
-      <svg width={size} height={size * 1.33} className="border rounded bg-white dark:bg-zinc-800">
+      <svg width={size} height={size * 1.33} className="border rounded bg-card">
         {regions.map((r, i) => (
           <rect
             key={i}

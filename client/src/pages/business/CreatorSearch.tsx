@@ -145,7 +145,7 @@ export function CreatorSearch() {
                   onClick={() => setViewMode("grid")}
                   className={`p-2 rounded-lg transition-all ${
                     viewMode === "grid"
-                      ? "bg-indigo-100 text-indigo-600"
+                      ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
                       : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -155,7 +155,7 @@ export function CreatorSearch() {
                   onClick={() => setViewMode("list")}
                   className={`p-2 rounded-lg transition-all ${
                     viewMode === "list"
-                      ? "bg-indigo-100 text-indigo-600"
+                      ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
                       : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -311,7 +311,7 @@ export function CreatorSearch() {
                         {creator.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold"
+                            className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-semibold"
                           >
                             ✓ {tag}
                           </span>
@@ -401,7 +401,7 @@ export function CreatorSearch() {
                             {creator.genre.map((g) => (
                               <span
                                 key={g}
-                                className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold"
+                                className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-semibold"
                               >
                                 {g}
                               </span>

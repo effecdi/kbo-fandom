@@ -337,7 +337,7 @@ export function Background() {
                       <Badge
                         key={s}
                         variant={selectedStyle === s ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-purple-100 hover:border-purple-600"
+                        className="cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:border-purple-600"
                         onClick={() => toggleStyle(s)}
                       >
                         {s}

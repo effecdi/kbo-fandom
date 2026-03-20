@@ -6,12 +6,10 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, User, Building2, Mail, Lock, LogIn, Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { useTheme } from "@/components/theme-provider";
 const olliMascot = "/favicon.png";
 
 export function Login() {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedTab, setSelectedTab] = useState<"creator" | "business">("creator");
@@ -22,14 +20,14 @@ export function Login() {
   };
 
   return (
-    <div className={`min-h-screen flex ${theme === "dark" ? "bg-gray-900" : "bg-muted"}`}>
+    <div className="min-h-screen flex bg-background">
       {/* Left Side - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
-            className={`mb-8 ${theme === "dark" ? "text-gray-300 hover:text-white hover:bg-gray-800" : ""}`}
+            className="mb-8 text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             홈으로
@@ -41,33 +39,29 @@ export function Login() {
               <div className="w-12 h-12 flex items-center justify-center">
                 <img src={olliMascot} alt="OLLI" className="w-full h-full" />
               </div>
-              <h1 className={`text-3xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
+              <h1 className="text-3xl font-black text-foreground">
                 OLLI
               </h1>
             </div>
-            <h2 className={`text-2xl font-bold mb-2 ${theme === "dark" ? "text-white" : "text-foreground"}`}>
+            <h2 className="text-2xl font-bold mb-2 text-foreground">
               다시 오신 것을 환영합니다
             </h2>
-            <p className={theme === "dark" ? "text-gray-300" : "text-foreground"}>
+            <p className="text-muted-foreground">
               계정에 로그인하여 계속하세요
             </p>
           </div>
 
           {/* Form Card */}
-          <div className={`rounded-3xl p-8 shadow-2xl border ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-card border-border"}`}>
+          <div className="rounded-3xl p-8 shadow-2xl border bg-card border-border">
             <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as "creator" | "business")}>
               {/* Custom Tab Selector */}
-              <div className={`grid grid-cols-2 gap-3 mb-8 p-2 rounded-2xl ${theme === "dark" ? "bg-gray-700/50" : "bg-muted"}`}>
+              <div className="grid grid-cols-2 gap-3 mb-8 p-2 rounded-2xl bg-muted/50">
                 <button
                   onClick={() => setSelectedTab("creator")}
                   className={`py-4 px-6 rounded-xl font-bold text-sm transition-all ${
                     selectedTab === "creator"
-                      ? theme === "dark"
-                        ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
-                        : "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
-                      : theme === "dark"
-                      ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   <User className="w-4 h-4 inline mr-2" />
@@ -77,12 +71,8 @@ export function Login() {
                   onClick={() => setSelectedTab("business")}
                   className={`py-4 px-6 rounded-xl font-bold text-sm transition-all ${
                     selectedTab === "business"
-                      ? theme === "dark"
-                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
-                        : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
-                      : theme === "dark"
-                      ? "text-gray-300 hover:text-white hover:bg-gray-700"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   <Building2 className="w-4 h-4 inline mr-2" />
@@ -94,44 +84,36 @@ export function Login() {
                 <form className="space-y-5">
                   {/* Email */}
                   <div>
-                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
+                    <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
                       이메일
                     </Label>
                     <div className="relative">
-                      <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
+                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="creator-email"
                         type="email"
                         placeholder="your@email.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className={`pl-12 h-12 text-base ${
-                          theme === "dark" 
-                            ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
-                            : "bg-card border-border"
-                        }`}
+                        className="pl-12 h-12 text-base bg-card border-border text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
 
                   {/* Password */}
                   <div>
-                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
+                    <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
                       비밀번호
                     </Label>
                     <div className="relative">
-                      <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="creator-password"
                         type="password"
                         placeholder="비밀번호를 입력하세요"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className={`pl-12 h-12 text-base ${
-                          theme === "dark" 
-                            ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
-                            : "bg-card border-border"
-                        }`}
+                        className="pl-12 h-12 text-base bg-card border-border text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -140,7 +122,7 @@ export function Login() {
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" className="w-4 h-4 rounded border-border text-teal-500 focus:ring-teal-500" />
-                      <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+                      <span className="text-sm text-muted-foreground">
                         로그인 상태 유지
                       </span>
                     </label>
@@ -164,10 +146,8 @@ export function Login() {
 
                   {/* Divider */}
                   <div className="relative my-8">
-                    <Separator className={theme === "dark" ? "bg-gray-700" : "bg-muted"} />
-                    <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold ${
-                      theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-card text-muted-foreground"
-                    }`}>
+                    <Separator className="bg-muted" />
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold bg-card text-muted-foreground">
                       또는
                     </span>
                   </div>
@@ -177,11 +157,7 @@ export function Login() {
                     <Button
                       type="button"
                       variant="outline"
-                      className={`w-full h-12 ${
-                        theme === "dark" 
-                          ? "border-gray-700 text-white hover:bg-gray-800" 
-                          : "border-border hover:bg-muted/50"
-                      }`}
+                      className="w-full h-12 border-border text-foreground hover:bg-muted"
                     >
                       <img src="https://www.google.com/favicon.ico" className="w-5 h-5 mr-2" alt="Google" />
                       Google로 계속하기
@@ -189,11 +165,7 @@ export function Login() {
                     <Button
                       type="button"
                       variant="outline"
-                      className={`w-full h-12 ${
-                        theme === "dark" 
-                          ? "border-gray-700 text-white hover:bg-gray-800" 
-                          : "border-border hover:bg-muted/50"
-                      }`}
+                      className="w-full h-12 border-border text-foreground hover:bg-muted"
                     >
                       <div className="w-5 h-5 mr-2 bg-yellow-400 rounded-full" />
                       카카오로 계속하기
@@ -201,7 +173,7 @@ export function Login() {
                   </div>
 
                   {/* Signup Link */}
-                  <p className={`text-center text-sm pt-4 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+                  <p className="text-center text-sm pt-4 text-muted-foreground">
                     계정이 없으신가요?{" "}
                     <button
                       type="button"
@@ -218,40 +190,32 @@ export function Login() {
                 <form className="space-y-5">
                   {/* Email */}
                   <div>
-                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
+                    <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
                       업무 이메일
                     </Label>
                     <div className="relative">
-                      <Mail className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
+                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="business-email"
                         type="email"
                         placeholder="your@company.com"
-                        className={`pl-12 h-12 text-base ${
-                          theme === "dark" 
-                            ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
-                            : "bg-card border-border"
-                        }`}
+                        className="pl-12 h-12 text-base bg-card border-border text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
 
                   {/* Password */}
                   <div>
-                    <Label className={`text-sm font-semibold mb-2 block ${theme === "dark" ? "text-gray-300" : "text-foreground"}`}>
+                    <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
                       비밀번호
                     </Label>
                     <div className="relative">
-                      <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === "dark" ? "text-gray-500" : "text-muted-foreground"}`} />
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="business-password"
                         type="password"
                         placeholder="비밀번호를 입력하세요"
-                        className={`pl-12 h-12 text-base ${
-                          theme === "dark" 
-                            ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
-                            : "bg-card border-border"
-                        }`}
+                        className="pl-12 h-12 text-base bg-card border-border text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -260,7 +224,7 @@ export function Login() {
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" className="w-4 h-4 rounded border-border text-blue-500 focus:ring-blue-500" />
-                      <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+                      <span className="text-sm text-muted-foreground">
                         로그인 상태 유지
                       </span>
                     </label>
@@ -284,10 +248,8 @@ export function Login() {
 
                   {/* Divider */}
                   <div className="relative my-8">
-                    <Separator className={theme === "dark" ? "bg-gray-700" : "bg-muted"} />
-                    <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold ${
-                      theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-card text-muted-foreground"
-                    }`}>
+                    <Separator className="bg-muted" />
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold bg-card text-muted-foreground">
                       또는
                     </span>
                   </div>
@@ -297,11 +259,7 @@ export function Login() {
                     <Button
                       type="button"
                       variant="outline"
-                      className={`w-full h-12 ${
-                        theme === "dark" 
-                          ? "border-gray-700 text-white hover:bg-gray-800" 
-                          : "border-border hover:bg-muted/50"
-                      }`}
+                      className="w-full h-12 border-border text-foreground hover:bg-muted"
                     >
                       <img src="https://www.google.com/favicon.ico" className="w-5 h-5 mr-2" alt="Google" />
                       Google Workspace로 계속하기
@@ -309,11 +267,7 @@ export function Login() {
                     <Button
                       type="button"
                       variant="outline"
-                      className={`w-full h-12 ${
-                        theme === "dark" 
-                          ? "border-gray-700 text-white hover:bg-gray-800" 
-                          : "border-border hover:bg-muted/50"
-                      }`}
+                      className="w-full h-12 border-border text-foreground hover:bg-muted"
                     >
                       <Building2 className="w-5 h-5 mr-2" />
                       기업 이메일로 계속하기
@@ -321,7 +275,7 @@ export function Login() {
                   </div>
 
                   {/* Signup Link */}
-                  <p className={`text-center text-sm pt-4 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+                  <p className="text-center text-sm pt-4 text-muted-foreground">
                     계정이 없으신가요?{" "}
                     <button
                       type="button"
@@ -340,8 +294,8 @@ export function Login() {
 
       {/* Right Side - Benefits */}
       <div className={`hidden lg:flex lg:w-1/2 items-center justify-center relative overflow-hidden ${
-        selectedTab === "creator" 
-          ? "bg-gradient-to-br from-[#00e5cc] to-[#00b3a6]" 
+        selectedTab === "creator"
+          ? "bg-gradient-to-br from-[#00e5cc] to-[#00b3a6]"
           : "bg-gradient-to-br from-blue-500 to-indigo-500"
       }`}>
         {/* Background Decoration */}
@@ -361,8 +315,8 @@ export function Login() {
 
           {/* Main Title */}
           <h2 className="text-4xl font-black text-white mb-6 leading-tight">
-            {selectedTab === "creator" 
-              ? "창작의 여정을\n계속하세요" 
+            {selectedTab === "creator"
+              ? "창작의 여정을\n계속하세요"
               : "스마트한 콘텐츠\n관리를 시작하세요"}
           </h2>
           <p className="text-white/90 text-lg mb-10">
@@ -439,8 +393,8 @@ export function Login() {
           {/* Quote */}
           <div className="mt-12 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <p className="text-white/90 text-sm italic mb-3">
-              "{selectedTab === "creator" 
-                ? "OLLI 덕분에 작업 시간이 절반으로 줄었고, 수익은 2배로 늘었어요!" 
+              "{selectedTab === "creator"
+                ? "OLLI 덕분에 작업 시간이 절반으로 줄었고, 수익은 2배로 늘었어요!"
                 : "승인 프로세스가 있어 내부 검토가 훨씬 수월해졌습니다."}"
             </p>
             <div className="flex items-center gap-3">

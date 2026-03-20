@@ -92,9 +92,9 @@ export function Revenue() {
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { label: string; color: string; icon: any }> = {
-      completed: { label: "정산완료", color: "bg-green-100 text-green-700", icon: CheckCircle },
-      pending: { label: "정산대기", color: "bg-yellow-100 text-yellow-700", icon: Clock },
-      in_progress: { label: "작업중", color: "bg-blue-100 text-blue-700", icon: AlertCircle },
+      completed: { label: "정산완료", color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300", icon: CheckCircle },
+      pending: { label: "정산대기", color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300", icon: Clock },
+      in_progress: { label: "작업중", color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300", icon: AlertCircle },
     };
     return configs[status] || configs.pending;
   };
@@ -145,14 +145,14 @@ export function Revenue() {
 
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
               <div
                 className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
                   summary.isPositive
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                    : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
                 }`}
               >
                 {summary.isPositive ? (
@@ -171,7 +171,7 @@ export function Revenue() {
 
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center">
                 <Clock className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
@@ -183,7 +183,7 @@ export function Revenue() {
 
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-blue-600" />
               </div>
             </div>
@@ -298,7 +298,7 @@ export function Revenue() {
                   className="flex items-center justify-between p-4 border border-border rounded-xl hover:shadow-md transition-all"
                 >
                   <div className="flex items-center gap-4 flex-1">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl flex items-center justify-center">
                       <Building2 className="w-6 h-6 text-purple-600" />
                     </div>
                     <div className="flex-1">

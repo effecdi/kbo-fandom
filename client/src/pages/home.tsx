@@ -615,18 +615,18 @@ export default function HomePage() {
           <h2 className="text-lg font-bold mb-4">요금제 & 크레딧 충전</h2>
           <div className="grid gap-6 md:grid-cols-2">
             {/* Free Card */}
-            <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
+            <Card className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-card text-card-foreground border-border shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]">
               <div className="relative flex h-full flex-col">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
-                  <span className="text-[13px] text-slate-400 dark:text-slate-400">영구 무료</span>
+                  <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-muted-foreground">Free</h3>
+                  <span className="text-[13px] text-muted-foreground">영구 무료</span>
                 </div>
                 <div className="mb-2">
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-black tracking-tight">₩0</span>
-                    <span className="text-sm text-slate-400">/월</span>
+                    <span className="text-sm text-muted-foreground">/월</span>
                   </div>
-                  <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
+                  <p className="mt-2 text-[13px] text-muted-foreground">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
                 </div>
                 <ul className="space-y-2.5 text-sm mb-7 mt-2">
                   {[
@@ -648,13 +648,13 @@ export default function HomePage() {
                       ) : (
                         <X className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500/60" />
                       )}
-                      <span className={f.ok ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-400"}>{f.text}</span>
+                      <span className={f.ok ? "text-foreground" : "text-muted-foreground"}>{f.text}</span>
                     </li>
                   ))}
                 </ul>
                 <Button
                   variant="outline"
-                  className="mt-auto w-full h-11 rounded-full border-slate-300 dark:border-slate-500/70 text-slate-700 dark:text-slate-50 hover:bg-slate-50 dark:hover:bg-slate-900/60"
+                  className="mt-auto w-full h-11 rounded-full border-border text-foreground hover:bg-muted"
                   disabled={usage?.tier === "free"}
                 >
                   {usage?.tier === "free" ? "현재 플랜" : "무료 플랜"}
@@ -720,13 +720,13 @@ export default function HomePage() {
                       <Sparkles className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg text-slate-900 dark:text-white">크레딧 충전</h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">50 크레딧으로 더 많은 작품을 만들어보세요</p>
+                      <h3 className="font-bold text-lg text-foreground">크레딧 충전</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">50 크레딧으로 더 많은 작품을 만들어보세요</p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-2xl font-black text-primary">₩4,900</div>
-                    <div className="text-[13px] text-slate-500 dark:text-slate-400">50 크레딧</div>
+                    <div className="text-[13px] text-muted-foreground">50 크레딧</div>
                   </div>
                 </div>
               </Card>
@@ -742,13 +742,13 @@ export default function HomePage() {
                     <Sparkles className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">크레딧 충전</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">로그인 후 이용 가능합니다</p>
+                    <h3 className="font-bold text-lg text-foreground">크레딧 충전</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">로그인 후 이용 가능합니다</p>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-2xl font-black text-primary">₩4,900</div>
-                  <div className="text-[13px] text-slate-500 dark:text-slate-400">50 크레딧</div>
+                  <div className="text-[13px] text-muted-foreground">50 크레딧</div>
                 </div>
               </div>
             </Card>

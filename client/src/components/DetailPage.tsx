@@ -61,9 +61,9 @@ export function DetailPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-purple-100 rounded-full px-4 py-2 mb-6">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <span className="text-purple-700 font-semibold text-sm">
+              <div className="inline-flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 rounded-full px-4 py-2 mb-6">
+                <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span className="text-purple-700 dark:text-purple-300 font-semibold text-sm">
                   AI 기반 웹툰 제작 플랫폼
                 </span>
               </div>
@@ -128,10 +128,10 @@ export function DetailPage() {
               <div className="relative bg-card rounded-3xl shadow-2xl p-8">
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { label: "행복", emoji: "😊", bg: "from-yellow-100 to-orange-100" },
-                    { label: "놀람", emoji: "😲", bg: "from-blue-100 to-cyan-100" },
-                    { label: "달리기", emoji: "🏃", bg: "from-green-100 to-emerald-100" },
-                    { label: "생각", emoji: "🤔", bg: "from-purple-100 to-pink-100" },
+                    { label: "행복", emoji: "😊", bg: "from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30" },
+                    { label: "놀람", emoji: "😲", bg: "from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30" },
+                    { label: "달리기", emoji: "🏃", bg: "from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30" },
+                    { label: "생각", emoji: "🤔", bg: "from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30" },
                   ].map((item, idx) => (
                     <div
                       key={idx}

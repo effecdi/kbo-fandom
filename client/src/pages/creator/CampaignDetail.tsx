@@ -155,7 +155,7 @@ export function CreatorCampaignDetail() {
               </h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 font-bold text-sm">
+                  <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 font-bold text-sm">
                     1
                   </div>
                   <div>
@@ -164,7 +164,7 @@ export function CreatorCampaignDetail() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 font-bold text-sm">
+                  <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 font-bold text-sm">
                     2
                   </div>
                   <div>
@@ -173,7 +173,7 @@ export function CreatorCampaignDetail() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 font-bold text-sm">
+                  <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 font-bold text-sm">
                     3
                   </div>
                   <div>
@@ -304,7 +304,7 @@ export function CreatorCampaignDetail() {
                     <p className="font-semibold text-sm text-foreground">에너지 절약 정책 홍보</p>
                     <p className="text-xs text-muted-foreground">환경부 · 8,000,000원</p>
                   </div>
-                  <Badge className="bg-green-100 text-green-700 text-xs">모집중</Badge>
+                  <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">모집중</Badge>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-muted rounded-lg hover:bg-muted transition-colors cursor-pointer">
                   <img
@@ -316,7 +316,7 @@ export function CreatorCampaignDetail() {
                     <p className="font-semibold text-sm text-foreground">청년 창업 지원 안내</p>
                     <p className="text-xs text-muted-foreground">중소벤처기업부 · 6,000,000원</p>
                   </div>
-                  <Badge className="bg-green-100 text-green-700 text-xs">모집중</Badge>
+                  <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">모집중</Badge>
                 </div>
               </div>
             </div>
@@ -394,7 +394,7 @@ export function CreatorCampaignDetail() {
                     <span>{campaign.company}</span>
                   </div>
                 </div>
-                <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">
+                <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300">
                   검토중
                 </Badge>
               </div>
@@ -517,7 +517,7 @@ export function CreatorCampaignDetail() {
                     </span>
                   </div>
                 </div>
-                <Badge className="bg-indigo-100 text-indigo-700">
+                <Badge className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
                   {campaign.type}
                 </Badge>
               </div>
@@ -601,7 +601,7 @@ export function CreatorCampaignDetail() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">분류</p>
-                  <Badge className="bg-blue-100 text-blue-700">
+                  <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
                     {campaign.companyInfo.category}
                   </Badge>
                 </div>

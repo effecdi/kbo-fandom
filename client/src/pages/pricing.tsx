@@ -386,7 +386,7 @@ export default function PricingPage() {
               className={`relative h-full overflow-hidden rounded-3xl border px-7 py-8 ${
                 plan.highlighted
                   ? "bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground border-primary/80 dark:border-primary/30 shadow-[0_22px_70px_rgba(15,23,42,0.3)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)] scale-[1.02]"
-                  : "bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                  : "bg-card text-card-foreground border-border shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
               }`}
               data-testid={`card-plan-${plan.tier}`}
             >
@@ -397,7 +397,7 @@ export default function PricingPage() {
                       <Badge className="bg-primary-foreground/15 text-primary-foreground text-[13px] px-3 py-1 border border-primary-foreground/20">Recommended</Badge>
                     </>
                   ) : (
-                    <h3 className={`font-semibold text-sm uppercase tracking-[0.18em] ${plan.tier === "premium" ? "text-amber-500 dark:text-amber-400" : "text-slate-400"}`}>
+                    <h3 className={`font-semibold text-sm uppercase tracking-[0.18em] ${plan.tier === "premium" ? "text-amber-500 dark:text-amber-400" : "text-muted-foreground"}`}>
                       {plan.name}
                     </h3>
                   )}
@@ -410,22 +410,22 @@ export default function PricingPage() {
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-black tracking-tight">{plan.priceLabel}</span>
                     {plan.period && (
-                      <span className={plan.highlighted ? "text-sm text-primary-foreground/70" : "text-sm text-slate-400"}>
+                      <span className={plan.highlighted ? "text-sm text-primary-foreground/70" : "text-sm text-muted-foreground"}>
                         {plan.period}
                       </span>
                     )}
                   </div>
                   {plan.monthlyEq && (
-                    <p className={`text-[13px] mt-1 ${plan.highlighted ? "text-primary-foreground/60" : "text-slate-400"}`}>
+                    <p className={`text-[13px] mt-1 ${plan.highlighted ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                       ${plan.monthlyEq}/mo equivalent
                     </p>
                   )}
                   {plan.tier !== "free" && (
-                    <p className={`text-[13px] mt-0.5 ${plan.highlighted ? "text-primary-foreground/50" : "text-slate-400"}`}>
+                    <p className={`text-[13px] mt-0.5 ${plan.highlighted ? "text-primary-foreground/50" : "text-muted-foreground"}`}>
                       ~{getPrice(plan.tier as "pro" | "premium").krw.toLocaleString("ko-KR")} KRW
                     </p>
                   )}
-                  <p className={`mt-2 text-[13px] ${plan.highlighted ? "text-primary-foreground/80" : "text-slate-500 dark:text-slate-400"}`}>
+                  <p className={`mt-2 text-[13px] ${plan.highlighted ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                     {plan.description}
                   </p>
                 </div>
@@ -440,8 +440,8 @@ export default function PricingPage() {
                       )}
                       <span className={
                         feature.included
-                          ? plan.highlighted ? "text-primary-foreground/95" : "text-slate-700 dark:text-slate-200"
-                          : plan.highlighted ? "text-primary-foreground/50" : "text-slate-400"
+                          ? plan.highlighted ? "text-primary-foreground/95" : "text-foreground"
+                          : plan.highlighted ? "text-primary-foreground/50" : "text-muted-foreground"
                       }>
                         {feature.text}
                       </span>
@@ -456,7 +456,7 @@ export default function PricingPage() {
                       ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90 border-0"
                       : plan.tier === "premium"
                         ? "border-amber-400 dark:border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
-                        : "border-slate-300 dark:border-slate-500/70 text-slate-700 dark:text-slate-50 hover:bg-slate-50 dark:hover:bg-slate-900/60"
+                        : "border-border text-foreground hover:bg-muted"
                   }`}
                   disabled={btn.disabled}
                   onClick={btn.action}
@@ -476,13 +476,13 @@ export default function PricingPage() {
       {/* Subscription Management */}
       {isAuthenticated && credits?.subscription && credits.subscription.status === "active" && (
         <div className="max-w-5xl mx-auto mt-8">
-          <Card className="rounded-2xl border px-8 py-6 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
+          <Card className="rounded-2xl border px-8 py-6 bg-card border-border">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                <h3 className="font-bold text-sm text-foreground">
                   Active Subscription: {credits.subscription.plan === "premium" ? "Premium" : "Pro"} ({credits.subscription.billingCycle === "yearly" ? "Annual" : "Monthly"})
                 </h3>
-                <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-[13px] text-muted-foreground mt-1">
                   Next billing: {new Date(credits.subscription.currentPeriodEnd).toLocaleDateString("ko-KR")}
                 </p>
               </div>
@@ -538,13 +538,13 @@ export default function PricingPage() {
                 <Sparkles className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-bold text-lg text-slate-900 dark:text-white">Credit Top-Up</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">One-time purchase of 50 credits</p>
+                <h3 className="font-bold text-lg text-foreground">Credit Top-Up</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">One-time purchase of 50 credits</p>
               </div>
             </div>
             <div className="text-right shrink-0">
               <div className="text-2xl font-black text-primary">{pricingData ? `₩${pricingData.products.credits.amount.toLocaleString("ko-KR")}` : "₩4,900"}</div>
-              <div className="text-[13px] text-slate-500 dark:text-slate-400">50 credits</div>
+              <div className="text-[13px] text-muted-foreground">50 credits</div>
             </div>
           </div>
         </Card>
@@ -552,8 +552,8 @@ export default function PricingPage() {
 
       {/* Credit Cost Table */}
       <div className="max-w-5xl mx-auto mt-12">
-        <Card className="rounded-2xl border px-8 py-7 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
-          <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-white">Credits per action</h3>
+        <Card className="rounded-2xl border px-8 py-7 bg-card border-border shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
+          <h3 className="font-bold text-lg mb-4 text-foreground">Credits per action</h3>
           <div className="space-y-2.5 text-sm">
             {[
               { label: "Character generation", cost: CREDIT_COSTS.character },
@@ -566,9 +566,9 @@ export default function PricingPage() {
             ].map((item, i, arr) => (
               <div
                 key={item.label}
-                className={`flex items-center justify-between py-2 ${i < arr.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+                className={`flex items-center justify-between py-2 ${i < arr.length - 1 ? "border-b border-border" : ""}`}
               >
-                <span className="text-slate-700 dark:text-slate-200">{item.label}</span>
+                <span className="text-foreground">{item.label}</span>
                 <Badge variant="secondary" className="text-[13px]">{item.cost} credits</Badge>
               </div>
             ))}

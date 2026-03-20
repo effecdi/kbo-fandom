@@ -74,10 +74,10 @@ export function MascotResult() {
       </div>
 
       {/* Status & Workflow */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-blue-200">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-2xl p-6 mb-8 border border-blue-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-black text-foreground">검토·승인 워크플로우</h3>
-          <span className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">
+          <span className="inline-flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-3 py-1 rounded-full text-sm font-semibold">
             <Clock className="w-4 h-4" />
             시안 검토 중
           </span>
@@ -94,9 +94,9 @@ export function MascotResult() {
               key={idx}
               className={`flex flex-col items-center text-center p-4 rounded-xl ${
                 item.status === "complete"
-                  ? "bg-green-100 border border-green-300"
+                  ? "bg-green-100 dark:bg-green-900/30 border border-green-300"
                   : item.status === "current"
-                  ? "bg-blue-100 border-2 border-blue-500"
+                  ? "bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500"
                   : "bg-muted border border-border"
               }`}
             >
@@ -106,7 +106,7 @@ export function MascotResult() {
                     ? "bg-green-500"
                     : item.status === "current"
                     ? "bg-blue-500"
-                    : "bg-gray-300"
+                    : "bg-muted"
                 }`}
               >
                 <item.icon className="w-5 h-5 text-white" />

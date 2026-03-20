@@ -254,7 +254,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-t bg-card/50 py-12" data-testid="section-stats">
+      <section className="border-t bg-muted/50 py-12" data-testid="section-stats">
         <div className="mx-auto max-w-4xl px-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {[
@@ -320,7 +320,7 @@ export default function LandingPage() {
 
       
 
-      <section ref={featuresRef} className="border-t bg-card/30 py-20 sm:py-28" data-testid="section-core-features">
+      <section ref={featuresRef} className="border-t bg-muted/30 py-20 sm:py-28" data-testid="section-core-features">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center mb-14">
             <motion.h2
@@ -390,20 +390,20 @@ export default function LandingPage() {
             {/* Free Card */}
             <motion.div initial="hidden" animate={pricingInView ? "visible" : "hidden"} variants={fadeUp} custom={2}>
               <Card
-                className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border-slate-200 dark:border-slate-800 shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
+                className="relative h-full overflow-hidden rounded-3xl border px-8 py-9 bg-card text-foreground border-border shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_22px_70px_rgba(15,23,42,0.85)]"
                 data-testid="card-pricing-free"
               >
                 <div className="relative flex h-full flex-col">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">Free</h3>
-                    <span className="text-[13px] text-slate-400 dark:text-slate-400">영구 무료</span>
+                    <h3 className="font-semibold text-sm uppercase tracking-[0.18em] text-muted-foreground">Free</h3>
+                    <span className="text-[13px] text-muted-foreground">영구 무료</span>
                   </div>
                   <div className="mb-2">
                     <div className="flex items-baseline gap-1">
                       <span className="text-4xl font-black tracking-tight">₩0</span>
-                      <span className="text-sm text-slate-400">/월</span>
+                      <span className="text-sm text-muted-foreground">/월</span>
                     </div>
-                    <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
+                    <p className="mt-2 text-[13px] text-muted-foreground">가입 시 20 크레딧 + 매월 10 크레딧 + 매일 출석 5 크레딧</p>
                   </div>
                   <ul className="space-y-2.5 text-sm mb-7 mt-2">
                     {[
@@ -425,13 +425,13 @@ export default function LandingPage() {
                         ) : (
                           <X className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500/60" />
                         )}
-                        <span className={f.ok ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-400"}>{f.text}</span>
+                        <span className={f.ok ? "text-foreground" : "text-muted-foreground"}>{f.text}</span>
                       </li>
                     ))}
                   </ul>
                   <Button
                     variant="outline"
-                    className="mt-auto w-full h-11 rounded-full border-slate-300 dark:border-slate-500/70 text-slate-700 dark:text-slate-50 hover:bg-slate-50 dark:hover:bg-slate-900/60"
+                    className="mt-auto w-full h-11 rounded-full border-border text-foreground hover:bg-muted"
                     asChild
                     data-testid="button-pricing-free"
                   >
@@ -492,7 +492,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section ref={ctaRef} className="border-t bg-card/30 py-24 sm:py-32 relative overflow-hidden" data-testid="section-cta-bottom">
+      <section ref={ctaRef} className="border-t bg-muted/30 py-24 sm:py-32 relative overflow-hidden" data-testid="section-cta-bottom">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{

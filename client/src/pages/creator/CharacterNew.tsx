@@ -163,7 +163,7 @@ export function CharacterNew() {
                   : "border-border hover:border-purple-300"
               }`}
             >
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Type className="w-6 h-6 text-purple-600" />
               </div>
               <h3 className="font-bold text-foreground mb-1">텍스트로 시작</h3>
@@ -180,7 +180,7 @@ export function CharacterNew() {
                   : "border-border hover:border-purple-300"
               }`}
             >
-              <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <ImageIcon className="w-6 h-6 text-pink-600" />
               </div>
               <h3 className="font-bold text-foreground mb-1">이미지 참고</h3>
@@ -197,7 +197,7 @@ export function CharacterNew() {
                   : "border-border hover:border-purple-300"
               }`}
             >
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Zap className="w-6 h-6 text-blue-600" />
               </div>
               <h3 className="font-bold text-foreground mb-1">기존 변형</h3>

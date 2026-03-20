@@ -248,7 +248,7 @@ export function MascotNew() {
               <h3 className="font-bold text-foreground mb-4">마스코트의 가치</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Building2 className="w-4 h-4 text-indigo-600" />
                   </div>
                   <div>
@@ -261,7 +261,7 @@ export function MascotNew() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Target className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
@@ -274,7 +274,7 @@ export function MascotNew() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Palette className="w-4 h-4 text-purple-600" />
                   </div>
                   <div>

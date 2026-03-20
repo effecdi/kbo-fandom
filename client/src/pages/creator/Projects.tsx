@@ -188,10 +188,10 @@ export function Projects() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {
-      pending: { label: "검토 중", className: "bg-yellow-100 text-yellow-700 border-yellow-300" },
-      accepted: { label: "수락됨", className: "bg-green-100 text-green-700 border-green-300" },
+      pending: { label: "검토 중", className: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300" },
+      accepted: { label: "수락됨", className: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300" },
       rejected: { label: "거절됨", className: "bg-gray-100 text-gray-700 border-gray-300" },
-      interviewing: { label: "인터뷰 예정", className: "bg-blue-100 text-blue-700 border-blue-300" },
+      interviewing: { label: "인터뷰 예정", className: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300" },
     };
     const config = statusMap[status] || statusMap.pending;
     return <Badge className={config.className}>{config.label}</Badge>;

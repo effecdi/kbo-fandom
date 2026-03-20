@@ -48,7 +48,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     location === item.path || item.alts?.includes(location);
 
   return (
-    <div className="min-h-screen bg-muted/30 dark:bg-background flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left Sidebar */}
       <aside className="w-60 bg-card border-r flex flex-col fixed h-screen z-20">
         {/* Logo */}

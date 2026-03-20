@@ -100,9 +100,9 @@ export function Campaigns() {
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { label: string; color: string; icon: any }> = {
-      active: { label: "진행중", color: "bg-green-100 text-green-700 border-green-300", icon: PlayCircle },
-      recruiting: { label: "작가모집중", color: "bg-purple-100 text-purple-700 border-purple-300", icon: Users },
-      planning: { label: "기획중", color: "bg-blue-100 text-blue-700 border-blue-300", icon: Target },
+      active: { label: "진행중", color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300", icon: PlayCircle },
+      recruiting: { label: "작가모집중", color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300", icon: Users },
+      planning: { label: "기획중", color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300", icon: Target },
       completed: { label: "완료", color: "bg-muted text-foreground border-border", icon: CheckCircle },
     };
     return configs[status] || configs.planning;
@@ -143,7 +143,7 @@ export function Campaigns() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                 <PlayCircle className="w-5 h-5 text-green-600" />
               </div>
               <span className="text-2xl font-black text-foreground">1</span>
@@ -152,7 +152,7 @@ export function Campaigns() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
                 <Clock className="w-5 h-5 text-yellow-600" />
               </div>
               <span className="text-2xl font-black text-foreground">1</span>
@@ -161,7 +161,7 @@ export function Campaigns() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-blue-600" />
               </div>
               <span className="text-2xl font-black text-foreground">1</span>
@@ -170,7 +170,7 @@ export function Campaigns() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-5 h-5 text-purple-600" />
               </div>
               <span className="text-2xl font-black text-foreground">1</span>

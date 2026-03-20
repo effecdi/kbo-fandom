@@ -119,7 +119,7 @@ export function ProposalNew() {
             <div className="bg-card rounded-2xl p-6 border border-border sticky top-8">
               <h3 className="font-black text-foreground mb-4">선택한 작가</h3>
               <div className="mb-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full mx-auto mb-3" />
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full mx-auto mb-3" />
                 <p className="font-bold text-center text-foreground">작가 A</p>
                 <p className="text-sm text-center text-muted-foreground">팔로워 15K</p>
               </div>

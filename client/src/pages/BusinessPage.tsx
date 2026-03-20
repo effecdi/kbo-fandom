@@ -25,9 +25,9 @@ const olliMascot = "/favicon.png";
 
 export function BusinessPage() {
   return (
-    <div className="min-h-screen w-full bg-card">
+    <div className="min-h-screen w-full bg-background">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-card/95 backdrop-blur-sm shadow-sm z-50">
+      <nav className="fixed top-0 w-full bg-background/95 backdrop-blur-sm shadow-sm z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <div className="w-12 h-12 flex items-center justify-center">
@@ -63,14 +63,14 @@ export function BusinessPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-indigo-100 rounded-full px-4 py-2 mb-6">
-                <Building2 className="w-4 h-4 text-indigo-600" />
-                <span className="text-indigo-700 font-semibold text-sm">
+              <div className="inline-flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full px-4 py-2 mb-6">
+                <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-indigo-700 dark:text-indigo-300 font-semibold text-sm">
                   기업 · 기관 · 관공서 전용
                 </span>
               </div>
@@ -175,7 +175,7 @@ export function BusinessPage() {
       </section>
 
       {/* Problem Statement */}
-      <section className="py-20 px-6 bg-card">
+      <section className="py-20 px-6 bg-background">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-black mb-6 text-foreground">
             이런 고민 있으셨나요?
@@ -207,7 +207,7 @@ export function BusinessPage() {
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="bg-gradient-to-br from-muted/50 to-muted rounded-2xl p-8 hover:shadow-xl transition-all"
+                className="bg-gradient-to-br from-muted/30 to-muted/60 rounded-2xl p-8 hover:shadow-xl transition-all"
               >
                 <div
                   className={`w-14 h-14 bg-gradient-to-br from-${item.color}-400 to-${item.color}-600 rounded-xl flex items-center justify-center mb-6 mx-auto`}
@@ -232,7 +232,7 @@ export function BusinessPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-6 bg-gradient-to-br from-indigo-50 to-purple-50">
+      <section id="features" className="py-20 px-6 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
@@ -324,7 +324,7 @@ export function BusinessPage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 px-6 bg-card">
+      <section id="how-it-works" className="py-20 px-6 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
@@ -385,7 +385,7 @@ export function BusinessPage() {
                 },
               ].map((item, idx) => (
                 <div key={idx} className="relative">
-                  <div className="bg-gradient-to-br from-muted/50 to-muted rounded-3xl p-8 hover:shadow-xl transition-all h-full">
+                  <div className="bg-gradient-to-br from-muted/30 to-muted/60 rounded-3xl p-8 hover:shadow-xl transition-all h-full">
                     {/* Step Number */}
                     <div className="text-6xl font-black text-indigo-100 mb-4">
                       {item.step}
@@ -468,7 +468,7 @@ export function BusinessPage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 px-6 bg-card">
+      <section id="pricing" className="py-20 px-6 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
@@ -579,7 +579,7 @@ export function BusinessPage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 px-6 bg-gradient-to-br from-muted/50 to-muted">
+      <section className="py-20 px-6 bg-gradient-to-br from-muted/30 to-muted/60">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
@@ -636,7 +636,7 @@ export function BusinessPage() {
                   <p className="text-sm text-muted-foreground mb-3">
                     {testimonial.role}
                   </p>
-                  <div className="inline-flex items-center gap-2 bg-indigo-50 rounded-full px-4 py-2">
+                  <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/20 rounded-full px-4 py-2">
                     <TrendingUp className="w-4 h-4 text-indigo-600" />
                     <span className="text-sm font-semibold text-indigo-600">
                       {testimonial.result}

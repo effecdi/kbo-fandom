@@ -642,7 +642,7 @@ export function BubbleCanvas({
                     height: page.canvasSize.height,
                     maxWidth: "100%",
                     cursor: isActive ? "default" : "pointer",
-                    border: isActive ? "1px solid rgba(0,0,0,0.1)" : "1px solid transparent"
+                    border: isActive ? "1px solid hsl(var(--border))" : "1px solid transparent"
                 }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}

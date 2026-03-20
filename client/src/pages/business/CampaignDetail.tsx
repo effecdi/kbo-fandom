@@ -128,8 +128,8 @@ export function CampaignDetail() {
 
   const getStatusBadge = (status: string) => {
     const configs: Record<string, { label: string; color: string; icon: any }> = {
-      pending: { label: "검토중", color: "bg-yellow-100 text-yellow-700", icon: Clock },
-      selected: { label: "선정됨", color: "bg-green-100 text-green-700", icon: CheckCircle },
+      pending: { label: "검토중", color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300", icon: Clock },
+      selected: { label: "선정됨", color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300", icon: CheckCircle },
       rejected: { label: "미선정", color: "bg-muted text-foreground", icon: XCircle },
     };
     return configs[status] || configs.pending;
@@ -154,7 +154,7 @@ export function CampaignDetail() {
                 <h1 className="text-3xl font-black text-foreground">
                   {campaign.title}
                 </h1>
-                <Badge className="bg-purple-100 text-purple-700 border-purple-300">
+                <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300">
                   <Users className="w-3 h-3 mr-1" />
                   작가모집중
                 </Badge>
@@ -270,11 +270,11 @@ export function CampaignDetail() {
                               <h3 className="text-xl font-black text-foreground">
                                 {applicant.name}
                               </h3>
-                              <Badge className="bg-indigo-100 text-indigo-700">
+                              <Badge className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
                                 {applicant.genre}
                               </Badge>
                               {applicant.rating >= 4.9 && (
-                                <Badge className="bg-yellow-100 text-yellow-700">
+                                <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
                                   <Award className="w-3 h-3 mr-1" />
                                   Top Rated
                                 </Badge>
@@ -403,7 +403,7 @@ export function CampaignDetail() {
                           <h3 className="text-lg font-black text-foreground mb-1">
                             {creator.name}
                           </h3>
-                          <Badge className="bg-green-100 text-green-700">
+                          <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
                             {creator.role}
                           </Badge>
                         </div>
@@ -430,7 +430,7 @@ export function CampaignDetail() {
                         </div>
                         <div>
                           <div className="text-sm text-muted-foreground mb-1">상태</div>
-                          <Badge className="bg-blue-100 text-blue-700">
+                          <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
                             {creator.status}
                           </Badge>
                         </div>
@@ -523,7 +523,7 @@ export function CampaignDetail() {
 
                 <div>
                   <h3 className="font-bold text-foreground mb-2">사용 마스코트</h3>
-                  <Badge className="bg-indigo-100 text-indigo-700">
+                  <Badge className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
                     {campaign.mascot}
                   </Badge>
                 </div>

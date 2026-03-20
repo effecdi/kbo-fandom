@@ -36,7 +36,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTheme } from "@/components/theme-provider";
 import { useNavigate } from "react-router";
 
 type AssetType = "mascot" | "logo" | "icon" | "color" | "document";
@@ -58,7 +57,6 @@ interface Asset {
 }
 
 export function BrandAssets() {
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedType, setSelectedType] = useState<AssetType | "all">("all");
@@ -176,15 +174,15 @@ export function BrandAssets() {
   const getStatusColor = (status: AssetStatus) => {
     switch (status) {
       case "approved":
-        return theme === "dark" ? "text-green-400 bg-green-500/20" : "text-green-600 bg-green-100";
+        return "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-500/20";
       case "pending":
-        return theme === "dark" ? "text-yellow-400 bg-yellow-500/20" : "text-yellow-600 bg-yellow-100";
+        return "text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-500/20";
       case "draft":
-        return theme === "dark" ? "text-gray-400 bg-gray-500/20" : "text-muted-foreground bg-muted";
+        return "text-muted-foreground bg-muted";
       case "rejected":
-        return theme === "dark" ? "text-red-400 bg-red-500/20" : "text-red-600 bg-red-100";
+        return "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/20";
       case "archived":
-        return theme === "dark" ? "text-muted-foreground bg-gray-700/20" : "text-muted-foreground bg-muted";
+        return "text-muted-foreground bg-muted";
     }
   };
 
@@ -269,19 +267,17 @@ export function BrandAssets() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className={`text-3xl font-black mb-2 ${
-              theme === "dark" ? "text-white" : "text-foreground"
-            }`}>
+            <h1 className="text-3xl font-black mb-2 text-foreground">
               브랜드 자산
             </h1>
-            <p className={theme === "dark" ? "text-gray-400" : "text-muted-foreground"}>
+            <p className="text-muted-foreground">
               승인된 마스코트, 로고, 아이콘을 통합 관리하고 버전을 추적하세요
             </p>
           </div>
           <div className="flex gap-3">
             <Button
               variant="outline"
-              className={theme === "dark" ? "border-border" : ""}
+              className="border-border"
             >
               <Upload className="w-4 h-4 mr-2" />
               업로드
@@ -298,72 +294,64 @@ export function BrandAssets() {
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
-          <div className={`rounded-xl p-4 border ${
-            theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
-          }`}>
+          <div className="rounded-xl p-4 border bg-card border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
                 <FolderOpen className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
+                <p className="text-2xl font-black text-foreground">
                   {stats.total}
                 </p>
-                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+                <p className="text-xs text-muted-foreground">
                   전체 자산
                 </p>
               </div>
             </div>
           </div>
 
-          <div className={`rounded-xl p-4 border ${
-            theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
-          }`}>
+          <div className="rounded-xl p-4 border bg-card border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
+                <p className="text-2xl font-black text-foreground">
                   {stats.approved}
                 </p>
-                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+                <p className="text-xs text-muted-foreground">
                   승인됨
                 </p>
               </div>
             </div>
           </div>
 
-          <div className={`rounded-xl p-4 border ${
-            theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
-          }`}>
+          <div className="rounded-xl p-4 border bg-card border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
                 <Clock className="w-5 h-5 text-yellow-500" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
+                <p className="text-2xl font-black text-foreground">
                   {stats.pending}
                 </p>
-                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+                <p className="text-xs text-muted-foreground">
                   검토중
                 </p>
               </div>
             </div>
           </div>
 
-          <div className={`rounded-xl p-4 border ${
-            theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
-          }`}>
+          <div className="rounded-xl p-4 border bg-card border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-500/20 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                 <Edit className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${theme === "dark" ? "text-white" : "text-foreground"}`}>
+                <p className="text-2xl font-black text-foreground">
                   {stats.draft}
                 </p>
-                <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+                <p className="text-xs text-muted-foreground">
                   초안
                 </p>
               </div>
@@ -373,22 +361,16 @@ export function BrandAssets() {
       </div>
 
       {/* Filters & Search */}
-      <div className={`rounded-2xl p-6 border mb-6 ${
-        theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
-      }`}>
+      <div className="rounded-2xl p-6 border mb-6 bg-card border-border">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-              theme === "dark" ? "text-muted-foreground" : "text-gray-400"
-            }`} />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="자산 이름 또는 태그로 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`pl-12 ${
-                theme === "dark" ? "bg-gray-900 border-border" : ""
-              }`}
+              className="pl-12 border-border"
             />
           </div>
 
@@ -418,11 +400,7 @@ export function BrandAssets() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value as AssetStatus | "all")}
-            className={`px-4 py-2 rounded-lg border font-semibold text-sm ${
-              theme === "dark"
-                ? "bg-gray-900 border-border text-white"
-                : "bg-card border-border text-foreground"
-            }`}
+            className="px-4 py-2 rounded-lg border font-semibold text-sm bg-card border-border text-foreground"
           >
             <option value="all">모든 상태</option>
             <option value="approved">승인됨</option>
@@ -433,18 +411,12 @@ export function BrandAssets() {
           </select>
 
           {/* View Mode */}
-          <div className={`flex rounded-lg border ${
-            theme === "dark" ? "border-border" : "border-border"
-          }`}>
+          <div className="flex rounded-lg border border-border">
             <button
               onClick={() => setViewMode("grid")}
               className={`px-4 py-2 rounded-l-lg ${
                 viewMode === "grid"
-                  ? theme === "dark"
-                    ? "bg-gray-800 text-white"
-                    : "bg-muted text-foreground"
-                  : theme === "dark"
-                  ? "text-gray-400"
+                  ? "bg-muted text-foreground"
                   : "text-muted-foreground"
               }`}
             >
@@ -454,11 +426,7 @@ export function BrandAssets() {
               onClick={() => setViewMode("list")}
               className={`px-4 py-2 rounded-r-lg ${
                 viewMode === "list"
-                  ? theme === "dark"
-                    ? "bg-gray-800 text-white"
-                    : "bg-muted text-foreground"
-                  : theme === "dark"
-                  ? "text-gray-400"
+                  ? "bg-muted text-foreground"
                   : "text-muted-foreground"
               }`}
             >
@@ -474,9 +442,7 @@ export function BrandAssets() {
           {filteredAssets.map((asset) => (
             <div
               key={asset.id}
-              className={`group rounded-2xl border overflow-hidden hover:shadow-xl transition-all ${
-                theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
-              }`}
+              className="group rounded-2xl border overflow-hidden hover:shadow-xl transition-all bg-card border-border"
             >
               {/* Thumbnail */}
               <div className="relative aspect-square overflow-hidden bg-muted">
@@ -526,25 +492,19 @@ export function BrandAssets() {
               {/* Content */}
               <div className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className={`font-bold text-sm line-clamp-1 ${
-                    theme === "dark" ? "text-white" : "text-foreground"
-                  }`}>
+                  <h3 className="font-bold text-sm line-clamp-1 text-foreground">
                     {asset.name}
                   </h3>
-                  <button className={theme === "dark" ? "text-gray-400" : "text-muted-foreground"}>
+                  <button className="text-muted-foreground">
                     <MoreVertical className="w-4 h-4" />
                   </button>
                 </div>
 
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    theme === "dark" ? "bg-gray-800 text-gray-400" : "bg-muted text-muted-foreground"
-                  }`}>
+                  <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">
                     {getTypeLabel(asset.type)}
                   </span>
-                  <span className={`text-xs font-mono ${
-                    theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
-                  }`}>
+                  <span className="text-xs font-mono text-muted-foreground">
                     {asset.version}
                   </span>
                 </div>
@@ -553,23 +513,19 @@ export function BrandAssets() {
                   {asset.tags.slice(0, 2).map((tag) => (
                     <span
                       key={tag}
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        theme === "dark" ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"
-                      }`}
+                      className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
                     >
                       {tag}
                     </span>
                   ))}
                   {asset.tags.length > 2 && (
-                    <span className={`text-xs ${theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"}`}>
+                    <span className="text-xs text-muted-foreground">
                       +{asset.tags.length - 2}
                     </span>
                   )}
                 </div>
 
-                <div className={`flex items-center justify-between text-xs pt-3 border-t ${
-                  theme === "dark" ? "border-border text-muted-foreground" : "border-border text-muted-foreground"
-                }`}>
+                <div className="flex items-center justify-between text-xs pt-3 border-t border-border text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Download className="w-3 h-3" />
                     <span>{asset.downloads}</span>
@@ -588,9 +544,7 @@ export function BrandAssets() {
           {filteredAssets.map((asset) => (
             <div
               key={asset.id}
-              className={`rounded-xl p-4 border hover:shadow-lg transition-all ${
-                theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
-              }`}
+              className="rounded-xl p-4 border hover:shadow-lg transition-all bg-card border-border"
             >
               <div className="flex items-center gap-4">
                 {/* Thumbnail */}
@@ -605,23 +559,17 @@ export function BrandAssets() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className={`font-bold truncate ${
-                      theme === "dark" ? "text-white" : "text-foreground"
-                    }`}>
+                    <h3 className="font-bold truncate text-foreground">
                       {asset.name}
                     </h3>
                     {asset.isLocked && <Lock className="w-4 h-4 text-muted-foreground" />}
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <span className={`inline-flex items-center gap-1 ${
-                      theme === "dark" ? "text-gray-400" : "text-muted-foreground"
-                    }`}>
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
                       {getTypeIcon(asset.type)}
                       {getTypeLabel(asset.type)}
                     </span>
-                    <span className={`font-mono text-xs ${
-                      theme === "dark" ? "text-muted-foreground" : "text-muted-foreground"
-                    }`}>
+                    <span className="font-mono text-xs text-muted-foreground">
                       {asset.version}
                     </span>
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold ${getStatusColor(asset.status)}`}>
@@ -636,9 +584,7 @@ export function BrandAssets() {
                   {asset.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        theme === "dark" ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"
-                      }`}
+                      className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
                     >
                       {tag}
                     </span>
@@ -646,9 +592,7 @@ export function BrandAssets() {
                 </div>
 
                 {/* Meta */}
-                <div className={`hidden md:flex items-center gap-4 text-sm ${
-                  theme === "dark" ? "text-gray-400" : "text-muted-foreground"
-                }`}>
+                <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <User className="w-4 h-4" />
                     <span>{asset.modifiedBy}</span>
@@ -683,18 +627,14 @@ export function BrandAssets() {
 
       {/* Empty State */}
       {filteredAssets.length === 0 && (
-        <div className={`text-center py-16 rounded-2xl border ${
-          theme === "dark" ? "bg-[#1a1a1a] border-border" : "bg-card border-border"
-        }`}>
-          <div className="w-16 h-16 bg-gray-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="text-center py-16 rounded-2xl border bg-card border-border">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
             <FolderOpen className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className={`text-xl font-bold mb-2 ${
-            theme === "dark" ? "text-white" : "text-foreground"
-          }`}>
+          <h3 className="text-xl font-bold mb-2 text-foreground">
             자산을 찾을 수 없습니다
           </h3>
-          <p className={`mb-6 ${theme === "dark" ? "text-gray-400" : "text-muted-foreground"}`}>
+          <p className="mb-6 text-muted-foreground">
             검색 조건을 변경하거나 새 자산을 생성해보세요
           </p>
           <Button

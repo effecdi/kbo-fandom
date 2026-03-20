@@ -154,12 +154,12 @@ export function Reports() {
             const Icon = stat.icon;
             const isPositive = stat.trend === "up";
             const colorClasses = {
-              indigo: "bg-indigo-100 text-indigo-600",
-              blue: "bg-blue-100 text-blue-600",
-              purple: "bg-purple-100 text-purple-600",
-              pink: "bg-pink-100 text-pink-600",
-              green: "bg-green-100 text-green-600",
-              orange: "bg-orange-100 text-orange-600",
+              indigo: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400",
+              blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+              purple: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
+              pink: "bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400",
+              green: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+              orange: "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400",
             }[stat.color];
 
             return (
@@ -174,8 +174,8 @@ export function Reports() {
                   <div
                     className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
                       isPositive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                        : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
                     }`}
                   >
                     {isPositive ? (
@@ -223,7 +223,7 @@ export function Reports() {
                         <div className="flex items-center gap-2">
                           <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
                             campaign.status === "진행중"
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
                               : "bg-muted text-foreground"
                           }`}>
                             {campaign.status}
@@ -355,7 +355,7 @@ export function Reports() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button variant="outline" className="justify-start h-auto p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-red-600" />
                 </div>
                 <div className="text-left">
@@ -366,7 +366,7 @@ export function Reports() {
             </Button>
             <Button variant="outline" className="justify-start h-auto p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-green-600" />
                 </div>
                 <div className="text-left">
@@ -377,7 +377,7 @@ export function Reports() {
             </Button>
             <Button variant="outline" className="justify-start h-auto p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-blue-600" />
                 </div>
                 <div className="text-left">

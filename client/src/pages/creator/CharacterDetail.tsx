@@ -75,7 +75,7 @@ export function CharacterDetail() {
           {/* Left - Character Image */}
           <div className="lg:col-span-1">
             <div className="bg-card rounded-2xl border border-border overflow-hidden sticky top-8">
-              <div className="aspect-square bg-gradient-to-br from-purple-100 to-pink-100">
+              <div className="aspect-square bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30">
                 <img
                   src={character.image}
                   alt={character.name}
@@ -190,7 +190,7 @@ export function CharacterDetail() {
                         key={index}
                         className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted transition-all cursor-pointer"
                       >
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg flex items-center justify-center">
                           <FileText className="w-6 h-6 text-purple-600" />
                         </div>
                         <div className="flex-1">

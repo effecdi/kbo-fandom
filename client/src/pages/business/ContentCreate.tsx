@@ -116,7 +116,7 @@ export function ContentCreate() {
               { id: 3, title: "공지사항 배너", date: "2024.02.20", type: "직접 제작" },
             ].map((content) => (
               <div key={content.id} className="group cursor-pointer">
-                <div className="aspect-square bg-gradient-to-br from-indigo-100 to-blue-100 rounded-xl mb-3 flex items-center justify-center group-hover:shadow-lg transition-all relative overflow-hidden">
+                <div className="aspect-square bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl mb-3 flex items-center justify-center group-hover:shadow-lg transition-all relative overflow-hidden">
                   <FileText className="w-16 h-16 text-indigo-300" />
                   <div className="absolute top-3 right-3">
                     <span className="bg-white/90 backdrop-blur-sm text-xs font-semibold text-foreground px-2 py-1 rounded-full">

@@ -182,7 +182,7 @@ export function LandingPage() {
             ].map((stat, i) => (
               <GlareHover key={i}>
                 <div
-                  className="group relative p-12 rounded-3xl text-center backdrop-blur-xl border-2 transition-all duration-300 hover:scale-105 bg-card/80 border-border hover:border-[#00e5cc]/50 shadow-xl"
+                  className="group relative p-12 rounded-3xl text-center backdrop-blur-xl border-2 transition-all duration-300 hover:scale-105 bg-muted/80 border-border hover:border-[#00e5cc]/50 shadow-xl"
                 >
                   <div
                     className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#00e5cc] to-blue-500 shadow-2xl group-hover:scale-110 transition-transform duration-300`}

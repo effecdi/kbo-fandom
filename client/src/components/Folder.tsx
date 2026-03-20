@@ -70,7 +70,7 @@ export function Folder({
   const backColor = darkenColor(color, 20);
   const paper1 = lightenColor(color, 85);
   const paper2 = lightenColor(color, 90);
-  const paper3 = "#ffffff";
+  const paper3 = "hsl(var(--card))";
 
   const w = 160 * size;
   const h = 120 * size;
@@ -168,7 +168,7 @@ export function Folder({
                     style={{
                       fontSize: 15 * size,
                       fontWeight: 800,
-                      color: "#1f2937",
+                      color: "hsl(var(--foreground))",
                       textAlign: "center",
                       lineHeight: 1.5,
                       whiteSpace: "pre-line",

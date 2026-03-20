@@ -206,7 +206,7 @@ export function Collaborations() {
               <div key={project.id} className="bg-card rounded-xl p-6 border border-border hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl flex items-center justify-center">
                       <Building2 className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>

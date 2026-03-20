@@ -202,7 +202,7 @@ export function CampaignNew() {
                         <Badge
                           key={genre}
                           variant="outline"
-                          className="cursor-pointer hover:bg-blue-100"
+                          className="cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30"
                         >
                           {genre}
                         </Badge>
@@ -296,7 +296,7 @@ export function CampaignNew() {
                         <Badge
                           key={channel}
                           variant="outline"
-                          className="cursor-pointer hover:bg-blue-100"
+                          className="cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30"
                         >
                           {channel}
                         </Badge>

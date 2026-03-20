@@ -144,11 +144,11 @@ export function CreatorProposals() {
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { label: string; color: string; icon: any }> = {
-      pending: { label: "응답 대기", color: "bg-yellow-100 text-yellow-700 border-yellow-300", icon: Clock },
-      accepted: { label: "수락함", color: "bg-green-100 text-green-700 border-green-300", icon: CheckCircle },
-      rejected: { label: "거절함", color: "bg-red-100 text-red-700 border-red-300", icon: XCircle },
-      in_progress: { label: "진행중", color: "bg-blue-100 text-blue-700 border-blue-300", icon: FileText },
-      selected: { label: "선정됨", color: "bg-purple-100 text-purple-700 border-purple-300", icon: Send },
+      pending: { label: "응답 대기", color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300", icon: Clock },
+      accepted: { label: "수락함", color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300", icon: CheckCircle },
+      rejected: { label: "거절함", color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300", icon: XCircle },
+      in_progress: { label: "진행중", color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300", icon: FileText },
+      selected: { label: "선정됨", color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300", icon: Send },
     };
     return configs[status] || configs.pending;
   };
@@ -177,7 +177,7 @@ export function CreatorProposals() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-purple-600" />
               </div>
               <span className="text-2xl font-black text-foreground">{stats.total}</span>
@@ -186,7 +186,7 @@ export function CreatorProposals() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
                 <Clock className="w-5 h-5 text-yellow-600" />
               </div>
               <span className="text-2xl font-black text-foreground">{stats.pending}</span>
@@ -195,7 +195,7 @@ export function CreatorProposals() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
               <span className="text-2xl font-black text-foreground">{stats.accepted}</span>
@@ -204,7 +204,7 @@ export function CreatorProposals() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-blue-600" />
               </div>
               <span className="text-2xl font-black text-foreground">{stats.inProgress}</span>
@@ -268,7 +268,7 @@ export function CreatorProposals() {
                                   <StatusIcon className="w-3 h-3 mr-1" />
                                   {statusConfig.label}
                                 </Badge>
-                                <Badge className="bg-indigo-100 text-indigo-700">
+                                <Badge className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
                                   {proposal.projectType}
                                 </Badge>
                               </div>
@@ -479,7 +479,7 @@ export function CreatorProposals() {
                                   <StatusIcon className="w-3 h-3 mr-1" />
                                   {statusConfig.label}
                                 </Badge>
-                                <Badge className="bg-indigo-100 text-indigo-700">
+                                <Badge className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
                                   {proposal.projectType}
                                 </Badge>
                               </div>

@@ -149,7 +149,7 @@ export function CreatorCampaigns() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                 <Star className="w-5 h-5 text-green-600" />
               </div>
               <span className="text-2xl font-black text-foreground">
@@ -160,7 +160,7 @@ export function CreatorCampaigns() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-blue-600" />
               </div>
               <span className="text-2xl font-black text-foreground">
@@ -171,7 +171,7 @@ export function CreatorCampaigns() {
           </div>
           <div className="bg-card rounded-xl p-6 border border-border">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-yellow-600" />
               </div>
               <span className="text-2xl font-black text-foreground">HOT</span>
@@ -226,13 +226,13 @@ export function CreatorCampaigns() {
                         </div>
                       </div>
                       {campaign.isNew && (
-                        <Badge className="bg-red-100 text-red-700 border-red-300">
+                        <Badge className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300">
                           NEW
                         </Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <Badge className="bg-indigo-100 text-indigo-700">
+                      <Badge className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
                         {campaign.type}
                       </Badge>
                       <span className="inline-flex items-center gap-1">

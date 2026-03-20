@@ -809,7 +809,7 @@ export default function CreateInstatoonPage() {
               </div>
             ) : baseImageForCanvas ? (
               <div className="flex flex-col gap-3 w-full">
-                <div className="overflow-hidden rounded-md border bg-white w-full">
+                <div className="overflow-hidden rounded-md border bg-background w-full">
                   <BubbleCanvas
                     page={bubblePage}
                     isActive

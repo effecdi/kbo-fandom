@@ -65,7 +65,7 @@ export default function OnboardingPage() {
       <div className="max-w-5xl w-full relative z-10">
         {/* Progress Bar */}
         <div className="mb-8">
-          <div className="relative h-2 bg-card/50 backdrop-blur-sm rounded-full overflow-hidden">
+          <div className="relative h-2 bg-muted/50 backdrop-blur-sm rounded-full overflow-hidden">
             <div
               className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progressPercentage}%` }}
@@ -86,7 +86,7 @@ export default function OnboardingPage() {
 
         {/* Logo */}
         <div className="flex justify-center mb-12">
-          <div className="flex items-center gap-4 bg-card/80 backdrop-blur-sm rounded-3xl px-8 py-4 shadow-lg">
+          <div className="flex items-center gap-4 bg-muted/80 backdrop-blur-sm rounded-3xl px-8 py-4 shadow-lg">
             <img src={logoImg} alt="OLLI" className="w-16 h-16 object-contain rounded-md" />
             <span className="text-4xl font-black text-primary">
               OLLI

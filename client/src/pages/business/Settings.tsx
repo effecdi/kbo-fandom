@@ -238,7 +238,7 @@ export function BusinessSettings() {
                       className="flex items-center justify-between p-4 border border-border rounded-xl"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl flex items-center justify-center">
                           <Users className="w-6 h-6 text-indigo-600" />
                         </div>
                         <div>
@@ -252,8 +252,8 @@ export function BusinessSettings() {
                         <span
                           className={`text-sm font-semibold px-3 py-1 rounded-full ${
                             member.status === "active"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-yellow-100 text-yellow-700"
+                              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                              : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
                           }`}
                         >
                           {member.status === "active" ? "활성" : "대기"}
@@ -390,7 +390,7 @@ export function BusinessSettings() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs font-semibold text-indigo-600 px-2 py-1 bg-indigo-100 rounded-full">
+                      <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
                         기본
                       </span>
                     </div>

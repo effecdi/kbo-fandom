@@ -72,7 +72,7 @@ export function CreatorDetail() {
           <div className="lg:col-span-2 space-y-8">
             {/* Header Card */}
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
-              <div className="relative bg-gradient-to-br from-indigo-50 to-blue-50 p-8">
+              <div className="relative bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 p-8">
                 <div className="absolute top-4 right-4 bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
                   <Star className="w-4 h-4 fill-white" />
                   매칭 {creator.matchScore}%
@@ -139,7 +139,7 @@ export function CreatorDetail() {
             </div>
 
             {/* Matching Reason */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-2xl p-6 border border-green-100">
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle2 className="w-6 h-6 text-green-600" />
                 <h2 className="text-xl font-black text-foreground">
@@ -192,7 +192,7 @@ export function CreatorDetail() {
                   {creator.style.map((s) => (
                     <span
                       key={s}
-                      className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold"
+                      className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-semibold"
                     >
                       {s}
                     </span>
@@ -209,7 +209,7 @@ export function CreatorDetail() {
                   {creator.collabCategories.map((cat) => (
                     <span
                       key={cat}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold"
+                      className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-semibold"
                     >
                       {cat}
                     </span>
@@ -233,7 +233,7 @@ export function CreatorDetail() {
                 {portfolioItems.map((item, index) => (
                   <div
                     key={index}
-                    className="group relative aspect-square bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl overflow-hidden cursor-pointer"
+                    className="group relative aspect-square bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl overflow-hidden cursor-pointer"
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
                       <FileText className="w-16 h-16 text-purple-300" />
@@ -376,7 +376,7 @@ export function CreatorDetail() {
             </div>
 
             {/* Stats */}
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl p-6 border border-indigo-100">
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-2xl p-6 border border-indigo-100">
               <h3 className="font-bold text-foreground mb-4">활동 지표</h3>
               <div className="space-y-4">
                 <div>
