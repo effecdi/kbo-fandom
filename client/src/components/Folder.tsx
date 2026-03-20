@@ -10,6 +10,16 @@ function darkenColor(hex: string, percent: number): string {
   return `#${darken(r).toString(16).padStart(2, "0")}${darken(g).toString(16).padStart(2, "0")}${darken(b).toString(16).padStart(2, "0")}`;
 }
 
+function lightenColor(hex: string, percent: number): string {
+  hex = hex.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const lighten = (value: number) =>
+    Math.max(0, Math.min(255, Math.floor(value + (255 - value) * (percent / 100))));
+  return `#${lighten(r).toString(16).padStart(2, "0")}${lighten(g).toString(16).padStart(2, "0")}${lighten(b).toString(16).padStart(2, "0")}`;
+}
+
 interface FolderProps {
   color?: string;
   size?: number;
@@ -40,8 +50,8 @@ export function Folder({
       const rect = e.currentTarget.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-      const offsetX = (e.clientX - centerX) * 0.15;
-      const offsetY = (e.clientY - centerY) * 0.15;
+      const offsetX = (e.clientX - centerX) * 0.1;
+      const offsetY = (e.clientY - centerY) * 0.1;
       setPaperOffsets(Array(3).fill({ x: offsetX, y: offsetY }));
     },
     [open]
@@ -57,13 +67,17 @@ export function Folder({
   }, []);
 
   const folderColor = color;
-  const backColor = darkenColor(color, 15);
+  const backColor = darkenColor(color, 20);
+  const paper1 = lightenColor(color, 85);
+  const paper2 = lightenColor(color, 90);
+  const paper3 = "#ffffff";
 
-  const baseWidth = 100 * size;
-  const baseHeight = 80 * size;
+  const w = 160 * size;
+  const h = 120 * size;
 
   return (
-    <div className={`flex flex-col items-center gap-4 ${className}`}>
+    <div className={`flex flex-col items-center ${className}`}>
+      {/* Hover zone — taller to include paper fan-out area */}
       <div
         onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
@@ -71,146 +85,177 @@ export function Folder({
         style={{
           position: "relative",
           cursor: "pointer",
-          transition: "all 0.2s ease-in",
-          transform: open ? "translateY(-8px)" : undefined,
-          width: baseWidth,
-          height: baseHeight,
+          width: w * 1.8,
+          height: h + (open ? h * 1.2 : 20),
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          transition: "height 0.3s ease",
         }}
       >
-        {/* Papers */}
-        {papers.map((item, i) => {
-          const paperBg =
-            i === 0 ? "#e6e6e6" : i === 1 ? "#f2f2f2" : "#ffffff";
-          const widthPercent = i === 0 ? 70 : i === 1 ? 80 : 90;
-          const heightPercent = i === 0 ? 80 : i === 1 ? 70 : 60;
-
-          let openTransform = "";
-          if (open) {
-            if (i === 0)
-              openTransform = `translate(calc(-120% + ${paperOffsets[0].x}px), calc(-70% + ${paperOffsets[0].y}px)) rotateZ(-15deg)`;
-            if (i === 1)
-              openTransform = `translate(calc(10% + ${paperOffsets[1].x}px), calc(-70% + ${paperOffsets[1].y}px)) rotateZ(15deg)`;
-            if (i === 2)
-              openTransform = `translate(calc(-50% + ${paperOffsets[2].x}px), calc(-100% + ${paperOffsets[2].y}px)) rotateZ(5deg)`;
-          }
-
-          // Render description text content
-          const renderContent = () => {
-            if (!open || !item) return null;
-            if (typeof item === "string") {
-              return (
-                <span
-                  style={{
-                    fontSize: 14 * size,
-                    fontWeight: 700,
-                    color: "#374151",
-                    textAlign: "center",
-                    lineHeight: 1.4,
-                    whiteSpace: "pre-line",
-                    padding: `${4 * size}px ${8 * size}px`,
-                  }}
-                >
-                  {item}
-                </span>
-              );
-            }
-            return item;
-          };
-
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                zIndex: 2,
-                bottom: "10%",
-                left: "50%",
-                transform: open ? openTransform : "translate(-50%, 10%)",
-                width: `${widthPercent}%`,
-                height: open && i > 0 ? "80%" : `${heightPercent}%`,
-                background: paperBg,
-                borderRadius: 10 * size,
-                transition: "all 0.3s ease-in-out",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: `${6 * size}px`,
-                overflow: "hidden",
-              }}
-            >
-              {renderContent()}
-            </div>
-          );
-        })}
-
-        {/* Back */}
+        {/* Folder body */}
         <div
           style={{
             position: "relative",
-            width: "100%",
-            height: "100%",
-            background: backColor,
-            borderRadius: `0px ${10 * size}px ${10 * size}px ${10 * size}px`,
+            width: w,
+            height: h,
+            transition: "transform 0.2s ease-in",
+            transform: open ? "translateY(-4px)" : undefined,
           }}
         >
-          {/* Tab */}
+          {/* Papers */}
+          {papers.map((item, i) => {
+            const paperBg = i === 0 ? paper1 : i === 1 ? paper2 : paper3;
+            const paperW = i === 0 ? w * 0.75 : i === 1 ? w * 0.85 : w * 0.92;
+            const paperH = i === 0 ? h * 0.85 : i === 1 ? h * 0.75 : h * 0.65;
+
+            const closedStyle: React.CSSProperties = {
+              left: "50%",
+              bottom: "8%",
+              transform: "translate(-50%, 8%)",
+              width: paperW,
+              height: paperH,
+            };
+
+            const openStyles: React.CSSProperties[] = [
+              {
+                left: "50%",
+                bottom: "15%",
+                transform: `translate(calc(-140% + ${paperOffsets[0].x}px), calc(-55% + ${paperOffsets[0].y}px)) rotateZ(-12deg)`,
+                width: paperW * 1.1,
+                height: h * 1.05,
+              },
+              {
+                left: "50%",
+                bottom: "15%",
+                transform: `translate(calc(15% + ${paperOffsets[1].x}px), calc(-55% + ${paperOffsets[1].y}px)) rotateZ(12deg)`,
+                width: paperW * 1.05,
+                height: h * 1.0,
+              },
+              {
+                left: "50%",
+                bottom: "15%",
+                transform: `translate(calc(-50% + ${paperOffsets[2].x}px), calc(-80% + ${paperOffsets[2].y}px)) rotateZ(2deg)`,
+                width: paperW * 1.15,
+                height: h * 1.1,
+              },
+            ];
+
+            const style = open ? openStyles[i] : closedStyle;
+
+            return (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  zIndex: 2,
+                  ...style,
+                  background: paperBg,
+                  borderRadius: 12 * size,
+                  transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 12 * size,
+                  boxShadow: open
+                    ? "0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)"
+                    : "0 1px 3px rgba(0,0,0,0.06)",
+                  overflow: "hidden",
+                }}
+              >
+                {open && item && (
+                  <div
+                    style={{
+                      fontSize: 15 * size,
+                      fontWeight: 800,
+                      color: "#1f2937",
+                      textAlign: "center",
+                      lineHeight: 1.5,
+                      whiteSpace: "pre-line",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {item}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Back */}
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              background: backColor,
+              borderRadius: `0 ${12 * size}px ${12 * size}px ${12 * size}px`,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            }}
+          >
+            {/* Tab */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "98%",
+                left: 0,
+                width: w * 0.35,
+                height: 14 * size,
+                background: backColor,
+                borderRadius: `${8 * size}px ${8 * size}px 0 0`,
+              }}
+            />
+          </div>
+
+          {/* Front */}
           <div
             style={{
               position: "absolute",
-              zIndex: 0,
-              bottom: "98%",
+              zIndex: 3,
+              top: 0,
               left: 0,
-              width: 30 * size,
-              height: 10 * size,
-              background: backColor,
-              borderRadius: `${5 * size}px ${5 * size}px 0 0`,
+              width: "100%",
+              height: "100%",
+              background: `linear-gradient(135deg, ${folderColor}, ${darkenColor(folderColor, 8)})`,
+              borderRadius: `${6 * size}px ${12 * size}px ${12 * size}px ${12 * size}px`,
+              transformOrigin: "bottom",
+              transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              transform: open ? "skew(15deg) scaleY(0.55)" : undefined,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            }}
+          />
+
+          {/* Right flap */}
+          <div
+            style={{
+              position: "absolute",
+              zIndex: 3,
+              top: 0,
+              right: 0,
+              width: "50%",
+              height: "100%",
+              background: `linear-gradient(135deg, ${darkenColor(folderColor, 5)}, ${darkenColor(folderColor, 12)})`,
+              borderRadius: `0 ${12 * size}px ${12 * size}px 0`,
+              transformOrigin: "bottom",
+              transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              transform: open ? "skew(-15deg) scaleY(0.55)" : undefined,
             }}
           />
         </div>
-
-        {/* Front */}
-        <div
-          style={{
-            position: "absolute",
-            zIndex: 3,
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: folderColor,
-            borderRadius: `${5 * size}px ${10 * size}px ${10 * size}px ${10 * size}px`,
-            transformOrigin: "bottom",
-            transition: "all 0.3s ease-in-out",
-            transform: open ? "skew(15deg) scaleY(0.6)" : undefined,
-          }}
-        />
-
-        {/* Right flap */}
-        <div
-          style={{
-            position: "absolute",
-            zIndex: 3,
-            top: 0,
-            right: 0,
-            width: "50%",
-            height: "100%",
-            background: folderColor,
-            borderRadius: `0 ${10 * size}px ${10 * size}px 0`,
-            transformOrigin: "bottom",
-            transition: "all 0.3s ease-in-out",
-            transform: open ? "skew(-15deg) scaleY(0.6)" : undefined,
-          }}
-        />
       </div>
 
       {/* Label */}
       {label && (
-        <span
-          className="text-center font-black leading-tight mt-2"
-          style={{ fontSize: 15 * size, maxWidth: baseWidth * 1.4 }}
+        <div
+          className="text-center font-black leading-snug"
+          style={{
+            fontSize: 18 * size,
+            marginTop: 8 * size,
+            maxWidth: w * 1.2,
+          }}
         >
           {label}
-        </span>
+        </div>
       )}
     </div>
   );

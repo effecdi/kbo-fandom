@@ -249,12 +249,12 @@ export function LandingPage() {
 
       {/* Features Section */}
       <section
-        className={`py-32 px-6 ${
+        className={`py-40 px-6 ${
           theme === "dark" ? "bg-black" : "bg-white"
         }`}
       >
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-28">
             <div
               className={`inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 ${
                 theme === "dark"
@@ -265,62 +265,54 @@ export function LandingPage() {
               핵심 기능
             </div>
             <h2
-              className={`text-6xl md:text-8xl font-black mb-4 ${
+              className={`text-6xl md:text-8xl font-black ${
                 theme === "dark" ? "text-white" : "text-gray-900"
               }`}
             >
               왜 <span className="bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">OLLI</span>인가?
             </h2>
+            <p className={`text-xl md:text-2xl mt-6 ${
+              theme === "dark" ? "text-gray-400" : "text-gray-500"
+            }`}>
+              폴더 위에 마우스를 올려보세요
+            </p>
           </div>
 
-          {/* Folder Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 justify-items-center pt-8">
-            {[
-              {
-                color: "#00e5cc",
-                label: "AI 캐릭터 생성",
-                desc: "텍스트 한 줄로\n독창적인 캐릭터 탄생",
-              },
-              {
-                color: "#f59e0b",
-                label: "초고속 처리",
-                desc: "5초만에\n완성",
-              },
-              {
-                color: "#a855f7",
-                label: "자동 스토리보드",
-                desc: "AI가 스토리를\n시각화",
-              },
-              {
-                color: "#ec4899",
-                label: "원클릭 퍼블리싱",
-                desc: "인스타그램\n직접 연동",
-              },
-              {
-                color: "#3b82f6",
-                label: "브랜드 마스코트",
-                desc: "기업 맞춤\nAI 학습",
-              },
-              {
-                color: "#22c55e",
-                label: "실시간 분석",
-                desc: "데이터 기반\n인사이트",
-              },
-              {
-                color: "#6b7280",
-                label: "엔터프라이즈 보안",
-                desc: "SOC 2\n인증 완료",
-              },
-            ].map((feature, i) => (
-              <Folder
-                key={i}
-                color={feature.color}
-                size={1.6}
-                items={[feature.desc]}
-                label={feature.label}
-                className={theme === "dark" ? "text-gray-200" : "text-gray-800"}
-              />
-            ))}
+          {/* Folder Grid — top row 4, bottom row 3 centered */}
+          <div className="flex flex-col items-center gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 justify-items-center">
+              {[
+                { color: "#00e5cc", label: "AI 캐릭터 생성", desc: "텍스트 한 줄로\n캐릭터 탄생" },
+                { color: "#f59e0b", label: "초고속 처리", desc: "단 5초만에\n완성" },
+                { color: "#a855f7", label: "자동 스토리보드", desc: "AI가 스토리를\n시각화" },
+                { color: "#ec4899", label: "원클릭 퍼블리싱", desc: "인스타그램\n직접 연동" },
+              ].map((f, i) => (
+                <Folder
+                  key={i}
+                  color={f.color}
+                  size={1.1}
+                  items={[f.desc]}
+                  label={f.label}
+                  className={theme === "dark" ? "text-gray-200" : "text-gray-800"}
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6 justify-items-center">
+              {[
+                { color: "#3b82f6", label: "브랜드 마스코트", desc: "기업 맞춤\nAI 학습" },
+                { color: "#22c55e", label: "실시간 분석", desc: "데이터 기반\n인사이트" },
+                { color: "#6b7280", label: "엔터프라이즈 보안", desc: "SOC 2\n인증 완료" },
+              ].map((f, i) => (
+                <Folder
+                  key={i + 4}
+                  color={f.color}
+                  size={1.1}
+                  items={[f.desc]}
+                  label={f.label}
+                  className={theme === "dark" ? "text-gray-200" : "text-gray-800"}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
