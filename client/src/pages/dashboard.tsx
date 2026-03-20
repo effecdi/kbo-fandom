@@ -281,17 +281,6 @@ export default function DashboardPage() {
     }
   }, [search, toast]);
 
-  if (!isAuthenticated) {
-    return (
-      <div className="mx-auto max-w-md px-6 py-16 text-center">
-        <h2 className="text-xl font-bold mb-2">로그인이 필요합니다</h2>
-        <p className="text-sm text-muted-foreground mb-5">대시보드를 보려면 로그인해주세요.</p>
-        <Button asChild size="sm">
-          <a href="/login">로그인</a>
-        </Button>
-      </div>
-    );
-  }
 
   const totalGen = usage?.totalGenerations || 0;
   const tier = getTier(totalGen);
