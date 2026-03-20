@@ -84,7 +84,7 @@ export function MascotNew() {
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
                   placeholder="예: 올리, ABC 브랜드..."
-                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-transparent border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
 
@@ -97,7 +97,7 @@ export function MascotNew() {
                   onChange={(e) => setConcept(e.target.value)}
                   placeholder="어떤 마스코트를 만들고 싶으신가요?&#10;예: 귀여운 곰돌이 캐릭터, 활기찬 느낌, 파란색 계열, 친근하고 다가가기 쉬운 이미지"
                   rows={6}
-                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 bg-transparent border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                 />
                 <p className="text-sm text-muted-foreground mt-2">
                   외형, 색상, 느낌을 구체적으로 설명할수록 좋아요

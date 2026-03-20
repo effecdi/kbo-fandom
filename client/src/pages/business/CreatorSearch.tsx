@@ -214,7 +214,7 @@ export function CreatorSearch() {
                   <label className="block text-sm font-bold text-foreground mb-2">
                     팔로워 수
                   </label>
-                  <select className="w-full px-3 py-2 border border-border rounded-lg text-sm">
+                  <select className="w-full px-3 py-2 bg-transparent border border-border rounded-lg text-sm">
                     <option>전체</option>
                     <option>1K - 5K</option>
                     <option>5K - 10K</option>
@@ -228,7 +228,7 @@ export function CreatorSearch() {
                   <label className="block text-sm font-bold text-foreground mb-2">
                     예산 범위
                   </label>
-                  <select className="w-full px-3 py-2 border border-border rounded-lg text-sm">
+                  <select className="w-full px-3 py-2 bg-transparent border border-border rounded-lg text-sm">
                     <option>전체</option>
                     <option>~₩500,000</option>
                     <option>₩500,000 - ₩1,000,000</option>
