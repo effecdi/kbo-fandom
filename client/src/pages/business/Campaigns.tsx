@@ -259,7 +259,7 @@ export function Campaigns() {
 
                   {/* Stats Grid */}
                   <div className="grid grid-cols-6 gap-4">
-                    <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <div className="text-center p-3 rounded-lg border border-purple-200 dark:border-purple-800">
                       <div className="text-xs text-purple-600 mb-1 font-semibold">지원자</div>
                       <div className="font-black text-purple-700 text-lg">
                         {campaign.applicants}명

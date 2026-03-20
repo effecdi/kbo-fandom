@@ -159,7 +159,7 @@ export function CharacterNew() {
               onClick={() => setMethod("text")}
               className={`p-6 rounded-xl border-2 transition-all ${
                 method === "text"
-                  ? "border-purple-600 bg-purple-50"
+                  ? "border-purple-600"
                   : "border-border hover:border-purple-300"
               }`}
             >
@@ -176,7 +176,7 @@ export function CharacterNew() {
               onClick={() => setMethod("image")}
               className={`p-6 rounded-xl border-2 transition-all ${
                 method === "image"
-                  ? "border-purple-600 bg-purple-50"
+                  ? "border-purple-600"
                   : "border-border hover:border-purple-300"
               }`}
             >
@@ -193,7 +193,7 @@ export function CharacterNew() {
               onClick={() => setMethod("variation")}
               className={`p-6 rounded-xl border-2 transition-all ${
                 method === "variation"
-                  ? "border-purple-600 bg-purple-50"
+                  ? "border-purple-600"
                   : "border-border hover:border-purple-300"
               }`}
             >
@@ -285,7 +285,7 @@ export function CharacterNew() {
                           isLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                         } ${
                           style === s.value
-                            ? "border-purple-600 bg-purple-50"
+                            ? "border-purple-600"
                             : "border-border hover:border-purple-300"
                         }`}
                       >

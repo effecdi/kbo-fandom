@@ -92,7 +92,7 @@ export function ProposalDetail() {
               </div>
 
               <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
+                <div className="p-4 rounded-xl">
                   <DollarSign className="w-5 h-5 text-purple-600 mb-2" />
                   <p className="text-xs text-muted-foreground mb-1">예산</p>
                   <p className="font-bold text-foreground text-sm">{proposal.budget}</p>

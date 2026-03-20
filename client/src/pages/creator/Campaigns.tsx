@@ -269,7 +269,7 @@ export function CreatorCampaigns() {
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
+                  <div className="rounded-lg p-3 border border-purple-200 dark:border-purple-800">
                     <div className="flex items-center gap-1 text-xs text-purple-600 mb-1">
                       <DollarSign className="w-3 h-3" />
                       <span className="font-semibold">예산</span>

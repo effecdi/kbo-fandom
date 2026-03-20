@@ -196,7 +196,7 @@ export default function OnboardingPage() {
                   key={item.id}
                   onClick={() => { setPurpose(item.id); setStep(3); }}
                   className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-purple-600 hover:shadow-lg ${
-                    purpose === item.id ? "border-purple-600 bg-purple-50 dark:bg-purple-950/50" : "border-border bg-card"
+                    purpose === item.id ? "border-purple-600" : "border-border bg-card"
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -279,7 +279,7 @@ export default function OnboardingPage() {
                   key={item.id}
                   onClick={() => { setExperience(item.id); setStep(4); }}
                   className={`p-6 rounded-2xl border-2 transition-all text-left hover:border-purple-600 hover:shadow-lg ${
-                    experience === item.id ? "border-purple-600 bg-purple-50 dark:bg-purple-950/50" : "border-border bg-card"
+                    experience === item.id ? "border-purple-600" : "border-border bg-card"
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -367,7 +367,7 @@ export default function OnboardingPage() {
 
             {userType === "creator" && (
               <div className="grid md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-purple-50 dark:bg-purple-950/50 rounded-xl p-6">
+                <div className="rounded-xl p-6">
                   <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Wand2 className="w-6 h-6 text-white" />
                   </div>
@@ -381,7 +381,7 @@ export default function OnboardingPage() {
                   <h3 className="font-bold text-foreground mb-2">인스타 최적화</h3>
                   <p className="text-sm text-muted-foreground">바로 업로드 가능</p>
                 </div>
-                <div className="bg-purple-50 dark:bg-purple-950/50 rounded-xl p-6">
+                <div className="rounded-xl p-6">
                   <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <TrendingUp className="w-6 h-6 text-white" />
                   </div>

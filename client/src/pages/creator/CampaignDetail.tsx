@@ -117,7 +117,7 @@ export function CreatorCampaignDetail() {
               </div>
               
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
+                <div className="rounded-lg p-3 border border-purple-200 dark:border-purple-800">
                   <div className="flex items-center gap-1 text-xs text-purple-600 mb-1">
                     <DollarSign className="w-3 h-3" />
                     <span className="font-semibold">예산</span>
@@ -526,7 +526,7 @@ export function CreatorCampaignDetail() {
 
           {/* Key Info Grid */}
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+            <div className="rounded-xl p-4 border border-purple-200 dark:border-purple-800">
               <div className="flex items-center gap-2 text-purple-600 mb-2">
                 <DollarSign className="w-4 h-4" />
                 <span className="text-xs font-semibold">예산</span>
@@ -583,7 +583,7 @@ export function CreatorCampaignDetail() {
             {/* Deliverables */}
             <div className="bg-card rounded-2xl border border-border p-6">
               <h2 className="text-xl font-black text-foreground mb-4">제공 결과물</h2>
-              <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+              <div className="rounded-lg p-4 border border-purple-200 dark:border-purple-800">
                 <p className="font-semibold text-foreground">{campaign.deliverables}</p>
               </div>
             </div>

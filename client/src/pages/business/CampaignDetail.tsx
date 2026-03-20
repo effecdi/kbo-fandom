@@ -321,7 +321,7 @@ export function CampaignDetail() {
                         </div>
 
                         {/* Cover Letter */}
-                        <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-4">
+                        <div className="border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-4">
                           <h4 className="text-sm font-bold text-purple-900 mb-2">
                             📝 지원 메시지
                           </h4>

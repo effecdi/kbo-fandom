@@ -90,7 +90,7 @@ export function DetailPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-purple-600 text-purple-600 text-lg px-8 py-6 hover:bg-purple-50"
+                  className="border-2 border-purple-600 text-purple-600 text-lg px-8 py-6"
                 >
                   작품 둘러보기
                   <ChevronRight className="w-5 h-5 ml-2" />
@@ -353,7 +353,7 @@ export function DetailPage() {
             <Button
               size="lg"
               variant="outline"
-              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+              className="border-2 border-purple-600 text-purple-600"
             >
               더 많은 작품 보기
               <ChevronRight className="w-5 h-5 ml-2" />

@@ -152,7 +152,7 @@ export function CollaborationNew() {
                     onClick={() => toggleContentType(type.id)}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       contentType.includes(type.id)
-                        ? "border-purple-600 bg-purple-50 dark:bg-purple-950/20"
+                        ? "border-purple-600"
                         : "border-border hover:border-purple-300"
                     }`}
                   >
@@ -253,7 +253,7 @@ export function CollaborationNew() {
                     onClick={() => setBudget(option.value)}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${
                       budget === option.value
-                        ? "border-purple-600 bg-purple-50 dark:bg-purple-950/20"
+                        ? "border-purple-600"
                         : "border-border hover:border-purple-300"
                     }`}
                   >
@@ -289,7 +289,7 @@ export function CollaborationNew() {
                     onClick={() => setDeadline(option.value)}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       deadline === option.value
-                        ? "border-purple-600 bg-purple-50 dark:bg-purple-950/20"
+                        ? "border-purple-600"
                         : "border-border hover:border-purple-300"
                     }`}
                   >

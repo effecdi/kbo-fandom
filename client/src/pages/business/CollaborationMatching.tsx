@@ -165,7 +165,7 @@ export function CollaborationMatching() {
               </span>
             </div>
             <Button
-              className="bg-white text-purple-600 hover:bg-purple-50"
+              className="bg-white text-purple-600"
               onClick={() => navigate("/business/proposals/new")}
             >
               <Send className="w-4 h-4 mr-2" />
@@ -224,7 +224,7 @@ export function CollaborationMatching() {
                           {creator.tags.map((tag, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/20 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold"
+                              className="inline-flex items-center gap-1 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold"
                             >
                               <Sparkles className="w-3 h-3" />
                               {tag}
