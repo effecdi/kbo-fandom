@@ -48,29 +48,34 @@ export function LandingPage() {
   useEffect(() => {
     if (!scrollTextRef.current) return;
 
-    // Lenis smooth scroll과 호환되도록 ScrollTrigger refresh 지연
     const ctx = gsap.context(() => {
-      // 섹션 pin
+      const el = scrollTextRef.current!;
+      const words = el.querySelectorAll(".scroll-word");
+      const totalWords = words.length; // 3개: 클릭 한 번으로, 전문가급 웹툰, 완성
+
+      // 섹션 pin — 단어 수 × 100vh 만큼 고정
       ScrollTrigger.create({
-        trigger: scrollTextRef.current,
+        trigger: el,
         start: "top top",
-        end: "+=150%",
+        end: `+=${totalWords * 100}%`,
         pin: true,
         pinSpacing: true,
       });
 
-      // 각 단어 스크롤 애니메이션
-      const words = scrollTextRef.current!.querySelectorAll(".scroll-word");
+      // 각 단어가 순서대로 등장 (1/3씩 구간 나눠서)
       words.forEach((word, i) => {
+        const segmentStart = (i / totalWords) * 100;       // 0%, 33%, 66%
+        const segmentEnd = ((i + 0.6) / totalWords) * 100; // 20%, 53%, 86%
+
         gsap.fromTo(
           word,
-          { opacity: 0.15, scale: 0.9, y: 60 + i * 20 },
+          { opacity: 0, scale: 0.85, y: 80 },
           {
             scrollTrigger: {
-              trigger: scrollTextRef.current,
-              start: `top+=${i * 15}% top`,
-              end: `+=${50}%`,
-              scrub: 0.5,
+              trigger: el,
+              start: `top+=${segmentStart}% top`,
+              end: `top+=${segmentEnd}% top`,
+              scrub: 0.3,
             },
             opacity: 1,
             scale: 1,
