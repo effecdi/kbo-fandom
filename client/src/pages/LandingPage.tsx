@@ -1,5 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useLenis } from "lenis/react";
+
+gsap.registerPlugin(ScrollTrigger);
 import {
   Sparkles,
   Building2,
@@ -33,6 +38,53 @@ import { FeatureCardSwap } from "@/components/FeatureCardSwap";
 export function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const scrollTextRef = useRef<HTMLDivElement>(null);
+
+  // Lenis ↔ ScrollTrigger 동기화
+  useLenis(() => {
+    ScrollTrigger.update();
+  });
+
+  useEffect(() => {
+    if (!scrollTextRef.current) return;
+
+    // 섹션 pin
+    gsap.to(scrollTextRef.current, {
+      scrollTrigger: {
+        trigger: scrollTextRef.current,
+        start: "top top",
+        end: "+=150%",
+        scrub: 1,
+        pin: true,
+        pinSpacing: true,
+      },
+    });
+
+    // 각 단어 스크롤 애니메이션
+    const words = scrollTextRef.current.querySelectorAll(".scroll-word");
+    words.forEach((word, i) => {
+      gsap.fromTo(
+        word,
+        { opacity: 0.3, scale: 0.95, y: 50 },
+        {
+          scrollTrigger: {
+            trigger: scrollTextRef.current,
+            start: "top top",
+            end: "+=150%",
+            scrub: 1,
+          },
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          ease: "power2.out",
+        },
+      );
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
+  }, []);
 
   return (
     <div
@@ -152,8 +204,9 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Apple-style Scroll Text Section */}
+      {/* Apple-style Scroll Text Section — GSAP pin */}
       <section
+        ref={scrollTextRef}
         className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-background to-muted"
       >
         <div className="max-w-5xl mx-auto text-center">
