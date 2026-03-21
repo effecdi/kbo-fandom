@@ -41,48 +41,53 @@ export function LandingPage() {
   const scrollTextRef = useRef<HTMLDivElement>(null);
 
   // Lenis ↔ ScrollTrigger 동기화
-  useLenis(() => {
+  useLenis((lenis) => {
     ScrollTrigger.update();
   });
 
   useEffect(() => {
     if (!scrollTextRef.current) return;
 
-    // 섹션 pin
-    gsap.to(scrollTextRef.current, {
-      scrollTrigger: {
+    // Lenis smooth scroll과 호환되도록 ScrollTrigger refresh 지연
+    const ctx = gsap.context(() => {
+      // 섹션 pin
+      ScrollTrigger.create({
         trigger: scrollTextRef.current,
         start: "top top",
         end: "+=150%",
-        scrub: 1,
         pin: true,
         pinSpacing: true,
-      },
-    });
+      });
 
-    // 각 단어 스크롤 애니메이션
-    const words = scrollTextRef.current.querySelectorAll(".scroll-word");
-    words.forEach((word, i) => {
-      gsap.fromTo(
-        word,
-        { opacity: 0.3, scale: 0.95, y: 50 },
-        {
-          scrollTrigger: {
-            trigger: scrollTextRef.current,
-            start: "top top",
-            end: "+=150%",
-            scrub: 1,
+      // 각 단어 스크롤 애니메이션
+      const words = scrollTextRef.current!.querySelectorAll(".scroll-word");
+      words.forEach((word, i) => {
+        gsap.fromTo(
+          word,
+          { opacity: 0.15, scale: 0.9, y: 60 + i * 20 },
+          {
+            scrollTrigger: {
+              trigger: scrollTextRef.current,
+              start: `top+=${i * 15}% top`,
+              end: `+=${50}%`,
+              scrub: 0.5,
+            },
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            ease: "none",
           },
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          ease: "power2.out",
-        },
-      );
+        );
+      });
+    }, scrollTextRef);
+
+    // Lenis가 초기화된 후 ScrollTrigger를 새로고침
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
     });
 
     return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
     };
   }, []);
 
