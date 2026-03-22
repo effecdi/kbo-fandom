@@ -72,10 +72,17 @@ export function MagneticCTA({ onButtonClick }: MagneticCTAProps) {
         }}
       />
 
-      {/* Animated gradient border */}
-      <div className="absolute inset-0 rounded-[4rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-        <div className="absolute inset-[-2px] bg-gradient-to-r from-[#00e5cc] via-blue-500 to-purple-600 rounded-[4rem] animate-spin-slow blur-sm" />
-      </div>
+      {/* Mouse-following gradient glow */}
+      <div
+        ref={glowRef}
+        className="pointer-events-none absolute w-[400px] h-[400px] rounded-full opacity-0 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(circle, rgba(0, 229, 204, 0.4) 0%, rgba(59, 130, 246, 0.3) 40%, transparent 70%)`,
+          filter: "blur(60px)",
+          top: 0,
+          left: 0,
+        }}
+      />
 
       <div className="relative z-10">
         <div className="mb-8 inline-block">
@@ -103,19 +110,6 @@ export function MagneticCTA({ onButtonClick }: MagneticCTAProps) {
         </button>
       </div>
 
-      <style>{`
-        @keyframes spin-slow {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
-        }
-      `}</style>
     </div>
   );
 }
