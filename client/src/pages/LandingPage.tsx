@@ -360,7 +360,7 @@ export function LandingPage() {
               포즈 & 표정
             </div>
             <h2 className="text-6xl md:text-8xl font-black mb-8 text-foreground">
-              <span className="block">하나의 캐릭터,</span>
+              <span className="block mb-4 md:mb-6">하나의 캐릭터,</span>
               <span className="block bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
                 무한한 표현
               </span>
