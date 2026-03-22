@@ -33,6 +33,7 @@ import { GlareHover } from "@/components/GlareHover";
 import { TargetCursor } from "@/components/TargetCursor";
 import { MagneticCTA } from "@/components/MagneticCTA";
 import { InfiniteCharacterGrid } from "@/components/InfiniteCharacterGrid";
+import { PoseMarquee } from "@/components/PoseMarquee";
 import { FeatureCardSwap } from "@/components/FeatureCardSwap";
 
 export function LandingPage() {
@@ -50,39 +51,14 @@ export function LandingPage() {
 
     const ctx = gsap.context(() => {
       const el = scrollTextRef.current!;
-      const words = el.querySelectorAll(".scroll-word");
-      const totalWords = words.length; // 3개: 클릭 한 번으로, 전문가급 웹툰, 완성
 
-      // 섹션 pin — 단어 수 × 100vh 만큼 고정
+      // 전체 문구를 하나로 pin
       ScrollTrigger.create({
         trigger: el,
         start: "top top",
-        end: `+=${totalWords * 100}%`,
+        end: `+=100%`,
         pin: true,
         pinSpacing: true,
-      });
-
-      // 각 단어가 순서대로 등장 (1/3씩 구간 나눠서)
-      words.forEach((word, i) => {
-        const segmentStart = (i / totalWords) * 100;       // 0%, 33%, 66%
-        const segmentEnd = ((i + 0.6) / totalWords) * 100; // 20%, 53%, 86%
-
-        gsap.fromTo(
-          word,
-          { opacity: 0, scale: 0.85, y: 80 },
-          {
-            scrollTrigger: {
-              trigger: el,
-              start: `top+=${segmentStart}% top`,
-              end: `top+=${segmentEnd}% top`,
-              scrub: 0.3,
-            },
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            ease: "none",
-          },
-        );
       });
     }, scrollTextRef);
 
@@ -223,11 +199,11 @@ export function LandingPage() {
           <h2
             className="text-5xl md:text-7xl lg:text-8xl font-black leading-tight text-foreground"
           >
-            <span className="scroll-word block mb-4">클릭 한 번으로</span>
-            <span className="scroll-word block mb-4 bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
+            <span className="block mb-4">클릭 한 번으로</span>
+            <span className="block mb-4 bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
               전문가급 웹툰
             </span>
-            <span className="scroll-word block">완성</span>
+            <span className="block">완성</span>
           </h2>
         </div>
       </section>
@@ -373,6 +349,28 @@ export function LandingPage() {
           </div>
 
           <InfiniteCharacterGrid theme={theme} />
+        </div>
+      </section>
+
+      {/* Pose/Expression Marquee */}
+      <section className="py-32 px-6 overflow-hidden bg-muted">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20">
+              포즈 & 표정
+            </div>
+            <h2 className="text-6xl md:text-8xl font-black mb-8 text-foreground">
+              하나의 캐릭터,{" "}
+              <span className="bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
+                무한한 표현
+              </span>
+            </h2>
+            <p className="text-2xl text-muted-foreground">
+              다양한 포즈와 표정으로 캐릭터에 생명을 불어넣으세요
+            </p>
+          </div>
+
+          <PoseMarquee />
         </div>
       </section>
 
