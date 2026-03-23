@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
 import { supabase } from "./supabaseClient";
-import { generateCharacterImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, removeBackgroundAI, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint } from "./imageGen";
+import { generateCharacterImage, generateLogoImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, removeBackgroundAI, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint } from "./imageGen";
 import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown, analyzeCharacterImage } from "./aiText";
 import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, updateProjectFolderSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
@@ -120,6 +120,13 @@ export async function registerRoutes(
         return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
       }
       const { prompt, style, sourceImageData } = parsed.data;
+      // Optional: allow callers to specify generation type (e.g. "mascot") and source role
+      const genType: string = (req.body as any).genType || "character";
+      const validTypes = ["character", "mascot"];
+      const finalType = validTypes.includes(genType) ? genType : "character";
+      const sourceRole: string = (req.body as any).source || "creator";
+      const validSources = ["creator", "business"];
+      const finalSource = validSources.includes(sourceRole) ? sourceRole : "creator";
 
       const FREE_STYLES = ["simple-line", "minimal", "doodle"];
       const credits = await storage.getUserCredits(userId);
@@ -154,8 +161,9 @@ export async function registerRoutes(
         generation = await storage.createGeneration({
           userId,
           characterId: character.id,
-          type: "character",
-          prompt,
+          type: finalType,
+          source: finalSource,
+          prompt: finalType === "mascot" ? `[MASCOT] ${prompt}` : prompt,
           resultImageUrl: imageDataUrl,
           thumbnailUrl,
           creditsUsed: 10,
@@ -180,6 +188,61 @@ export async function registerRoutes(
     } catch (error: any) {
       logger.error("Character generation error", error);
       res.status(500).json({ message: "캐릭터 생성에 실패했습니다." });
+    }
+  });
+
+  // ─── Logo Generation ──────────────────────────────────────────────────────
+  app.post("/api/generate-logo", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { prompt, style, sourceImageData, source: reqSource } = req.body as {
+        prompt?: string;
+        style?: string;
+        sourceImageData?: string;
+        source?: string;
+      };
+
+      if (!prompt && !sourceImageData) {
+        return res.status(400).json({ message: "프롬프트 또는 스케치 이미지가 필요합니다." });
+      }
+
+      const finalSource = reqSource === "business" ? "business" : "creator";
+
+      const credits = await storage.getUserCredits(userId);
+      const canGenerate = await storage.deductCredit(userId, 10);
+      if (!canGenerate) {
+        return res.status(403).json({ message: "크레딧이 부족합니다." });
+      }
+
+      let imageDataUrl = await generateLogoImage(
+        prompt || "",
+        style || "minimal",
+        sourceImageData
+      );
+
+      if (credits.tier === "free") {
+        imageDataUrl = await applyWatermark(imageDataUrl);
+      }
+
+      // Save as generation for gallery tracking
+      try {
+        await storage.createGeneration({
+          userId,
+          characterId: null as any,
+          type: "logo",
+          source: finalSource,
+          prompt: `[LOGO] ${prompt || "sketch-based logo"}`,
+          resultImageUrl: imageDataUrl,
+          thumbnailUrl: null,
+          creditsUsed: 10,
+        });
+        await storage.incrementTotalGenerations(userId);
+      } catch { /* DB save optional */ }
+
+      res.json({ imageUrl: imageDataUrl });
+    } catch (error: any) {
+      logger.error("Logo generation error", error);
+      res.status(500).json({ message: "로고 생성에 실패했습니다." });
     }
   });
 
@@ -221,11 +284,13 @@ export async function registerRoutes(
         poseThumbUrl = await generateThumbnail(imageDataUrl) || null;
       } catch { /* thumbnail is optional */ }
 
+      const poseSource = (req.body as any).source === "business" ? "business" : "creator";
       try {
         await storage.createGeneration({
           userId,
           characterId: characterIds[0],
           type: "pose",
+          source: poseSource,
           prompt,
           referenceImageUrl: referenceImageData || null,
           resultImageUrl: imageDataUrl,
@@ -289,11 +354,13 @@ export async function registerRoutes(
           bgThumbUrl = await generateThumbnail(imageDataUrl) || null;
         } catch { /* thumbnail is optional */ }
 
+        const bgSource = req.body.source === "business" ? "business" : "creator";
         try {
           await storage.createGeneration({
             userId,
             characterId: characterIds?.[0] || null,
             type: "background",
+            source: bgSource,
             prompt: fullPrompt,
             referenceImageUrl: null,
             resultImageUrl: imageDataUrl,
@@ -364,11 +431,13 @@ export async function registerRoutes(
       let thumbUrl: string | null = null;
       try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
 
+      const fillSource = (req.body as any).source === "business" ? "business" : "creator";
       try {
         await storage.createGeneration({
           userId,
           characterId: null,
           type: "background",
+          source: fillSource,
           prompt: `[Generative Fill] ${prompt}`,
           resultImageUrl: resultUrl,
           thumbnailUrl: thumbUrl,
@@ -413,11 +482,13 @@ export async function registerRoutes(
       let thumbUrl: string | null = null;
       try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
 
+      const expandSource = (req.body as any).source === "business" ? "business" : "creator";
       try {
         await storage.createGeneration({
           userId,
           characterId: null,
           type: "background",
+          source: expandSource,
           prompt: `[Generative Expand] ${prompt || "auto"}`,
           resultImageUrl: resultUrl,
           thumbnailUrl: thumbUrl,
@@ -458,11 +529,13 @@ export async function registerRoutes(
       let thumbUrl: string | null = null;
       try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
 
+      const upscaleSource = (req.body as any).source === "business" ? "business" : "creator";
       try {
         await storage.createGeneration({
           userId,
           characterId: null,
           type: "background",
+          source: upscaleSource,
           prompt: `[Generative Upscale] ${scale || 2}x`,
           resultImageUrl: resultUrl,
           thumbnailUrl: thumbUrl,
@@ -651,6 +724,7 @@ export async function registerRoutes(
         const limit = Math.min(Math.max(parseInt(String(req.query.limit)) || 24, 1), 100);
         const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
         const type = (req.query.type as string) || "all";
+        const source = (req.query.source as string) || "all";
         const folderId = req.query.folderId ? parseInt(String(req.query.folderId)) : undefined;
 
         let items: any[];
@@ -663,9 +737,19 @@ export async function registerRoutes(
           ]);
         } else {
           [items, total] = await Promise.all([
-            storage.getGenerationsLight(userId, limit, offset, type),
-            storage.getGalleryCount(userId, type),
+            storage.getGenerationsLight(userId, limit, offset, type, source),
+            storage.getGalleryCount(userId, type, source),
           ]);
+        }
+
+        // Filter out misclassified items (backward compat for old data)
+        if (type === "character") {
+          items = items.filter((item: any) => {
+            const prompt = item.prompt || "";
+            if (prompt.startsWith("[LOGO]")) return false;
+            if (prompt.startsWith("[MASCOT]")) return false;
+            return true;
+          });
         }
 
         res.json({
@@ -675,7 +759,16 @@ export async function registerRoutes(
         });
       } else {
         // Legacy format: plain array (used by pose, background, bubble, etc.)
-        const items = await storage.getGenerationsByUser(userId);
+        const type = (req.query.type as string) || "all";
+        let items = await storage.getGenerationsByUser(userId);
+        // Filter by type if specified
+        if (type && type !== "all") {
+          items = items.filter((item: any) => item.type === type);
+        }
+        // Always filter out logo items from character queries
+        if (type === "character") {
+          items = items.filter((item: any) => !(item.prompt || "").startsWith("[LOGO]"));
+        }
         res.json(items);
       }
     } catch (error) {

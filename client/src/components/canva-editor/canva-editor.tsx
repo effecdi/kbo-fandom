@@ -14,6 +14,7 @@ import {
   Polyline,
   Textbox,
   FabricObject,
+  FabricImage,
   Point,
 } from "fabric";
 import CanvaFloatingToolbar from "./canva-floating-toolbar";
@@ -182,14 +183,33 @@ const CanvaEditor = forwardRef<CanvaEditorHandle, CanvaEditorProps>(
 
     useEffect(() => {
       const fc = fabricRef.current;
-      if (!fc || !backgroundImage) return;
-      const img = new window.Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
+      if (!fc) return;
+
+      if (!backgroundImage) {
         fc.backgroundImage = undefined;
         fc.requestRenderAll();
+        return;
+      }
+
+      const imgEl = new window.Image();
+      imgEl.crossOrigin = "anonymous";
+      imgEl.onload = () => {
+        const fabricImg = new FabricImage(imgEl, {
+          originX: "left",
+          originY: "top",
+        });
+        // Scale to fit canvas
+        const scaleX = fc.width! / (fabricImg.width || 1);
+        const scaleY = fc.height! / (fabricImg.height || 1);
+        fabricImg.scaleX = scaleX;
+        fabricImg.scaleY = scaleY;
+        fc.backgroundImage = fabricImg;
+        fc.requestRenderAll();
       };
-      img.src = backgroundImage;
+      imgEl.onerror = () => {
+        console.error("Failed to load background image");
+      };
+      imgEl.src = backgroundImage;
     }, [backgroundImage]);
 
     // ─── Tool mode switching (reacts to prop changes) ─────────────────

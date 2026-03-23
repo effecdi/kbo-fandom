@@ -207,19 +207,23 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getGenerationsLight(userId: string, limit: number, offset: number, type?: string): Promise<any[]> {
+  async getGenerationsLight(userId: string, limit: number, offset: number, type?: string, source?: string): Promise<any[]> {
     const db = this.getDb();
-    const conditions = type && type !== "all"
-      ? and(eq(generations.userId, userId), eq(generations.type, type))
-      : eq(generations.userId, userId);
+    const conds: any[] = [eq(generations.userId, userId)];
+    if (type && type !== "all") conds.push(eq(generations.type, type));
+    if (source && source !== "all") {
+      conds.push(sql`COALESCE(${generations.source}, 'creator') = ${source}`);
+    }
+    const conditions = conds.length === 1 ? conds[0] : and(...conds);
 
     try {
-      // Try with thumbnailUrl + characterName columns
+      // Try with thumbnailUrl + characterName + source columns
       const rows = await db.select({
         id: generations.id,
         userId: generations.userId,
         characterId: generations.characterId,
         type: generations.type,
+        source: sql<string>`COALESCE(${generations.source}, 'creator')`,
         prompt: generations.prompt,
         thumbnailUrl: generations.thumbnailUrl,
         characterName: generations.characterName,
@@ -233,7 +237,11 @@ export class DatabaseStorage implements IStorage {
         .offset(offset);
       return rows;
     } catch {
-      // Fallback: characterName or thumbnailUrl column doesn't exist yet
+      // Fallback: source column might not exist yet
+      const conds2: any[] = [eq(generations.userId, userId)];
+      if (type && type !== "all") conds2.push(eq(generations.type, type));
+      const conditions2 = conds2.length === 1 ? conds2[0] : and(...conds2);
+
       try {
         const rows = await db.select({
           id: generations.id,
@@ -246,11 +254,11 @@ export class DatabaseStorage implements IStorage {
           creditsUsed: generations.creditsUsed,
           createdAt: generations.createdAt,
         }).from(generations)
-          .where(conditions)
+          .where(conditions2)
           .orderBy(desc(generations.createdAt))
           .limit(limit)
           .offset(offset);
-        return rows.map((r: any) => ({ ...r, characterName: null }));
+        return rows.map((r: any) => ({ ...r, characterName: null, source: "creator" }));
       } catch {
         const rows = await db.select({
           id: generations.id,
@@ -262,25 +270,39 @@ export class DatabaseStorage implements IStorage {
           creditsUsed: generations.creditsUsed,
           createdAt: generations.createdAt,
         }).from(generations)
-          .where(conditions)
+          .where(conditions2)
           .orderBy(desc(generations.createdAt))
           .limit(limit)
           .offset(offset);
-        return rows.map((r: any) => ({ ...r, thumbnailUrl: null, characterName: null }));
+        return rows.map((r: any) => ({ ...r, thumbnailUrl: null, characterName: null, source: "creator" }));
       }
     }
   }
 
-  async getGalleryCount(userId: string, type?: string): Promise<number> {
+  async getGalleryCount(userId: string, type?: string, source?: string): Promise<number> {
     const db = this.getDb();
-    const conditions = type && type !== "all"
-      ? and(eq(generations.userId, userId), eq(generations.type, type))
-      : eq(generations.userId, userId);
+    const conds: any[] = [eq(generations.userId, userId)];
+    if (type && type !== "all") conds.push(eq(generations.type, type));
+    if (source && source !== "all") {
+      conds.push(sql`COALESCE(${generations.source}, 'creator') = ${source}`);
+    }
+    const conditions = conds.length === 1 ? conds[0] : and(...conds);
 
-    const [result] = await db.select({ count: sql<number>`count(*)::int` })
-      .from(generations)
-      .where(conditions);
-    return result?.count ?? 0;
+    try {
+      const [result] = await db.select({ count: sql<number>`count(*)::int` })
+        .from(generations)
+        .where(conditions);
+      return result?.count ?? 0;
+    } catch {
+      // Fallback if source column doesn't exist
+      const conds2: any[] = [eq(generations.userId, userId)];
+      if (type && type !== "all") conds2.push(eq(generations.type, type));
+      const conditions2 = conds2.length === 1 ? conds2[0] : and(...conds2);
+      const [result] = await db.select({ count: sql<number>`count(*)::int` })
+        .from(generations)
+        .where(conditions2);
+      return result?.count ?? 0;
+    }
   }
 
   async getGenerationById(id: number, userId: string): Promise<Generation | undefined> {
@@ -312,22 +334,45 @@ export class DatabaseStorage implements IStorage {
     try {
       const [generation] = await db.insert(generations).values(data).returning();
       return generation;
-    } catch {
-      // Fallback: thumbnailUrl column might not exist yet
-      // .returning() 도 thumbnail_url을 포함하므로 컬럼을 명시적으로 지정
-      const { thumbnailUrl, ...rest } = data as any;
-      const [generation] = await db.insert(generations).values(rest).returning({
-        id: generations.id,
-        userId: generations.userId,
-        characterId: generations.characterId,
-        type: generations.type,
-        prompt: generations.prompt,
-        referenceImageUrl: generations.referenceImageUrl,
-        resultImageUrl: generations.resultImageUrl,
-        creditsUsed: generations.creditsUsed,
-        createdAt: generations.createdAt,
-      });
-      return { ...generation, thumbnailUrl: null } as Generation;
+    } catch (err: any) {
+      // Auto-create source column if missing
+      if (err?.message?.includes("source") || err?.code === "42703") {
+        try {
+          await db.execute(sql`ALTER TABLE generations ADD COLUMN IF NOT EXISTS source text DEFAULT 'creator'`);
+          const [generation] = await db.insert(generations).values(data).returning();
+          return generation;
+        } catch { /* fall through to next fallback */ }
+      }
+      // Fallback: thumbnailUrl/source columns might not exist yet
+      const { thumbnailUrl, source, ...rest } = data as any;
+      try {
+        const [generation] = await db.insert(generations).values(rest).returning({
+          id: generations.id,
+          userId: generations.userId,
+          characterId: generations.characterId,
+          type: generations.type,
+          prompt: generations.prompt,
+          referenceImageUrl: generations.referenceImageUrl,
+          resultImageUrl: generations.resultImageUrl,
+          creditsUsed: generations.creditsUsed,
+          createdAt: generations.createdAt,
+        });
+        return { ...generation, thumbnailUrl: null, source: source || "creator" } as Generation;
+      } catch {
+        // Even more minimal fallback
+        const { characterName, ...minimal } = rest;
+        const [generation] = await db.insert(generations).values(minimal).returning({
+          id: generations.id,
+          userId: generations.userId,
+          characterId: generations.characterId,
+          type: generations.type,
+          prompt: generations.prompt,
+          resultImageUrl: generations.resultImageUrl,
+          creditsUsed: generations.creditsUsed,
+          createdAt: generations.createdAt,
+        });
+        return { ...generation, thumbnailUrl: null, source: source || "creator" } as Generation;
+      }
     }
   }
 
@@ -451,6 +496,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deductCredit(userId: string, amount: number = 1): Promise<boolean> {
+    // Dev bypass: skip credit deduction entirely
+    if (process.env.AUTH_BYPASS === "true") return true;
+
     await this.ensureUserCredits(userId);
 
     const db = this.getDb();

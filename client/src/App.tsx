@@ -6,6 +6,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
 import { ReactLenis } from "lenis/react";
 import { useAuth } from "@/hooks/use-auth";
+import { seedIfEmpty } from "@/lib/local-store";
+
+// Seed localStorage with demo data on first load
+seedIfEmpty();
 
 // Design pages
 import { LandingPage } from "@/pages/LandingPage";
@@ -89,6 +93,52 @@ import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
 import RefundPolicyPage from "@/pages/refund-policy";
 
+// New pages - Studio
+import { StudioProjects } from "@/pages/studio/Projects";
+import { StudioNew } from "@/pages/studio/New";
+import { StudioEditor } from "@/pages/studio/Editor";
+
+// New pages - Gallery
+import { GalleryIndex } from "@/pages/gallery/Index";
+import { MyGalleryPage } from "@/pages/gallery/Mine";
+import { FeedPage as NewFeedPage } from "@/pages/gallery/Feed";
+
+// New pages - Assets
+import { AssetsIndex } from "@/pages/assets/Index";
+import { CharactersPage } from "@/pages/assets/Characters";
+import { CharacterNewPage } from "@/pages/assets/CharacterNew";
+import { CharacterDetailPage } from "@/pages/assets/CharacterDetail";
+import { BrandAssetsPage } from "@/pages/assets/BrandAssets";
+import { MascotCreatorPage } from "@/pages/assets/brand/MascotCreator";
+import { LogoCreatorPage } from "@/pages/assets/brand/LogoCreator";
+import { ColorCreatorPage } from "@/pages/assets/brand/ColorCreator";
+import { DocumentCreatorPage } from "@/pages/assets/brand/DocumentCreator";
+
+// New pages - Dashboard
+import { DashboardIndex } from "@/pages/dashboard/Index";
+import { AnalyticsPage } from "@/pages/dashboard/Analytics";
+import { RevenuePage } from "@/pages/dashboard/Revenue";
+import { ReportsPage } from "@/pages/dashboard/Reports";
+import { MediaKitPage as NewMediaKitPage } from "@/pages/dashboard/MediaKit";
+
+// New pages - Market
+import { MarketIndex } from "@/pages/market/Index";
+import { CollaborationsPage } from "@/pages/market/Collaborations";
+import { CampaignsPage } from "@/pages/market/Campaigns";
+import { CampaignNewPage } from "@/pages/market/CampaignNew";
+import { CampaignDetailPage } from "@/pages/market/CampaignDetail";
+import { CreatorsPage } from "@/pages/market/Creators";
+import { CreatorDetailPage } from "@/pages/market/CreatorDetail";
+import { ProposalsPage } from "@/pages/market/Proposals";
+import { ProposalDetailPage } from "@/pages/market/ProposalDetail";
+
+// New pages - Settings
+import { SettingsIndex } from "@/pages/settings/Index";
+import { ProfileSettings } from "@/pages/settings/ProfileSettings";
+
+// Legacy redirects
+import { CreatorRedirect, BusinessRedirect } from "@/components/LegacyRedirects";
+
 function ProGuard({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated } = useAuth();
   const { data: usage, isLoading } = useQuery<{ tier: string }>({
@@ -101,8 +151,19 @@ function ProGuard({ component: Component }: { component: React.ComponentType }) 
   return <Component />;
 }
 
+/** Role-based route guard — redirects if user role doesn't match */
+function RoleGuard({ role, children, fallback }: { role: "creator" | "business"; children: React.ReactNode; fallback?: string }) {
+  const currentRole = (localStorage.getItem("olli_user_role") as string) || "creator";
+  if (currentRole !== role) {
+    return <Navigate to={fallback || (role === "business" ? "/studio" : "/studio")} replace />;
+  }
+  return <>{children}</>;
+}
+
 const router = createBrowserRouter([
-  // Landing & Auth
+  // ============================================
+  // Core / Auth
+  // ============================================
   { path: "/", element: <LandingPage /> },
   { path: "/onboarding", element: <OnboardingPage /> },
   { path: "/login", element: <Login /> },
@@ -112,56 +173,71 @@ const router = createBrowserRouter([
   { path: "/payments", element: <Payments /> },
   { path: "/auth/callback", element: <AuthCallbackPage /> },
 
-  // Creator design pages
-  { path: "/creator", element: <CreatorPage /> },
-  { path: "/creator/dashboard", element: <CreatorDashboard /> },
-  { path: "/creator/character/new", element: <CharacterNew /> },
-  { path: "/creator/character/result", element: <CharacterResult /> },
-  { path: "/creator/character", element: <CharacterList /> },
-  { path: "/creator/character/:id", element: <CharacterDetail /> },
-  { path: "/creator/pose-expression", element: <PoseExpression /> },
-  { path: "/creator/background", element: <Background /> },
-  { path: "/creator/story", element: <StoryEditor /> },
-  { path: "/creator/story/preview", element: <StoryPreview /> },
-  { path: "/creator/publish", element: <Publish /> },
-  { path: "/creator/contents", element: <Contents /> },
-  { path: "/creator/revenue", element: <Revenue /> },
-  { path: "/creator/settings", element: <CreatorSettings /> },
-  { path: "/creator/feed", element: <Feed /> },
-  { path: "/creator/chat-maker", element: <ChatMaker /> },
-  { path: "/creator/speech-bubble", element: <SpeechBubble /> },
-  { path: "/creator/blur-effects", element: <BlurEffects /> },
-  { path: "/creator/profile", element: <Profile /> },
-  { path: "/creator/projects", element: <Projects /> },
-  { path: "/creator/campaigns", element: <CreatorCampaigns /> },
-  { path: "/creator/campaigns/:id", element: <CreatorCampaignDetail /> },
-  { path: "/creator/proposals", element: <CreatorProposals /> },
-  { path: "/creator/proposals/:id", element: <ProposalDetail /> },
-  { path: "/creator/collaborations", element: <Collaborations /> },
-  { path: "/creator/media-kit", element: <MediaKit /> },
+  // ============================================
+  // Studio (새 구조)
+  // ============================================
+  { path: "/studio", element: <StudioProjects /> },
+  { path: "/studio/new", element: <StudioNew /> },
+  { path: "/studio/editor/:projectId", element: <StudioEditor /> },
 
-  // Business design pages
-  { path: "/business", element: <BusinessPage /> },
-  { path: "/business/dashboard", element: <BusinessDashboard /> },
-  { path: "/business/mascot", element: <MascotNew /> },
-  { path: "/business/mascot/result", element: <MascotResult /> },
-  { path: "/business/mascots", element: <Mascots /> },
-  { path: "/business/content", element: <ContentCreate /> },
-  { path: "/business/content/editor", element: <ContentEditor /> },
-  { path: "/business/collaboration/new", element: <CollaborationNew /> },
-  { path: "/business/collaboration/matching", element: <CollaborationMatching /> },
-  { path: "/business/campaigns", element: <Campaigns /> },
-  { path: "/business/campaigns/new", element: <CampaignNew /> },
-  { path: "/business/campaigns/:id", element: <CampaignDetail /> },
-  { path: "/business/proposals/new", element: <ProposalNew /> },
-  { path: "/business/creators", element: <CreatorSearch /> },
-  { path: "/business/creators/:id", element: <CreatorDetail /> },
-  { path: "/business/proposals", element: <BusinessProposals /> },
-  { path: "/business/reports", element: <Reports /> },
-  { path: "/business/brand-assets", element: <BrandAssets /> },
-  { path: "/business/settings", element: <BusinessSettings /> },
+  // ============================================
+  // Assets (새 구조 — StudioLayout 통합)
+  // ============================================
+  { path: "/assets", element: <AssetsIndex /> },
+  { path: "/assets/characters", element: <CharactersPage /> },
+  { path: "/assets/characters/new", element: <CharacterNewPage /> },
+  { path: "/assets/characters/:id", element: <CharacterDetailPage /> },
+  { path: "/assets/brand", element: <RoleGuard role="business" fallback="/assets"><BrandAssetsPage /></RoleGuard> },
+  { path: "/assets/brand/mascot/new", element: <RoleGuard role="business" fallback="/assets"><MascotCreatorPage /></RoleGuard> },
+  { path: "/assets/brand/logo/new", element: <RoleGuard role="business" fallback="/assets"><LogoCreatorPage /></RoleGuard> },
+  { path: "/assets/brand/color/new", element: <RoleGuard role="business" fallback="/assets"><ColorCreatorPage /></RoleGuard> },
+  { path: "/assets/brand/document/new", element: <RoleGuard role="business" fallback="/assets"><DocumentCreatorPage /></RoleGuard> },
 
-  // Existing functional pages (preserved)
+  // ============================================
+  // Gallery (새 구조 — StudioLayout 통합)
+  // ============================================
+  { path: "/gallery", element: <GalleryIndex /> },
+  { path: "/gallery/mine", element: <MyGalleryPage /> },
+  { path: "/gallery/feed", element: <NewFeedPage /> },
+
+  // ============================================
+  // Market (새 구조 — StudioLayout 통합)
+  // ============================================
+  { path: "/market", element: <MarketIndex /> },
+  { path: "/market/campaigns", element: <CampaignsPage /> },
+  { path: "/market/campaigns/new", element: <CampaignNewPage /> },
+  { path: "/market/campaigns/:id", element: <CampaignDetailPage /> },
+  { path: "/market/creators", element: <RoleGuard role="business" fallback="/market"><CreatorsPage /></RoleGuard> },
+  { path: "/market/creators/:id", element: <RoleGuard role="business" fallback="/market"><CreatorDetailPage /></RoleGuard> },
+  { path: "/market/proposals", element: <ProposalsPage /> },
+  { path: "/market/proposals/:id", element: <ProposalDetailPage /> },
+  { path: "/market/collaborations", element: <CollaborationsPage /> },
+
+  // ============================================
+  // Dashboard (새 구조 — StudioLayout 통합)
+  // ============================================
+  { path: "/dashboard", element: <DashboardIndex /> },
+  { path: "/dashboard/analytics", element: <AnalyticsPage /> },
+  { path: "/dashboard/revenue", element: <RoleGuard role="creator" fallback="/dashboard"><RevenuePage /></RoleGuard> },
+  { path: "/dashboard/reports", element: <RoleGuard role="business" fallback="/dashboard"><ReportsPage /></RoleGuard> },
+  { path: "/dashboard/media-kit", element: <RoleGuard role="creator" fallback="/dashboard"><NewMediaKitPage /></RoleGuard> },
+
+  // ============================================
+  // Settings (새 구조)
+  // ============================================
+  { path: "/settings", element: <SettingsIndex /> },
+  { path: "/settings/profile", element: <ProfileSettings /> },
+
+  // ============================================
+  // Legal
+  // ============================================
+  { path: "/legal/terms", element: <TermsPage /> },
+  { path: "/legal/privacy", element: <PrivacyPage /> },
+  { path: "/legal/refund", element: <RefundPolicyPage /> },
+
+  // ============================================
+  // Legacy functional pages (preserved)
+  // ============================================
   { path: "/story", element: <ProGuard component={StoryPage} /> },
   { path: "/bubble", element: <ProGuard component={BubblePage} /> },
   { path: "/create", element: <CreatePage /> },
@@ -173,13 +249,66 @@ const router = createBrowserRouter([
   { path: "/ad-match", element: <ProGuard component={AdMatchPage} /> },
   { path: "/media-kit", element: <ProGuard component={MediaKitPage} /> },
   { path: "/feed", element: <FeedPage /> },
-  { path: "/dashboard", element: <DashboardPage /> },
-  { path: "/gallery", element: <GalleryPage /> },
   { path: "/edits", element: <ProGuard component={EditsPage} /> },
   { path: "/auto-webtoon", element: <AutoWebtoonPage /> },
-  { path: "/terms", element: <TermsPage /> },
-  { path: "/privacy", element: <PrivacyPage /> },
-  { path: "/refund-policy", element: <RefundPolicyPage /> },
+
+  // ============================================
+  // Legacy redirects
+  // ============================================
+  { path: "/terms", element: <Navigate to="/legal/terms" replace /> },
+  { path: "/privacy", element: <Navigate to="/legal/privacy" replace /> },
+  { path: "/refund-policy", element: <Navigate to="/legal/refund" replace /> },
+
+  // Creator legacy routes → unified redirects
+  { path: "/creator", element: <CreatorRedirect /> },
+  { path: "/creator/dashboard", element: <CreatorRedirect /> },
+  { path: "/creator/character/new", element: <CreatorRedirect /> },
+  { path: "/creator/character/result", element: <CreatorRedirect /> },
+  { path: "/creator/character", element: <CreatorRedirect /> },
+  { path: "/creator/character/:id", element: <CreatorRedirect /> },
+  { path: "/creator/pose-expression", element: <CreatorRedirect /> },
+  { path: "/creator/background", element: <CreatorRedirect /> },
+  { path: "/creator/story", element: <CreatorRedirect /> },
+  { path: "/creator/story/preview", element: <CreatorRedirect /> },
+  { path: "/creator/publish", element: <CreatorRedirect /> },
+  { path: "/creator/contents", element: <CreatorRedirect /> },
+  { path: "/creator/revenue", element: <CreatorRedirect /> },
+  { path: "/creator/settings", element: <CreatorRedirect /> },
+  { path: "/creator/feed", element: <CreatorRedirect /> },
+  { path: "/creator/chat-maker", element: <CreatorRedirect /> },
+  { path: "/creator/speech-bubble", element: <CreatorRedirect /> },
+  { path: "/creator/blur-effects", element: <CreatorRedirect /> },
+  { path: "/creator/profile", element: <CreatorRedirect /> },
+  { path: "/creator/projects", element: <CreatorRedirect /> },
+  { path: "/creator/campaigns", element: <CreatorRedirect /> },
+  { path: "/creator/campaigns/:id", element: <CreatorRedirect /> },
+  { path: "/creator/proposals", element: <CreatorRedirect /> },
+  { path: "/creator/proposals/:id", element: <CreatorRedirect /> },
+  { path: "/creator/collaborations", element: <CreatorRedirect /> },
+  { path: "/creator/media-kit", element: <CreatorRedirect /> },
+
+  // Business legacy routes → unified redirects
+  { path: "/business", element: <BusinessRedirect /> },
+  { path: "/business/dashboard", element: <BusinessRedirect /> },
+  { path: "/business/mascot", element: <BusinessRedirect /> },
+  { path: "/business/mascot/result", element: <BusinessRedirect /> },
+  { path: "/business/mascots", element: <BusinessRedirect /> },
+  { path: "/business/content", element: <BusinessRedirect /> },
+  { path: "/business/content/editor", element: <BusinessRedirect /> },
+  { path: "/business/collaboration/new", element: <BusinessRedirect /> },
+  { path: "/business/collaboration/matching", element: <BusinessRedirect /> },
+  { path: "/business/campaigns", element: <BusinessRedirect /> },
+  { path: "/business/campaigns/new", element: <BusinessRedirect /> },
+  { path: "/business/campaigns/:id", element: <BusinessRedirect /> },
+  { path: "/business/proposals/new", element: <BusinessRedirect /> },
+  { path: "/business/creators", element: <BusinessRedirect /> },
+  { path: "/business/creators/:id", element: <BusinessRedirect /> },
+  { path: "/business/proposals", element: <BusinessRedirect /> },
+  { path: "/business/reports", element: <BusinessRedirect /> },
+  { path: "/business/brand-assets", element: <BusinessRedirect /> },
+  { path: "/business/settings", element: <BusinessRedirect /> },
+
+  // Catch-all
   { path: "*", element: <NotFound /> },
 ]);
 

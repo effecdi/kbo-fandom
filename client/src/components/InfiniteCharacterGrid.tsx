@@ -2,29 +2,26 @@ import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// 기존 이미지
-const img1 = "/favicon.png";
-const img2 = "/favicon.png";
-const img3 = "/favicon.png";
-const img4 = "/favicon.png";
-const img5 = "/favicon.png";
-const img6 = "/favicon.png";
-const img7 = "/favicon.png";
-const img8 = "/favicon.png";
-const img9 = "/favicon.png";
-const img10 = "/favicon.png";
-
-// 새로운 이미지
-const img11 = "/favicon.png";
-const img12 = "/favicon.png";
-const img13 = "/favicon.png";
-const img14 = "/favicon.png";
-const img15 = "/favicon.png";
-const img16 = "/favicon.png";
-const img17 = "/favicon.png";
-const img18 = "/favicon.png";
-const img19 = "/favicon.png";
-const img20 = "/favicon.png";
+const img1 = "/images/img-1.png";
+const img2 = "/images/img-2.png";
+const img3 = "/images/img-3.png";
+const img4 = "/images/img-4.png";
+const img5 = "/images/img-5.png";
+const img6 = "/images/img-6.png";
+const img7 = "/images/img-7.png";
+const img8 = "/images/img-8.png";
+const img9 = "/images/img-9.png";
+const img10 = "/images/img-10.png";
+const img11 = "/images/img-11.png";
+const img12 = "/images/img-12.png";
+const img13 = "/images/img-13.png";
+const img14 = "/images/img-14.png";
+const img15 = "/images/img-15.png";
+const img16 = "/images/img-16.png";
+const img17 = "/images/img-17.png";
+const img18 = "/images/img-18.png";
+const img19 = "/images/img-19.png";
+const img20 = "/images/img-20.png";
 
 const images = [
   img1, img2, img3, img4, img5,

@@ -18,6 +18,7 @@ export const generations = pgTable("generations", {
   userId: varchar("user_id").notNull().references(() => users.id),
   characterId: integer("character_id").references(() => characters.id),
   type: text("type").notNull(),
+  source: text("source").default("creator"), // "creator" | "business"
   prompt: text("prompt").notNull(),
   referenceImageUrl: text("reference_image_url"),
   resultImageUrl: text("result_image_url").notNull(),

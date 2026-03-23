@@ -391,6 +391,119 @@ RULES:
   return `data:image/png;base64,${resultBuf.toString("base64")}`;
 }
 
+// ─── Logo Generation ──────────────────────────────────────────────────────────
+
+const LOGO_STYLE_CONFIG: Record<string, string> = {
+  minimal: "ultra-clean minimalist logo, geometric simplicity, flat vector style, modern Swiss design",
+  geometric: "geometric abstract logo, precise shapes, mathematical precision, bold constructivist design",
+  mascot: "mascot-style logo mark, iconic character icon, brand mascot symbol, professional logo with character element",
+  wordmark: "typographic wordmark logo, custom lettering, modern brand typography, clean type-based logo",
+  emblem: "emblem badge logo, crest-style seal, vintage badge mark, enclosed logo design",
+  abstract: "abstract logo mark, fluid shapes, contemporary brand symbol, artistic minimalist icon",
+  symbol_simple: "simple symbol logo, single iconic shape, extremely minimal, one-stroke mark, like Apple or Nike logo",
+  symbol_refined: "refined elegant symbol logo, sophisticated icon mark, luxury brand aesthetic, premium and polished, like Chanel or Mercedes logo",
+  line_art: "single-weight line art logo, continuous line drawing style, thin elegant strokes, monoline design, outlined logo mark",
+  colorful: "vibrant colorful logo, bold vivid gradients, multi-color palette, playful yet professional, like Google or Slack logo",
+  cute_character: "adorable cute character logo, kawaii mascot icon, friendly rounded shapes, soft pastel colors, lovable brand character mark",
+  flat: "flat design logo, no gradients no shadows, solid color blocks, modern material design aesthetic, clean geometric flat icon",
+};
+
+export async function generateLogoImage(prompt: string, style: string, sourceImageData?: string): Promise<string> {
+  const styleGuide = LOGO_STYLE_CONFIG[style] || LOGO_STYLE_CONFIG.minimal;
+  const parts: any[] = [];
+
+  const hasImage = sourceImageData && sourceImageData.startsWith("data:");
+  const hasPrompt = prompt && prompt.trim().length > 0;
+  const translatedPrompt = hasPrompt ? await translateToEnglish(prompt, ai) : "";
+
+  const logoSystemPrompt = `You are a world-class brand logo designer. Your task is to create a PROFESSIONAL BRAND LOGO — NOT a character, NOT an illustration, NOT a cartoon.
+
+CRITICAL RULES:
+- This MUST be a LOGO DESIGN, not a character or mascot illustration
+- The logo should look like it was designed by a top branding agency (like Pentagram, Landor, or Wolff Olins)
+- Use clean vector-like shapes, professional typography feel, and balanced composition
+- The logo must work at any size (scalable design)
+- Use a SQUARE 1:1 composition with the logo centered
+- Background must be pure solid white (#FFFFFF) with nothing else
+- Do NOT include any text, letters, words, or writing in the image — only the logo MARK/SYMBOL
+- Do NOT draw any characters, people, or full-body figures — this is a brand ICON/SYMBOL
+- Keep colors limited (2-3 max) for professional look
+- The design should feel corporate, polished, and premium
+
+Style direction: ${styleGuide}`;
+
+  if (hasImage && hasPrompt) {
+    parts.push({
+      text: `${logoSystemPrompt}
+
+Look at this rough sketch/drawing. The user drew this as a concept for their brand logo. Analyze the SHAPES, STRUCTURE, and CONCEPT in the sketch — NOT the drawing quality.
+
+Now design a PROFESSIONAL, POLISHED brand logo that captures the essence and shape concept from this sketch, but elevates it to professional quality.
+
+Additional direction from the user: ${translatedPrompt}
+
+Remember: Output a professional logo MARK/SYMBOL only. No text, no characters, no illustrations. Pure brand logo design on white background.`
+    });
+    const match = sourceImageData!.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+    }
+  } else if (hasImage) {
+    parts.push({
+      text: `${logoSystemPrompt}
+
+Look at this rough sketch/drawing. The user drew this as a concept for their brand logo. Analyze the SHAPES, STRUCTURE, and CONCEPT — NOT the drawing quality.
+
+Transform this rough concept into a PROFESSIONAL, POLISHED brand logo design that a top agency would produce. Keep the core shape concept but make it clean, balanced, and scalable.
+
+Remember: Output a professional logo MARK/SYMBOL only. No text, no characters, no illustrations. Pure brand logo design on white background.`
+    });
+    const match = sourceImageData!.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+    }
+  } else {
+    parts.push({
+      text: `${logoSystemPrompt}
+
+Design a professional brand logo based on this concept: ${translatedPrompt}
+
+Remember: Output a professional logo MARK/SYMBOL only. No text, no characters, no illustrations. Pure brand logo design on white background.`
+    });
+  }
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash-image",
+    contents: parts,
+    config: {
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+      imageConfig: {
+        aspectRatio: "1:1",
+      },
+    },
+  });
+
+  const promptFeedback = (response as any).promptFeedback;
+  if (promptFeedback?.blockReason) {
+    throw new Error(`Prompt blocked: ${promptFeedback.blockReason}`);
+  }
+
+  const candidate = response.candidates?.[0];
+  if (!candidate) {
+    throw new Error("No candidates in response");
+  }
+
+  const imagePart = candidate?.content?.parts?.find((part: any) => part.inlineData);
+  if (!imagePart?.inlineData?.data) {
+    const reason = candidate.finishReason ? ` (finishReason: ${candidate.finishReason})` : "";
+    throw new Error(`Failed to generate logo${reason}`);
+  }
+
+  const mimeType = imagePart.inlineData.mimeType || "image/png";
+  const rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  return removeWhiteBackground(rawDataUrl);
+}
+
 export async function generateCharacterImage(prompt: string, style: string, sourceImageData?: string): Promise<string> {
   const config = getStyleConfig(style);
   const parts: any[] = [];
