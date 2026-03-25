@@ -117,7 +117,7 @@ export function DashboardLayout({ children, noPadding }: DashboardLayoutProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto">
+        <nav className="flex-1 min-h-0 p-4 overflow-y-auto">
           <div className="space-y-1">
             {navItems.map((item, index) => {
               if (item.type === "single") {
