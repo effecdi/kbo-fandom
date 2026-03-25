@@ -38,7 +38,7 @@ export function StoryPreview() {
   ];
 
   return (
-    <DashboardLayout userType="creator">
+    <DashboardLayout>
       <div className="mb-8">
         <Button
           variant="ghost"

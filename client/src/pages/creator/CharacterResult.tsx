@@ -32,7 +32,7 @@ export function CharacterResult() {
   ];
 
   return (
-    <DashboardLayout userType="creator">
+    <DashboardLayout>
       {/* Header */}
       <div className="mb-8">
         <Button

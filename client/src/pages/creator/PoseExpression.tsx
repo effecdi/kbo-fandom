@@ -152,7 +152,7 @@ export function PoseExpression() {
   const canGenerate = selectedCharacterIds.length > 0 && !generateMutation.isPending && !isOutOfCredits;
 
   return (
-    <DashboardLayout userType="creator">
+    <DashboardLayout>
       <div className="mb-8">
         <Button
           variant="ghost"

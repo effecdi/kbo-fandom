@@ -30,6 +30,36 @@ interface GenerateSceneResponse {
   imageUrl: string;
 }
 
+// ─── Retry helper for flaky API calls ────────────────────────────────────────
+
+async function fetchWithRetry(
+  method: string,
+  url: string,
+  body: any,
+  opts: { signal?: AbortSignal } = {},
+  maxRetries = 2,
+): Promise<Response> {
+  let lastError: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await apiRequest(method, url, body, opts);
+      // Retry on 502/503/504 gateway errors
+      if (res.status >= 502 && res.status <= 504 && attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        continue;
+      }
+      return res;
+    } catch (err: any) {
+      if (err?.name === "AbortError") throw err;
+      lastError = err;
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 // ─── Hook ───────────────────────────────────────────────────────────────────
 
 export function useCopilot() {
@@ -323,7 +353,7 @@ export function useCopilot() {
         const canvasH = fc?.height || 800;
         const geminiRatio = getGeminiAspectRatio(canvasW, canvasH);
 
-        const genRes = await apiRequest(
+        const genRes = await fetchWithRetry(
           "POST",
           "/api/auto-webtoon/generate-scene",
           {
@@ -458,7 +488,7 @@ export function useCopilot() {
             const sourceImages: string[] = [...charImageUrls];
             if (referenceImageUrl) sourceImages.push(referenceImageUrl);
 
-            const genRes = await apiRequest(
+            const genRes = await fetchWithRetry(
               "POST",
               "/api/auto-webtoon/generate-scene",
               {
@@ -610,7 +640,7 @@ export function useCopilot() {
       try {
         addAssistantMsg(`현재 컷을 다시 생성하고 있어요... 🔄`);
 
-        const res = await apiRequest(
+        const res = await fetchWithRetry(
           "POST",
           "/api/auto-webtoon/generate-scene",
           {
@@ -681,7 +711,7 @@ export function useCopilot() {
           addAssistantMsg(`컷 ${i + 1}/${cutsWithBg.length} 스타일 변경 중...`);
 
           try {
-            const genRes = await apiRequest(
+            const genRes = await fetchWithRetry(
               "POST",
               "/api/auto-webtoon/generate-scene",
               {
@@ -839,13 +869,33 @@ export function useCopilot() {
         case "/auto":
           dispatch({ type: "SET_ACTIVE_MODULE", module: "autogen" });
           break;
+        case "/story":
+          dispatch({ type: "SET_ACTIVE_MODULE", module: "story" });
+          break;
+        case "/chat":
+          dispatch({ type: "SET_ACTIVE_MODULE", module: "chat" });
+          break;
+        case "/pose":
+          dispatch({ type: "SET_ACTIVE_MODULE", module: "pose" });
+          break;
+        case "/background":
+          dispatch({ type: "SET_ACTIVE_MODULE", module: "background" });
+          break;
+        case "/photocard":
+          dispatch({ type: "SET_CANVAS_ASPECT_RATIO", ratio: "2:3" });
+          addAssistantMsg("포토카드 모드로 전환했어요! (2:3 비율)");
+          break;
+        case "/sticker":
+          dispatch({ type: "OPEN_STICKER_PANEL" });
+          addAssistantMsg("스티커 패널을 열었어요!");
+          break;
         case "/pro":
           dispatch({ type: "SET_UI_LEVEL", level: "pro" });
           break;
       }
       dispatch({ type: "INCREMENT_INTERACTION" });
     },
-    [dispatch]
+    [dispatch, addAssistantMsg]
   );
 
   // ── Pin/unpin characters ──────────────────────────────────────────────────

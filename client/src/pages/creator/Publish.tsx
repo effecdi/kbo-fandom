@@ -29,7 +29,7 @@ export function Publish() {
   };
 
   return (
-    <DashboardLayout userType="creator">
+    <DashboardLayout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Button

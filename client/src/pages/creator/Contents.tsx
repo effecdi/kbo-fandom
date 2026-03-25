@@ -3,7 +3,7 @@ import EditsPage from "../edits";
 
 export function Contents() {
   return (
-    <DashboardLayout userType="creator" noPadding>
+    <DashboardLayout noPadding>
       <EditsPage />
     </DashboardLayout>
   );

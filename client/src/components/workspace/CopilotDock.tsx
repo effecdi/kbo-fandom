@@ -215,23 +215,23 @@ export function CopilotDock() {
       <div className="w-full max-w-3xl pointer-events-auto">
         {/* ── Character picker popup ──────────────────────────────── */}
         {showCharPicker && (
-          <div className="bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl mb-2 mx-4 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50">
-              <span className="text-xs font-bold text-foreground">내 캐릭터 선택</span>
+          <div className="bg-[#0c0c10]/95 backdrop-blur-xl border border-white/[0.06] rounded-2xl shadow-2xl mb-2 mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04]">
+              <span className="text-xs font-bold text-white">내 캐릭터 선택</span>
               <button
                 onClick={() => setShowCharPicker(false)}
-                className="p-1 rounded-md hover:bg-muted transition-colors"
+                className="p-1 rounded-md hover:bg-white/[0.06] transition-colors"
               >
-                <X className="w-5 h-5 text-muted-foreground" />
+                <X className="w-5 h-5 text-white/50" />
               </button>
             </div>
             <div className="p-3 max-h-48 overflow-y-auto">
               {loadingGallery ? (
                 <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-5 h-5 animate-spin text-white/50" />
                 </div>
               ) : galleryChars.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
+                <p className="text-xs text-white/50 text-center py-4">
                   생성된 캐릭터가 없어요. 먼저 캐릭터를 만들어주세요.
                 </p>
               ) : (
@@ -249,7 +249,7 @@ export function CopilotDock() {
                       className={`relative group rounded-xl overflow-hidden border-2 transition-all aspect-square ${
                         isPinned(char.id)
                           ? "border-primary ring-2 ring-primary/30"
-                          : "border-transparent hover:border-border"
+                          : "border-transparent hover:border-white/[0.06]"
                       }`}
                     >
                       <img
@@ -278,12 +278,12 @@ export function CopilotDock() {
 
         {/* ── Expanded conversation panel ──────────────────────────────── */}
         {dockExpanded && (
-          <div className="bg-card/95 backdrop-blur-xl border border-border border-b-0 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col">
+          <div className="bg-[#0c0c10]/95 backdrop-blur-xl border border-white/[0.06] border-b-0 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04]">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5" style={{ color: accentColor }} />
-                <span className="text-xs font-bold text-foreground">AI Copilot</span>
+                <span className="text-xs font-bold text-white">AI Copilot</span>
                 {contextLabel && (
                   <span className="text-[12px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                     {contextLabel}
@@ -292,9 +292,9 @@ export function CopilotDock() {
               </div>
               <button
                 onClick={toggleDock}
-                className="p-1 rounded-md hover:bg-muted transition-colors"
+                className="p-1 rounded-md hover:bg-white/[0.06] transition-colors"
               >
-                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                <ChevronDown className="w-5 h-5 text-white/50" />
               </button>
             </div>
 
@@ -316,8 +316,8 @@ export function CopilotDock() {
                           {fandomMeta.groupName.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground">{fandomMeta.groupName} 팬아트</p>
-                          <p className="text-[11px] text-muted-foreground truncate">
+                          <p className="text-sm font-bold text-white">{fandomMeta.groupName} 팬아트</p>
+                          <p className="text-[11px] text-white/50 truncate">
                             {fandomMeta.memberTags.length > 0
                               ? `멤버: ${fandomMeta.memberTags.join(", ")}`
                               : "전체 멤버"}
@@ -329,7 +329,7 @@ export function CopilotDock() {
 
                       {/* Fandom prompt suggestions */}
                       <div className="space-y-1.5">
-                        <p className="text-[11px] text-muted-foreground/60 font-medium px-1">이런 것도 만들어보세요</p>
+                        <p className="text-[11px] text-white/40 font-medium px-1">이런 것도 만들어보세요</p>
                         {[
                           `${fandomMeta.memberTags[0] || fandomMeta.groupName} 카페 일상 팬아트`,
                           `${fandomMeta.groupName} 연습실 일상 인스타툰`,
@@ -340,7 +340,7 @@ export function CopilotDock() {
                             key={prompt}
                             onClick={() => sendMessage(prompt)}
                             disabled={isGenerating}
-                            className="w-full text-left px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-white/[0.06] hover:text-foreground transition-colors disabled:opacity-40"
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs text-white/50 hover:bg-white/[0.06] hover:text-white transition-colors disabled:opacity-40"
                           >
                             "{prompt}"
                           </button>
@@ -349,11 +349,11 @@ export function CopilotDock() {
                     </div>
                   ) : (
                     <div className="text-center py-6">
-                      <Bot className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
-                      <p className="text-sm text-muted-foreground font-medium">
+                      <Bot className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                      <p className="text-sm text-white/50 font-medium">
                         무엇을 만들어볼까요?
                       </p>
-                      <p className="text-xs text-muted-foreground/60 mt-1">
+                      <p className="text-xs text-white/40 mt-1">
                         자연어로 요청하면 AI가 인스타툰을 만들어드려요
                       </p>
                     </div>
@@ -376,7 +376,7 @@ export function CopilotDock() {
                         className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
                           msg.role === "user"
                             ? "text-white rounded-br-md"
-                            : "bg-muted text-foreground rounded-bl-md"
+                            : "bg-white/[0.06] text-white rounded-bl-md"
                         }`}
                         style={msg.role === "user" ? { background: accentColor } : undefined}
                       >
@@ -388,8 +388,8 @@ export function CopilotDock() {
                         ))}
                       </div>
                       {msg.role === "user" && (
-                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
-                          <User className="w-5 h-5 text-muted-foreground" />
+                        <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
+                          <User className="w-5 h-5 text-white/50" />
                         </div>
                       )}
                     </div>
@@ -402,7 +402,7 @@ export function CopilotDock() {
                     <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: `linear-gradient(to bottom right, ${accentColor}, ${accentColor})` }}>
                       <Bot className="w-5 h-5 text-white animate-pulse" />
                     </div>
-                    <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+                    <div className="bg-white/[0.06] rounded-2xl rounded-bl-md px-4 py-3">
                       <div className="flex gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" />
                         <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:0.15s]" />
@@ -419,7 +419,7 @@ export function CopilotDock() {
         )}
 
         {/* ── Dock bar (always visible) ─────────────────────────────── */}
-        <div className="bg-card/95 backdrop-blur-xl border border-border rounded-t-2xl shadow-2xl">
+        <div className="bg-[#0c0c10]/95 backdrop-blur-xl border border-white/[0.06] rounded-t-2xl shadow-2xl">
           {/* Fandom context bar */}
           {fandomMeta && !dockExpanded && (
             <div className="flex items-center gap-2 px-4 pt-3 pb-1">
@@ -429,7 +429,7 @@ export function CopilotDock() {
               >
                 {fandomMeta.groupName.charAt(0)}
               </div>
-              <span className="text-[11px] font-bold text-foreground/70">{fandomMeta.groupName}</span>
+              <span className="text-[11px] font-bold text-white/70">{fandomMeta.groupName}</span>
               <span
                 className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
                 style={{ backgroundColor: fandomMeta.coverColor }}
@@ -453,7 +453,7 @@ export function CopilotDock() {
           {/* Pinned characters bar */}
           {pinnedCharacters.length > 0 && (
             <div className="flex items-center gap-1.5 px-4 pt-3 pb-1">
-              <span className="text-[12px] text-muted-foreground font-medium shrink-0 mr-1">캐릭터</span>
+              <span className="text-[12px] text-white/50 font-medium shrink-0 mr-1">캐릭터</span>
               {pinnedCharacters.map((char) => (
                 <div key={char.id} className="relative group shrink-0">
                   <img
@@ -471,18 +471,18 @@ export function CopilotDock() {
               ))}
               <button
                 onClick={() => setShowCharPicker(!showCharPicker)}
-                className="w-8 h-8 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center shrink-0 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                className="w-8 h-8 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center shrink-0 hover:border-primary/50 hover:bg-primary/5 transition-colors"
                 title="캐릭터 추가"
               >
-                <Plus className="w-5 h-5 text-muted-foreground" />
+                <Plus className="w-5 h-5 text-white/50" />
               </button>
 
               {/* Cuts count selector (only for multi-cut templates) */}
               {showCutsSelector && (
                 <>
-                  <div className="w-px h-6 bg-border mx-1" />
-                  <span className="text-[12px] text-muted-foreground font-medium shrink-0 mr-1">컷</span>
-                  <div className="flex items-center bg-muted rounded-lg p-0.5 gap-0.5">
+                  <div className="w-px h-6 bg-white/[0.06] mx-1" />
+                  <span className="text-[12px] text-white/50 font-medium shrink-0 mr-1">컷</span>
+                  <div className="flex items-center bg-white/[0.06] rounded-lg p-0.5 gap-0.5">
                     {CUTS_OPTIONS.map((n) => (
                       <button
                         key={n}
@@ -490,7 +490,7 @@ export function CopilotDock() {
                         className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
                           cutsCount === n
                             ? "text-white shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
+                            : "text-white/50 hover:text-white"
                         }`}
                         style={cutsCount === n ? { background: accentColor } : undefined}
                       >
@@ -523,7 +523,7 @@ export function CopilotDock() {
           <div className="relative">
             {/* Slash command menu */}
             {showSlash && (
-              <div className="absolute bottom-full left-4 right-4 bg-card border border-border rounded-xl shadow-xl overflow-hidden mb-1">
+              <div className="absolute bottom-full left-4 right-4 bg-[#0c0c10] border border-white/[0.06] rounded-xl shadow-xl overflow-hidden mb-1">
                 {SLASH_COMMANDS.map(({ cmd, label }) => (
                   <button
                     key={cmd}
@@ -532,10 +532,10 @@ export function CopilotDock() {
                       setInput("");
                       setShowSlash(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted text-left transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-white/[0.06] text-left transition-colors"
                   >
                     <code className="text-primary font-mono text-xs">{cmd}</code>
-                    <span className="text-muted-foreground">{label}</span>
+                    <span className="text-white/50">{label}</span>
                   </button>
                 ))}
               </div>
@@ -546,13 +546,13 @@ export function CopilotDock() {
               {messages.length > 0 && (
                 <button
                   onClick={toggleDock}
-                  className="p-1.5 rounded-lg hover:bg-muted transition-colors shrink-0"
+                  className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors shrink-0"
                   title={dockExpanded ? "접기" : "대화 보기"}
                 >
                   {dockExpanded ? (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                    <ChevronDown className="w-5 h-5 text-white/50" />
                   ) : (
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                    <ChevronUp className="w-5 h-5 text-white/50" />
                   )}
                 </button>
               )}
@@ -563,7 +563,7 @@ export function CopilotDock() {
                 className={`p-1.5 rounded-lg transition-colors shrink-0 ${
                   showCharPicker
                     ? "bg-primary/20 text-primary"
-                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                    : "hover:bg-white/[0.06] text-white/50 hover:text-white"
                 }`}
                 title="캐릭터 고정"
               >
@@ -577,10 +577,10 @@ export function CopilotDock() {
                     const next = cutsCount === 4 ? 2 : cutsCount === 2 ? 3 : 4;
                     setCutsCount(next as 2 | 3 | 4);
                   }}
-                  className="p-1.5 rounded-lg hover:bg-muted transition-colors shrink-0 group relative"
+                  className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors shrink-0 group relative"
                   title={`${cutsCount}컷 (클릭하여 변경)`}
                 >
-                  <Grid2x2 className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+                  <Grid2x2 className="w-5 h-5 text-white/50 group-hover:text-white" />
                   <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full text-[12px] font-bold text-white flex items-center justify-center" style={{ background: accentColor }}>
                     {cutsCount}
                   </span>
@@ -609,7 +609,7 @@ export function CopilotDock() {
                 }
                 disabled={isGenerating}
                 rows={1}
-                className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:opacity-50 max-h-20"
+                className="flex-1 resize-none bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none disabled:opacity-50 max-h-20"
               />
 
               {/* Quick actions (visible when input is empty) */}
@@ -619,16 +619,16 @@ export function CopilotDock() {
                     <button
                       key={action.id}
                       onClick={() => sendMessage(action.prompt)}
-                      className="p-1.5 rounded-lg hover:bg-muted transition-colors group"
+                      className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors group"
                       title={action.label}
                     >
-                      <action.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <action.icon className="w-5 h-5 text-white/50 group-hover:text-primary transition-colors" />
                     </button>
                   ))}
                   {/* Fandom member quick chips */}
                   {fandomMeta && fandomMeta.memberTags.length > 0 && (
                     <>
-                      <div className="w-px h-4 bg-border mx-0.5" />
+                      <div className="w-px h-4 bg-white/[0.06] mx-0.5" />
                       {fandomMeta.memberTags.slice(0, 3).map((member) => (
                         <button
                           key={member}

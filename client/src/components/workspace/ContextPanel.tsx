@@ -92,7 +92,7 @@ export function ContextPanel() {
 
       {/* Panel content — only when a tab is active */}
       {activeTab && (
-        <div className="w-[260px] shrink-0 border-r border-white/[0.04] bg-[#0c0c10]">
+        <div className="w-[260px] shrink-0 border-r border-white/[0.04] bg-[#0c0c10] h-full overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-3">
               {activeTab === "members" && <MemberPanel />}

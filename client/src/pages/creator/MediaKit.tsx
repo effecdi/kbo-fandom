@@ -3,7 +3,7 @@ import MediaKitPage from "../media-kit";
 
 export function MediaKit() {
   return (
-    <DashboardLayout userType="creator" noPadding>
+    <DashboardLayout noPadding>
       <MediaKitPage />
     </DashboardLayout>
   );

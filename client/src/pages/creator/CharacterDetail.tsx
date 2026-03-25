@@ -39,7 +39,7 @@ export function CharacterDetail() {
   ];
 
   return (
-    <DashboardLayout userType="creator">
+    <DashboardLayout>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">

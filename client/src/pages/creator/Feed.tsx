@@ -3,7 +3,7 @@ import FeedPage from "../feed";
 
 export function Feed() {
   return (
-    <DashboardLayout userType="creator" noPadding>
+    <DashboardLayout noPadding>
       <FeedPage />
     </DashboardLayout>
   );

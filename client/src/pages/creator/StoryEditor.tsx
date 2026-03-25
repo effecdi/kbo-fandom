@@ -3,7 +3,7 @@ import StoryPage from "../story";
 
 export function StoryEditor() {
   return (
-    <DashboardLayout userType="creator" noPadding>
+    <DashboardLayout noPadding>
       <div className="fixed inset-0 top-[72px] left-60 z-0">
         <StoryPage />
       </div>

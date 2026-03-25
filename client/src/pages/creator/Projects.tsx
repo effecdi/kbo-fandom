@@ -198,7 +198,7 @@ export function Projects() {
   };
 
   return (
-    <DashboardLayout userType="creator">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

@@ -11,6 +11,12 @@ const SLASH_COMMANDS = [
   { cmd: "/bubble", label: "말풍선 에디터" },
   { cmd: "/effects", label: "효과 에디터" },
   { cmd: "/auto", label: "AI 자동 생성" },
+  { cmd: "/story", label: "스토리 에디터" },
+  { cmd: "/chat", label: "채팅 메이커" },
+  { cmd: "/pose", label: "포즈/표정" },
+  { cmd: "/background", label: "배경 생성" },
+  { cmd: "/photocard", label: "포토카드 모드" },
+  { cmd: "/sticker", label: "스티커 추가" },
 ];
 
 export function CopilotInput({ onSend, onSlashCommand, disabled }: CopilotInputProps) {
@@ -47,10 +53,10 @@ export function CopilotInput({ onSend, onSlashCommand, disabled }: CopilotInputP
   }
 
   return (
-    <div className="relative border-t border-border">
+    <div className="relative border-t border-white/[0.04]">
       {/* Slash command menu */}
       {showSlash && (
-        <div className="absolute bottom-full left-0 right-0 bg-card border border-border rounded-t-lg shadow-lg overflow-hidden">
+        <div className="absolute bottom-full left-0 right-0 bg-[#0c0c10] border border-white/[0.06] rounded-t-lg shadow-lg overflow-hidden">
           {SLASH_COMMANDS.map(({ cmd, label }) => (
             <button
               key={cmd}
@@ -59,10 +65,10 @@ export function CopilotInput({ onSend, onSlashCommand, disabled }: CopilotInputP
                 setValue("");
                 setShowSlash(false);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-xs hover:bg-muted text-left transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 text-xs hover:bg-white/[0.06] text-left transition-colors"
             >
               <code className="text-primary font-mono">{cmd}</code>
-              <span className="text-muted-foreground">{label}</span>
+              <span className="text-white/50">{label}</span>
             </button>
           ))}
         </div>
@@ -77,7 +83,7 @@ export function CopilotInput({ onSend, onSlashCommand, disabled }: CopilotInputP
           placeholder="AI에게 요청하세요... (/ 로 명령어)"
           disabled={disabled}
           rows={1}
-          className="flex-1 resize-none bg-muted rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 max-h-20"
+          className="flex-1 resize-none bg-white/[0.06] rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 max-h-20"
         />
         <button
           onClick={handleSend}

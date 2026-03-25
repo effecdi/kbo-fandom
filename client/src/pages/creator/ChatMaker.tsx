@@ -3,7 +3,7 @@ import ChatPage from "../chat";
 
 export function ChatMaker() {
   return (
-    <DashboardLayout userType="creator" noPadding>
+    <DashboardLayout noPadding>
       <ChatPage />
     </DashboardLayout>
   );

@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Textbox, Rect, Group } from "fabric";
+import { Textbox, Rect, Group, ActiveSelection } from "fabric";
 import CanvaEditor from "@/components/canva-editor/canva-editor";
 import CanvaToolbar from "@/components/canva-editor/canva-toolbar";
 import type {
@@ -32,6 +32,11 @@ import {
   Lock,
   Scissors,
   CopyPlus,
+  FolderClosed,
+  FolderOpen,
+  FlipHorizontal2,
+  Unlock,
+  SquareDashedMousePointer,
 } from "lucide-react";
 
 // ─── Canvas dimensions by aspect ratio ──────────────────────────────────────
@@ -498,6 +503,77 @@ export function CanvasArea() {
     setContextMenu(null);
   }, [canvasRef]);
 
+  const ctxGroup = useCallback(() => {
+    const fc = canvasRef.current?.getCanvas();
+    if (!fc) return;
+    const active = fc.getActiveObject();
+    if (!active || active.type !== "activeselection") return;
+    const sel = active as ActiveSelection;
+    const objects = sel.getObjects();
+    if (objects.length < 2) return;
+    fc.discardActiveObject();
+    const group = new Group(objects, {
+      subTargetCheck: true,
+      interactive: true,
+    });
+    objects.forEach((o: any) => fc.remove(o));
+    fc.add(group);
+    fc.setActiveObject(group);
+    fc.requestRenderAll();
+    setContextMenu(null);
+  }, [canvasRef]);
+
+  const ctxUngroup = useCallback(() => {
+    const fc = canvasRef.current?.getCanvas();
+    if (!fc) return;
+    const active = fc.getActiveObject();
+    if (!active || active.type !== "group") return;
+    const group = active as Group;
+    const items = group.getObjects();
+    const groupLeft = group.left || 0;
+    const groupTop = group.top || 0;
+    fc.remove(group);
+    items.forEach((item: any) => {
+      item.set({
+        left: (item.left || 0) + groupLeft + (group.width || 0) / 2,
+        top: (item.top || 0) + groupTop + (group.height || 0) / 2,
+      });
+      fc.add(item);
+    });
+    fc.discardActiveObject();
+    fc.requestRenderAll();
+    setContextMenu(null);
+  }, [canvasRef]);
+
+  const ctxFlip = useCallback(() => {
+    const fc = canvasRef.current?.getCanvas();
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (obj) { obj.set({ flipX: !obj.flipX }); fc.requestRenderAll(); }
+    setContextMenu(null);
+  }, [canvasRef]);
+
+  const ctxSelectAll = useCallback(() => {
+    const fc = canvasRef.current?.getCanvas();
+    if (!fc) return;
+    const objs = fc.getObjects();
+    if (objs.length === 0) return;
+    fc.discardActiveObject();
+    const sel = new ActiveSelection(objs, { canvas: fc });
+    fc.setActiveObject(sel);
+    fc.requestRenderAll();
+    setContextMenu(null);
+  }, [canvasRef]);
+
+  // Detect what's active for context menu rendering
+  const getActiveType = useCallback(() => {
+    const fc = canvasRef.current?.getCanvas();
+    if (!fc) return null;
+    const active = fc.getActiveObject();
+    if (!active) return null;
+    return active.type;
+  }, [canvasRef]);
+
   // Script rendering
   const scriptTop = activeCut?.scriptTop;
   const scriptBottom = activeCut?.scriptBottom;
@@ -679,26 +755,54 @@ export function CanvasArea() {
         </div>
 
         {/* Right-click context menu */}
-        {contextMenu && (
+        {contextMenu && (() => {
+          const activeType = getActiveType();
+          const hasActive = !!activeType;
+          const isMultiSelect = activeType === "activeselection";
+          const isGroup = activeType === "group";
+          return (
           <div
-            className="fixed z-50 min-w-[180px] bg-[#1a1a1f]/95 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl py-1.5 overflow-hidden"
+            className="fixed z-50 min-w-[200px] bg-[#1a1a1f]/95 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl py-1.5 overflow-hidden"
             style={{ left: contextMenu.x, top: contextMenu.y }}
             onClick={(e) => e.stopPropagation()}
           >
-            <CtxMenuItem icon={<Copy className="w-5 h-5" />} label="복사" shortcut="⌘C" onClick={ctxCopy} />
-            <CtxMenuItem icon={<Scissors className="w-5 h-5" />} label="잘라내기" shortcut="⌘X" onClick={ctxCut} />
+            {hasActive && (
+              <>
+                <CtxMenuItem icon={<Copy className="w-5 h-5" />} label="복사" shortcut="⌘C" onClick={ctxCopy} />
+                <CtxMenuItem icon={<Scissors className="w-5 h-5" />} label="잘라내기" shortcut="⌘X" onClick={ctxCut} />
+              </>
+            )}
             <CtxMenuItem icon={<Clipboard className="w-5 h-5" />} label="붙여넣기" shortcut="⌘V" onClick={ctxPaste} />
-            <CtxMenuItem icon={<CopyPlus className="w-5 h-5" />} label="복제" shortcut="⌘D" onClick={ctxDuplicate} />
+            {hasActive && (
+              <CtxMenuItem icon={<CopyPlus className="w-5 h-5" />} label="복제" shortcut="⌘D" onClick={ctxDuplicate} />
+            )}
             <div className="h-px bg-white/[0.06] my-1" />
-            <CtxMenuItem icon={<ChevronsUp className="w-5 h-5" />} label="맨 앞으로" shortcut="⌘⇧]" onClick={ctxBringToFront} />
-            <CtxMenuItem icon={<ArrowUpToLine className="w-5 h-5" />} label="앞으로" shortcut="⌘]" onClick={ctxBringForward} />
-            <CtxMenuItem icon={<ArrowDownToLine className="w-5 h-5" />} label="뒤로" shortcut="⌘[" onClick={ctxSendBackward} />
-            <CtxMenuItem icon={<ChevronsDown className="w-5 h-5" />} label="맨 뒤로" shortcut="⌘⇧[" onClick={ctxSendToBack} />
-            <div className="h-px bg-white/[0.06] my-1" />
-            <CtxMenuItem icon={<Lock className="w-5 h-5" />} label="잠금 토글" shortcut="⌘L" onClick={ctxLock} />
-            <CtxMenuItem icon={<Trash2 className="w-5 h-5" />} label="삭제" shortcut="Del" onClick={ctxDelete} danger />
+            {isMultiSelect && (
+              <CtxMenuItem icon={<FolderClosed className="w-5 h-5" />} label="그룹으로 묶기" shortcut="⌘G" onClick={ctxGroup} />
+            )}
+            {isGroup && (
+              <CtxMenuItem icon={<FolderOpen className="w-5 h-5" />} label="그룹 해제" shortcut="⌘⇧G" onClick={ctxUngroup} />
+            )}
+            {(isMultiSelect || isGroup) && <div className="h-px bg-white/[0.06] my-1" />}
+            {hasActive && (
+              <>
+                <CtxMenuItem icon={<ChevronsUp className="w-5 h-5" />} label="맨 앞으로" shortcut="⌘⇧]" onClick={ctxBringToFront} />
+                <CtxMenuItem icon={<ArrowUpToLine className="w-5 h-5" />} label="앞으로" shortcut="⌘]" onClick={ctxBringForward} />
+                <CtxMenuItem icon={<ArrowDownToLine className="w-5 h-5" />} label="뒤로" shortcut="⌘[" onClick={ctxSendBackward} />
+                <CtxMenuItem icon={<ChevronsDown className="w-5 h-5" />} label="맨 뒤로" shortcut="⌘⇧[" onClick={ctxSendToBack} />
+                <div className="h-px bg-white/[0.06] my-1" />
+                <CtxMenuItem icon={<FlipHorizontal2 className="w-5 h-5" />} label="좌우 반전" onClick={ctxFlip} />
+                <CtxMenuItem icon={<Lock className="w-5 h-5" />} label="잠금 토글" shortcut="⌘L" onClick={ctxLock} />
+                <div className="h-px bg-white/[0.06] my-1" />
+              </>
+            )}
+            <CtxMenuItem icon={<SquareDashedMousePointer className="w-5 h-5" />} label="전체 선택" shortcut="⌘A" onClick={ctxSelectAll} />
+            {hasActive && (
+              <CtxMenuItem icon={<Trash2 className="w-5 h-5" />} label="삭제" shortcut="Del" onClick={ctxDelete} danger />
+            )}
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

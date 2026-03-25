@@ -21,11 +21,11 @@ export function CopilotPanel() {
   }, [messages.length]);
 
   return (
-    <div className="flex flex-col h-full border-t border-border">
+    <div className="flex flex-col h-full border-t border-white/[0.04]">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.04]">
         <Sparkles className="w-5 h-5 text-primary" />
-        <span className="text-xs font-bold text-foreground">AI Copilot</span>
+        <span className="text-xs font-bold text-white">AI Copilot</span>
       </div>
 
       {/* Messages */}
@@ -33,11 +33,11 @@ export function CopilotPanel() {
         <div className="p-3 space-y-3">
           {messages.length === 0 && (
             <div className="text-center py-8">
-              <Bot className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-xs text-muted-foreground">
+              <Bot className="w-8 h-8 text-white/20 mx-auto mb-2" />
+              <p className="text-xs text-white/50">
                 AI에게 요청하세요
               </p>
-              <p className="text-[12px] text-muted-foreground/60 mt-1">
+              <p className="text-[12px] text-white/40 mt-1">
                 "배경 생성해줘", "말풍선 추가" 등
               </p>
             </div>
@@ -58,15 +58,15 @@ export function CopilotPanel() {
                 <div
                   className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
                     msg.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
+                      ? "bg-primary text-white"
+                      : "bg-white/[0.06] text-white"
                   }`}
                 >
                   {msg.content}
                 </div>
                 {msg.role === "user" && (
-                  <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
-                    <User className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-5 h-5 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
+                    <User className="w-5 h-5 text-white/50" />
                   </div>
                 )}
               </div>
@@ -79,11 +79,11 @@ export function CopilotPanel() {
               <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Bot className="w-5 h-5 text-primary animate-pulse" />
               </div>
-              <div className="bg-muted rounded-lg px-3 py-2">
+              <div className="bg-white/[0.06] rounded-lg px-3 py-2">
                 <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:0.1s]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce [animation-delay:0.1s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce [animation-delay:0.2s]" />
                 </div>
               </div>
             </div>

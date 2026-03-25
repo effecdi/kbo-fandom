@@ -184,7 +184,7 @@ export function Background() {
   const canGenerate = sourceImages.length > 0 && prompt.trim().length > 0 && !bgMutation.isPending && !isOutOfCredits;
 
   return (
-    <DashboardLayout userType="creator">
+    <DashboardLayout>
       <div className="mb-8">
         <Button
           variant="ghost"

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Group, ActiveSelection } from "fabric";
 import {
   Copy,
   Trash2,
@@ -28,6 +29,8 @@ import {
   Palette,
   Scissors,
   FileText,
+  FolderClosed,
+  FolderOpen,
 } from "lucide-react";
 import { useWorkspace, useActiveCut, useActiveScene, useCanvasRef } from "@/hooks/use-workspace";
 import { genId } from "@/contexts/workspace-context";
@@ -78,6 +81,7 @@ export function PropertiesPanel() {
     setActiveTab((prev) => (prev === id ? null : id));
   };
   const [activeLayerIndex, setActiveLayerIndex] = useState<number>(-1);
+  const [selectedLayerIndices, setSelectedLayerIndices] = useState<Set<number>>(new Set());
 
   // Selected object properties
   const [objScale, setObjScale] = useState(100);
@@ -262,10 +266,78 @@ export function PropertiesPanel() {
     const target = fc.getObjects()[index];
     if (target) { fc.remove(target); fc.requestRenderAll(); }
   }
-  function handleSelectLayer(index: number) {
+  function handleSelectLayer(index: number, e?: React.MouseEvent) {
     const fc = canvasRef.current?.getCanvas(); if (!fc) return;
-    const target = fc.getObjects()[index];
-    if (target) { fc.setActiveObject(target); fc.requestRenderAll(); setActiveLayerIndex(index); }
+    const objs = fc.getObjects();
+    const target = objs[index];
+    if (!target) return;
+
+    // Shift+click: multi-select
+    if (e?.shiftKey) {
+      const newSet = new Set(selectedLayerIndices);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      setSelectedLayerIndices(newSet);
+
+      // Update canvas selection
+      const selectedObjs = Array.from(newSet).map((i) => objs[i]).filter(Boolean);
+      if (selectedObjs.length > 1) {
+        fc.discardActiveObject();
+        const sel = new ActiveSelection(selectedObjs, { canvas: fc });
+        fc.setActiveObject(sel);
+      } else if (selectedObjs.length === 1) {
+        fc.setActiveObject(selectedObjs[0]);
+      } else {
+        fc.discardActiveObject();
+      }
+      fc.requestRenderAll();
+      return;
+    }
+
+    // Normal click: single select
+    setSelectedLayerIndices(new Set([index]));
+    fc.setActiveObject(target);
+    fc.requestRenderAll();
+    setActiveLayerIndex(index);
+  }
+
+  function handleGroupSelected() {
+    const fc = canvasRef.current?.getCanvas(); if (!fc) return;
+    const objs = fc.getObjects();
+    const selected = Array.from(selectedLayerIndices).map((i) => objs[i]).filter(Boolean);
+    if (selected.length < 2) return;
+
+    fc.discardActiveObject();
+    const group = new Group(selected, { subTargetCheck: true, interactive: true });
+    selected.forEach((o: any) => fc.remove(o));
+    fc.add(group);
+    fc.setActiveObject(group);
+    fc.requestRenderAll();
+    setSelectedLayerIndices(new Set());
+  }
+
+  function handleUngroupSelected() {
+    const fc = canvasRef.current?.getCanvas(); if (!fc) return;
+    const active = fc.getActiveObject();
+    if (!active || active.type !== "group") return;
+    const group = active as Group;
+    const items = group.getObjects();
+    const groupLeft = group.left || 0;
+    const groupTop = group.top || 0;
+    fc.remove(group);
+    items.forEach((item: any) => {
+      item.set({
+        left: (item.left || 0) + groupLeft + (group.width || 0) / 2,
+        top: (item.top || 0) + groupTop + (group.height || 0) / 2,
+      });
+      fc.add(item);
+    });
+    fc.discardActiveObject();
+    fc.requestRenderAll();
+    setSelectedLayerIndices(new Set());
   }
   function handleDuplicateCut() {
     if (!activeCut || !activeScene) return;
@@ -288,7 +360,7 @@ export function PropertiesPanel() {
     <div className="h-full flex shrink-0">
       {/* ── Panel Content — only when a tab is active ── */}
       {activeTab ? (
-      <div className="w-[280px] shrink-0 border-l border-white/[0.04] bg-[#0c0c10] min-h-0 overflow-y-auto">
+      <div className="w-[280px] h-full shrink-0 border-l border-white/[0.04] bg-[#0c0c10] min-h-0 overflow-y-auto">
 
         {/* ════════════════════════════════════════════════════════════════
             레이어 탭
@@ -297,8 +369,32 @@ export function PropertiesPanel() {
           <div className="p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[12px] font-semibold text-white/40 uppercase tracking-wider">레이어</span>
-              <span className="text-[12px] text-white/20 font-mono">{layers.length}</span>
+              <div className="flex items-center gap-1">
+                {selectedLayerIndices.size >= 2 && (
+                  <button
+                    onClick={handleGroupSelected}
+                    className="p-1 rounded-lg hover:bg-white/[0.06] text-white/40 hover:text-primary transition-all"
+                    title="그룹으로 묶기 (⌘G)"
+                  >
+                    <FolderClosed className="w-4 h-4" />
+                  </button>
+                )}
+                {activeLayerIndex >= 0 && layers[activeLayerIndex]?.type === "group" && (
+                  <button
+                    onClick={handleUngroupSelected}
+                    className="p-1 rounded-lg hover:bg-white/[0.06] text-white/40 hover:text-primary transition-all"
+                    title="그룹 해제 (⌘⇧G)"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                  </button>
+                )}
+                <span className="text-[12px] text-white/20 font-mono">{layers.length}</span>
+              </div>
             </div>
+
+            {selectedLayerIndices.size >= 2 && (
+              <p className="text-[10px] text-white/30 px-1">Shift+클릭으로 다중 선택 중 ({selectedLayerIndices.size}개)</p>
+            )}
 
             {/* Background */}
             <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-xs text-white/25">
@@ -316,19 +412,25 @@ export function PropertiesPanel() {
               {layers.map((layer, i) => {
                 const Icon = getLayerIcon(layer.type);
                 const isSelected = i === activeLayerIndex;
+                const isMultiSelected = selectedLayerIndices.has(i);
                 return (
                   <div
                     key={layer.id + i}
-                    onClick={() => handleSelectLayer(i)}
+                    onClick={(e) => handleSelectLayer(i, e)}
                     className={`flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer group transition-all ${
                       isSelected
                         ? "bg-primary/8 border border-primary/15 text-primary"
+                        : isMultiSelected
+                        ? "bg-blue-500/8 border border-blue-500/15 text-blue-400"
                         : "border border-transparent hover:bg-white/[0.03] text-white/50 hover:text-white/70"
                     }`}
                   >
                     <GripVertical className="w-4 h-4 text-white/10 shrink-0" />
-                    <Icon className={`w-5 h-5 shrink-0 ${isSelected ? "text-primary" : "text-white/30"}`} />
+                    <Icon className={`w-5 h-5 shrink-0 ${isSelected ? "text-primary" : isMultiSelected ? "text-blue-400" : "text-white/30"}`} />
                     <span className="flex-1 truncate text-[12px]">{layer.label}</span>
+                    {layer.type === "group" && (
+                      <FolderClosed className="w-3.5 h-3.5 text-white/20 shrink-0" />
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteLayer(i); }}
                       className="p-0.5 rounded-lg hover:bg-red-500/15 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -364,6 +466,9 @@ export function PropertiesPanel() {
                   <IcoBtn icon={FlipHorizontal2} onClick={flipHorizontal} tooltip="좌우 반전" />
                   <IcoBtn icon={Copy} onClick={duplicateObject} tooltip="복제" />
                   <IcoBtn icon={Trash2} onClick={deleteObject} tooltip="삭제" destructive />
+                  <div className="w-px h-4 bg-white/[0.06] mx-0.5" />
+                  <IcoBtn icon={FolderClosed} onClick={handleGroupSelected} tooltip="그룹 (⌘G)" />
+                  <IcoBtn icon={FolderOpen} onClick={handleUngroupSelected} tooltip="그룹 해제 (⌘⇧G)" />
                   <div className="w-px h-4 bg-white/[0.06] mx-0.5" />
                   <IcoBtn icon={ChevronsUp} onClick={bringToFront} tooltip="맨 앞" />
                   <IcoBtn icon={ArrowUp} onClick={bringForward} tooltip="앞으로" />
