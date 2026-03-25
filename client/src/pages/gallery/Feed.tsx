@@ -285,7 +285,7 @@ export function FeedPage() {
           </div>
           <Link to="/studio/new">
             <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-              <Plus className="w-4 h-4" />
+              <Plus className="w-5 h-5" />
               발행하기
             </Button>
           </Link>
@@ -303,7 +303,7 @@ export function FeedPage() {
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
-              <t.icon className="w-4 h-4" />
+              <t.icon className="w-5 h-5" />
               {t.label}
             </button>
           ))}
@@ -330,7 +330,7 @@ export function FeedPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-foreground">{post.author}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#00e5cc]/10 text-[#00e5cc]">
+                      <span className="px-2 py-0.5 rounded-full text-[12px] font-medium bg-[#00e5cc]/10 text-[#00e5cc]">
                         {TYPE_LABELS[post.type]}
                       </span>
                     </div>
@@ -338,7 +338,7 @@ export function FeedPage() {
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0">{post.createdAt}</span>
                   <button className="p-1 rounded-lg hover:bg-muted transition-colors shrink-0">
-                    <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                    <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
                   </button>
                 </div>
 
@@ -357,7 +357,7 @@ export function FeedPage() {
                     </div>
                   )}
                   {post.panels > 1 && (
-                    <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[10px] text-white font-bold">
+                    <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[12px] text-white font-bold">
                       {post.panels}컷
                     </div>
                   )}
@@ -379,15 +379,15 @@ export function FeedPage() {
                             : "text-muted-foreground hover:bg-muted"
                         }`}
                       >
-                        <Heart className={`w-4 h-4 ${post.liked ? "fill-current" : ""}`} />
+                        <Heart className={`w-5 h-5 ${post.liked ? "fill-current" : ""}`} />
                         {post.likes.toLocaleString()}
                       </button>
                       <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-all">
-                        <MessageCircle className="w-4 h-4" />
+                        <MessageCircle className="w-5 h-5" />
                         {post.comments}
                       </button>
                       <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-all">
-                        <Share2 className="w-4 h-4" />
+                        <Share2 className="w-5 h-5" />
                         {post.shares}
                       </button>
                     </div>
@@ -399,7 +399,7 @@ export function FeedPage() {
                           : "text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <Bookmark className={`w-4 h-4 ${post.saved ? "fill-current" : ""}`} />
+                      <Bookmark className={`w-5 h-5 ${post.saved ? "fill-current" : ""}`} />
                     </button>
                   </div>
                 </div>

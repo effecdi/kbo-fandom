@@ -133,7 +133,7 @@ export function MyGalleryPage() {
           </div>
           <Link to="/assets/characters/new">
             <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-              <Plus className="w-4 h-4" />
+              <Plus className="w-5 h-5" />
               새 작품 만들기
             </Button>
           </Link>
@@ -223,7 +223,7 @@ export function MyGalleryPage() {
                   )}
                   {/* Type badge */}
                   <div className="absolute top-2 left-2">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold border ${TYPE_COLORS[item.type] || "bg-muted text-muted-foreground border-border"}`}>
+                    <span className={`px-2 py-1 rounded-full text-[12px] font-bold border ${TYPE_COLORS[item.type] || "bg-muted text-muted-foreground border-border"}`}>
                       {TYPE_LABELS[item.type] || item.type}
                     </span>
                   </div>
@@ -249,7 +249,7 @@ export function MyGalleryPage() {
                   <h3 className="text-sm font-semibold text-foreground truncate">
                     {item.prompt.replace("[LOGO] ", "")}
                   </h3>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-[12px] text-muted-foreground">
                     {formatDate(item.createdAt)}
                   </p>
                 </div>
@@ -265,7 +265,7 @@ export function MyGalleryPage() {
             <p className="text-sm text-muted-foreground mt-1 mb-4">AI로 첫 작품을 만들어보세요</p>
             <Link to="/assets/characters/new">
               <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 만들기
               </Button>
             </Link>

@@ -60,7 +60,7 @@ export function CreatorSettings() {
                       className="w-24 h-24 rounded-2xl object-cover"
                     />
                     <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors">
-                      <Camera className="w-4 h-4" />
+                      <Camera className="w-5 h-5" />
                     </button>
                   </div>
                   <div className="flex-1">
@@ -114,7 +114,7 @@ export function CreatorSettings() {
                     <div>
                       <Label htmlFor="email">이메일 *</Label>
                       <div className="relative mt-2">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <Input
                           id="email"
                           type="email"
@@ -126,7 +126,7 @@ export function CreatorSettings() {
                     <div>
                       <Label htmlFor="phone">전화번호</Label>
                       <div className="relative mt-2">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <Input
                           id="phone"
                           defaultValue="010-1234-5678"
@@ -138,7 +138,7 @@ export function CreatorSettings() {
                   <div>
                     <Label htmlFor="location">지역</Label>
                     <div className="relative mt-2">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="location"
                         defaultValue="서울, 대한민국"
@@ -162,7 +162,7 @@ export function CreatorSettings() {
                   <div>
                     <Label htmlFor="instagram">Instagram</Label>
                     <div className="relative mt-2">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="instagram"
                         placeholder="https://instagram.com/username"
@@ -173,7 +173,7 @@ export function CreatorSettings() {
                   <div>
                     <Label htmlFor="youtube">YouTube</Label>
                     <div className="relative mt-2">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="youtube"
                         placeholder="https://youtube.com/@username"
@@ -184,7 +184,7 @@ export function CreatorSettings() {
                   <div>
                     <Label htmlFor="twitter">Twitter</Label>
                     <div className="relative mt-2">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="twitter"
                         placeholder="https://twitter.com/username"

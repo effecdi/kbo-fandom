@@ -1,54 +1,41 @@
 import { useState, ReactNode } from "react";
 import {
   LayoutDashboard,
-  Wand2,
   Users,
-  FolderOpen,
-  DollarSign,
   Settings,
   Bell,
   Search,
   ChevronDown,
   LogOut,
-  User,
-  Building2,
-  Sparkles,
-  Target,
-  BarChart3,
-  MessageSquare,
-  SwitchCamera,
-  CreditCard,
-  Image,
-  Rss,
-  HelpCircle,
+  Heart,
   Moon,
   Sun,
   ChevronRight,
-  Plus,
+  Rss,
+  Sparkles,
+  Trophy,
   Palette,
-  FileText,
-  ShoppingBag,
-  PieChart,
-  UserCircle,
+  Image,
+  FolderOpen,
+  RefreshCw,
+  MessageCircle,
+  Star,
+  TrendingUp,
+  Flame,
+  Crown,
+  Pen,
+  Send,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
-const olliLogo = "/favicon.png";
 import { useTheme } from "@/components/theme-provider";
-
-interface NavChild {
-  label: string;
-  path: string;
-  roles?: ("creator" | "business")[];
-}
+import { getFandomProfile, clearFandomProfile } from "@/lib/local-store";
 
 interface NavSection {
   title: string;
   items: {
     icon: React.ComponentType<{ className?: string }>;
     label: string;
-    path?: string;
-    roles?: ("creator" | "business")[];
-    children?: NavChild[];
+    path: string;
   }[];
 }
 
@@ -64,22 +51,13 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    "스튜디오": true,
+    "내 팬덤": true,
+    "창작": true,
+    "커뮤니티": true,
   });
 
-  // Persist role in localStorage so it survives navigation
-  const ROLE_KEY = "olli_user_role";
-  const [userRole, setUserRoleState] = useState<"creator" | "business">(() => {
-    const stored = localStorage.getItem(ROLE_KEY) as "creator" | "business" | null;
-    if (stored) return stored;
-    // Fallback: detect from URL on first visit
-    const isBiz = location.pathname.startsWith("/business") || location.pathname.startsWith("/market") || location.pathname.startsWith("/assets/brand");
-    return isBiz ? "business" : "creator";
-  });
-  const setUserRole = (role: "creator" | "business") => {
-    setUserRoleState(role);
-    localStorage.setItem(ROLE_KEY, role);
-  };
+  const fandomProfile = getFandomProfile();
+  const themeColor = "var(--fandom-primary, #7B2FF7)";
 
   const toggleSection = (label: string) => {
     setExpandedSections(prev => ({ ...prev, [label]: !prev[label] }));
@@ -87,116 +65,39 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
 
   const navSections: NavSection[] = [
     {
-      title: "스튜디오",
+      title: "내 팬덤",
       items: [
-        {
-          icon: FolderOpen,
-          label: "프로젝트",
-          path: "/studio",
-        },
-        {
-          icon: Plus,
-          label: "새 프로젝트",
-          path: "/studio/new",
-        },
+        { icon: Heart, label: "팬덤 홈", path: "/fandom" },
+        ...(fandomProfile?.groupId
+          ? [{ icon: Star, label: "내 그룹", path: `/fandom/groups/${fandomProfile.groupId}` }]
+          : []),
+        { icon: Rss, label: "팬덤 피드", path: "/fandom/feed" },
       ],
     },
     {
-      title: "에셋",
+      title: "창작",
       items: [
-        {
-          icon: Image,
-          label: "캐릭터",
-          path: "/assets/characters",
-        },
-        {
-          icon: Palette,
-          label: "배경",
-          path: "/assets",
-        },
-        {
-          icon: FolderOpen,
-          label: "브랜드 자산",
-          path: "/assets/brand",
-          roles: ["business"],
-        },
+        { icon: Pen, label: "에디터", path: "/editor/new" },
+        { icon: Sparkles, label: "팬아트 만들기", path: "/fandom/create" },
+        { icon: FolderOpen, label: "내 작품", path: "/studio" },
       ],
     },
     {
-      title: "갤러리",
+      title: "커뮤니티",
       items: [
-        {
-          icon: Sparkles,
-          label: "인기작품",
-          path: "/gallery",
-        },
-        {
-          icon: FolderOpen,
-          label: "내 갤러리",
-          path: "/gallery/mine",
-        },
-        {
-          icon: Rss,
-          label: "피드",
-          path: "/gallery/feed",
-        },
-      ],
-    },
-    {
-      title: "마켓",
-      items: [
-        {
-          icon: Target,
-          label: "캠페인",
-          path: "/market/campaigns",
-        },
-        {
-          icon: Users,
-          label: "크리에이터 찾기",
-          path: "/market/creators",
-          roles: ["business"],
-        },
-        {
-          icon: MessageSquare,
-          label: "협업 관리",
-          path: "/market/collaborations",
-        },
-      ],
-    },
-    {
-      title: "대시보드",
-      items: [
-        {
-          icon: PieChart,
-          label: "분석",
-          path: "/dashboard/analytics",
-        },
-        {
-          icon: DollarSign,
-          label: userRole === "creator" ? "수익" : "리포트",
-          path: userRole === "creator" ? "/dashboard/revenue" : "/dashboard/reports",
-        },
-        {
-          icon: UserCircle,
-          label: "미디어킷",
-          path: "/dashboard/media-kit",
-          roles: ["creator"],
-        },
+        { icon: Users, label: "아이돌 그룹", path: "/fandom/groups" },
+        { icon: Crown, label: "크리에이터", path: "/fandom/fans" },
+        { icon: Trophy, label: "이벤트 / 챌린지", path: "/fandom/events" },
+        { icon: TrendingUp, label: "팬아트 랭킹", path: "/fandom/feed" },
+        { icon: MessageCircle, label: "팬 토크", path: "/fandom/talk" },
+        { icon: Send, label: "다이렉트 메시지", path: "/fandom/messages" },
       ],
     },
     {
       title: "설정",
       items: [
-        {
-          icon: Settings,
-          label: "설정",
-          path: "/settings",
-        },
-        {
-          icon: User,
-          label: "프로필",
-          path: "/settings/profile",
-        },
+        { icon: Settings, label: "프로필 설정", path: "/settings" },
+        { icon: RefreshCw, label: "팬덤 재인증", path: "/fandom/onboarding" },
       ],
     },
   ];
@@ -204,31 +105,62 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
   const isActive = (path: string) =>
     location.pathname === path || (path !== "/" && location.pathname.startsWith(path + "/"));
 
+  const handleLogout = () => {
+    clearFandomProfile();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left Sidebar */}
       <aside className="w-60 border-r flex flex-col fixed h-screen bg-card border-border">
-        {/* Logo */}
-        <div className="p-6 border-b border-border">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <img src={olliLogo} alt="OLLI" className="w-full h-full object-contain" />
+        {/* Logo / Group Badge */}
+        <div className="p-5 border-b border-border">
+          <Link to="/fandom" className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black"
+              style={{ background: themeColor }}
+            >
+              {fandomProfile?.groupName?.charAt(0) || <Heart className="w-5 h-5" />}
             </div>
-            <span className="text-2xl font-black text-[#00e5cc]">OLLI</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-lg font-black block truncate" style={{ color: themeColor }}>
+                {fandomProfile ? `${fandomProfile.groupName}` : "MY FANDOM"}
+              </span>
+              {fandomProfile && (
+                <span className="text-xs text-muted-foreground truncate block">
+                  {fandomProfile.fandomName}
+                </span>
+              )}
+            </div>
           </Link>
         </div>
 
+        {/* Profile Card */}
+        {fandomProfile && (
+          <div className="px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                style={{ background: themeColor }}
+              >
+                {fandomProfile.nickname.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{fandomProfile.nickname}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  최애: {fandomProfile.bias}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto">
+        <nav className="flex-1 min-h-0 p-4 overflow-y-auto">
           <div className="space-y-4">
             {navSections.map((section) => {
-              const visibleItems = section.items.filter(
-                (item) => !item.roles || item.roles.includes(userRole)
-              );
-              if (visibleItems.length === 0) return null;
-
               const isSectionExpanded = expandedSections[section.title] !== false;
-
               return (
                 <div key={section.title}>
                   <button
@@ -237,22 +169,27 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
                   >
                     <span>{section.title}</span>
                     <ChevronRight
-                      className={`w-3 h-3 transition-transform ${isSectionExpanded ? "rotate-90" : ""}`}
+                      className={`w-5 h-5 transition-transform ${isSectionExpanded ? "rotate-90" : ""}`}
                     />
                   </button>
                   {isSectionExpanded && (
                     <div className="mt-1 space-y-0.5">
-                      {visibleItems.map((item) => (
+                      {section.items.map((item) => (
                         <Link
                           key={item.path}
-                          to={item.path!}
+                          to={item.path}
                           className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                            isActive(item.path!)
-                              ? "bg-[#00e5cc]/10 text-[#00e5cc] font-semibold"
+                            isActive(item.path)
+                              ? "font-semibold"
                               : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           }`}
+                          style={
+                            isActive(item.path)
+                              ? { background: `color-mix(in srgb, ${themeColor} 10%, transparent)`, color: themeColor }
+                              : {}
+                          }
                         >
-                          <item.icon className="w-4 h-4" />
+                          <item.icon className="w-5 h-5" />
                           <span>{item.label}</span>
                         </Link>
                       ))}
@@ -265,80 +202,42 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
         </nav>
 
         {/* User Menu */}
-        <div className="p-4 border-t relative border-border">
+        <div className="p-4 border-t relative border-border shrink-0">
           <button
             className="flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-all hover:bg-muted"
             onClick={() => setUserMenuOpen(!userMenuOpen)}
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] flex items-center justify-center">
-              {userRole === "creator" ? (
-                <User className="w-4 h-4 text-white" />
-              ) : (
-                <Building2 className="w-4 h-4 text-white" />
-              )}
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
+              style={{ background: themeColor }}
+            >
+              {fandomProfile?.nickname?.charAt(0) || "?"}
             </div>
             <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-foreground">사용자</p>
+              <p className="text-sm font-semibold text-foreground">{fandomProfile?.nickname || "게스트"}</p>
               <p className="text-xs text-muted-foreground">
-                {userRole === "creator" ? "작가 모드" : "기업 모드"}
+                {fandomProfile?.groupName || "팬덤 미인증"}
               </p>
             </div>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
           </button>
           {userMenuOpen && (
             <div className="absolute left-4 right-4 bottom-20 rounded-xl shadow-xl overflow-hidden z-50 bg-card border border-border">
               <div className="py-2">
                 <button
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    navigate("/dashboard");
-                  }}
+                  onClick={() => { setUserMenuOpen(false); navigate("/settings"); }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>대시보드</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    navigate("/gallery/mine");
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  <Image className="w-4 h-4" />
-                  <span>내 갤러리</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    navigate("/payments");
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span>결제 내역</span>
+                  <Settings className="w-5 h-5" />
+                  <span>설정</span>
                 </button>
                 <div className="border-t my-1 border-border" />
                 <button
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    setUserRole(userRole === "creator" ? "business" : "creator");
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  <SwitchCamera className="w-4 h-4" />
-                  <span>역할 변경 ({userRole === "creator" ? "기업" : "작가"})</span>
-                </button>
-                <div className="border-t my-1 border-border" />
-                <button
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    navigate("/");
-                  }}
+                  onClick={() => { setUserMenuOpen(false); handleLogout(); }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  <LogOut className="w-5 h-5" />
+                  <span>로그아웃</span>
                 </button>
               </div>
             </div>
@@ -357,8 +256,9 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="검색..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00e5cc] focus:border-transparent bg-muted border-border text-foreground placeholder-muted-foreground"
+                  placeholder="팬아트, 그룹, 이벤트 검색..."
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent bg-muted border-border text-foreground placeholder-muted-foreground"
+                  style={{ "--tw-ring-color": themeColor } as any}
                 />
               </div>
             </div>
@@ -379,44 +279,44 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
 
               <button className="relative p-2 rounded-lg transition-all hover:bg-muted">
                 <Bell className="w-5 h-5 text-muted-foreground" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#00e5cc] rounded-full" />
+                <span
+                  className="absolute top-1 right-1 w-2 h-2 rounded-full"
+                  style={{ background: themeColor }}
+                />
               </button>
 
               <div className="relative">
                 <button
-                  className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] flex items-center justify-center"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                  style={{ background: themeColor }}
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 >
-                  {userRole === "creator" ? (
-                    <User className="w-5 h-5 text-white" />
-                  ) : (
-                    <Building2 className="w-5 h-5 text-white" />
-                  )}
+                  {fandomProfile?.nickname?.charAt(0) || "?"}
                 </button>
                 {profileMenuOpen && (
                   <div className="absolute right-0 top-12 w-56 rounded-xl shadow-xl overflow-hidden z-50 bg-card border border-border">
                     <div className="py-2">
                       <button
-                        onClick={() => { setProfileMenuOpen(false); navigate("/dashboard"); }}
+                        onClick={() => { setProfileMenuOpen(false); navigate("/fandom"); }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
                       >
-                        <LayoutDashboard className="w-4 h-4" />
-                        <span>대시보드</span>
+                        <LayoutDashboard className="w-5 h-5" />
+                        <span>팬덤 홈</span>
                       </button>
                       <button
                         onClick={() => { setProfileMenuOpen(false); navigate("/settings"); }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
                       >
-                        <Settings className="w-4 h-4" />
+                        <Settings className="w-5 h-5" />
                         <span>설정</span>
                       </button>
                       <div className="border-t my-1 border-border" />
                       <button
-                        onClick={() => { setProfileMenuOpen(false); navigate("/"); }}
+                        onClick={() => { setProfileMenuOpen(false); handleLogout(); }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
                       >
-                        <LogOut className="w-4 h-4" />
-                        <span>Sign Out</span>
+                        <LogOut className="w-5 h-5" />
+                        <span>로그아웃</span>
                       </button>
                     </div>
                   </div>

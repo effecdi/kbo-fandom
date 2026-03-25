@@ -16,6 +16,10 @@ import {
   FabricObject,
   FabricImage,
   Point,
+  Rect,
+  Ellipse,
+  Polygon,
+  ActiveSelection,
 } from "fabric";
 import CanvaFloatingToolbar from "./canva-floating-toolbar";
 import type {
@@ -38,6 +42,7 @@ const CanvaEditor = forwardRef<CanvaEditorHandle, CanvaEditorProps>(
       drawConfig,
       lineConfig,
       textConfig,
+      shapeConfig,
       onToolModeChange,
       onObjectSelected,
     },
@@ -126,7 +131,7 @@ const CanvaEditor = forwardRef<CanvaEditorHandle, CanvaEditorProps>(
             const offsetY = canvasRect.top - wrapRect.top;
             setFloatingPos({
               x: offsetX + (bound.left + bound.width / 2) * scaleX,
-              y: offsetY + bound.top * scaleY - 52,
+              y: offsetY + bound.top * scaleY - 12,
               visible: true,
             });
           }
@@ -151,9 +156,30 @@ const CanvaEditor = forwardRef<CanvaEditorHandle, CanvaEditorProps>(
       fc.on("object:modified", () => saveHistory());
       fc.on("path:created", () => saveHistory());
 
+      // Double-click to edit text inside Groups (bubbles)
+      fc.on("mouse:dblclick", (opt: any) => {
+        const target = opt.target;
+        if (!target) return;
+        if (target.type === "group" && target._objects) {
+          const textObj = target._objects.find((o: any) => o.type === "textbox" || o.type === "i-text");
+          if (textObj) {
+            textObj.enterEditing();
+            textObj.selectAll();
+            fc.requestRenderAll();
+          }
+        } else if (target.type === "textbox" || target.type === "i-text") {
+          target.enterEditing();
+          target.selectAll();
+          fc.requestRenderAll();
+        }
+      });
+
       const onKey = (e: KeyboardEvent) => {
         const tag = (e.target as HTMLElement)?.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+        const mod = e.ctrlKey || e.metaKey;
+
+        // Delete / Backspace
         if (e.key === "Delete" || e.key === "Backspace") {
           const objs = fc.getActiveObjects();
           if (objs.length > 0) {
@@ -162,6 +188,146 @@ const CanvaEditor = forwardRef<CanvaEditorHandle, CanvaEditorProps>(
             fc.requestRenderAll();
             saveHistory();
           }
+          return;
+        }
+
+        // Undo: Ctrl+Z
+        if (mod && e.key === "z" && !e.shiftKey) {
+          e.preventDefault();
+          if (historyRef.current.length <= 1) return;
+          futureRef.current.push(historyRef.current.pop()!);
+          skipSaveRef.current = true;
+          fc.loadFromJSON(JSON.parse(historyRef.current[historyRef.current.length - 1])).then(() => fc.requestRenderAll());
+          return;
+        }
+
+        // Redo: Ctrl+Shift+Z or Ctrl+Y
+        if ((mod && e.key === "Z") || (mod && e.key === "z" && e.shiftKey) || (mod && e.key === "y")) {
+          e.preventDefault();
+          if (futureRef.current.length === 0) return;
+          const next = futureRef.current.pop()!;
+          historyRef.current.push(next);
+          skipSaveRef.current = true;
+          fc.loadFromJSON(JSON.parse(next)).then(() => fc.requestRenderAll());
+          return;
+        }
+
+        // Copy: Ctrl+C
+        if (mod && e.key === "c") {
+          const obj = fc.getActiveObject();
+          if (!obj) return;
+          obj.clone().then((cloned: FabricObject) => {
+            (window as any).__olli_clipboard = cloned;
+          });
+          return;
+        }
+
+        // Paste: Ctrl+V
+        if (mod && e.key === "v") {
+          const cloned = (window as any).__olli_clipboard;
+          if (!cloned) return;
+          e.preventDefault();
+          cloned.clone().then((pasted: FabricObject) => {
+            pasted.set({ left: (pasted.left || 0) + 20, top: (pasted.top || 0) + 20 });
+            if (pasted instanceof ActiveSelection) {
+              pasted.canvas = fc;
+              pasted.forEachObject((o: FabricObject) => fc.add(o));
+              pasted.setCoords();
+            } else {
+              fc.add(pasted);
+            }
+            (window as any).__olli_clipboard = pasted;
+            fc.setActiveObject(pasted);
+            fc.requestRenderAll();
+            saveHistory();
+          });
+          return;
+        }
+
+        // Cut: Ctrl+X
+        if (mod && e.key === "x") {
+          const obj = fc.getActiveObject();
+          if (!obj) return;
+          obj.clone().then((cloned: FabricObject) => {
+            (window as any).__olli_clipboard = cloned;
+            fc.getActiveObjects().forEach((o) => fc.remove(o));
+            fc.discardActiveObject();
+            fc.requestRenderAll();
+            saveHistory();
+          });
+          return;
+        }
+
+        // Duplicate: Ctrl+D
+        if (mod && e.key === "d") {
+          e.preventDefault();
+          const obj = fc.getActiveObject();
+          if (!obj) return;
+          obj.clone().then((cloned: FabricObject) => {
+            cloned.set({ left: (cloned.left || 0) + 20, top: (cloned.top || 0) + 20 });
+            fc.add(cloned);
+            fc.setActiveObject(cloned);
+            fc.requestRenderAll();
+            saveHistory();
+          });
+          return;
+        }
+
+        // Select All: Ctrl+A
+        if (mod && e.key === "a") {
+          e.preventDefault();
+          const objs = fc.getObjects();
+          if (objs.length === 0) return;
+          fc.discardActiveObject();
+          const sel = new ActiveSelection(objs, { canvas: fc });
+          fc.setActiveObject(sel);
+          fc.requestRenderAll();
+          return;
+        }
+
+        // Layer ordering: Ctrl+] / Ctrl+[
+        if (mod && e.key === "]") {
+          e.preventDefault();
+          const obj = fc.getActiveObject();
+          if (!obj) return;
+          if (e.shiftKey) { fc.bringObjectToFront(obj); } else { fc.bringObjectForward(obj); }
+          fc.requestRenderAll();
+          saveHistory();
+          return;
+        }
+        if (mod && e.key === "[") {
+          e.preventDefault();
+          const obj = fc.getActiveObject();
+          if (!obj) return;
+          if (e.shiftKey) { fc.sendObjectToBack(obj); } else { fc.sendObjectBackwards(obj); }
+          fc.requestRenderAll();
+          saveHistory();
+          return;
+        }
+
+        // Arrow keys: move selected objects
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+          const obj = fc.getActiveObject();
+          if (!obj) return;
+          e.preventDefault();
+          const step = e.shiftKey ? 10 : 1;
+          switch (e.key) {
+            case "ArrowUp":    obj.set({ top: (obj.top || 0) - step }); break;
+            case "ArrowDown":  obj.set({ top: (obj.top || 0) + step }); break;
+            case "ArrowLeft":  obj.set({ left: (obj.left || 0) - step }); break;
+            case "ArrowRight": obj.set({ left: (obj.left || 0) + step }); break;
+          }
+          obj.setCoords();
+          fc.requestRenderAll();
+          saveHistory();
+          return;
+        }
+
+        // Escape: deselect
+        if (e.key === "Escape") {
+          fc.discardActiveObject();
+          fc.requestRenderAll();
+          return;
         }
       };
       window.addEventListener("keydown", onKey);
@@ -528,50 +694,109 @@ const CanvaEditor = forwardRef<CanvaEditorHandle, CanvaEditorProps>(
           });
           break;
         }
+
+        case "shape": {
+          fc.selection = false;
+          fc.defaultCursor = "crosshair";
+          fc.hoverCursor = "crosshair";
+          fc.forEachObject((o) => {
+            o.selectable = false;
+            o.evented = false;
+          });
+
+          let shapeStartPt: Point | null = null;
+          let tempShape: FabricObject | null = null;
+
+          const createShapeAt = (x: number, y: number, w: number, h: number) => {
+            const common = {
+              left: x,
+              top: y,
+              fill: shapeConfig.fill,
+              stroke: shapeConfig.stroke,
+              strokeWidth: shapeConfig.strokeWidth,
+              opacity: shapeConfig.opacity,
+              selectable: false,
+              evented: false,
+              objectCaching: false,
+            };
+            switch (shapeConfig.subTool) {
+              case "circle":
+                return new Ellipse({ ...common, rx: w / 2, ry: h / 2 });
+              case "triangle":
+                return new Polygon(
+                  [{ x: w / 2, y: 0 }, { x: w, y: h }, { x: 0, y: h }],
+                  { ...common }
+                );
+              case "diamond":
+                return new Polygon(
+                  [{ x: w / 2, y: 0 }, { x: w, y: h / 2 }, { x: w / 2, y: h }, { x: 0, y: h / 2 }],
+                  { ...common }
+                );
+              case "star": {
+                const pts: { x: number; y: number }[] = [];
+                const cx = w / 2, cy = h / 2;
+                for (let i = 0; i < 10; i++) {
+                  const angle = (Math.PI / 5) * i - Math.PI / 2;
+                  const r = i % 2 === 0 ? Math.min(w, h) / 2 : Math.min(w, h) / 4.5;
+                  pts.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+                }
+                return new Polygon(pts, { ...common });
+              }
+              case "arrow": {
+                const pts = [
+                  { x: 0, y: h * 0.35 },
+                  { x: w * 0.6, y: h * 0.35 },
+                  { x: w * 0.6, y: 0 },
+                  { x: w, y: h / 2 },
+                  { x: w * 0.6, y: h },
+                  { x: w * 0.6, y: h * 0.65 },
+                  { x: 0, y: h * 0.65 },
+                ];
+                return new Polygon(pts, { ...common });
+              }
+              default: // rectangle
+                return new Rect({ ...common, width: w, height: h });
+            }
+          };
+
+          on("mouse:down", (opt: any) => {
+            const pointer = fc.getScenePoint(opt.e);
+            shapeStartPt = new Point(pointer.x, pointer.y);
+            tempShape = createShapeAt(pointer.x, pointer.y, 1, 1);
+            fc.add(tempShape);
+          });
+
+          on("mouse:move", (opt: any) => {
+            if (!shapeStartPt || !tempShape) return;
+            const pointer = fc.getScenePoint(opt.e);
+            const w = Math.abs(pointer.x - shapeStartPt.x);
+            const h = Math.abs(pointer.y - shapeStartPt.y);
+            const left = Math.min(pointer.x, shapeStartPt.x);
+            const top = Math.min(pointer.y, shapeStartPt.y);
+            fc.remove(tempShape);
+            tempShape = createShapeAt(left, top, Math.max(w, 2), Math.max(h, 2));
+            fc.add(tempShape);
+            fc.requestRenderAll();
+          });
+
+          on("mouse:up", () => {
+            if (tempShape) {
+              tempShape.set({ selectable: true, evented: true, objectCaching: true });
+              fc.setActiveObject(tempShape);
+              fc.requestRenderAll();
+              saveHistory();
+              onToolModeChange?.("select");
+            }
+            shapeStartPt = null;
+            tempShape = null;
+          });
+          break;
+        }
       }
 
       fc.requestRenderAll();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [toolMode, drawConfig, lineConfig, textConfig]);
-
-    // ─── Floating toolbar actions ─────────────────────────────────────
-
-    const handleColorChange = useCallback((color: string) => {
-      const fc = fabricRef.current; if (!fc) return;
-      const obj = fc.getActiveObject(); if (!obj) return;
-      if (obj.type === "path" || obj.type === "line" || obj.type === "polyline") {
-        obj.set({ stroke: color });
-      } else { obj.set({ fill: color }); }
-      fc.requestRenderAll(); saveHistory();
-    }, [saveHistory]);
-
-    const handleDuplicate = useCallback(() => {
-      const fc = fabricRef.current; if (!fc) return;
-      const obj = fc.getActiveObject(); if (!obj) return;
-      obj.clone().then((cloned: FabricObject) => {
-        cloned.set({ left: (cloned.left || 0) + 20, top: (cloned.top || 0) + 20 });
-        fc.add(cloned); fc.setActiveObject(cloned); fc.requestRenderAll(); saveHistory();
-      });
-    }, [saveHistory]);
-
-    const handleDelete = useCallback(() => {
-      const fc = fabricRef.current; if (!fc) return;
-      fc.getActiveObjects().forEach((o) => fc.remove(o));
-      fc.discardActiveObject(); fc.requestRenderAll(); saveHistory();
-    }, [saveHistory]);
-
-    const handleLock = useCallback(() => {
-      const fc = fabricRef.current; if (!fc) return;
-      const obj = fc.getActiveObject(); if (!obj) return;
-      const locked = !obj.lockMovementX;
-      obj.set({ lockMovementX: locked, lockMovementY: locked, lockRotation: locked, lockScalingX: locked, lockScalingY: locked, hasControls: !locked });
-      fc.requestRenderAll();
-    }, []);
-
-    const handleBringForward = useCallback(() => { const fc = fabricRef.current; if (!fc) return; const o = fc.getActiveObject(); if (o) { fc.bringObjectForward(o); fc.requestRenderAll(); saveHistory(); } }, [saveHistory]);
-    const handleSendBackward = useCallback(() => { const fc = fabricRef.current; if (!fc) return; const o = fc.getActiveObject(); if (o) { fc.sendObjectBackwards(o); fc.requestRenderAll(); saveHistory(); } }, [saveHistory]);
-    const handleBringToFront = useCallback(() => { const fc = fabricRef.current; if (!fc) return; const o = fc.getActiveObject(); if (o) { fc.bringObjectToFront(o); fc.requestRenderAll(); saveHistory(); } }, [saveHistory]);
-    const handleSendToBack = useCallback(() => { const fc = fabricRef.current; if (!fc) return; const o = fc.getActiveObject(); if (o) { fc.sendObjectToBack(o); fc.requestRenderAll(); saveHistory(); } }, [saveHistory]);
+    }, [toolMode, drawConfig, lineConfig, textConfig, shapeConfig]);
 
     // ─── Imperative handle ────────────────────────────────────────────
 
@@ -617,15 +842,6 @@ const CanvaEditor = forwardRef<CanvaEditorHandle, CanvaEditorProps>(
             <CanvaFloatingToolbar
               x={floatingPos.x}
               y={floatingPos.y}
-              selectedObj={selectedObj}
-              onColorChange={handleColorChange}
-              onDuplicate={handleDuplicate}
-              onDelete={handleDelete}
-              onLock={handleLock}
-              onBringForward={handleBringForward}
-              onSendBackward={handleSendBackward}
-              onBringToFront={handleBringToFront}
-              onSendToBack={handleSendToBack}
             />
           )}
         </div>

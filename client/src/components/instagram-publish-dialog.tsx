@@ -231,19 +231,19 @@ export function InstagramPublishDialog({
                 <div className="flex items-center gap-1.5">
                   <RadioGroupItem value="feed" id="type-feed" />
                   <Label htmlFor="type-feed" className="text-[13px] cursor-pointer flex items-center gap-1">
-                    <Image className="h-3 w-3" /> 피드
+                    <Image className="h-5 w-5" /> 피드
                   </Label>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <RadioGroupItem value="carousel" id="type-carousel" />
                   <Label htmlFor="type-carousel" className="text-[13px] cursor-pointer flex items-center gap-1">
-                    <Images className="h-3 w-3" /> 캐러셀
+                    <Images className="h-5 w-5" /> 캐러셀
                   </Label>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <RadioGroupItem value="story" id="type-story" />
                   <Label htmlFor="type-story" className="text-[13px] cursor-pointer flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> 스토리
+                    <Clock className="h-5 w-5" /> 스토리
                   </Label>
                 </div>
               </RadioGroup>
@@ -264,7 +264,7 @@ export function InstagramPublishDialog({
                   className="flex-1 gap-1.5 text-[13px]"
                   onClick={() => { setSourceTab("gallery"); setSelectedPanels(new Set()); }}
                 >
-                  <GalleryHorizontalEnd className="h-3.5 w-3.5" />
+                  <GalleryHorizontalEnd className="h-5 w-5" />
                   갤러리
                 </Button>
                 {panels.length > 0 && (
@@ -274,7 +274,7 @@ export function InstagramPublishDialog({
                     className="flex-1 gap-1.5 text-[13px]"
                     onClick={() => { setSourceTab("panels"); setSelectedGalleryIds(new Set()); }}
                   >
-                    <LayoutPanelTop className="h-3.5 w-3.5" />
+                    <LayoutPanelTop className="h-5 w-5" />
                     스토리 패널
                   </Button>
                 )}
@@ -322,7 +322,7 @@ export function InstagramPublishDialog({
                           <div className="absolute top-1 left-1">
                             <Checkbox
                               checked={isSelected}
-                              className="h-4 w-4 bg-white/80 border-white/50"
+                              className="h-5 w-5 bg-white/80 border-white/50"
                               tabIndex={-1}
                             />
                           </div>
@@ -358,7 +358,7 @@ export function InstagramPublishDialog({
                           <div className="absolute top-1 left-1">
                             <Checkbox
                               checked={isSelected}
-                              className="h-4 w-4 bg-white/80 border-white/50"
+                              className="h-5 w-5 bg-white/80 border-white/50"
                               tabIndex={-1}
                             />
                           </div>
@@ -410,7 +410,7 @@ export function InstagramPublishDialog({
                   disabled={!canPublish() || publishMutation.isPending}
                   onClick={() => publishMutation.mutate()}
                 >
-                  <Instagram className="h-3.5 w-3.5" />
+                  <Instagram className="h-5 w-5" />
                   게시하기
                 </Button>
               </div>

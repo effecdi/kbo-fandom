@@ -271,7 +271,7 @@ export function Projects() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Inbox className="w-4 h-4" />
+              <Inbox className="w-5 h-5" />
               받은 제안
               {receivedProposals.filter(p => p.status === "pending").length > 0 && (
                 <span className="ml-1 px-2 py-0.5 bg-[#00e5cc] text-black text-xs rounded-full font-bold">
@@ -287,7 +287,7 @@ export function Projects() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
               지원 현황
             </button>
             <button
@@ -298,7 +298,7 @@ export function Projects() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <TrendingUp className="w-4 h-4" />
+              <TrendingUp className="w-5 h-5" />
               진행 중
               {ongoingProjects.length > 0 && (
                 <span className="ml-1 px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full font-bold">
@@ -314,7 +314,7 @@ export function Projects() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <CheckCircle className="w-4 h-4" />
+              <CheckCircle className="w-5 h-5" />
               완료됨
             </button>
           </div>
@@ -343,11 +343,11 @@ export function Projects() {
                             </h3>
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
-                                <Building2 className="w-4 h-4" />
+                                <Building2 className="w-5 h-5" />
                                 {proposal.companyName}
                               </span>
                               <span className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
+                                <Calendar className="w-5 h-5" />
                                 {proposal.receivedDate}
                               </span>
                             </div>
@@ -360,21 +360,21 @@ export function Projects() {
                         <div className="grid grid-cols-3 gap-3 mb-4">
                           <div className="bg-card rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                              <DollarSign className="w-3 h-3" />
+                              <DollarSign className="w-5 h-5" />
                               예산
                             </div>
                             <p className="text-sm font-bold text-foreground">{proposal.budget}</p>
                           </div>
                           <div className="bg-card rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                              <Calendar className="w-3 h-3" />
+                              <Calendar className="w-5 h-5" />
                               마감
                             </div>
                             <p className="text-sm font-bold text-foreground">{proposal.deadline}</p>
                           </div>
                           <div className="bg-card rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                              <FileText className="w-3 h-3" />
+                              <FileText className="w-5 h-5" />
                               결과물
                             </div>
                             <p className="text-sm font-bold text-foreground">{proposal.deliverables.split(" ")[1]}</p>
@@ -388,7 +388,7 @@ export function Projects() {
                               className="flex-1 bg-[#00e5cc] text-black hover:bg-[#00f0ff]"
                               onClick={() => navigate(`/creator/proposals/${proposal.id}`)}
                             >
-                              <CheckCircle className="w-4 h-4 mr-2" />
+                              <CheckCircle className="w-5 h-5 mr-2" />
                               수락하기
                             </Button>
                             <Button
@@ -396,7 +396,7 @@ export function Projects() {
                               size="sm"
                               className="flex-1 border-border text-muted-foreground hover:bg-muted"
                             >
-                              <XCircle className="w-4 h-4 mr-2" />
+                              <XCircle className="w-5 h-5 mr-2" />
                               거절하기
                             </Button>
                           </div>
@@ -431,11 +431,11 @@ export function Projects() {
                             </h3>
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
-                                <Building2 className="w-4 h-4" />
+                                <Building2 className="w-5 h-5" />
                                 {campaign.company}
                               </span>
                               <span className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
+                                <Calendar className="w-5 h-5" />
                                 지원일: {campaign.appliedDate}
                               </span>
                             </div>
@@ -446,14 +446,14 @@ export function Projects() {
                         <div className="grid grid-cols-2 gap-3">
                           <div className="bg-card rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                              <DollarSign className="w-3 h-3" />
+                              <DollarSign className="w-5 h-5" />
                               예산
                             </div>
                             <p className="text-sm font-bold text-foreground">{campaign.budget}</p>
                           </div>
                           <div className="bg-card rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                              <Target className="w-3 h-3" />
+                              <Target className="w-5 h-5" />
                               분류
                             </div>
                             <p className="text-sm font-bold text-foreground">{campaign.type}</p>
@@ -481,11 +481,11 @@ export function Projects() {
                         </h3>
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Building2 className="w-4 h-4" />
+                            <Building2 className="w-5 h-5" />
                             {project.brand}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
+                            <Clock className="w-5 h-5" />
                             마감: {project.deadline}
                           </span>
                         </div>
@@ -522,7 +522,7 @@ export function Projects() {
                         size="sm"
                         className="flex-1 bg-[#00e5cc] text-black hover:bg-[#00f0ff]"
                       >
-                        <Upload className="w-4 h-4 mr-2" />
+                        <Upload className="w-5 h-5 mr-2" />
                         파일 업로드
                       </Button>
                       <Button
@@ -530,7 +530,7 @@ export function Projects() {
                         size="sm"
                         className="flex-1 border-border text-muted-foreground hover:bg-muted"
                       >
-                        <MessageSquare className="w-4 h-4 mr-2" />
+                        <MessageSquare className="w-5 h-5 mr-2" />
                         메시지
                       </Button>
                       <Button
@@ -538,7 +538,7 @@ export function Projects() {
                         size="sm"
                         className="border-border text-muted-foreground hover:bg-muted"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-5 h-5" />
                       </Button>
                     </div>
                   </div>
@@ -561,11 +561,11 @@ export function Projects() {
                         </h3>
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Building2 className="w-4 h-4" />
+                            <Building2 className="w-5 h-5" />
                             {project.brand}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="w-5 h-5" />
                             완료: {project.completedDate}
                           </span>
                         </div>
@@ -600,7 +600,7 @@ export function Projects() {
                         size="sm"
                         className="flex-1 border-border text-muted-foreground hover:bg-muted"
                       >
-                        <Eye className="w-4 h-4 mr-2" />
+                        <Eye className="w-5 h-5 mr-2" />
                         결과물 보기
                       </Button>
                       <Button
@@ -608,7 +608,7 @@ export function Projects() {
                         size="sm"
                         className="border-border text-muted-foreground hover:bg-muted"
                       >
-                        <MessageSquare className="w-4 h-4" />
+                        <MessageSquare className="w-5 h-5" />
                       </Button>
                     </div>
                   </div>

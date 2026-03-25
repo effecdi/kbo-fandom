@@ -57,7 +57,7 @@ export function Payments() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
             <div>
               <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1.5 rounded-full text-sm font-bold mb-3">
-                <TrendingUp className="w-4 h-4" />
+                <TrendingUp className="w-5 h-5" />
                 Pro
               </div>
               <h2 className="text-2xl font-black mb-1 text-foreground">
@@ -82,7 +82,7 @@ export function Payments() {
             <div className="rounded-2xl p-5 border bg-card border-border">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-white" />
+                  <DollarSign className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-xs font-bold text-muted-foreground">
                   월 결제 금액
@@ -99,7 +99,7 @@ export function Payments() {
             <div className="rounded-2xl p-5 border bg-card border-border">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-white" />
+                  <Calendar className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-xs font-bold text-muted-foreground">
                   다음 결제일
@@ -116,7 +116,7 @@ export function Payments() {
             <div className="rounded-2xl p-5 border bg-card border-border">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-                  <CreditCard className="w-4 h-4 text-white" />
+                  <CreditCard className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-xs font-bold text-muted-foreground">
                   결제 수단
@@ -144,7 +144,7 @@ export function Payments() {
               </p>
             </div>
             <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-muted">
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-5 h-5 mr-2" />
               전체 내역 다운로드
             </Button>
           </div>
@@ -167,7 +167,7 @@ export function Payments() {
                           {payment.plan}
                         </h3>
                         <Badge className="bg-green-500/20 text-green-400 hover:bg-green-500/20">
-                          <Check className="w-3 h-3 mr-1" />
+                          <Check className="w-5 h-5 mr-1" />
                           {payment.status}
                         </Badge>
                       </div>
@@ -185,7 +185,7 @@ export function Payments() {
                       size="sm"
                       className="text-muted-foreground hover:text-foreground hover:bg-muted"
                     >
-                      <FileText className="w-4 h-4 mr-2" />
+                      <FileText className="w-5 h-5 mr-2" />
                       영수증
                     </Button>
                   </div>

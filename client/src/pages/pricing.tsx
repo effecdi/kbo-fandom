@@ -434,9 +434,9 @@ export default function PricingPage() {
                   {plan.features.map((feature) => (
                     <li key={feature.text} className="flex items-center gap-2.5">
                       {feature.included ? (
-                        <Check className={`h-4 w-4 shrink-0 ${plan.highlighted ? "text-primary-foreground" : "text-emerald-500 dark:text-teal-300"}`} />
+                        <Check className={`h-5 w-5 shrink-0 ${plan.highlighted ? "text-primary-foreground" : "text-emerald-500 dark:text-teal-300"}`} />
                       ) : (
-                        <X className={`h-4 w-4 shrink-0 ${plan.highlighted ? "text-primary-foreground/25" : "text-slate-300 dark:text-slate-500/60"}`} />
+                        <X className={`h-5 w-5 shrink-0 ${plan.highlighted ? "text-primary-foreground/25" : "text-slate-300 dark:text-slate-500/60"}`} />
                       )}
                       <span className={
                         feature.included
@@ -463,7 +463,7 @@ export default function PricingPage() {
                   data-testid={`button-plan-${plan.tier}`}
                 >
                   {isProcessing && (plan.tier === "pro" || plan.tier === "premium") ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
                   ) : null}
                   {btn.text}
                 </Button>
@@ -489,7 +489,7 @@ export default function PricingPage() {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm" className="text-muted-foreground" disabled={isCancelling}>
-                    {isCancelling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {isCancelling ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
                     Cancel Subscription
                   </Button>
                 </AlertDialogTrigger>

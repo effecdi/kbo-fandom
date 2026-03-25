@@ -23,9 +23,18 @@ import {
   Layers,
 } from "lucide-react";
 import { FabricImage } from "fabric";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { useWorkspace, useActiveCut, useAllCuts } from "@/hooks/use-workspace";
 import type { Cut } from "@/lib/workspace-types";
+import {
+  addItem,
+  generateId,
+  listItems,
+  STORE_KEYS,
+  type FandomFeedPost,
+  type FandomEvent,
+} from "@/lib/local-store";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -84,9 +93,12 @@ interface Props {
 }
 
 export function PublishDialog({ open, onClose }: Props) {
+  const navigate = useNavigate();
   const { state, dispatch, canvasRef } = useWorkspace();
   const activeCut = useActiveCut();
   const allCuts = useAllCuts();
+  const fandomMeta = state.fandomMeta;
+  const accentColor = "var(--fandom-accent, var(--fandom-primary, #7B2FF7))";
 
   const [view, setView] = useState<ActiveView>("publish");
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
@@ -98,6 +110,8 @@ export function PublishDialog({ open, onClose }: Props) {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState("");
+  const [activeEvents, setActiveEvents] = useState<{ id: string; title: string }[]>([]);
 
   // Download state
   const [dlCurrent, setDlCurrent] = useState(false);
@@ -117,7 +131,7 @@ export function PublishDialog({ open, onClose }: Props) {
     if (!open) return;
     setTitle(state.project.title);
     setDesc("");
-    setTags("");
+    setTags(fandomMeta ? [fandomMeta.groupName, ...fandomMeta.memberTags].join(", ") : "");
     setPublishing(false);
     setPublished(false);
     setSaving(false);
@@ -128,6 +142,19 @@ export function PublishDialog({ open, onClose }: Props) {
     setProjects(getSaved());
     setConfirmDelete(null);
     setToast(null);
+    setSelectedEventId("");
+
+    // Load active events for fandom mode
+    if (fandomMeta) {
+      try {
+        const events = listItems<FandomEvent>(STORE_KEYS.FANDOM_EVENTS);
+        setActiveEvents(
+          events
+            .filter((e: any) => e.status === "active" && (!fandomMeta.groupId || e.groupId === fandomMeta.groupId))
+            .map((e: any) => ({ id: e.id, title: e.title }))
+        );
+      } catch { /* ignore */ }
+    }
   }, [open, state.project.title]);
 
   // Toast auto-dismiss
@@ -278,7 +305,7 @@ export function PublishDialog({ open, onClose }: Props) {
 
   // ── Load project ──────────────────────────────────────────────────────
   const handleLoad = useCallback((id: string) => {
-    window.location.href = `/studio/editor/${id}`;
+    window.location.href = `/editor/${id}`;
   }, []);
 
   // ── Delete saved ──────────────────────────────────────────────────────
@@ -324,10 +351,32 @@ export function PublishDialog({ open, onClose }: Props) {
 
     // Simulate publish delay
     await new Promise((r) => setTimeout(r, 1800));
+
+    // If fandom mode, create a fandom feed post
+    if (fandomMeta) {
+      const post: FandomFeedPost = {
+        id: generateId("fp"),
+        authorName: "나",
+        authorAvatar: "ME",
+        groupId: fandomMeta.groupId,
+        groupName: fandomMeta.groupName,
+        memberTags: fandomMeta.memberTags,
+        title: title.trim(),
+        description: desc.trim(),
+        imageUrl: allCuts[0]?.thumbnailUrl || null,
+        likes: 0,
+        liked: false,
+        commentCount: 0,
+        type: fandomMeta.templateType,
+        createdAt: new Date().toISOString().slice(0, 10),
+      };
+      addItem(STORE_KEYS.FANDOM_FEED, post);
+    }
+
     setPublishing(false);
     setPublished(true);
     dispatch({ type: "SET_PROJECT_TITLE", title });
-  }, [title, flushActiveCut, state, allCuts, dispatch]);
+  }, [title, desc, flushActiveCut, state, allCuts, dispatch, fandomMeta]);
 
   // ── Copy link ─────────────────────────────────────────────────────────
   const handleCopy = useCallback(() => {
@@ -362,7 +411,7 @@ export function PublishDialog({ open, onClose }: Props) {
               ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
               : "bg-red-500/10 border-red-500/30 text-red-400"
           }`}>
-            {toast.type === "ok" ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+            {toast.type === "ok" ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             {toast.msg}
           </div>
         </div>
@@ -374,13 +423,13 @@ export function PublishDialog({ open, onClose }: Props) {
         {/* ── Header ────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00e5cc] to-[#0ea5e9] flex items-center justify-center shadow-[0_0_20px_rgba(0,229,204,0.2)]">
-              <Rocket className="w-4.5 h-4.5 text-white" />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(to bottom right, ${accentColor}, ${accentColor})` }}>
+              <Rocket className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-[15px] font-bold text-white tracking-tight">발행 센터</h2>
-              <p className="text-[11px] text-white/40 mt-0.5 flex items-center gap-1.5">
-                <Layers className="w-3 h-3" />
+              <p className="text-[12px] text-white/40 mt-0.5 flex items-center gap-1.5">
+                <Layers className="w-5 h-5" />
                 {allCuts.length}컷 · {state.project.title}
               </p>
             </div>
@@ -389,7 +438,7 @@ export function PublishDialog({ open, onClose }: Props) {
             onClick={onClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.06] transition-colors"
           >
-            <X className="w-4 h-4 text-white/40" />
+            <X className="w-5 h-5 text-white/40" />
           </button>
         </div>
 
@@ -401,11 +450,11 @@ export function PublishDialog({ open, onClose }: Props) {
               onClick={() => setView(n.id)}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all ${
                 view === n.id
-                  ? "bg-white/[0.08] text-[#00e5cc] shadow-[inset_0_1px_0_rgba(0,229,204,0.1)]"
+                  ? "bg-white/[0.08] text-primary shadow-[inset_0_1px_0_rgba(123,47,247,0.1)]"
                   : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
               }`}
             >
-              <n.icon className="w-3.5 h-3.5" />
+              <n.icon className="w-5 h-5" />
               {n.label}
             </button>
           ))}
@@ -421,15 +470,15 @@ export function PublishDialog({ open, onClose }: Props) {
                 /* Success */
                 <div className="py-8 text-center space-y-5 animate-in fade-in zoom-in-95 duration-300">
                   <div className="relative mx-auto w-20 h-20">
-                    <div className="absolute inset-0 rounded-full bg-[#00e5cc]/20 animate-ping" />
-                    <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#00e5cc] to-[#0ea5e9] flex items-center justify-center shadow-[0_0_40px_rgba(0,229,204,0.3)]">
+                    <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                    <div className="relative w-20 h-20 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(to bottom right, ${accentColor}, ${accentColor})` }}>
                       <CheckCheck className="w-9 h-9 text-white" />
                     </div>
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">게시 완료!</h3>
                     <p className="text-sm text-white/50 mt-1.5">
-                      <span className="text-[#00e5cc] font-semibold">{title}</span>이(가) 피드에 게시되었습니다
+                      <span className="text-primary font-semibold">{title}</span>이(가) 피드에 게시되었습니다
                     </p>
                   </div>
                   <div className="flex items-center justify-center gap-2.5">
@@ -439,16 +488,28 @@ export function PublishDialog({ open, onClose }: Props) {
                       className="h-9 gap-2 border-white/10 bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08]"
                       onClick={handleCopy}
                     >
-                      {copied ? <Check className="w-3.5 h-3.5 text-[#00e5cc]" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? <Check className="w-5 h-5 text-primary" /> : <Copy className="w-5 h-5" />}
                       {copied ? "복사됨" : "링크 복사"}
                     </Button>
                     <Button
                       size="sm"
-                      className="h-9 gap-2 bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold"
-                      onClick={() => window.open("/gallery/feed", "_blank")}
+                      className="h-9 gap-2 font-bold"
+                      style={
+                        fandomMeta
+                          ? { background: fandomMeta.coverColor, color: "#fff" }
+                          : { background: accentColor, color: "#fff" }
+                      }
+                      onClick={() => {
+                        if (fandomMeta) {
+                          onClose();
+                          navigate("/fandom/feed");
+                        } else {
+                          window.open("/gallery/feed", "_blank");
+                        }
+                      }}
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      피드에서 보기
+                      <ExternalLink className="w-5 h-5" />
+                      {fandomMeta ? "팬덤 피드에서 보기" : "피드에서 보기"}
                     </Button>
                   </div>
                 </div>
@@ -457,7 +518,7 @@ export function PublishDialog({ open, onClose }: Props) {
                 <div className="space-y-5">
                   {/* Cut preview strip */}
                   <div>
-                    <label className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-2.5 block">
+                    <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-2.5 block">
                       컷 미리보기
                     </label>
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -474,7 +535,7 @@ export function PublishDialog({ open, onClose }: Props) {
                             </div>
                           )}
                           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
-                            <span className="text-[10px] font-bold text-white/80">{i + 1}컷</span>
+                            <span className="text-[12px] font-bold text-white/80">{i + 1}컷</span>
                           </div>
                         </div>
                       ))}
@@ -484,7 +545,7 @@ export function PublishDialog({ open, onClose }: Props) {
                   {/* Form fields */}
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
+                      <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
                         제목
                       </label>
                       <input
@@ -492,11 +553,11 @@ export function PublishDialog({ open, onClose }: Props) {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="인스타툰 제목"
-                        className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#00e5cc]/40 focus:bg-white/[0.06] transition-all"
+                        className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] transition-all"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
+                      <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
                         설명 <span className="text-white/15 normal-case tracking-normal">(선택)</span>
                       </label>
                       <textarea
@@ -504,11 +565,11 @@ export function PublishDialog({ open, onClose }: Props) {
                         onChange={(e) => setDesc(e.target.value)}
                         placeholder="이 인스타툰에 대해 한 줄로 소개해보세요"
                         rows={2}
-                        className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#00e5cc]/40 focus:bg-white/[0.06] transition-all resize-none"
+                        className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] transition-all resize-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
+                      <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
                         태그 <span className="text-white/15 normal-case tracking-normal">(콤마 구분)</span>
                       </label>
                       <input
@@ -516,35 +577,68 @@ export function PublishDialog({ open, onClose }: Props) {
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
                         placeholder="일상, 코믹, 캐릭터"
-                        className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#00e5cc]/40 focus:bg-white/[0.06] transition-all"
+                        className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] transition-all"
                       />
                       {tags && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {tags.split(",").filter((t) => t.trim()).map((t, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#00e5cc]/10 text-[#00e5cc] border border-[#00e5cc]/10">
+                            <span key={i} className="px-2 py-0.5 rounded-md text-[12px] font-medium bg-primary/10 text-primary border border-primary/10">
                               #{t.trim()}
                             </span>
                           ))}
                         </div>
                       )}
                     </div>
+
+                    {/* Fandom event selector */}
+                    {fandomMeta && activeEvents.length > 0 && (
+                      <div>
+                        <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
+                          이벤트 참여 <span className="text-white/15 normal-case tracking-normal">(선택)</span>
+                        </label>
+                        <select
+                          value={selectedEventId}
+                          onChange={(e) => setSelectedEventId(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.06] rounded-xl text-sm text-white focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] transition-all"
+                        >
+                          <option value="">이벤트 선택 안함</option>
+                          {activeEvents.map((event) => (
+                            <option key={event.id} value={event.id}>
+                              {event.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   {/* Publish CTA */}
                   <button
                     onClick={handlePublish}
                     disabled={publishing || !title.trim()}
-                    className="w-full h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-[#00e5cc] to-[#0ea5e9] text-black shadow-[0_4px_24px_rgba(0,229,204,0.25)] hover:shadow-[0_4px_32px_rgba(0,229,204,0.4)] active:scale-[0.98]"
+                    className="w-full h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                    style={
+                      fandomMeta
+                        ? {
+                            background: `linear-gradient(135deg, ${fandomMeta.coverColor}, ${fandomMeta.coverColor}cc)`,
+                            color: "#fff",
+                            boxShadow: `0 4px 24px ${fandomMeta.coverColor}40`,
+                          }
+                        : {
+                            background: `linear-gradient(to right, ${accentColor}, ${accentColor})`,
+                            color: "#fff",
+                          }
+                    }
                   >
                     {publishing ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-5 h-5 animate-spin" />
                         게시 중...
                       </>
                     ) : (
                       <>
-                        <Rocket className="w-4 h-4" />
-                        인스타툰 게시하기
+                        <Rocket className="w-5 h-5" />
+                        {fandomMeta ? "팬덤에 게시하기" : "인스타툰 게시하기"}
                       </>
                     )}
                   </button>
@@ -561,7 +655,7 @@ export function PublishDialog({ open, onClose }: Props) {
                   <button
                     onClick={handleDownloadCurrent}
                     disabled={dlCurrent}
-                    className="group relative p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-[#00e5cc]/30 hover:bg-white/[0.04] transition-all text-left active:scale-[0.98]"
+                    className="group relative p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-primary/30 hover:bg-white/[0.04] transition-all text-left active:scale-[0.98]"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
@@ -573,10 +667,10 @@ export function PublishDialog({ open, onClose }: Props) {
                           <ImageIcon className="w-5 h-5 text-violet-400" />
                         )}
                       </div>
-                      <Download className="w-4 h-4 text-white/20 group-hover:text-[#00e5cc] transition-colors" />
+                      <Download className="w-5 h-5 text-white/20 group-hover:text-primary transition-colors" />
                     </div>
                     <h4 className="text-sm font-bold text-white">현재 컷 다운로드</h4>
-                    <p className="text-[11px] text-white/35 mt-1 leading-relaxed">
+                    <p className="text-[12px] text-white/35 mt-1 leading-relaxed">
                       컷 {activeCut?.order || 1} · PNG 2x 고화질
                     </p>
                   </button>
@@ -585,31 +679,31 @@ export function PublishDialog({ open, onClose }: Props) {
                   <button
                     onClick={handleDownloadAll}
                     disabled={dlAll}
-                    className="group relative p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-[#00e5cc]/30 hover:bg-white/[0.04] transition-all text-left active:scale-[0.98]"
+                    className="group relative p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-primary/30 hover:bg-white/[0.04] transition-all text-left active:scale-[0.98]"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                        dlAll ? "bg-[#00e5cc]/20" : "bg-[#00e5cc]/10 group-hover:bg-[#00e5cc]/20"
+                        dlAll ? "bg-primary/20" : "bg-primary/10 group-hover:bg-primary/20"
                       }`}>
                         {dlAll ? (
-                          <Loader2 className="w-5 h-5 text-[#00e5cc] animate-spin" />
+                          <Loader2 className="w-5 h-5 text-primary animate-spin" />
                         ) : (
-                          <Images className="w-5 h-5 text-[#00e5cc]" />
+                          <Images className="w-5 h-5 text-primary" />
                         )}
                       </div>
-                      <Download className="w-4 h-4 text-white/20 group-hover:text-[#00e5cc] transition-colors" />
+                      <Download className="w-5 h-5 text-white/20 group-hover:text-primary transition-colors" />
                     </div>
                     <h4 className="text-sm font-bold text-white">
                       {dlAll ? `다운로드 중 ${dlProgress}%` : "전체 다운로드"}
                     </h4>
-                    <p className="text-[11px] text-white/35 mt-1 leading-relaxed">
+                    <p className="text-[12px] text-white/35 mt-1 leading-relaxed">
                       {allCuts.length}장 일괄 · PNG 2x 고화질
                     </p>
                     {/* Progress bar */}
                     {dlAll && (
                       <div className="mt-3 h-1 rounded-full bg-white/[0.06] overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-[#00e5cc] to-[#0ea5e9] transition-all duration-300"
+                          className="h-full rounded-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-300"
                           style={{ width: `${dlProgress}%` }}
                         />
                       </div>
@@ -619,7 +713,7 @@ export function PublishDialog({ open, onClose }: Props) {
 
                 {/* Individual cut grid */}
                 <div>
-                  <label className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-3 block">
+                  <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-3 block">
                     개별 컷 선택 다운로드
                   </label>
                   <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
@@ -678,7 +772,7 @@ export function PublishDialog({ open, onClose }: Props) {
                             setToast({ msg: "이 컷은 아직 비어있습니다", type: "err" });
                           }
                         }}
-                        className="group relative aspect-[3/4] rounded-xl border border-white/[0.06] overflow-hidden bg-white/[0.02] hover:border-[#00e5cc]/30 transition-all active:scale-95"
+                        className="group relative aspect-[3/4] rounded-xl border border-white/[0.06] overflow-hidden bg-white/[0.02] hover:border-primary/30 transition-all active:scale-95"
                       >
                         {cut.thumbnailUrl ? (
                           <img src={cut.thumbnailUrl} alt="" className="w-full h-full object-cover" />
@@ -688,7 +782,7 @@ export function PublishDialog({ open, onClose }: Props) {
                           </div>
                         )}
                         {/* Order badge */}
-                        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-[9px] font-bold text-white/80">
+                        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-[12px] font-bold text-white/80">
                           {i + 1}
                         </div>
                         {/* Hover overlay */}
@@ -708,17 +802,17 @@ export function PublishDialog({ open, onClose }: Props) {
                 {/* Main save card */}
                 <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent p-6 text-center">
                   {/* Decorative glow */}
-                  <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-[#00e5cc]/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
                   <div className="relative space-y-4">
-                    <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-[#00e5cc]/15 to-[#0ea5e9]/15 border border-[#00e5cc]/10 flex items-center justify-center">
-                      <HardDrive className="w-7 h-7 text-[#00e5cc]" />
+                    <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-primary/15 to-primary/10 border border-primary/10 flex items-center justify-center">
+                      <HardDrive className="w-7 h-7 text-primary" />
                     </div>
 
                     <div>
                       <h3 className="text-[15px] font-bold text-white">{state.project.title}</h3>
-                      <p className="text-[11px] text-white/35 mt-1 flex items-center justify-center gap-1.5">
-                        <Layers className="w-3 h-3" />
+                      <p className="text-[12px] text-white/35 mt-1 flex items-center justify-center gap-1.5">
+                        <Layers className="w-5 h-5" />
                         {allCuts.length}컷 · 브라우저 로컬 저장
                       </p>
                     </div>
@@ -726,14 +820,14 @@ export function PublishDialog({ open, onClose }: Props) {
                     <button
                       onClick={handleSave}
                       disabled={saving}
-                      className="w-full h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60 bg-gradient-to-r from-[#00e5cc] to-[#0ea5e9] text-black shadow-[0_4px_20px_rgba(0,229,204,0.2)] hover:shadow-[0_4px_28px_rgba(0,229,204,0.35)] active:scale-[0.98]"
+                      className="w-full h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60 bg-gradient-to-r from-primary to-primary/80 text-black shadow-[0_4px_20px_rgba(0,229,204,0.2)] hover:shadow-[0_4px_28px_rgba(0,229,204,0.35)] active:scale-[0.98]"
                     >
                       {saving ? (
-                        <><Loader2 className="w-4 h-4 animate-spin" /> 저장 중...</>
+                        <><Loader2 className="w-5 h-5 animate-spin" /> 저장 중...</>
                       ) : justSaved ? (
-                        <><Check className="w-4 h-4" /> 저장 완료!</>
+                        <><Check className="w-5 h-5" /> 저장 완료!</>
                       ) : (
-                        <><Save className="w-4 h-4" /> 인스타툰 저장</>
+                        <><Save className="w-5 h-5" /> 인스타툰 저장</>
                       )}
                     </button>
                   </div>
@@ -742,7 +836,7 @@ export function PublishDialog({ open, onClose }: Props) {
                 {/* Recent saves */}
                 {projects.length > 0 && (
                   <div>
-                    <label className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-3 block">
+                    <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-3 block">
                       최근 저장 기록
                     </label>
                     <div className="space-y-1.5">
@@ -756,13 +850,13 @@ export function PublishDialog({ open, onClose }: Props) {
                               <img src={p.thumbnail} alt="" className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <FileImage className="w-3.5 h-3.5 text-white/10" />
+                                <FileImage className="w-5 h-5 text-white/10" />
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-medium text-white/80 truncate">{p.title}</p>
-                            <p className="text-[10px] text-white/25 mt-0.5 flex items-center gap-1.5">
+                            <p className="text-[12px] text-white/25 mt-0.5 flex items-center gap-1.5">
                               <Layers className="w-2.5 h-2.5" />
                               {p.cutCount}컷
                               <span className="mx-0.5">·</span>
@@ -771,7 +865,7 @@ export function PublishDialog({ open, onClose }: Props) {
                             </p>
                           </div>
                           {p.id === state.project.id && (
-                            <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-[#00e5cc]/15 text-[#00e5cc] border border-[#00e5cc]/10">
+                            <span className="px-1.5 py-0.5 rounded-md text-[12px] font-bold bg-primary/15 text-primary border border-primary/10">
                               현재
                             </span>
                           )}
@@ -799,7 +893,7 @@ export function PublishDialog({ open, onClose }: Props) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-[11px] text-white/25">
+                  <p className="text-[12px] text-white/25">
                     저장된 인스타툰 {projects.length}개
                   </p>
 
@@ -813,7 +907,7 @@ export function PublishDialog({ open, onClose }: Props) {
                           key={p.id}
                           className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${
                             isCurrent
-                              ? "border-[#00e5cc]/20 bg-[#00e5cc]/[0.03]"
+                              ? "border-primary/20 bg-primary/[0.03]"
                               : "border-white/[0.04] bg-white/[0.02] hover:border-white/[0.08]"
                           }`}
                         >
@@ -833,16 +927,16 @@ export function PublishDialog({ open, onClose }: Props) {
                             <div className="flex items-center gap-2">
                               <p className="text-[13px] font-semibold text-white/90 truncate">{p.title}</p>
                               {isCurrent && (
-                                <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-[#00e5cc]/15 text-[#00e5cc] border border-[#00e5cc]/10">
+                                <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[12px] font-bold bg-primary/15 text-primary border border-primary/10">
                                   현재
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-white/30 mt-1 flex items-center gap-1.5">
-                              <Layers className="w-3 h-3" />
+                            <p className="text-[12px] text-white/30 mt-1 flex items-center gap-1.5">
+                              <Layers className="w-5 h-5" />
                               {p.cutCount}컷
                               <span className="mx-0.5">·</span>
-                              <Clock className="w-3 h-3" />
+                              <Clock className="w-5 h-5" />
                               {relativeTime(p.savedAt)}
                             </p>
                           </div>
@@ -853,13 +947,13 @@ export function PublishDialog({ open, onClose }: Props) {
                               <div className="flex items-center gap-1 animate-in fade-in duration-150">
                                 <button
                                   onClick={() => handleDelete(p.id)}
-                                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                                  className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors"
                                 >
                                   삭제
                                 </button>
                                 <button
                                   onClick={() => setConfirmDelete(null)}
-                                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-white/40 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
+                                  className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold text-white/40 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
                                 >
                                   취소
                                 </button>
@@ -870,14 +964,14 @@ export function PublishDialog({ open, onClose }: Props) {
                                   onClick={() => setConfirmDelete(p.id)}
                                   className="w-8 h-8 rounded-lg flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-5 h-5" />
                                 </button>
                                 {!isCurrent && (
                                   <button
                                     onClick={() => handleLoad(p.id)}
-                                    className="h-8 px-3.5 rounded-lg text-[12px] font-bold flex items-center gap-1.5 bg-[#00e5cc] text-black hover:bg-[#00f0ff] transition-colors active:scale-95"
+                                    className="h-8 px-3.5 rounded-lg text-[12px] font-bold flex items-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors active:scale-95"
                                   >
-                                    <RotateCcw className="w-3 h-3" />
+                                    <RotateCcw className="w-5 h-5" />
                                     불러오기
                                   </button>
                                 )}

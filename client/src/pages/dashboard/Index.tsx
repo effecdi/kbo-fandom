@@ -259,7 +259,7 @@ export function DashboardIndex() {
                       <p className="text-xs text-muted-foreground">{action.desc}</p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  <ArrowRight className="w-5 h-5 text-muted-foreground" />
                 </Link>
               ))}
             </div>
@@ -274,7 +274,7 @@ export function DashboardIndex() {
                 recentActivities.map((activity, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors">
                     <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                      <activity.icon className="w-4 h-4 text-muted-foreground" />
+                      <activity.icon className="w-5 h-5 text-muted-foreground" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm text-foreground">{activity.text}</p>
@@ -291,20 +291,20 @@ export function DashboardIndex() {
         <div className="flex gap-4">
           <Link to="/dashboard/analytics">
             <Button variant="outline" className="gap-2">
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="w-5 h-5" />
               상세 분석
             </Button>
           </Link>
           <Link to={role === "business" ? "/dashboard/reports" : "/dashboard/revenue"}>
             <Button variant="outline" className="gap-2">
-              <DollarSign className="w-4 h-4" />
+              <DollarSign className="w-5 h-5" />
               {role === "business" ? "리포트" : "수익 관리"}
             </Button>
           </Link>
           {role === "business" && (
             <Link to="/assets/brand">
               <Button variant="outline" className="gap-2">
-                <FolderOpen className="w-4 h-4" />
+                <FolderOpen className="w-5 h-5" />
                 브랜드 자산
               </Button>
             </Link>

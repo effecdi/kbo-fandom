@@ -1,22 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, User, Building2, Mail, Lock, LogIn, Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
+import { ArrowLeft, Mail, Lock, LogIn, Heart, Music, Sparkles, Users } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-const olliMascot = "/favicon.png";
+import { getFandomProfile } from "@/lib/local-store";
 
 export function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedTab, setSelectedTab] = useState<"creator" | "business">("creator");
 
-  const handleLogin = (userType: "creator" | "business") => {
-    // Mock login - redirect to onboarding for role selection
-    navigate("/onboarding");
+  const handleLogin = () => {
+    const profile = getFandomProfile();
+    if (profile?.verified) {
+      navigate("/fandom");
+    } else {
+      navigate("/fandom/onboarding");
+    }
   };
 
   return (
@@ -29,275 +31,137 @@ export function Login() {
             onClick={() => navigate("/")}
             className="mb-8 text-muted-foreground hover:text-foreground hover:bg-muted"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
             홈으로
           </Button>
 
           {/* Logo & Title */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 flex items-center justify-center">
-                <img src={olliMascot} alt="OLLI" className="w-full h-full" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+                <Heart className="w-7 h-7 text-white" />
               </div>
-              <h1 className="text-3xl font-black text-foreground">
-                OLLI
+              <h1 className="text-3xl font-black bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">
+                MY FANDOM
               </h1>
             </div>
             <h2 className="text-2xl font-bold mb-2 text-foreground">
-              다시 오신 것을 환영합니다
+              나만의 팬덤 세계로
             </h2>
             <p className="text-muted-foreground">
-              계정에 로그인하여 계속하세요
+              팬아트, 소통, 이벤트 모두 한 곳에서
             </p>
           </div>
 
           {/* Form Card */}
           <div className="rounded-3xl p-8 shadow-2xl border bg-card border-border">
-            <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as "creator" | "business")}>
-              {/* Custom Tab Selector */}
-              <div className="grid grid-cols-2 gap-3 mb-8 p-2 rounded-2xl bg-muted/50">
+            <form className="space-y-5">
+              {/* Email */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
+                  이메일
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
+                  비밀번호
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="비밀번호를 입력하세요"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              {/* Remember & Forgot */}
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="w-4 h-4 rounded border-border text-violet-500 focus:ring-violet-500" />
+                  <span className="text-sm text-muted-foreground">로그인 상태 유지</span>
+                </label>
                 <button
-                  onClick={() => setSelectedTab("creator")}
-                  className={`py-4 px-6 rounded-xl font-bold text-sm transition-all ${
-                    selectedTab === "creator"
-                      ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                  type="button"
+                  className="text-sm font-semibold text-violet-500 hover:text-violet-600 transition-colors"
                 >
-                  <User className="w-4 h-4 inline mr-2" />
-                  작가 계정
-                </button>
-                <button
-                  onClick={() => setSelectedTab("business")}
-                  className={`py-4 px-6 rounded-xl font-bold text-sm transition-all ${
-                    selectedTab === "business"
-                      ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <Building2 className="w-4 h-4 inline mr-2" />
-                  기업/기관
+                  비밀번호 찾기
                 </button>
               </div>
 
-              <TabsContent value="creator" className="mt-0">
-                <form className="space-y-5">
-                  {/* Email */}
-                  <div>
-                    <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
-                      이메일
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="creator-email"
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
+              {/* Submit Button */}
+              <Button
+                type="button"
+                className="w-full h-14 text-base font-bold bg-gradient-to-r from-violet-500 to-pink-500 text-white shadow-lg hover:shadow-xl transition-all"
+                onClick={handleLogin}
+              >
+                <LogIn className="w-5 h-5 mr-2" />
+                로그인
+              </Button>
 
-                  {/* Password */}
-                  <div>
-                    <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
-                      비밀번호
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="creator-password"
-                        type="password"
-                        placeholder="비밀번호를 입력하세요"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
+              {/* Divider */}
+              <div className="relative my-8">
+                <Separator className="bg-muted" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold bg-card text-muted-foreground">
+                  또는
+                </span>
+              </div>
 
-                  {/* Remember & Forgot */}
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" className="w-4 h-4 rounded border-border text-teal-500 focus:ring-teal-500" />
-                      <span className="text-sm text-muted-foreground">
-                        로그인 상태 유지
-                      </span>
-                    </label>
-                    <button
-                      type="button"
-                      className="text-sm font-semibold text-teal-500 hover:text-teal-600 transition-colors"
-                    >
-                      비밀번호 찾기
-                    </button>
-                  </div>
+              {/* Social Login */}
+              <div className="space-y-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 border-border text-foreground hover:bg-muted"
+                >
+                  <img src="https://www.google.com/favicon.ico" className="w-5 h-5 mr-2" alt="Google" />
+                  Google로 계속하기
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 border-border text-foreground hover:bg-muted"
+                >
+                  <div className="w-5 h-5 mr-2 bg-yellow-400 rounded-full" />
+                  카카오로 계속하기
+                </Button>
+              </div>
 
-                  {/* Submit Button */}
-                  <Button
-                    type="button"
-                    className="w-full h-14 text-base font-bold bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg hover:shadow-xl transition-all"
-                    onClick={() => handleLogin("creator")}
-                  >
-                    <LogIn className="w-5 h-5 mr-2" />
-                    로그인
-                  </Button>
-
-                  {/* Divider */}
-                  <div className="relative my-8">
-                    <Separator className="bg-muted" />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold bg-card text-muted-foreground">
-                      또는
-                    </span>
-                  </div>
-
-                  {/* Social Login */}
-                  <div className="space-y-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full h-12 border-border text-foreground hover:bg-muted"
-                    >
-                      <img src="https://www.google.com/favicon.ico" className="w-5 h-5 mr-2" alt="Google" />
-                      Google로 계속하기
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full h-12 border-border text-foreground hover:bg-muted"
-                    >
-                      <div className="w-5 h-5 mr-2 bg-yellow-400 rounded-full" />
-                      카카오로 계속하기
-                    </Button>
-                  </div>
-
-                  {/* Signup Link */}
-                  <p className="text-center text-sm pt-4 text-muted-foreground">
-                    계정이 없으신가요?{" "}
-                    <button
-                      type="button"
-                      onClick={() => navigate("/signup")}
-                      className="font-bold text-teal-500 hover:text-teal-600 transition-colors"
-                    >
-                      회원가입
-                    </button>
-                  </p>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="business" className="mt-0">
-                <form className="space-y-5">
-                  {/* Email */}
-                  <div>
-                    <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
-                      업무 이메일
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="business-email"
-                        type="email"
-                        placeholder="your@company.com"
-                        className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password */}
-                  <div>
-                    <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
-                      비밀번호
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="business-password"
-                        type="password"
-                        placeholder="비밀번호를 입력하세요"
-                        className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Remember & Forgot */}
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" className="w-4 h-4 rounded border-border text-blue-500 focus:ring-blue-500" />
-                      <span className="text-sm text-muted-foreground">
-                        로그인 상태 유지
-                      </span>
-                    </label>
-                    <button
-                      type="button"
-                      className="text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
-                    >
-                      비밀번호 찾기
-                    </button>
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="button"
-                    className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg hover:shadow-xl transition-all"
-                    onClick={() => handleLogin("business")}
-                  >
-                    <LogIn className="w-5 h-5 mr-2" />
-                    로그인
-                  </Button>
-
-                  {/* Divider */}
-                  <div className="relative my-8">
-                    <Separator className="bg-muted" />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold bg-card text-muted-foreground">
-                      또는
-                    </span>
-                  </div>
-
-                  {/* Social Login */}
-                  <div className="space-y-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full h-12 border-border text-foreground hover:bg-muted"
-                    >
-                      <img src="https://www.google.com/favicon.ico" className="w-5 h-5 mr-2" alt="Google" />
-                      Google Workspace로 계속하기
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full h-12 border-border text-foreground hover:bg-muted"
-                    >
-                      <Building2 className="w-5 h-5 mr-2" />
-                      기업 이메일로 계속하기
-                    </Button>
-                  </div>
-
-                  {/* Signup Link */}
-                  <p className="text-center text-sm pt-4 text-muted-foreground">
-                    계정이 없으신가요?{" "}
-                    <button
-                      type="button"
-                      onClick={() => navigate("/signup")}
-                      className="font-bold text-blue-500 hover:text-blue-600 transition-colors"
-                    >
-                      회원가입
-                    </button>
-                  </p>
-                </form>
-              </TabsContent>
-            </Tabs>
+              {/* Signup Link */}
+              <p className="text-center text-sm pt-4 text-muted-foreground">
+                계정이 없으신가요?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/signup")}
+                  className="font-bold text-violet-500 hover:text-violet-600 transition-colors"
+                >
+                  회원가입
+                </button>
+              </p>
+            </form>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Benefits */}
-      <div className={`hidden lg:flex lg:w-1/2 items-center justify-center relative overflow-hidden ${
-        selectedTab === "creator"
-          ? "bg-gradient-to-br from-[#00e5cc] to-[#00b3a6]"
-          : "bg-gradient-to-br from-blue-500 to-indigo-500"
-      }`}>
+      {/* Right Side - Fandom Benefits */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500">
         {/* Background Decoration */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl" />
@@ -307,105 +171,63 @@ export function Login() {
         <div className="relative z-10 max-w-md p-12">
           {/* Icon Badge */}
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 mb-8">
-            <Sparkles className="w-5 h-5 text-white" />
+            <Heart className="w-5 h-5 text-white" />
             <span className="text-white font-bold text-sm">
-              {selectedTab === "creator" ? "작가님, 다시 만나서 반가워요!" : "안전하고 효율적인 업무 환경"}
+              나만의 아이돌 팬덤 세계
             </span>
           </div>
 
           {/* Main Title */}
           <h2 className="text-4xl font-black text-white mb-6 leading-tight">
-            {selectedTab === "creator"
-              ? "창작의 여정을\n계속하세요"
-              : "스마트한 콘텐츠\n관리를 시작하세요"}
+            팬덤의 모든 것,<br/>한 곳에서
           </h2>
           <p className="text-white/90 text-lg mb-10">
-            {selectedTab === "creator"
-              ? "AI 도구와 함께 더 빠르고 쉽게 인스타툰을 제작하고, 수익화의 기회를 발견하세요."
-              : "승인 워크플로우와 버전 관리로 브랜드 자산을 안전하게 관리하고, 최적의 작가와 협업하세요."}
+            팬아트 제작, 팬덤 인증, 이벤트 참여까지. 진정한 팬의 세계를 경험하세요.
           </p>
 
           {/* Features List */}
           <div className="space-y-5">
-            {selectedTab === "creator" ? (
-              <>
-                <div className="flex items-start gap-4">
-                  <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold mb-1">빠른 제작</h3>
-                    <p className="text-white/80 text-sm">AI로 1분만에 캐릭터와 스토리 생성</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
-                    <TrendingUp className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold mb-1">수익 증대</h3>
-                    <p className="text-white/80 text-sm">Ad Match AI로 자동 광고 매칭</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
-                    <Zap className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold mb-1">간편한 관리</h3>
-                    <p className="text-white/80 text-sm">모든 작품을 한 곳에서 관리</p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-start gap-4">
-                  <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
-                    <Shield className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold mb-1">안전한 승인</h3>
-                    <p className="text-white/80 text-sm">4단계 승인 프로세스로 안전하게</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
-                    <TrendingUp className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold mb-1">효율적인 협업</h3>
-                    <p className="text-white/80 text-sm">검증된 작가와 즉시 협업 시작</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold mb-1">브랜드 일관성</h3>
-                    <p className="text-white/80 text-sm">버전 관리로 자산 통합 관리</p>
-                  </div>
-                </div>
-              </>
-            )}
+            <div className="flex items-start gap-4">
+              <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold mb-1">AI 팬아트 제작</h3>
+                <p className="text-white/80 text-sm">좋아하는 아이돌의 팬아트를 AI로 간편하게</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold mb-1">팬덤 소통</h3>
+                <p className="text-white/80 text-sm">같은 팬들과 작품 공유하고 소통하세요</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="bg-white/20 rounded-xl p-3 flex-shrink-0">
+                <Music className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold mb-1">이벤트 & 챌린지</h3>
+                <p className="text-white/80 text-sm">공식 이벤트에 참여하고 굿즈를 받으세요</p>
+              </div>
+            </div>
           </div>
 
           {/* Quote */}
           <div className="mt-12 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <p className="text-white/90 text-sm italic mb-3">
-              "{selectedTab === "creator"
-                ? "OLLI 덕분에 작업 시간이 절반으로 줄었고, 수익은 2배로 늘었어요!"
-                : "승인 프로세스가 있어 내부 검토가 훨씬 수월해졌습니다."}"
+              "팬아트 만들고, 팬덤 인증하고, 이벤트까지! 진짜 팬을 위한 공간이에요 💜"
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20" />
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm">
+                A
+              </div>
               <div>
-                <p className="text-white font-bold text-sm">
-                  {selectedTab === "creator" ? "김작가" : "서울시청"}
-                </p>
-                <p className="text-white/70 text-xs">
-                  {selectedTab === "creator" ? "인스타툰 크리에이터" : "공공기관"}
-                </p>
+                <p className="text-white font-bold text-sm">아미드로잉</p>
+                <p className="text-white/70 text-xs">BTS ARMY</p>
               </div>
             </div>
           </div>

@@ -105,7 +105,7 @@ export default function DrawingToolsPanel({
             onClick={onClose}
             className="drawing-tools-panel__close"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-5 w-5" />
           </button>
         )}
       </div>
@@ -143,7 +143,7 @@ export default function DrawingToolsPanel({
           }`}
           onClick={selectEraser}
         >
-          <Eraser className="h-4 w-4" />
+          <Eraser className="h-5 w-5" />
           <span>지우개</span>
         </button>
       </div>
@@ -243,7 +243,7 @@ export default function DrawingToolsPanel({
             }}
             title="이미지 다운로드"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-5 w-5" />
             <span>다운로드</span>
           </button>
         </div>

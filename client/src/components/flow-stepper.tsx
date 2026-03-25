@@ -26,7 +26,7 @@ export function FlowStepper({ currentStep }: { currentStep?: number }) {
                     : "bg-muted text-muted-foreground"
                 }`}
               >
-                {isDone ? <Check className="h-3 w-3" /> : s.step}
+                {isDone ? <Check className="h-5 w-5" /> : s.step}
               </div>
               <span
                 className={`text-[13px] hidden sm:inline whitespace-nowrap ${

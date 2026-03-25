@@ -139,7 +139,7 @@ export function AssetBrowser() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <tab.icon className="w-3 h-3" />
+            <tab.icon className="w-5 h-5" />
             {tab.label}
           </button>
         ))}
@@ -157,7 +157,7 @@ export function AssetBrowser() {
             className="w-full gap-2"
             onClick={handleAIBackground}
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-5 h-5" />
             AI 배경 생성
           </Button>
           <Button
@@ -166,7 +166,7 @@ export function AssetBrowser() {
             className="w-full gap-2"
             onClick={handleUpload}
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-5 h-5" />
             이미지 업로드
           </Button>
           <input
@@ -190,7 +190,7 @@ export function AssetBrowser() {
                   <div
                     key={item.id}
                     onClick={() => applyBackground(item.imageUrl)}
-                    className="aspect-video rounded-lg bg-muted border border-border overflow-hidden cursor-pointer hover:border-[#00e5cc]/50 transition-colors"
+                    className="aspect-video rounded-lg bg-muted border border-border overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
                   >
                     <img
                       src={item.imageUrl}
@@ -215,10 +215,10 @@ export function AssetBrowser() {
               <button
                 key={sticker.id}
                 onClick={() => handleStickerAdd(sticker.emoji)}
-                className="aspect-square rounded-lg bg-muted border border-border flex flex-col items-center justify-center gap-0.5 hover:bg-muted/80 hover:border-[#00e5cc]/50 transition-colors cursor-pointer"
+                className="aspect-square rounded-lg bg-muted border border-border flex flex-col items-center justify-center gap-0.5 hover:bg-muted/80 hover:border-primary/50 transition-colors cursor-pointer"
               >
                 <span className="text-xl">{sticker.emoji}</span>
-                <span className="text-[9px] text-muted-foreground">{sticker.label}</span>
+                <span className="text-[12px] text-muted-foreground">{sticker.label}</span>
               </button>
             ))}
           </div>
@@ -240,7 +240,7 @@ export function AssetBrowser() {
                 className="w-full gap-2 text-xs justify-start"
                 onClick={() => handleEffectAdd(effect.prompt)}
               >
-                <Star className="w-3 h-3 text-[#00e5cc]" />
+                <Star className="w-5 h-5 text-primary" />
                 {effect.label}
               </Button>
             ))}

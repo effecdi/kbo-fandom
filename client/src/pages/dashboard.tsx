@@ -313,7 +313,7 @@ export default function DashboardPage() {
             onClick={() => navigate("/story")}
             data-testid="button-start-guide"
           >
-            <HelpCircle className="h-4 w-4" />
+            <HelpCircle className="h-5 w-5" />
             <span className="hidden sm:inline">사용 가이드</span>
           </Button>
           <Link to="/pricing">
@@ -361,7 +361,7 @@ export default function DashboardPage() {
                 try { localStorage.setItem("olli_tour_completed", "true"); } catch {}
               }}
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -382,7 +382,7 @@ export default function DashboardPage() {
               <h3 className="font-semibold text-sm mb-1">캐릭터 생성</h3>
               <p className="text-[13px] text-muted-foreground leading-relaxed">텍스트로 나만의 AI 캐릭터를 만들어보세요.</p>
               <div className="flex items-center gap-1 mt-3 text-[13px] text-primary font-medium">
-                시작하기 <ArrowRight className="h-3 w-3" />
+                시작하기 <ArrowRight className="h-5 w-5" />
               </div>
             </Card>
           </Link>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
               <h3 className="font-semibold text-sm mb-1">포즈/배경 꾸미기</h3>
               <p className="text-[13px] text-muted-foreground leading-relaxed">다양한 포즈, 표정, 배경을 추가하세요.</p>
               <div className="flex items-center gap-1 mt-3 text-[13px] text-primary font-medium">
-                시작하기 <ArrowRight className="h-3 w-3" />
+                시작하기 <ArrowRight className="h-5 w-5" />
               </div>
             </Card>
           </Link>
@@ -413,7 +413,7 @@ export default function DashboardPage() {
                 <h3 className="font-semibold text-sm mb-1">스토리 에디터로 완성</h3>
                 <p className="text-[13px] text-muted-foreground leading-relaxed">멀티패널 인스타툰을 제작하고 공유하세요.</p>
                 <div className="flex items-center gap-1 mt-3 text-[13px] text-primary font-medium">
-                  시작하기 <ArrowRight className="h-3 w-3" />
+                  시작하기 <ArrowRight className="h-5 w-5" />
                 </div>
               </Card>
             </Link>
@@ -427,12 +427,12 @@ export default function DashboardPage() {
                   <BookOpen className="h-5 w-5 text-white" />
                 </div>
                 <Badge variant="secondary" className="text-[13px]">Step 3</Badge>
-                <Lock className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
+                <Lock className="h-5 w-5 text-muted-foreground ml-auto" />
               </div>
               <h3 className="font-semibold text-sm mb-1">스토리 에디터로 완성</h3>
               <p className="text-[13px] text-muted-foreground leading-relaxed">멀티패널 인스타툰을 제작하고 공유하세요.</p>
               <div className="flex items-center gap-1 mt-3 text-[13px] text-yellow-600 dark:text-yellow-400 font-medium">
-                Pro 전용 <Lock className="h-3 w-3" />
+                Pro 전용 <Lock className="h-5 w-5" />
               </div>
             </Card>
           )}
@@ -506,7 +506,7 @@ export default function DashboardPage() {
 
             {tier.nextUnlock && (
               <div className="flex items-start gap-2.5 mt-3 rounded-lg bg-primary/5 p-3">
-                <Gift className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <Gift className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[13px] font-semibold text-primary mb-0.5">다음 등급 혜택</p>
                   <p className="text-[13px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
@@ -518,7 +518,7 @@ export default function DashboardPage() {
               onClick={() => setShowTierGuide((v) => !v)}
               className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover-elevate rounded-md px-2 py-1.5 -mx-1 w-fit mt-3"
             >
-              <Info className="h-3.5 w-3.5" />
+              <Info className="h-5 w-5" />
               <span>등급별 혜택 보기</span>
             </button>
 
@@ -537,7 +537,7 @@ export default function DashboardPage() {
                     >
                       <div className="flex items-center gap-2.5 mb-2.5">
                         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 ${t.color}`}>
-                          <Icon className="h-4 w-4" />
+                          <Icon className="h-5 w-5" />
                         </div>
                         <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                           <span className="font-semibold">{t.name}</span>
@@ -549,17 +549,17 @@ export default function DashboardPage() {
                               현재
                             </Badge>
                           )}
-                          {isUnlocked && !isCurrent && <Check className="h-3.5 w-3.5 text-green-500" />}
-                          {!isUnlocked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                          {isUnlocked && !isCurrent && <Check className="h-5 w-5 text-green-500" />}
+                          {!isUnlocked && <Lock className="h-5 w-5 text-muted-foreground" />}
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-x-3 gap-y-1 pl-[42px]">
                         {t.benefits.map((b, bi) => (
                           <div key={bi} className="flex items-center gap-1.5">
                             {isUnlocked ? (
-                              <Check className="h-3 w-3 text-green-500 shrink-0" />
+                              <Check className="h-5 w-5 text-green-500 shrink-0" />
                             ) : (
-                              <Lock className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                              <Lock className="h-5 w-5 text-muted-foreground/50 shrink-0" />
                             )}
                             <span className={isUnlocked ? "" : "text-muted-foreground"}>{b}</span>
                           </div>
@@ -578,7 +578,7 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-bold">최근 작품</h2>
                 <Link to="/gallery">
                   <Button variant="ghost" size="sm" className="gap-1 text-[13px]">
-                    전체보기 <ArrowRight className="h-3 w-3" />
+                    전체보기 <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
               </div>
@@ -641,11 +641,11 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                         <span className="text-[13px] text-muted-foreground flex items-center gap-1">
-                          <Users className="h-3 w-3" />
+                          <Users className="h-5 w-5" />
                           {creator.followerCount} 팔로워
                         </span>
                         <span className="text-[13px] text-muted-foreground flex items-center gap-1">
-                          <Heart className="h-3 w-3" />
+                          <Heart className="h-5 w-5" />
                           {creator.totalLikes} 좋아요
                         </span>
                       </div>
@@ -669,7 +669,7 @@ export default function DashboardPage() {
                     <h3 className="font-semibold text-sm">Pro로 업그레이드</h3>
                     <p className="text-[13px] text-muted-foreground mt-0.5">무제한 생성 & 모든 기능·모든 폰트 해제</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-primary shrink-0" />
+                  <ArrowRight className="h-5 w-5 text-primary shrink-0" />
                 </div>
               </Card>
             </Link>

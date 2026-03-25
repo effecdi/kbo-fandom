@@ -1,4 +1,4 @@
-app = 'olli-b2b-dev'
+app = 'olli-fandom-dev'
 primary_region = 'nrt'
 
 [build]

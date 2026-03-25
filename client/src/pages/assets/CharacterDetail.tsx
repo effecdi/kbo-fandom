@@ -210,7 +210,7 @@ export function CharacterDetailPage() {
           to="/assets/characters"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5" />
           캐릭터 목록으로 돌아가기
         </Link>
 
@@ -247,18 +247,18 @@ export function CharacterDetailPage() {
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mt-4 mb-6">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-400">
-                <Tag className="w-3 h-3" />
+                <Tag className="w-5 h-5" />
                 {displayStyle}
               </span>
               {character.gender && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
-                  <UserCircle className="w-3 h-3" />
+                  <UserCircle className="w-5 h-5" />
                   {character.gender}
                 </span>
               )}
               {character.mood && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-pink-500/20 text-pink-400">
-                  <Smile className="w-3 h-3" />
+                  <Smile className="w-5 h-5" />
                   {character.mood}
                 </span>
               )}
@@ -268,13 +268,13 @@ export function CharacterDetailPage() {
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-6">
               {character.createdAt && (
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
+                  <Calendar className="w-5 h-5" />
                   생성일: {new Date(character.createdAt).toLocaleDateString("ko-KR")}
                 </span>
               )}
               {character.updatedAt && (
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
+                  <Calendar className="w-5 h-5" />
                   수정일: {new Date(character.updatedAt).toLocaleDateString("ko-KR")}
                 </span>
               )}
@@ -283,11 +283,11 @@ export function CharacterDetailPage() {
             {/* Action Buttons */}
             <div className="flex gap-3">
               <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-                <Edit3 className="w-4 h-4" />
+                <Edit3 className="w-5 h-5" />
                 수정
               </Button>
               <Button variant="outline" className="gap-2">
-                <Download className="w-4 h-4" />
+                <Download className="w-5 h-5" />
                 다운로드
               </Button>
               <Button
@@ -295,7 +295,7 @@ export function CharacterDetailPage() {
                 className="gap-2 text-red-400 border-red-400/30 hover:bg-red-500/10 hover:text-red-300"
                 onClick={handleDelete}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-5 h-5" />
                 삭제
               </Button>
             </div>
@@ -314,7 +314,7 @@ export function CharacterDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-5 h-5" />
               {tab.label}
             </button>
           ))}
@@ -386,12 +386,12 @@ export function CharacterDetailPage() {
                 >
                   {poseGenerating ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                       생성 중...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-5 h-5" />
                       생성
                     </>
                   )}
@@ -400,7 +400,7 @@ export function CharacterDetailPage() {
 
               {poseError && (
                 <div className="mt-3 flex items-center gap-2 text-sm text-red-400">
-                  <AlertCircle className="w-4 h-4" />
+                  <AlertCircle className="w-5 h-5" />
                   {poseError}
                 </div>
               )}

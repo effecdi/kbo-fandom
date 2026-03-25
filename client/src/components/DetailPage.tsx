@@ -62,7 +62,7 @@ export function DetailPage() {
             {/* Left Content */}
             <div>
               <div className="inline-flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 rounded-full px-4 py-2 mb-6">
-                <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 <span className="text-purple-700 dark:text-purple-300 font-semibold text-sm">
                   AI 기반 웹툰 제작 플랫폼
                 </span>
@@ -154,7 +154,7 @@ export function DetailPage() {
                 {/* Badge */}
                 <div className="absolute -top-4 -right-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full px-6 py-3 shadow-lg">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles className="w-5 h-5" />
                     <span className="font-bold">AI 생성</span>
                   </div>
                 </div>
@@ -339,7 +339,7 @@ export function DetailPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-muted-foreground">
-                    <Heart className="w-4 h-4" />
+                    <Heart className="w-5 h-5" />
                     <span className="text-sm font-semibold">
                       {(Math.random() * 10 + 2).toFixed(1)}K
                     </span>
@@ -487,7 +487,7 @@ export function DetailPage() {
             size="lg"
             className="bg-white text-purple-600 hover:bg-muted text-xl px-12 py-8 shadow-2xl"
           >
-            <Sparkles className="w-6 h-6 mr-2" />
+            <Sparkles className="w-8 h-8 mr-2" />
             무료로 시작하기
           </Button>
           <p className="text-white/80 mt-4">신용카드 불필요 • 언제든 업그레이드</p>

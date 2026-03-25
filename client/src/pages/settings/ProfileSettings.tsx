@@ -143,9 +143,9 @@ export function ProfileSettings() {
             }`}
           >
             {feedback.type === "success" ? (
-              <Check className="w-4 h-4" />
+              <Check className="w-5 h-5" />
             ) : (
-              <AlertCircle className="w-4 h-4" />
+              <AlertCircle className="w-5 h-5" />
             )}
             {feedback.message}
           </div>
@@ -156,7 +156,7 @@ export function ProfileSettings() {
           to="/settings"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5" />
           설정으로 돌아가기
         </Link>
 
@@ -177,8 +177,8 @@ export function ProfileSettings() {
                     <User className="w-10 h-10 text-white" />
                   )}
                 </div>
-                <button className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-card border border-border flex items-center justify-center hover:bg-muted">
-                  <Camera className="w-3.5 h-3.5 text-muted-foreground" />
+                <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center hover:bg-muted">
+                  <Camera className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
               <div>
@@ -253,7 +253,7 @@ export function ProfileSettings() {
                   }`}
                 >
                   {genres.includes(genre) && (
-                    <Check className="w-3 h-3 inline mr-1" />
+                    <Check className="w-5 h-5 inline mr-1" />
                   )}
                   {genre}
                 </button>
@@ -279,7 +279,7 @@ export function ProfileSettings() {
                 onClick={addSocialLink}
                 className="gap-1.5 text-xs"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-5 h-5" />
                 추가
               </Button>
             </div>
@@ -314,7 +314,7 @@ export function ProfileSettings() {
                       onClick={() => removeSocialLink(index)}
                       className="p-2 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
                 ))}
@@ -326,7 +326,7 @@ export function ProfileSettings() {
           <div className="flex items-center justify-between pt-2 pb-8">
             <Link to="/settings">
               <Button variant="outline" className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-5 h-5" />
                 취소
               </Button>
             </Link>
@@ -334,7 +334,7 @@ export function ProfileSettings() {
               onClick={handleSave}
               className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2 px-8"
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-5 h-5" />
               저장
             </Button>
           </div>

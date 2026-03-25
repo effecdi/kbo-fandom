@@ -142,7 +142,7 @@ export default function CreatePage() {
           <Card className="p-6">
             <div className="flex items-center gap-2.5 mb-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Wand2 className="h-4.5 w-4.5 text-primary" />
+                <Wand2 className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-base font-semibold">캐릭터 설명</h2>
             </div>
@@ -158,7 +158,7 @@ export default function CreatePage() {
                     className="absolute top-1.5 right-1.5 bg-black/60 text-white rounded-full p-1 hover:bg-black/80 transition-colors"
                     data-testid="button-remove-source-image"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-5 w-5" />
                   </button>
                   <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[13px] px-2 py-1 truncate">
                     {sourceImageName || "업로드됨"}
@@ -219,9 +219,9 @@ export default function CreatePage() {
                 data-testid="button-ai-prompt-character"
               >
                 {aiPromptMutation.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  <Loader2 className="h-5 w-5 animate-spin mr-1.5" />
                 ) : (
-                  <Bot className="h-3.5 w-3.5 mr-1.5" />
+                  <Bot className="h-5 w-5 mr-1.5" />
                 )}
                 AI 캐릭터
               </Button>
@@ -231,7 +231,7 @@ export default function CreatePage() {
           <Card className="p-6">
             <div className="flex items-center gap-2.5 mb-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Palette className="h-4.5 w-4.5 text-primary" />
+                <Palette className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-base font-semibold">그림 스타일</h2>
             </div>
@@ -300,12 +300,12 @@ export default function CreatePage() {
           >
             {generateMutation.isPending ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
                 그리는 중...
               </>
             ) : (
               <>
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-5 w-5" />
                 캐릭터 생성하기
               </>
             )}
@@ -363,7 +363,7 @@ export default function CreatePage() {
                     data-testid="button-create-poses"
                   >
                     포즈 만들기
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-5 w-5" />
                   </Button>
                   <Button
                     variant="outline"
@@ -371,7 +371,7 @@ export default function CreatePage() {
                     onClick={() => navigate(`/chat?characterId=${characterId}`)}
                     data-testid="button-create-chat"
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    <MessageCircle className="h-5 w-5" />
                     채팅 이미지
                   </Button>
                 </div>

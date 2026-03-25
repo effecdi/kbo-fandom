@@ -2,18 +2,20 @@ import { StudioLayout } from "@/components/StudioLayout";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   Sparkles,
-  Wand2,
   Layers,
-  Building2,
   Paintbrush,
   Camera,
   MessageCircle,
   Zap,
   ArrowRight,
+  Heart,
+  Image as ImageIcon,
+  Scissors,
 } from "lucide-react";
 import {
   addItem,
   generateId,
+  getFandomProfile,
   STORE_KEYS,
   type ProjectRecord,
 } from "@/lib/local-store";
@@ -22,42 +24,38 @@ const templates = [
   {
     id: "instatoon",
     icon: Layers,
-    title: "인스타툰 4컷",
-    description: "4컷 형식의 인스타그램용 웹툰을 제작합니다",
-    color: "from-pink-500 to-rose-500",
+    title: "최애 인스타툰",
+    description: "최애 멤버로 4컷 인스타툰을 제작합니다",
     panels: 4,
   },
   {
     id: "auto",
     icon: Sparkles,
-    title: "AI 자동 생성",
-    description: "스토리를 입력하면 AI가 자동으로 웹툰을 생성합니다",
-    color: "from-purple-500 to-indigo-500",
+    title: "AI 팬아트 자동 생성",
+    description: "스토리를 입력하면 AI가 팬아트를 자동 생성합니다",
     panels: 4,
   },
   {
     id: "blank",
     icon: Paintbrush,
-    title: "빈 캔버스",
-    description: "자유롭게 컷을 구성하고 직접 제작합니다",
-    color: "from-cyan-500 to-blue-500",
+    title: "자유 캔버스",
+    description: "자유롭게 나만의 팬아트를 직접 그립니다",
     panels: 1,
   },
   {
-    id: "mascot",
-    icon: Building2,
-    title: "마스코트 콘텐츠",
-    description: "브랜드 마스코트를 활용한 콘텐츠를 제작합니다",
-    color: "from-amber-500 to-orange-500",
+    id: "meme",
+    icon: Scissors,
+    title: "밈 / 에디트",
+    description: "재미있는 밈이나 포토 에디트를 만듭니다",
     panels: 1,
   },
 ];
 
 const TEMPLATE_TITLES: Record<string, string> = {
-  instatoon: "인스타툰 4컷",
-  auto: "AI 자동 생성",
-  blank: "새 프로젝트",
-  mascot: "마스코트 콘텐츠",
+  instatoon: "최애 인스타툰",
+  auto: "AI 팬아트",
+  blank: "자유 캔버스",
+  meme: "밈 / 에디트",
 };
 
 const tools = [
@@ -69,7 +67,7 @@ const tools = [
   },
   {
     id: "background",
-    icon: Paintbrush,
+    icon: ImageIcon,
     title: "배경 생성",
     description: "AI로 배경 이미지를 생성합니다",
   },
@@ -120,9 +118,8 @@ function createProjectAndNavigate(
 export function StudioNew() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const selectedTool = searchParams.get("tool");
-  const selectedTemplate = searchParams.get("template");
-  const selectedMode = searchParams.get("mode");
+  const profile = getFandomProfile();
+  const themeColor = "var(--fandom-primary, #7B2FF7)";
 
   const handleTemplateSelect = (templateId: string) => {
     const template = templates.find((t) => t.id === templateId);
@@ -159,27 +156,53 @@ export function StudioNew() {
   return (
     <StudioLayout>
       <div className="max-w-5xl mx-auto">
+        {/* Header */}
         <div className="mb-10">
-          <h1 className="text-3xl font-black text-foreground">새 프로젝트</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <Heart className="w-7 h-7" style={{ color: themeColor }} />
+            <h1 className="text-3xl font-black text-foreground">새 프로젝트</h1>
+          </div>
           <p className="text-muted-foreground mt-1">
-            템플릿을 선택하거나 도구를 사용해 시작하세요
+            {profile
+              ? `${profile.groupName} 팬아트를 만들어보세요`
+              : "템플릿을 선택하거나 도구를 사용해 시작하세요"}
           </p>
         </div>
 
+        {/* Quick CTA */}
+        <button
+          onClick={() => navigate("/fandom/create")}
+          className="w-full mb-8 p-5 rounded-2xl border border-border hover:shadow-lg transition-all text-left flex items-center gap-4 group"
+          style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${themeColor} 8%, transparent), color-mix(in srgb, ${themeColor} 3%, transparent))` }}
+        >
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0"
+            style={{ background: themeColor }}
+          >
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-foreground">그룹 & 멤버 선택해서 만들기</h3>
+            <p className="text-sm text-muted-foreground">아이돌 그룹과 멤버를 먼저 선택하고 팬아트를 시작합니다</p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+        </button>
+
         {/* Templates */}
         <div className="mb-12">
-          <h2 className="text-lg font-bold text-foreground mb-4">템플릿</h2>
+          <h2 className="text-lg font-bold text-foreground mb-4">빠른 시작 템플릿</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {templates.map((template) => (
               <button
                 key={template.id}
                 onClick={() => handleTemplateSelect(template.id)}
-                className="group rounded-2xl border border-border bg-card p-6 text-left hover:shadow-lg hover:border-[#00e5cc]/50 transition-all"
+                className="group rounded-2xl border border-border bg-card p-6 text-left hover:shadow-lg hover:border-foreground/15 transition-all"
               >
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center mb-4`}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-white"
+                  style={{ background: themeColor }}
                 >
-                  <template.icon className="w-6 h-6 text-white" />
+                  <template.icon className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-foreground mb-1">
                   {template.title}
@@ -187,9 +210,12 @@ export function StudioNew() {
                 <p className="text-sm text-muted-foreground">
                   {template.description}
                 </p>
-                <div className="mt-4 flex items-center gap-1 text-[#00e5cc] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                <div
+                  className="mt-4 flex items-center gap-1 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: themeColor }}
+                >
                   <span>시작하기</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-5 h-5" />
                 </div>
               </button>
             ))}
@@ -204,9 +230,9 @@ export function StudioNew() {
               <button
                 key={tool.id}
                 onClick={() => handleToolSelect(tool.id)}
-                className="group rounded-xl border border-border bg-card p-4 text-left hover:shadow-md hover:border-[#00e5cc]/50 transition-all"
+                className="group rounded-xl border border-border bg-card p-4 text-left hover:shadow-md hover:border-foreground/15 transition-all"
               >
-                <tool.icon className="w-8 h-8 text-muted-foreground group-hover:text-[#00e5cc] transition-colors mb-3" />
+                <tool.icon className="w-8 h-8 text-muted-foreground transition-colors mb-3" style={{}} />
                 <h3 className="font-semibold text-sm text-foreground">
                   {tool.title}
                 </h3>

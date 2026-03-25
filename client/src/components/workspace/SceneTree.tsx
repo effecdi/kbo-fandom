@@ -59,19 +59,19 @@ export function SceneTree() {
             }}
             className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
               scene.id === state.activeSceneId
-                ? "bg-[#00e5cc]/10 text-[#00e5cc]"
+                ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
             }`}
           >
             <ChevronRight
-              className={`w-3 h-3 transition-transform ${
+              className={`w-5 h-5 transition-transform ${
                 scene.id === state.activeSceneId ? "rotate-90" : ""
               }`}
             />
             <span className="font-medium">{scene.title}</span>
             {state.scenes.length > 1 && (
               <Trash2
-                className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 hover:text-red-400"
+                className="w-5 h-5 ml-auto opacity-0 group-hover:opacity-100 hover:text-red-400"
                 onClick={(e) => {
                   e.stopPropagation();
                   dispatch({ type: "HISTORY_PUSH" });
@@ -91,15 +91,15 @@ export function SceneTree() {
                   }
                   className={`w-full flex items-center gap-2 px-2 py-1 rounded text-xs transition-colors ${
                     cut.id === state.activeCutId
-                      ? "bg-[#00e5cc]/5 text-[#00e5cc]"
+                      ? "bg-primary/5 text-primary"
                       : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  <Layers className="w-3 h-3" />
+                  <Layers className="w-5 h-5" />
                   <span>컷 {cut.order}</span>
                   {scene.cuts.length > 1 && (
                     <Trash2
-                      className="w-3 h-3 ml-auto opacity-0 hover:opacity-100 hover:text-red-400"
+                      className="w-5 h-5 ml-auto opacity-0 hover:opacity-100 hover:text-red-400"
                       onClick={(e) => {
                         e.stopPropagation();
                         dispatch({ type: "HISTORY_PUSH" });
@@ -113,7 +113,7 @@ export function SceneTree() {
                 onClick={() => addCut(scene.id)}
                 className="w-full flex items-center gap-2 px-2 py-1 rounded text-xs text-muted-foreground hover:bg-muted transition-colors"
               >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-5 h-5" />
                 <span>컷 추가</span>
               </button>
             </div>
@@ -125,7 +125,7 @@ export function SceneTree() {
         onClick={addScene}
         className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-muted-foreground hover:bg-muted transition-colors mt-2"
       >
-        <Plus className="w-3 h-3" />
+        <Plus className="w-5 h-5" />
         <span>씬 추가</span>
       </button>
     </div>

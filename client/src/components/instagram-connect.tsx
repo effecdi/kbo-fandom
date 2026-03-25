@@ -121,9 +121,9 @@ export function InstagramConnect() {
                 disabled={refreshMutation.isPending}
               >
                 {refreshMutation.isPending ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <RefreshCw className="h-3 w-3" />
+                  <RefreshCw className="h-5 w-5" />
                 )}
                 토큰 갱신
               </Button>
@@ -136,9 +136,9 @@ export function InstagramConnect() {
               disabled={disconnectMutation.isPending}
             >
               {disconnectMutation.isPending ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Unlink className="h-3 w-3" />
+                <Unlink className="h-5 w-5" />
               )}
               연결 해제
             </Button>
@@ -151,9 +151,9 @@ export function InstagramConnect() {
           disabled={connectMutation.isPending}
         >
           {connectMutation.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <Instagram className="h-4 w-4" />
+            <Instagram className="h-5 w-5" />
           )}
           Instagram 계정 연결
         </Button>

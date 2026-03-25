@@ -154,7 +154,7 @@ export function ElementPropertiesPanel({
           title={title}
           onClick={() => onAlign(action)}
         >
-          <Icon className="h-3.5 w-3.5" />
+          <Icon className="h-5 w-5" />
         </Button>
       ))}
       <div className="w-px bg-border mx-0.5" />
@@ -171,7 +171,7 @@ export function ElementPropertiesPanel({
           title={title}
           onClick={() => onAlign(action)}
         >
-          <Icon className="h-3.5 w-3.5" />
+          <Icon className="h-5 w-5" />
         </Button>
       ))}
     </div>
@@ -229,7 +229,7 @@ export function ElementPropertiesPanel({
               />
             </div>
             <div className="flex items-center gap-1">
-              <RotateCw className="h-3 w-3 text-muted-foreground shrink-0" />
+              <RotateCw className="h-5 w-5 text-muted-foreground shrink-0" />
               <Input
                 type="number"
                 value={rotDeg}
@@ -247,7 +247,7 @@ export function ElementPropertiesPanel({
               className="flex-1 gap-1 h-7 text-[13px]"
               onClick={() => onUpdateChar?.(selectedChar.id, { flipX: !selectedChar.flipX })}
             >
-              <FlipHorizontal2 className="h-3 w-3" />
+              <FlipHorizontal2 className="h-5 w-5" />
               좌우반전
             </Button>
             <Button
@@ -256,7 +256,7 @@ export function ElementPropertiesPanel({
               className="flex-1 gap-1 h-7 text-[13px]"
               onClick={() => onUpdateChar?.(selectedChar.id, { flipY: !selectedChar.flipY })}
             >
-              <FlipVertical2 className="h-3 w-3" />
+              <FlipVertical2 className="h-5 w-5" />
               상하반전
             </Button>
           </div>
@@ -338,12 +338,12 @@ export function ElementPropertiesPanel({
             disabled={removingBg || !isPro}
           >
             {removingBg ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <Wand2 className="h-3 w-3" />
+              <Wand2 className="h-5 w-5" />
             )}
             AI 배경제거
-            {!isPro && <Crown className="h-2.5 w-2.5 text-yellow-500" />}
+            {!isPro && <Crown className="h-5 w-5 text-yellow-500" />}
           </Button>
         )}
 
@@ -353,7 +353,7 @@ export function ElementPropertiesPanel({
           className="w-full text-red-500 h-7 text-[13px]"
           onClick={() => onDeleteChar?.(selectedChar.id)}
         >
-          <Trash2 className="mr-1.5 h-3 w-3" /> 삭제
+          <Trash2 className="mr-1.5 h-5 w-5" /> 삭제
         </Button>
       </div>
     );
@@ -815,7 +815,7 @@ export function ElementPropertiesPanel({
           className="w-full text-red-500 h-7 text-[13px]"
           onClick={() => onDeleteBubble(selectedBubble.id)}
         >
-          <Trash2 className="mr-1.5 h-3 w-3" /> 삭제
+          <Trash2 className="mr-1.5 h-5 w-5" /> 삭제
         </Button>
       )}
     </div>

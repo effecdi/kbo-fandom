@@ -180,7 +180,7 @@ export function Pricing() {
             onClick={() => navigate("/")}
             className="text-muted-foreground hover:text-foreground hover:bg-muted"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
             홈으로
           </Button>
         </div>
@@ -189,7 +189,7 @@ export function Pricing() {
       {/* Hero */}
       <div className="max-w-7xl mx-auto px-6 py-16 text-center">
         <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#00e5cc]/20 to-[#00b3a6]/20 rounded-full px-4 py-2 mb-6">
-          <Sparkles className="w-4 h-4 text-[#00e5cc]" />
+          <Sparkles className="w-5 h-5 text-[#00e5cc]" />
           <span className="text-sm font-bold text-teal-600 dark:text-[#00e5cc]">
             모든 규모에 맞는 요금제
           </span>
@@ -211,7 +211,7 @@ export function Pricing() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Wand2 className="w-4 h-4" />
+            <Wand2 className="w-5 h-5" />
             작가 요금제
           </button>
           <button
@@ -222,7 +222,7 @@ export function Pricing() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Building2 className="w-4 h-4" />
+            <Building2 className="w-5 h-5" />
             기업/기관 요금제
           </button>
         </div>
@@ -252,7 +252,7 @@ export function Pricing() {
                         ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6]"
                         : "bg-gradient-to-r from-blue-500 to-indigo-500"
                     } text-white px-4 py-1.5 rounded-bl-2xl rounded-tr-2xl font-bold text-xs shadow-lg flex items-center gap-1`}>
-                      <Star className="w-3 h-3" />
+                      <Star className="w-5 h-5" />
                       인기
                     </div>
                   </div>
@@ -298,7 +298,7 @@ export function Pricing() {
                       ? "bg-teal-100 text-teal-700 dark:bg-[#00e5cc]/20 dark:text-[#00e5cc]"
                       : "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
                   }`}>
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-5 h-5" />
                     {plan.highlight}
                   </div>
                 )}
@@ -314,7 +314,7 @@ export function Pricing() {
                             : "bg-blue-500/20"
                           : "bg-muted"
                       }`}>
-                        <Check className={`w-3 h-3 ${
+                        <Check className={`w-5 h-5 ${
                           plan.popular
                             ? selectedType === "creator"
                               ? "text-[#00e5cc]"

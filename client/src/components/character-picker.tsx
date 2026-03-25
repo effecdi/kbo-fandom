@@ -410,7 +410,7 @@ export function CharacterPicker({
                 />
                 {selected && (
                   <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-primary drop-shadow" />
+                    <CheckCircle2 className="h-5 w-5 text-primary drop-shadow" />
                   </div>
                 )}
                 <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[7px] px-0.5 truncate text-center">
@@ -432,9 +432,9 @@ export function CharacterPicker({
                 onClick={() => removeImage(img.id)}
                 className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
               >
-                <X className="h-2.5 w-2.5" />
+                <X className="h-5 w-5" />
               </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] px-0.5 py-0.5 truncate text-center">
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[12px] px-0.5 py-0.5 truncate text-center">
                 {img.name?.slice(0, 8) || "캐릭터"}
               </div>
             </div>
@@ -458,7 +458,7 @@ export function CharacterPicker({
             onClick={() => onSelectedImagesChange([])}
             className="text-muted-foreground hover:text-foreground flex-shrink-0"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
       )}
@@ -470,7 +470,7 @@ export function CharacterPicker({
             onClick={() => fileInputRef.current?.click()}
             className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-2.5 text-[13px] text-muted-foreground hover:border-primary/50 hover:bg-muted/70 transition-colors"
           >
-            <UploadCloud className={mode === "multi" ? "h-5 w-5 text-muted-foreground/70" : "h-4 w-4 opacity-70"} />
+            <UploadCloud className={mode === "multi" ? "h-5 w-5 text-muted-foreground/70" : "h-5 w-5 opacity-70"} />
             <span className="text-[13px] font-medium">이미지 업로드</span>
             {mode === "multi" && (
               <span className="text-[13px] opacity-70">JPG·PNG ({selectedImages.length}/{max})</span>
@@ -484,7 +484,7 @@ export function CharacterPicker({
                 : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/70"
             }`}
           >
-            <ImagePlus className={mode === "multi" ? "h-5 w-5 opacity-70" : "h-4 w-4 opacity-70"} />
+            <ImagePlus className={mode === "multi" ? "h-5 w-5 opacity-70" : "h-5 w-5 opacity-70"} />
             <span className="text-[13px] font-medium">갤러리에서</span>
             {mode === "multi" && (
               <span className="text-[13px] opacity-70">생성 이미지 ({selectedImages.length}/{max})</span>

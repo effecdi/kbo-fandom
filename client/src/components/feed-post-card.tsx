@@ -74,7 +74,7 @@ export function FeedPostCard({ post, onAuthorClick, onPostClick }: FeedPostCardP
           </Avatar>
           <span className="text-[13px] font-medium truncate flex-1">{displayName}</span>
           {post.authorGenre && (
-            <Badge variant="secondary" className="text-[9px] shrink-0">
+            <Badge variant="secondary" className="text-[12px] shrink-0">
               {post.authorGenre === "daily" ? "Daily" : post.authorGenre === "gag" ? "Comedy" : post.authorGenre === "romance" ? "Romance" : post.authorGenre === "fantasy" ? "Fantasy" : post.authorGenre}
             </Badge>
           )}
@@ -94,7 +94,7 @@ export function FeedPostCard({ post, onAuthorClick, onPostClick }: FeedPostCardP
             disabled={!isAuthenticated || likeMutation.isPending}
           >
             <Heart
-              className={`h-4 w-4 transition-colors ${liked ? "fill-red-500 text-red-500" : ""}`}
+              className={`h-5 w-5 transition-colors ${liked ? "fill-red-500 text-red-500" : ""}`}
             />
             <span>{likeCount}</span>
           </button>

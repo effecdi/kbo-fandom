@@ -29,31 +29,31 @@ export function CopilotPreview({ message }: CopilotPreviewProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-[10px] gap-1"
+            className="h-7 text-[12px] gap-1"
             onClick={() => setFullPreview(true)}
           >
-            <Eye className="w-3 h-3" />
+            <Eye className="w-5 h-5" />
             미리보기
           </Button>
           <Button
             size="sm"
-            className="h-7 text-[10px] gap-1 bg-[#00e5cc] hover:bg-[#00f0ff] text-black"
+            className="h-7 text-[12px] gap-1 bg-primary hover:bg-primary/90 text-black"
             onClick={() =>
               dispatch({ type: "COPILOT_APPLY_PREVIEW", messageId: message.id })
             }
           >
-            <Check className="w-3 h-3" />
+            <Check className="w-5 h-5" />
             적용
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-[10px] gap-1 text-red-400"
+            className="h-7 text-[12px] gap-1 text-red-400"
             onClick={() =>
               dispatch({ type: "COPILOT_APPLY_PREVIEW", messageId: message.id })
             }
           >
-            <X className="w-3 h-3" />
+            <X className="w-5 h-5" />
             폐기
           </Button>
         </div>

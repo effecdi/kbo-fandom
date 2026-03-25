@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/theme-provider";
 import {
   Sparkles, Image, LayoutGrid, CreditCard, Moon, Sun, LogOut, Home,
-  Wand2, MessageCircle, Target, Eye, ChevronDown, FileText, Paintbrush, Briefcase, MessageSquare, Trees, BookOpen, FolderOpen, Crown, HelpCircle, Rss,
+  Wand2, ChevronDown, Rss,
+  Heart, Trophy, Users, Palette, Pen, MessageCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,7 +20,6 @@ interface NavGroup {
   icon: any;
   paths: string[];
   items: { path: string; label: string; icon: any }[];
-  proOnly?: boolean;
 }
 
 export function Navbar() {
@@ -35,43 +35,40 @@ export function Navbar() {
 
   const navGroups: NavGroup[] = [
     {
+      label: "팬덤",
+      icon: Heart,
+      paths: ["/fandom", "/fandom/feed", "/fandom/groups", "/fandom/events", "/fandom/create", "/fandom/talk", "/fandom/messages"],
+      items: [
+        { path: "/fandom", label: "팬덤 홈", icon: Heart },
+        { path: "/fandom/feed", label: "팬덤 피드", icon: Rss },
+        { path: "/fandom/talk", label: "팬 토크", icon: MessageCircle },
+        { path: "/fandom/groups", label: "아이돌 그룹", icon: Users },
+        { path: "/fandom/events", label: "이벤트/챌린지", icon: Trophy },
+        { path: "/fandom/create", label: "팬아트 만들기", icon: Palette },
+      ],
+    },
+    {
+      label: "에디터",
+      icon: Pen,
+      paths: ["/editor"],
+      items: [
+        { path: "/editor/new", label: "새 에디터", icon: Pen },
+        { path: "/gallery/mine", label: "내 작품", icon: LayoutGrid },
+      ],
+    },
+    {
       label: "Create",
       icon: Wand2,
       paths: ["/create", "/gallery", "/background"],
       items: [
         { path: "/create", label: "New Character", icon: Wand2 },
         { path: "/pose", label: "Expression/Pose", icon: Image },
-        { path: "/background", label: "Background / Items", icon: Trees },
         { path: "/gallery", label: "Gallery", icon: LayoutGrid },
-      ],
-    },
-    {
-      label: "Tools",
-      icon: Paintbrush,
-      paths: ["/chat", "/effects", "/bubble", "/story", "/edits"],
-      proOnly: true,
-      items: [
-        { path: "/story", label: "Story Editor", icon: BookOpen },
-        { path: "/chat", label: "Chat Maker", icon: MessageCircle },
-        { path: "/bubble", label: "Speech Bubble", icon: MessageSquare },
-        { path: "/effects", label: "Blur Effects", icon: Eye },
-        { path: "/edits", label: "My Edits", icon: FolderOpen },
-      ],
-    },
-    {
-      label: "Business",
-      icon: Briefcase,
-      paths: ["/ad-match", "/media-kit"],
-      proOnly: true,
-      items: [
-        { path: "/ad-match", label: "Ad Match AI", icon: Target },
-        { path: "/media-kit", label: "Media Kit", icon: FileText },
       ],
     },
   ];
 
-  const isPro = credits?.tier === "pro" || credits?.tier === "premium";
-  const isGroupActive = (group: NavGroup) => group.paths.includes(location);
+  const isGroupActive = (group: NavGroup) => group.paths.some((p) => location.startsWith(p));
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
@@ -93,40 +90,24 @@ export function Navbar() {
                     className={`gap-1.5 ${isGroupActive(group) ? "bg-primary/10 text-primary" : ""}`}
                     data-testid={`menu-${group.label.toLowerCase()}`}
                   >
-                    <group.icon className="h-4 w-4" />
+                    <group.icon className="h-5 w-5" />
                     <span className="hidden sm:inline">{group.label}</span>
-                    <ChevronDown className="h-3 w-3 opacity-50" />
+                    <ChevronDown className="h-5 w-5 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48">
-                  {group.items.map((item) => {
-                    const locked = group.proOnly && !isPro;
-                    return locked ? (
-                      <DropdownMenuItem
-                        key={item.path}
-                        className="cursor-pointer opacity-70"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          toast({ title: "Pro 전용 기능", description: `${item.label}은(는) Pro 멤버십 전용입니다.`, variant: "destructive" });
-                        }}
+                  {group.items.map((item) => (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link
+                        to={item.path}
+                        className="cursor-pointer"
+                        data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
                       >
-                        <item.icon className="mr-2 h-4 w-4" />
+                        <item.icon className="mr-2 h-5 w-5" />
                         {item.label}
-                        <Crown className="h-3 w-3 ml-auto text-yellow-500" />
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem key={item.path} asChild>
-                        <Link
-                          to={item.path}
-                          className="cursor-pointer"
-                          data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
-                        >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             ))}
@@ -138,7 +119,7 @@ export function Navbar() {
                 className={`gap-1.5 ${location === "/feed" ? "bg-primary/10 text-primary" : ""}`}
                 data-testid="link-feed"
               >
-                <Rss className="h-4 w-4" />
+                <Rss className="h-5 w-5" />
                 <span className="hidden sm:inline">Feed</span>
               </Button>
             </Link>
@@ -150,7 +131,7 @@ export function Navbar() {
                 className={`gap-1.5 ${location === "/pricing" ? "bg-primary/10 text-primary" : ""}`}
                 data-testid="link-pricing"
               >
-                <CreditCard className="h-4 w-4" />
+                <CreditCard className="h-5 w-5" />
                 <span className="hidden sm:inline">Pricing</span>
               </Button>
             </Link>
@@ -160,27 +141,14 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           {isAuthenticated && credits && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Badge variant="secondary" data-testid="badge-credits" className="gap-1 bg-primary/10 text-primary border-primary/20 cursor-pointer">
-                  <Sparkles className="h-3 w-3" />
-                  {`${(credits.credits ?? 0) + (credits.dailyBonusCredits ?? 0)} credits`}
-                  <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
-                </Badge>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem asChild>
-                  <Link to="/pose" className="cursor-pointer" data-testid="menu-pose-expression">
-                    <Image className="mr-2 h-4 w-4" />
-                    포즈/표정
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Badge variant="secondary" data-testid="badge-credits" className="gap-1 bg-primary/10 text-primary border-primary/20 cursor-pointer">
+              <Sparkles className="h-5 w-5" />
+              {`${(credits.credits ?? 0) + (credits.dailyBonusCredits ?? 0)} credits`}
+            </Badge>
           )}
 
           <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme-toggle">
-            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </Button>
 
           {isAuthenticated ? (
@@ -200,21 +168,21 @@ export function Navbar() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="cursor-pointer" data-testid="menu-dashboard">
-                    <Home className="mr-2 h-4 w-4" />
-                    대쉬보드
+                  <Link to="/fandom" className="cursor-pointer" data-testid="menu-fandom">
+                    <Home className="mr-2 h-5 w-5" />
+                    팬덤 홈
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/gallery" className="cursor-pointer">
-                    <Image className="mr-2 h-4 w-4" />
+                    <Image className="mr-2 h-5 w-5" />
                     My Gallery
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/payments" className="cursor-pointer">
-                    <CreditCard className="mr-2 h-4 w-4" />
+                    <CreditCard className="mr-2 h-5 w-5" />
                     결제 내역
                   </Link>
                 </DropdownMenuItem>
@@ -224,7 +192,7 @@ export function Navbar() {
                   data-testid="button-logout"
                   onClick={() => logout()}
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="mr-2 h-5 w-5" />
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>

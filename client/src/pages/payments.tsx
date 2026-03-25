@@ -76,7 +76,7 @@ export default function PaymentsPage() {
       <div className="flex items-center gap-3 mb-6">
         <Link to="/pricing">
           <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">결제 내역</h1>

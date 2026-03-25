@@ -40,7 +40,7 @@ export function CharacterResult() {
           onClick={() => navigate("/creator/character/new")}
           className="mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-5 h-5 mr-2" />
           뒤로 가기
         </Button>
         <div className="flex items-center justify-between">
@@ -57,7 +57,7 @@ export function CharacterResult() {
               variant="outline"
               onClick={() => navigate("/creator/character/new")}
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw className="w-5 h-5 mr-2" />
               다시 생성하기
             </Button>
             <Button
@@ -65,7 +65,7 @@ export function CharacterResult() {
               className="bg-gradient-to-r from-purple-600 to-pink-600 text-white"
               onClick={() => navigate("/creator/characters")}
             >
-              <Check className="w-4 h-4 mr-2" />
+              <Check className="w-5 h-5 mr-2" />
               선택 후 저장
             </Button>
           </div>
@@ -100,11 +100,11 @@ export function CharacterResult() {
                   <p className="text-white font-bold mb-2">{result.style} 스타일</p>
                   <div className="flex gap-2">
                     <Button size="sm" variant="secondary" className="flex-1">
-                      <Edit className="w-3 h-3 mr-1" />
+                      <Edit className="w-5 h-5 mr-1" />
                       수정
                     </Button>
                     <Button size="sm" variant="secondary" className="flex-1">
-                      <Download className="w-3 h-3 mr-1" />
+                      <Download className="w-5 h-5 mr-1" />
                       다운로드
                     </Button>
                   </div>

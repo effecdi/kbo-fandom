@@ -315,7 +315,7 @@ export function CharacterNew() {
                         onClick={() => setSourceImage(null)}
                         className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80 transition-colors"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-5 w-5" />
                       </button>
                     </div>
                   ) : (
@@ -417,7 +417,7 @@ export function CharacterNew() {
                     onClick={() => navigate(`/creator/pose-expression?characterId=${characterId}`)}
                   >
                     포즈 만들기
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                   <Button
                     variant="outline"

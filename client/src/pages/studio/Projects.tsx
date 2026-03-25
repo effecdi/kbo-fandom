@@ -9,13 +9,14 @@ import {
   Trash2,
   ChevronDown,
   MoreVertical,
-  Filter,
+  Heart,
 } from "lucide-react";
 import { QuickStartHero } from "@/components/workspace/QuickStartHero";
 import {
   listItems,
   removeItem,
   updateItem,
+  getFandomProfile,
   STORE_KEYS,
   type ProjectRecord,
 } from "@/lib/local-store";
@@ -43,6 +44,9 @@ export function StudioProjects() {
   const [sortBy, setSortBy] = useState<SortKey>("updatedAt");
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const profile = getFandomProfile();
+  const themeColor = "var(--fandom-primary, #7B2FF7)";
 
   const loadProjects = useCallback(() => {
     setProjects(listItems<ProjectRecord>(STORE_KEYS.PROJECTS));
@@ -99,6 +103,17 @@ export function StudioProjects() {
   return (
     <StudioLayout>
       <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3">
+            <Heart className="w-7 h-7" style={{ color: themeColor }} />
+            <h1 className="text-2xl font-black text-foreground">내 작품</h1>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            {profile ? `${profile.groupName} 팬아트 프로젝트` : "나의 팬아트 프로젝트"}
+          </p>
+        </div>
+
         {/* AI-First Quick Start Hero */}
         <QuickStartHero />
 
@@ -115,13 +130,14 @@ export function StudioProjects() {
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
               placeholder="프로젝트 검색..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#00e5cc] transition-colors"
+              className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-colors"
+              style={{ "--tw-ring-color": themeColor } as any}
             />
           </div>
 
@@ -140,9 +156,10 @@ export function StudioProjects() {
                 onClick={() => setStatusFilter(f.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   statusFilter === f.id
-                    ? "bg-[#00e5cc] text-black"
+                    ? "text-white"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
+                style={statusFilter === f.id ? { background: themeColor } : {}}
               >
                 {f.label}
               </button>
@@ -153,7 +170,7 @@ export function StudioProjects() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="px-3 py-2 bg-card border border-border rounded-xl text-xs text-muted-foreground focus:outline-none focus:border-[#00e5cc] cursor-pointer"
+            className="px-3 py-2 bg-card border border-border rounded-xl text-xs text-muted-foreground focus:outline-none cursor-pointer"
           >
             <option value="updatedAt">최근 수정순</option>
             <option value="createdAt">생성일순</option>
@@ -203,7 +220,7 @@ export function StudioProjects() {
                       to={`/studio/editor/${project.id}`}
                       className="flex-1 min-w-0"
                     >
-                      <h3 className="font-semibold text-foreground group-hover:text-[#00e5cc] transition-colors truncate">
+                      <h3 className="font-semibold text-foreground transition-colors truncate group-hover:text-[var(--fandom-primary)]">
                         {project.title}
                       </h3>
                     </Link>
@@ -219,7 +236,7 @@ export function StudioProjects() {
                         }}
                         className="p-1 rounded-lg hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
                       >
-                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                        <MoreVertical className="w-5 h-5 text-muted-foreground" />
                       </button>
 
                       {menuOpenId === project.id && (
@@ -231,7 +248,7 @@ export function StudioProjects() {
                             onClick={() => handleStatusChange(project.id)}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                           >
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronDown className="w-5 h-5" />
                             <span>
                               상태 변경 →{" "}
                               {statusLabel[STATUS_FLOW[project.status]].text}
@@ -244,7 +261,7 @@ export function StudioProjects() {
                             }}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-5 h-5" />
                             <span>삭제</span>
                           </button>
                         </div>
@@ -254,11 +271,11 @@ export function StudioProjects() {
 
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <FileText className="w-3 h-3" />
+                      <FileText className="w-5 h-5" />
                       <span>{project.panels}컷</span>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
+                      <Clock className="w-5 h-5" />
                       <span>{project.updatedAt}</span>
                     </div>
                   </div>
@@ -276,10 +293,11 @@ export function StudioProjects() {
             </p>
             {!search && statusFilter === "all" && (
               <Link
-                to="/studio/new"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold text-sm transition-colors"
+                to="/fandom/create"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-bold text-sm transition-colors hover:opacity-90"
+                style={{ background: themeColor }}
               >
-                새 프로젝트 시작하기
+                첫 팬아트 만들기
               </Link>
             )}
           </div>

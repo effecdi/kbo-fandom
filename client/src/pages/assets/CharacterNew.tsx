@@ -111,7 +111,7 @@ export function CharacterNewPage() {
           to="/assets/characters"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5" />
           캐릭터 목록으로 돌아가기
         </Link>
 
@@ -219,7 +219,7 @@ export function CharacterNewPage() {
                   >
                     {selectedStyle === style.id && (
                       <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#00e5cc] flex items-center justify-center">
-                        <Check className="w-4 h-4 text-black" />
+                        <Check className="w-5 h-5 text-black" />
                       </div>
                     )}
                     <div className="w-10 h-10 rounded-xl bg-background/50 flex items-center justify-center mb-3">
@@ -238,7 +238,7 @@ export function CharacterNewPage() {
             <div className="flex items-center justify-between">
               <Link to="/assets/characters">
                 <Button variant="outline" className="gap-2" disabled={status === "loading"}>
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-5 h-5" />
                   취소
                 </Button>
               </Link>
@@ -247,7 +247,7 @@ export function CharacterNewPage() {
                   onClick={handleNewCharacter}
                   className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2 px-8 py-3"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-5 h-5" />
                   새 캐릭터 만들기
                 </Button>
               ) : (
@@ -258,12 +258,12 @@ export function CharacterNewPage() {
                 >
                   {status === "loading" ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                       생성 중...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-5 h-5" />
                       AI 캐릭터 생성
                     </>
                   )}
@@ -313,7 +313,7 @@ export function CharacterNewPage() {
                       onClick={() => navigate(`/assets/characters/${characterId}`)}
                     >
                       캐릭터 상세보기
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-5 h-5" />
                     </Button>
                   )}
                   <Button
@@ -321,7 +321,7 @@ export function CharacterNewPage() {
                     className="w-full gap-2"
                     onClick={handleRetry}
                   >
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="w-5 h-5" />
                     다시 생성하기
                   </Button>
                 </div>
@@ -340,7 +340,7 @@ export function CharacterNewPage() {
                   className="w-full gap-2"
                   onClick={handleRetry}
                 >
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="w-5 h-5" />
                   다시 시도
                 </Button>
               </div>

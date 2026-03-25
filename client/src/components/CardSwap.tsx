@@ -187,7 +187,7 @@ export function CardSwap() {
                       transition={{ delay: i * 0.1 }}
                     >
                       <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${currentCard.gradient} flex items-center justify-center flex-shrink-0`}>
-                        <Sparkles className="w-3 h-3 text-white" />
+                        <Sparkles className="w-5 h-5 text-white" />
                       </div>
                       <span className="text-sm text-foreground">
                         {feature}
@@ -216,7 +216,7 @@ export function CardSwap() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <ChevronRight className="w-6 h-6 rotate-180 text-foreground" />
+            <ChevronRight className="w-8 h-8 rotate-180 text-foreground" />
           </motion.button>
 
           <motion.button
@@ -225,7 +225,7 @@ export function CardSwap() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <ChevronRight className="w-6 h-6 text-foreground" />
+            <ChevronRight className="w-8 h-8 text-foreground" />
           </motion.button>
         </div>
 
@@ -237,7 +237,7 @@ export function CardSwap() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <Zap className="w-4 h-4 text-[#00e5cc]" />
+            <Zap className="w-5 h-5 text-[#00e5cc]" />
             <span className="text-sm font-bold text-foreground">
               핵심 기능 소개
             </span>

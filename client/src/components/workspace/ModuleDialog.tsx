@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useCopilot } from "@/hooks/use-copilot";
-import { MessageSquare, Sparkles, Wand2 } from "lucide-react";
+import { MessageSquare, Sparkles, Wand2, BookOpen, MessageCircle, User, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
@@ -38,6 +38,46 @@ const MODULE_CONFIG: Record<string, { title: string; icon: any; description: str
       { label: "일상 인스타툰", prompt: "카페에서 공부하는 일상 인스타툰 만들어줘" },
       { label: "감성 인스타툰", prompt: "비오는 날 감성 인스타툰 만들어줘" },
       { label: "코미디 인스타툰", prompt: "웃긴 사무실 일상 인스타툰 만들어줘" },
+    ],
+  },
+  story: {
+    title: "스토리 에디터",
+    icon: BookOpen,
+    description: "AI가 스토리를 자동 생성합니다. 장르와 분위기를 선택하세요.",
+    actions: [
+      { label: "일상 스토리", prompt: "따뜻한 일상 스토리를 만들어줘" },
+      { label: "판타지 스토리", prompt: "판타지 세계관 스토리를 만들어줘" },
+      { label: "로맨스 스토리", prompt: "설레는 로맨스 스토리를 만들어줘" },
+    ],
+  },
+  chat: {
+    title: "채팅 메이커",
+    icon: MessageCircle,
+    description: "카카오톡/아이메시지 스타일의 채팅 화면을 만듭니다.",
+    actions: [
+      { label: "카카오톡 스타일", prompt: "카카오톡 채팅 스타일로 대화를 만들어줘" },
+      { label: "아이메시지 스타일", prompt: "아이메시지 스타일로 대화를 만들어줘" },
+      { label: "SNS DM 스타일", prompt: "인스타그램 DM 스타일로 대화를 만들어줘" },
+    ],
+  },
+  pose: {
+    title: "포즈/표정",
+    icon: User,
+    description: "캐릭터의 포즈와 표정을 변경합니다.",
+    actions: [
+      { label: "셀카 포즈", prompt: "셀카 포즈로 변경해줘" },
+      { label: "전신 포즈", prompt: "전신이 보이는 포즈로 변경해줘" },
+      { label: "표정 변경", prompt: "밝게 웃는 표정으로 변경해줘" },
+    ],
+  },
+  background: {
+    title: "배경 생성",
+    icon: Image,
+    description: "다양한 배경을 AI로 생성합니다.",
+    actions: [
+      { label: "무대 배경", prompt: "콘서트 무대 배경을 생성해줘" },
+      { label: "카페 배경", prompt: "예쁜 카페 배경을 생성해줘" },
+      { label: "판타지 배경", prompt: "판타지 세계 배경을 생성해줘" },
     ],
   },
 };
@@ -87,7 +127,7 @@ export function ModuleDialog() {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Icon className="w-5 h-5 text-[#00e5cc]" />
+            <Icon className="w-5 h-5 text-primary" />
             {config.title}
           </DialogTitle>
         </DialogHeader>
@@ -102,7 +142,7 @@ export function ModuleDialog() {
               className="w-full justify-start gap-2 text-sm"
               onClick={() => handleAction(action.prompt)}
             >
-              <Sparkles className="w-4 h-4 text-[#00e5cc]" />
+              <Sparkles className="w-5 h-5 text-primary" />
               {action.label}
             </Button>
           ))}
@@ -115,11 +155,11 @@ export function ModuleDialog() {
             onChange={(e) => setCustomPrompt(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCustomSubmit()}
             placeholder="직접 입력..."
-            className="flex-1 px-3 py-2 text-sm bg-muted rounded-lg border border-border focus:outline-none focus:border-[#00e5cc]"
+            className="flex-1 px-3 py-2 text-sm bg-muted rounded-lg border border-border focus:outline-none focus:border-primary"
           />
           <Button
             size="sm"
-            className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black"
+            className="bg-primary hover:bg-primary/90 text-black"
             onClick={handleCustomSubmit}
             disabled={!customPrompt.trim()}
           >

@@ -45,7 +45,7 @@ export function StoryPreview() {
           onClick={() => navigate("/creator/story")}
           className="mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-5 h-5 mr-2" />
           에디터로 돌아가기
         </Button>
         <div className="flex items-center justify-between">
@@ -62,15 +62,15 @@ export function StoryPreview() {
               variant="outline"
               onClick={() => navigate("/creator/story")}
             >
-              <Edit className="w-4 h-4 mr-2" />
+              <Edit className="w-5 h-5 mr-2" />
               수정하기
             </Button>
             <Button variant="outline">
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-5 h-5 mr-2" />
               저장
             </Button>
             <Button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-              <Share2 className="w-4 h-4 mr-2" />
+              <Share2 className="w-5 h-5 mr-2" />
               발행하기
             </Button>
           </div>
@@ -144,15 +144,15 @@ export function StoryPreview() {
             <h2 className="font-black text-foreground mb-4">내보내기</h2>
             <div className="space-y-3">
               <Button variant="outline" className="w-full justify-start">
-                <Instagram className="w-4 h-4 mr-2" />
+                <Instagram className="w-5 h-5 mr-2" />
                 인스타용 다운로드
               </Button>
               <Button variant="outline" className="w-full justify-start">
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-5 h-5 mr-2" />
                 고해상도 다운로드
               </Button>
               <Button variant="outline" className="w-full justify-start">
-                <Share2 className="w-4 h-4 mr-2" />
+                <Share2 className="w-5 h-5 mr-2" />
                 URL 공유
               </Button>
             </div>

@@ -61,7 +61,7 @@ export function CopilotInput({ onSend, onSlashCommand, disabled }: CopilotInputP
               }}
               className="w-full flex items-center gap-3 px-3 py-2 text-xs hover:bg-muted text-left transition-colors"
             >
-              <code className="text-[#00e5cc] font-mono">{cmd}</code>
+              <code className="text-primary font-mono">{cmd}</code>
               <span className="text-muted-foreground">{label}</span>
             </button>
           ))}
@@ -77,17 +77,17 @@ export function CopilotInput({ onSend, onSlashCommand, disabled }: CopilotInputP
           placeholder="AI에게 요청하세요... (/ 로 명령어)"
           disabled={disabled}
           rows={1}
-          className="flex-1 resize-none bg-muted rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-[#00e5cc] disabled:opacity-50 max-h-20"
+          className="flex-1 resize-none bg-muted rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 max-h-20"
         />
         <button
           onClick={handleSend}
           disabled={!value.trim() || disabled}
-          className="p-2 rounded-lg bg-[#00e5cc] text-black hover:bg-[#00f0ff] disabled:opacity-30 disabled:hover:bg-[#00e5cc] transition-colors shrink-0"
+          className="p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:hover:bg-primary transition-colors shrink-0"
         >
           {disabled ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
           )}
         </button>
       </div>

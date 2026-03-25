@@ -271,7 +271,7 @@ export function TextContextToolbar({ element, onChange }: TextToolbarProps) {
           <span className="context-toolbar__btn-label">
             {FONT_OPTIONS.find((f) => f.value === element.fontFamily)?.label || "기본"}
           </span>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-5 w-5" />
         </button>
         {showFontDropdown && (
           <div className="context-toolbar__dropdown">
@@ -300,7 +300,7 @@ export function TextContextToolbar({ element, onChange }: TextToolbarProps) {
           onClick={() => setShowSizeDropdown((v) => !v)}
         >
           <span className="context-toolbar__btn-label">{element.fontSize}</span>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-5 w-5" />
         </button>
         {showSizeDropdown && (
           <div className="context-toolbar__dropdown">
@@ -370,7 +370,7 @@ export function TextContextToolbar({ element, onChange }: TextToolbarProps) {
         onClick={() => update({ bold: !element.bold })}
         title="굵게"
       >
-        <Bold className="h-4 w-4" />
+        <Bold className="h-5 w-5" />
       </button>
 
       {/* Italic */}
@@ -379,7 +379,7 @@ export function TextContextToolbar({ element, onChange }: TextToolbarProps) {
         onClick={() => update({ italic: !element.italic })}
         title="기울임"
       >
-        <Italic className="h-4 w-4" />
+        <Italic className="h-5 w-5" />
       </button>
 
       {/* Underline */}
@@ -388,7 +388,7 @@ export function TextContextToolbar({ element, onChange }: TextToolbarProps) {
         onClick={() => update({ underline: !element.underline })}
         title="밑줄"
       >
-        <Underline className="h-4 w-4" />
+        <Underline className="h-5 w-5" />
       </button>
 
       {/* Strikethrough */}
@@ -397,7 +397,7 @@ export function TextContextToolbar({ element, onChange }: TextToolbarProps) {
         onClick={() => update({ strikethrough: !element.strikethrough })}
         title="취소선"
       >
-        <Strikethrough className="h-4 w-4" />
+        <Strikethrough className="h-5 w-5" />
       </button>
 
       <div className="context-toolbar__divider" />
@@ -416,7 +416,7 @@ export function TextContextToolbar({ element, onChange }: TextToolbarProps) {
         }}
         title="대소문자"
       >
-        <CaseSensitive className="h-4 w-4" />
+        <CaseSensitive className="h-5 w-5" />
       </button>
 
       {/* Alignment */}
@@ -433,41 +433,41 @@ export function TextContextToolbar({ element, onChange }: TextToolbarProps) {
         }}
         title="정렬"
       >
-        {element.textAlign === "left" && <AlignLeft className="h-4 w-4" />}
-        {element.textAlign === "center" && <AlignCenter className="h-4 w-4" />}
-        {element.textAlign === "right" && <AlignRight className="h-4 w-4" />}
+        {element.textAlign === "left" && <AlignLeft className="h-5 w-5" />}
+        {element.textAlign === "center" && <AlignCenter className="h-5 w-5" />}
+        {element.textAlign === "right" && <AlignRight className="h-5 w-5" />}
       </button>
 
       {/* List */}
       <button className="context-toolbar__btn" title="목록">
-        <List className="h-4 w-4" />
+        <List className="h-5 w-5" />
       </button>
 
       {/* Text direction */}
       <button className="context-toolbar__btn" title="텍스트 방향">
-        <Pilcrow className="h-4 w-4" />
+        <Pilcrow className="h-5 w-5" />
       </button>
 
       <div className="context-toolbar__divider" />
 
       {/* Effects */}
       <button className="context-toolbar__btn" title="효과">
-        <Sparkles className="h-4 w-4" />
+        <Sparkles className="h-5 w-5" />
       </button>
 
       {/* Animation */}
       <button className="context-toolbar__btn" title="애니메이션">
-        <Play className="h-4 w-4" />
+        <Play className="h-5 w-5" />
       </button>
 
       {/* Position */}
       <button className="context-toolbar__btn" title="위치">
-        <Move className="h-4 w-4" />
+        <Move className="h-5 w-5" />
       </button>
 
       {/* Paint */}
       <button className="context-toolbar__btn" title="채우기">
-        <Paintbrush className="h-4 w-4" />
+        <Paintbrush className="h-5 w-5" />
       </button>
     </div>
   );
@@ -544,7 +544,7 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
         onClick={onShowSettings}
         title="설정"
       >
-        <Menu className="h-4 w-4" />
+        <Menu className="h-5 w-5" />
       </button>
 
       <div className="context-toolbar__divider" />
@@ -555,7 +555,7 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
         onClick={() => update({ startArrow: !element.startArrow })}
         title="시작 화살표"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-5 w-5" />
       </button>
 
       {/* End arrow */}
@@ -564,7 +564,7 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
         onClick={() => update({ endArrow: !element.endArrow })}
         title="끝 화살표"
       >
-        <ArrowRight className="h-4 w-4" />
+        <ArrowRight className="h-5 w-5" />
       </button>
 
       <div className="context-toolbar__divider" />
@@ -575,7 +575,7 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
         onClick={() => update({ lineType: "straight" })}
         title="직선"
       >
-        <Minus className="h-4 w-4" />
+        <Minus className="h-5 w-5" />
       </button>
 
       {/* Line type: curved */}
@@ -584,7 +584,7 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
         onClick={() => update({ lineType: "curved" })}
         title="곡선"
       >
-        <Spline className="h-4 w-4" />
+        <Spline className="h-5 w-5" />
       </button>
 
       {/* Line type: polyline */}
@@ -593,7 +593,7 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
         onClick={() => update({ lineType: "polyline" })}
         title="꺾인선"
       >
-        <ArrowUpRight className="h-4 w-4" />
+        <ArrowUpRight className="h-5 w-5" />
       </button>
 
       <div className="context-toolbar__divider" />
@@ -612,7 +612,7 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
         }}
         title="선 패턴"
       >
-        <MoreHorizontal className="h-4 w-4" />
+        <MoreHorizontal className="h-5 w-5" />
       </button>
 
       {/* Border style toggle — 컷 보더 라인 전용 */}
@@ -624,31 +624,31 @@ export function LineContextToolbar({ element, onChange, onShowSettings, showSett
             onClick={() => update({ borderStyle: "wobbly" })}
             title="꾹꾹체"
           >
-            <Waves className="h-4 w-4" />
+            <Waves className="h-5 w-5" />
           </button>
           <button
             className={`context-toolbar__btn ${element.borderStyle === "simple" ? "context-toolbar__btn--active" : ""}`}
             onClick={() => update({ borderStyle: "simple" })}
             title="심플라인"
           >
-            <Minus className="h-4 w-4" />
+            <Minus className="h-5 w-5" />
           </button>
         </>
       )}
 
       {/* Animation */}
       <button className="context-toolbar__btn" title="애니메이션">
-        <Play className="h-4 w-4" />
+        <Play className="h-5 w-5" />
       </button>
 
       {/* Position */}
       <button className="context-toolbar__btn" title="위치">
-        <Move className="h-4 w-4" />
+        <Move className="h-5 w-5" />
       </button>
 
       {/* Paint */}
       <button className="context-toolbar__btn" title="채우기">
-        <Paintbrush className="h-4 w-4" />
+        <Paintbrush className="h-5 w-5" />
       </button>
     </div>
   );
@@ -788,7 +788,7 @@ export function DrawingContextToolbar({
         onClick={onShowSettings}
         title="설정"
       >
-        <Menu className="h-4 w-4" />
+        <Menu className="h-5 w-5" />
       </button>
 
       {/* Layer management controls — shown when layer is provided */}
@@ -807,7 +807,7 @@ export function DrawingContextToolbar({
                 }}
                 title="불투명도"
               >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
+                <SlidersHorizontal className="h-5 w-5" />
               </button>
               {showOpacity && (
                 <div className="context-toolbar__dropdown" style={{ padding: "8px 12px", minWidth: 160 }}>
@@ -835,7 +835,7 @@ export function DrawingContextToolbar({
               onClick={onToggleVisibility}
               title={layer.visible ? "숨기기" : "보이기"}
             >
-              {layer.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              {layer.visible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
             </button>
           )}
 
@@ -846,7 +846,7 @@ export function DrawingContextToolbar({
               onClick={onDuplicate}
               title="복제"
             >
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="h-5 w-5" />
             </button>
           )}
 
@@ -858,7 +858,7 @@ export function DrawingContextToolbar({
               title="삭제"
               style={{ color: "hsl(var(--destructive))" }}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-5 w-5" />
             </button>
           )}
 
@@ -872,7 +872,7 @@ export function DrawingContextToolbar({
               }}
               title="정렬 순서"
             >
-              <MoreHorizontal className="h-3.5 w-3.5" />
+              <MoreHorizontal className="h-5 w-5" />
             </button>
             {showZOrder && (
               <div className="context-toolbar__dropdown" style={{ minWidth: 120, padding: 4 }}>
@@ -880,28 +880,28 @@ export function DrawingContextToolbar({
                   className="context-toolbar__dropdown-item"
                   onClick={() => { onBringToFront?.(); setShowZOrder(false); }}
                 >
-                  <ChevronsUp className="h-4 w-4" style={{ marginRight: 6 }} />
+                  <ChevronsUp className="h-5 w-5" style={{ marginRight: 6 }} />
                   맨 앞으로
                 </button>
                 <button
                   className="context-toolbar__dropdown-item"
                   onClick={() => { onBringForward?.(); setShowZOrder(false); }}
                 >
-                  <ArrowUp className="h-4 w-4" style={{ marginRight: 6 }} />
+                  <ArrowUp className="h-5 w-5" style={{ marginRight: 6 }} />
                   앞으로
                 </button>
                 <button
                   className="context-toolbar__dropdown-item"
                   onClick={() => { onSendBackward?.(); setShowZOrder(false); }}
                 >
-                  <ArrowDown className="h-4 w-4" style={{ marginRight: 6 }} />
+                  <ArrowDown className="h-5 w-5" style={{ marginRight: 6 }} />
                   뒤로
                 </button>
                 <button
                   className="context-toolbar__dropdown-item"
                   onClick={() => { onSendToBack?.(); setShowZOrder(false); }}
                 >
-                  <ChevronsDown className="h-4 w-4" style={{ marginRight: 6 }} />
+                  <ChevronsDown className="h-5 w-5" style={{ marginRight: 6 }} />
                   맨 뒤로
                 </button>
               </div>
@@ -938,7 +938,7 @@ export function FloatingSettingsModal({
       <div className="floating-settings-modal__header">
         <span className="floating-settings-modal__title">설정</span>
         <button className="floating-settings-modal__close" onClick={onClose}>
-          <X className="h-3.5 w-3.5" />
+          <X className="h-5 w-5" />
         </button>
       </div>
 
@@ -1006,7 +1006,7 @@ export function BubbleContextToolbar({ bubble, onChange, onShowSettings, showSet
           onClick={() => { setShowFontDropdown((v) => !v); setShowSizeDropdown(false); setShowFillColorPicker(false); setShowStrokeColorPicker(false); }}
         >
           <span className="context-toolbar__btn-label">{fontLabel}</span>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-5 w-5" />
         </button>
         {showFontDropdown && (
           <div className="context-toolbar__dropdown">
@@ -1041,7 +1041,7 @@ export function BubbleContextToolbar({ bubble, onChange, onShowSettings, showSet
           onClick={() => { setShowSizeDropdown((v) => !v); setShowFontDropdown(false); setShowFillColorPicker(false); setShowStrokeColorPicker(false); }}
         >
           <span className="context-toolbar__btn-label">{bubble.fontSize}</span>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-5 w-5" />
         </button>
         {showSizeDropdown && (
           <div className="context-toolbar__dropdown">
@@ -1153,7 +1153,7 @@ export function BubbleContextToolbar({ bubble, onChange, onShowSettings, showSet
         onClick={onShowSettings}
         title="설정"
       >
-        <Menu className="h-4 w-4" />
+        <Menu className="h-5 w-5" />
       </button>
     </div>
   );
@@ -1173,7 +1173,7 @@ export function BubbleFloatingSettings({ bubble, onChange, onClose }: BubbleSett
       <div className="floating-settings-modal__header">
         <span className="floating-settings-modal__title">말풍선 설정</span>
         <button className="floating-settings-modal__close" onClick={onClose}>
-          <X className="h-3.5 w-3.5" />
+          <X className="h-5 w-5" />
         </button>
       </div>
 
@@ -1357,7 +1357,7 @@ export function ShapeContextToolbar({ element, onChange, onShowSettings, showSet
           onClick={() => update({ shapeType: st.type })}
           title={st.label}
         >
-          <st.icon className="h-4 w-4" />
+          <st.icon className="h-5 w-5" />
         </button>
       ))}
 
@@ -1369,7 +1369,7 @@ export function ShapeContextToolbar({ element, onChange, onShowSettings, showSet
         onClick={onShowSettings}
         title="설정"
       >
-        <Menu className="h-4 w-4" />
+        <Menu className="h-5 w-5" />
       </button>
 
       <div className="context-toolbar__divider" />
@@ -1380,7 +1380,7 @@ export function ShapeContextToolbar({ element, onChange, onShowSettings, showSet
         onClick={() => update({ maskEnabled: !element.maskEnabled })}
         title="클리핑 마스크"
       >
-        <Scan className="h-4 w-4" />
+        <Scan className="h-5 w-5" />
       </button>
     </div>
   );
@@ -1420,7 +1420,7 @@ export function CanvasBgToolbar({ backgroundColor, onColorChange }: CanvasBgTool
         onClick={() => colorInputRef.current?.click()}
         title="직접 선택"
       >
-        <Palette className="h-4 w-4" />
+        <Palette className="h-5 w-5" />
       </button>
       <input
         ref={colorInputRef}
@@ -1494,7 +1494,7 @@ export function ScriptContextToolbar({ script, onChange, canAllFonts = true }: S
           onClick={() => { closeAll(); setShowFontDropdown((v) => !v); }}
         >
           <span className="context-toolbar__btn-label">{fontLabel}</span>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-5 w-5" />
         </button>
         {showFontDropdown && (
           <div className="context-toolbar__dropdown">
@@ -1525,7 +1525,7 @@ export function ScriptContextToolbar({ script, onChange, canAllFonts = true }: S
           onClick={() => { closeAll(); setShowSizeDropdown((v) => !v); }}
         >
           <span className="context-toolbar__btn-label">{script.fontSize || 20}</span>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-5 w-5" />
         </button>
         {showSizeDropdown && (
           <div className="context-toolbar__dropdown">
@@ -1550,7 +1550,7 @@ export function ScriptContextToolbar({ script, onChange, canAllFonts = true }: S
         onClick={() => { closeAll(); onChange({ bold: script.bold === false ? true : false }); }}
         title="굵게"
       >
-        <Bold className="h-4 w-4" />
+        <Bold className="h-5 w-5" />
       </button>
 
       <div className="context-toolbar__divider" />
@@ -1633,7 +1633,7 @@ export function ScriptContextToolbar({ script, onChange, canAllFonts = true }: S
           onClick={() => { closeAll(); setShowStyleDropdown((v) => !v); }}
         >
           <span className="context-toolbar__btn-label">{styleLabel}</span>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-5 w-5" />
         </button>
         {showStyleDropdown && (
           <div className="context-toolbar__dropdown">
@@ -1671,7 +1671,7 @@ export function CharContextToolbar({ onFlipX, onDelete, onRegenerate, showRegenP
         onClick={onFlipX}
         title="좌우 반전"
       >
-        <FlipHorizontal2 className="h-4 w-4" />
+        <FlipHorizontal2 className="h-5 w-5" />
       </button>
 
       <div className="context-toolbar__divider" />
@@ -1682,7 +1682,7 @@ export function CharContextToolbar({ onFlipX, onDelete, onRegenerate, showRegenP
         onClick={onRegenerate}
         title="AI 재생성"
       >
-        <Sparkles className="h-4 w-4" />
+        <Sparkles className="h-5 w-5" />
       </button>
 
       {/* Delete */}
@@ -1692,7 +1692,7 @@ export function CharContextToolbar({ onFlipX, onDelete, onRegenerate, showRegenP
         title="삭제"
         style={{ color: "hsl(var(--destructive))" }}
       >
-        <Trash2 className="h-4 w-4" />
+        <Trash2 className="h-5 w-5" />
       </button>
     </div>
   );

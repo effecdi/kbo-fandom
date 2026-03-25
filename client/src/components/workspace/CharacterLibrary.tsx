@@ -95,7 +95,7 @@ export function CharacterLibrary() {
                 <User className="w-8 h-8 text-muted-foreground/20" />
               </div>
             ))}
-            <p className="col-span-2 text-[10px] text-muted-foreground/50 text-center">
+            <p className="col-span-2 text-[12px] text-muted-foreground/50 text-center">
               생성된 캐릭터가 없습니다
             </p>
           </>
@@ -106,8 +106,8 @@ export function CharacterLibrary() {
               onClick={() => handlePinCharacter(char)}
               className={`relative aspect-square rounded-lg border-2 overflow-hidden group cursor-pointer transition-all ${
                 isPinned(char.id)
-                  ? "border-[#00e5cc] ring-2 ring-[#00e5cc]/30"
-                  : "border-border hover:border-[#00e5cc]/50"
+                  ? "border-primary ring-2 ring-primary/30"
+                  : "border-border hover:border-primary/50"
               }`}
             >
               <img
@@ -117,12 +117,12 @@ export function CharacterLibrary() {
                 loading="lazy"
               />
               {isPinned(char.id) && (
-                <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#00e5cc] flex items-center justify-center">
-                  <span className="text-[10px] text-black font-bold">✓</span>
+                <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                  <span className="text-[12px] text-black font-bold">✓</span>
                 </div>
               )}
               <div className="absolute inset-x-0 bottom-0 bg-black/50 px-1.5 py-1">
-                <span className="text-[10px] text-white truncate block">
+                <span className="text-[12px] text-white truncate block">
                   {char.name}
                 </span>
               </div>

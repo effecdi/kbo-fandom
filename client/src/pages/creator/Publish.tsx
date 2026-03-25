@@ -37,7 +37,7 @@ export function Publish() {
             onClick={() => navigate("/creator/story")}
             className="mb-4"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
             뒤로 가기
           </Button>
           <div className="flex items-center justify-between">
@@ -51,11 +51,11 @@ export function Publish() {
             </div>
             <div className="flex gap-3">
               <Button variant="outline">
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="w-5 h-5 mr-2" />
                 임시 저장
               </Button>
               <Button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                <Share2 className="w-4 h-4 mr-2" />
+                <Share2 className="w-5 h-5 mr-2" />
                 발행하기
               </Button>
             </div>
@@ -102,7 +102,7 @@ export function Publish() {
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                     />
                     <Button onClick={handleAddTag}>
-                      <Tag className="w-4 h-4" />
+                      <Tag className="w-5 h-5" />
                     </Button>
                   </div>
                   {tags.length > 0 && (
@@ -202,7 +202,7 @@ export function Publish() {
                 <div className="flex items-start justify-between p-4 rounded-xl border border-purple-200 dark:border-purple-800">
                   <div className="flex-1">
                     <Label htmlFor="business" className="font-bold flex items-center gap-2">
-                      <Users className="w-4 h-4 text-purple-600" />
+                      <Users className="w-5 h-5 text-purple-600" />
                       기업 노출 허용
                     </Label>
                     <p className="text-sm text-purple-700 mt-1">

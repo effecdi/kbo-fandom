@@ -191,7 +191,7 @@ export function Background() {
           onClick={() => navigate("/creator/character")}
           className="mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-5 h-5 mr-2" />
           뒤로 가기
         </Button>
         <div className="flex items-center justify-between">
@@ -209,7 +209,7 @@ export function Background() {
                 className="bg-gradient-to-r from-purple-600 to-pink-600 text-white"
                 onClick={() => downloadImage(bgResultImage)}
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-5 h-5 mr-2" />
                 다운로드
               </Button>
             )}
@@ -238,9 +238,9 @@ export function Background() {
                     />
                     <button
                       onClick={() => removeSource(idx)}
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center"
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-5 w-5" />
                     </button>
                   </div>
                 ))}
@@ -394,12 +394,12 @@ export function Background() {
                 >
                   {bgMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       생성 중...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4 mr-2" />
+                      <Sparkles className="w-5 h-5 mr-2" />
                       배경 생성하기
                     </>
                   )}
@@ -419,7 +419,7 @@ export function Background() {
 
               <TabsContent value="preset" className="mt-6">
                 <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     placeholder="프리셋 검색..."
                     className="pl-10"
@@ -486,7 +486,7 @@ export function Background() {
                     className="flex-1"
                     onClick={() => downloadImage(bgResultImage)}
                   >
-                    <Download className="w-4 h-4 mr-2" />
+                    <Download className="w-5 h-5 mr-2" />
                     다운로드
                   </Button>
                   <Button
@@ -494,7 +494,7 @@ export function Background() {
                     className="flex-1"
                     onClick={resetAll}
                   >
-                    <RotateCcw className="w-4 h-4 mr-2" />
+                    <RotateCcw className="w-5 h-5 mr-2" />
                     다시 만들기
                   </Button>
                 </div>

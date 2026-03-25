@@ -85,7 +85,7 @@ function InlineNameEditor({ genId, initialName, prompt }: { genId: number; initi
         onClick={(e) => { e.stopPropagation(); startEdit(); }}
         title="이름 편집"
       >
-        <Pencil className="h-3 w-3" />
+        <Pencil className="h-5 w-5" />
       </button>
     </div>
   );
@@ -435,7 +435,7 @@ export default function GalleryPage() {
                 className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-[13px] font-medium text-primary transition-colors hover:bg-primary/10 hover:border-primary/50"
                 onClick={() => setShowAddToFolder(!showAddToFolder)}
               >
-                <FolderPlus className="h-3.5 w-3.5" />
+                <FolderPlus className="h-5 w-5" />
                 폴더에 추가
               </button>
               <button
@@ -447,7 +447,7 @@ export default function GalleryPage() {
                   }
                 }}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-5 w-5" />
                 선택 삭제
               </button>
               <button
@@ -459,7 +459,7 @@ export default function GalleryPage() {
                   }
                 }}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-5 w-5" />
                 전체 삭제
               </button>
             </div>
@@ -480,7 +480,7 @@ export default function GalleryPage() {
                       onClick={() => addToFolderMutation.mutate({ folderId: folder.id, generationIds: Array.from(selected) })}
                       disabled={addToFolderMutation.isPending}
                     >
-                      <Folder className="h-3 w-3" />
+                      <Folder className="h-5 w-5" />
                       {folder.name}
                     </button>
                   ))}
@@ -556,7 +556,7 @@ export default function GalleryPage() {
                             }}
                             title="재생성"
                           >
-                            <RefreshCw className="h-4 w-4" />
+                            <RefreshCw className="h-5 w-5" />
                           </Button>
                           <Button
                             size="icon"
@@ -571,7 +571,7 @@ export default function GalleryPage() {
                             }}
                             data-testid={`button-delete-${gen.id}`}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-5 w-5" />
                           </Button>
                           <Button
                             size="icon"
@@ -584,7 +584,7 @@ export default function GalleryPage() {
                             }}
                             data-testid={`button-download-${gen.id}`}
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className="h-5 w-5" />
                           </Button>
                         </div>
                       </div>
@@ -593,11 +593,11 @@ export default function GalleryPage() {
                         <div className="flex items-center justify-between flex-wrap gap-1.5 mt-2">
                           <Badge variant="secondary" className="capitalize text-[13px]">
                             {gen.type === "character" ? (
-                              <><Wand2 className="h-3 w-3 mr-1" />{gen.type}</>
+                              <><Wand2 className="h-5 w-5 mr-1" />{gen.type}</>
                             ) : gen.type === "background" ? (
-                              <><Trees className="h-3 w-3 mr-1" />{gen.type}</>
+                              <><Trees className="h-5 w-5 mr-1" />{gen.type}</>
                             ) : (
-                              <><ImageIcon className="h-3 w-3 mr-1" />{gen.type}</>
+                              <><ImageIcon className="h-5 w-5 mr-1" />{gen.type}</>
                             )}
                           </Badge>
                           <div className="flex items-center gap-1.5">
@@ -610,7 +610,7 @@ export default function GalleryPage() {
                                   data-testid={`button-pose-${gen.id}`}
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <Paintbrush className="h-3 w-3" />
+                                  <Paintbrush className="h-5 w-5" />
                                   포즈
                                 </Button>
                               </Link>
@@ -665,7 +665,7 @@ export default function GalleryPage() {
                   if (newFolderName.trim()) createFolderMutation.mutate(newFolderName.trim());
                 }}
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-5 w-5" />
               </Button>
             </div>
 
@@ -690,7 +690,7 @@ export default function GalleryPage() {
                         })}
                       >
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-250 ${isOpen ? "" : "-rotate-90"}`} />
+                          <ChevronDown className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-250 ${isOpen ? "" : "-rotate-90"}`} />
                           <FolderNameEditor folder={folder} onUpdate={invalidateAll} />
                           {folder.items.length > 0 && (
                             <span className="text-[13px] text-muted-foreground shrink-0">({folder.items.length})</span>
@@ -705,7 +705,7 @@ export default function GalleryPage() {
                             }
                           }}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
                       {folder.items.length > 0 && (
@@ -734,7 +734,7 @@ export default function GalleryPage() {
                                         <img src={thumb} alt="" className="w-full h-full object-cover" loading="lazy" />
                                       ) : (
                                         <div className="w-full h-full flex items-center justify-center">
-                                          <ImageIcon className="h-3 w-3 text-muted-foreground" />
+                                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
                                         </div>
                                       )}
                                     </div>
@@ -746,7 +746,7 @@ export default function GalleryPage() {
                                         removeFolderItemMutation.mutate({ folderId: folder.id, generationId: item.generationId });
                                       }}
                                     >
-                                      <X className="h-3.5 w-3.5" />
+                                      <X className="h-5 w-5" />
                                     </button>
                                   </div>
                                 );
@@ -774,7 +774,7 @@ export default function GalleryPage() {
                 className="p-1 rounded hover:bg-muted transition-colors"
                 onClick={() => !regenerateMutation.isPending && setRegenTarget(null)}
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
@@ -822,9 +822,9 @@ export default function GalleryPage() {
                 onClick={() => regenerateMutation.mutate({ id: regenTarget.id, prompt: regenPrompt })}
               >
                 {regenerateMutation.isPending ? (
-                  <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />생성 중...</>
+                  <><Loader2 className="h-5 w-5 animate-spin mr-1.5" />생성 중...</>
                 ) : (
-                  <><RefreshCw className="h-3.5 w-3.5 mr-1.5" />재생성</>
+                  <><RefreshCw className="h-5 w-5 mr-1.5" />재생성</>
                 )}
               </Button>
             </div>

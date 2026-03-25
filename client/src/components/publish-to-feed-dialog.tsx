@@ -76,11 +76,11 @@ export function PublishToFeedDialog({ children }: PublishToFeedDialogProps) {
         <Tabs value={tab} onValueChange={(v) => { setTab(v as "image" | "project"); setSelectedId(null); }}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="image" className="gap-1.5">
-              <Image className="h-4 w-4" />
+              <Image className="h-5 w-5" />
               Gallery Images
             </TabsTrigger>
             <TabsTrigger value="project" className="gap-1.5">
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className="h-5 w-5" />
               Story Projects
             </TabsTrigger>
           </TabsList>
@@ -176,7 +176,7 @@ export function PublishToFeedDialog({ children }: PublishToFeedDialogProps) {
           onClick={() => publishMutation.mutate()}
           disabled={!canPublish || publishMutation.isPending}
         >
-          <Upload className="h-4 w-4" />
+          <Upload className="h-5 w-5" />
           {publishMutation.isPending ? "Publishing..." : "Publish"}
         </Button>
       </DialogContent>

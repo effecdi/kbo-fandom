@@ -1,3 +1,52 @@
+// ─── Fandom Template & Style Types ───────────────────────────────────────────
+
+export type FandomTemplateType =
+  | "portrait"    // 아이돌 포트레이트
+  | "photocard"   // 포토카드
+  | "wallpaper"   // 폰 배경화면
+  | "fanart"      // 자유 팬아트
+  | "sticker"     // 스티커/이모지
+  | "concept"     // 컨셉 포토
+  | "edit"        // 에디트/콜라주
+  | "instatoon"   // 인스타툰
+  | "meme";       // 밈
+
+export type FandomStylePreset =
+  | "anime" | "watercolor" | "realistic" | "chibi" | "pop-art"
+  | "sketch" | "flat" | "pixel" | "manhwa" | "dreamy";
+
+// ─── Fandom Sticker & Tool Types ─────────────────────────────────────────────
+
+export type FandomStickerCategory = "lightstick" | "emoji" | "logo" | "text" | "concert" | "heart";
+
+export interface FandomSticker {
+  id: string;
+  category: FandomStickerCategory;
+  imageUrl: string;
+  label: string;
+  groupId?: string;
+}
+
+export type PhotocardFrame = "basic" | "polaroid" | "idol-card" | "holographic" | "vintage" | "neon";
+
+export type ConcertEffect = "lightstick-glow" | "spotlight" | "confetti" | "stage-smoke" | "laser";
+
+// ─── Fandom Editor Meta ──────────────────────────────────────────────────────
+
+export interface FandomEditorMeta {
+  groupId: string;
+  groupName: string;
+  coverColor: string;
+  memberTags: string[];
+  templateType: FandomTemplateType;
+  title: string;
+  description: string;
+  stylePreset?: FandomStylePreset;
+  poseHint?: string;
+  outfitHint?: string;
+  moodHint?: string;
+}
+
 // ─── Workspace Types ────────────────────────────────────────────────────────
 
 export interface WorkspaceProject {
@@ -24,6 +73,9 @@ export interface CutScript {
   fontFamily?: string;
   fontSize?: number;
   color?: string;
+  style?: "filled" | "box" | "handwritten-box" | "no-bg" | "no-border";
+  bgColor?: string;
+  bold?: boolean;
 }
 
 export interface Cut {
@@ -91,6 +143,9 @@ export interface PinnedCharacter {
   imageDataUrl?: string; // base64 for API calls
 }
 
+export type MultiCutLayoutType = "default" | "square";
+export type MultiCutBorderStyle = "wobbly" | "simple";
+
 export interface CopilotState {
   input: string;
   messages: CopilotMessage[];
@@ -100,6 +155,8 @@ export interface CopilotState {
   dockExpanded: boolean;
   pinnedCharacters: PinnedCharacter[];
   cutsCount: 2 | 3 | 4;
+  layoutType: MultiCutLayoutType;
+  borderStyle: MultiCutBorderStyle;
 }
 
 // ─── History ────────────────────────────────────────────────────────────────
@@ -112,7 +169,7 @@ export interface HistoryEntry {
 
 // ─── Canvas ─────────────────────────────────────────────────────────────────
 
-export type CanvasAspectRatio = "3:4" | "1:1";
+export type CanvasAspectRatio = "3:4" | "1:1" | "2:3" | "9:16" | "4:5" | "16:9";
 
 export interface CanvasLayer {
   id: string;
@@ -146,6 +203,7 @@ export interface WorkspaceState {
   uiLevel: UILevel;
   interactionCount: number;
   onboardingDismissed: boolean;
+  fandomMeta: FandomEditorMeta | null;
 }
 
 // ─── Actions ────────────────────────────────────────────────────────────────
@@ -177,6 +235,8 @@ export type WorkspaceAction =
   | { type: "COPILOT_PIN_CHARACTER"; character: PinnedCharacter }
   | { type: "COPILOT_UNPIN_CHARACTER"; characterId: string }
   | { type: "COPILOT_SET_CUTS_COUNT"; count: 2 | 3 | 4 }
+  | { type: "COPILOT_SET_LAYOUT_TYPE"; layoutType: MultiCutLayoutType }
+  | { type: "COPILOT_SET_BORDER_STYLE"; borderStyle: MultiCutBorderStyle }
   | { type: "HISTORY_PUSH" }
   | { type: "HISTORY_UNDO" }
   | { type: "HISTORY_REDO" }
@@ -189,4 +249,9 @@ export type WorkspaceAction =
   | { type: "REORDER_CUTS"; sceneId: string; cutIds: string[] }
   | { type: "SET_UI_LEVEL"; level: UILevel }
   | { type: "INCREMENT_INTERACTION" }
-  | { type: "DISMISS_ONBOARDING" };
+  | { type: "DISMISS_ONBOARDING" }
+  | { type: "SET_FANDOM_META"; meta: FandomEditorMeta | null }
+  | { type: "SET_FANDOM_STYLE_PRESET"; preset: FandomStylePreset }
+  | { type: "OPEN_STICKER_PANEL" }
+  | { type: "SET_PHOTOCARD_FRAME"; frame: PhotocardFrame }
+  | { type: "APPLY_FANDOM_COLOR"; color: string };

@@ -11,6 +11,11 @@ import type {
   CanvasLayer,
   UILevel,
   PinnedCharacter,
+  MultiCutLayoutType,
+  MultiCutBorderStyle,
+  FandomEditorMeta,
+  FandomStylePreset,
+  PhotocardFrame,
 } from "@/lib/workspace-types";
 import type { CanvaEditorHandle } from "@/components/canva-editor/types";
 
@@ -70,6 +75,8 @@ export const initialState: WorkspaceState = {
     dockExpanded: false,
     pinnedCharacters: [],
     cutsCount: 4,
+    layoutType: "default",
+    borderStyle: "wobbly",
   },
   history: { past: [], future: [] },
   activeModule: null,
@@ -79,6 +86,7 @@ export const initialState: WorkspaceState = {
   uiLevel: "pro",
   interactionCount: 99,
   onboardingDismissed: false,
+  fandomMeta: null,
 };
 
 // ─── Snapshot for undo/redo ─────────────────────────────────────────────────
@@ -223,8 +231,17 @@ function workspaceReducer(
       return { ...state, scenes };
     }
 
-    case "SELECT_OBJECTS":
+    case "SELECT_OBJECTS": {
+      // Skip if selection hasn't changed
+      const oldIds = state.selectedObjectIds;
+      if (
+        oldIds.length === action.objectIds.length &&
+        oldIds.every((id, i) => id === action.objectIds[i])
+      ) {
+        return state;
+      }
       return { ...state, selectedObjectIds: action.objectIds };
+    }
 
     case "ADD_CHARACTER":
       return {
@@ -255,11 +272,20 @@ function workspaceReducer(
         copilot: { ...state.copilot, isGenerating: action.isGenerating },
       };
 
-    case "COPILOT_SET_CHIPS":
+    case "COPILOT_SET_CHIPS": {
+      // Skip if chips are identical
+      const oldChips = state.copilot.suggestedChips;
+      if (
+        oldChips.length === action.chips.length &&
+        oldChips.every((c, i) => c === action.chips[i])
+      ) {
+        return state;
+      }
       return {
         ...state,
         copilot: { ...state.copilot, suggestedChips: action.chips },
       };
+    }
 
     case "COPILOT_APPLY_PREVIEW": {
       const messages = state.copilot.messages.map((m) =>
@@ -279,11 +305,20 @@ function workspaceReducer(
         copilot: { ...state.copilot, input: action.input },
       };
 
-    case "COPILOT_SET_CONTEXT":
+    case "COPILOT_SET_CONTEXT": {
+      // Skip if context hasn't changed
+      const oldCtx = state.copilot.context;
+      if (
+        oldCtx.selectedElementId === action.context.selectedElementId &&
+        oldCtx.type === action.context.type
+      ) {
+        return state;
+      }
       return {
         ...state,
         copilot: { ...state.copilot, context: action.context },
       };
+    }
 
     case "COPILOT_TOGGLE_DOCK":
       return {
@@ -320,6 +355,18 @@ function workspaceReducer(
       return {
         ...state,
         copilot: { ...state.copilot, cutsCount: action.count },
+      };
+
+    case "COPILOT_SET_LAYOUT_TYPE":
+      return {
+        ...state,
+        copilot: { ...state.copilot, layoutType: action.layoutType },
+      };
+
+    case "COPILOT_SET_BORDER_STYLE":
+      return {
+        ...state,
+        copilot: { ...state.copilot, borderStyle: action.borderStyle },
       };
 
     case "HISTORY_PUSH": {
@@ -387,8 +434,16 @@ function workspaceReducer(
     case "SET_CANVAS_ASPECT_RATIO":
       return { ...state, canvasAspectRatio: action.ratio };
 
-    case "UPDATE_CANVAS_LAYERS":
+    case "UPDATE_CANVAS_LAYERS": {
+      // Skip if layers haven't actually changed (avoid re-renders)
+      if (
+        state.canvasLayers.length === action.layers.length &&
+        state.canvasLayers.every((l, i) => l.id === action.layers[i]?.id && l.type === action.layers[i]?.type)
+      ) {
+        return state;
+      }
       return { ...state, canvasLayers: action.layers };
+    }
 
     case "REORDER_CUTS": {
       const scenes = state.scenes.map((s) => {
@@ -417,6 +472,25 @@ function workspaceReducer(
 
     case "DISMISS_ONBOARDING":
       return { ...state, onboardingDismissed: true };
+
+    case "SET_FANDOM_META":
+      return { ...state, fandomMeta: action.meta };
+
+    case "SET_FANDOM_STYLE_PRESET":
+      if (!state.fandomMeta) return state;
+      return {
+        ...state,
+        fandomMeta: { ...state.fandomMeta, stylePreset: action.preset },
+      };
+
+    case "OPEN_STICKER_PANEL":
+      return state; // handled by ContextPanel UI
+
+    case "SET_PHOTOCARD_FRAME":
+      return { ...state, canvasAspectRatio: "2:3" as CanvasAspectRatio };
+
+    case "APPLY_FANDOM_COLOR":
+      return state; // handled by canvas UI directly
 
     default:
       return state;

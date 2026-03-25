@@ -173,7 +173,7 @@ export function EditorOnboarding({ editor, onComplete }: { editor: "story" | "bu
         <div className="relative">
           <div className="bg-gradient-to-br from-[hsl(173_100%_35%)] to-[hsl(262_83%_45%)] px-6 pt-8 pb-6 text-white">
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="h-4 w-4 opacity-80" />
+              <Sparkles className="h-5 w-5 opacity-80" />
               <span className="text-[13px] font-medium opacity-80 uppercase tracking-wider">
                 {editor === "story" ? "Story Editor" : "Bubble Editor"} Guide
               </span>
@@ -205,7 +205,7 @@ export function EditorOnboarding({ editor, onComplete }: { editor: "story" | "bu
           </p>
           {current.tip && (
             <div className="mt-3 flex items-start gap-2 bg-muted/50 dark:bg-muted/30 rounded-lg px-3 py-2.5">
-              <Sparkles className="h-3.5 w-3.5 text-[hsl(173_100%_35%)] shrink-0 mt-0.5" />
+              <Sparkles className="h-5 w-5 text-[hsl(173_100%_35%)] shrink-0 mt-0.5" />
               <p className="text-[13px] text-muted-foreground leading-relaxed" data-testid="text-onboarding-tip">{current.tip}</p>
             </div>
           )}
@@ -220,7 +220,7 @@ export function EditorOnboarding({ editor, onComplete }: { editor: "story" | "bu
             className="gap-1"
             data-testid="button-onboarding-prev"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft className="h-5 w-5" />
             이전
           </Button>
           <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export function EditorOnboarding({ editor, onComplete }: { editor: "story" | "bu
               data-testid="button-onboarding-next"
             >
               {step === steps.length - 1 ? "시작하기" : "다음"}
-              {step < steps.length - 1 && <ChevronRight className="h-3.5 w-3.5" />}
+              {step < steps.length - 1 && <ChevronRight className="h-5 w-5" />}
             </Button>
           </div>
         </div>

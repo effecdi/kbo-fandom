@@ -167,7 +167,7 @@ export function GalleryIndex() {
           </div>
           <Link to="/studio/new">
             <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-5 h-5" />
               새 작품 만들기
             </Button>
           </Link>
@@ -176,7 +176,7 @@ export function GalleryIndex() {
         {/* Search & Filters */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
               placeholder="작품, 작가 검색..."
@@ -222,7 +222,7 @@ export function GalleryIndex() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <t.icon className="w-4 h-4" />
+              <t.icon className="w-5 h-5" />
               {t.label}
             </button>
           ))}
@@ -258,7 +258,7 @@ export function GalleryIndex() {
                     )}
                     {/* Type badge */}
                     <div className="absolute top-2 left-2">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${TYPE_COLORS[item.type]}`}>
+                      <span className={`px-2 py-1 rounded-full text-[12px] font-bold ${TYPE_COLORS[item.type]}`}>
                         {TYPE_LABELS[item.type]}
                       </span>
                     </div>
@@ -285,23 +285,23 @@ export function GalleryIndex() {
                     <h3 className="text-sm font-semibold text-foreground truncate">{item.title}</h3>
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#00e5cc] to-[#00b4d8] flex items-center justify-center">
-                        <span className="text-[8px] text-white font-bold">{item.authorAvatar}</span>
+                        <span className="text-[12px] text-white font-bold">{item.authorAvatar}</span>
                       </div>
                       <span className="text-xs text-muted-foreground">{item.author}</span>
-                      <span className="text-[10px] text-muted-foreground/50 ml-auto">{item.createdAt}</span>
+                      <span className="text-[12px] text-muted-foreground/50 ml-auto">{item.createdAt}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
                       <button
                         onClick={() => toggleLike(item.id)}
                         className={`flex items-center gap-1 transition-colors ${
                           item.liked ? "text-rose-400" : ""
                         }`}
                       >
-                        <Heart className={`w-3 h-3 ${item.liked ? "fill-current" : ""}`} />
+                        <Heart className={`w-5 h-5 ${item.liked ? "fill-current" : ""}`} />
                         {item.likes.toLocaleString()}
                       </button>
                       <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
+                        <Eye className="w-5 h-5" />
                         {item.views.toLocaleString()}
                       </span>
                     </div>

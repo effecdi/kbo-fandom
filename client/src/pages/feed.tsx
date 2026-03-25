@@ -100,7 +100,7 @@ export default function FeedPage() {
         {isAuthenticated && (
           <PublishToFeedDialog>
             <Button className="gap-1.5">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-5 w-5" />
               Publish
             </Button>
           </PublishToFeedDialog>
@@ -110,16 +110,16 @@ export default function FeedPage() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as FeedTab)}>
         <TabsList>
           <TabsTrigger value="recent" className="gap-1.5">
-            <Clock className="h-4 w-4" />
+            <Clock className="h-5 w-5" />
             Recent
           </TabsTrigger>
           <TabsTrigger value="popular" className="gap-1.5">
-            <TrendingUp className="h-4 w-4" />
+            <TrendingUp className="h-5 w-5" />
             Popular
           </TabsTrigger>
           {isAuthenticated && (
             <TabsTrigger value="following" className="gap-1.5">
-              <Users className="h-4 w-4" />
+              <Users className="h-5 w-5" />
               Following
             </TabsTrigger>
           )}
@@ -144,7 +144,7 @@ export default function FeedPage() {
           {isAuthenticated && (
             <PublishToFeedDialog>
               <Button variant="outline" className="gap-1.5">
-                <Plus className="h-4 w-4" />
+                <Plus className="h-5 w-5" />
                 Create First Post
               </Button>
             </PublishToFeedDialog>

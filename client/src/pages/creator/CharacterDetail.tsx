@@ -48,7 +48,7 @@ export function CharacterDetail() {
             onClick={() => navigate("/creator/character")}
             className="mb-4"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
             캐릭터 목록으로
           </Button>
           <div className="flex items-start justify-between">
@@ -60,11 +60,11 @@ export function CharacterDetail() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline">
-                <Edit className="w-4 h-4 mr-2" />
+                <Edit className="w-5 h-5 mr-2" />
                 수정
               </Button>
               <Button variant="outline" className="text-red-600 hover:text-red-700">
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="w-5 h-5 mr-2" />
                 삭제
               </Button>
             </div>
@@ -104,7 +104,7 @@ export function CharacterDetail() {
                   </div>
                 </div>
                 <Button className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                  <Download className="w-4 h-4 mr-2" />
+                  <Download className="w-5 h-5 mr-2" />
                   다운로드
                 </Button>
               </div>

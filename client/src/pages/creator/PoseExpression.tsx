@@ -159,7 +159,7 @@ export function PoseExpression() {
           onClick={() => navigate("/creator/character")}
           className="mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-5 h-5 mr-2" />
           뒤로 가기
         </Button>
         <div className="flex items-center justify-between">
@@ -177,7 +177,7 @@ export function PoseExpression() {
                 className="bg-gradient-to-r from-purple-600 to-pink-600 text-white"
                 onClick={() => downloadImage(poseResultImage)}
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-5 h-5 mr-2" />
                 다운로드
               </Button>
             )}
@@ -206,9 +206,9 @@ export function PoseExpression() {
                     />
                     <button
                       onClick={() => toggleCharacter(gen.characterId!)}
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center"
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-5 w-5" />
                     </button>
                   </div>
                 ))}
@@ -356,7 +356,7 @@ export function PoseExpression() {
                     onClick={() => setReferenceImage(null)}
                     className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
               ) : (
@@ -384,12 +384,12 @@ export function PoseExpression() {
             >
               {generateMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   생성 중...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <Sparkles className="w-5 h-5 mr-2" />
                   생성하기
                 </>
               )}
@@ -422,7 +422,7 @@ export function PoseExpression() {
                     guard(() => generateMutation.mutate());
                   }}
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <RefreshCw className="w-5 h-5 mr-2" />
                   다시 생성
                 </Button>
               )}

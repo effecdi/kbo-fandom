@@ -61,7 +61,7 @@ export function EditorUI() {
                   variant="outline"
                   className="w-full border-violet-300 text-violet-600 hover:bg-violet-50"
                 >
-                  <ImagePlus className="w-4 h-4 mr-2" />
+                  <ImagePlus className="w-5 h-5 mr-2" />
                   Add New
                 </Button>
               </div>
@@ -127,7 +127,7 @@ export function EditorUI() {
                 className="w-full bg-white text-violet-600 hover:bg-violet-50"
                 size="lg"
               >
-                <Wand2 className="w-4 h-4 mr-2" />
+                <Wand2 className="w-5 h-5 mr-2" />
                 Full AI Automation
               </Button>
             </div>
@@ -143,11 +143,11 @@ export function EditorUI() {
                 </h3>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
-                    <Palette className="w-4 h-4 mr-2" />
+                    <Palette className="w-5 h-5 mr-2" />
                     Style
                   </Button>
                   <Button variant="outline" size="sm">
-                    <Settings className="w-4 h-4 mr-2" />
+                    <Settings className="w-5 h-5 mr-2" />
                     Settings
                   </Button>
                 </div>
@@ -191,7 +191,7 @@ export function EditorUI() {
 
                       {/* Magic Wand Icon (appears on hover) */}
                       <div className="absolute top-3 right-3 bg-violet-600 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                        <Wand2 className="w-4 h-4 text-white" />
+                        <Wand2 className="w-5 h-5 text-white" />
                       </div>
 
                       {/* Character */}

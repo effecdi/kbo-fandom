@@ -14,7 +14,7 @@ export function CopilotChips({ chips, onChipClick, disabled }: CopilotChipsProps
           key={chip}
           onClick={() => onChipClick(chip)}
           disabled={disabled}
-          className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#00e5cc]/10 text-[#00e5cc] hover:bg-[#00e5cc]/20 disabled:opacity-50 transition-colors border border-[#00e5cc]/20"
+          className="px-2.5 py-1 rounded-full text-[12px] font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 transition-colors border border-primary/20"
         >
           {chip}
         </button>

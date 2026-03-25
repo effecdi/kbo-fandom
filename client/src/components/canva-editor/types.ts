@@ -7,10 +7,12 @@ export type ToolMode =
   | "draw"
   | "line"
   | "text"
-  | "eraser";
+  | "eraser"
+  | "shape";
 
 export type DrawSubTool = "pencil" | "marker" | "highlighter";
 export type LineSubTool = "straight" | "curve" | "polyline";
+export type ShapeSubTool = "rectangle" | "circle" | "triangle" | "diamond" | "star" | "arrow";
 
 // ─── Drawing state ──────────────────────────────────────────────────────────
 
@@ -34,6 +36,14 @@ export interface TextConfig {
   color: string;
   bold: boolean;
   italic: boolean;
+}
+
+export interface ShapeConfig {
+  subTool: ShapeSubTool;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  opacity: number;
 }
 
 // ─── Floating toolbar ───────────────────────────────────────────────────────
@@ -67,6 +77,7 @@ export interface CanvaEditorProps {
   drawConfig: DrawingConfig;
   lineConfig: LineConfig;
   textConfig: TextConfig;
+  shapeConfig: ShapeConfig;
   onToolModeChange?: (mode: ToolMode) => void;
   onObjectSelected?: (obj: FabricObject | null) => void;
 }

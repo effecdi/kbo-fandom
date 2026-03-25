@@ -24,7 +24,7 @@ export function CopilotPanel() {
     <div className="flex flex-col h-full border-t border-border">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-        <Sparkles className="w-3.5 h-3.5 text-[#00e5cc]" />
+        <Sparkles className="w-5 h-5 text-primary" />
         <span className="text-xs font-bold text-foreground">AI Copilot</span>
       </div>
 
@@ -37,7 +37,7 @@ export function CopilotPanel() {
               <p className="text-xs text-muted-foreground">
                 AI에게 요청하세요
               </p>
-              <p className="text-[10px] text-muted-foreground/60 mt-1">
+              <p className="text-[12px] text-muted-foreground/60 mt-1">
                 "배경 생성해줘", "말풍선 추가" 등
               </p>
             </div>
@@ -51,14 +51,14 @@ export function CopilotPanel() {
                 }`}
               >
                 {msg.role === "assistant" && (
-                  <div className="w-5 h-5 rounded-full bg-[#00e5cc]/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="w-3 h-3 text-[#00e5cc]" />
+                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Bot className="w-5 h-5 text-primary" />
                   </div>
                 )}
                 <div
                   className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
                     msg.role === "user"
-                      ? "bg-[#00e5cc] text-black"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground"
                   }`}
                 >
@@ -66,7 +66,7 @@ export function CopilotPanel() {
                 </div>
                 {msg.role === "user" && (
                   <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
-                    <User className="w-3 h-3 text-muted-foreground" />
+                    <User className="w-5 h-5 text-muted-foreground" />
                   </div>
                 )}
               </div>
@@ -76,8 +76,8 @@ export function CopilotPanel() {
 
           {isGenerating && (
             <div className="flex gap-2">
-              <div className="w-5 h-5 rounded-full bg-[#00e5cc]/10 flex items-center justify-center shrink-0">
-                <Bot className="w-3 h-3 text-[#00e5cc] animate-pulse" />
+              <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Bot className="w-5 h-5 text-primary animate-pulse" />
               </div>
               <div className="bg-muted rounded-lg px-3 py-2">
                 <div className="flex gap-1">

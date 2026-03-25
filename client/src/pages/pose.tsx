@@ -244,7 +244,7 @@ export default function PosePage() {
                         onClick={() => removeCharacter(gen.characterId!)}
                         className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-5 w-5" />
                       </button>
                     </div>
                   ))}
@@ -314,7 +314,7 @@ export default function PosePage() {
                   onClick={() => setReferenceImage(null)}
                   data-testid="button-clear-reference"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </Button>
               </div>
             ) : (
@@ -364,7 +364,7 @@ export default function PosePage() {
             <div className="flex flex-col gap-4">
               <div>
                 <Label className="text-sm font-medium mb-2 flex items-center gap-1">
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <Sparkles className="h-5 w-5" />
                   포즈/표정 설명
                 </Label>
                 <Textarea
@@ -384,9 +384,9 @@ export default function PosePage() {
                   data-testid="button-ai-prompt-pose"
                 >
                   {aiPromptMutation.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    <Loader2 className="h-5 w-5 animate-spin mr-1.5" />
                   ) : (
-                    <Bot className="h-3.5 w-3.5 mr-1.5" />
+                    <Bot className="h-5 w-5 mr-1.5" />
                   )}
                   AI 프롬프트
                 </Button>
@@ -403,12 +403,12 @@ export default function PosePage() {
           >
             {generateMutation.isPending ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
                 포즈 생성 중...
               </>
             ) : (
               <>
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-5 w-5" />
                 {selectedCharacterIds.length > 1
                   ? `${selectedCharacterIds.length}캐릭터 포즈 생성하기`
                   : "포즈 생성하기"}
@@ -463,9 +463,9 @@ export default function PosePage() {
                   }}
                   data-testid="button-go-background"
                 >
-                  <Trees className="h-4 w-4" />
+                  <Trees className="h-5 w-5" />
                   배경/아이템 만들기
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-5 w-5" />
                 </Button>
                 <div className="flex gap-2">
                   <Button
@@ -474,7 +474,7 @@ export default function PosePage() {
                     onClick={() => downloadImage(poseResultImage)}
                     data-testid="button-download-pose"
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-5 w-5" />
                     다운로드
                   </Button>
                   <Button
@@ -486,7 +486,7 @@ export default function PosePage() {
                     }}
                     data-testid="button-new-pose"
                   >
-                    <RotateCcw className="h-4 w-4" />
+                    <RotateCcw className="h-5 w-5" />
                     새 포즈 만들기
                   </Button>
                 </div>
@@ -514,7 +514,7 @@ export default function PosePage() {
             onClick={() => navigate("/create")}
             data-testid="button-flow-prev"
           >
-            <ArrowLeft className="h-4 w-4" /> 캐릭터 준비
+            <ArrowLeft className="h-5 w-5" /> 캐릭터 준비
           </Button>
           <div className="flex-1" />
           <Button
@@ -525,7 +525,7 @@ export default function PosePage() {
             }}
             data-testid="button-flow-next"
           >
-            배경/아이템 <ArrowRight className="h-4 w-4" />
+            배경/아이템 <ArrowRight className="h-5 w-5" />
           </Button>
         </div>
       )}

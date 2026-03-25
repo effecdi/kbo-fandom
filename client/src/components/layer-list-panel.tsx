@@ -212,7 +212,7 @@ export function LayerListPanel({
   return (
     <div className="h-full overflow-y-auto p-3 space-y-2">
       <div className="flex items-center gap-1.5">
-        <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+        <Layers className="h-5 w-5 text-muted-foreground" />
         <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
           레이어 ({items.length})
         </span>
@@ -236,7 +236,7 @@ export function LayerListPanel({
               onClick={() => linkMultiToMask(maskShapes[0].id)}
               title="선택 항목 마스크 연결/해제"
             >
-              <Link className="h-3 w-3" />
+              <Link className="h-5 w-5" />
             </Button>
           )}
           <Button
@@ -246,7 +246,7 @@ export function LayerListPanel({
             onClick={deleteMultiSelected}
             title="선택 항목 삭제"
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className="h-5 w-5" />
           </Button>
         </div>
       )}
@@ -330,7 +330,7 @@ export function LayerListPanel({
             >
               <div className="flex items-center gap-1 min-w-0">
                 {/* 드래그 핸들 */}
-                <GripVertical className="h-3 w-3 text-muted-foreground/50 shrink-0 cursor-grab active:cursor-grabbing" />
+                <GripVertical className="h-5 w-5 text-muted-foreground/50 shrink-0 cursor-grab active:cursor-grabbing" />
                 {/* 눈/잠금 — 맨 앞 */}
                 {onToggleVisibility && (
                   <button
@@ -339,7 +339,7 @@ export function LayerListPanel({
                     onClick={(e) => { e.stopPropagation(); onToggleVisibility(item); }}
                     title={item.visible !== false ? "숨기기" : "보이기"}
                   >
-                    {item.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                    {item.visible !== false ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                   </button>
                 )}
                 {onToggleLock && item.type !== "topScript" && item.type !== "bottomScript" && (
@@ -349,7 +349,7 @@ export function LayerListPanel({
                     onClick={(e) => { e.stopPropagation(); onToggleLock(item); }}
                     title={item.locked ? "잠금 해제" : "잠금"}
                   >
-                    {item.locked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+                    {item.locked ? <Lock className="h-5 w-5" /> : <LockOpen className="h-5 w-5" />}
                   </button>
                 )}
                 {isLinkedToMask && (
@@ -357,24 +357,24 @@ export function LayerListPanel({
                 )}
                 <div className={`w-6 h-6 rounded overflow-hidden shrink-0 border border-border/50 bg-card flex items-center justify-center`}>
                   {item.type === "topScript" || item.type === "bottomScript" ? (
-                    <Subtitles className="h-3 w-3 text-yellow-500" />
+                    <Subtitles className="h-5 w-5 text-yellow-500" />
                   ) : item.type === "drawing" ? (
-                    <DrawingIcon className="h-3 w-3 text-muted-foreground" />
+                    <DrawingIcon className="h-5 w-5 text-muted-foreground" />
                   ) : item.type === "text" ? (
-                    <span className="text-[9px] font-semibold text-muted-foreground">T</span>
+                    <span className="text-[12px] font-semibold text-muted-foreground">T</span>
                   ) : item.type === "line" ? (
-                    <span className="text-[9px] font-semibold text-muted-foreground">L</span>
+                    <span className="text-[12px] font-semibold text-muted-foreground">L</span>
                   ) : item.type === "shape" ? (
-                    <Square className="h-3 w-3 text-muted-foreground" />
+                    <Square className="h-5 w-5 text-muted-foreground" />
                   ) : item.thumb ? (
                     <img src={item.thumb} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-[9px] font-semibold text-muted-foreground">
+                    <span className="text-[12px] font-semibold text-muted-foreground">
                       {item.type === "bubble" ? "B" : "C"}
                     </span>
                   )}
                 </div>
-                {isMask && <Scan className="h-3 w-3 text-primary shrink-0" />}
+                {isMask && <Scan className="h-5 w-5 text-primary shrink-0" />}
                 <span className="text-[13px] truncate">
                   {isMask ? `[마스크] ${item.label}` : item.label}
                 </span>
@@ -392,7 +392,7 @@ export function LayerListPanel({
                     }}
                     title={isLinkedToMask ? "마스크 연결 해제" : "마스크에 연결"}
                   >
-                    {isLinkedToMask ? <Link className="h-3.5 w-3.5" /> : <Unlink className="h-3.5 w-3.5" />}
+                    {isLinkedToMask ? <Link className="h-5 w-5" /> : <Unlink className="h-5 w-5" />}
                   </button>
                 )}
                 {/* 선택된 항목만: 반전/이동/삭제 */}
@@ -405,7 +405,7 @@ export function LayerListPanel({
                         onClick={(e) => { e.stopPropagation(); onFlipChar(item.id); }}
                         title="좌우 반전"
                       >
-                        <FlipHorizontal2 className="h-3.5 w-3.5" />
+                        <FlipHorizontal2 className="h-5 w-5" />
                       </button>
                     )}
                     <button
@@ -415,7 +415,7 @@ export function LayerListPanel({
                       onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "up"); }}
                       title="앞으로"
                     >
-                      <ChevronUp className="h-3.5 w-3.5" />
+                      <ChevronUp className="h-5 w-5" />
                     </button>
                     <button
                       type="button"
@@ -424,7 +424,7 @@ export function LayerListPanel({
                       onClick={(e) => { e.stopPropagation(); onMoveLayer(i, "down"); }}
                       title="뒤로"
                     >
-                      <ChevronDown className="h-3.5 w-3.5" />
+                      <ChevronDown className="h-5 w-5" />
                     </button>
                     <button
                       type="button"
@@ -432,7 +432,7 @@ export function LayerListPanel({
                       onClick={(e) => { e.stopPropagation(); onDeleteLayer(item); }}
                       title="삭제"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </>
                 )}
@@ -519,15 +519,15 @@ export function LayerListPanel({
                 {onDownloadLayerPng && (
                   <button type="button" className={ctxBtnClass}
                     onClick={() => { onDownloadLayerPng(ci); setContextMenu(null); }}>
-                    <span className="flex items-center gap-1"><Download className="h-3 w-3" /> PNG 다운로드</span>
+                    <span className="flex items-center gap-1"><Download className="h-5 w-5" /> PNG 다운로드</span>
                   </button>
                 )}
                 {onDownloadLayerSvg && (
                   <button type="button" className={`${ctxBtnClass} ${!isPro ? "opacity-50" : ""}`}
                     disabled={!isPro}
                     onClick={() => { if (isPro) { onDownloadLayerSvg(ci); setContextMenu(null); } }}>
-                    <span className="flex items-center gap-1"><Download className="h-3 w-3" /> SVG 다운로드</span>
-                    {!isPro && <Crown className="h-3 w-3 text-yellow-500" />}
+                    <span className="flex items-center gap-1"><Download className="h-5 w-5" /> SVG 다운로드</span>
+                    {!isPro && <Crown className="h-5 w-5 text-yellow-500" />}
                   </button>
                 )}
               </>

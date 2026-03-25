@@ -142,7 +142,7 @@ export function AnalyticsPage() {
               <div className="flex items-center justify-between mb-3">
                 <metric.icon className="w-5 h-5 text-muted-foreground" />
                 <div className={`flex items-center gap-1 text-xs font-medium ${metric.up ? "text-green-500" : "text-red-500"}`}>
-                  {metric.up ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                  {metric.up ? <ArrowUp className="w-5 h-5" /> : <ArrowDown className="w-5 h-5" />}
                   {metric.change}
                 </div>
               </div>

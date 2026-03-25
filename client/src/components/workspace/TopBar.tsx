@@ -105,10 +105,10 @@ export function TopBar() {
         {/* ── Left ─────────────────────────────────────────────────────── */}
         <div className="flex items-center gap-1.5">
           <button
-            onClick={() => navigate("/studio")}
+            onClick={() => navigate(state.fandomMeta ? "/fandom" : "/studio")}
             className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 text-white/40" />
+            <ArrowLeft className="w-5 h-5 text-white/40" />
           </button>
 
           <input
@@ -120,16 +120,26 @@ export function TopBar() {
             className="text-sm font-semibold bg-transparent border-none outline-none text-white/90 w-40 hover:bg-white/[0.04] focus:bg-white/[0.06] px-2 py-1 rounded-lg transition-colors"
           />
 
+          {/* Fandom group badge */}
+          {state.fandomMeta && (
+            <span
+              className="px-2 py-0.5 rounded-md text-[11px] font-bold text-white"
+              style={{ backgroundColor: state.fandomMeta.coverColor }}
+            >
+              {state.fandomMeta.groupName}
+            </span>
+          )}
+
           <button
             onClick={() => {
               if (uiLevel === "beginner") forceLevel("intermediate");
               else if (uiLevel === "intermediate") forceLevel("pro");
               else forceLevel("beginner");
             }}
-            className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/35 transition-colors"
+            className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/35 transition-colors"
             title="클릭하여 UI 모드 전환"
           >
-            <ChevronUp className="w-3 h-3" />
+            <ChevronUp className="w-5 h-5" />
             {uiLevel === "beginner" ? "간편" : uiLevel === "intermediate" ? "일반" : "프로"}
           </button>
         </div>
@@ -145,7 +155,7 @@ export function TopBar() {
               onClick={() => dispatch({ type: "HISTORY_UNDO" })}
               title="실행취소 (Ctrl+Z)"
             >
-              <Undo2 className="w-4 h-4" />
+              <Undo2 className="w-5 h-5" />
             </Button>
             <Button
               variant="ghost"
@@ -155,7 +165,7 @@ export function TopBar() {
               onClick={() => dispatch({ type: "HISTORY_REDO" })}
               title="다시실행 (Ctrl+Shift+Z)"
             >
-              <Redo2 className="w-4 h-4" />
+              <Redo2 className="w-5 h-5" />
             </Button>
           </div>
         )}
@@ -171,7 +181,7 @@ export function TopBar() {
                 onClick={() => dispatch({ type: "TOGGLE_LEFT_PANEL" })}
                 title="왼쪽 패널"
               >
-                {state.ui.leftCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+                {state.ui.leftCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
               </Button>
               <Button
                 variant="ghost"
@@ -180,7 +190,7 @@ export function TopBar() {
                 onClick={() => dispatch({ type: "TOGGLE_RIGHT_PANEL" })}
                 title="오른쪽 패널"
               >
-                {state.ui.rightCollapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
+                {state.ui.rightCollapsed ? <PanelRightOpen className="w-5 h-5" /> : <PanelRightClose className="w-5 h-5" />}
               </Button>
               <div className="w-px h-4 bg-white/[0.06] mx-1" />
             </>
@@ -195,7 +205,7 @@ export function TopBar() {
                 onClick={handleDownload}
                 title="현재 컷 다운로드"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-5 h-5" />
               </Button>
 
               <Button
@@ -204,7 +214,7 @@ export function TopBar() {
                 className="h-8 gap-1.5 text-xs text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
                 onClick={handleSave}
               >
-                {saved ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Save className="w-3.5 h-3.5" />}
+                {saved ? <Check className="w-5 h-5 text-emerald-400" /> : <Save className="w-5 h-5" />}
                 <span className="hidden sm:inline">{saved ? "저장됨" : "저장"}</span>
               </Button>
 
@@ -214,7 +224,7 @@ export function TopBar() {
                 className="h-8 gap-1.5 text-xs text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
                 onClick={handlePreview}
               >
-                <Eye className="w-3.5 h-3.5" />
+                <Eye className="w-5 h-5" />
                 <span className="hidden sm:inline">미리보기</span>
               </Button>
             </>
@@ -222,10 +232,22 @@ export function TopBar() {
 
           <button
             onClick={() => setPublishOpen(true)}
-            className="h-8 px-3 ml-1 rounded-lg bg-gradient-to-r from-[#00e5cc] to-[#0ea5e9] text-black font-bold text-xs flex items-center gap-1.5 hover:shadow-[0_0_16px_rgba(0,229,204,0.3)] transition-shadow active:scale-95"
+            className="h-8 px-3 ml-1 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-shadow active:scale-95"
+            style={
+              state.fandomMeta
+                ? {
+                    background: `linear-gradient(135deg, ${state.fandomMeta.coverColor}, ${state.fandomMeta.coverColor}cc)`,
+                    color: "#fff",
+                    boxShadow: `0 0 16px ${state.fandomMeta.coverColor}40`,
+                  }
+                : {
+                    background: `linear-gradient(to right, var(--fandom-accent, var(--fandom-primary, #7B2FF7)), var(--fandom-accent, #6d28d9))`,
+                    color: "#fff",
+                  }
+            }
           >
-            <Rocket className="w-3.5 h-3.5" />
-            <span>발행</span>
+            <Rocket className="w-5 h-5" />
+            <span>{state.fandomMeta ? "팬덤에 게시" : "발행"}</span>
           </button>
         </div>
       </header>

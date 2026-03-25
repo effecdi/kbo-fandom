@@ -106,10 +106,10 @@ export function StoryGuidePanel({ onClose, onNavigateToTab }: StoryGuidePanelPro
           className="absolute top-3 right-3 p-1 rounded-md hover:bg-white/20 transition-colors"
           title="닫기"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="h-4 w-4 opacity-80" />
+          <Sparkles className="h-5 w-5 opacity-80" />
           <span className="text-[13px] font-medium opacity-80 uppercase tracking-wider">
             Story Editor Guide
           </span>
@@ -128,7 +128,7 @@ export function StoryGuidePanel({ onClose, onNavigateToTab }: StoryGuidePanelPro
               <AccordionTrigger className="text-[13px] py-3 hover:no-underline gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <section.icon className="h-3.5 w-3.5 text-primary" />
+                    <section.icon className="h-5 w-5 text-primary" />
                   </div>
                   <span className="font-medium">{section.title}</span>
                 </div>
@@ -139,7 +139,7 @@ export function StoryGuidePanel({ onClose, onNavigateToTab }: StoryGuidePanelPro
                 </p>
                 {section.tip && (
                   <div className="mt-2.5 flex items-start gap-2 bg-muted/50 dark:bg-muted/30 rounded-lg px-2.5 py-2">
-                    <Sparkles className="h-3 w-3 text-[hsl(173_100%_35%)] shrink-0 mt-0.5" />
+                    <Sparkles className="h-5 w-5 text-[hsl(173_100%_35%)] shrink-0 mt-0.5" />
                     <p className="text-[13px] text-muted-foreground leading-relaxed">
                       {section.tip}
                     </p>
@@ -155,7 +155,7 @@ export function StoryGuidePanel({ onClose, onNavigateToTab }: StoryGuidePanelPro
                     }
                   >
                     {section.navigateTo.label} 바로가기
-                    <ArrowRight className="h-3 w-3" />
+                    <ArrowRight className="h-5 w-5" />
                   </Button>
                 )}
               </AccordionContent>

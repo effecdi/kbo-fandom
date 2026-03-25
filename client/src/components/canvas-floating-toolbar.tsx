@@ -103,7 +103,7 @@ export default function CanvasFloatingToolbar({
             }}
             title="불투명도"
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <SlidersHorizontal className="h-5 w-5" />
           </button>
 
           {showOpacity && (
@@ -131,7 +131,7 @@ export default function CanvasFloatingToolbar({
         onClick={onToggleVisibility}
         title={layer.visible ? "숨기기" : "보이기"}
       >
-        {layer.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+        {layer.visible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
       </button>
 
       {/* Duplicate (not for eraser) */}
@@ -141,7 +141,7 @@ export default function CanvasFloatingToolbar({
           onClick={onDuplicate}
           title="복제"
         >
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="h-5 w-5" />
         </button>
       )}
 
@@ -151,7 +151,7 @@ export default function CanvasFloatingToolbar({
         onClick={onDelete}
         title="삭제"
       >
-        <Trash2 className="h-3.5 w-3.5" />
+        <Trash2 className="h-5 w-5" />
       </button>
 
       <div className="canvas-floating-toolbar__divider" />
@@ -166,7 +166,7 @@ export default function CanvasFloatingToolbar({
           }}
           title="더보기"
         >
-          <MoreHorizontal className="h-3.5 w-3.5" />
+          <MoreHorizontal className="h-5 w-5" />
         </button>
 
         {showMore && (
@@ -175,28 +175,28 @@ export default function CanvasFloatingToolbar({
               className="canvas-floating-toolbar__popup-item"
               onClick={() => { onBringToFront(); setShowMore(false); }}
             >
-              <ChevronsUp className="h-4 w-4" />
+              <ChevronsUp className="h-5 w-5" />
               <span>맨 앞으로</span>
             </button>
             <button
               className="canvas-floating-toolbar__popup-item"
               onClick={() => { onBringForward(); setShowMore(false); }}
             >
-              <ArrowUp className="h-4 w-4" />
+              <ArrowUp className="h-5 w-5" />
               <span>앞으로</span>
             </button>
             <button
               className="canvas-floating-toolbar__popup-item"
               onClick={() => { onSendBackward(); setShowMore(false); }}
             >
-              <ArrowDown className="h-4 w-4" />
+              <ArrowDown className="h-5 w-5" />
               <span>뒤로</span>
             </button>
             <button
               className="canvas-floating-toolbar__popup-item"
               onClick={() => { onSendToBack(); setShowMore(false); }}
             >
-              <ChevronsDown className="h-4 w-4" />
+              <ChevronsDown className="h-5 w-5" />
               <span>맨 뒤로</span>
             </button>
           </div>

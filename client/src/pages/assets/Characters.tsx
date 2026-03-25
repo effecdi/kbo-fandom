@@ -142,12 +142,12 @@ export function CharactersPage() {
               disabled={loading}
               className="gap-1.5"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
               새로고침
             </Button>
             <Link to="/assets/characters/new">
               <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 새 캐릭터 만들기
               </Button>
             </Link>
@@ -228,7 +228,7 @@ export function CharactersPage() {
                           {label}
                         </span>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="w-3 h-3" />
+                          <Calendar className="w-5 h-5" />
                           {new Date(char.createdAt).toLocaleDateString("ko-KR")}
                         </div>
                       </div>

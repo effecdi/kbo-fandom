@@ -124,13 +124,13 @@ export default function OnboardingPage() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm font-semibold">
-                    <Palette className="w-3 h-3" /> 캐릭터 생성
+                    <Palette className="w-5 h-5" /> 캐릭터 생성
                   </span>
                   <span className="inline-flex items-center gap-1 bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300 px-3 py-1 rounded-full text-sm font-semibold">
-                    <Sparkles className="w-3 h-3" /> 툰 제작
+                    <Sparkles className="w-5 h-5" /> 툰 제작
                   </span>
                   <span className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm font-semibold">
-                    <TrendingUp className="w-3 h-3" /> 수익화
+                    <TrendingUp className="w-5 h-5" /> 수익화
                   </span>
                 </div>
                 <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -155,13 +155,13 @@ export default function OnboardingPage() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-sm font-semibold">
-                    <Sparkles className="w-3 h-3" /> 마스코트 생성
+                    <Sparkles className="w-5 h-5" /> 마스코트 생성
                   </span>
                   <span className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-semibold">
-                    <Palette className="w-3 h-3" /> 콘텐츠 제작
+                    <Palette className="w-5 h-5" /> 콘텐츠 제작
                   </span>
                   <span className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-sm font-semibold">
-                    <Users className="w-3 h-3" /> 작가 협업
+                    <Users className="w-5 h-5" /> 작가 협업
                   </span>
                 </div>
                 <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -209,7 +209,7 @@ export default function OnboardingPage() {
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)} className="border-2">이전</Button>
               <Button onClick={() => setStep(3)} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                다음 <ChevronRight className="w-4 h-4 ml-2" />
+                다음 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -252,7 +252,7 @@ export default function OnboardingPage() {
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)} className="border-2">이전</Button>
               <Button onClick={() => setStep(3)} className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
-                다음 <ChevronRight className="w-4 h-4 ml-2" />
+                다음 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -292,7 +292,7 @@ export default function OnboardingPage() {
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(2)} className="border-2">이전</Button>
               <Button onClick={() => setStep(4)} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                다음 <ChevronRight className="w-4 h-4 ml-2" />
+                다음 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -333,7 +333,7 @@ export default function OnboardingPage() {
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(2)} className="border-2">이전</Button>
               <Button onClick={() => setStep(3)} className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
-                다음 <ChevronRight className="w-4 h-4 ml-2" />
+                다음 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>

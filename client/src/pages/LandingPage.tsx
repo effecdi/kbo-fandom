@@ -1,490 +1,307 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useLenis } from "lenis/react";
-
-gsap.registerPlugin(ScrollTrigger);
+import { useNavigate, Link } from "react-router";
 import {
-  Sparkles,
-  Building2,
-  Instagram,
-  FileText,
+  Heart,
   Users,
-  BarChart3,
-  Shield,
+  Sparkles,
+  Trophy,
+  Music,
+  Star,
+  ArrowRight,
   Moon,
   Sun,
-  Zap,
-  Brain,
-  Target,
   Palette,
-  TrendingUp,
-  Globe,
+  MessageCircle,
+  Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-const olliLogo = "/favicon.png";
 import { useTheme } from "@/components/theme-provider";
-import { WebtoonShowcase } from "@/components/WebtoonShowcase";
-import { CardSwap } from "@/components/CardSwap";
-import { ShuffleText } from "@/components/ShuffleText";
-import { ShinyText } from "@/components/ShinyText";
-import { GlareHover } from "@/components/GlareHover";
-import { TargetCursor } from "@/components/TargetCursor";
-import { MagneticCTA } from "@/components/MagneticCTA";
-import { InfiniteCharacterGrid } from "@/components/InfiniteCharacterGrid";
-import { PoseMarquee } from "@/components/PoseMarquee";
-import { FeatureCardSwap } from "@/components/FeatureCardSwap";
+import {
+  listItems,
+  seedIfEmpty,
+  STORE_KEYS,
+  type IdolGroup,
+} from "@/lib/local-store";
 
 export function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const scrollTextRef = useRef<HTMLDivElement>(null);
-
-  // Lenis ↔ ScrollTrigger 동기화
-  useLenis((lenis) => {
-    ScrollTrigger.update();
-  });
+  const [groups, setGroups] = useState<IdolGroup[]>([]);
 
   useEffect(() => {
-    if (!scrollTextRef.current) return;
-
-    const ctx = gsap.context(() => {
-      const el = scrollTextRef.current!;
-
-      // 전체 문구를 하나로 pin
-      ScrollTrigger.create({
-        trigger: el,
-        start: "top top",
-        end: `+=100%`,
-        pin: true,
-        pinSpacing: true,
-      });
-    }, scrollTextRef);
-
-    // Lenis가 초기화된 후 ScrollTrigger를 새로고침
-    requestAnimationFrame(() => {
-      ScrollTrigger.refresh();
-    });
-
-    return () => {
-      ctx.revert();
-    };
+    seedIfEmpty();
+    setGroups(listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS));
   }, []);
 
-  return (
-    <div
-      className="min-h-screen transition-colors duration-500 bg-background text-foreground"
-    >
-      <TargetCursor />
+  const totalFanart = groups.reduce((sum, g) => sum + g.fanartCount, 0);
+  const totalFollowers = groups.reduce((sum, g) => sum + g.followers, 0);
 
-      {/* Fixed Dark Mode Toggle */}
-      <div className="fixed top-8 right-8 z-50">
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Dark Mode Toggle */}
+      <div className="fixed top-6 right-6 z-50">
         <button
           onClick={toggleTheme}
-          className="group w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-2xl border-2 transition-all duration-300 hover:scale-110 bg-muted/50 border-border hover:border-[#00e5cc]/50"
+          className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all hover:scale-110 bg-muted/50 border-border"
         >
           {theme === "dark" ? (
-            <Sun className="w-7 h-7 text-yellow-400 transition-transform group-hover:rotate-90" />
+            <Sun className="w-5 h-5 text-yellow-400" />
           ) : (
-            <Moon className="w-7 h-7 text-indigo-600 transition-transform group-hover:-rotate-12" />
+            <Moon className="w-5 h-5 text-indigo-600" />
           )}
         </button>
       </div>
 
       {/* Hero Section */}
-      <section
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      >
-        {/* Animated background gradients */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Animated background */}
         <div className="absolute inset-0 overflow-hidden">
-          <div
-            className="parallax-bg absolute top-20 left-20 w-96 h-96 rounded-full blur-3xl opacity-30 bg-[#00e5cc]"
-          />
-          <div
-            className="parallax-bg absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl opacity-30 bg-blue-500"
-          />
-          <div
-            className="parallax-bg absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-20 bg-purple-500"
-          />
+          <div className="absolute top-20 left-20 w-96 h-96 rounded-full blur-3xl opacity-20 bg-violet-500 animate-pulse" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl opacity-20 bg-pink-500 animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-10 bg-purple-500" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-32 text-center">
-          {/* Logo with electric border effect */}
-          <div className="hero-logo mb-12 inline-block">
-            <div className="relative group">
-              <div
-                className="absolute -inset-1 bg-gradient-to-r from-[#00e5cc] via-blue-500 to-purple-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"
-              />
-              <img
-                src={olliLogo}
-                alt="OLLI Logo"
-                className="relative w-40 h-40 rounded-full"
-              />
-            </div>
+        <div className="relative z-10 max-w-5xl mx-auto px-6 py-32 text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-6 py-2 mb-8">
+            <Heart className="w-4 h-4 text-violet-500" />
+            <span className="text-sm font-bold text-violet-500">K-POP 팬덤 플랫폼</span>
           </div>
 
-          {/* Main Title */}
-          <h1 className="hero-title mb-8">
-            <div
-              className="text-8xl md:text-9xl lg:text-[12rem] font-black leading-none mb-4"
-              style={{
-                background: `linear-gradient(135deg, #00e5cc 0%, #0891b2 50%, #3b82f6 100%)`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              <ShuffleText>OLLI</ShuffleText>
+          {/* Title */}
+          <h1 className="mb-8">
+            <div className="text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-4 bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              MY FANDOM
             </div>
-            <div
-              className="text-4xl md:text-6xl lg:text-7xl font-black text-foreground"
-            >
-              AI 인스타툰 혁명
+            <div className="text-3xl md:text-5xl font-black text-foreground">
+              나만의 아이돌 팬덤 세계
             </div>
           </h1>
 
           {/* Subtitle */}
-          <p
-            className="hero-subtitle text-xl md:text-3xl mb-16 max-w-4xl mx-auto text-muted-foreground"
-          >
-            작가와 기업을 연결하는 차세대 플랫폼
+          <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto text-muted-foreground">
+            팬아트 제작, 팬덤 인증, 이벤트 참여까지
             <br />
-            <ShinyText className="font-bold">5초만에 당신의 캐릭터가 살아납니다</ShinyText>
+            <span className="font-bold text-foreground">진정한 팬을 위한 올인원 플랫폼</span>
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-24">
-            <GlareHover>
-              <button
-                onClick={() => navigate("/signup")}
-                className="hero-cta group relative px-14 py-7 bg-gradient-to-r from-[#00e5cc] via-teal-500 to-[#00b3a6] text-white font-black text-2xl rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#00e5cc]/50"
-              >
-                <span className="relative z-10 flex items-center gap-3">
-                  <Sparkles className="w-7 h-7" />
-                  작가로 시작하기
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              </button>
-            </GlareHover>
-
-            <GlareHover>
-              <button
-                onClick={() => navigate("/enterprise")}
-                className="hero-cta group relative px-14 py-7 font-black text-2xl rounded-2xl border-2 overflow-hidden transition-all duration-300 hover:scale-105 bg-muted/50 border-blue-500/50 text-blue-500 hover:bg-muted hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/30"
-              >
-                <span className="relative z-10 flex items-center gap-3">
-                  <Building2 className="w-7 h-7" />
-                  기업으로 시작하기
-                </span>
-              </button>
-            </GlareHover>
+          {/* CTA */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <Button
+              onClick={() => navigate("/login")}
+              className="px-10 py-7 text-lg font-black bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-2xl hover:scale-105 transition-all shadow-lg hover:shadow-xl hover:shadow-violet-500/25"
+            >
+              <Heart className="w-6 h-6 mr-2" />
+              팬덤 시작하기
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/login")}
+              className="px-10 py-7 text-lg font-black rounded-2xl border-2 hover:scale-105 transition-all"
+            >
+              <ArrowRight className="w-6 h-6 mr-2" />
+              로그인
+            </Button>
           </div>
 
           {/* Scroll indicator */}
           <div className="animate-bounce">
-            <div
-              className="w-1 h-16 mx-auto rounded-full bg-gradient-to-b from-[#00e5cc] to-transparent"
-            />
+            <div className="w-1 h-16 mx-auto rounded-full bg-gradient-to-b from-violet-500 to-transparent" />
           </div>
         </div>
       </section>
 
-      {/* Apple-style Scroll Text Section — GSAP pin */}
-      <section
-        ref={scrollTextRef}
-        className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-background to-muted"
-      >
-        <div className="max-w-5xl mx-auto text-center">
-          <h2
-            className="text-5xl md:text-7xl lg:text-8xl font-black leading-tight text-foreground"
-          >
-            <span className="block mb-4">클릭 한 번으로</span>
-            <span className="block mb-4 bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
-              전문가급 웹툰
-            </span>
-            <span className="block">완성</span>
-          </h2>
-        </div>
-      </section>
-
       {/* Stats Section */}
-      <section
-        className="py-32 px-6 bg-muted"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-12">
+      <section className="py-24 px-6 bg-muted">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { icon: Users, label: "활동 작가", target: 10000, suffix: "+" },
-              { icon: Building2, label: "기업 고객", target: 500, suffix: "+" },
-              { icon: FileText, label: "툰 생성", target: 1000000, suffix: "+" },
+              { icon: Users, label: "활성 팬", value: totalFollowers.toLocaleString(), color: "text-violet-500" },
+              { icon: Heart, label: "팬아트", value: totalFanart.toLocaleString(), color: "text-rose-500" },
+              { icon: Music, label: "아이돌 그룹", value: String(groups.length), color: "text-cyan-500" },
+              { icon: Trophy, label: "이벤트", value: "8+", color: "text-amber-500" },
             ].map((stat, i) => (
-              <GlareHover key={i}>
-                <div
-                  className="group relative p-12 rounded-3xl text-center backdrop-blur-xl border-2 transition-all duration-300 hover:scale-105 bg-muted/80 border-border hover:border-[#00e5cc]/50 shadow-xl"
-                >
-                  <div
-                    className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#00e5cc] to-blue-500 shadow-2xl group-hover:scale-110 transition-transform duration-300`}
-                  >
-                    <stat.icon className="w-10 h-10 text-white" />
-                  </div>
-                  <div
-                    className={`text-6xl font-black mb-4 bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent`}
-                  >
-                    <span className="stat-number" data-target={stat.target}>
-                      0
-                    </span>
-                    {stat.suffix}
-                  </div>
-                  <div
-                    className="text-xl font-bold uppercase tracking-wider text-muted-foreground"
-                  >
-                    {stat.label}
-                  </div>
-                </div>
-              </GlareHover>
+              <div key={i} className="text-center p-6 rounded-2xl bg-card border border-border">
+                <stat.icon className={`w-10 h-10 mx-auto mb-3 ${stat.color}`} />
+                <p className="text-3xl font-black text-foreground mb-1">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section
-        className="py-32 px-6 bg-background"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <div
-              className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20"
-            >
+      <section className="py-24 px-6 bg-background">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-block px-6 py-2 rounded-full text-sm font-bold mb-6 bg-violet-500/10 text-violet-500 border border-violet-500/20">
               핵심 기능
             </div>
-            <h2
-              className="text-6xl md:text-8xl font-black text-foreground"
-            >
-              왜 <span className="bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">OLLI</span>인가?
+            <h2 className="text-4xl md:text-6xl font-black text-foreground">
+              왜 <span className="bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">MY FANDOM</span>인가?
             </h2>
           </div>
 
-          <FeatureCardSwap />
-        </div>
-      </section>
-
-      {/* Mode Switcher Section */}
-      <section
-        className="py-32 px-6 bg-gradient-to-b from-background to-muted"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <div
-              className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20"
-            >
-              양면 플랫폼
-            </div>
-            <h2
-              className="text-6xl md:text-8xl font-black mb-8 text-foreground"
-            >
-              당신의 역할은?
-            </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: Palette,
+                title: "AI 팬아트 제작",
+                desc: "AI로 좋아하는 아이돌의 팬아트를 간편하게 제작하세요",
+                color: "#8B5CF6",
+              },
+              {
+                icon: MessageCircle,
+                title: "팬덤 소통",
+                desc: "같은 팬들과 작품을 공유하고 댓글로 소통하세요",
+                color: "#EC4899",
+              },
+              {
+                icon: Trophy,
+                title: "이벤트 & 챌린지",
+                desc: "공식 이벤트에 참여하고 특별한 굿즈를 받으세요",
+                color: "#F59E0B",
+              },
+              {
+                icon: Star,
+                title: "팬덤 인증",
+                desc: "10문답 퀴즈를 통해 진정한 팬임을 인증하세요",
+                color: "#00B4D8",
+              },
+            ].map((feature, i) => (
+              <div
+                key={i}
+                className="group p-6 rounded-2xl border bg-card border-border hover:shadow-xl transition-all hover:-translate-y-1"
+              >
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+                  style={{ background: `${feature.color}15` }}
+                >
+                  <feature.icon className="w-7 h-7" style={{ color: feature.color }} />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground">{feature.desc}</p>
+              </div>
+            ))}
           </div>
-
-          <CardSwap />
         </div>
       </section>
 
-      {/* Showcase Gallery */}
-      <section
-        className="py-32 px-6 bg-muted"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <div
-              className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20"
-            >
-              작품 갤러리
-            </div>
-            <h2
-              className="text-6xl md:text-8xl font-black mb-8 text-foreground"
-            >
-              <span className="bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
-                놀라운
-              </span>{" "}
-              작품들
-            </h2>
-            <p
-              className="text-2xl text-muted-foreground"
-            >
-              OLLI로 만들어진 실제 웹툰을 만나보세요
-            </p>
-          </div>
-
-          <WebtoonShowcase />
-        </div>
-      </section>
-
-      {/* Infinite Character Grid - 무한한 캐릭터 가능성 */}
-      <section
-        className="py-32 px-6 overflow-hidden bg-background"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <div
-              className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20"
-            >
-              AI 캐릭터
-            </div>
-            <h2
-              className="text-6xl md:text-8xl font-black mb-8 text-foreground"
-            >
-              <span className="bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
-                무한한
-              </span>{" "}
-              캐릭터 가능성
-            </h2>
-            <p
-              className="text-2xl text-muted-foreground"
-            >
-              마우스를 움직여 3D 그리드를 탐험하세요
-            </p>
-          </div>
-
-          <InfiniteCharacterGrid theme={theme} />
-        </div>
-      </section>
-
-      {/* Pose/Expression Marquee */}
-      <section className="py-32 px-6 overflow-hidden bg-muted">
-        <div className="max-w-7xl mx-auto">
+      {/* Popular Groups Carousel */}
+      <section className="py-24 px-6 bg-muted">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-block px-8 py-3 rounded-full text-sm font-black uppercase tracking-wider mb-8 bg-[#00e5cc]/10 text-[#00e5cc] border-2 border-[#00e5cc]/20">
-              포즈 & 표정
+            <div className="inline-block px-6 py-2 rounded-full text-sm font-bold mb-6 bg-pink-500/10 text-pink-500 border border-pink-500/20">
+              <Flame className="w-4 h-4 inline mr-1" />
+              인기 그룹
             </div>
-            <h2 className="text-6xl md:text-8xl font-black mb-8 text-foreground">
-              <span className="block mb-4 md:mb-6">하나의 캐릭터,</span>
-              <span className="block bg-gradient-to-r from-[#00e5cc] to-blue-500 bg-clip-text text-transparent">
-                무한한 표현
-              </span>
+            <h2 className="text-4xl md:text-6xl font-black text-foreground">
+              지금 <span className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">핫한</span> 그룹
             </h2>
-            <p className="text-2xl text-muted-foreground">
-              다양한 포즈와 표정으로 캐릭터에 생명을 불어넣으세요
-            </p>
           </div>
 
-          <PoseMarquee />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {groups.slice(0, 8).map((group) => (
+              <div
+                key={group.id}
+                className="group p-6 rounded-2xl border bg-card border-border hover:shadow-xl transition-all hover:-translate-y-1 text-center cursor-pointer"
+                onClick={() => navigate("/login")}
+              >
+                <div
+                  className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-white font-black text-xl group-hover:scale-110 transition-transform"
+                  style={{ background: group.coverColor }}
+                >
+                  {group.name.charAt(0)}
+                </div>
+                <h3 className="font-bold text-foreground">{group.name}</h3>
+                <p className="text-xs text-muted-foreground mb-2">{group.nameKo}</p>
+                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                  <Heart className="w-3 h-3" />
+                  <span>{group.followers.toLocaleString()} 팬</span>
+                </div>
+                <div
+                  className="mt-3 inline-block px-3 py-1 rounded-full text-xs font-bold text-white"
+                  style={{ background: group.coverColor }}
+                >
+                  {group.fandomName}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section
-        className="py-32 px-6 bg-background"
-      >
-        <div className="max-w-6xl mx-auto">
-          <MagneticCTA onButtonClick={() => navigate("/signup")} />
+      <section className="py-32 px-6 bg-background">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-6xl font-black text-foreground mb-6">
+            지금 바로<br/>
+            <span className="bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">팬덤</span>에 합류하세요
+          </h2>
+          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            10가지 문답으로 팬덤을 인증하고, 나만의 개인화된 팬덤 세계를 경험하세요
+          </p>
+          <Button
+            onClick={() => navigate("/login")}
+            className="px-12 py-7 text-xl font-black bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-2xl hover:scale-105 transition-all shadow-xl hover:shadow-2xl hover:shadow-violet-500/25"
+          >
+            <Sparkles className="w-6 h-6 mr-2" />
+            팬덤 시작하기
+          </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer
-        className="border-t py-20 px-6 border-border bg-muted"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-5 gap-12 mb-16">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-4 mb-6">
-                <img
-                  src={olliLogo}
-                  alt="OLLI"
-                  className="w-16 h-16 rounded-full"
-                />
-                <span
-                  className="text-4xl font-black"
-                  style={{
-                    background: `linear-gradient(135deg, #00e5cc, #0891b2, #3b82f6)`,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  OLLI
+      <footer className="border-t py-16 px-6 border-border bg-muted">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+                  <Heart className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-2xl font-black bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">
+                  MY FANDOM
                 </span>
               </div>
-              <p
-                className="text-lg mb-6 text-muted-foreground"
-              >
-                차세대 AI 인스타그램 툰 플랫폼
-                <br />
-                작가와 기업을 연결합니다
+              <p className="text-sm text-muted-foreground">
+                K-POP 팬덤을 위한 올인원 플랫폼
               </p>
-              <div className="flex gap-4">
-                {[Instagram, Globe, TrendingUp].map((Icon, i) => (
-                  <button
-                    key={i}
-                    className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 bg-muted hover:bg-[#00e5cc]/20 text-muted-foreground hover:text-[#00e5cc]"
-                  >
-                    <Icon className="w-5 h-5" />
-                  </button>
-                ))}
-              </div>
             </div>
-
             {[
-              {
-                title: "제품",
-                links: ["기능", "가격", "업데이트", "로드맵"],
-              },
-              {
-                title: "회사",
-                links: ["소개", "블로그", "채용", "언론"],
-              },
-              {
-                title: "지원",
-                links: ["도움말", "문의", "커뮤니티", "FAQ"],
-              },
+              { title: "서비스", links: ["팬아트 제작", "팬덤 피드", "이벤트"] },
+              { title: "팬덤", links: ["그룹 목록", "팬덤 인증", "갤러리"] },
+              { title: "법적 고지", links: [{ label: "이용약관", path: "/legal/terms" }, { label: "개인정보", path: "/legal/privacy" }, { label: "환불정책", path: "/legal/refund" }] },
             ].map((section) => (
               <div key={section.title}>
-                <h4
-                  className="font-black mb-6 text-xl text-foreground"
-                >
-                  {section.title}
-                </h4>
-                <ul className="space-y-4">
-                  {section.links.map((link) => (
-                    <li key={link}>
-                      <a
-                        href="#"
-                        className="text-lg transition-colors hover:text-[#00e5cc] text-muted-foreground"
-                      >
-                        {link}
-                      </a>
-                    </li>
-                  ))}
+                <h4 className="font-bold mb-4 text-foreground">{section.title}</h4>
+                <ul className="space-y-2">
+                  {section.links.map((link) => {
+                    const isObj = typeof link === "object";
+                    return (
+                      <li key={isObj ? link.label : link}>
+                        {isObj ? (
+                          <Link to={link.path} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                            {link.label}
+                          </Link>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{link}</span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
           </div>
-
-          <div
-            className="pt-8 border-t text-center border-border"
-          >
-            <p
-              className="text-lg text-muted-foreground"
-            >
-              © 2026 OLLI. All rights reserved. Powered by AI.
+          <div className="pt-8 border-t border-border text-center">
+            <p className="text-sm text-muted-foreground">
+              © 2026 MY FANDOM. All rights reserved.
             </p>
           </div>
         </div>
       </footer>
-
-      <style>{`
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
-        }
-      `}</style>
     </div>
   );
 }
-

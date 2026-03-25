@@ -151,7 +151,7 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
             </p>
           </div>
           <Button className="w-full" onClick={() => setStep(1)} data-testid="button-onboarding-start">
-            시작하기 <ArrowRight className="ml-2 h-4 w-4" />
+            시작하기 <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </Card>
       </div>
@@ -186,7 +186,7 @@ function OnboardingSurvey({ onComplete }: { onComplete: () => void }) {
             disabled={!authorName.trim()}
             data-testid="button-onboarding-next"
           >
-            다음 <ChevronRight className="ml-1 h-4 w-4" />
+            다음 <ChevronRight className="ml-1 h-5 w-5" />
           </Button>
         </Card>
       </div>
@@ -326,7 +326,7 @@ export default function HomePage() {
               onClick={() => navigate("/story")}
               data-testid="button-start-guide"
             >
-              <HelpCircle className="h-4 w-4" />
+              <HelpCircle className="h-5 w-5" />
               <span className="hidden sm:inline">사용 가이드</span>
             </Button>
             <Link to="/pricing">
@@ -375,7 +375,7 @@ export default function HomePage() {
                   try { localStorage.setItem("olli_tour_completed", "true"); } catch {}
                 }}
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
           </div>
@@ -445,7 +445,7 @@ export default function HomePage() {
 
               {tier.nextUnlock && (
                 <div className="flex items-start gap-2.5 mt-3 rounded-lg bg-primary/5 p-3" data-testid="section-next-unlock">
-                  <Gift className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <Gift className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[13px] font-semibold text-primary mb-0.5">다음 등급 혜택</p>
                     <p className="text-[13px] text-muted-foreground leading-relaxed">{tier.nextUnlock}</p>
@@ -458,7 +458,7 @@ export default function HomePage() {
                 className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover-elevate rounded-md px-2 py-1.5 -mx-1 w-fit mt-3"
                 data-testid="button-tier-guide-toggle"
               >
-                <Info className="h-3.5 w-3.5" />
+                <Info className="h-5 w-5" />
                 <span>등급별 혜택 보기</span>
               </button>
 
@@ -476,23 +476,23 @@ export default function HomePage() {
                       >
                         <div className="flex items-center gap-2.5 mb-2.5">
                           <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 ${t.color}`}>
-                            <Icon className="h-4 w-4" />
+                            <Icon className="h-5 w-5" />
                           </div>
                           <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                             <span className="font-semibold">{t.name}</span>
                             <Badge variant="secondary" className="text-[13px]">{t.badge}</Badge>
                             {isCurrent && <Badge variant="default" className="text-[13px]">현재</Badge>}
-                            {isUnlocked && !isCurrent && <Check className="h-3.5 w-3.5 text-green-500" />}
-                            {!isUnlocked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                            {isUnlocked && !isCurrent && <Check className="h-5 w-5 text-green-500" />}
+                            {!isUnlocked && <Lock className="h-5 w-5 text-muted-foreground" />}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-x-3 gap-y-1 pl-[42px]">
                           {t.benefits.map((b, bi) => (
                             <div key={bi} className="flex items-center gap-1.5">
                               {isUnlocked ? (
-                                <Check className="h-3 w-3 text-green-500 shrink-0" />
+                                <Check className="h-5 w-5 text-green-500 shrink-0" />
                               ) : (
-                                <Lock className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                                <Lock className="h-5 w-5 text-muted-foreground/50 shrink-0" />
                               )}
                               <span className={isUnlocked ? "" : "text-muted-foreground"}>{b}</span>
                             </div>
@@ -511,7 +511,7 @@ export default function HomePage() {
                   <h2 className="text-lg font-bold">최근 작품</h2>
                   <Link to="/gallery">
                     <Button variant="ghost" size="sm" className="gap-1 text-[13px]" data-testid="button-view-all-gallery">
-                      전체보기 <ArrowRight className="h-3 w-3" />
+                      전체보기 <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
                 </div>
@@ -550,7 +550,7 @@ export default function HomePage() {
                       <h3 className="font-semibold text-sm">Pro로 업그레이드</h3>
                       <p className="text-[13px] text-muted-foreground mt-0.5">무제한 생성 & 모든 기능·모든 폰트 해제</p>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-primary shrink-0" />
+                    <ArrowRight className="h-5 w-5 text-primary shrink-0" />
                   </div>
                 </Card>
               </Link>
@@ -569,7 +569,7 @@ export default function HomePage() {
                     <h3 className="font-semibold text-sm">크레딧 충전</h3>
                     <p className="text-[13px] text-muted-foreground mt-0.5">₩4,900 / 50 크레딧</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-primary shrink-0" />
+                  <ArrowRight className="h-5 w-5 text-primary shrink-0" />
                 </div>
               </Card>
             </Link>
@@ -644,9 +644,9 @@ export default function HomePage() {
                   ].map((f) => (
                     <li key={f.text} className="flex items-center gap-2.5">
                       {f.ok ? (
-                        <Check className="h-4 w-4 shrink-0 text-emerald-500 dark:text-teal-300" />
+                        <Check className="h-5 w-5 shrink-0 text-emerald-500 dark:text-teal-300" />
                       ) : (
-                        <X className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500/60" />
+                        <X className="h-5 w-5 shrink-0 text-slate-300 dark:text-slate-500/60" />
                       )}
                       <span className={f.ok ? "text-foreground" : "text-muted-foreground"}>{f.text}</span>
                     </li>
@@ -690,7 +690,7 @@ export default function HomePage() {
                     "우선 지원",
                   ].map((text) => (
                     <li key={text} className="flex items-center gap-2.5">
-                      <Check className="h-4 w-4 shrink-0 text-primary-foreground" />
+                      <Check className="h-5 w-5 shrink-0 text-primary-foreground" />
                       <span className="text-primary-foreground/95">{text}</span>
                     </li>
                   ))}

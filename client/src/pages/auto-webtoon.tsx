@@ -493,7 +493,7 @@ export default function AutoWebtoonPage() {
             onClick={() => topicMutation.mutate()}
             disabled={topicMutation.isPending}
           >
-            {topicMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+            {topicMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin mr-1" /> : <Sparkles className="h-5 w-5 mr-1" />}
             AI 주제 추천
           </Button>
         </div>
@@ -564,7 +564,7 @@ export default function AutoWebtoonPage() {
             onClick={() => setShowGalleryPicker(true)}
             disabled={selectedCharacters.length >= 4}
           >
-            <FolderOpen className="h-3.5 w-3.5 mr-1" />
+            <FolderOpen className="h-5 w-5 mr-1" />
             갤러리에서 선택
           </Button>
           <Button
@@ -573,7 +573,7 @@ export default function AutoWebtoonPage() {
             onClick={() => uploadInputRef.current?.click()}
             disabled={selectedCharacters.length >= 4}
           >
-            <Upload className="h-3.5 w-3.5 mr-1" />
+            <Upload className="h-5 w-5 mr-1" />
             이미지 업로드
           </Button>
           <input
@@ -597,7 +597,7 @@ export default function AutoWebtoonPage() {
                   onClick={() => removeCharacter(char.id)}
                   className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-5 w-5" />
                 </button>
                 <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[13px] text-center truncate px-1">
                   {char.name}
@@ -655,9 +655,9 @@ export default function AutoWebtoonPage() {
             onClick={() => guard(() => breakdownMutation.mutate())}
           >
             {breakdownMutation.isPending ? (
-              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> 분석 중...</>
+              <><Loader2 className="h-5 w-5 animate-spin mr-2" /> 분석 중...</>
             ) : (
-              <><Wand2 className="h-4 w-4 mr-2" /> 장면 분배하기</>
+              <><Wand2 className="h-5 w-5 mr-2" /> 장면 분배하기</>
             )}
           </Button>
         </div>
@@ -790,7 +790,7 @@ export default function AutoWebtoonPage() {
       {/* Actions */}
       <div className="flex gap-3 justify-between">
         <Button variant="outline" onClick={() => setStep(1)}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> 이전
+          <ArrowLeft className="h-5 w-5 mr-1" /> 이전
         </Button>
         <div className="flex gap-2">
           <Button
@@ -798,11 +798,11 @@ export default function AutoWebtoonPage() {
             onClick={() => breakdownMutation.mutate()}
             disabled={breakdownMutation.isPending}
           >
-            <RefreshCw className={`h-4 w-4 mr-1 ${breakdownMutation.isPending ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-5 w-5 mr-1 ${breakdownMutation.isPending ? "animate-spin" : ""}`} />
             다시 분배
           </Button>
           <Button onClick={startGeneration}>
-            <ImageIcon className="h-4 w-4 mr-2" />
+            <ImageIcon className="h-5 w-5 mr-2" />
             이미지 생성 시작 ({isPro ? "Pro" : `${imageCost} 크레딧`})
           </Button>
         </div>
@@ -856,7 +856,7 @@ export default function AutoWebtoonPage() {
                     {idx + 1}
                   </div>
                 )}
-                <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[9px] px-1 rounded">
+                <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[12px] px-1 rounded">
                   C{canvasIdx + 1}-{cutIdx + 1}
                 </span>
               </div>
@@ -869,7 +869,7 @@ export default function AutoWebtoonPage() {
           <div className="flex gap-2">
             {failedCount > 0 && !isGenerating && (
               <Button variant="outline" onClick={retryFailed}>
-                <RefreshCw className="h-4 w-4 mr-1" /> 실패한 컷 재시도 ({failedCount}컷)
+                <RefreshCw className="h-5 w-5 mr-1" /> 실패한 컷 재시도 ({failedCount}컷)
               </Button>
             )}
           </div>
@@ -881,7 +881,7 @@ export default function AutoWebtoonPage() {
               }
             }}
           >
-            <BookOpen className="h-4 w-4 mr-2" />
+            <BookOpen className="h-5 w-5 mr-2" />
             스토리 편집기에서 열기
           </Button>
         </div>
@@ -912,7 +912,7 @@ export default function AutoWebtoonPage() {
           { num: 3, label: "생성" },
         ].map(({ num, label }, i) => (
           <div key={num} className="flex items-center gap-2">
-            {i > 0 && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+            {i > 0 && <ArrowRight className="h-5 w-5 text-muted-foreground" />}
             <div
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 step === num
@@ -922,7 +922,7 @@ export default function AutoWebtoonPage() {
                     : "bg-muted text-muted-foreground"
               }`}
             >
-              {step > num ? <Check className="h-3.5 w-3.5" /> : <span>{num}</span>}
+              {step > num ? <Check className="h-5 w-5" /> : <span>{num}</span>}
               <span className="hidden sm:inline">{label}</span>
             </div>
           </div>

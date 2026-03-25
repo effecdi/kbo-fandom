@@ -719,7 +719,7 @@ export function AutoWebtoonPanel({
           onClick={(e) => { e.stopPropagation(); topicMutation.mutate(); }}
           disabled={topicMutation.isPending}
         >
-          {topicMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+          {topicMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin mr-1" /> : <Sparkles className="h-5 w-5 mr-1" />}
           AI 주제 추천
         </Button>
         {topicMutation.data && (
@@ -929,9 +929,9 @@ export function AutoWebtoonPanel({
             onClick={(e) => { e.stopPropagation(); guard(() => breakdownMutation.mutate()); }}
           >
             {breakdownMutation.isPending ? (
-              <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> 분석 중...</>
+              <><Loader2 className="h-5 w-5 animate-spin mr-1.5" /> 분석 중...</>
             ) : (
-              <><Wand2 className="h-3.5 w-3.5 mr-1.5" /> 장면 분해하기</>
+              <><Wand2 className="h-5 w-5 mr-1.5" /> 장면 분해하기</>
             )}
           </Button>
         </div>
@@ -1062,7 +1062,7 @@ export function AutoWebtoonPanel({
                             setScenes(updated);
                           }}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
                     ))}
@@ -1078,7 +1078,7 @@ export function AutoWebtoonPanel({
                           setScenes(updated);
                         }}
                       >
-                        <Plus className="h-3 w-3" /> 말풍선 추가
+                        <Plus className="h-5 w-5" /> 말풍선 추가
                       </button>
                     )}
                   </div>
@@ -1092,7 +1092,7 @@ export function AutoWebtoonPanel({
       {/* Actions */}
       <div className="flex gap-2 justify-between">
         <Button type="button" variant="outline" size="sm" className="h-7 text-[13px]" onClick={(e) => { e.stopPropagation(); setStep(1); }}>
-          <ArrowLeft className="h-3 w-3 mr-1" /> 이전
+          <ArrowLeft className="h-5 w-5 mr-1" /> 이전
         </Button>
         <div className="flex gap-1.5">
           <Button
@@ -1103,11 +1103,11 @@ export function AutoWebtoonPanel({
             onClick={(e) => { e.stopPropagation(); breakdownMutation.mutate(); }}
             disabled={breakdownMutation.isPending}
           >
-            <RefreshCw className={`h-3 w-3 mr-1 ${breakdownMutation.isPending ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-5 w-5 mr-1 ${breakdownMutation.isPending ? "animate-spin" : ""}`} />
             다시
           </Button>
           <Button type="button" size="sm" className="h-7 text-[13px]" onClick={(e) => { e.stopPropagation(); startGeneration(); }}>
-            <ImageIcon className="h-3 w-3 mr-1" />
+            <ImageIcon className="h-5 w-5 mr-1" />
             생성 시작
           </Button>
         </div>
@@ -1153,18 +1153,18 @@ export function AutoWebtoonPanel({
                   <img src={r.imageUrl} alt="" className="w-full h-full object-cover" />
                 ) : r.status === "generating" ? (
                   <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   </div>
                 ) : r.status === "failed" ? (
                   <div className="flex items-center justify-center h-full bg-destructive/10">
-                    <X className="h-4 w-4 text-destructive" />
+                    <X className="h-5 w-5 text-destructive" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-[9px]">
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
                     {idx + 1}
                   </div>
                 )}
-                <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[8px] px-0.5 rounded">
+                <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[12px] px-0.5 rounded">
                   C{canvasIdx + 1}-{cutIdx + 1}
                 </span>
               </button>
@@ -1235,7 +1235,7 @@ export function AutoWebtoonPanel({
                 disabled={isGenerating}
                 onClick={(e) => { e.stopPropagation(); regenerateSingle(previewIndex); }}
               >
-                <RefreshCw className={`h-3 w-3 mr-1 ${isGenerating && r.status === "generating" ? "animate-spin" : ""}`} />
+                <RefreshCw className={`h-5 w-5 mr-1 ${isGenerating && r.status === "generating" ? "animate-spin" : ""}`} />
                 이 컷만 재생성
               </Button>
             </Card>
@@ -1256,7 +1256,7 @@ export function AutoWebtoonPanel({
                 abortRef.current?.abort();
               }}
             >
-              <X className="h-3 w-3 mr-1" /> 생성 취소
+              <X className="h-5 w-5 mr-1" /> 생성 취소
             </Button>
           )}
           {failedCount > 0 && !isGenerating && (
@@ -1267,7 +1267,7 @@ export function AutoWebtoonPanel({
               className="w-full h-7 text-[13px]"
               onClick={(e) => { e.stopPropagation(); retryFailed(); }}
             >
-              <RefreshCw className="h-3 w-3 mr-1" /> 실패 재시도 ({failedCount}컷)
+              <RefreshCw className="h-5 w-5 mr-1" /> 실패 재시도 ({failedCount}컷)
             </Button>
           )}
           <Button
@@ -1277,7 +1277,7 @@ export function AutoWebtoonPanel({
             disabled={isGenerating || doneCount === 0}
             onClick={(e) => { e.stopPropagation(); applyToEditor(); }}
           >
-            <Wand2 className="h-3.5 w-3.5 mr-1.5" />
+            <Wand2 className="h-5 w-5 mr-1.5" />
             에디터에 적용 ({canvasCount}패널)
           </Button>
           <Button
@@ -1307,7 +1307,7 @@ export function AutoWebtoonPanel({
           { num: 3, label: "생성" },
         ].map(({ num, label }, i) => (
           <div key={num} className="flex items-center gap-1">
-            {i > 0 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
+            {i > 0 && <ArrowRight className="h-5 w-5 text-muted-foreground" />}
             <div
               className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium transition-colors ${
                 step === num
@@ -1317,7 +1317,7 @@ export function AutoWebtoonPanel({
                     : "bg-muted text-muted-foreground"
               }`}
             >
-              {step > num ? <Check className="h-2.5 w-2.5" /> : <span>{num}</span>}
+              {step > num ? <Check className="h-5 w-5" /> : <span>{num}</span>}
               {label}
             </div>
           </div>

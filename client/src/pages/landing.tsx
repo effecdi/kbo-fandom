@@ -144,7 +144,7 @@ export default function LandingPage() {
             className="mb-6"
           >
             <Badge variant="secondary" className="text-sm px-4 py-1.5" data-testid="badge-hero">
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              <Sparkles className="h-5 w-5 mr-1.5" />
               AI 인스타툰 자동화
             </Badge>
           </motion.div>
@@ -239,15 +239,15 @@ export default function LandingPage() {
             className="flex items-center justify-center gap-5 text-sm text-muted-foreground flex-wrap"
           >
             <span className="flex items-center gap-1.5" data-testid="text-hero-free-daily">
-              <Zap className="h-3.5 w-3.5 text-primary" />
+              <Zap className="h-5 w-5 text-primary" />
               첫 가입 후 3회 무료
             </span>
             <span className="flex items-center gap-1.5" data-testid="text-hero-no-card">
-              <Check className="h-3.5 w-3.5 text-primary" />
+              <Check className="h-5 w-5 text-primary" />
               카드 등록 불필요
             </span>
             <span className="flex items-center gap-1.5">
-              <Palette className="h-3.5 w-3.5 text-primary" />
+              <Palette className="h-5 w-5 text-primary" />
               3가지 무료 스타일
             </span>
           </motion.div>
@@ -421,9 +421,9 @@ export default function LandingPage() {
                     ].map((f) => (
                       <li key={f.text} className="flex items-center gap-2.5">
                         {f.ok ? (
-                          <Check className="h-4 w-4 shrink-0 text-emerald-500 dark:text-teal-300" />
+                          <Check className="h-5 w-5 shrink-0 text-emerald-500 dark:text-teal-300" />
                         ) : (
-                          <X className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500/60" />
+                          <X className="h-5 w-5 shrink-0 text-slate-300 dark:text-slate-500/60" />
                         )}
                         <span className={f.ok ? "text-foreground" : "text-muted-foreground"}>{f.text}</span>
                       </li>
@@ -473,7 +473,7 @@ export default function LandingPage() {
                       "우선 지원",
                     ].map((text) => (
                       <li key={text} className="flex items-center gap-2.5">
-                        <Check className="h-4 w-4 shrink-0 text-primary-foreground" />
+                        <Check className="h-5 w-5 shrink-0 text-primary-foreground" />
                         <span className="text-primary-foreground/95">{text}</span>
                       </li>
                     ))}

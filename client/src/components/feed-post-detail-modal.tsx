@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, Calendar, Eye, Trash2 } from "lucide-react";
+import { CommentSection } from "@/components/fandom/comment-section";
 import type { FeedPostWithAuthor } from "@shared/schema";
 
 const GENRE_LABELS: Record<string, string> = {
@@ -109,7 +110,7 @@ export function FeedPostDetailModal({ post, onClose, onAuthorClick }: FeedPostDe
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate">{displayName}</p>
                   {post.authorGenre && (
-                    <Badge variant="secondary" className="text-[9px] mt-0.5">
+                    <Badge variant="secondary" className="text-[12px] mt-0.5">
                       {GENRE_LABELS[post.authorGenre] || post.authorGenre}
                     </Badge>
                   )}
@@ -126,16 +127,19 @@ export function FeedPostDetailModal({ post, onClose, onAuthorClick }: FeedPostDe
 
             <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Eye className="h-3.5 w-3.5" />
+                <Eye className="h-5 w-5" />
                 {post.viewCount}
               </span>
               <span className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5" />
+                <Calendar className="h-5 w-5" />
                 {createdAt.toLocaleDateString()}
               </span>
             </div>
 
-            <div className="flex-1" />
+            {/* Comments */}
+            <div className="border-t border-border pt-3">
+              <CommentSection postId={String(post.id)} />
+            </div>
 
             <div className="flex items-center gap-2 pt-2 border-t">
               <Button
@@ -159,7 +163,7 @@ export function FeedPostDetailModal({ post, onClose, onAuthorClick }: FeedPostDe
                   }}
                   disabled={deleteMutation.isPending}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-5 w-5" />
                   Delete
                 </Button>
               )}

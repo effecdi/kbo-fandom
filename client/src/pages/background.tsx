@@ -220,7 +220,7 @@ export default function BackgroundPage() {
                         onClick={() => removeSource(idx)}
                         className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-5 w-5" />
                       </button>
                     </div>
                   ))}
@@ -312,7 +312,7 @@ export default function BackgroundPage() {
             <div className="flex flex-col gap-4">
               <div>
                 <Label className="text-sm font-medium mb-2 flex items-center gap-1">
-                  <Trees className="h-3.5 w-3.5" />
+                  <Trees className="h-5 w-5" />
                   배경 설명
                 </Label>
                 <Textarea
@@ -325,7 +325,7 @@ export default function BackgroundPage() {
               </div>
               <div>
                 <Label className="text-sm font-medium mb-2 flex items-center gap-1">
-                  <Package className="h-3.5 w-3.5" />
+                  <Package className="h-5 w-5" />
                   아이템 (선택사항)
                 </Label>
                 <Input
@@ -344,9 +344,9 @@ export default function BackgroundPage() {
                   data-testid="button-ai-prompt-background"
                 >
                   {aiPromptMutation.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    <Loader2 className="h-5 w-5 animate-spin mr-1.5" />
                   ) : (
-                    <Bot className="h-3.5 w-3.5 mr-1.5" />
+                    <Bot className="h-5 w-5 mr-1.5" />
                   )}
                   AI 프롬프트
                 </Button>
@@ -363,12 +363,12 @@ export default function BackgroundPage() {
           >
             {bgMutation.isPending ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
                 배경 생성 중...
               </>
             ) : (
               <>
-                <Trees className="h-4 w-4" />
+                <Trees className="h-5 w-5" />
                 {sourceImages.length > 1
                   ? `${sourceImages.length}캐릭터 배경 생성하기`
                   : "배경 생성하기"}
@@ -415,7 +415,7 @@ export default function BackgroundPage() {
                     onClick={() => downloadImage(bgResultImage)}
                     data-testid="button-download-bg"
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-5 w-5" />
                     다운로드
                   </Button>
                   <Button
@@ -424,7 +424,7 @@ export default function BackgroundPage() {
                     onClick={resetAll}
                     data-testid="button-new-bg"
                   >
-                    <RotateCcw className="h-4 w-4" />
+                    <RotateCcw className="h-5 w-5" />
                     다시 만들기
                   </Button>
                 </div>
@@ -446,11 +446,11 @@ export default function BackgroundPage() {
       {isFlow && (
         <div className="flex gap-3 mt-6">
           <Button variant="outline" className="gap-2" onClick={() => navigate(`/pose?characterId=${getFlowState().selectedCharacterIds[0] || ""}&flow=1`)} data-testid="button-flow-prev">
-            <ArrowLeft className="h-4 w-4" /> 포즈/표정
+            <ArrowLeft className="h-5 w-5" /> 포즈/표정
           </Button>
           <div className="flex-1" />
           <Button className="gap-2" onClick={() => { if (bgResultImage) setFlowState({ lastPoseImageUrl: bgResultImage }); navigate("/effects?flow=1"); }} data-testid="button-flow-next">
-            효과 <ArrowRight className="h-4 w-4" />
+            효과 <ArrowRight className="h-5 w-5" />
           </Button>
         </div>
       )}

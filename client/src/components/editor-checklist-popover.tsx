@@ -88,7 +88,7 @@ export function EditorChecklistPopover({
                 className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted transition-colors"
                 title="최소화"
               >
-                <MinusIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                <MinusIcon className="h-5 w-5 text-muted-foreground" />
               </button>
             </div>
 
@@ -122,12 +122,12 @@ export function EditorChecklistPopover({
                           : "border-border bg-background"
                       }`}
                     >
-                      {done && <Check className="h-3 w-3 text-white" />}
+                      {done && <Check className="h-5 w-5 text-white" />}
                     </div>
 
                     {/* Icon */}
                     <Icon
-                      className={`h-4 w-4 shrink-0 ${
+                      className={`h-5 w-5 shrink-0 ${
                         done ? "text-muted-foreground" : "text-foreground/70"
                       }`}
                     />

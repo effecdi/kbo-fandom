@@ -278,7 +278,7 @@ export default function CreateInstatoonPage() {
         onClick={() => navigate("/create")}
         className="mb-4 inline-flex items-center text-[13px] text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+        <ArrowLeft className="h-5 w-5 mr-1" />
         캐릭터 만들기로 돌아가기
       </button>
 
@@ -304,7 +304,7 @@ export default function CreateInstatoonPage() {
                 }`}
               >
                 <span className="flex items-center gap-1.5">
-                  <ImageIcon className="h-3.5 w-3.5" />
+                  <ImageIcon className="h-5 w-5" />
                   이미지 선택
                 </span>
               </button>
@@ -316,7 +316,7 @@ export default function CreateInstatoonPage() {
                 }`}
               >
                 <span className="flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <Sparkles className="h-5 w-5" />
                   프롬프트
                 </span>
               </button>
@@ -328,7 +328,7 @@ export default function CreateInstatoonPage() {
                 }`}
               >
                 <span className="flex items-center gap-1.5">
-                  <Type className="h-3.5 w-3.5" />
+                  <Type className="h-5 w-5" />
                   자막 설정
                 </span>
               </button>
@@ -340,7 +340,7 @@ export default function CreateInstatoonPage() {
                 }`}
               >
                 <span className="flex items-center gap-1.5">
-                  <MessageCircle className="h-3.5 w-3.5" />
+                  <MessageCircle className="h-5 w-5" />
                   말풍선
                 </span>
               </button>
@@ -374,7 +374,7 @@ export default function CreateInstatoonPage() {
                       }}
                       data-testid="button-clear-instatoon-base"
                     >
-                      <ImageIcon className="h-4 w-4" />
+                      <ImageIcon className="h-5 w-5" />
                     </Button>
                   </div>
                 ) : (
@@ -442,7 +442,7 @@ export default function CreateInstatoonPage() {
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
+                    <Sparkles className="h-5 w-5 text-primary" />
                     <h3 className="text-sm font-medium">인스타툰 프롬프트</h3>
                   </div>
                   <Button
@@ -453,9 +453,9 @@ export default function CreateInstatoonPage() {
                     data-testid="button-ai-prompt-instatoon"
                   >
                     {aiPromptMutation.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                      <Loader2 className="h-5 w-5 animate-spin mr-1.5" />
                     ) : (
-                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                      <Sparkles className="h-5 w-5 mr-1.5" />
                     )}
                     AI 프롬프트
                   </Button>
@@ -482,12 +482,12 @@ export default function CreateInstatoonPage() {
                 >
                   {generateMutation.isPending ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                       인스타툰 생성 중...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-4 w-4" />
+                      <Sparkles className="h-5 w-5" />
                       인스타툰 생성하기
                     </>
                   )}
@@ -511,17 +511,17 @@ export default function CreateInstatoonPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <Label className="text-[13px] font-medium flex items-center gap-1">
-                      <Type className="h-3.5 w-3.5" />
+                      <Type className="h-5 w-5" />
                       상단 자막
                     </Label>
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6"
+                      className="h-8 w-8"
                       onClick={() => setTopCaptions((prev) => [...prev, ""])}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-5 w-5" />
                     </Button>
                   </div>
                   <div className="space-y-2">
@@ -539,12 +539,12 @@ export default function CreateInstatoonPage() {
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className="h-8 w-8"
                           onClick={() =>
                             setTopCaptions((prev) => prev.filter((_, i) => i !== index))
                           }
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                          <Trash2 className="h-5 w-5 text-red-500" />
                         </Button>
                       </div>
                     ))}
@@ -556,7 +556,7 @@ export default function CreateInstatoonPage() {
                         className="w-full justify-center gap-1.5 text-[13px]"
                         onClick={() => setTopCaptions([""])}
                       >
-                        <Plus className="h-3.5 w-3.5" />
+                        <Plus className="h-5 w-5" />
                         상단 자막 추가
                       </Button>
                     )}
@@ -566,17 +566,17 @@ export default function CreateInstatoonPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <Label className="text-[13px] font-medium flex items-center gap-1">
-                      <Type className="h-3.5 w-3.5" />
+                      <Type className="h-5 w-5" />
                       하단 자막
                     </Label>
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6"
+                      className="h-8 w-8"
                       onClick={() => setBottomCaptions((prev) => [...prev, ""])}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-5 w-5" />
                     </Button>
                   </div>
                   <div className="space-y-2">
@@ -594,12 +594,12 @@ export default function CreateInstatoonPage() {
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className="h-8 w-8"
                           onClick={() =>
                             setBottomCaptions((prev) => prev.filter((_, i) => i !== index))
                           }
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                          <Trash2 className="h-5 w-5 text-red-500" />
                         </Button>
                       </div>
                     ))}
@@ -611,7 +611,7 @@ export default function CreateInstatoonPage() {
                         className="w-full justify-center gap-1.5 text-[13px]"
                         onClick={() => setBottomCaptions([""])}
                       >
-                        <Plus className="h-3.5 w-3.5" />
+                        <Plus className="h-5 w-5" />
                         하단 자막 추가
                       </Button>
                     )}
@@ -625,16 +625,16 @@ export default function CreateInstatoonPage() {
             <Card className="p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                  <MessageCircle className="h-5 w-5 text-muted-foreground" />
                   <h3 className="text-sm font-medium text-muted-foreground">말풍선 설정</h3>
                 </div>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-6 w-6"
+                  className="h-8 w-8"
                   onClick={addSpeechBubble}
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="h-5 w-5" />
                 </Button>
               </div>
 
@@ -659,7 +659,7 @@ export default function CreateInstatoonPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className="h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation();
                           setBubblePage((prev) => ({
@@ -671,7 +671,7 @@ export default function CreateInstatoonPage() {
                           }
                         }}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                        <Trash2 className="h-5 w-5 text-red-500" />
                       </Button>
                     </div>
                   ))
@@ -803,7 +803,7 @@ export default function CreateInstatoonPage() {
               <div className="flex flex-col items-center gap-4 w-full">
                 <Skeleton className="w-full aspect-[4/3] rounded-md" />
                 <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">인스타툰 장면을 생성하는 중...</p>
                 </div>
               </div>
@@ -834,7 +834,7 @@ export default function CreateInstatoonPage() {
                     disabled={!canDownload}
                     data-testid="button-download-instatoon"
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-5 w-5" />
                     다운로드
                   </Button>
                 </div>

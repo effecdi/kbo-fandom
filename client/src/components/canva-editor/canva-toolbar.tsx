@@ -10,14 +10,22 @@ import {
   CornerDownRight,
   Type,
   X,
+  Square,
+  Circle,
+  Triangle,
+  Diamond,
+  Star,
+  ArrowRight,
 } from "lucide-react";
 import type {
   ToolMode,
   DrawSubTool,
   LineSubTool,
+  ShapeSubTool,
   DrawingConfig,
   LineConfig,
   TextConfig,
+  ShapeConfig,
 } from "./types";
 import { COLOR_PRESETS, FONT_OPTIONS } from "./types";
 
@@ -41,6 +49,15 @@ const LINE_SUB_TOOLS: SubToolDef[] = [
   { id: "polyline", label: "꺾인선", icon: CornerDownRight },
 ];
 
+const SHAPE_SUB_TOOLS: SubToolDef[] = [
+  { id: "rectangle", label: "사각형", icon: Square },
+  { id: "circle", label: "원형", icon: Circle },
+  { id: "triangle", label: "삼각형", icon: Triangle },
+  { id: "diamond", label: "마름모", icon: Diamond },
+  { id: "star", label: "별", icon: Star },
+  { id: "arrow", label: "화살표", icon: ArrowRight },
+];
+
 // ─── Props ──────────────────────────────────────────────────────────────────
 
 interface CanvaToolbarProps {
@@ -52,6 +69,8 @@ interface CanvaToolbarProps {
   onLineConfigChange: (config: LineConfig) => void;
   textConfig: TextConfig;
   onTextConfigChange: (config: TextConfig) => void;
+  shapeConfig: ShapeConfig;
+  onShapeConfigChange: (config: ShapeConfig) => void;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -65,8 +84,10 @@ export default function CanvaToolbar({
   onLineConfigChange,
   textConfig,
   onTextConfigChange,
+  shapeConfig,
+  onShapeConfigChange,
 }: CanvaToolbarProps) {
-  const [expandedMenu, setExpandedMenu] = useState<"draw" | "line" | "text" | null>(null);
+  const [expandedMenu, setExpandedMenu] = useState<"draw" | "line" | "text" | "shape" | null>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
 
   // Close submenu on outside click
@@ -85,7 +106,7 @@ export default function CanvaToolbar({
   }, []);
 
   const handleToolClick = useCallback(
-    (mode: ToolMode, menu?: "draw" | "line" | "text") => {
+    (mode: ToolMode, menu?: "draw" | "line" | "text" | "shape") => {
       onToolModeChange(mode);
       if (menu) {
         setExpandedMenu((prev) => (prev === menu ? null : menu));
@@ -102,13 +123,14 @@ export default function CanvaToolbar({
     id: ToolMode;
     icon: typeof Pen;
     label: string;
-    menu?: "draw" | "line" | "text";
+    menu?: "draw" | "line" | "text" | "shape";
     indicator?: string;
   }[] = [
     { id: "select", icon: MousePointer2, label: "선택" },
     { id: "draw", icon: Pen, label: "드로잉", menu: "draw", indicator: drawConfig.color },
     { id: "eraser", icon: Eraser, label: "지우개" },
     { id: "line", icon: Minus, label: "선", menu: "line", indicator: lineConfig.color },
+    { id: "shape", icon: Square, label: "도형", menu: "shape", indicator: shapeConfig.fill },
     { id: "text", icon: Type, label: "텍스트", menu: "text" },
   ];
 
@@ -126,6 +148,7 @@ export default function CanvaToolbar({
             title={tool.label}
           >
             <tool.icon className="canva-toolbar__btn-icon" />
+            <span className="left-icon-sidebar__label">{tool.label}</span>
             {tool.indicator && toolMode === tool.id && (
               <span
                 className="canva-toolbar__color-dot"
@@ -143,7 +166,7 @@ export default function CanvaToolbar({
             className="canva-toolbar__submenu-close"
             onClick={() => setExpandedMenu(null)}
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="w-5 h-5" />
           </button>
 
           {/* ── Draw sub-tools ── */}
@@ -415,6 +438,102 @@ export default function CanvaToolbar({
 
               <p className="canva-toolbar__hint">
                 캔버스 빈 곳을 클릭하면 텍스트가 생성됩니다.
+              </p>
+            </div>
+          )}
+
+          {/* ── Shape sub-tools ── */}
+          {expandedMenu === "shape" && (
+            <div className="canva-toolbar__submenu-content">
+              <span className="canva-toolbar__submenu-title">도형 종류</span>
+              <div className="canva-toolbar__subtool-list">
+                {SHAPE_SUB_TOOLS.map((st) => (
+                  <button
+                    key={st.id}
+                    className={`canva-toolbar__subtool-btn ${
+                      shapeConfig.subTool === st.id
+                        ? "canva-toolbar__subtool-btn--active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      onShapeConfigChange({
+                        ...shapeConfig,
+                        subTool: st.id as ShapeSubTool,
+                      })
+                    }
+                  >
+                    <st.icon className="h-5 w-5" />
+                    <span>{st.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Fill color */}
+              <span className="canva-toolbar__submenu-title">채우기</span>
+              <div className="canva-toolbar__color-grid">
+                {COLOR_PRESETS.map((c) => (
+                  <button
+                    key={c}
+                    className={`canva-toolbar__color-swatch ${
+                      shapeConfig.fill === c ? "canva-toolbar__color-swatch--active" : ""
+                    }`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => onShapeConfigChange({ ...shapeConfig, fill: c })}
+                  />
+                ))}
+              </div>
+
+              {/* Stroke color */}
+              <span className="canva-toolbar__submenu-title">테두리 색</span>
+              <div className="canva-toolbar__color-grid">
+                {COLOR_PRESETS.map((c) => (
+                  <button
+                    key={c}
+                    className={`canva-toolbar__color-swatch ${
+                      shapeConfig.stroke === c ? "canva-toolbar__color-swatch--active" : ""
+                    }`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => onShapeConfigChange({ ...shapeConfig, stroke: c })}
+                  />
+                ))}
+              </div>
+
+              {/* Stroke width & opacity */}
+              <div className="canva-toolbar__slider-section">
+                <div className="canva-toolbar__slider-row">
+                  <span className="canva-toolbar__slider-label">테두리</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={20}
+                    value={shapeConfig.strokeWidth}
+                    onChange={(e) =>
+                      onShapeConfigChange({ ...shapeConfig, strokeWidth: +e.target.value })
+                    }
+                    className="canva-toolbar__range"
+                  />
+                  <span className="canva-toolbar__slider-value">{shapeConfig.strokeWidth}</span>
+                </div>
+                <div className="canva-toolbar__slider-row">
+                  <span className="canva-toolbar__slider-label">투명도</span>
+                  <input
+                    type="range"
+                    min={5}
+                    max={100}
+                    value={Math.round(shapeConfig.opacity * 100)}
+                    onChange={(e) =>
+                      onShapeConfigChange({ ...shapeConfig, opacity: +e.target.value / 100 })
+                    }
+                    className="canva-toolbar__range"
+                  />
+                  <span className="canva-toolbar__slider-value">
+                    {Math.round(shapeConfig.opacity * 100)}
+                  </span>
+                </div>
+              </div>
+
+              <p className="canva-toolbar__hint">
+                캔버스에서 드래그하여 도형을 그리세요.
               </p>
             </div>
           )}

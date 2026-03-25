@@ -81,7 +81,7 @@ export function AssetsIndex() {
           </div>
           <Link to="/assets/characters/new">
             <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-              <Plus className="w-4 h-4" />
+              <Plus className="w-5 h-5" />
               새 에셋
             </Button>
           </Link>
@@ -97,7 +97,7 @@ export function AssetsIndex() {
               <div className="w-10 h-10 rounded-xl bg-[#00e5cc]/10 flex items-center justify-center">
                 <User className="w-5 h-5 text-[#00e5cc]" />
               </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-[#00e5cc] transition-colors" />
+              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-[#00e5cc] transition-colors" />
             </div>
             <h3 className="text-sm font-bold text-foreground group-hover:text-[#00e5cc] transition-colors">
               새 캐릭터 생성
@@ -153,7 +153,7 @@ export function AssetsIndex() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-5 h-5" />
               {tab.label}
               {tab.count > 0 && (
                 <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{tab.count}</span>
@@ -204,7 +204,7 @@ export function AssetsIndex() {
                 <p className="text-sm text-muted-foreground mt-1 mb-4">AI로 첫 번째 캐릭터를 만들어보세요</p>
                 <Link to="/assets/characters/new">
                   <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-5 h-5" />
                     캐릭터 만들기
                   </Button>
                 </Link>
@@ -248,7 +248,7 @@ export function AssetsIndex() {
                 <p className="text-sm text-muted-foreground mt-1 mb-4">브랜드 자산 관리 페이지에서 추가하세요</p>
                 <Link to="/assets/brand">
                   <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-5 h-5" />
                     브랜드 자산 관리
                   </Button>
                 </Link>

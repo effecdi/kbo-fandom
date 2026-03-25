@@ -179,20 +179,20 @@ export function OnboardingPage() {
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-400">
-                      <Palette className="w-3.5 h-3.5" />
+                      <Palette className="w-5 h-5" />
                       캐릭터 생성
                     </span>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400">
-                      <Instagram className="w-3.5 h-3.5" />
+                      <Instagram className="w-5 h-5" />
                       툰 제작
                     </span>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-400">
-                      <TrendingUp className="w-3.5 h-3.5" />
+                      <TrendingUp className="w-5 h-5" />
                       수익화
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-[#00e5cc] font-bold text-sm group-hover:translate-x-2 transition-transform">
-                    시작하기 <ArrowRight className="w-4 h-4" />
+                    시작하기 <ArrowRight className="w-5 h-5" />
                   </div>
                 </div>
               </button>
@@ -219,20 +219,20 @@ export function OnboardingPage() {
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <Sparkles className="w-5 h-5" />
                       마스코트
                     </span>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400">
-                      <Palette className="w-3.5 h-3.5" />
+                      <Palette className="w-5 h-5" />
                       콘텐츠
                     </span>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
-                      <Users className="w-3.5 h-3.5" />
+                      <Users className="w-5 h-5" />
                       협업
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-blue-500 font-bold text-sm group-hover:translate-x-2 transition-transform">
-                    시작하기 <ArrowRight className="w-4 h-4" />
+                    시작하기 <ArrowRight className="w-5 h-5" />
                   </div>
                 </div>
               </button>
@@ -307,7 +307,7 @@ export function OnboardingPage() {
                 onClick={() => setStep(1)}
                 className=""
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-5 h-5 mr-2" />
                 이전
               </Button>
               <Button
@@ -316,7 +316,7 @@ export function OnboardingPage() {
                 className="bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 다음
-                <ChevronRight className="w-4 h-4 ml-2" />
+                <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -389,7 +389,7 @@ export function OnboardingPage() {
                 onClick={() => setStep(1)}
                 className=""
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-5 h-5 mr-2" />
                 이전
               </Button>
               <Button
@@ -398,7 +398,7 @@ export function OnboardingPage() {
                 className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 다음
-                <ChevronRight className="w-4 h-4 ml-2" />
+                <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -464,7 +464,7 @@ export function OnboardingPage() {
                 onClick={() => setStep(2)}
                 className=""
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-5 h-5 mr-2" />
                 이전
               </Button>
               <Button
@@ -473,7 +473,7 @@ export function OnboardingPage() {
                 className="bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 다음
-                <ChevronRight className="w-4 h-4 ml-2" />
+                <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -544,7 +544,7 @@ export function OnboardingPage() {
                 onClick={() => setStep(2)}
                 className=""
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-5 h-5 mr-2" />
                 이전
               </Button>
               <Button
@@ -553,7 +553,7 @@ export function OnboardingPage() {
                 className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 다음
-                <ChevronRight className="w-4 h-4 ml-2" />
+                <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
