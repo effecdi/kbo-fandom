@@ -59,10 +59,10 @@ export function NotFound() {
                 작가 대시보드
               </button>
               <button
-                onClick={() => navigate("/business/dashboard")}
+                onClick={() => navigate("/feed")}
                 className="p-3 rounded-xl text-sm font-semibold transition-all bg-muted text-foreground hover:bg-muted/80"
               >
-                기업 대시보드
+                팬덤 피드
               </button>
               <button
                 onClick={() => navigate("/pricing")}

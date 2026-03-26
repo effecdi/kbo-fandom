@@ -1,156 +1,81 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, ArrowLeft, Sparkles, Zap, Crown, Building2, Wand2, ChevronDown, Star, Rocket, Shield } from "lucide-react";
+import { Check, ArrowLeft, Sparkles, Zap, Crown, ChevronDown, Star } from "lucide-react";
 import { useNavigate } from "react-router";
 
 export function Pricing() {
   const navigate = useNavigate();
-  const [selectedType, setSelectedType] = useState<"creator" | "business">("creator");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const creatorPlans = [
+  const plans = [
     {
-      name: "Free",
+      name: "팬 시작",
       price: "₩0",
       period: "/월",
       icon: Sparkles,
-      description: "인스타툰 제작을 시작해보세요",
+      description: "무료로 팬아트 생성을 시작해보세요",
       features: [
-        "캐릭터 생성 월 5회",
-        "기본 스토리 에디터",
-        "기본 템플릿 라이브러리",
-        "저장 공간 1GB",
-        "커뮤니티 지원",
-        "OLLI 워터마크 포함",
+        "AI 팬아트 생성 월 5회",
+        "기본 팬아트 에디터",
+        "그룹 팔로우 3개",
+        "팬톡 참여",
+        "커뮤니티 피드 이용",
+        "워터마크 포함",
       ],
       cta: "무료 시작",
     },
     {
-      name: "Pro",
+      name: "팬 크리에이터",
       price: "₩29,000",
       period: "/월",
       popular: true,
       icon: Zap,
-      description: "전문 작가를 위한 모든 기능",
+      description: "AI 팬아트를 무제한으로 만들고 이벤트에 참여하세요",
       highlight: "월 500 크레딧",
       features: [
         "AI 크레딧 월 500개",
-        "캐릭터 생성 무제한",
-        "모든 AI 도구 이용",
-        "고급 스토리 에디터",
-        "저장 공간 10GB",
+        "AI 팬아트 생성 무제한",
+        "모든 AI 스타일 이용",
+        "그룹 팔로우 무제한",
+        "이벤트 참여 및 응모",
         "워터마크 제거",
-        "프리미엄 템플릿 라이브러리",
-        "Ad Match AI (광고 매칭)",
-        "미디어키트 기능",
+        "프리미엄 팬아트 템플릿",
+        "팬 크리에이터 프로필 배지",
         "우선 지원",
       ],
-      cta: "Pro 시작하기",
+      cta: "크리에이터 시작하기",
     },
     {
-      name: "Premium",
+      name: "팬덤 마스터",
       price: "₩99,000",
       period: "/월",
       icon: Crown,
-      description: "최고급 기능과 전담 지원",
+      description: "프리미엄 도구와 우선 노출로 팬덤을 리드하세요",
       highlight: "월 2000 크레딧",
       features: [
         "AI 크레딧 월 2000개",
-        "Pro 기능 전체",
-        "저장 공간 50GB",
+        "팬 크리에이터 기능 전체",
         "고급 AI 스타일 (프리미엄 모델)",
-        "AI 자동 스토리 생성",
-        "고급 분석 대시보드",
-        "협업 관리 툴",
-        "프리미엄 광고 매칭 우선권",
-        "브랜드 협업 우선 추천",
-        "1:1 전담 매니저",
+        "AI 자동 인스타툰 생성",
+        "팬아트 피드 우선 노출",
+        "팬덤 마스터 배지",
+        "이벤트 우선 참여권",
+        "고급 활동 분석 대시보드",
+        "1:1 전담 지원",
         "API 접근 권한",
       ],
-      cta: "Premium 시작하기",
+      cta: "마스터 시작하기",
     },
   ];
-
-  const businessPlans = [
-    {
-      name: "Starter",
-      price: "₩29,000",
-      period: "/월",
-      icon: Rocket,
-      description: "소규모 팀을 위한 시작",
-      highlight: "월 500 크레딧",
-      features: [
-        "AI 크레딧 월 500개",
-        "마스코트 생성 월 10회",
-        "작가 탐색 기능",
-        "캠페인 관리 3개",
-        "기본 분석 리포트",
-        "팀 멤버 2명",
-        "저장 공간 5GB",
-        "이메일 지원",
-      ],
-      cta: "시작하기",
-    },
-    {
-      name: "Business",
-      price: "₩99,000",
-      period: "/월",
-      popular: true,
-      icon: Building2,
-      description: "중소기업 및 공공기관용",
-      highlight: "무제한 생성",
-      features: [
-        "마스코트 생성 무제한",
-        "고급 작가 매칭 AI",
-        "캠페인 관리 무제한",
-        "상세 분석 리포트",
-        "팀 협업 (최대 10명)",
-        "저장 공간 50GB",
-        "브랜드 자산 관리",
-        "승인 워크플로우",
-        "버전 관리 시스템",
-        "검토 및 내부 승인 기능",
-        "일관된 자산 라이브러리",
-        "우선 지원",
-      ],
-      cta: "시작하기",
-    },
-    {
-      name: "Enterprise",
-      price: "맞춤 견적",
-      period: "",
-      icon: Shield,
-      description: "대기업 및 대형 공공기관용",
-      highlight: "완전한 맞춤 솔루션",
-      features: [
-        "Business 기능 전체",
-        "전용 계정 매니저",
-        "팀 협업 무제한",
-        "무제한 저장 공간",
-        "API 접근 및 통합",
-        "맞춤형 AI 모델 학습",
-        "고급 승인 워크플로우",
-        "SSO/SAML 인증",
-        "계약서 맞춤 작성",
-        "규정 준수 지원",
-        "온프레미스 배포 옵션",
-        "24/7 프리미엄 전화 지원",
-      ],
-      cta: "문의하기",
-    },
-  ];
-
-  const plans = selectedType === "creator" ? creatorPlans : businessPlans;
 
   const faqs = [
     {
       q: "무료 체험이 가능한가요?",
-      a: "네, Free 플랜으로 언제든지 시작하실 수 있습니다. 신용카드 등록 없이 바로 이용 가능하며, 필요할 때 언제든지 유료 플랜으로 업그레이드할 수 있습니다."
+      a: "네, 팬 시작 플랜으로 언제든지 시작하실 수 있습니다. 신용카드 등록 없이 바로 이용 가능하며, 필요할 때 언제든지 유료 플랜으로 업그레이드할 수 있습니다."
     },
     {
       q: "크레딧은 무엇인가요?",
-      a: "크레딧은 AI 기능(캐릭터 생성, 이미지 생성, 스타일 변환 등)을 사용할 때 소모되는 단위입니다. Pro는 월 500크레딧, Premium은 월 2000크레딧이 제공되며, 사용하지 않은 크레딧은 다음 달로 이월되지 않습니다."
+      a: "크레딧은 AI 기능(팬아트 생성, 이미지 생성, 스타일 변환 등)을 사용할 때 소모되는 단위입니다. 팬 크리에이터는 월 500크레딧, 팬덤 마스터는 월 2000크레딧이 제공되며, 사용하지 않은 크레딧은 다음 달로 이월되지 않습니다."
     },
     {
       q: "플랜은 언제든지 변경할 수 있나요?",
@@ -161,12 +86,12 @@ export function Pricing() {
       a: "결제 후 7일 이내 100% 환불이 가능합니다. 단, 크레딧을 사용하지 않은 경우에 한하며, 환불 요청 시 즉시 처리됩니다."
     },
     {
-      q: "Enterprise 플랜은 어떻게 신청하나요?",
-      a: "Enterprise 플랜은 조직의 규모와 요구사항에 따라 맞춤형 견적으로 제공됩니다. '문의하기' 버튼을 클릭하여 영업팀에 연락주시면 1영업일 내 상담해드립니다."
+      q: "팬아트는 어떤 그룹을 지원하나요?",
+      a: "BTS, BLACKPINK, NewJeans, aespa, Stray Kids, SEVENTEEN, IVE, LE SSERAFIM 등 주요 K-POP 그룹을 지원하며, 지속적으로 새로운 그룹이 추가됩니다."
     },
     {
-      q: "공공기관도 이용할 수 있나요?",
-      a: "네, 관공서, 공공기관, 비영리단체 모두 Business 또는 Enterprise 플랜을 이용하실 수 있습니다. 특히 승인 워크플로우, 버전 관리, 검토 프로세스 등 공공 업무에 필요한 기능이 포함되어 있습니다."
+      q: "이벤트는 어떻게 참여하나요?",
+      a: "팬 크리에이터 이상 플랜에서 이벤트에 참여할 수 있습니다. 팬아트 챌린지, 밈 콘테스트, 기념일 이벤트 등 다양한 이벤트가 진행되며, 수상 시 공식 굿즈와 포토카드 등을 받을 수 있습니다."
     },
   ];
 
@@ -191,41 +116,15 @@ export function Pricing() {
         <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#00e5cc]/20 to-[#00b3a6]/20 rounded-full px-4 py-2 mb-6">
           <Sparkles className="w-5 h-5 text-[#00e5cc]" />
           <span className="text-sm font-bold text-teal-600 dark:text-[#00e5cc]">
-            모든 규모에 맞는 요금제
+            K-POP 팬덤 요금제
           </span>
         </div>
         <h1 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
-          성장에 맞춘 유연한 가격
+          팬덤 활동에 맞춘 요금제
         </h1>
-        <p className="text-lg md:text-xl mb-8 text-muted-foreground">
-          무료로 시작하고, 필요할 때 업그레이드하세요
+        <p className="text-lg md:text-xl mb-12 text-muted-foreground">
+          무료로 시작하고, 팬 크리에이터로 성장하세요
         </p>
-
-        {/* Type Toggle */}
-        <div className="inline-flex p-1.5 rounded-2xl mb-12 bg-card border border-border shadow-sm">
-          <button
-            onClick={() => setSelectedType("creator")}
-            className={`px-8 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
-              selectedType === "creator"
-                ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Wand2 className="w-5 h-5" />
-            작가 요금제
-          </button>
-          <button
-            onClick={() => setSelectedType("business")}
-            className={`px-8 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
-              selectedType === "business"
-                ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Building2 className="w-5 h-5" />
-            기업/기관 요금제
-          </button>
-        </div>
       </div>
 
       {/* Pricing Cards */}
@@ -238,20 +137,14 @@ export function Pricing() {
                 key={index}
                 className={`rounded-3xl p-8 border-2 transition-all relative overflow-hidden ${
                   plan.popular
-                    ? selectedType === "creator"
-                      ? "border-teal-500 bg-card shadow-2xl scale-105"
-                      : "border-blue-500 bg-card shadow-2xl scale-105"
+                    ? "border-teal-500 bg-card shadow-2xl scale-105"
                     : "border-border bg-card hover:border-border hover:shadow-lg"
                 }`}
               >
                 {/* Popular Badge */}
                 {plan.popular && (
                   <div className="absolute top-0 right-0 -mr-1 -mt-1">
-                    <div className={`${
-                      selectedType === "creator"
-                        ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6]"
-                        : "bg-gradient-to-r from-blue-500 to-indigo-500"
-                    } text-white px-4 py-1.5 rounded-bl-2xl rounded-tr-2xl font-bold text-xs shadow-lg flex items-center gap-1`}>
+                    <div className="bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white px-4 py-1.5 rounded-bl-2xl rounded-tr-2xl font-bold text-xs shadow-lg flex items-center gap-1">
                       <Star className="w-5 h-5" />
                       인기
                     </div>
@@ -261,9 +154,7 @@ export function Pricing() {
                 {/* Icon */}
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${
                   plan.popular
-                    ? selectedType === "creator"
-                      ? "bg-gradient-to-br from-[#00e5cc] to-[#00b3a6]"
-                      : "bg-gradient-to-br from-blue-500 to-indigo-500"
+                    ? "bg-gradient-to-br from-[#00e5cc] to-[#00b3a6]"
                     : "bg-muted"
                 }`}>
                   <Icon className={`w-7 h-7 ${
@@ -293,11 +184,7 @@ export function Pricing() {
 
                 {/* Highlight */}
                 {plan.highlight && (
-                  <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold mb-6 ${
-                    selectedType === "creator"
-                      ? "bg-teal-100 text-teal-700 dark:bg-[#00e5cc]/20 dark:text-[#00e5cc]"
-                      : "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
-                  }`}>
+                  <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold mb-6 bg-teal-100 text-teal-700 dark:bg-[#00e5cc]/20 dark:text-[#00e5cc]">
                     <Sparkles className="w-5 h-5" />
                     {plan.highlight}
                   </div>
@@ -309,16 +196,12 @@ export function Pricing() {
                     <li key={i} className="flex items-start gap-3">
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                         plan.popular
-                          ? selectedType === "creator"
-                            ? "bg-[#00e5cc]/20"
-                            : "bg-blue-500/20"
+                          ? "bg-[#00e5cc]/20"
                           : "bg-muted"
                       }`}>
                         <Check className={`w-5 h-5 ${
                           plan.popular
-                            ? selectedType === "creator"
-                              ? "text-[#00e5cc]"
-                              : "text-blue-500"
+                            ? "text-[#00e5cc]"
                             : "text-muted-foreground"
                         }`} />
                       </div>
@@ -333,20 +216,11 @@ export function Pricing() {
                 <Button
                   className={`w-full h-12 font-bold ${
                     plan.popular
-                      ? selectedType === "creator"
-                        ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white hover:shadow-xl"
-                        : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-xl"
+                      ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white hover:shadow-xl"
                       : ""
                   }`}
                   variant={plan.popular ? "default" : "outline"}
-                  onClick={() => {
-                    if (plan.name === "Enterprise") {
-                      // Navigate to contact page
-                      navigate("/contact");
-                    } else {
-                      navigate("/signup");
-                    }
-                  }}
+                  onClick={() => navigate("/signup")}
                 >
                   {plan.cta}
                 </Button>
@@ -362,15 +236,9 @@ export function Pricing() {
           <h3 className="font-bold mb-3 text-foreground">
             모든 플랜에 포함된 기본 기능
           </h3>
-          <p className="text-sm mb-4 text-muted-foreground">
-            모든 플랜에는 기본 보안, 정기 업데이트, 커뮤니티 접근이 포함됩니다.
+          <p className="text-sm text-muted-foreground">
+            모든 플랜에는 기본 보안, 정기 업데이트, K-POP 팬덤 커뮤니티 접근이 포함됩니다.
           </p>
-          {selectedType === "business" && (
-            <p className="text-sm text-muted-foreground">
-              💼 기업 플랜은 <strong>관공서, 공공기관, 비영리단체</strong>도 이용 가능하며,<br />
-              <strong>승인 프로세스, 버전 관리, 검토 기능</strong>이 포함되어 안전한 업무 환경을 제공합니다.
-            </p>
-          )}
         </div>
       </div>
 
@@ -412,26 +280,19 @@ export function Pricing() {
       </div>
 
       {/* CTA */}
-      <div className={`py-20 ${
-        selectedType === "creator"
-          ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6]"
-          : "bg-gradient-to-r from-blue-500 to-indigo-500"
-      }`}>
+      <div className="py-20 bg-gradient-to-r from-[#00e5cc] to-[#00b3a6]">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
             지금 바로 시작하세요
           </h2>
           <p className="text-lg md:text-xl text-white/90 mb-8">
-            {selectedType === "creator"
-              ? "무료로 시작하고 AI 인스타툰의 세계를 경험하세요"
-              : "브랜드 마스코트를 생성하고 작가와 협업하세요"
-            }
+            무료로 시작하고 K-POP 팬아트의 세계를 경험하세요
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
               className="bg-white hover:bg-muted font-bold h-14 px-8"
-              style={{ color: selectedType === "creator" ? "#00b3a6" : "#4f46e5" }}
+              style={{ color: "#00b3a6" }}
               onClick={() => navigate("/signup")}
             >
               무료로 시작하기
@@ -440,9 +301,9 @@ export function Pricing() {
               size="lg"
               variant="outline"
               className="text-white border-2 border-white hover:bg-white/10 font-bold h-14 px-8"
-              onClick={() => navigate(selectedType === "creator" ? "/creator" : "/business")}
+              onClick={() => navigate("/fandom")}
             >
-              더 알아보기
+              팬덤 둘러보기
             </Button>
           </div>
         </div>

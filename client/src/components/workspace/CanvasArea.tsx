@@ -15,6 +15,7 @@ import { useWorkspace, useActiveCut, useCanvasRef } from "@/hooks/use-workspace"
 import { useProgressiveUI } from "@/hooks/use-progressive-ui";
 import type { CutBubble, CutScript, CanvasLayer, CanvasAspectRatio } from "@/lib/workspace-types";
 import { TEMPLATE_RATIOS } from "@/lib/fandom-templates";
+import { mmToPx } from "@/lib/fandom-goods-config";
 import {
   RectangleHorizontal,
   Square,
@@ -172,7 +173,15 @@ export function CanvasArea() {
   // Right-click context menu
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
-  const dims = CANVAS_DIMS[state.canvasAspectRatio];
+  // DPI-aware canvas dimensions: if printSettings exist, compute from physical size
+  const printSettings = state.printSettings;
+  const baseDims = CANVAS_DIMS[state.canvasAspectRatio];
+  const dims = printSettings
+    ? {
+        w: Math.min(mmToPx(printSettings.physicalWidthMm, 72), 1200), // Cap at 1200px for editor performance
+        h: Math.min(mmToPx(printSettings.physicalHeightMm, 72), 1600),
+      }
+    : baseDims;
 
   // ── Auto-fit canvas to container ──────────────────────────────────────────
   const fitToViewRef = useRef<() => void>(() => {});
@@ -682,6 +691,52 @@ export function CanvasArea() {
               onObjectSelected={handleObjectSelected}
               backgroundImage={activeCut?.backgroundImageUrl}
             />
+
+            {/* Print guide overlays (bleed/trim/safezone) */}
+            {printSettings && (
+              <svg
+                className="absolute inset-0 pointer-events-none z-[5]"
+                width={dims.w}
+                height={dims.h}
+                viewBox={`0 0 ${dims.w} ${dims.h}`}
+              >
+                {/* Bleed marks */}
+                {printSettings.showBleedMarks && (() => {
+                  const bleedPx = mmToPx(printSettings.bleedMm, 72);
+                  return (
+                    <rect
+                      x={0} y={0} width={dims.w} height={dims.h}
+                      fill="none" stroke="#FF000040" strokeWidth={1}
+                      strokeDasharray="6 3"
+                    />
+                  );
+                })()}
+                {/* Trim lines */}
+                {printSettings.showTrimLines && (() => {
+                  const bleedPx = mmToPx(printSettings.bleedMm, 72);
+                  return (
+                    <rect
+                      x={bleedPx} y={bleedPx}
+                      width={dims.w - bleedPx * 2} height={dims.h - bleedPx * 2}
+                      fill="none" stroke="#00FF0050" strokeWidth={1}
+                      strokeDasharray="8 4"
+                    />
+                  );
+                })()}
+                {/* Safe zone */}
+                {printSettings.showSafeZone && (() => {
+                  const safePx = mmToPx(5, 72); // 5mm safe zone
+                  return (
+                    <rect
+                      x={safePx} y={safePx}
+                      width={dims.w - safePx * 2} height={dims.h - safePx * 2}
+                      fill="none" stroke="#0088FF30" strokeWidth={1}
+                      strokeDasharray="4 4"
+                    />
+                  );
+                })()}
+              </svg>
+            )}
 
             {/* Bottom script overlay */}
             {scriptBottom?.text && (

@@ -14,7 +14,18 @@ import {
   Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { STORE_KEYS, type UserProfile, seedIfEmpty } from "@/lib/local-store";
+import { seedIfEmpty } from "@/lib/local-store";
+
+const PROFILE_KEY = "olli-fandom-profile";
+
+interface UserProfile {
+  name: string;
+  email: string;
+  bio: string;
+  avatar: string;
+  genres: string[];
+  socialLinks: { platform: string; url: string }[];
+}
 
 const availableGenres = [
   "캐릭터 디자인",
@@ -63,7 +74,7 @@ export function ProfileSettings() {
   useEffect(() => {
     seedIfEmpty();
     try {
-      const raw = localStorage.getItem(STORE_KEYS.PROFILE);
+      const raw = localStorage.getItem(PROFILE_KEY);
       if (raw) {
         const profile: UserProfile = JSON.parse(raw);
         setName(profile.name || "");
@@ -121,7 +132,7 @@ export function ProfileSettings() {
     };
 
     try {
-      localStorage.setItem(STORE_KEYS.PROFILE, JSON.stringify(profile));
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
       showFeedback("프로필이 성공적으로 저장되었습니다.");
     } catch {
       showFeedback("저장에 실패했습니다. 다시 시도해주세요.", "error");

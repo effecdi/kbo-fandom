@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import React from "react";
 
-export type UserRole = "creator" | "business" | null;
+export type UserRole = "creator" | null;
 
 interface OnboardingData {
   purpose?: string;

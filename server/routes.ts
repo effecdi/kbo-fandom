@@ -4,8 +4,8 @@ import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
 import { supabase } from "./supabaseClient";
 import { generateCharacterImage, generateLogoImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, removeBackgroundAI, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint } from "./imageGen";
-import { generateAIPrompt, analyzeAdMatch, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown, analyzeCharacterImage } from "./aiText";
-import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, adMatchSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, updateProjectFolderSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
+import { generateAIPrompt, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown, analyzeCharacterImage } from "./aiText";
+import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, updateProjectFolderSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
 import { config } from "./config";
 import { logger } from "./logger";
@@ -124,9 +124,7 @@ export async function registerRoutes(
       const genType: string = (req.body as any).genType || "character";
       const validTypes = ["character", "mascot"];
       const finalType = validTypes.includes(genType) ? genType : "character";
-      const sourceRole: string = (req.body as any).source || "creator";
-      const validSources = ["creator", "business"];
-      const finalSource = validSources.includes(sourceRole) ? sourceRole : "creator";
+      const finalSource = "creator";
 
       const FREE_STYLES = ["simple-line", "minimal", "doodle"];
       const credits = await storage.getUserCredits(userId);
@@ -206,7 +204,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "프롬프트 또는 스케치 이미지가 필요합니다." });
       }
 
-      const finalSource = reqSource === "business" ? "business" : "creator";
+      const finalSource = "creator";
 
       const credits = await storage.getUserCredits(userId);
       const canGenerate = await storage.deductCredit(userId, 10);
@@ -284,7 +282,7 @@ export async function registerRoutes(
         poseThumbUrl = await generateThumbnail(imageDataUrl) || null;
       } catch { /* thumbnail is optional */ }
 
-      const poseSource = (req.body as any).source === "business" ? "business" : "creator";
+      const poseSource = "creator";
       try {
         await storage.createGeneration({
           userId,
@@ -354,7 +352,7 @@ export async function registerRoutes(
           bgThumbUrl = await generateThumbnail(imageDataUrl) || null;
         } catch { /* thumbnail is optional */ }
 
-        const bgSource = req.body.source === "business" ? "business" : "creator";
+        const bgSource = "creator";
         try {
           await storage.createGeneration({
             userId,
@@ -431,7 +429,7 @@ export async function registerRoutes(
       let thumbUrl: string | null = null;
       try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
 
-      const fillSource = (req.body as any).source === "business" ? "business" : "creator";
+      const fillSource = "creator";
       try {
         await storage.createGeneration({
           userId,
@@ -482,7 +480,7 @@ export async function registerRoutes(
       let thumbUrl: string | null = null;
       try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
 
-      const expandSource = (req.body as any).source === "business" ? "business" : "creator";
+      const expandSource = "creator";
       try {
         await storage.createGeneration({
           userId,
@@ -529,7 +527,7 @@ export async function registerRoutes(
       let thumbUrl: string | null = null;
       try { thumbUrl = await generateThumbnail(resultUrl) || null; } catch { /* optional */ }
 
-      const upscaleSource = (req.body as any).source === "business" ? "business" : "creator";
+      const upscaleSource = "creator";
       try {
         await storage.createGeneration({
           userId,
@@ -595,27 +593,6 @@ export async function registerRoutes(
     } catch (error: any) {
       logger.error("Object selection at point error", error);
       res.status(500).json({ message: "개체 선택에 실패했습니다." });
-    }
-  });
-
-  app.post("/api/ad-match", isAuthenticated, async (req: AuthRequest, res) => {
-    try {
-      const userId = req.userId!;
-      const credits = await storage.getUserCredits(userId);
-      if (credits.tier === "free") {
-        return res.status(403).json({ message: "광고 매칭 AI는 유료 멤버십 전용 기능입니다." });
-      }
-
-      const parsed = adMatchSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: "입력값이 올바르지 않습니다." });
-      }
-
-      const result = await analyzeAdMatch(parsed.data);
-      res.json(result);
-    } catch (error: any) {
-      logger.error("Ad match error", error);
-      res.status(500).json({ message: "광고 매칭 분석에 실패했습니다." });
     }
   });
 

@@ -21,6 +21,7 @@ import {
   ExternalLink,
   AlertCircle,
   Layers,
+  Printer,
 } from "lucide-react";
 import { FabricImage } from "fabric";
 import { useNavigate } from "react-router";
@@ -48,7 +49,7 @@ interface SavedProject {
   thumbnail: string | null;
 }
 
-type ActiveView = "publish" | "download" | "save" | "load";
+type ActiveView = "publish" | "download" | "save" | "load" | "print";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -388,9 +389,11 @@ export function PublishDialog({ open, onClose }: Props) {
   if (!open) return null;
 
   // ── View navigation items ─────────────────────────────────────────────
+  const hasPrintSettings = !!state.printSettings;
   const NAV: { id: ActiveView; icon: typeof Upload; label: string }[] = [
     { id: "publish", icon: Rocket, label: "게시" },
     { id: "download", icon: Download, label: "다운로드" },
+    ...(hasPrintSettings ? [{ id: "print" as ActiveView, icon: Printer, label: "인쇄 내보내기" }] : []),
     { id: "save", icon: Save, label: "저장" },
     { id: "load", icon: FolderOpen, label: "불러오기" },
   ];
@@ -793,6 +796,62 @@ export function PublishDialog({ open, onClose }: Props) {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* ═══════ PRINT VIEW ═══════ */}
+            {view === "print" && state.printSettings && (
+              <div className="space-y-5">
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent p-6 text-center">
+                  <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="relative space-y-4">
+                    <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-primary/15 to-primary/10 border border-primary/10 flex items-center justify-center">
+                      <Printer className="w-7 h-7 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-[15px] font-bold text-white">인쇄용 고해상도 내보내기</h3>
+                      <p className="text-[12px] text-white/35 mt-1">
+                        {state.printSettings.physicalWidthMm}×{state.printSettings.physicalHeightMm}mm · {state.printSettings.dpi} DPI
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (!canvasRef.current) return;
+                        const multiplier = state.printSettings!.dpi / 72;
+                        const fc = canvasRef.current.getCanvas();
+                        if (!fc) return;
+                        const dataUrl = fc.toDataURL({
+                          format: "png",
+                          quality: 1,
+                          multiplier,
+                        });
+                        const a = document.createElement("a");
+                        a.href = dataUrl;
+                        a.download = `${state.project.title}_${state.printSettings!.dpi}dpi.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        setToast({ msg: `${state.printSettings!.dpi}dpi PNG 내보내기 완료`, type: "ok" });
+                      }}
+                      className="w-full h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-primary to-primary/80 text-black shadow-[0_4px_20px_rgba(0,229,204,0.2)] hover:shadow-[0_4px_28px_rgba(0,229,204,0.35)] active:scale-[0.98]"
+                    >
+                      <Download className="w-5 h-5" />
+                      {state.printSettings.dpi}dpi PNG 내보내기
+                    </button>
+                  </div>
+                </div>
+
+                {/* Birthday package batch download */}
+                {state.birthdayCafePackage && allCuts.length > 1 && (
+                  <button
+                    onClick={handleDownloadAll}
+                    disabled={dlAll}
+                    className="w-full h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 active:scale-[0.98]"
+                  >
+                    <Images className="w-5 h-5" />
+                    {dlAll ? `패키지 다운로드 중 ${dlProgress}%` : `생카 패키지 전체 다운로드 (${allCuts.length}개)`}
+                  </button>
+                )}
               </div>
             )}
 

@@ -3,109 +3,50 @@ import { StudioLayout } from "@/components/StudioLayout";
 import { Link } from "react-router";
 import {
   Sparkles,
-  Target,
+  Heart,
   Users,
-  TrendingUp,
+  Image,
   ArrowRight,
-  Eye,
   FileText,
-  DollarSign,
   BarChart3,
   Plus,
-  FolderOpen,
-  Image,
+  Calendar,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   listItems,
   seedIfEmpty,
   STORE_KEYS,
-  type RevenueRecord,
-  type ProjectRecord,
-  type Collaboration,
-  type Campaign,
+  type FandomFeedPost,
+  type FandomEvent,
+  type FanCreator,
 } from "@/lib/local-store";
 
-function formatCurrency(amount: number): string {
-  if (amount >= 1_000_000) {
-    return `\u20A9${(amount / 1_000_000).toFixed(1)}M`;
-  }
-  if (amount >= 1_000) {
-    return `\u20A9${(amount / 1_000).toFixed(0)}K`;
-  }
-  return `\u20A9${amount.toLocaleString()}`;
-}
-
-function getUserRole(): "creator" | "business" {
-  return (localStorage.getItem("olli_user_role") as "creator" | "business") || "creator";
-}
-
 export function DashboardIndex() {
-  const [projects, setProjects] = useState<ProjectRecord[]>([]);
-  const [revenue, setRevenue] = useState<RevenueRecord[]>([]);
-  const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const role = getUserRole();
+  const [fanarts, setFanarts] = useState<FandomFeedPost[]>([]);
+  const [events, setEvents] = useState<FandomEvent[]>([]);
+  const [creators, setCreators] = useState<FanCreator[]>([]);
 
   useEffect(() => {
     seedIfEmpty();
-    setProjects(listItems<ProjectRecord>(STORE_KEYS.PROJECTS));
-    setRevenue(listItems<RevenueRecord>(STORE_KEYS.REVENUE));
-    setCollaborations(listItems<Collaboration>(STORE_KEYS.COLLABORATIONS));
-    setCampaigns(listItems<Campaign>(STORE_KEYS.CAMPAIGNS));
+    setFanarts(listItems<FandomFeedPost>(STORE_KEYS.FANDOM_FEED));
+    setEvents(listItems<FandomEvent>(STORE_KEYS.FANDOM_EVENTS));
+    setCreators(listItems<FanCreator>(STORE_KEYS.FAN_CREATORS));
   }, []);
 
   // Computed stats
-  const totalCompletedRevenue = revenue
-    .filter((r) => r.status === "completed")
-    .reduce((sum, r) => sum + r.amount, 0);
+  const totalFanarts = fanarts.length;
+  const totalLikes = fanarts.reduce((sum, f) => sum + f.likes, 0);
+  const activeEvents = events.filter((e) => e.status === "active");
+  const totalFollowers = creators.reduce((sum, c) => sum + c.followerCount, 0);
 
-  const projectCount = projects.length;
-  const draftCount = projects.filter((p) => p.status === "draft").length;
-  const publishedCount = projects.filter((p) => p.status === "published").length;
+  // Recent activities
+  const recentFanarts = [...fanarts]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 4);
 
-  const activeCampaigns = campaigns.filter((c) => c.status === "recruiting" || c.status === "active");
-  const pendingCollabs = collaborations.filter((c) => c.status === "pending" || c.status === "in_progress");
-
-  // Current month revenue
   const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const currentMonthRevenue = revenue
-    .filter((r) => r.date.startsWith(currentMonth) && r.status === "completed")
-    .reduce((sum, r) => sum + r.amount, 0);
-
-  // Previous month revenue for comparison
-  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
-  const prevMonthRevenue = revenue
-    .filter((r) => r.date.startsWith(prevMonth) && r.status === "completed")
-    .reduce((sum, r) => sum + r.amount, 0);
-
-  const revenueChange = prevMonthRevenue > 0
-    ? Math.round(((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
-    : currentMonthRevenue > 0 ? 100 : 0;
-
-  // Recent activities from real data
-  const recentProjects = [...projects]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 2);
-
-  const recentRevenue = [...revenue]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 2);
-
-  const recentActivities = [
-    ...recentProjects.map((p) => ({
-      text: `${p.title} ${p.status === "draft" ? "초안 저장" : p.status === "published" ? "발행" : "검토 중"}`,
-      time: p.updatedAt,
-      icon: FileText,
-    })),
-    ...recentRevenue.map((r) => ({
-      text: `${r.project} - ${r.status === "completed" ? "정산 완료" : r.status === "pending" ? "대기 중" : "처리 중"}`,
-      time: r.date,
-      icon: DollarSign,
-    })),
-  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 4);
 
   function formatRelativeDate(dateStr: string): string {
     const date = new Date(dateStr);
@@ -118,62 +59,32 @@ export function DashboardIndex() {
     return `${Math.floor(diffDays / 30)}개월 전`;
   }
 
-  // ─── Role-specific quick actions ─────────────────────────────────────
-  const creatorQuickActions = [
+  const quickActions = [
     {
-      to: "/studio/new",
+      to: "/fandom/create",
       icon: Plus,
       iconBg: "bg-[#00e5cc]/10",
       iconColor: "text-[#00e5cc]",
-      title: "새 프로젝트 만들기",
-      desc: "템플릿으로 시작하세요",
+      title: "새 팬아트 만들기",
+      desc: "AI로 팬아트를 생성하세요",
     },
     {
-      to: "/assets/characters/new",
-      icon: Sparkles,
+      to: "/fandom/events",
+      icon: Calendar,
       iconBg: "bg-purple-500/10",
       iconColor: "text-purple-500",
-      title: "캐릭터 생성",
-      desc: "AI로 캐릭터를 만드세요",
+      title: "이벤트 참여",
+      desc: "진행 중인 챌린지를 확인하세요",
     },
     {
-      to: "/market/campaigns",
-      icon: Target,
+      to: "/fandom/talk",
+      icon: MessageCircle,
       iconBg: "bg-amber-500/10",
       iconColor: "text-amber-500",
-      title: "캠페인 둘러보기",
-      desc: "새로운 협업 기회를 찾으세요",
+      title: "팬톡",
+      desc: "팬들과 이야기를 나누세요",
     },
   ];
-
-  const businessQuickActions = [
-    {
-      to: "/assets/brand/mascot/new",
-      icon: Sparkles,
-      iconBg: "bg-purple-500/10",
-      iconColor: "text-purple-500",
-      title: "AI 마스코트 생성",
-      desc: "브랜드 마스코트를 만드세요",
-    },
-    {
-      to: "/assets/brand",
-      icon: FolderOpen,
-      iconBg: "bg-amber-500/10",
-      iconColor: "text-amber-500",
-      title: "브랜드 자산 관리",
-      desc: "로고, 컬러, 문서를 관리하세요",
-    },
-    {
-      to: "/market/creators",
-      icon: Users,
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-500",
-      title: "크리에이터 찾기",
-      desc: "협업할 작가를 검색하세요",
-    },
-  ];
-
-  const quickActions = role === "business" ? businessQuickActions : creatorQuickActions;
 
   return (
     <StudioLayout>
@@ -182,9 +93,7 @@ export function DashboardIndex() {
         <div className="mb-8">
           <h1 className="text-3xl font-black text-foreground">대시보드</h1>
           <p className="text-muted-foreground mt-1">
-            {role === "business"
-              ? "브랜드 자산과 캠페인 현황을 확인하세요"
-              : "활동 요약과 주요 지표를 확인하세요"}
+            내 팬덤 활동 요약과 주요 지표를 확인하세요
           </p>
         </div>
 
@@ -193,49 +102,45 @@ export function DashboardIndex() {
           <div className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center">
-                <FileText className="w-6 h-6 text-cyan-600" />
+                <Image className="w-6 h-6 text-cyan-600" />
               </div>
-              <span className="text-2xl font-black text-foreground">{projectCount}</span>
+              <span className="text-2xl font-black text-foreground">{totalFanarts}</span>
             </div>
-            <p className="text-sm font-semibold text-muted-foreground">프로젝트</p>
-            <p className="text-xs mt-1 text-muted-foreground">초안 {draftCount} · 발행 {publishedCount}</p>
+            <p className="text-sm font-semibold text-muted-foreground">내 팬아트</p>
+            <p className="text-xs mt-1 text-muted-foreground">피드에 공유된 작품</p>
           </div>
 
           <div className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-purple-600" />
+                <Calendar className="w-6 h-6 text-purple-600" />
               </div>
-              <span className="text-2xl font-black text-foreground">{collaborations.length}</span>
+              <span className="text-2xl font-black text-foreground">{activeEvents.length}</span>
             </div>
-            <p className="text-sm font-semibold text-muted-foreground">협업</p>
-            <p className="text-xs mt-1 text-muted-foreground">진행 중 {pendingCollabs.length}건</p>
+            <p className="text-sm font-semibold text-muted-foreground">참여 이벤트</p>
+            <p className="text-xs mt-1 text-muted-foreground">진행 중 {activeEvents.length}건</p>
           </div>
 
           <div className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-xl flex items-center justify-center">
+                <Heart className="w-6 h-6 text-pink-600" />
               </div>
-              <span className="text-2xl font-black text-foreground">{formatCurrency(totalCompletedRevenue)}</span>
+              <span className="text-2xl font-black text-foreground">{totalLikes.toLocaleString()}</span>
             </div>
-            <p className="text-sm font-semibold text-muted-foreground">
-              {role === "business" ? "총 지출" : "총 수익"}
-            </p>
-            <p className="text-xs mt-1 text-muted-foreground">
-              이번 달 {revenueChange >= 0 ? "+" : ""}{revenueChange}%
-            </p>
+            <p className="text-sm font-semibold text-muted-foreground">받은 좋아요</p>
+            <p className="text-xs mt-1 text-muted-foreground">전체 팬아트 합산</p>
           </div>
 
           <div className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center">
-                <Target className="w-6 h-6 text-amber-600" />
+                <Users className="w-6 h-6 text-amber-600" />
               </div>
-              <span className="text-2xl font-black text-foreground">{activeCampaigns.length}</span>
+              <span className="text-2xl font-black text-foreground">{totalFollowers.toLocaleString()}</span>
             </div>
-            <p className="text-sm font-semibold text-muted-foreground">진행중 캠페인</p>
-            <p className="text-xs mt-1 text-muted-foreground">전체 {campaigns.length}건</p>
+            <p className="text-sm font-semibold text-muted-foreground">팔로워</p>
+            <p className="text-xs mt-1 text-muted-foreground">크리에이터 전체</p>
           </div>
         </div>
 
@@ -266,19 +171,19 @@ export function DashboardIndex() {
           </div>
 
           <div className="rounded-2xl border bg-card border-border p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4">최근 활동</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">최근 팬아트</h2>
             <div className="space-y-3">
-              {recentActivities.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">아직 활동 내역이 없습니다</p>
+              {recentFanarts.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">아직 팬아트가 없습니다</p>
               ) : (
-                recentActivities.map((activity, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors">
+                recentFanarts.map((fanart) => (
+                  <div key={fanart.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors">
                     <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                      <activity.icon className="w-5 h-5 text-muted-foreground" />
+                      <FileText className="w-5 h-5 text-muted-foreground" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-foreground">{activity.text}</p>
-                      <p className="text-xs text-muted-foreground">{formatRelativeDate(activity.time)}</p>
+                      <p className="text-sm text-foreground">{fanart.title}</p>
+                      <p className="text-xs text-muted-foreground">{fanart.groupName} · {formatRelativeDate(fanart.createdAt)}</p>
                     </div>
                   </div>
                 ))
@@ -287,7 +192,7 @@ export function DashboardIndex() {
           </div>
         </div>
 
-        {/* Links to sub pages — role-aware */}
+        {/* Links to sub pages */}
         <div className="flex gap-4">
           <Link to="/dashboard/analytics">
             <Button variant="outline" className="gap-2">
@@ -295,20 +200,18 @@ export function DashboardIndex() {
               상세 분석
             </Button>
           </Link>
-          <Link to={role === "business" ? "/dashboard/reports" : "/dashboard/revenue"}>
+          <Link to="/fandom/feed">
             <Button variant="outline" className="gap-2">
-              <DollarSign className="w-5 h-5" />
-              {role === "business" ? "리포트" : "수익 관리"}
+              <Sparkles className="w-5 h-5" />
+              팬아트 피드
             </Button>
           </Link>
-          {role === "business" && (
-            <Link to="/assets/brand">
-              <Button variant="outline" className="gap-2">
-                <FolderOpen className="w-5 h-5" />
-                브랜드 자산
-              </Button>
-            </Link>
-          )}
+          <Link to="/fandom/fans">
+            <Button variant="outline" className="gap-2">
+              <Users className="w-5 h-5" />
+              팬 크리에이터
+            </Button>
+          </Link>
         </div>
       </div>
     </StudioLayout>

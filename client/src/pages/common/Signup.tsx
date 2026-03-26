@@ -2,14 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, User, Building2, Mail, Lock, CheckCircle2, Eye, EyeOff, Phone, Briefcase } from "lucide-react";
+import { ArrowLeft, User, Mail, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 const olliMascot = "/favicon.png";
 
 export function Signup() {
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState<"creator" | "business">("creator");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -33,88 +32,37 @@ export function Signup() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 flex items-center justify-center">
-                <img src={olliMascot} alt="OLLI" className="w-full h-full" />
+                <img src={olliMascot} alt="OLLI Fandom" className="w-full h-full" />
               </div>
               <h1 className="text-3xl font-black text-foreground">
-                OLLI
+                OLLI Fandom
               </h1>
             </div>
             <h2 className="text-2xl font-bold mb-2 text-foreground">
               새로운 계정 만들기
             </h2>
             <p className="text-muted-foreground">
-              AI 인스타툰 제작을 시작하세요
+              K-POP 팬아트를 만들고 팬덤 활동을 시작하세요
             </p>
           </div>
 
           {/* Form Card */}
           <div className="rounded-3xl p-8 shadow-xl border bg-card border-border">
-            {/* Tab Selector */}
-            <div className="grid grid-cols-2 gap-3 mb-8 p-2 rounded-2xl bg-muted/50">
-              <button
-                onClick={() => setSelectedTab("creator")}
-                className={`py-4 px-6 rounded-xl font-bold text-sm transition-all ${
-                  selectedTab === "creator"
-                    ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white shadow-lg"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                <User className="w-5 h-5 inline mr-2" />
-                작가 계정
-              </button>
-              <button
-                onClick={() => setSelectedTab("business")}
-                className={`py-4 px-6 rounded-xl font-bold text-sm transition-all ${
-                  selectedTab === "business"
-                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                <Building2 className="w-5 h-5 inline mr-2" />
-                기업/기관
-              </button>
-            </div>
-
             {/* Form */}
             <form className="space-y-5">
-              {/* Name/Company Name */}
+              {/* Nickname */}
               <div>
                 <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
-                  {selectedTab === "creator" ? "이름" : "기업/기관명"}
+                  닉네임
                 </Label>
                 <div className="relative">
-                  {selectedTab === "creator" ? (
-                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  )}
+                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    placeholder={selectedTab === "creator" ? "홍길동" : "(주)올리코리아"}
+                    placeholder="팬덤에서 사용할 닉네임"
                     className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
-
-              {/* Business Type (Business only) */}
-              {selectedTab === "business" && (
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
-                    조직 유형
-                  </Label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <select
-                      className="w-full pl-12 h-12 text-base rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent border-border text-foreground"
-                    >
-                      <option value="">선택해주세요</option>
-                      <option value="enterprise">기업</option>
-                      <option value="government">관공서</option>
-                      <option value="public">공공기관</option>
-                      <option value="nonprofit">비영리단체</option>
-                    </select>
-                  </div>
-                </div>
-              )}
 
               {/* Email */}
               <div>
@@ -130,23 +78,6 @@ export function Signup() {
                   />
                 </div>
               </div>
-
-              {/* Phone (Business only) */}
-              {selectedTab === "business" && (
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block text-muted-foreground">
-                    연락처
-                  </Label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      type="tel"
-                      placeholder="010-1234-5678"
-                      className="pl-12 h-12 text-base bg-transparent border-border text-foreground placeholder:text-muted-foreground"
-                    />
-                  </div>
-                </div>
-              )}
 
               {/* Password */}
               <div>
@@ -231,11 +162,7 @@ export function Signup() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className={`w-full h-14 text-base font-bold shadow-lg ${
-                  selectedTab === "creator"
-                    ? "bg-gradient-to-r from-[#00e5cc] to-[#00b3a6]"
-                    : "bg-gradient-to-r from-blue-500 to-indigo-500"
-                } text-white hover:shadow-xl`}
+                className="w-full h-14 text-base font-bold shadow-lg bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white hover:shadow-xl"
                 disabled={!agreedToTerms || !agreedToPrivacy}
               >
                 계정 만들기
@@ -272,9 +199,7 @@ export function Signup() {
                 <button
                   type="button"
                   onClick={() => navigate("/login")}
-                  className={`font-bold ${
-                    selectedTab === "creator" ? "text-[#00e5cc]" : "text-blue-500"
-                  } hover:underline`}
+                  className="font-bold text-[#00e5cc] hover:underline"
                 >
                   로그인
                 </button>
@@ -285,73 +210,37 @@ export function Signup() {
       </div>
 
       {/* Right Side - Info Panel */}
-      <div className={`hidden lg:flex lg:w-1/2 p-12 items-center justify-center ${
-        selectedTab === "creator"
-          ? "bg-gradient-to-br from-[#00e5cc] to-[#00b3a6]"
-          : "bg-gradient-to-br from-blue-500 to-indigo-500"
-      }`}>
+      <div className="hidden lg:flex lg:w-1/2 p-12 items-center justify-center bg-gradient-to-br from-[#00e5cc] to-[#00b3a6]">
         <div className="max-w-lg text-white">
           <h2 className="text-4xl font-black mb-6">
-            {selectedTab === "creator"
-              ? "AI로 쉽게 만드는 인스타툰"
-              : "브랜드 마스코트 & 작가 협업"}
+            K-POP 팬아트의 새로운 세계
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            {selectedTab === "creator"
-              ? "창작부터 수익화까지, OLLI와 함께 시작하세요"
-              : "공공기관과 기업을 위한 안전한 콘텐츠 제작 플랫폼"}
+            AI로 나만의 팬아트를 만들고, 팬덤 친구들과 함께하세요
           </p>
 
           <div className="space-y-4">
-            {selectedTab === "creator" ? (
-              <>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">AI 캐릭터 생성</h3>
-                    <p className="text-white/80">텍스트만으로 나만의 캐릭터를 만드세요</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">스토리 에디터</h3>
-                    <p className="text-white/80">직관적인 툴로 쉽게 툰을 완성하세요</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">광고 매칭</h3>
-                    <p className="text-white/80">AI가 최적의 광고 기회를 찾아드립니다</p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">브랜드 마스코트 생성</h3>
-                    <p className="text-white/80">AI로 브랜드 정체성을 담은 마스코트 제작</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">승인 워크플로우</h3>
-                    <p className="text-white/80">검토와 승인 프로세스로 안전하게 관리</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">작가 협업</h3>
-                    <p className="text-white/80">검증된 크리에이터와 쉽게 연결</p>
-                  </div>
-                </div>
-              </>
-            )}
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-lg mb-1">AI 팬아트 생성</h3>
+                <p className="text-white/80">텍스트만으로 최애 아이돌 팬아트를 만드세요</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-lg mb-1">팬덤 커뮤니티</h3>
+                <p className="text-white/80">같은 그룹을 좋아하는 팬들과 소통하세요</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-lg mb-1">이벤트 & 챌린지</h3>
+                <p className="text-white/80">팬아트 챌린지에 참여하고 공식 굿즈를 받으세요</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

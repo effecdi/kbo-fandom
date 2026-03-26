@@ -11,6 +11,7 @@ import {
   STYLE_PRESETS,
   getTemplateChips,
   TEMPLATE_LABELS,
+  KPOP_AESTHETIC_FILTERS,
 } from "@/lib/fandom-templates";
 
 // ─── Types for API responses ────────────────────────────────────────────────
@@ -58,6 +59,27 @@ async function fetchWithRetry(
     }
   }
   throw lastError;
+}
+
+// ─── Goods-specific prompt suffix ────────────────────────────────────────────
+
+function getGoodsPromptSuffix(templateType: string): string | null {
+  switch (templateType) {
+    case "cupsleeve":
+      return "cup sleeve wrap-around print, clean layout, text area for cafe name";
+    case "slogan":
+      return "concert banner, bold readable text at distance, vibrant colors";
+    case "stickersheet":
+      return "multiple cute sticker designs, white background, kiss-cut ready, separated stickers";
+    case "birthday-set":
+      return "coordinated birthday cafe design set, consistent visual theme across all items";
+    case "acrylicstand":
+      return "acrylic stand design, clear outline, full body character, transparent background ready";
+    case "phonecase":
+      return "phone case design, full coverage pattern, considering camera cutout area";
+    default:
+      return null;
+  }
 }
 
 // ─── Hook ───────────────────────────────────────────────────────────────────
@@ -343,6 +365,23 @@ export function useCopilot() {
         }
       }
 
+      // Inject K-POP aesthetic filter if active
+      const aestheticFilter = state.activeAestheticFilter;
+      if (aestheticFilter) {
+        const filterDef = KPOP_AESTHETIC_FILTERS.find((f) => f.id === aestheticFilter);
+        if (filterDef) {
+          styledPrompt = `${filterDef.prompt}, ${styledPrompt}`;
+        }
+      }
+
+      // Add goods-specific prompt suffix
+      if (fandomMeta) {
+        const goodsSuffix = getGoodsPromptSuffix(fandomMeta.templateType);
+        if (goodsSuffix) {
+          styledPrompt = `${styledPrompt}, ${goodsSuffix}`;
+        }
+      }
+
       const label = fandomMeta ? TEMPLATE_LABELS[fandomMeta.templateType] : "이미지";
 
       try {
@@ -405,7 +444,7 @@ export function useCopilot() {
         }
       }
     },
-    [dispatch, state.copilot.pinnedCharacters, fandomMeta, addAssistantMsg, canvasRef, activeCut, getGeminiAspectRatio, addImageAsLayer]
+    [dispatch, state.copilot.pinnedCharacters, fandomMeta, state.activeAestheticFilter, addAssistantMsg, canvasRef, activeCut, getGeminiAspectRatio, addImageAsLayer]
   );
 
   // ── Generate multi-cut instatoon (single canvas compositing) ──────────────

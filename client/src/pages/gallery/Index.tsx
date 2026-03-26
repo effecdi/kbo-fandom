@@ -44,7 +44,7 @@ const MOCK_ITEMS: GalleryItem[] = [
   { id: "g1", title: "귀여운 고양이 캐릭터", author: "올리작가", authorAvatar: "OA", imageUrl: null, likes: 342, views: 1820, liked: false, type: "character", createdAt: "2시간 전" },
   { id: "g2", title: "카페 일상 인스타툰", author: "모카디자인", authorAvatar: "MD", imageUrl: null, likes: 218, views: 1450, liked: false, type: "instatoon", createdAt: "3시간 전" },
   { id: "g3", title: "벚꽃 배경 일러스트", author: "봄날작가", authorAvatar: "BN", imageUrl: null, likes: 567, views: 3200, liked: false, type: "background", createdAt: "5시간 전" },
-  { id: "g4", title: "기업 마스코트 - 해피곰", author: "브랜드팩토리", authorAvatar: "BF", imageUrl: null, likes: 891, views: 5100, liked: false, type: "mascot", createdAt: "6시간 전" },
+  { id: "g4", title: "K-POP 아이돌 팬아트", author: "스타라이트", authorAvatar: "SL", imageUrl: null, likes: 891, views: 5100, liked: false, type: "character", createdAt: "6시간 전" },
   { id: "g5", title: "코믹 스타일 캐릭터", author: "펀아트", authorAvatar: "FA", imageUrl: null, likes: 156, views: 890, liked: false, type: "character", createdAt: "8시간 전" },
   { id: "g6", title: "감성 비오는날 인스타툰", author: "레인드롭", authorAvatar: "RD", imageUrl: null, likes: 423, views: 2300, liked: false, type: "instatoon", createdAt: "10시간 전" },
   { id: "g7", title: "네온 시티 배경", author: "사이버아트", authorAvatar: "CA", imageUrl: null, likes: 298, views: 1700, liked: false, type: "background", createdAt: "12시간 전" },

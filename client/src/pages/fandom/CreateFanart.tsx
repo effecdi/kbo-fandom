@@ -17,6 +17,17 @@ import {
   Star,
   Scissors,
   Layers,
+  Coffee,
+  Flag,
+  Grid3X3,
+  Gift,
+  Gem,
+  Shell,
+  Printer,
+  BookOpen,
+  Ticket,
+  Heart,
+  User,
 } from "lucide-react";
 import {
   listItems,
@@ -39,7 +50,10 @@ import {
   MOOD_CHIPS,
   POSE_OUTFIT_TEMPLATES,
   TEMPLATE_LABELS,
+  KPOP_AESTHETIC_FILTERS,
 } from "@/lib/fandom-templates";
+import { isGoodsTemplate, PHYSICAL_SIZES, GOODS_PHYSICAL_SIZE_MAP } from "@/lib/fandom-goods-config";
+import type { KpopAestheticFilterId } from "@/lib/workspace-types";
 
 type Step = "group" | "template" | "style" | "details";
 
@@ -60,6 +74,18 @@ const TEMPLATE_ICONS: Record<string, typeof ImageIcon> = {
   sticker: Scissors,
   instatoon: MessageSquare,
   meme: MessageSquare,
+  cupsleeve: Coffee,
+  slogan: Flag,
+  stickersheet: Grid3X3,
+  "birthday-set": Gift,
+  acrylicstand: Gem,
+  phonecase: Shell,
+  "deco-photocard": Sparkles,
+  "retro-magazine": BookOpen,
+  "diary-page": Palette,
+  "kitsch-collage": Layers,
+  "ticket-bookmark": Ticket,
+  "profile-deco": User,
 };
 
 export function FandomCreateFanart() {
@@ -72,6 +98,8 @@ export function FandomCreateFanart() {
   const [selectedPose, setSelectedPose] = useState<string | null>(null);
   const [selectedOutfit, setSelectedOutfit] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedAesthetic, setSelectedAesthetic] = useState<KpopAestheticFilterId | null>(null);
+  const [selectedDpi, setSelectedDpi] = useState<72 | 150 | 300>(300);
   const [activeCategory, setActiveCategory] = useState<string>("popular");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -146,6 +174,16 @@ export function FandomCreateFanart() {
       moodHint: selectedMood || undefined,
     };
     localStorage.setItem(`olli-fandom-editor-${projectId}`, JSON.stringify(meta));
+
+    // Save extended editor settings (aesthetic filter, DPI)
+    if (selectedAesthetic || (templateDef && isGoodsTemplate(templateDef.type))) {
+      const extSettings = {
+        aestheticFilter: selectedAesthetic || null,
+        dpi: selectedDpi,
+        isGoods: templateDef ? isGoodsTemplate(templateDef.type) : false,
+      };
+      localStorage.setItem(`olli-fandom-editor-ext-${projectId}`, JSON.stringify(extSettings));
+    }
 
     navigate(`/editor/${projectId}?mode=fandom`);
   }
@@ -382,6 +420,61 @@ export function FandomCreateFanart() {
                 </div>
               </div>
 
+              {/* Aesthetic Filter */}
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">K-POP 미학 필터</label>
+                <div className="grid grid-cols-5 gap-2">
+                  {KPOP_AESTHETIC_FILTERS.map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setSelectedAesthetic(selectedAesthetic === filter.id ? null : filter.id)}
+                      className={`px-2 py-2 rounded-xl border text-center transition-all text-xs font-medium ${
+                        selectedAesthetic === filter.id
+                          ? "text-white border-transparent"
+                          : "border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
+                      }`}
+                      style={selectedAesthetic === filter.id ? { background: filter.color, borderColor: filter.color } : {}}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Goods DPI Selector (only when goods template) */}
+              {templateDef && isGoodsTemplate(templateDef.type) && (
+                <div className="rounded-xl border border-border p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Printer className="w-4 h-4" />
+                    인쇄 설정
+                  </div>
+                  <div className="flex gap-2">
+                    {([72, 150, 300] as const).map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => setSelectedDpi(d)}
+                        className={`flex-1 px-3 py-2 rounded-lg border text-center text-xs font-medium transition-all ${
+                          selectedDpi === d
+                            ? "text-white border-transparent"
+                            : "border-border text-muted-foreground hover:border-muted-foreground"
+                        }`}
+                        style={selectedDpi === d ? { background: themeColor } : {}}
+                      >
+                        {d} DPI
+                        <span className="block text-[10px] opacity-70">
+                          {d === 72 ? "화면용" : d === 150 ? "보통" : "인쇄용"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {GOODS_PHYSICAL_SIZE_MAP[templateDef.type] && (
+                    <p className="text-[11px] text-muted-foreground">
+                      물리 사이즈: {PHYSICAL_SIZES[GOODS_PHYSICAL_SIZE_MAP[templateDef.type][0]]?.label}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <p className="text-[11px] text-muted-foreground">모든 옵션은 선택사항이에요. 건너뛸 수 있어요.</p>
 
               <div className="flex justify-between">
@@ -451,6 +544,8 @@ export function FandomCreateFanart() {
                   {selectedPose && <p>포즈: <span className="font-semibold">{selectedPose}</span></p>}
                   {selectedOutfit && <p>의상: <span className="font-semibold">{selectedOutfit}</span></p>}
                   {selectedMood && <p>분위기: <span className="font-semibold">{selectedMood}</span></p>}
+                  {selectedAesthetic && <p>미학: <span className="font-semibold">{KPOP_AESTHETIC_FILTERS.find(f => f.id === selectedAesthetic)?.label}</span></p>}
+                  {templateDef && isGoodsTemplate(templateDef.type) && <p>해상도: <span className="font-semibold">{selectedDpi} DPI</span></p>}
                 </div>
               </div>
 

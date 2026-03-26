@@ -7,6 +7,7 @@ import type {
   FandomSticker,
   PhotocardFrame,
   ConcertEffect,
+  KpopAestheticFilterId,
 } from "./workspace-types";
 
 // ─── Template Definitions ────────────────────────────────────────────────────
@@ -18,7 +19,7 @@ export interface FandomTemplate {
   desc: string;
   panels: number;
   aspect: CanvasAspectRatio;
-  category: "popular" | "photo" | "art" | "comic";
+  category: "popular" | "photo" | "art" | "comic" | "goods" | "kitsch";
 }
 
 export const FANDOM_TEMPLATES: FandomTemplate[] = [
@@ -35,6 +36,20 @@ export const FANDOM_TEMPLATES: FandomTemplate[] = [
   // 코믹
   { id: "instatoon", type: "instatoon", label: "4컷 인스타툰", desc: "클래식 4컷 인스타툰", panels: 4, aspect: "3:4", category: "comic" },
   { id: "meme", type: "meme", label: "밈/코믹", desc: "밈이나 코믹", panels: 2, aspect: "1:1", category: "comic" },
+  // 굿즈
+  { id: "cupsleeve", type: "cupsleeve", label: "컵슬리브", desc: "생일카페 컵슬리브", panels: 1, aspect: "3:4", category: "goods" },
+  { id: "slogan", type: "slogan", label: "슬로건 배너", desc: "콘서트 슬로건/배너", panels: 1, aspect: "16:9", category: "goods" },
+  { id: "stickersheet", type: "stickersheet", label: "스티커시트", desc: "키스컷 스티커 시트", panels: 1, aspect: "3:4", category: "goods" },
+  { id: "birthday-set", type: "birthday-set", label: "생카 패키지", desc: "생일카페 일괄 패키지", panels: 4, aspect: "3:4", category: "goods" },
+  { id: "acrylicstand", type: "acrylicstand", label: "아크릴 스탠드", desc: "아크릴 스탠드/키링", panels: 1, aspect: "2:3", category: "goods" },
+  { id: "phonecase", type: "phonecase", label: "폰케이스", desc: "스마트폰 케이스 디자인", panels: 1, aspect: "9:16", category: "goods" },
+  // 키치
+  { id: "deco-photocard", type: "deco-photocard", label: "꾸미기 포카", desc: "Y2K 스티커, 젬, 리본으로 꾸민 포토카드", panels: 1, aspect: "2:3", category: "kitsch" },
+  { id: "retro-magazine", type: "retro-magazine", label: "키치 매거진", desc: "레트로 Y2K 매거진 커버", panels: 1, aspect: "3:4", category: "kitsch" },
+  { id: "diary-page", type: "diary-page", label: "아이돌 다꾸", desc: "다이어리 꾸미기 페이지", panels: 1, aspect: "1:1", category: "kitsch" },
+  { id: "kitsch-collage", type: "kitsch-collage", label: "키치 콜라주", desc: "네온, 크롬, 반짝이 맥시멀리스트 콜라주", panels: 1, aspect: "1:1", category: "kitsch" },
+  { id: "ticket-bookmark", type: "ticket-bookmark", label: "키치 티켓", desc: "레트로 콘서트 티켓 & 북마크", panels: 1, aspect: "2:3", category: "kitsch" },
+  { id: "profile-deco", type: "profile-deco", label: "프로필 꾸미기", desc: "Y2K 키치 SNS 프로필 세트", panels: 1, aspect: "1:1", category: "kitsch" },
 ];
 
 export const TEMPLATE_CATEGORIES = [
@@ -42,6 +57,8 @@ export const TEMPLATE_CATEGORIES = [
   { id: "photo", label: "포토" },
   { id: "art", label: "아트" },
   { id: "comic", label: "코믹" },
+  { id: "goods", label: "굿즈" },
+  { id: "kitsch", label: "키치" },
 ] as const;
 
 // ─── Style Presets ───────────────────────────────────────────────────────────
@@ -88,12 +105,26 @@ export const TEMPLATE_RATIOS: Record<FandomTemplateType, CanvasAspectRatio[]> = 
   edit: ["1:1", "4:5", "3:4"],
   instatoon: ["3:4", "1:1"],
   meme: ["1:1", "3:4"],
+  cupsleeve: ["3:4"],
+  slogan: ["16:9"],
+  stickersheet: ["3:4", "4:5"],
+  "birthday-set": ["3:4"],
+  acrylicstand: ["2:3", "3:4"],
+  phonecase: ["9:16"],
+  "deco-photocard": ["2:3"],
+  "retro-magazine": ["3:4", "4:5"],
+  "diary-page": ["1:1"],
+  "kitsch-collage": ["1:1", "4:5"],
+  "ticket-bookmark": ["2:3"],
+  "profile-deco": ["1:1"],
 };
 
 // ─── Single Image Templates (skip breakdown, go straight to generate) ────────
 
 const SINGLE_IMAGE_TYPES: FandomTemplateType[] = [
   "portrait", "photocard", "wallpaper", "fanart", "sticker", "concept", "edit",
+  "cupsleeve", "slogan", "stickersheet", "acrylicstand", "phonecase",
+  "deco-photocard", "retro-magazine", "diary-page", "kitsch-collage", "ticket-bookmark", "profile-deco",
 ];
 
 export function isSingleImageTemplate(type: FandomTemplateType): boolean {
@@ -112,6 +143,18 @@ export const TEMPLATE_LABELS: Record<FandomTemplateType, string> = {
   edit: "에디트",
   instatoon: "인스타툰",
   meme: "밈",
+  cupsleeve: "컵슬리브",
+  slogan: "슬로건",
+  stickersheet: "스티커시트",
+  "birthday-set": "생카 패키지",
+  acrylicstand: "아크릴 스탠드",
+  phonecase: "폰케이스",
+  "deco-photocard": "꾸미기 포카",
+  "retro-magazine": "키치 매거진",
+  "diary-page": "아이돌 다꾸",
+  "kitsch-collage": "키치 콜라주",
+  "ticket-bookmark": "키치 티켓",
+  "profile-deco": "프로필 꾸미기",
 };
 
 // ─── Auto-Prompt Builder ─────────────────────────────────────────────────────
@@ -155,6 +198,42 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
       break;
     case "meme":
       parts.push(`${memberPart} 밈/코믹`);
+      break;
+    case "cupsleeve":
+      parts.push(`${memberPart} 생일카페 컵슬리브 디자인`);
+      break;
+    case "slogan":
+      parts.push(`${memberPart} 콘서트 슬로건 배너`);
+      break;
+    case "stickersheet":
+      parts.push(`${memberPart} 귀여운 스티커 시트, 다양한 포즈와 표정`);
+      break;
+    case "birthday-set":
+      parts.push(`${memberPart} 생일카페 패키지 디자인`);
+      break;
+    case "acrylicstand":
+      parts.push(`${memberPart} 아크릴 스탠드 디자인`);
+      break;
+    case "phonecase":
+      parts.push(`${memberPart} 폰케이스 디자인`);
+      break;
+    case "deco-photocard":
+      parts.push(`${memberPart} Y2K 꾸미기 포토카드, 스티커와 젬 장식`);
+      break;
+    case "retro-magazine":
+      parts.push(`${memberPart} 레트로 Y2K 매거진 커버`);
+      break;
+    case "diary-page":
+      parts.push(`${memberPart} 아이돌 다이어리 꾸미기 페이지`);
+      break;
+    case "kitsch-collage":
+      parts.push(`${memberPart} 네온 크롬 맥시멀리스트 키치 콜라주`);
+      break;
+    case "ticket-bookmark":
+      parts.push(`${memberPart} 레트로 콘서트 티켓 & 북마크`);
+      break;
+    case "profile-deco":
+      parts.push(`${memberPart} Y2K 키치 SNS 프로필 데코 세트`);
       break;
   }
 
@@ -216,6 +295,66 @@ export function getOnboardingPrompts(meta: FandomEditorMeta): string[] {
       `${m} 밈 만들어줘`,
       `${meta.groupName} 코믹`,
       `${m} 리액션 밈`,
+    ],
+    cupsleeve: [
+      `${m} 생일카페 컵슬리브`,
+      `꽃 테마 컵슬리브`,
+      `${m} 컬러 컵슬리브`,
+    ],
+    slogan: [
+      `${m} 콘서트 슬로건`,
+      `${m}아 사랑해 배너`,
+      `${meta.groupName} 화이팅 슬로건`,
+    ],
+    stickersheet: [
+      `${m} 귀여운 스티커 시트`,
+      `${m} 다양한 표정 스티커`,
+      `치비 스타일 스티커`,
+    ],
+    "birthday-set": [
+      `${m} 생일카페 풀세트`,
+      `핑크 테마 생카 패키지`,
+      `${m} 생일 축하 패키지`,
+    ],
+    acrylicstand: [
+      `${m} 아크릴 스탠드`,
+      `${m} 전신 아크릴`,
+      `${m} 치비 아크릴`,
+    ],
+    phonecase: [
+      `${m} 폰케이스`,
+      `${meta.groupName} 로고 폰케이스`,
+      `${m} 몽환적 폰케이스`,
+    ],
+    "deco-photocard": [
+      `${m} Y2K 꾸미기 포카`,
+      `반짝이 젬 스티커 포카`,
+      `${m} 리본 데코 포토카드`,
+    ],
+    "retro-magazine": [
+      `${m} 틴 매거진 커버`,
+      `Y2K 매거진 표지`,
+      `${m} 레트로 잡지 커버`,
+    ],
+    "diary-page": [
+      `${m} 다꾸 페이지`,
+      `${m} 다이어리 꾸미기`,
+      `마스킹테이프 다꾸`,
+    ],
+    "kitsch-collage": [
+      `${m} 네온 키치 콜라주`,
+      `크롬 반짝이 콜라주`,
+      `${m} 맥시멀리스트 콜라주`,
+    ],
+    "ticket-bookmark": [
+      `${m} 레트로 콘서트 티켓`,
+      `${m} 키치 북마크`,
+      `빈티지 티켓 디자인`,
+    ],
+    "profile-deco": [
+      `${m} Y2K 프로필 꾸미기`,
+      `키치 SNS 프로필 세트`,
+      `${m} 프로필 데코`,
     ],
   };
 
@@ -284,6 +423,90 @@ export function getQuickActions(type: FandomTemplateType): QuickAction[] {
         { id: "text", label: "텍스트 변경", prompt: "텍스트를 변경해줘" },
         { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
       ];
+    case "cupsleeve":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "theme", label: "테마 변경", prompt: "테마를 변경해줘" },
+        { id: "text", label: "텍스트 편집", prompt: "카페명과 날짜를 변경해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
+    case "slogan":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "text", label: "문구 변경", prompt: "응원 문구를 변경해줘" },
+        { id: "color", label: "컬러 변경", prompt: "컬러를 변경해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
+    case "stickersheet":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "more", label: "더 만들기", prompt: "스티커를 더 추가해줘" },
+        { id: "style", label: "스타일 변경", prompt: "스타일을 변경해줘" },
+        { id: "layout", label: "배열 변경", prompt: "스티커 배열을 변경해줘" },
+      ];
+    case "birthday-set":
+      return [
+        { id: "regen", label: "전체 재생성", prompt: "전체 패키지를 다시 생성해줘" },
+        { id: "theme", label: "테마 변경", prompt: "테마를 변경해줘" },
+        { id: "add", label: "굿즈 추가", prompt: "굿즈를 추가해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
+    case "acrylicstand":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "pose", label: "포즈 변경", prompt: "포즈를 변경해줘" },
+        { id: "outline", label: "외곽선", prompt: "키스컷 외곽선을 추가해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
+    case "phonecase":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "layout", label: "레이아웃", prompt: "레이아웃을 변경해줘" },
+        { id: "color", label: "컬러 변경", prompt: "컬러를 변경해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
+    case "deco-photocard":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "sticker", label: "스티커 추가", prompt: "Y2K 스티커를 더 추가해줘" },
+        { id: "gem", label: "젬 장식", prompt: "반짝이 젬을 추가해줘" },
+        { id: "frame", label: "프레임 변경", prompt: "프레임을 변경해줘" },
+      ];
+    case "retro-magazine":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "headline", label: "헤드라인", prompt: "매거진 헤드라인을 변경해줘" },
+        { id: "layout", label: "레이아웃", prompt: "레이아웃을 변경해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
+    case "diary-page":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "tape", label: "테이프 추가", prompt: "마스킹테이프를 추가해줘" },
+        { id: "deco", label: "데코 추가", prompt: "다꾸 데코 요소를 추가해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
+    case "kitsch-collage":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "neon", label: "네온 효과", prompt: "네온 효과를 추가해줘" },
+        { id: "chrome", label: "크롬 텍스트", prompt: "크롬 텍스트를 추가해줘" },
+        { id: "more", label: "요소 추가", prompt: "콜라주 요소를 더 추가해줘" },
+      ];
+    case "ticket-bookmark":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "text", label: "텍스트 편집", prompt: "티켓 정보를 변경해줘" },
+        { id: "vintage", label: "빈티지 효과", prompt: "빈티지 효과를 추가해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
+    case "profile-deco":
+      return [
+        { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
+        { id: "frame", label: "프레임 변경", prompt: "프로필 프레임을 변경해줘" },
+        { id: "deco", label: "데코 추가", prompt: "Y2K 데코를 추가해줘" },
+        { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
+      ];
     default:
       return [
         { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
@@ -314,6 +537,30 @@ export function getTemplateChips(type: FandomTemplateType): string[] {
       return ["4컷 자동 생성", "컷 추가", "배경 생성"];
     case "meme":
       return ["밈 생성", "텍스트 변경", "스타일 변경"];
+    case "cupsleeve":
+      return ["컵슬리브 생성", "테마 변경", "텍스트 편집"];
+    case "slogan":
+      return ["슬로건 생성", "문구 변경", "컬러 변경"];
+    case "stickersheet":
+      return ["스티커 생성", "더 추가", "배열 변경"];
+    case "birthday-set":
+      return ["패키지 생성", "테마 변경", "굿즈 추가"];
+    case "acrylicstand":
+      return ["아크릴 생성", "포즈 변경", "스타일 변경"];
+    case "phonecase":
+      return ["폰케이스 생성", "레이아웃 변경", "컬러 변경"];
+    case "deco-photocard":
+      return ["꾸미기 포카 생성", "스티커 추가", "젬 장식"];
+    case "retro-magazine":
+      return ["매거진 커버 생성", "헤드라인 변경", "레이아웃 변경"];
+    case "diary-page":
+      return ["다꾸 페이지 생성", "테이프 추가", "데코 추가"];
+    case "kitsch-collage":
+      return ["키치 콜라주 생성", "네온 효과", "크롬 텍스트"];
+    case "ticket-bookmark":
+      return ["티켓 생성", "텍스트 편집", "빈티지 효과"];
+    case "profile-deco":
+      return ["프로필 데코 생성", "프레임 변경", "Y2K 데코"];
     default:
       return ["생성", "스타일 변경"];
   }
@@ -332,6 +579,18 @@ export function getTemplatePlaceholder(type: FandomTemplateType): string {
     case "edit": return "어떤 에디트를 만들까요?";
     case "instatoon": return "어떤 인스타툰을 만들까요?";
     case "meme": return "어떤 밈을 만들까요?";
+    case "cupsleeve": return "어떤 컵슬리브를 만들까요?";
+    case "slogan": return "어떤 슬로건을 만들까요?";
+    case "stickersheet": return "어떤 스티커를 만들까요?";
+    case "birthday-set": return "생카 패키지 테마를 정해주세요";
+    case "acrylicstand": return "어떤 아크릴 스탠드를 만들까요?";
+    case "phonecase": return "어떤 폰케이스를 만들까요?";
+    case "deco-photocard": return "어떤 꾸미기 포카를 만들까요?";
+    case "retro-magazine": return "어떤 매거진 커버를 만들까요?";
+    case "diary-page": return "어떤 다꾸 페이지를 만들까요?";
+    case "kitsch-collage": return "어떤 키치 콜라주를 만들까요?";
+    case "ticket-bookmark": return "어떤 티켓/북마크를 만들까요?";
+    case "profile-deco": return "어떤 프로필 데코를 만들까요?";
     default: return "무엇을 만들고 싶으세요?";
   }
 }
@@ -437,4 +696,161 @@ export const CONCERT_EFFECTS: ConcertEffectDef[] = [
   { id: "confetti", label: "컨페티", desc: "축하 컨페티 효과", prompt: "컨페티 효과를 추가해줘" },
   { id: "stage-smoke", label: "스모그", desc: "무대 연기 효과", prompt: "무대 스모그 효과를 추가해줘" },
   { id: "laser", label: "레이저", desc: "레이저 빔 효과", prompt: "레이저 빔 효과를 추가해줘" },
+];
+
+// ─── K-POP Aesthetic Filters ─────────────────────────────────────────────────
+
+export interface KpopAestheticFilter {
+  id: KpopAestheticFilterId;
+  label: string;
+  prompt: string;
+  color: string;
+}
+
+export const KPOP_AESTHETIC_FILTERS: KpopAestheticFilter[] = [
+  { id: "dreamy",      label: "몽환적",     prompt: "dreamy soft focus ethereal glow pastel tones", color: "#E8B4F8" },
+  { id: "y2k",         label: "Y2K",        prompt: "Y2K aesthetic, chrome, bubble, sparkle, neon pink", color: "#FF69B4" },
+  { id: "holographic", label: "홀로그래픽",  prompt: "holographic iridescent rainbow shimmer", color: "#87CEEB" },
+  { id: "retro-film",  label: "필름 레트로", prompt: "vintage film grain, warm tones, light leak", color: "#D4A574" },
+  { id: "fairy",       label: "요정 코어",   prompt: "fairy core, sparkles, butterfly, pastel bloom", color: "#FFB6C1" },
+  { id: "dark-royal",  label: "다크 로열",   prompt: "dark royal, velvet, gold accents, dramatic", color: "#4A0E5C" },
+  { id: "concert",     label: "콘서트",      prompt: "concert stage, dramatic lighting, lens flare", color: "#1E3A5F" },
+  { id: "magazine",    label: "매거진",      prompt: "fashion magazine editorial, clean typography", color: "#2C2C2C" },
+  { id: "summer-pop",  label: "썸머 팝",     prompt: "bright summer pop, vivid, tropical, cheerful", color: "#FF6347" },
+  { id: "winter-soft", label: "겨울 소프트", prompt: "soft winter, snow, white tones, cozy warm", color: "#B0C4DE" },
+  { id: "kitsch-y2k",     label: "키치 Y2K",     prompt: "Y2K kitsch, bubblegum pink, chrome hearts, butterfly clips, sparkle gems", color: "#FF69B4" },
+  { id: "kitsch-retro",   label: "키치 레트로",   prompt: "retro kitsch, checkerboard, neon signs, vintage stickers, maximalist", color: "#FF6F61" },
+  { id: "kitsch-dreampop", label: "키치 드림팝",  prompt: "dreampop kitsch, pastel rainbow, glitter, soft glow, kawaii deco", color: "#DDA0DD" },
+];
+
+// ─── Fandom Color Palettes (expanded from LIGHTSTICK_COLORS) ────────────────
+
+export interface FandomColorPalette {
+  groupName: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+  gradient: [string, string];
+  lightstick: string;
+}
+
+export const FANDOM_COLOR_PALETTES: FandomColorPalette[] = [
+  { groupName: "BTS",         primary: "#A855F7", secondary: "#7C3AED", accent: "#C084FC", gradient: ["#A855F7", "#7C3AED"], lightstick: "#A855F7" },
+  { groupName: "BLACKPINK",   primary: "#EC4899", secondary: "#DB2777", accent: "#F472B6", gradient: ["#EC4899", "#DB2777"], lightstick: "#EC4899" },
+  { groupName: "TWICE",       primary: "#F97316", secondary: "#EA580C", accent: "#FB923C", gradient: ["#F97316", "#FBBF24"], lightstick: "#F97316" },
+  { groupName: "aespa",       primary: "#6366F1", secondary: "#4F46E5", accent: "#818CF8", gradient: ["#6366F1", "#A855F7"], lightstick: "#6366F1" },
+  { groupName: "NewJeans",    primary: "#3B82F6", secondary: "#2563EB", accent: "#60A5FA", gradient: ["#3B82F6", "#06B6D4"], lightstick: "#3B82F6" },
+  { groupName: "IVE",         primary: "#EF4444", secondary: "#DC2626", accent: "#F87171", gradient: ["#EF4444", "#F97316"], lightstick: "#EF4444" },
+  { groupName: "LE SSERAFIM", primary: "#14B8A6", secondary: "#0D9488", accent: "#2DD4BF", gradient: ["#14B8A6", "#06B6D4"], lightstick: "#14B8A6" },
+  { groupName: "Stray Kids",  primary: "#EAB308", secondary: "#CA8A04", accent: "#FACC15", gradient: ["#EAB308", "#F97316"], lightstick: "#EAB308" },
+  { groupName: "(G)I-DLE",    primary: "#8B5CF6", secondary: "#7C3AED", accent: "#A78BFA", gradient: ["#8B5CF6", "#EC4899"], lightstick: "#8B5CF6" },
+  { groupName: "SEVENTEEN",   primary: "#F472B6", secondary: "#EC4899", accent: "#F9A8D4", gradient: ["#F472B6", "#A855F7"], lightstick: "#F472B6" },
+];
+
+// ─── Wallpaper Widget Layouts ────────────────────────────────────────────────
+
+export interface WallpaperSafeZone {
+  x: number; y: number; width: number; height: number; label: string;
+}
+
+export interface WallpaperLayout {
+  id: string;
+  label: string;
+  safeZones: WallpaperSafeZone[];
+}
+
+export const WALLPAPER_LAYOUTS: WallpaperLayout[] = [
+  {
+    id: "ios-clock",
+    label: "iOS 시계 레이아웃",
+    safeZones: [
+      { x: 30, y: 60, width: 390, height: 120, label: "시계/날짜 영역" },
+    ],
+  },
+  {
+    id: "android-top",
+    label: "Android 상단 위젯",
+    safeZones: [
+      { x: 20, y: 40, width: 410, height: 180, label: "위젯 영역" },
+    ],
+  },
+  {
+    id: "lockscreen",
+    label: "잠금화면 (시간+날짜)",
+    safeZones: [
+      { x: 30, y: 50, width: 390, height: 100, label: "시간" },
+      { x: 30, y: 160, width: 200, height: 40, label: "날짜" },
+    ],
+  },
+  {
+    id: "full",
+    label: "전체 화면",
+    safeZones: [],
+  },
+];
+
+// ─── Fandom Design Elements ─────────────────────────────────────────────────
+
+export interface FandomDesignElement {
+  id: string;
+  label: string;
+  category: "texture" | "overlay" | "pattern" | "deco";
+  prompt: string;
+}
+
+export const FANDOM_DESIGN_ELEMENTS: FandomDesignElement[] = [
+  // Textures
+  { id: "holo-texture", label: "홀로 텍스처", category: "texture", prompt: "holographic foil texture overlay" },
+  { id: "glitter", label: "글리터", category: "texture", prompt: "sparkle glitter dust particles" },
+  { id: "film-grain", label: "필름 그레인", category: "texture", prompt: "vintage film grain texture" },
+  // Overlays
+  { id: "bokeh", label: "보케 오버레이", category: "overlay", prompt: "soft bokeh light circles overlay" },
+  { id: "lightstick-sea", label: "응원봉 바다", category: "overlay", prompt: "sea of concert lightsticks glowing background" },
+  { id: "confetti-overlay", label: "컨페티", category: "overlay", prompt: "colorful confetti falling overlay" },
+  { id: "lens-flare", label: "렌즈 플레어", category: "overlay", prompt: "anamorphic lens flare light" },
+  // Patterns
+  { id: "heart-pattern", label: "하트 패턴", category: "pattern", prompt: "repeating heart pattern background" },
+  { id: "star-pattern", label: "별 패턴", category: "pattern", prompt: "repeating star pattern background" },
+  { id: "lightstick-pattern", label: "응원봉 패턴", category: "pattern", prompt: "repeating lightstick icon pattern" },
+  // Deco
+  { id: "butterfly", label: "나비", category: "deco", prompt: "decorative butterflies scattered" },
+  { id: "flower-frame", label: "꽃 프레임", category: "deco", prompt: "floral frame border decoration" },
+  { id: "ribbon", label: "리본 장식", category: "deco", prompt: "cute ribbon bow decoration" },
+  // Kitsch deco
+  { id: "y2k-sticker", label: "Y2K 스티커", category: "deco", prompt: "Y2K style decorative stickers, chrome hearts, stars, butterflies" },
+  { id: "chrome-text", label: "크롬 텍스트", category: "deco", prompt: "chrome metallic 3D text effect" },
+  { id: "masking-tape", label: "마스킹테이프", category: "deco", prompt: "colorful washi masking tape strips decoration" },
+  { id: "checkerboard", label: "체커보드", category: "pattern", prompt: "retro checkerboard pattern, pink and white" },
+  { id: "gem-sticker", label: "젬 스티커", category: "deco", prompt: "sparkly gem rhinestone sticker decorations" },
+  { id: "neon-frame", label: "네온 프레임", category: "overlay", prompt: "glowing neon frame border, pink and blue" },
+];
+
+// ─── K-POP Text Presets ──────────────────────────────────────────────────────
+
+export interface KpopTextPreset {
+  id: string;
+  text: string;
+  category: "cheer" | "birthday" | "love" | "general";
+  lang: "ko" | "en";
+}
+
+export const KPOP_TEXT_PRESETS: KpopTextPreset[] = [
+  { id: "t1",  text: "사랑해요",          category: "love",     lang: "ko" },
+  { id: "t2",  text: "영원히 함께",        category: "love",     lang: "ko" },
+  { id: "t3",  text: "최고의 아이돌",      category: "cheer",    lang: "ko" },
+  { id: "t4",  text: "화이팅!",           category: "cheer",    lang: "ko" },
+  { id: "t5",  text: "생일 축하해!",       category: "birthday", lang: "ko" },
+  { id: "t6",  text: "태어나줘서 고마워",   category: "birthday", lang: "ko" },
+  { id: "t7",  text: "오늘도 빛나는 너",    category: "general",  lang: "ko" },
+  { id: "t8",  text: "Forever Young",     category: "general",  lang: "en" },
+  { id: "t9",  text: "My Universe",       category: "love",     lang: "en" },
+  { id: "t10", text: "Happy Birthday!",   category: "birthday", lang: "en" },
+  { id: "t11", text: "You Are My Star",   category: "love",     lang: "en" },
+  { id: "t12", text: "Shine On!",         category: "cheer",    lang: "en" },
+  // Kitsch text presets
+  { id: "t13", text: "My Star",           category: "love",     lang: "en" },
+  { id: "t14", text: "XOXO",              category: "love",     lang: "en" },
+  { id: "t15", text: "Dream On",          category: "general",  lang: "en" },
+  { id: "t16", text: "너만 볼 거야",       category: "love",     lang: "ko" },
+  { id: "t17", text: "덕질은 나의 힘",     category: "cheer",    lang: "ko" },
 ];

@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from "react-router";
 import { useCopilot } from "@/hooks/use-copilot";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { genId } from "@/contexts/workspace-context";
-import type { FandomEditorMeta, Cut } from "@/lib/workspace-types";
+import type { FandomEditorMeta, Cut, KpopAestheticFilterId } from "@/lib/workspace-types";
 import {
   FANDOM_TEMPLATES,
   TEMPLATE_LABELS,
@@ -126,6 +126,36 @@ export function EditorAutoStart() {
         }
       }
 
+      // Load extended settings (aesthetic filter, DPI, goods mode)
+      const extKey = `olli-fandom-editor-ext-${pid}`;
+      const extRaw = localStorage.getItem(extKey);
+      if (extRaw) {
+        try {
+          const ext = JSON.parse(extRaw);
+          if (ext.aestheticFilter) {
+            dispatch({ type: "SET_AESTHETIC_FILTER", filterId: ext.aestheticFilter as KpopAestheticFilterId });
+          }
+          if (ext.isGoods && ext.dpi) {
+            // Goods mode: set print settings from template defaults
+            const tmplDef2 = FANDOM_TEMPLATES.find((t) => t.type === meta.templateType);
+            if (tmplDef2) {
+              dispatch({
+                type: "SET_PRINT_SETTINGS",
+                settings: {
+                  dpi: ext.dpi,
+                  bleedMm: 3,
+                  showBleedMarks: false,
+                  showTrimLines: true,
+                  showSafeZone: false,
+                  physicalWidthMm: 0,
+                  physicalHeightMm: 0,
+                },
+              });
+            }
+          }
+        } catch { /* ignore */ }
+      }
+
       // Auto-send fandom prompt with template context
       const prompt = buildAutoPrompt(meta);
 
@@ -135,6 +165,22 @@ export function EditorAutoStart() {
       // Invalid meta
     }
   }, [searchParams, projectId, dispatch, sendMessage]);
+
+  // ── Birthday cafe mode ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (searchParams.get("mode") !== "birthday-cafe") return;
+    if (fandomRef.current) return;
+
+    const pid = projectId || "new";
+    const pkgKey = `olli-birthday-cafe-${pid}`;
+    const raw = localStorage.getItem(pkgKey);
+    if (!raw) return;
+
+    try {
+      const pkg = JSON.parse(raw);
+      dispatch({ type: "SET_BIRTHDAY_CAFE_PACKAGE", package: pkg });
+    } catch { /* ignore */ }
+  }, [searchParams, projectId, dispatch]);
 
   // ── Auto-prompt (generic, non-fandom) ─────────────────────────────────
   useEffect(() => {

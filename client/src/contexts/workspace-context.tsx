@@ -16,6 +16,9 @@ import type {
   FandomEditorMeta,
   FandomStylePreset,
   PhotocardFrame,
+  PrintSettings,
+  BirthdayCafePackage,
+  KpopAestheticFilterId,
 } from "@/lib/workspace-types";
 import type { CanvaEditorHandle } from "@/components/canva-editor/types";
 
@@ -87,6 +90,9 @@ export const initialState: WorkspaceState = {
   interactionCount: 99,
   onboardingDismissed: false,
   fandomMeta: null,
+  printSettings: null,
+  birthdayCafePackage: null,
+  activeAestheticFilter: null,
 };
 
 // ─── Snapshot for undo/redo ─────────────────────────────────────────────────
@@ -491,6 +497,18 @@ function workspaceReducer(
 
     case "APPLY_FANDOM_COLOR":
       return state; // handled by canvas UI directly
+
+    case "SET_PRINT_SETTINGS":
+      return { ...state, printSettings: action.settings };
+
+    case "SET_BIRTHDAY_CAFE_PACKAGE":
+      return { ...state, birthdayCafePackage: action.package };
+
+    case "SET_AESTHETIC_FILTER":
+      return { ...state, activeAestheticFilter: action.filterId };
+
+    case "SET_PHYSICAL_CANVAS_SIZE":
+      return state; // Canvas pixel size is computed at render time via DPI
 
     default:
       return state;

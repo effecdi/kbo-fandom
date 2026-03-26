@@ -1,15 +1,27 @@
 // ─── Fandom Template & Style Types ───────────────────────────────────────────
 
 export type FandomTemplateType =
-  | "portrait"    // 아이돌 포트레이트
-  | "photocard"   // 포토카드
-  | "wallpaper"   // 폰 배경화면
-  | "fanart"      // 자유 팬아트
-  | "sticker"     // 스티커/이모지
-  | "concept"     // 컨셉 포토
-  | "edit"        // 에디트/콜라주
-  | "instatoon"   // 인스타툰
-  | "meme";       // 밈
+  | "portrait"      // 아이돌 포트레이트
+  | "photocard"     // 포토카드
+  | "wallpaper"     // 폰 배경화면
+  | "fanart"        // 자유 팬아트
+  | "sticker"       // 스티커/이모지
+  | "concept"       // 컨셉 포토
+  | "edit"          // 에디트/콜라주
+  | "instatoon"     // 인스타툰
+  | "meme"          // 밈
+  | "cupsleeve"     // 컵슬리브
+  | "slogan"        // 슬로건/배너
+  | "stickersheet"  // 스티커시트
+  | "birthday-set"  // 생일카페 패키지
+  | "acrylicstand"  // 아크릴 스탠드
+  | "phonecase"     // 폰케이스
+  | "deco-photocard"  // 꾸미기 포카
+  | "retro-magazine"  // 키치 매거진
+  | "diary-page"      // 아이돌 다꾸
+  | "kitsch-collage"  // 키치 콜라주
+  | "ticket-bookmark" // 키치 티켓
+  | "profile-deco";   // 프로필 꾸미기
 
 export type FandomStylePreset =
   | "anime" | "watercolor" | "realistic" | "chibi" | "pop-art"
@@ -30,6 +42,37 @@ export interface FandomSticker {
 export type PhotocardFrame = "basic" | "polaroid" | "idol-card" | "holographic" | "vintage" | "neon";
 
 export type ConcertEffect = "lightstick-glow" | "spotlight" | "confetti" | "stage-smoke" | "laser";
+
+// ─── Print Settings ─────────────────────────────────────────────────────────
+
+export interface PrintSettings {
+  dpi: 72 | 150 | 300;
+  bleedMm: number;
+  showBleedMarks: boolean;
+  showTrimLines: boolean;
+  showSafeZone: boolean;
+  physicalWidthMm: number;
+  physicalHeightMm: number;
+}
+
+// ─── Birthday Cafe Package ──────────────────────────────────────────────────
+
+export interface BirthdayCafePackage {
+  memberId: string;
+  memberName: string;
+  birthdayDate: string;
+  cafeName: string;
+  themeColors: string[];
+  selectedGoods: ("cupsleeve" | "banner" | "poster" | "standee" | "photocard" | "sticker")[];
+  coordinatedStyle: string;
+}
+
+// ─── K-POP Aesthetic Filter ─────────────────────────────────────────────────
+
+export type KpopAestheticFilterId =
+  | "dreamy" | "y2k" | "holographic" | "retro-film" | "fairy"
+  | "dark-royal" | "concert" | "magazine" | "summer-pop" | "winter-soft"
+  | "kitsch-y2k" | "kitsch-retro" | "kitsch-dreampop";
 
 // ─── Fandom Editor Meta ──────────────────────────────────────────────────────
 
@@ -204,6 +247,9 @@ export interface WorkspaceState {
   interactionCount: number;
   onboardingDismissed: boolean;
   fandomMeta: FandomEditorMeta | null;
+  printSettings: PrintSettings | null;
+  birthdayCafePackage: BirthdayCafePackage | null;
+  activeAestheticFilter: KpopAestheticFilterId | null;
 }
 
 // ─── Actions ────────────────────────────────────────────────────────────────
@@ -254,4 +300,8 @@ export type WorkspaceAction =
   | { type: "SET_FANDOM_STYLE_PRESET"; preset: FandomStylePreset }
   | { type: "OPEN_STICKER_PANEL" }
   | { type: "SET_PHOTOCARD_FRAME"; frame: PhotocardFrame }
-  | { type: "APPLY_FANDOM_COLOR"; color: string };
+  | { type: "APPLY_FANDOM_COLOR"; color: string }
+  | { type: "SET_PRINT_SETTINGS"; settings: PrintSettings | null }
+  | { type: "SET_BIRTHDAY_CAFE_PACKAGE"; package: BirthdayCafePackage | null }
+  | { type: "SET_AESTHETIC_FILTER"; filterId: KpopAestheticFilterId | null }
+  | { type: "SET_PHYSICAL_CANVAS_SIZE"; widthMm: number; heightMm: number; dpi: number };

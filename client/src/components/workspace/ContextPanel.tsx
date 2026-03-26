@@ -10,6 +10,7 @@ import {
   Sticker,
   Wrench,
   Users,
+  Package,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -24,10 +25,13 @@ import { MemberPanel } from "./panels/MemberPanel";
 import { StickerPanel } from "./panels/StickerPanel";
 import { FandomToolsPanel } from "./panels/FandomToolsPanel";
 import { CommunityPanel } from "./panels/CommunityPanel";
+import { GoodsSettingsPanel } from "./panels/GoodsSettingsPanel";
+import { KitchToolsPanel } from "./panels/KitchToolsPanel";
+import { isGoodsTemplate, isKitschTemplate } from "@/lib/fandom-goods-config";
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
-export type LeftTab = "members" | "fandom-tools" | "stickers" | "community" | "image" | "ai" | "elements" | "tools" | "generative" | "guide";
+export type LeftTab = "members" | "fandom-tools" | "stickers" | "community" | "goods-settings" | "kitsch-tools" | "image" | "ai" | "elements" | "tools" | "generative" | "guide";
 
 const baseTabs: { id: LeftTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "image", label: "이미지", icon: Image },
@@ -50,7 +54,18 @@ const fandomTabs: typeof baseTabs = [
 export function ContextPanel() {
   const { state } = useWorkspace();
   const isFandom = !!state.fandomMeta;
-  const tabs = isFandom ? [...fandomTabs, ...baseTabs] : baseTabs;
+  const isGoods = isFandom && state.fandomMeta ? isGoodsTemplate(state.fandomMeta.templateType) : false;
+  const isKitsch = isFandom && state.fandomMeta ? isKitschTemplate(state.fandomMeta.templateType) : false;
+
+  const goodsTabs: typeof baseTabs = isGoods
+    ? [{ id: "goods-settings" as const, label: "굿즈설정", icon: Package }]
+    : [];
+
+  const kitschTabs: typeof baseTabs = isKitsch
+    ? [{ id: "kitsch-tools" as const, label: "키치도구", icon: Sparkles }]
+    : [];
+
+  const tabs = isFandom ? [...fandomTabs, ...goodsTabs, ...kitschTabs, ...baseTabs] : baseTabs;
 
   const [activeTab, setActiveTab] = useState<LeftTab | null>(null);
 
@@ -99,6 +114,8 @@ export function ContextPanel() {
               {activeTab === "fandom-tools" && <FandomToolsPanel />}
               {activeTab === "stickers" && <StickerPanel />}
               {activeTab === "community" && <CommunityPanel />}
+              {activeTab === "goods-settings" && <GoodsSettingsPanel />}
+              {activeTab === "kitsch-tools" && <KitchToolsPanel />}
               {activeTab === "image" && <ImagePanel />}
               {activeTab === "ai" && <AIPanel />}
               {activeTab === "elements" && <ElementsPanel />}

@@ -8,9 +8,20 @@ import {
   ChevronRight, Sparkles, Crown, Volume2, VolumeX,
 } from "lucide-react";
 import {
-  STORE_KEYS, type UserProfile, type FandomUserProfile, seedIfEmpty,
+  STORE_KEYS, type FandomUserProfile, seedIfEmpty,
   getFandomProfile, setFandomProfile, type FanCreator, listItems,
 } from "@/lib/local-store";
+
+const PROFILE_KEY = "olli-fandom-profile";
+
+interface UserProfile {
+  name: string;
+  email: string;
+  bio: string;
+  avatar: string;
+  genres: string[];
+  socialLinks: { platform: string; url: string }[];
+}
 import { useTheme } from "@/components/theme-provider";
 
 type SettingsTab = "profile" | "fandom" | "notifications" | "privacy" | "theme";
@@ -45,7 +56,7 @@ export function SettingsIndex() {
   useEffect(() => {
     seedIfEmpty();
     try {
-      const raw = localStorage.getItem(STORE_KEYS.PROFILE);
+      const raw = localStorage.getItem(PROFILE_KEY);
       if (raw) setProfile(JSON.parse(raw));
     } catch {}
     const fp = getFandomProfile();

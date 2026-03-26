@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { StudioLayout } from "@/components/StudioLayout";
 import { Link } from "react-router";
-import { Image, Palette, FolderOpen, Plus, User, Loader2, Package, ArrowRight } from "lucide-react";
+import { Image, Palette, Plus, User, Loader2, Package, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { listItems, STORE_KEYS, type BrandAsset } from "@/lib/local-store";
 import { apiRequest } from "@/lib/queryClient";
 
 interface GalleryItem {
@@ -15,25 +14,11 @@ interface GalleryItem {
   createdAt?: string;
 }
 
-function getUserRole(): "creator" | "business" {
-  return (localStorage.getItem("olli_user_role") as "creator" | "business") || "creator";
-}
-
 export function AssetsIndex() {
-  const role = getUserRole();
-  const isBusiness = role === "business";
-
-  type AssetTab = "characters" | "backgrounds" | "brand";
+  type AssetTab = "characters" | "backgrounds";
   const [activeTab, setActiveTab] = useState<AssetTab>("characters");
   const [characters, setCharacters] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [brandAssets, setBrandAssets] = useState<BrandAsset[]>([]);
-
-  // Load brand assets from localStorage
-  useEffect(() => {
-    const assets = listItems<BrandAsset>(STORE_KEYS.BRAND_ASSETS);
-    setBrandAssets(assets);
-  }, []);
 
   // Fetch characters from API with fallback
   useEffect(() => {
@@ -57,15 +42,10 @@ export function AssetsIndex() {
     return () => { cancelled = true; };
   }, []);
 
-  const baseTabs = [
+  const tabs = [
     { id: "characters" as const, label: "캐릭터", icon: User, count: characters.length },
     { id: "backgrounds" as const, label: "배경", icon: Image, count: 0 },
   ];
-
-  // Only show brand tab for business users
-  const tabs = isBusiness
-    ? [...baseTabs, { id: "brand" as const, label: "브랜드 자산", icon: FolderOpen, count: brandAssets.length }]
-    : baseTabs;
 
   return (
     <StudioLayout>
@@ -73,11 +53,7 @@ export function AssetsIndex() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-black text-foreground">에셋</h1>
-            <p className="text-muted-foreground mt-1">
-              {isBusiness
-                ? "캐릭터, 배경, 브랜드 자산을 관리하세요"
-                : "캐릭터와 배경을 관리하세요"}
-            </p>
+            <p className="text-muted-foreground mt-1">캐릭터와 배경을 관리하세요</p>
           </div>
           <Link to="/assets/characters/new">
             <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
@@ -88,7 +64,7 @@ export function AssetsIndex() {
         </div>
 
         {/* Quick Action Cards */}
-        <div className={`grid grid-cols-1 ${isBusiness ? "md:grid-cols-3" : "md:grid-cols-2"} gap-4 mb-8`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Link
             to="/assets/characters/new"
             className="group rounded-2xl border border-border bg-card p-5 hover:shadow-lg hover:border-[#00e5cc]/30 transition-all"
@@ -120,25 +96,6 @@ export function AssetsIndex() {
             </h3>
             <p className="text-xs text-muted-foreground mt-1">생성한 캐릭터 관리</p>
           </Link>
-
-          {/* Brand assets card — business only */}
-          {isBusiness && (
-            <Link
-              to="/assets/brand"
-              className="group rounded-2xl border border-border bg-card p-5 hover:shadow-lg hover:border-[#00e5cc]/30 transition-all"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                  <FolderOpen className="w-5 h-5 text-amber-400" />
-                </div>
-                <span className="text-lg font-black text-[#00e5cc]">{brandAssets.length}</span>
-              </div>
-              <h3 className="text-sm font-bold text-foreground group-hover:text-[#00e5cc] transition-colors">
-                브랜드 자산
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">로고, 마스코트, 가이드라인</p>
-            </Link>
-          )}
         </div>
 
         {/* Tabs */}
@@ -219,42 +176,6 @@ export function AssetsIndex() {
             <p className="text-lg font-semibold text-muted-foreground">배경 에셋</p>
             <p className="text-sm text-muted-foreground mt-1">곧 지원될 예정입니다</p>
           </div>
-        )}
-
-        {activeTab === "brand" && isBusiness && (
-          <>
-            {brandAssets.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {brandAssets.map((asset) => (
-                  <Link
-                    key={asset.id}
-                    to="/assets/brand"
-                    className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-all cursor-pointer"
-                  >
-                    <div className="aspect-square bg-muted flex items-center justify-center">
-                      <FolderOpen className="w-10 h-10 text-muted-foreground/20" />
-                    </div>
-                    <div className="p-3">
-                      <h3 className="text-sm font-semibold text-foreground group-hover:text-[#00e5cc]">{asset.name}</h3>
-                      <p className="text-xs text-muted-foreground">v{asset.version} | {asset.status === "approved" ? "승인됨" : asset.status === "review" ? "검토중" : "초안"}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <FolderOpen className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                <p className="text-lg font-semibold text-muted-foreground">브랜드 자산이 없습니다</p>
-                <p className="text-sm text-muted-foreground mt-1 mb-4">브랜드 자산 관리 페이지에서 추가하세요</p>
-                <Link to="/assets/brand">
-                  <Button className="bg-[#00e5cc] hover:bg-[#00f0ff] text-black font-bold gap-2">
-                    <Plus className="w-5 h-5" />
-                    브랜드 자산 관리
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </>
         )}
       </div>
     </StudioLayout>

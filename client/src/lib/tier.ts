@@ -76,7 +76,6 @@ export const FEATURE_TIER_REQUIREMENTS = {
   bubbleEditor: { minTier: 1, label: "말풍선 에디터", unlockAt: "신인 작가 (5회+)" },
   allFonts: { minTier: 3, label: "전체 폰트", unlockAt: "프로 연재러 (30회+)" },
   chat: { minTier: -1, label: "채팅 이미지", unlockAt: "유료 멤버십" },
-  adMatch: { minTier: -1, label: "광고 매칭 AI", unlockAt: "유료 멤버십" },
 } as const;
 
 export type FeatureKey = keyof typeof FEATURE_TIER_REQUIREMENTS;
