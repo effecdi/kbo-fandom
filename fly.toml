@@ -1,4 +1,4 @@
-app = 'olli-fandom-dev'
+app = 'kbo-fandom'
 primary_region = 'nrt'
 
 [build]
