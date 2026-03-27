@@ -1,26 +1,26 @@
 // ─── Fandom Template & Style Types ───────────────────────────────────────────
 
 export type FandomTemplateType =
-  | "portrait"      // 아이돌 포트레이트
-  | "photocard"     // 포토카드
-  | "wallpaper"     // 폰 배경화면
-  | "fanart"        // 자유 팬아트
-  | "sticker"       // 스티커/이모지
-  | "concept"       // 컨셉 포토
-  | "edit"          // 에디트/콜라주
-  | "instatoon"     // 인스타툰
-  | "meme"          // 밈
-  | "cupsleeve"     // 컵슬리브
-  | "slogan"        // 슬로건/배너
-  | "stickersheet"  // 스티커시트
-  | "birthday-set"  // 생일카페 패키지
-  | "acrylicstand"  // 아크릴 스탠드
-  | "phonecase"     // 폰케이스
-  | "deco-photocard"  // 꾸미기 포카
-  | "retro-magazine"  // 키치 매거진
-  | "diary-page"      // 아이돌 다꾸
+  | "portrait"        // 선수 포트레이트
+  | "playercard"      // 선수 카드
+  | "wallpaper"       // 폰 배경화면
+  | "fanart"          // 자유 팬아트
+  | "sticker"         // 스티커/이모지
+  | "matchday"        // 경기날 포토
+  | "edit"            // 에디트/콜라주
+  | "instatoon"       // 인스타툰
+  | "meme"            // 밈
+  | "cheerbanner"     // 응원 배너
+  | "slogan"          // 슬로건/배너
+  | "stickersheet"    // 스티커시트
+  | "stadium-set"     // 경기장 패키지
+  | "acrylicstand"    // 아크릴 스탠드
+  | "phonecase"       // 폰케이스
+  | "deco-playercard" // 꾸미기 선수카드
+  | "retro-magazine"  // 레트로 매거진
+  | "scorebook-page"  // 스코어북 꾸미기
   | "kitsch-collage"  // 키치 콜라주
-  | "ticket-bookmark" // 키치 티켓
+  | "ticket-bookmark" // 관람 티켓
   | "profile-deco";   // 프로필 꾸미기
 
 export type FandomStylePreset =
@@ -29,7 +29,7 @@ export type FandomStylePreset =
 
 // ─── Fandom Sticker & Tool Types ─────────────────────────────────────────────
 
-export type FandomStickerCategory = "lightstick" | "emoji" | "logo" | "text" | "concert" | "heart";
+export type FandomStickerCategory = "cheer" | "emoji" | "logo" | "text" | "stadium" | "heart";
 
 export interface FandomSticker {
   id: string;
@@ -39,9 +39,9 @@ export interface FandomSticker {
   groupId?: string;
 }
 
-export type PhotocardFrame = "basic" | "polaroid" | "idol-card" | "holographic" | "vintage" | "neon";
+export type PhotocardFrame = "basic" | "polaroid" | "player-card" | "holographic" | "vintage" | "neon";
 
-export type ConcertEffect = "lightstick-glow" | "spotlight" | "confetti" | "stage-smoke" | "laser";
+export type ConcertEffect = "cheer-glow" | "spotlight" | "confetti" | "firework" | "laser";
 
 // ─── Print Settings ─────────────────────────────────────────────────────────
 
@@ -55,24 +55,24 @@ export interface PrintSettings {
   physicalHeightMm: number;
 }
 
-// ─── Birthday Cafe Package ──────────────────────────────────────────────────
+// ─── Stadium Package ────────────────────────────────────────────────────────
 
 export interface BirthdayCafePackage {
-  memberId: string;
-  memberName: string;
-  birthdayDate: string;
-  cafeName: string;
+  playerId: string;
+  playerName: string;
+  matchDate: string;
+  stadiumName: string;
   themeColors: string[];
-  selectedGoods: ("cupsleeve" | "banner" | "poster" | "standee" | "photocard" | "sticker")[];
+  selectedGoods: ("cheerbanner" | "banner" | "poster" | "standee" | "playercard" | "sticker")[];
   coordinatedStyle: string;
 }
 
-// ─── K-POP Aesthetic Filter ─────────────────────────────────────────────────
+// ─── Baseball Aesthetic Filter ───────────────────────────────────────────────
 
 export type KpopAestheticFilterId =
-  | "dreamy" | "y2k" | "holographic" | "retro-film" | "fairy"
-  | "dark-royal" | "concert" | "magazine" | "summer-pop" | "winter-soft"
-  | "kitsch-y2k" | "kitsch-retro" | "kitsch-dreampop";
+  | "classic" | "retro" | "dynamic" | "night-game" | "victory"
+  | "daytime" | "stadium" | "magazine" | "summer-day" | "autumn-series"
+  | "kitsch-retro" | "kitsch-pop" | "kitsch-heritage";
 
 // ─── Fandom Editor Meta ──────────────────────────────────────────────────────
 

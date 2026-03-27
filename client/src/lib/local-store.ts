@@ -58,6 +58,9 @@ export const STORE_KEYS = {
   PROJECTS: "olli-fandom-projects",
   // Fandom
   FANDOM_USER_PROFILE: "olli-fandom-user-profile",
+  KBO_TEAMS: "olli-fandom-groups",
+  KBO_PLAYERS: "olli-fandom-members",
+  // Backward compatibility aliases (same localStorage keys)
   IDOL_GROUPS: "olli-fandom-groups",
   IDOL_MEMBERS: "olli-fandom-members",
   FANDOM_FEED: "olli-fandom-feed",
@@ -75,7 +78,13 @@ export const STORE_KEYS = {
   EDITOR_EVENTS: "olli-editor-events",
   EDITOR_POLLS: "olli-editor-polls",
   EDITOR_CONTENT: "olli-editor-all-content",
+  // KBO Schedule
+  KBO_SCHEDULE: "olli-kbo-schedule",
 } as const;
+
+// Backward compatibility aliases
+export const IDOL_GROUPS_KEY = STORE_KEYS.KBO_TEAMS;
+export const IDOL_MEMBERS_KEY = STORE_KEYS.KBO_PLAYERS;
 
 // ─── ID Generator ────────────────────────────────────────────────────────────
 
@@ -104,8 +113,8 @@ export interface FandomUserProfile {
   groupId: string;
   groupName: string;
   fandomName: string;
-  bias: string;
-  biasWrecker: string;
+  favoritePlayer: string;
+  secondPlayer: string;
   answers: Record<string, string>;
   verified: boolean;
   verifiedAt: string;
@@ -133,11 +142,11 @@ export function verifyFandomAnswers(
   groupId: string,
   answers: Record<string, string>
 ): { passed: boolean; score: number; wrongKeys: string[] } {
-  const groups = listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS);
-  const group = groups.find((g) => g.id === groupId);
-  if (!group) return { passed: false, score: 0, wrongKeys: ["groupId"] };
+  const teams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
+  const team = teams.find((g) => g.id === groupId);
+  if (!team) return { passed: false, score: 0, wrongKeys: ["groupId"] };
 
-  const members = listItems<IdolMember>(STORE_KEYS.IDOL_MEMBERS).filter(
+  const players = listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS).filter(
     (m) => m.groupId === groupId
   );
 
@@ -146,59 +155,73 @@ export function verifyFandomAnswers(
   // Q2: fandom name
   if (
     (answers.fandomName || "").trim().toLowerCase() !==
-    group.fandomName.trim().toLowerCase()
+    team.fandomName.trim().toLowerCase()
   )
     wrongKeys.push("fandomName");
 
-  // Q3: debut year
-  if (String(answers.debutYear) !== String(group.debutYear))
-    wrongKeys.push("debutYear");
+  // Q3: founded year (창단 연도)
+  if (String(answers.foundedYear) !== String(team.foundedYear))
+    wrongKeys.push("foundedYear");
 
-  // Q4: company
+  // Q4: city (연고지)
   if (
-    (answers.company || "").trim().toLowerCase() !==
-    group.company.trim().toLowerCase()
+    (answers.city || "").trim().toLowerCase() !==
+    team.city.trim().toLowerCase()
   )
-    wrongKeys.push("company");
+    wrongKeys.push("city");
 
-  // Q5: member count
-  if (Number(answers.memberCount) !== members.length)
-    wrongKeys.push("memberCount");
+  // Q5: stadium (홈구장)
+  if (
+    (answers.stadium || "").trim() !== "" &&
+    !(team.stadium.toLowerCase().includes((answers.stadium || "").trim().toLowerCase()))
+  )
+    wrongKeys.push("stadium");
 
-  // Q6: leader
-  const leaders = members
-    .filter((m) => m.position.includes("리더"))
+  // Q6: captain/representative player
+  const captains = players
+    .slice(0, 3) // 대표 선수 (처음 3명 중 매칭)
     .map((m) => m.name.toLowerCase());
-  if (!leaders.includes((answers.leader || "").trim().toLowerCase()))
-    wrongKeys.push("leader");
+  if (
+    (answers.captain || "").trim() !== "" &&
+    !captains.includes((answers.captain || "").trim().toLowerCase())
+  )
+    wrongKeys.push("captain");
 
   const score = 5 - wrongKeys.length;
-  return { passed: score >= 4, score, wrongKeys };
+  return { passed: score >= 3, score, wrongKeys };
 }
 
 // ─── Fandom Type Definitions ────────────────────────────────────────────────
 
-export interface IdolGroup {
+export interface KboTeam {
   id: string;
   name: string;
   nameKo: string;
-  company: string;
+  city: string;
+  stadium: string;
   fandomName: string;
-  debutYear: number;
+  foundedYear: number;
   followers: number;
   fanartCount: number;
   coverColor: string;
+  secondaryColor: string;
   description: string;
+  mascot: string;
 }
 
-export interface IdolMember {
+export interface KboPlayer {
   id: string;
   groupId: string;
   name: string;
   nameKo: string;
   position: string;
+  jerseyNumber: number;
   color: string;
 }
+
+// Backward compatibility aliases
+export type IdolGroup = KboTeam;
+export type IdolMember = KboPlayer;
 
 export interface FandomFeedPost {
   id: string;
@@ -254,7 +277,7 @@ export interface FanCreator {
   bio: string;
   groupId: string;
   groupName: string;
-  bias: string;
+  favoritePlayer: string;
   fanartCount: number;
   followerCount: number;
   followingCount: number;
@@ -291,7 +314,7 @@ export interface FanTalkPost {
   groupId: string;
   groupName: string;
   content: string;
-  topic: "잡담" | "질문" | "추천" | "소식" | "인증";
+  topic: "잡담" | "질문" | "추천" | "소식" | "인증" | "직관인증";
   likes: number;
   liked: boolean;
   replyCount: number;
@@ -395,198 +418,196 @@ export function seedIfEmpty(): void {
 
   // ─── Fandom Seed Data ──────────────────────────────────────────────────────
 
-  // Idol Groups
-  if (listItems(STORE_KEYS.IDOL_GROUPS).length === 0) {
-    const groups: IdolGroup[] = [
-      { id: "grp-bts", name: "BTS", nameKo: "방탄소년단", company: "HYBE", fandomName: "ARMY", debutYear: 2013, followers: 45200, fanartCount: 3420, coverColor: "#7B2FF7", description: "글로벌 K-POP 그룹 방탄소년단" },
-      { id: "grp-bp", name: "BLACKPINK", nameKo: "블랙핑크", company: "YG", fandomName: "BLINK", debutYear: 2016, followers: 38100, fanartCount: 2890, coverColor: "#FF2D8A", description: "글로벌 걸그룹 블랙핑크" },
-      { id: "grp-nj", name: "NewJeans", nameKo: "뉴진스", company: "ADOR", fandomName: "Bunnies", debutYear: 2022, followers: 28500, fanartCount: 2150, coverColor: "#00B4D8", description: "4세대 대표 걸그룹 뉴진스" },
-      { id: "grp-ae", name: "aespa", nameKo: "에스파", company: "SM", fandomName: "MY", debutYear: 2020, followers: 22800, fanartCount: 1780, coverColor: "#8B5CF6", description: "메타버스 걸그룹 에스파" },
-      { id: "grp-skz", name: "Stray Kids", nameKo: "스트레이 키즈", company: "JYP", fandomName: "STAY", debutYear: 2018, followers: 31200, fanartCount: 2340, coverColor: "#EF4444", description: "자체 프로듀싱 보이그룹 스트레이 키즈" },
-      { id: "grp-svt", name: "SEVENTEEN", nameKo: "세븐틴", company: "PLEDIS", fandomName: "CARAT", debutYear: 2015, followers: 34600, fanartCount: 2670, coverColor: "#F59E0B", description: "자체 제작 아이돌 세븐틴" },
-      { id: "grp-ive", name: "IVE", nameKo: "아이브", company: "STARSHIP", fandomName: "DIVE", debutYear: 2021, followers: 19800, fanartCount: 1420, coverColor: "#EC4899", description: "4세대 걸그룹 아이브" },
-      { id: "grp-lsf", name: "LE SSERAFIM", nameKo: "르세라핌", company: "SOURCE", fandomName: "FEARNOT", debutYear: 2022, followers: 21300, fanartCount: 1650, coverColor: "#10B981", description: "퍼포먼스 걸그룹 르세라핌" },
+  // KBO Teams (10개 구단)
+  if (listItems(STORE_KEYS.KBO_TEAMS).length === 0) {
+    const teams: KboTeam[] = [
+      { id: "team-lg", name: "LG Twins", nameKo: "LG 트윈스", city: "서울", stadium: "잠실야구장", fandomName: "트윈스 팬", foundedYear: 1982, followers: 42000, fanartCount: 2800, coverColor: "#C60C30", secondaryColor: "#000000", description: "서울을 대표하는 전통 구단, 2023년 한국시리즈 우승", mascot: "Luckii" },
+      { id: "team-kt", name: "KT Wiz", nameKo: "KT 위즈", city: "수원", stadium: "수원KT위즈파크", fandomName: "위즈 팬", foundedYear: 2015, followers: 18000, fanartCount: 1200, coverColor: "#000000", secondaryColor: "#ED1C24", description: "수원의 젊은 구단, 2021년 한국시리즈 우승", mascot: "Vic" },
+      { id: "team-ssg", name: "SSG Landers", nameKo: "SSG 랜더스", city: "인천", stadium: "인천SSG랜더스필드", fandomName: "랜더스 팬", foundedYear: 2000, followers: 25000, fanartCount: 1800, coverColor: "#CE0E2D", secondaryColor: "#1D1D1B", description: "인천의 자존심, 2022년 한국시리즈 우승", mascot: "Landro" },
+      { id: "team-nc", name: "NC Dinos", nameKo: "NC 다이노스", city: "창원", stadium: "창원NC파크", fandomName: "다이노스 팬", foundedYear: 2013, followers: 22000, fanartCount: 1500, coverColor: "#315288", secondaryColor: "#C0A882", description: "창원의 공룡 군단, 2020년 한국시리즈 우승", mascot: "Dandi" },
+      { id: "team-doo", name: "Doosan Bears", nameKo: "두산 베어스", city: "서울", stadium: "잠실야구장", fandomName: "베어스 팬", foundedYear: 1982, followers: 38000, fanartCount: 2500, coverColor: "#131230", secondaryColor: "#ED1C24", description: "잠실의 전통 강호, 최다 한국시리즈 우승 구단", mascot: "Beary" },
+      { id: "team-kia", name: "KIA Tigers", nameKo: "KIA 타이거즈", city: "광주", stadium: "광주-기아챔피언스필드", fandomName: "타이거즈 팬", foundedYear: 1982, followers: 35000, fanartCount: 2400, coverColor: "#EA0029", secondaryColor: "#000000", description: "호남의 왕, KBO 최다 통합 우승 구단", mascot: "Hogini" },
+      { id: "team-lot", name: "Lotte Giants", nameKo: "롯데 자이언츠", city: "부산", stadium: "사직야구장", fandomName: "자이언츠 팬", foundedYear: 1982, followers: 32000, fanartCount: 2100, coverColor: "#041E42", secondaryColor: "#E30613", description: "부산의 영웅, 열정적인 응원 문화의 원조", mascot: "Giant" },
+      { id: "team-sam", name: "Samsung Lions", nameKo: "삼성 라이온즈", city: "대구", stadium: "대구삼성라이온즈파크", fandomName: "라이온즈 팬", foundedYear: 1982, followers: 30000, fanartCount: 2000, coverColor: "#074CA1", secondaryColor: "#FFFFFF", description: "대구의 사자, 4연패 신화의 주인공", mascot: "Blazey" },
+      { id: "team-han", name: "Hanwha Eagles", nameKo: "한화 이글스", city: "대전", stadium: "한화생명이글스파크", fandomName: "이글스 팬", foundedYear: 1986, followers: 20000, fanartCount: 1400, coverColor: "#FF6600", secondaryColor: "#000000", description: "대전의 독수리, 꾸준한 팬사랑의 구단", mascot: "Suri" },
+      { id: "team-kiw", name: "Kiwoom Heroes", nameKo: "키움 히어로즈", city: "서울", stadium: "고척스카이돔", fandomName: "히어로즈 팬", foundedYear: 2008, followers: 19000, fanartCount: 1300, coverColor: "#820024", secondaryColor: "#000000", description: "고척의 영웅들, 국내 유일 돔구장 구단", mascot: "Tuki" },
     ];
-    groups.forEach((g) => addItem(STORE_KEYS.IDOL_GROUPS, g));
+    teams.forEach((t) => addItem(STORE_KEYS.KBO_TEAMS, t));
   }
 
-  // Idol Members
-  if (listItems(STORE_KEYS.IDOL_MEMBERS).length === 0) {
-    const members: IdolMember[] = [
-      // BTS
-      { id: "mem-rm", groupId: "grp-bts", name: "RM", nameKo: "알엠", position: "리더/래퍼", color: "#7B2FF7" },
-      { id: "mem-jin", groupId: "grp-bts", name: "Jin", nameKo: "진", position: "보컬", color: "#EC4899" },
-      { id: "mem-suga", groupId: "grp-bts", name: "SUGA", nameKo: "슈가", position: "래퍼", color: "#3B82F6" },
-      { id: "mem-jhope", groupId: "grp-bts", name: "j-hope", nameKo: "제이홉", position: "댄서/래퍼", color: "#F59E0B" },
-      { id: "mem-jimin", groupId: "grp-bts", name: "Jimin", nameKo: "지민", position: "보컬/댄서", color: "#EF4444" },
-      { id: "mem-v", groupId: "grp-bts", name: "V", nameKo: "뷔", position: "보컬", color: "#10B981" },
-      { id: "mem-jk", groupId: "grp-bts", name: "Jung Kook", nameKo: "정국", position: "보컬/센터", color: "#8B5CF6" },
-      // BLACKPINK
-      { id: "mem-jisoo", groupId: "grp-bp", name: "Jisoo", nameKo: "지수", position: "보컬/비주얼", color: "#EC4899" },
-      { id: "mem-jennie", groupId: "grp-bp", name: "Jennie", nameKo: "제니", position: "래퍼/보컬", color: "#F59E0B" },
-      { id: "mem-rose", groupId: "grp-bp", name: "Rosé", nameKo: "로제", position: "메인보컬", color: "#3B82F6" },
-      { id: "mem-lisa", groupId: "grp-bp", name: "Lisa", nameKo: "리사", position: "메인댄서/래퍼", color: "#EF4444" },
-      // NewJeans
-      { id: "mem-minji", groupId: "grp-nj", name: "Minji", nameKo: "민지", position: "리더/보컬", color: "#00B4D8" },
-      { id: "mem-hanni", groupId: "grp-nj", name: "Hanni", nameKo: "하니", position: "보컬", color: "#F59E0B" },
-      { id: "mem-danielle", groupId: "grp-nj", name: "Danielle", nameKo: "다니엘", position: "보컬", color: "#EC4899" },
-      { id: "mem-haerin", groupId: "grp-nj", name: "Haerin", nameKo: "해린", position: "보컬", color: "#8B5CF6" },
-      { id: "mem-hyein", groupId: "grp-nj", name: "Hyein", nameKo: "혜인", position: "보컬/막내", color: "#10B981" },
-      // aespa
-      { id: "mem-karina", groupId: "grp-ae", name: "Karina", nameKo: "카리나", position: "리더/댄서", color: "#8B5CF6" },
-      { id: "mem-giselle", groupId: "grp-ae", name: "Giselle", nameKo: "지젤", position: "래퍼", color: "#3B82F6" },
-      { id: "mem-winter", groupId: "grp-ae", name: "Winter", nameKo: "윈터", position: "메인보컬", color: "#00B4D8" },
-      { id: "mem-ningning", groupId: "grp-ae", name: "Ningning", nameKo: "닝닝", position: "메인보컬", color: "#EF4444" },
-      // Stray Kids
-      { id: "mem-bangchan", groupId: "grp-skz", name: "Bang Chan", nameKo: "방찬", position: "리더/프로듀서", color: "#EF4444" },
-      { id: "mem-leeknow", groupId: "grp-skz", name: "Lee Know", nameKo: "리노", position: "댄서/보컬", color: "#3B82F6" },
-      { id: "mem-changbin", groupId: "grp-skz", name: "Changbin", nameKo: "창빈", position: "래퍼", color: "#F59E0B" },
-      { id: "mem-hyunjin", groupId: "grp-skz", name: "Hyunjin", nameKo: "현진", position: "댄서/래퍼", color: "#8B5CF6" },
-      { id: "mem-han", groupId: "grp-skz", name: "HAN", nameKo: "한", position: "래퍼/보컬", color: "#10B981" },
-      { id: "mem-felix", groupId: "grp-skz", name: "Felix", nameKo: "필릭스", position: "댄서/래퍼", color: "#EC4899" },
-      { id: "mem-seungmin", groupId: "grp-skz", name: "Seungmin", nameKo: "승민", position: "보컬", color: "#00B4D8" },
-      { id: "mem-in", groupId: "grp-skz", name: "I.N", nameKo: "아이엔", position: "보컬/막내", color: "#F97316" },
-      // SEVENTEEN
-      { id: "mem-scoups", groupId: "grp-svt", name: "S.Coups", nameKo: "에스쿱스", position: "리더/래퍼", color: "#F59E0B" },
-      { id: "mem-jeonghan", groupId: "grp-svt", name: "Jeonghan", nameKo: "정한", position: "보컬", color: "#EC4899" },
-      { id: "mem-joshua", groupId: "grp-svt", name: "Joshua", nameKo: "조슈아", position: "보컬", color: "#3B82F6" },
-      { id: "mem-hoshi", groupId: "grp-svt", name: "Hoshi", nameKo: "호시", position: "퍼포먼스 리더", color: "#EF4444" },
-      { id: "mem-wonwoo", groupId: "grp-svt", name: "Wonwoo", nameKo: "원우", position: "래퍼", color: "#8B5CF6" },
-      { id: "mem-woozi", groupId: "grp-svt", name: "Woozi", nameKo: "우지", position: "보컬/프로듀서", color: "#10B981" },
-      { id: "mem-dk", groupId: "grp-svt", name: "DK", nameKo: "도겸", position: "메인보컬", color: "#F97316" },
-      // IVE
-      { id: "mem-yujin", groupId: "grp-ive", name: "Yujin", nameKo: "유진", position: "리더/보컬", color: "#EC4899" },
-      { id: "mem-gaeul", groupId: "grp-ive", name: "Gaeul", nameKo: "가을", position: "래퍼", color: "#F59E0B" },
-      { id: "mem-rei", groupId: "grp-ive", name: "Rei", nameKo: "레이", position: "보컬", color: "#3B82F6" },
-      { id: "mem-wonyoung", groupId: "grp-ive", name: "Wonyoung", nameKo: "원영", position: "센터/보컬", color: "#8B5CF6" },
-      { id: "mem-liz", groupId: "grp-ive", name: "Liz", nameKo: "리즈", position: "메인보컬", color: "#10B981" },
-      { id: "mem-leeseo", groupId: "grp-ive", name: "Leeseo", nameKo: "이서", position: "보컬/막내", color: "#EF4444" },
-      // LE SSERAFIM
-      { id: "mem-sakura", groupId: "grp-lsf", name: "Sakura", nameKo: "사쿠라", position: "보컬", color: "#EC4899" },
-      { id: "mem-chaewon", groupId: "grp-lsf", name: "Chaewon", nameKo: "채원", position: "리더/보컬", color: "#10B981" },
-      { id: "mem-yunjin", groupId: "grp-lsf", name: "Yunjin", nameKo: "윤진", position: "보컬", color: "#3B82F6" },
-      { id: "mem-kazuha", groupId: "grp-lsf", name: "Kazuha", nameKo: "카즈하", position: "댄서", color: "#F59E0B" },
-      { id: "mem-eunchae", groupId: "grp-lsf", name: "Eunchae", nameKo: "은채", position: "보컬/막내", color: "#8B5CF6" },
+  // KBO Players (구단별 대표선수 5~6명)
+  if (listItems(STORE_KEYS.KBO_PLAYERS).length === 0) {
+    const players: KboPlayer[] = [
+      // LG Twins
+      { id: "plr-lg-1", groupId: "team-lg", name: "오지환", nameKo: "오지환", position: "내야수", jerseyNumber: 10, color: "#C60C30" },
+      { id: "plr-lg-2", groupId: "team-lg", name: "박해민", nameKo: "박해민", position: "외야수", jerseyNumber: 17, color: "#C60C30" },
+      { id: "plr-lg-3", groupId: "team-lg", name: "임찬규", nameKo: "임찬규", position: "투수", jerseyNumber: 29, color: "#C60C30" },
+      { id: "plr-lg-4", groupId: "team-lg", name: "오스틴", nameKo: "오스틴", position: "외야수", jerseyNumber: 30, color: "#C60C30" },
+      { id: "plr-lg-5", groupId: "team-lg", name: "박동원", nameKo: "박동원", position: "포수", jerseyNumber: 22, color: "#C60C30" },
+      // KT Wiz
+      { id: "plr-kt-1", groupId: "team-kt", name: "강백호", nameKo: "강백호", position: "내야수", jerseyNumber: 50, color: "#ED1C24" },
+      { id: "plr-kt-2", groupId: "team-kt", name: "소형준", nameKo: "소형준", position: "투수", jerseyNumber: 11, color: "#ED1C24" },
+      { id: "plr-kt-3", groupId: "team-kt", name: "장성우", nameKo: "장성우", position: "포수", jerseyNumber: 27, color: "#ED1C24" },
+      { id: "plr-kt-4", groupId: "team-kt", name: "김민혁", nameKo: "김민혁", position: "외야수", jerseyNumber: 8, color: "#ED1C24" },
+      { id: "plr-kt-5", groupId: "team-kt", name: "쿠에바스", nameKo: "쿠에바스", position: "투수", jerseyNumber: 34, color: "#ED1C24" },
+      // SSG Landers
+      { id: "plr-ssg-1", groupId: "team-ssg", name: "최정", nameKo: "최정", position: "내야수", jerseyNumber: 14, color: "#CE0E2D" },
+      { id: "plr-ssg-2", groupId: "team-ssg", name: "김광현", nameKo: "김광현", position: "투수", jerseyNumber: 29, color: "#CE0E2D" },
+      { id: "plr-ssg-3", groupId: "team-ssg", name: "추신수", nameKo: "추신수", position: "외야수", jerseyNumber: 17, color: "#CE0E2D" },
+      { id: "plr-ssg-4", groupId: "team-ssg", name: "한유섬", nameKo: "한유섬", position: "외야수", jerseyNumber: 52, color: "#CE0E2D" },
+      { id: "plr-ssg-5", groupId: "team-ssg", name: "오원석", nameKo: "오원석", position: "투수", jerseyNumber: 47, color: "#CE0E2D" },
+      // NC Dinos
+      { id: "plr-nc-1", groupId: "team-nc", name: "박건우", nameKo: "박건우", position: "외야수", jerseyNumber: 33, color: "#315288" },
+      { id: "plr-nc-2", groupId: "team-nc", name: "에릭 양", nameKo: "에릭 양", position: "투수", jerseyNumber: 54, color: "#315288" },
+      { id: "plr-nc-3", groupId: "team-nc", name: "손아섭", nameKo: "손아섭", position: "외야수", jerseyNumber: 15, color: "#315288" },
+      { id: "plr-nc-4", groupId: "team-nc", name: "노진혁", nameKo: "노진혁", position: "내야수", jerseyNumber: 7, color: "#315288" },
+      { id: "plr-nc-5", groupId: "team-nc", name: "양의지", nameKo: "양의지", position: "포수", jerseyNumber: 25, color: "#315288" },
+      // Doosan Bears
+      { id: "plr-doo-1", groupId: "team-doo", name: "양의지", nameKo: "양의지", position: "포수", jerseyNumber: 25, color: "#131230" },
+      { id: "plr-doo-2", groupId: "team-doo", name: "허경민", nameKo: "허경민", position: "내야수", jerseyNumber: 16, color: "#131230" },
+      { id: "plr-doo-3", groupId: "team-doo", name: "곽빈", nameKo: "곽빈", position: "투수", jerseyNumber: 22, color: "#131230" },
+      { id: "plr-doo-4", groupId: "team-doo", name: "정수빈", nameKo: "정수빈", position: "외야수", jerseyNumber: 51, color: "#131230" },
+      { id: "plr-doo-5", groupId: "team-doo", name: "김재환", nameKo: "김재환", position: "지명타자", jerseyNumber: 32, color: "#131230" },
+      // KIA Tigers
+      { id: "plr-kia-1", groupId: "team-kia", name: "양현종", nameKo: "양현종", position: "투수", jerseyNumber: 54, color: "#EA0029" },
+      { id: "plr-kia-2", groupId: "team-kia", name: "나성범", nameKo: "나성범", position: "외야수", jerseyNumber: 47, color: "#EA0029" },
+      { id: "plr-kia-3", groupId: "team-kia", name: "김도영", nameKo: "김도영", position: "내야수", jerseyNumber: 5, color: "#EA0029" },
+      { id: "plr-kia-4", groupId: "team-kia", name: "소크라테스", nameKo: "소크라테스", position: "외야수", jerseyNumber: 30, color: "#EA0029" },
+      { id: "plr-kia-5", groupId: "team-kia", name: "한승택", nameKo: "한승택", position: "포수", jerseyNumber: 22, color: "#EA0029" },
+      // Lotte Giants
+      { id: "plr-lot-1", groupId: "team-lot", name: "전준우", nameKo: "전준우", position: "외야수", jerseyNumber: 22, color: "#041E42" },
+      { id: "plr-lot-2", groupId: "team-lot", name: "안치홍", nameKo: "안치홍", position: "내야수", jerseyNumber: 13, color: "#041E42" },
+      { id: "plr-lot-3", groupId: "team-lot", name: "박세웅", nameKo: "박세웅", position: "투수", jerseyNumber: 11, color: "#041E42" },
+      { id: "plr-lot-4", groupId: "team-lot", name: "윤동희", nameKo: "윤동희", position: "외야수", jerseyNumber: 51, color: "#041E42" },
+      { id: "plr-lot-5", groupId: "team-lot", name: "나균안", nameKo: "나균안", position: "투수", jerseyNumber: 18, color: "#041E42" },
+      // Samsung Lions
+      { id: "plr-sam-1", groupId: "team-sam", name: "구자욱", nameKo: "구자욱", position: "외야수", jerseyNumber: 42, color: "#074CA1" },
+      { id: "plr-sam-2", groupId: "team-sam", name: "오승환", nameKo: "오승환", position: "투수", jerseyNumber: 26, color: "#074CA1" },
+      { id: "plr-sam-3", groupId: "team-sam", name: "김영웅", nameKo: "김영웅", position: "내야수", jerseyNumber: 6, color: "#074CA1" },
+      { id: "plr-sam-4", groupId: "team-sam", name: "이재현", nameKo: "이재현", position: "포수", jerseyNumber: 35, color: "#074CA1" },
+      { id: "plr-sam-5", groupId: "team-sam", name: "원태인", nameKo: "원태인", position: "투수", jerseyNumber: 17, color: "#074CA1" },
+      // Hanwha Eagles
+      { id: "plr-han-1", groupId: "team-han", name: "노시환", nameKo: "노시환", position: "내야수", jerseyNumber: 52, color: "#FF6600" },
+      { id: "plr-han-2", groupId: "team-han", name: "문동주", nameKo: "문동주", position: "투수", jerseyNumber: 21, color: "#FF6600" },
+      { id: "plr-han-3", groupId: "team-han", name: "채은성", nameKo: "채은성", position: "내야수", jerseyNumber: 44, color: "#FF6600" },
+      { id: "plr-han-4", groupId: "team-han", name: "황준서", nameKo: "황준서", position: "투수", jerseyNumber: 19, color: "#FF6600" },
+      { id: "plr-han-5", groupId: "team-han", name: "이주형", nameKo: "이주형", position: "외야수", jerseyNumber: 15, color: "#FF6600" },
+      // Kiwoom Heroes
+      { id: "plr-kiw-1", groupId: "team-kiw", name: "이정후", nameKo: "이정후", position: "외야수", jerseyNumber: 51, color: "#820024" },
+      { id: "plr-kiw-2", groupId: "team-kiw", name: "안우진", nameKo: "안우진", position: "투수", jerseyNumber: 43, color: "#820024" },
+      { id: "plr-kiw-3", groupId: "team-kiw", name: "김혜성", nameKo: "김혜성", position: "내야수", jerseyNumber: 3, color: "#820024" },
+      { id: "plr-kiw-4", groupId: "team-kiw", name: "송성문", nameKo: "송성문", position: "내야수", jerseyNumber: 7, color: "#820024" },
+      { id: "plr-kiw-5", groupId: "team-kiw", name: "이용찬", nameKo: "이용찬", position: "투수", jerseyNumber: 28, color: "#820024" },
     ];
-    members.forEach((m) => addItem(STORE_KEYS.IDOL_MEMBERS, m));
+    players.forEach((p) => addItem(STORE_KEYS.KBO_PLAYERS, p));
   }
 
-  // Fandom Feed Posts
+  // Fandom Feed Posts (KBO 야구 팬아트)
   if (listItems(STORE_KEYS.FANDOM_FEED).length === 0) {
     const posts: FandomFeedPost[] = [
-      { id: "fp-1", authorName: "아미드로잉", authorAvatar: "AD", groupId: "grp-bts", groupName: "BTS", memberTags: ["Jimin", "V"], title: "지민 & 뷔 우정 팬아트", description: "95즈 우정을 그려봤어요!", imageUrl: null, likes: 892, liked: false, commentCount: 45, type: "fanart", createdAt: "2026-03-23" },
-      { id: "fp-2", authorName: "블링크아트", authorAvatar: "BA", groupId: "grp-bp", groupName: "BLACKPINK", memberTags: ["Jennie"], title: "제니 Solo 팬아트", description: "Solo 컨셉으로 그린 제니", imageUrl: null, likes: 756, liked: false, commentCount: 38, type: "fanart", createdAt: "2026-03-23" },
-      { id: "fp-3", authorName: "버니작가", authorAvatar: "BJ", groupId: "grp-nj", groupName: "NewJeans", memberTags: ["Minji", "Hanni"], title: "뉴진스 Ditto 인스타툰", description: "Ditto MV 장면을 4컷 인스타툰으로!", imageUrl: null, likes: 1203, liked: false, commentCount: 67, type: "instatoon", createdAt: "2026-03-22" },
-      { id: "fp-4", authorName: "마이드로우", authorAvatar: "MD", groupId: "grp-ae", groupName: "aespa", memberTags: ["Karina", "Winter"], title: "카리나 & 윈터 듀엣 일러스트", description: "Supernova 컨셉 팬아트", imageUrl: null, likes: 645, liked: false, commentCount: 29, type: "fanart", createdAt: "2026-03-22" },
-      { id: "fp-5", authorName: "스테이아트", authorAvatar: "SA", groupId: "grp-skz", groupName: "Stray Kids", memberTags: ["Hyunjin"], title: "현진 댄스 팬아트", description: "LALALALA 안무 장면 팬아트", imageUrl: null, likes: 534, liked: false, commentCount: 22, type: "fanart", createdAt: "2026-03-21" },
-      { id: "fp-6", authorName: "캐럿크리에이터", authorAvatar: "CC", groupId: "grp-svt", groupName: "SEVENTEEN", memberTags: ["Hoshi"], title: "호시 호랑이 밈 인스타툰", description: "호시의 호랑이 사랑을 인스타툰으로 😂", imageUrl: null, likes: 1567, liked: false, commentCount: 89, type: "meme", createdAt: "2026-03-21" },
-      { id: "fp-7", authorName: "다이브아트", authorAvatar: "DA", groupId: "grp-ive", groupName: "IVE", memberTags: ["Wonyoung", "Yujin"], title: "아이브 LOVE DIVE 팬아트", description: "LOVE DIVE 컨셉 일러스트", imageUrl: null, likes: 423, liked: false, commentCount: 18, type: "fanart", createdAt: "2026-03-20" },
-      { id: "fp-8", authorName: "피어낫작가", authorAvatar: "FN", groupId: "grp-lsf", groupName: "LE SSERAFIM", memberTags: ["Chaewon", "Kazuha"], title: "르세라핌 퍼포먼스 팬아트", description: "FEARLESS 안무 장면", imageUrl: null, likes: 389, liked: false, commentCount: 15, type: "fanart", createdAt: "2026-03-20" },
-      { id: "fp-9", authorName: "아미드로잉", authorAvatar: "AD", groupId: "grp-bts", groupName: "BTS", memberTags: ["Jung Kook"], title: "정국 Seven 인스타툰", description: "Seven MV를 4컷으로!", imageUrl: null, likes: 2103, liked: false, commentCount: 112, type: "instatoon", createdAt: "2026-03-19" },
-      { id: "fp-10", authorName: "블링크아트", authorAvatar: "BA", groupId: "grp-bp", groupName: "BLACKPINK", memberTags: ["Lisa"], title: "리사 MONEY 에디트", description: "MONEY 뮤비 팬에디트", imageUrl: null, likes: 934, liked: false, commentCount: 41, type: "edit", createdAt: "2026-03-19" },
-      { id: "fp-11", authorName: "버니작가", authorAvatar: "BJ", groupId: "grp-nj", groupName: "NewJeans", memberTags: ["Haerin"], title: "해린 고양이 밈", description: "해린이의 고양이 매력 밈!", imageUrl: null, likes: 1876, liked: false, commentCount: 95, type: "meme", createdAt: "2026-03-18" },
-      { id: "fp-12", authorName: "스테이아트", authorAvatar: "SA", groupId: "grp-skz", groupName: "Stray Kids", memberTags: ["Felix", "Bang Chan"], title: "필릭스 & 방찬 듀엣", description: "호주즈 팬아트", imageUrl: null, likes: 678, liked: false, commentCount: 34, type: "fanart", createdAt: "2026-03-18" },
-      { id: "fp-13", authorName: "마이드로우", authorAvatar: "MD", groupId: "grp-ae", groupName: "aespa", memberTags: ["Giselle", "Ningning"], title: "지젤 & 닝닝 우정 인스타툰", description: "에스파 연습실 일상 4컷", imageUrl: null, likes: 412, liked: false, commentCount: 19, type: "instatoon", createdAt: "2026-03-17" },
-      { id: "fp-14", authorName: "캐럿크리에이터", authorAvatar: "CC", groupId: "grp-svt", groupName: "SEVENTEEN", memberTags: ["Woozi", "DK"], title: "우지 & 도겸 보컬 유닛 팬아트", description: "보컬팀 무대 일러스트", imageUrl: null, likes: 567, liked: false, commentCount: 28, type: "fanart", createdAt: "2026-03-17" },
-      { id: "fp-15", authorName: "다이브아트", authorAvatar: "DA", groupId: "grp-ive", groupName: "IVE", memberTags: ["Rei", "Liz"], title: "레이 & 리즈 셀카 인스타툰", description: "아이브 셀카 일상 인스타툰", imageUrl: null, likes: 345, liked: false, commentCount: 14, type: "instatoon", createdAt: "2026-03-16" },
-      { id: "fp-16", authorName: "피어낫작가", authorAvatar: "FN", groupId: "grp-lsf", groupName: "LE SSERAFIM", memberTags: ["Sakura"], title: "사쿠라 팬아트", description: "우아한 사쿠라 일러스트", imageUrl: null, likes: 501, liked: false, commentCount: 23, type: "fanart", createdAt: "2026-03-16" },
-      { id: "fp-17", authorName: "아미드로잉", authorAvatar: "AD", groupId: "grp-bts", groupName: "BTS", memberTags: ["SUGA"], title: "슈가 Agust D 팬아트", description: "Agust D 컨셉 팬아트", imageUrl: null, likes: 1456, liked: false, commentCount: 72, type: "fanart", createdAt: "2026-03-15" },
-      { id: "fp-18", authorName: "버니작가", authorAvatar: "BJ", groupId: "grp-nj", groupName: "NewJeans", memberTags: ["Danielle", "Hyein"], title: "다니엘 & 혜인 학교 인스타툰", description: "뉴진스 등교길 4컷!", imageUrl: null, likes: 923, liked: false, commentCount: 48, type: "instatoon", createdAt: "2026-03-15" },
+      { id: "fp-1", authorName: "트윈스드로잉", authorAvatar: "TD", groupId: "team-lg", groupName: "LG Twins", memberTags: ["오지환", "박해민"], title: "오지환 & 박해민 더블플레이 팬아트", description: "잠실의 철벽 콤비를 그려봤어요!", imageUrl: null, likes: 892, liked: false, commentCount: 45, type: "fanart", createdAt: "2026-03-23" },
+      { id: "fp-2", authorName: "타이거즈아트", authorAvatar: "TA", groupId: "team-kia", groupName: "KIA Tigers", memberTags: ["양현종"], title: "양현종 에이스 포트레이트", description: "KIA의 전설 양현종 투구 팬아트", imageUrl: null, likes: 756, liked: false, commentCount: 38, type: "fanart", createdAt: "2026-03-23" },
+      { id: "fp-3", authorName: "다이노스작가", authorAvatar: "DJ", groupId: "team-nc", groupName: "NC Dinos", memberTags: ["박건우", "양의지"], title: "NC 다이노스 우승 인스타툰", description: "2020 우승의 감동을 4컷 인스타툰으로!", imageUrl: null, likes: 1203, liked: false, commentCount: 67, type: "instatoon", createdAt: "2026-03-22" },
+      { id: "fp-4", authorName: "랜더스그림", authorAvatar: "RG", groupId: "team-ssg", groupName: "SSG Landers", memberTags: ["최정", "추신수"], title: "최정 & 추신수 레전드 일러스트", description: "SSG 최정의 500홈런 기념 팬아트", imageUrl: null, likes: 645, liked: false, commentCount: 29, type: "fanart", createdAt: "2026-03-22" },
+      { id: "fp-5", authorName: "베어스팬아트", authorAvatar: "BA", groupId: "team-doo", groupName: "Doosan Bears", memberTags: ["허경민"], title: "허경민 수비 팬아트", description: "두산의 철벽 유격수 팬아트", imageUrl: null, likes: 534, liked: false, commentCount: 22, type: "fanart", createdAt: "2026-03-21" },
+      { id: "fp-6", authorName: "자이언츠크리", authorAvatar: "GC", groupId: "team-lot", groupName: "Lotte Giants", memberTags: ["전준우"], title: "사직구장 응원 밈 인스타툰", description: "롯데 팬들의 열정적인 응원 밈 ㅋㅋ", imageUrl: null, likes: 1567, liked: false, commentCount: 89, type: "meme", createdAt: "2026-03-21" },
+      { id: "fp-7", authorName: "라이온즈아트", authorAvatar: "LA", groupId: "team-sam", groupName: "Samsung Lions", memberTags: ["구자욱", "오승환"], title: "삼성 라이온즈 4연패 팬아트", description: "삼성의 황금기를 기억하며", imageUrl: null, likes: 423, liked: false, commentCount: 18, type: "fanart", createdAt: "2026-03-20" },
+      { id: "fp-8", authorName: "이글스작가", authorAvatar: "EW", groupId: "team-han", groupName: "Hanwha Eagles", memberTags: ["노시환", "문동주"], title: "한화 이글스 희망의 투수진", description: "문동주의 역투 장면 일러스트", imageUrl: null, likes: 389, liked: false, commentCount: 15, type: "fanart", createdAt: "2026-03-20" },
+      { id: "fp-9", authorName: "트윈스드로잉", authorAvatar: "TD", groupId: "team-lg", groupName: "LG Twins", memberTags: ["임찬규"], title: "임찬규 삼진 인스타툰", description: "LG의 에이스 임찬규의 삼진 장면을 4컷으로!", imageUrl: null, likes: 2103, liked: false, commentCount: 112, type: "instatoon", createdAt: "2026-03-19" },
+      { id: "fp-10", authorName: "타이거즈아트", authorAvatar: "TA", groupId: "team-kia", groupName: "KIA Tigers", memberTags: ["김도영"], title: "김도영 풀스윙 에디트", description: "김도영의 역동적인 타격 에디트", imageUrl: null, likes: 934, liked: false, commentCount: 41, type: "edit", createdAt: "2026-03-19" },
+      { id: "fp-11", authorName: "자이언츠크리", authorAvatar: "GC", groupId: "team-lot", groupName: "Lotte Giants", memberTags: ["안치홍"], title: "부산 사직 응원 밈", description: "사직구장 응원 문화 밈 모음!", imageUrl: null, likes: 1876, liked: false, commentCount: 95, type: "meme", createdAt: "2026-03-18" },
+      { id: "fp-12", authorName: "위즈아트", authorAvatar: "WA", groupId: "team-kt", groupName: "KT Wiz", memberTags: ["강백호", "소형준"], title: "강백호 & 소형준 케미 팬아트", description: "KT의 미래 듀오 팬아트", imageUrl: null, likes: 678, liked: false, commentCount: 34, type: "fanart", createdAt: "2026-03-18" },
+      { id: "fp-13", authorName: "히어로즈그림", authorAvatar: "HG", groupId: "team-kiw", groupName: "Kiwoom Heroes", memberTags: ["이정후", "안우진"], title: "고척돔 일상 인스타툰", description: "키움 히어로즈 고척돔 일상 4컷", imageUrl: null, likes: 412, liked: false, commentCount: 19, type: "instatoon", createdAt: "2026-03-17" },
+      { id: "fp-14", authorName: "라이온즈아트", authorAvatar: "LA", groupId: "team-sam", groupName: "Samsung Lions", memberTags: ["원태인", "김영웅"], title: "삼성 투타 콤비 팬아트", description: "원태인-김영웅 콤비 일러스트", imageUrl: null, likes: 567, liked: false, commentCount: 28, type: "fanart", createdAt: "2026-03-17" },
+      { id: "fp-15", authorName: "베어스팬아트", authorAvatar: "BA", groupId: "team-doo", groupName: "Doosan Bears", memberTags: ["정수빈", "김재환"], title: "두산 타선 인스타툰", description: "두산 베어스 타선의 화력 4컷!", imageUrl: null, likes: 345, liked: false, commentCount: 14, type: "instatoon", createdAt: "2026-03-16" },
+      { id: "fp-16", authorName: "이글스작가", authorAvatar: "EW", groupId: "team-han", groupName: "Hanwha Eagles", memberTags: ["황준서"], title: "황준서 팬아트", description: "한화의 미래 에이스 황준서 일러스트", imageUrl: null, likes: 501, liked: false, commentCount: 23, type: "fanart", createdAt: "2026-03-16" },
+      { id: "fp-17", authorName: "트윈스드로잉", authorAvatar: "TD", groupId: "team-lg", groupName: "LG Twins", memberTags: ["오스틴"], title: "오스틴 홈런 팬아트", description: "LG 오스틴의 대포 홈런 장면 팬아트", imageUrl: null, likes: 1456, liked: false, commentCount: 72, type: "fanart", createdAt: "2026-03-15" },
+      { id: "fp-18", authorName: "다이노스작가", authorAvatar: "DJ", groupId: "team-nc", groupName: "NC Dinos", memberTags: ["손아섭", "노진혁"], title: "NC 다이노스 경기 인스타툰", description: "NC 다이노스 경기 하이라이트 4컷!", imageUrl: null, likes: 923, liked: false, commentCount: 48, type: "instatoon", createdAt: "2026-03-15" },
     ];
     posts.forEach((p) => addItem(STORE_KEYS.FANDOM_FEED, p));
   }
 
-  // Fandom Comments
+  // Fandom Comments (KBO 야구)
   if (listItems(STORE_KEYS.FANDOM_COMMENTS).length === 0) {
     const comments: FandomComment[] = [
-      { id: "fc-1", postId: "fp-1", authorName: "아미1004", authorAvatar: "A1", content: "95즈 진짜 최고 ㅠㅠ 너무 예쁘게 그리셨어요!", likes: 23, liked: false, createdAt: "2026-03-23" },
-      { id: "fc-2", postId: "fp-1", authorName: "보라해", authorAvatar: "BH", content: "색감이 너무 좋아요!! 배경도 예술이에요", likes: 15, liked: false, createdAt: "2026-03-23" },
-      { id: "fc-3", postId: "fp-1", authorName: "탄이팬", authorAvatar: "TP", content: "지민이 표정 완벽 캡처! 대단해요", likes: 8, liked: false, parentId: "fc-1", createdAt: "2026-03-23" },
-      { id: "fc-4", postId: "fp-3", authorName: "뉴진러버", authorAvatar: "NL", content: "Ditto 인스타툰 너무 귀여워요! 민지 하니 최고", likes: 45, liked: false, createdAt: "2026-03-22" },
-      { id: "fc-5", postId: "fp-3", authorName: "버니즈", authorAvatar: "BZ", content: "4컷 스토리텔링 진짜 잘하시네요 ㅎㅎ", likes: 12, liked: false, createdAt: "2026-03-22" },
-      { id: "fc-6", postId: "fp-6", authorName: "캐럿팬", authorAvatar: "CF", content: "호시 호랑이 ㅋㅋㅋㅋ 공감 100%", likes: 67, liked: false, createdAt: "2026-03-21" },
-      { id: "fc-7", postId: "fp-6", authorName: "세븐틴러브", authorAvatar: "SL", content: "이거 공유해도 되나요?? 너무 웃겨요 ㅋㅋ", likes: 23, liked: false, createdAt: "2026-03-21" },
-      { id: "fc-8", postId: "fp-6", authorName: "호시팬", authorAvatar: "HP", content: "호시오빠 보면 진짜 이래요 ㅋㅋㅋ", likes: 34, liked: false, parentId: "fc-6", createdAt: "2026-03-21" },
-      { id: "fc-9", postId: "fp-9", authorName: "정국맘", authorAvatar: "JM", content: "Seven 인스타툰 진짜 잘 만드셨어요!! 대박", likes: 89, liked: false, createdAt: "2026-03-19" },
-      { id: "fc-10", postId: "fp-9", authorName: "아미드림", authorAvatar: "AD", content: "퀄리티 미쳤다... 프로 크리에이터시죠?", likes: 56, liked: false, createdAt: "2026-03-19" },
-      { id: "fc-11", postId: "fp-11", authorName: "해린팬", authorAvatar: "HR", content: "해린이 고양이 너무 귀여워ㅠㅠ", likes: 78, liked: false, createdAt: "2026-03-18" },
-      { id: "fc-12", postId: "fp-11", authorName: "버니1", authorAvatar: "B1", content: "이 밈 진짜 찐이다 ㅋㅋㅋ", likes: 45, liked: false, createdAt: "2026-03-18" },
-      { id: "fc-13", postId: "fp-2", authorName: "블링크1", authorAvatar: "BK", content: "제니 Solo 느낌 완벽해요!", likes: 34, liked: false, createdAt: "2026-03-23" },
-      { id: "fc-14", postId: "fp-4", authorName: "마이팬", authorAvatar: "MF", content: "카리나 윈터 조합 최고!", likes: 19, liked: false, createdAt: "2026-03-22" },
-      { id: "fc-15", postId: "fp-5", authorName: "스테이1", authorAvatar: "S1", content: "현진이 댄스 라인 살아있네요!", likes: 22, liked: false, createdAt: "2026-03-21" },
-      { id: "fc-16", postId: "fp-7", authorName: "다이버", authorAvatar: "DV", content: "원영이 유진이 투샷 너무 예뻐요!", likes: 15, liked: false, createdAt: "2026-03-20" },
-      { id: "fc-17", postId: "fp-8", authorName: "피어낫1", authorAvatar: "F1", content: "채원 카즈하 퍼포먼스 팬아트 대박!", likes: 11, liked: false, createdAt: "2026-03-20" },
-      { id: "fc-18", postId: "fp-10", authorName: "블링크2", authorAvatar: "B2", content: "리사 에디트 완전 프로급이에요!", likes: 28, liked: false, createdAt: "2026-03-19" },
-      { id: "fc-19", postId: "fp-12", authorName: "스테이2", authorAvatar: "S2", content: "호주즈 조합 최고!! 필릭스 방찬 ♥", likes: 31, liked: false, createdAt: "2026-03-18" },
-      { id: "fc-20", postId: "fp-13", authorName: "마이2", authorAvatar: "M2", content: "에스파 연습실 일상 귀여워요 ㅎㅎ", likes: 14, liked: false, createdAt: "2026-03-17" },
-      { id: "fc-21", postId: "fp-14", authorName: "캐럿2", authorAvatar: "C2", content: "보컬팀 무대 팬아트 감동이에요!", likes: 20, liked: false, createdAt: "2026-03-17" },
-      { id: "fc-22", postId: "fp-15", authorName: "다이버2", authorAvatar: "D2", content: "레이 리즈 셀카 인스타툰 귀여움 폭발!", likes: 9, liked: false, createdAt: "2026-03-16" },
-      { id: "fc-23", postId: "fp-16", authorName: "피어낫2", authorAvatar: "F2", content: "사쿠라 일러스트 너무 우아해요!", likes: 17, liked: false, createdAt: "2026-03-16" },
-      { id: "fc-24", postId: "fp-17", authorName: "아미3", authorAvatar: "A3", content: "Agust D 컨셉 완전 멋져요!!", likes: 43, liked: false, createdAt: "2026-03-15" },
-      { id: "fc-25", postId: "fp-17", authorName: "슈가팬", authorAvatar: "SP", content: "디테일 미쳤다... 슈가 그 자체!", likes: 38, liked: false, createdAt: "2026-03-15" },
-      { id: "fc-26", postId: "fp-18", authorName: "버니3", authorAvatar: "B3", content: "등교길 4컷 너무 귀여워요 ㅠㅠ", likes: 29, liked: false, createdAt: "2026-03-15" },
-      { id: "fc-27", postId: "fp-18", authorName: "뉴진팬", authorAvatar: "NF", content: "다니엘 혜인 케미 최고!!", likes: 25, liked: false, createdAt: "2026-03-15" },
-      { id: "fc-28", postId: "fp-9", authorName: "전정국팬", authorAvatar: "JF", content: "정국이 표현력 진짜 대단하세요", likes: 41, liked: false, parentId: "fc-9", createdAt: "2026-03-19" },
-      { id: "fc-29", postId: "fp-3", authorName: "뉴진팬2", authorAvatar: "N2", content: "다음엔 Super Shy도 그려주세요!", likes: 33, liked: false, parentId: "fc-4", createdAt: "2026-03-22" },
-      { id: "fc-30", postId: "fp-11", authorName: "해린이", authorAvatar: "HI", content: "이거 짤로 써도 될까요? ㅋㅋ", likes: 12, liked: false, parentId: "fc-11", createdAt: "2026-03-18" },
-      { id: "fc-31", postId: "fp-2", authorName: "제니팬", authorAvatar: "JF", content: "Solo 바이브 완벽 재현!! 팔로우했어요", likes: 21, liked: false, parentId: "fc-13", createdAt: "2026-03-23" },
-      { id: "fc-32", postId: "fp-5", authorName: "현진맘", authorAvatar: "HM", content: "현진이 비율 진짜 잘 잡으셨네요", likes: 16, liked: false, parentId: "fc-15", createdAt: "2026-03-21" },
-      { id: "fc-33", postId: "fp-4", authorName: "에스파팬", authorAvatar: "EF", content: "Supernova 컨셉 너무 잘 어울려요!", likes: 13, liked: false, parentId: "fc-14", createdAt: "2026-03-22" },
-      { id: "fc-34", postId: "fp-17", authorName: "민윤기", authorAvatar: "MY", content: "Agust D 3집 컨셉이죠? 대박이에요", likes: 35, liked: false, parentId: "fc-24", createdAt: "2026-03-15" },
-      { id: "fc-35", postId: "fp-6", authorName: "호시호랑이", authorAvatar: "HH", content: "이거 호시 본인도 웃겼을 듯 ㅋㅋㅋ", likes: 52, liked: false, parentId: "fc-7", createdAt: "2026-03-21" },
+      { id: "fc-1", postId: "fp-1", authorName: "LG팬1004", authorAvatar: "L1", content: "더블플레이 장면 진짜 소름 돋게 그리셨어요!", likes: 23, liked: false, createdAt: "2026-03-23" },
+      { id: "fc-2", postId: "fp-1", authorName: "잠실직관러", authorAvatar: "JG", content: "색감이 너무 좋아요!! 잠실 분위기 살아있네요", likes: 15, liked: false, createdAt: "2026-03-23" },
+      { id: "fc-3", postId: "fp-1", authorName: "트윈스팬", authorAvatar: "TP", content: "오지환 수비 포즈 완벽 캡처! 대단해요", likes: 8, liked: false, parentId: "fc-1", createdAt: "2026-03-23" },
+      { id: "fc-4", postId: "fp-3", authorName: "NC팬덤", authorAvatar: "NF", content: "2020 우승 인스타툰 너무 감동이에요! 그때 기억나네요", likes: 45, liked: false, createdAt: "2026-03-22" },
+      { id: "fc-5", postId: "fp-3", authorName: "창원직관", authorAvatar: "CG", content: "4컷 스토리텔링 진짜 잘하시네요 ㅎㅎ", likes: 12, liked: false, createdAt: "2026-03-22" },
+      { id: "fc-6", postId: "fp-6", authorName: "부산사직팬", authorAvatar: "BS", content: "사직구장 응원 ㅋㅋㅋ 공감 100%", likes: 67, liked: false, createdAt: "2026-03-21" },
+      { id: "fc-7", postId: "fp-6", authorName: "롯데팬사랑", authorAvatar: "RL", content: "이거 공유해도 되나요?? 너무 웃겨요 ㅋㅋ", likes: 23, liked: false, createdAt: "2026-03-21" },
+      { id: "fc-8", postId: "fp-6", authorName: "자이언츠", authorAvatar: "GI", content: "사직 가본 사람은 진짜 공감할 듯 ㅋㅋㅋ", likes: 34, liked: false, parentId: "fc-6", createdAt: "2026-03-21" },
+      { id: "fc-9", postId: "fp-9", authorName: "임찬규팬", authorAvatar: "IC", content: "임찬규 삼진 인스타툰 진짜 잘 만드셨어요!! 대박", likes: 89, liked: false, createdAt: "2026-03-19" },
+      { id: "fc-10", postId: "fp-9", authorName: "야구팬아트", authorAvatar: "YA", content: "퀄리티 미쳤다... 프로 크리에이터시죠?", likes: 56, liked: false, createdAt: "2026-03-19" },
+      { id: "fc-11", postId: "fp-11", authorName: "사직러버", authorAvatar: "SL", content: "사직 응원 밈 너무 공감ㅋㅋㅋ", likes: 78, liked: false, createdAt: "2026-03-18" },
+      { id: "fc-12", postId: "fp-11", authorName: "롯데1", authorAvatar: "L1", content: "이 밈 진짜 레전드다 ㅋㅋㅋ", likes: 45, liked: false, createdAt: "2026-03-18" },
+      { id: "fc-13", postId: "fp-2", authorName: "KIA팬1", authorAvatar: "K1", content: "양현종 투구 폼 완벽해요!", likes: 34, liked: false, createdAt: "2026-03-23" },
+      { id: "fc-14", postId: "fp-4", authorName: "SSG팬", authorAvatar: "SF", content: "최정 추신수 레전드 조합 최고!", likes: 19, liked: false, createdAt: "2026-03-22" },
+      { id: "fc-15", postId: "fp-5", authorName: "두산1", authorAvatar: "D1", content: "허경민 수비 라인 살아있네요!", likes: 22, liked: false, createdAt: "2026-03-21" },
+      { id: "fc-16", postId: "fp-7", authorName: "삼성팬", authorAvatar: "SF", content: "4연패 시절 추억이 새록새록!", likes: 15, liked: false, createdAt: "2026-03-20" },
+      { id: "fc-17", postId: "fp-8", authorName: "한화팬1", authorAvatar: "H1", content: "문동주 역투 장면 팬아트 대박!", likes: 11, liked: false, createdAt: "2026-03-20" },
+      { id: "fc-18", postId: "fp-10", authorName: "KIA팬2", authorAvatar: "K2", content: "김도영 에디트 완전 프로급이에요!", likes: 28, liked: false, createdAt: "2026-03-19" },
+      { id: "fc-19", postId: "fp-12", authorName: "KT팬", authorAvatar: "KF", content: "강백호 소형준 콤비 최고!! ♥", likes: 31, liked: false, createdAt: "2026-03-18" },
+      { id: "fc-20", postId: "fp-13", authorName: "키움팬", authorAvatar: "KW", content: "고척돔 일상 인스타툰 귀여워요 ㅎㅎ", likes: 14, liked: false, createdAt: "2026-03-17" },
+      { id: "fc-21", postId: "fp-14", authorName: "삼성2", authorAvatar: "S2", content: "원태인 김영웅 콤비 팬아트 감동이에요!", likes: 20, liked: false, createdAt: "2026-03-17" },
+      { id: "fc-22", postId: "fp-15", authorName: "두산2", authorAvatar: "D2", content: "두산 타선 인스타툰 화력 폭발!", likes: 9, liked: false, createdAt: "2026-03-16" },
+      { id: "fc-23", postId: "fp-16", authorName: "한화2", authorAvatar: "H2", content: "황준서 일러스트 너무 멋져요!", likes: 17, liked: false, createdAt: "2026-03-16" },
+      { id: "fc-24", postId: "fp-17", authorName: "LG팬3", authorAvatar: "L3", content: "오스틴 홈런 장면 완전 멋져요!!", likes: 43, liked: false, createdAt: "2026-03-15" },
+      { id: "fc-25", postId: "fp-17", authorName: "잠실팬", authorAvatar: "JS", content: "디테일 미쳤다... 오스틴 그 자체!", likes: 38, liked: false, createdAt: "2026-03-15" },
     ];
     comments.forEach((c) => addItem(STORE_KEYS.FANDOM_COMMENTS, c));
   }
 
-  // Fandom Events
+  // Fandom Events (KBO 이벤트)
   if (listItems(STORE_KEYS.FANDOM_EVENTS).length === 0) {
     const events: FandomEvent[] = [
-      { id: "evt-1", title: "BTS 데뷔 13주년 팬아트 챌린지", description: "방탄소년단 데뷔 13주년을 기념하는 팬아트 챌린지! 멤버별 또는 단체 팬아트를 제출하세요.", groupId: "grp-bts", groupName: "BTS", type: "anniversary", status: "active", participants: 234, prize: "공식 굿즈 세트 + 팬미팅 초대권", startDate: "2026-06-01", endDate: "2026-06-30", coverColor: "#7B2FF7" },
-      { id: "evt-2", title: "NewJeans 인스타툰 콘테스트", description: "뉴진스의 곡을 주제로 4컷 인스타툰을 만들어주세요! 창의적인 스토리텔링을 기대합니다.", groupId: "grp-nj", groupName: "NewJeans", type: "contest", status: "active", participants: 156, prize: "앨범 사인본 + 포토카드 세트", startDate: "2026-03-15", endDate: "2026-04-15", coverColor: "#00B4D8" },
-      { id: "evt-3", title: "BLACKPINK 밈 챌린지", description: "블랙핑크 멤버들의 재미있는 순간을 밈/인스타툰으로 만들어주세요!", groupId: "grp-bp", groupName: "BLACKPINK", type: "challenge", status: "active", participants: 189, prize: "공식 MD + 디지털 포토카드", startDate: "2026-03-10", endDate: "2026-04-10", coverColor: "#FF2D8A" },
-      { id: "evt-4", title: "Stray Kids x 크리에이터 콜라보", description: "스트레이 키즈 공식 콜라보! 최우수 팬아트는 공식 SNS에 게시됩니다.", groupId: "grp-skz", groupName: "Stray Kids", type: "collab", status: "active", participants: 312, prize: "공식 SNS 게시 + 앨범 10장", startDate: "2026-03-01", endDate: "2026-04-30", coverColor: "#EF4444" },
-      { id: "evt-5", title: "SEVENTEEN 캐럿 팬아트 페스타", description: "세븐틴 유닛별 팬아트를 그려주세요! 힙합팀, 보컬팀, 퍼포먼스팀 부문으로 진행됩니다.", groupId: "grp-svt", groupName: "SEVENTEEN", type: "contest", status: "upcoming", participants: 0, prize: "콘서트 티켓 2매 + 굿즈 패키지", startDate: "2026-04-01", endDate: "2026-05-01", coverColor: "#F59E0B" },
-      { id: "evt-6", title: "aespa MY 팬아트 챌린지", description: "에스파와 ae 캐릭터를 함께 그리는 팬아트 챌린지! 메타버스 컨셉을 자유롭게 표현하세요.", groupId: "grp-ae", groupName: "aespa", type: "challenge", status: "upcoming", participants: 0, prize: "앨범 사인본 + 포토카드 풀세트", startDate: "2026-04-15", endDate: "2026-05-15", coverColor: "#8B5CF6" },
-      { id: "evt-7", title: "IVE 데뷔 5주년 기념 이벤트", description: "아이브 데뷔 5주년을 축하하는 팬아트 & 인스타툰 공모전!", groupId: "grp-ive", groupName: "IVE", type: "anniversary", status: "ended", participants: 145, prize: "팬사인회 응모권 + 앨범", startDate: "2026-01-01", endDate: "2026-02-01", coverColor: "#EC4899" },
-      { id: "evt-8", title: "LE SSERAFIM FEARLESS 팬아트", description: "르세라핌의 FEARLESS 컨셉을 자유롭게 팬아트로 표현하세요!", groupId: "grp-lsf", groupName: "LE SSERAFIM", type: "challenge", status: "ended", participants: 98, prize: "디지털 포토카드 세트", startDate: "2026-02-01", endDate: "2026-03-01", coverColor: "#10B981" },
+      { id: "evt-1", title: "KIA 타이거즈 2026 시즌 응원 팬아트 챌린지", description: "KIA 타이거즈 2026 시즌 개막을 기념하는 팬아트 챌린지! 선수별 또는 팀 팬아트를 제출하세요.", groupId: "team-kia", groupName: "KIA Tigers", type: "challenge", status: "active", participants: 234, prize: "KIA 시즌 관람권 + 공식 굿즈", startDate: "2026-03-01", endDate: "2026-04-30", coverColor: "#EA0029" },
+      { id: "evt-2", title: "NC 다이노스 인스타툰 콘테스트", description: "NC 다이노스의 경기 하이라이트를 4컷 인스타툰으로 만들어주세요!", groupId: "team-nc", groupName: "NC Dinos", type: "contest", status: "active", participants: 156, prize: "NC 사인볼 + 유니폼 세트", startDate: "2026-03-15", endDate: "2026-04-15", coverColor: "#315288" },
+      { id: "evt-3", title: "롯데 자이언츠 응원 밈 챌린지", description: "사직구장의 열정적인 응원 문화를 밈/인스타툰으로 만들어주세요!", groupId: "team-lot", groupName: "Lotte Giants", type: "challenge", status: "active", participants: 189, prize: "롯데 MD + 사직 시즌권", startDate: "2026-03-10", endDate: "2026-04-10", coverColor: "#041E42" },
+      { id: "evt-4", title: "LG 트윈스 x 크리에이터 콜라보", description: "LG 트윈스 공식 콜라보! 최우수 팬아트는 구단 공식 SNS에 게시됩니다.", groupId: "team-lg", groupName: "LG Twins", type: "collab", status: "active", participants: 312, prize: "구단 공식 SNS 게시 + 시즌권", startDate: "2026-03-01", endDate: "2026-04-30", coverColor: "#C60C30" },
+      { id: "evt-5", title: "KBO 올스타전 기념 팬아트 페스타", description: "KBO 올스타전을 기념하는 팬아트 이벤트! 10개 구단 선수를 자유롭게 그려주세요.", groupId: "team-sam", groupName: "Samsung Lions", type: "contest", status: "upcoming", participants: 0, prize: "올스타전 관람권 2매 + 굿즈 패키지", startDate: "2026-07-01", endDate: "2026-07-31", coverColor: "#074CA1" },
+      { id: "evt-6", title: "한화 이글스 팬아트 챌린지", description: "한화 이글스의 젊은 투수진을 응원하는 팬아트 챌린지! 문동주, 황준서를 그려주세요.", groupId: "team-han", groupName: "Hanwha Eagles", type: "challenge", status: "upcoming", participants: 0, prize: "한화 사인볼 + 유니폼", startDate: "2026-04-15", endDate: "2026-05-15", coverColor: "#FF6600" },
+      { id: "evt-7", title: "두산 베어스 창단 기념 이벤트", description: "두산 베어스의 전통을 기리는 팬아트 & 인스타툰 공모전!", groupId: "team-doo", groupName: "Doosan Bears", type: "anniversary", status: "ended", participants: 145, prize: "두산 시즌권 + 사인 유니폼", startDate: "2026-01-01", endDate: "2026-02-01", coverColor: "#131230" },
+      { id: "evt-8", title: "SSG 랜더스 팬아트 챌린지", description: "인천의 자존심 SSG 랜더스 선수들을 팬아트로 표현하세요!", groupId: "team-ssg", groupName: "SSG Landers", type: "challenge", status: "ended", participants: 98, prize: "SSG 관람권 세트", startDate: "2026-02-01", endDate: "2026-03-01", coverColor: "#CE0E2D" },
     ];
     events.forEach((e) => addItem(STORE_KEYS.FANDOM_EVENTS, e));
   }
 
-  // Fan Creators
+  // Fan Creators (KBO 팬 크리에이터)
   if (listItems(STORE_KEYS.FAN_CREATORS).length === 0) {
     const creators: FanCreator[] = [
-      { id: "fan-1", nickname: "아미드로잉", avatar: "AD", bio: "BTS 팬아트 전문 크리에이터 🎨 95즈 최애", groupId: "grp-bts", groupName: "BTS", bias: "Jimin", fanartCount: 48, followerCount: 1230, followingCount: 45, totalLikes: 15600, badge: "top", joinedAt: "2025-06-15" },
-      { id: "fan-2", nickname: "블링크아트", avatar: "BA", bio: "BLACKPINK 일러스트레이터 💖 제니 최애", groupId: "grp-bp", groupName: "BLACKPINK", bias: "Jennie", fanartCount: 35, followerCount: 890, followingCount: 32, totalLikes: 9800, badge: "popular", joinedAt: "2025-08-20" },
-      { id: "fan-3", nickname: "버니작가", avatar: "BJ", bio: "뉴진스 인스타툰 크리에이터 🐰 민지 최애", groupId: "grp-nj", groupName: "NewJeans", bias: "Minji", fanartCount: 52, followerCount: 2100, followingCount: 38, totalLikes: 22400, badge: "top", joinedAt: "2025-05-10" },
-      { id: "fan-4", nickname: "마이드로우", avatar: "MD", bio: "에스파 팬아트 그리는 MY 🌟 카리나 최애", groupId: "grp-ae", groupName: "aespa", bias: "Karina", fanartCount: 28, followerCount: 560, followingCount: 51, totalLikes: 5400, badge: "rising", joinedAt: "2025-09-01" },
-      { id: "fan-5", nickname: "스테이아트", avatar: "SA", bio: "스키즈 팬아트 & 밈 제작 🎯 현진 최애", groupId: "grp-skz", groupName: "Stray Kids", bias: "Hyunjin", fanartCount: 31, followerCount: 720, followingCount: 28, totalLikes: 7200, badge: "popular", joinedAt: "2025-07-22" },
-      { id: "fan-6", nickname: "캐럿크리에이터", avatar: "CC", bio: "세븐틴 밈 장인 ㅋㅋ 호시 최애 🐯", groupId: "grp-svt", groupName: "SEVENTEEN", bias: "Hoshi", fanartCount: 44, followerCount: 1560, followingCount: 41, totalLikes: 18900, badge: "top", joinedAt: "2025-04-05" },
-      { id: "fan-7", nickname: "다이브아트", avatar: "DA", bio: "아이브 팬아트 크리에이터 🎀 원영 최애", groupId: "grp-ive", groupName: "IVE", bias: "Wonyoung", fanartCount: 22, followerCount: 380, followingCount: 55, totalLikes: 3800, badge: "rising", joinedAt: "2025-10-12" },
-      { id: "fan-8", nickname: "피어낫작가", avatar: "FN", bio: "르세라핌 팬아트 전문 🦋 채원 최애", groupId: "grp-lsf", groupName: "LE SSERAFIM", bias: "Chaewon", fanartCount: 19, followerCount: 340, followingCount: 29, totalLikes: 3200, badge: "rising", joinedAt: "2025-11-01" },
-      { id: "fan-9", nickname: "올리작가", avatar: "OL", bio: "멀티 팬덤 크리에이터 ✨ 다양한 그룹 팬아트", groupId: "grp-bts", groupName: "BTS", bias: "V", fanartCount: 67, followerCount: 3200, followingCount: 120, totalLikes: 34500, badge: "top", joinedAt: "2025-01-15" },
-      { id: "fan-10", nickname: "뉴진러버", avatar: "NL", bio: "뉴진스 일러스트 & 굿즈 제작 🎨", groupId: "grp-nj", groupName: "NewJeans", bias: "Hanni", fanartCount: 15, followerCount: 210, followingCount: 67, totalLikes: 1800, badge: "rookie", joinedAt: "2026-01-20" },
-      { id: "fan-11", nickname: "호시호랑이", avatar: "HH", bio: "호시 = 호랑이 🐯 세븐틴 팬아트", groupId: "grp-svt", groupName: "SEVENTEEN", bias: "Hoshi", fanartCount: 12, followerCount: 180, followingCount: 34, totalLikes: 1200, badge: "rookie", joinedAt: "2026-02-10" },
-      { id: "fan-12", nickname: "정국맘", avatar: "JM", bio: "정국이 팬아트 모아 놓는 계정 💜", groupId: "grp-bts", groupName: "BTS", bias: "Jung Kook", fanartCount: 25, followerCount: 890, followingCount: 42, totalLikes: 8900, badge: "popular", joinedAt: "2025-08-05" },
+      { id: "fan-1", nickname: "트윈스드로잉", avatar: "TD", bio: "LG 트윈스 팬아트 전문 크리에이터 잠실 직관러", groupId: "team-lg", groupName: "LG Twins", favoritePlayer: "오지환", fanartCount: 48, followerCount: 1230, followingCount: 45, totalLikes: 15600, badge: "top", joinedAt: "2025-06-15" },
+      { id: "fan-2", nickname: "타이거즈아트", avatar: "TA", bio: "KIA 타이거즈 일러스트레이터 광주 챔필 홈팬", groupId: "team-kia", groupName: "KIA Tigers", favoritePlayer: "양현종", fanartCount: 35, followerCount: 890, followingCount: 32, totalLikes: 9800, badge: "popular", joinedAt: "2025-08-20" },
+      { id: "fan-3", nickname: "다이노스작가", avatar: "DJ", bio: "NC 다이노스 인스타툰 크리에이터 창원직관러", groupId: "team-nc", groupName: "NC Dinos", favoritePlayer: "박건우", fanartCount: 52, followerCount: 2100, followingCount: 38, totalLikes: 22400, badge: "top", joinedAt: "2025-05-10" },
+      { id: "fan-4", nickname: "랜더스그림", avatar: "RG", bio: "SSG 랜더스 팬아트 그리는 인천팬", groupId: "team-ssg", groupName: "SSG Landers", favoritePlayer: "최정", fanartCount: 28, followerCount: 560, followingCount: 51, totalLikes: 5400, badge: "rising", joinedAt: "2025-09-01" },
+      { id: "fan-5", nickname: "베어스팬아트", avatar: "BA", bio: "두산 베어스 팬아트 & 밈 제작 잠실 단골", groupId: "team-doo", groupName: "Doosan Bears", favoritePlayer: "허경민", fanartCount: 31, followerCount: 720, followingCount: 28, totalLikes: 7200, badge: "popular", joinedAt: "2025-07-22" },
+      { id: "fan-6", nickname: "자이언츠크리", avatar: "GC", bio: "롯데 자이언츠 밈 장인 ㅋㅋ 사직 응원문화 전파", groupId: "team-lot", groupName: "Lotte Giants", favoritePlayer: "전준우", fanartCount: 44, followerCount: 1560, followingCount: 41, totalLikes: 18900, badge: "top", joinedAt: "2025-04-05" },
+      { id: "fan-7", nickname: "라이온즈아트", avatar: "LA", bio: "삼성 라이온즈 팬아트 크리에이터 대구팬", groupId: "team-sam", groupName: "Samsung Lions", favoritePlayer: "구자욱", fanartCount: 22, followerCount: 380, followingCount: 55, totalLikes: 3800, badge: "rising", joinedAt: "2025-10-12" },
+      { id: "fan-8", nickname: "이글스작가", avatar: "EW", bio: "한화 이글스 팬아트 전문 대전직관러", groupId: "team-han", groupName: "Hanwha Eagles", favoritePlayer: "노시환", fanartCount: 19, followerCount: 340, followingCount: 29, totalLikes: 3200, badge: "rising", joinedAt: "2025-11-01" },
+      { id: "fan-9", nickname: "KBO작가", avatar: "KB", bio: "KBO 전 구단 크리에이터 다양한 구단 팬아트", groupId: "team-lg", groupName: "LG Twins", favoritePlayer: "박해민", fanartCount: 67, followerCount: 3200, followingCount: 120, totalLikes: 34500, badge: "top", joinedAt: "2025-01-15" },
+      { id: "fan-10", nickname: "위즈아트", avatar: "WA", bio: "KT 위즈 일러스트 & 굿즈 제작", groupId: "team-kt", groupName: "KT Wiz", favoritePlayer: "강백호", fanartCount: 15, followerCount: 210, followingCount: 67, totalLikes: 1800, badge: "rookie", joinedAt: "2026-01-20" },
+      { id: "fan-11", nickname: "히어로즈그림", avatar: "HG", bio: "키움 히어로즈 팬아트 고척돔 직관러", groupId: "team-kiw", groupName: "Kiwoom Heroes", favoritePlayer: "이정후", fanartCount: 12, followerCount: 180, followingCount: 34, totalLikes: 1200, badge: "rookie", joinedAt: "2026-02-10" },
+      { id: "fan-12", nickname: "임찬규팬", avatar: "IC", bio: "임찬규 팬아트 모아 놓는 계정", groupId: "team-lg", groupName: "LG Twins", favoritePlayer: "임찬규", fanartCount: 25, followerCount: 890, followingCount: 42, totalLikes: 8900, badge: "popular", joinedAt: "2025-08-05" },
     ];
     creators.forEach((c) => addItem(STORE_KEYS.FAN_CREATORS, c));
   }
 
-  // Fan Talk Posts
+  // Fan Talk Posts (KBO 야구 토크)
   if (listItems(STORE_KEYS.FAN_TALK_POSTS).length === 0) {
     const talkPosts: FanTalkPost[] = [
-      { id: "talk-1", authorId: "fan-1", authorName: "아미드로잉", authorAvatar: "AD", groupId: "grp-bts", groupName: "BTS", content: "오늘 지민이 인스타 업데이트 봤어요?! 팬아트 영감 뿜뿜 🎨", topic: "잡담", likes: 45, liked: false, replyCount: 12, createdAt: "2026-03-24T09:30:00" },
-      { id: "talk-2", authorId: "fan-3", authorName: "버니작가", authorAvatar: "BJ", groupId: "grp-nj", groupName: "NewJeans", content: "뉴진스 인스타툰 그릴 때 어떤 스타일이 제일 반응 좋았어요? 저는 Ditto 컨셉이 대박이었는데", topic: "질문", likes: 67, liked: false, replyCount: 23, createdAt: "2026-03-24T08:15:00" },
-      { id: "talk-3", authorId: "fan-6", authorName: "캐럿크리에이터", authorAvatar: "CC", groupId: "grp-svt", groupName: "SEVENTEEN", content: "호시 밈 새로 만들었는데 반응이 미쳤어요 ㅋㅋㅋ 여러분도 밈 챌린지 참여하세요!", topic: "인증", likes: 89, liked: false, replyCount: 34, createdAt: "2026-03-24T07:00:00" },
-      { id: "talk-4", authorId: "fan-9", authorName: "올리작가", authorAvatar: "OL", groupId: "grp-bts", groupName: "BTS", content: "팬아트 그릴 때 참고하기 좋은 포즈 레퍼런스 사이트 추천해요!\n1. QuickPoses\n2. Line of Action\n3. SketchDaily", topic: "추천", likes: 156, liked: false, replyCount: 45, createdAt: "2026-03-23T22:00:00" },
-      { id: "talk-5", authorId: "fan-2", authorName: "블링크아트", authorAvatar: "BA", groupId: "grp-bp", groupName: "BLACKPINK", content: "제니 솔로 앨범 나온다는 소식!! 팬아트 미리 준비해야겠어요 🖤💖", topic: "소식", likes: 112, liked: false, replyCount: 28, createdAt: "2026-03-23T20:30:00" },
-      { id: "talk-6", authorId: "fan-5", authorName: "스테이아트", authorAvatar: "SA", groupId: "grp-skz", groupName: "Stray Kids", content: "스키즈 월드투어 팬아트 프로젝트 같이 하실 분 구합니다! 멤버별 한 장씩 분배해서 합작하고 싶어요", topic: "잡담", likes: 78, liked: false, replyCount: 19, createdAt: "2026-03-23T18:45:00" },
-      { id: "talk-7", authorId: "fan-4", authorName: "마이드로우", authorAvatar: "MD", groupId: "grp-ae", groupName: "aespa", content: "에스파 ae 캐릭터 그릴 때 팁 있으신 분? 메타버스 느낌을 살리고 싶은데 어려워요 ㅠ", topic: "질문", likes: 34, liked: false, replyCount: 15, createdAt: "2026-03-23T16:20:00" },
-      { id: "talk-8", authorId: "fan-12", authorName: "정국맘", authorAvatar: "JM", groupId: "grp-bts", groupName: "BTS", content: "정국이 Seven 인스타툰 시리즈 완성했어요! 피드에 올렸으니 봐주세요 💜", topic: "인증", likes: 201, liked: false, replyCount: 56, createdAt: "2026-03-23T14:00:00" },
-      { id: "talk-9", authorId: "fan-7", authorName: "다이브아트", authorAvatar: "DA", groupId: "grp-ive", groupName: "IVE", content: "아이브 컴백 예고편 나왔어요!! 원영이 비주얼 미쳤다 ㅠㅠ 바로 팬아트 들어갑니다", topic: "소식", likes: 56, liked: false, replyCount: 11, createdAt: "2026-03-23T12:30:00" },
-      { id: "talk-10", authorId: "fan-10", authorName: "뉴진러버", authorAvatar: "NL", groupId: "grp-nj", groupName: "NewJeans", content: "팬아트 초보인데 OLLI AI 써보니까 진짜 신세계에요... 하니 팬아트 처음으로 완성했어요!", topic: "인증", likes: 93, liked: false, replyCount: 31, createdAt: "2026-03-23T10:15:00" },
-      { id: "talk-11", authorId: "fan-8", authorName: "피어낫작가", authorAvatar: "FN", groupId: "grp-lsf", groupName: "LE SSERAFIM", content: "르세라핌 FEARLESS 챌린지 참여했는데 결과 언제 나오나요?", topic: "질문", likes: 22, liked: false, replyCount: 8, createdAt: "2026-03-22T21:00:00" },
-      { id: "talk-12", authorId: "fan-11", authorName: "호시호랑이", authorAvatar: "HH", groupId: "grp-svt", groupName: "SEVENTEEN", content: "호시 팬아트 그리다가 자동으로 호랑이가 그려지는 건 저만 그런가요 ㅋㅋㅋ", topic: "잡담", likes: 134, liked: false, replyCount: 42, createdAt: "2026-03-22T19:30:00" },
+      { id: "talk-1", authorId: "fan-1", authorName: "트윈스드로잉", authorAvatar: "TD", groupId: "team-lg", groupName: "LG Twins", content: "오늘 잠실 직관 가시는 분?! 오지환 타격 폼 팬아트 영감 잡아야해요", topic: "잡담", likes: 45, liked: false, replyCount: 12, createdAt: "2026-03-24T09:30:00" },
+      { id: "talk-2", authorId: "fan-3", authorName: "다이노스작가", authorAvatar: "DJ", groupId: "team-nc", groupName: "NC Dinos", content: "야구 인스타툰 그릴 때 어떤 장면이 제일 반응 좋았어요? 저는 역전 홈런 장면이 대박이었는데", topic: "질문", likes: 67, liked: false, replyCount: 23, createdAt: "2026-03-24T08:15:00" },
+      { id: "talk-3", authorId: "fan-6", authorName: "자이언츠크리", authorAvatar: "GC", groupId: "team-lot", groupName: "Lotte Giants", content: "사직구장 응원 밈 새로 만들었는데 반응이 미쳤어요 ㅋㅋㅋ 여러분도 밈 챌린지 참여하세요!", topic: "인증", likes: 89, liked: false, replyCount: 34, createdAt: "2026-03-24T07:00:00" },
+      { id: "talk-4", authorId: "fan-9", authorName: "KBO작가", authorAvatar: "KB", groupId: "team-lg", groupName: "LG Twins", content: "야구 팬아트 그릴 때 참고하기 좋은 자료 추천!\n1. KBO 공식 사진\n2. 스포츠 일러스트\n3. 야구 포즈 레퍼런스", topic: "추천", likes: 156, liked: false, replyCount: 45, createdAt: "2026-03-23T22:00:00" },
+      { id: "talk-5", authorId: "fan-2", authorName: "타이거즈아트", authorAvatar: "TA", groupId: "team-kia", groupName: "KIA Tigers", content: "김도영 20-20 달성 기념 팬아트 이벤트 소식!! 지금 참여 가능!", topic: "소식", likes: 112, liked: false, replyCount: 28, createdAt: "2026-03-23T20:30:00" },
+      { id: "talk-6", authorId: "fan-5", authorName: "베어스팬아트", authorAvatar: "BA", groupId: "team-doo", groupName: "Doosan Bears", content: "두산 선수별 팬아트 프로젝트 같이 하실 분 구합니다! 선수별 한 장씩 분배해서 합작하고 싶어요", topic: "잡담", likes: 78, liked: false, replyCount: 19, createdAt: "2026-03-23T18:45:00" },
+      { id: "talk-7", authorId: "fan-4", authorName: "랜더스그림", authorAvatar: "RG", groupId: "team-ssg", groupName: "SSG Landers", content: "야구 유니폼 그릴 때 팁 있으신 분? 로고랑 번호를 정확하게 그리고 싶은데 어려워요 ㅠ", topic: "질문", likes: 34, liked: false, replyCount: 15, createdAt: "2026-03-23T16:20:00" },
+      { id: "talk-8", authorId: "fan-12", authorName: "임찬규팬", authorAvatar: "IC", groupId: "team-lg", groupName: "LG Twins", content: "임찬규 삼진 인스타툰 시리즈 완성했어요! 피드에 올렸으니 봐주세요", topic: "인증", likes: 201, liked: false, replyCount: 56, createdAt: "2026-03-23T14:00:00" },
+      { id: "talk-9", authorId: "fan-7", authorName: "라이온즈아트", authorAvatar: "LA", groupId: "team-sam", groupName: "Samsung Lions", content: "삼성 라이온즈 신규 유니폼 디자인 공개됐어요!! 팬아트 들어갑니다", topic: "소식", likes: 56, liked: false, replyCount: 11, createdAt: "2026-03-23T12:30:00" },
+      { id: "talk-10", authorId: "fan-10", authorName: "위즈아트", authorAvatar: "WA", groupId: "team-kt", groupName: "KT Wiz", content: "팬아트 초보인데 AI 써보니까 진짜 신세계에요... 강백호 팬아트 처음으로 완성!", topic: "인증", likes: 93, liked: false, replyCount: 31, createdAt: "2026-03-23T10:15:00" },
+      { id: "talk-11", authorId: "fan-8", authorName: "이글스작가", authorAvatar: "EW", groupId: "team-han", groupName: "Hanwha Eagles", content: "한화 이글스 팬아트 챌린지 참여했는데 결과 언제 나오나요?", topic: "질문", likes: 22, liked: false, replyCount: 8, createdAt: "2026-03-22T21:00:00" },
+      { id: "talk-12", authorId: "fan-11", authorName: "히어로즈그림", authorAvatar: "HG", groupId: "team-kiw", groupName: "Kiwoom Heroes", content: "이정후 팬아트 그리다가 자동으로 타격폼이 그려지는 건 저만 그런가요 ㅋㅋㅋ", topic: "잡담", likes: 134, liked: false, replyCount: 42, createdAt: "2026-03-22T19:30:00" },
     ];
     talkPosts.forEach((t) => addItem(STORE_KEYS.FAN_TALK_POSTS, t));
   }
@@ -594,12 +615,12 @@ export function seedIfEmpty(): void {
   // Fan DMs (demo conversations)
   if (listItems(STORE_KEYS.FAN_DMS).length === 0) {
     const dms: FanDM[] = [
-      { id: "dm-1", senderId: "fan-3", senderName: "버니작가", senderAvatar: "BJ", receiverId: "me", receiverName: "나", receiverAvatar: "ME", content: "안녕하세요! 팬아트 스타일 너무 좋아요 😊 혹시 합작 관심 있으신가요?", read: false, createdAt: "2026-03-24T10:00:00" },
-      { id: "dm-2", senderId: "me", senderName: "나", senderAvatar: "ME", receiverId: "fan-3", receiverName: "버니작가", receiverAvatar: "BJ", content: "감사합니다! 합작 좋아요~ 어떤 컨셉으로 하고 싶으세요?", read: true, createdAt: "2026-03-24T10:05:00" },
-      { id: "dm-3", senderId: "fan-3", senderName: "버니작가", senderAvatar: "BJ", receiverId: "me", receiverName: "나", receiverAvatar: "ME", content: "뉴진스 멤버별로 한 장씩 그려서 합치면 어떨까요? 저는 민지랑 하니를 맡을게요!", read: false, createdAt: "2026-03-24T10:10:00" },
-      { id: "dm-4", senderId: "fan-9", senderName: "올리작가", senderAvatar: "OL", receiverId: "me", receiverName: "나", receiverAvatar: "ME", content: "팬아트 이벤트 같이 참여할래요? BTS 데뷔 13주년 챌린지요!", read: false, createdAt: "2026-03-23T15:30:00" },
-      { id: "dm-5", senderId: "fan-6", senderName: "캐럿크리에이터", senderAvatar: "CC", receiverId: "me", receiverName: "나", receiverAvatar: "ME", content: "밈 만드는 팁 좀 알려주실 수 있나요? 항상 작품 잘 보고 있어요!", read: true, createdAt: "2026-03-22T20:00:00" },
-      { id: "dm-6", senderId: "me", senderName: "나", senderAvatar: "ME", receiverId: "fan-6", receiverName: "캐럿크리에이터", receiverAvatar: "CC", content: "감사해요! 밈은 일단 공감 포인트를 잡는 게 중요해요 ㅎㅎ", read: true, createdAt: "2026-03-22T20:15:00" },
+      { id: "dm-1", senderId: "fan-3", senderName: "다이노스작가", senderAvatar: "DJ", receiverId: "me", receiverName: "나", receiverAvatar: "ME", content: "안녕하세요! 팬아트 스타일 너무 좋아요 혹시 합작 관심 있으신가요?", read: false, createdAt: "2026-03-24T10:00:00" },
+      { id: "dm-2", senderId: "me", senderName: "나", senderAvatar: "ME", receiverId: "fan-3", receiverName: "다이노스작가", receiverAvatar: "DJ", content: "감사합니다! 합작 좋아요~ 어떤 컨셉으로 하고 싶으세요?", read: true, createdAt: "2026-03-24T10:05:00" },
+      { id: "dm-3", senderId: "fan-3", senderName: "다이노스작가", senderAvatar: "DJ", receiverId: "me", receiverName: "나", receiverAvatar: "ME", content: "NC 선수별로 한 장씩 그려서 합치면 어떨까요? 저는 박건우랑 양의지를 맡을게요!", read: false, createdAt: "2026-03-24T10:10:00" },
+      { id: "dm-4", senderId: "fan-9", senderName: "KBO작가", senderAvatar: "KB", receiverId: "me", receiverName: "나", receiverAvatar: "ME", content: "팬아트 이벤트 같이 참여할래요? KIA 타이거즈 시즌 챌린지요!", read: false, createdAt: "2026-03-23T15:30:00" },
+      { id: "dm-5", senderId: "fan-6", senderName: "자이언츠크리", senderAvatar: "GC", receiverId: "me", receiverName: "나", receiverAvatar: "ME", content: "밈 만드는 팁 좀 알려주실 수 있나요? 항상 작품 잘 보고 있어요!", read: true, createdAt: "2026-03-22T20:00:00" },
+      { id: "dm-6", senderId: "me", senderName: "나", senderAvatar: "ME", receiverId: "fan-6", receiverName: "자이언츠크리", receiverAvatar: "GC", content: "감사해요! 밈은 일단 공감 포인트를 잡는 게 중요해요 ㅎㅎ", read: true, createdAt: "2026-03-22T20:15:00" },
     ];
     dms.forEach((d) => addItem(STORE_KEYS.FAN_DMS, d));
   }
@@ -608,65 +629,65 @@ export function seedIfEmpty(): void {
   if (listItems(STORE_KEYS.EDITOR_CONTENT).length === 0) {
     const editorContent: EditorContent[] = [
       {
-        id: "ec-1", type: "idol-profile", title: "BTS 그룹 프로필", description: "방탄소년단 공식 프로필 정리", authorName: "아미드로잉",
-        fandomId: "grp-bts", fandomName: "BTS", tags: ["BTS", "방탄소년단", "ARMY"], status: "published",
+        id: "ec-1", type: "idol-profile", title: "LG 트윈스 구단 프로필", description: "LG 트윈스 공식 프로필 정리", authorName: "트윈스드로잉",
+        fandomId: "team-lg", fandomName: "LG Twins", tags: ["LG", "트윈스", "잠실"], status: "published",
         likes: 234, views: 1560, commentCount: 12, createdAt: "2026-03-20", updatedAt: "2026-03-22",
-        groupName: "BTS", company: "HYBE", debutDate: "2013-06-13", bio: "글로벌 K-POP 그룹 방탄소년단. 2013년 데뷔 이후 전 세계적으로 사랑받는 아이돌 그룹입니다.",
-        members: [{ name: "RM", position: "리더/래퍼" }, { name: "Jin", position: "보컬" }, { name: "SUGA", position: "래퍼" }, { name: "j-hope", position: "댄서/래퍼" }, { name: "Jimin", position: "보컬/댄서" }, { name: "V", position: "보컬" }, { name: "Jung Kook", position: "보컬/센터" }],
+        groupName: "LG Twins", company: "LG", debutDate: "1982-01-01", bio: "서울을 대표하는 전통 구단 LG 트윈스. 1982년 창단 이후 잠실야구장을 홈으로 하는 명문 구단입니다.",
+        members: [{ name: "오지환", position: "내야수" }, { name: "박해민", position: "외야수" }, { name: "임찬규", position: "투수" }, { name: "오스틴", position: "외야수" }, { name: "박동원", position: "포수" }],
         profileImageUrl: null, galleryImages: [],
       },
       {
-        id: "ec-2", type: "fanart", title: "뉴진스 Ditto 팬아트", description: "Ditto MV 영감을 받은 팬아트",
-        authorName: "버니작가", fandomId: "grp-nj", fandomName: "NewJeans", idolId: "mem-minji", idolName: "Minji",
-        tags: ["NewJeans", "Ditto", "민지", "팬아트"], status: "published",
+        id: "ec-2", type: "fanart", title: "NC 다이노스 우승 팬아트", description: "2020 한국시리즈 우승 영감 팬아트",
+        authorName: "다이노스작가", fandomId: "team-nc", fandomName: "NC Dinos", idolId: "plr-nc-1", idolName: "박건우",
+        tags: ["NC", "다이노스", "우승", "팬아트"], status: "published",
         likes: 456, views: 2340, commentCount: 23, createdAt: "2026-03-19", updatedAt: "2026-03-19",
         imageUrls: [], dimensions: "3:4", medium: "디지털",
       },
       {
-        id: "ec-3", type: "fanfic", title: "별이 빛나는 밤에 - BTS 팬픽", description: "방탄소년단 멤버들의 따뜻한 우정 이야기",
-        authorName: "올리작가", fandomId: "grp-bts", fandomName: "BTS",
-        tags: ["BTS", "팬픽", "우정", "힐링"], status: "published",
+        id: "ec-3", type: "fanfic", title: "잠실의 밤 - 야구 팬픽", description: "잠실야구장에서 펼쳐지는 감동의 야구 이야기",
+        authorName: "KBO작가", fandomId: "team-lg", fandomName: "LG Twins",
+        tags: ["LG", "잠실", "야구", "팬픽"], status: "published",
         likes: 189, views: 890, commentCount: 34, createdAt: "2026-03-18", updatedAt: "2026-03-21",
-        content: "서울의 밤하늘에 별이 빛나고 있었다. 연습실을 나선 일곱 명의 청년들은...", genre: "힐링/우정",
-        chapters: [{ title: "프롤로그 - 별이 빛나는 밤", content: "서울의 밤하늘에 별이 빛나고 있었다..." }, { title: "1장 - 연습실의 새벽", content: "새벽 3시, 연습실의 불빛이..." }],
+        content: "잠실야구장의 조명이 밝게 빛나고 있었다. 9회말 2아웃, 투스트라이크에서...", genre: "스포츠/감동",
+        chapters: [{ title: "프롤로그 - 잠실의 밤", content: "잠실야구장의 조명이 밝게 빛나고 있었다..." }, { title: "1장 - 9회말의 기적", content: "9회말, 스코어보드에는 1-2가 찍혀있었다..." }],
         wordCount: 3420,
       },
       {
-        id: "ec-4", type: "event", title: "BLACKPINK 밈 챌린지 안내", description: "블랙핑크 밈 챌린지 상세 안내",
-        authorName: "블링크아트", fandomId: "grp-bp", fandomName: "BLACKPINK",
-        tags: ["BLACKPINK", "챌린지", "밈"], status: "published",
+        id: "ec-4", type: "event", title: "롯데 자이언츠 응원 밈 챌린지 안내", description: "롯데 응원 밈 챌린지 상세 안내",
+        authorName: "자이언츠크리", fandomId: "team-lot", fandomName: "Lotte Giants",
+        tags: ["롯데", "챌린지", "밈", "사직"], status: "published",
         likes: 78, views: 560, commentCount: 8, createdAt: "2026-03-15", updatedAt: "2026-03-15",
-        eventName: "BLACKPINK 밈 챌린지", startDate: "2026-03-10", endDate: "2026-04-10",
+        eventName: "롯데 자이언츠 응원 밈 챌린지", startDate: "2026-03-10", endDate: "2026-04-10",
         location: "온라인", link: "",
       },
       {
-        id: "ec-5", type: "poll", title: "최고의 K-POP 댄스 브레이크는?", description: "역대 K-POP 댄스 브레이크 중 최고를 뽑아주세요!",
-        authorName: "캐럿크리에이터", fandomId: "grp-svt", fandomName: "SEVENTEEN",
-        tags: ["투표", "댄스브레이크", "K-POP"], status: "published",
+        id: "ec-5", type: "poll", title: "2026 시즌 최고의 홈런왕 후보는?", description: "올 시즌 홈런왕 후보를 뽑아주세요!",
+        authorName: "KBO작가", fandomId: "team-lg", fandomName: "LG Twins",
+        tags: ["투표", "홈런왕", "KBO"], status: "published",
         likes: 312, views: 4560, commentCount: 45, createdAt: "2026-03-22", updatedAt: "2026-03-22",
-        question: "역대 K-POP 댄스 브레이크 중 최고는?",
+        question: "2026 시즌 최고의 홈런왕 후보는?",
         options: [
-          { id: "opt-1", text: "BTS - MIC Drop", votes: 342 },
-          { id: "opt-2", text: "SEVENTEEN - Super", votes: 287 },
-          { id: "opt-3", text: "Stray Kids - LALALALA", votes: 198 },
-          { id: "opt-4", text: "aespa - Supernova", votes: 156 },
+          { id: "opt-1", text: "오스틴 (LG)", votes: 342 },
+          { id: "opt-2", text: "최정 (SSG)", votes: 287 },
+          { id: "opt-3", text: "강백호 (KT)", votes: 198 },
+          { id: "opt-4", text: "노시환 (한화)", votes: 156 },
         ],
         endDate: "2026-04-01", totalVotes: 983,
       },
       {
-        id: "ec-6", type: "fanart", title: "에스파 Supernova 컨셉 아트", description: "Supernova 뮤직비디오 영감 팬아트",
-        authorName: "마이드로우", fandomId: "grp-ae", fandomName: "aespa", idolId: "mem-karina", idolName: "Karina",
-        tags: ["aespa", "Supernova", "카리나", "팬아트"], status: "draft",
+        id: "ec-6", type: "fanart", title: "SSG 랜더스 최정 500홈런 아트", description: "최정 500홈런 기념 팬아트",
+        authorName: "랜더스그림", fandomId: "team-ssg", fandomName: "SSG Landers", idolId: "plr-ssg-1", idolName: "최정",
+        tags: ["SSG", "최정", "500홈런", "팬아트"], status: "draft",
         likes: 0, views: 0, commentCount: 0, createdAt: "2026-03-24", updatedAt: "2026-03-24",
         imageUrls: [], dimensions: "1:1", medium: "디지털",
       },
       {
-        id: "ec-7", type: "fanfic", title: "르세라핌 FEARLESS 이야기", description: "두려움 없이 나아가는 다섯 소녀의 이야기",
-        authorName: "피어낫작가", fandomId: "grp-lsf", fandomName: "LE SSERAFIM",
-        tags: ["르세라핌", "팬픽", "FEARLESS"], status: "draft",
+        id: "ec-7", type: "fanfic", title: "사직의 함성 - 롯데 팬픽", description: "부산 사직야구장의 열정적인 응원 이야기",
+        authorName: "자이언츠크리", fandomId: "team-lot", fandomName: "Lotte Giants",
+        tags: ["롯데", "팬픽", "사직", "응원"], status: "draft",
         likes: 0, views: 0, commentCount: 0, createdAt: "2026-03-23", updatedAt: "2026-03-24",
-        content: "두려움이란 무엇일까. 무대 위에 선 다섯 소녀는...", genre: "성장/드라마",
-        chapters: [{ title: "프롤로그", content: "두려움이란 무엇일까..." }],
+        content: "부산 사직야구장의 관중석이 들썩거리고 있었다. 3만 관중의 함성이...", genre: "스포츠/열정",
+        chapters: [{ title: "프롤로그", content: "부산 사직야구장의 관중석이 들썩거리고 있었다..." }],
         wordCount: 1200,
       },
     ];
