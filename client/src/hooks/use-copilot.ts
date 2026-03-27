@@ -11,6 +11,7 @@ import {
   STYLE_PRESETS,
   getTemplateChips,
   TEMPLATE_LABELS,
+  BASEBALL_AESTHETIC_FILTERS,
   KPOP_AESTHETIC_FILTERS,
 } from "@/lib/fandom-templates";
 
@@ -65,20 +66,25 @@ async function fetchWithRetry(
 
 function getGoodsPromptSuffix(templateType: string): string | null {
   switch (templateType) {
-    case "cupsleeve":
-      return "cup sleeve wrap-around print, clean layout, text area for cafe name";
+    case "cheerbanner":
+      return "baseball cheer banner, bold readable text at distance, team colors, stadium atmosphere";
     case "slogan":
-      return "concert banner, bold readable text at distance, vibrant colors";
+      return "baseball stadium banner, bold readable text at distance, vibrant team colors";
     case "stickersheet":
       return "multiple cute sticker designs, white background, kiss-cut ready, separated stickers";
-    case "birthday-set":
-      return "coordinated birthday cafe design set, consistent visual theme across all items";
+    case "stadium-set":
+      return "coordinated stadium goods design set, consistent visual theme across all items, team colors";
     case "acrylicstand":
       return "acrylic stand design, clear outline, full body character, transparent background ready";
     case "phonecase":
       return "phone case design, full coverage pattern, considering camera cutout area";
     case "meme":
-      return "2-panel meme comic layout, bold text captions, humorous";
+      return "2-panel meme comic layout, bold text captions, humorous baseball theme";
+    // backward compat
+    case "cupsleeve":
+      return "baseball cheer banner, bold readable text at distance, team colors";
+    case "birthday-set":
+      return "coordinated stadium goods design set, consistent visual theme";
     default:
       return null;
   }
@@ -367,10 +373,10 @@ export function useCopilot() {
         }
       }
 
-      // Inject K-POP aesthetic filter if active
+      // Inject baseball aesthetic filter if active
       const aestheticFilter = state.activeAestheticFilter;
       if (aestheticFilter) {
-        const filterDef = KPOP_AESTHETIC_FILTERS.find((f) => f.id === aestheticFilter);
+        const filterDef = BASEBALL_AESTHETIC_FILTERS.find((f) => f.id === aestheticFilter);
         if (filterDef) {
           styledPrompt = `${filterDef.prompt}, ${styledPrompt}`;
         }

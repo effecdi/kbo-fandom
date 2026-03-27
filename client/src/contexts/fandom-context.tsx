@@ -6,14 +6,19 @@ import {
   listItems,
   STORE_KEYS,
   type FandomUserProfile,
+  type KboTeam,
+  type KboPlayer,
   type IdolGroup,
   type IdolMember,
 } from "@/lib/local-store";
 
 interface FandomContextValue {
   profile: FandomUserProfile | null;
-  group: IdolGroup | null;
-  members: IdolMember[];
+  group: KboTeam | null;
+  members: KboPlayer[];
+  // backward compat aliases
+  team: KboTeam | null;
+  players: KboPlayer[];
   isVerified: boolean;
   themeColor: string;
   setProfile: (p: FandomUserProfile) => void;
@@ -25,18 +30,18 @@ const FandomContext = createContext<FandomContextValue | null>(null);
 
 export function FandomProvider({ children }: { children: ReactNode }) {
   const [profile, setProfileState] = useState<FandomUserProfile | null>(null);
-  const [group, setGroup] = useState<IdolGroup | null>(null);
-  const [members, setMembers] = useState<IdolMember[]>([]);
+  const [group, setGroup] = useState<KboTeam | null>(null);
+  const [members, setMembers] = useState<KboPlayer[]>([]);
 
   const loadProfile = () => {
     const p = getFandomProfile();
     setProfileState(p);
     if (p) {
-      const groups = listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS);
+      const groups = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
       const g = groups.find((gr) => gr.id === p.groupId) || null;
       setGroup(g);
       setMembers(
-        listItems<IdolMember>(STORE_KEYS.IDOL_MEMBERS).filter(
+        listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS).filter(
           (m) => m.groupId === p.groupId
         )
       );
@@ -75,6 +80,8 @@ export function FandomProvider({ children }: { children: ReactNode }) {
         profile,
         group,
         members,
+        team: group,
+        players: members,
         isVerified: !!profile?.verified,
         themeColor,
         setProfile,
