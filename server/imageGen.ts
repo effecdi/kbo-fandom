@@ -37,7 +37,7 @@ Text: ${text}`
 let ai: GoogleGenAI;
 try {
   if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development" || process.env.AUTH_BYPASS === "true") {
       logger.warn("Gemini API 키 미설정 — 이미지 생성 비활성화");
       // 더미 클라이언트 생성 (실제 사용 시 에러 발생)
       ai = new GoogleGenAI({
@@ -60,7 +60,7 @@ try {
     });
   }
 } catch (error) {
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === "development" || process.env.AUTH_BYPASS === "true") {
     logger.warn("Gemini 클라이언트 생성 실패", error);
     ai = new GoogleGenAI({
       apiKey: "dummy-key",
