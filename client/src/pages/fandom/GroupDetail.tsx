@@ -17,8 +17,8 @@ import {
   listItems,
   seedIfEmpty,
   STORE_KEYS,
-  type IdolGroup,
-  type IdolMember,
+  type KboTeam,
+  type KboPlayer,
   type KboGameSchedule,
   type CheerSong,
   type StadiumGuide,
@@ -41,8 +41,8 @@ const TABS: { id: GroupTab; label: string; icon: typeof Sparkles }[] = [
 
 export function FandomGroupDetail() {
   const { id } = useParams<{ id: string }>();
-  const [group, setGroup] = useState<IdolGroup | null>(null);
-  const [members, setMembers] = useState<IdolMember[]>([]);
+  const [group, setGroup] = useState<KboTeam | null>(null);
+  const [members, setMembers] = useState<KboPlayer[]>([]);
   const [posts, setPosts] = useState<FandomFeedPost[]>([]);
   const [events, setEvents] = useState<FandomEvent[]>([]);
   const [tab, setTab] = useState<GroupTab>("fanart");
@@ -50,17 +50,17 @@ export function FandomGroupDetail() {
   const [games, setGames] = useState<KboGameSchedule[]>([]);
   const [cheerSongs, setCheerSongs] = useState<CheerSong[]>([]);
   const [stadiumGuide, setStadiumGuide] = useState<StadiumGuide | null>(null);
-  const [allTeams, setAllTeams] = useState<IdolGroup[]>([]);
+  const [allTeams, setAllTeams] = useState<KboTeam[]>([]);
 
   useEffect(() => {
     seedIfEmpty();
     if (!id) return;
-    const allGroups = listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS);
+    const allGroups = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
     setAllTeams(allGroups);
     const g = allGroups.find((gr) => gr.id === id) || null;
     setGroup(g);
 
-    const allMembers = listItems<IdolMember>(STORE_KEYS.IDOL_MEMBERS);
+    const allMembers = listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS);
     setMembers(allMembers.filter((m) => m.groupId === id));
 
     const allPosts = listItems<FandomFeedPost>(STORE_KEYS.FANDOM_FEED);

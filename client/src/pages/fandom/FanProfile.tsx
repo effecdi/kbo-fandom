@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import {
   listItems, addItem, seedIfEmpty, STORE_KEYS, getFandomProfile, generateId,
-  type FanCreator, type FandomFeedPost, type FanFollow, type IdolGroup,
+  type FanCreator, type FandomFeedPost, type FanFollow, type KboTeam,
 } from "@/lib/local-store";
 
 const BADGE_CONFIG: Record<string, { label: string; color: string; icon: typeof Crown }> = {
@@ -85,7 +85,7 @@ export function FanProfile() {
     );
   }
 
-  const group = listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS).find((g) => g.id === creator.groupId);
+  const group = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS).find((g) => g.id === creator.groupId);
   const badgeInfo = creator.badge ? BADGE_CONFIG[creator.badge] : null;
 
   return (

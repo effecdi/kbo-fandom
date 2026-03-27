@@ -20,7 +20,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { IdolGroupCard } from "@/components/fandom/idol-group-card";
+import { TeamCard } from "@/components/fandom/team-card";
 import { FandomEventCard } from "@/components/fandom/fandom-event-card";
 import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
@@ -30,7 +30,6 @@ import {
   seedIfEmpty,
   STORE_KEYS,
   getFandomProfile,
-  type IdolGroup,
   type KboTeam,
   type KboGameSchedule,
   type KboStanding,
@@ -40,7 +39,7 @@ import {
 } from "@/lib/local-store";
 
 export function FandomIndex() {
-  const [groups, setGroups] = useState<IdolGroup[]>([]);
+  const [groups, setGroups] = useState<KboTeam[]>([]);
   const [todayGames, setTodayGames] = useState<KboGameSchedule[]>([]);
   const [standings, setStandings] = useState<KboStanding[]>([]);
   const [feedCount, setFeedCount] = useState(0);
@@ -52,7 +51,7 @@ export function FandomIndex() {
 
   useEffect(() => {
     seedIfEmpty();
-    setGroups(listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS));
+    setGroups(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
     const allPosts = listItems<FandomFeedPost>(STORE_KEYS.FANDOM_FEED);
     setFeedCount(allPosts.length);
     setEvents(listItems<FandomEvent>(STORE_KEYS.FANDOM_EVENTS));
@@ -371,7 +370,7 @@ export function FandomIndex() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {trendingGroups.map((group) => (
-              <IdolGroupCard key={group.id} group={group} />
+              <TeamCard key={group.id} group={group} />
             ))}
           </div>
         </div>

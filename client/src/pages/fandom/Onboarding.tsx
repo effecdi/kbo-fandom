@@ -19,8 +19,8 @@ import {
   generateId,
   verifyFandomAnswers,
   setFandomProfile,
-  type IdolGroup,
-  type IdolMember,
+  type KboTeam,
+  type KboPlayer,
   type FandomUserProfile,
 } from "@/lib/local-store";
 
@@ -29,8 +29,8 @@ const TOTAL_STEPS = 10;
 export function FandomOnboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [groups, setGroups] = useState<IdolGroup[]>([]);
-  const [members, setMembers] = useState<IdolMember[]>([]);
+  const [groups, setGroups] = useState<KboTeam[]>([]);
+  const [members, setMembers] = useState<KboPlayer[]>([]);
   const [error, setError] = useState("");
   const [verifyResult, setVerifyResult] = useState<{
     passed: boolean;
@@ -45,14 +45,14 @@ export function FandomOnboarding() {
   const [companyAnswer, setCompanyAnswer] = useState("");
   const [memberCountInput, setMemberCountInput] = useState("");
   const [leaderAnswer, setLeaderAnswer] = useState("");
-  const [biasId, setBiasId] = useState("");
-  const [biasWreckerId, setBiasWreckerId] = useState("");
+  const [favoritePlayerId, setFavoritePlayerId] = useState("");
+  const [secondPlayerId, setSecondPlayerId] = useState("");
   const [favoriteSong, setFavoriteSong] = useState("");
   const [nickname, setNickname] = useState("");
 
   useEffect(() => {
     seedIfEmpty();
-    setGroups(listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS));
+    setGroups(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
   }, []);
 
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) || null;
@@ -60,7 +60,7 @@ export function FandomOnboarding() {
 
   useEffect(() => {
     if (selectedGroupId) {
-      setMembers(listItems<IdolMember>(STORE_KEYS.IDOL_MEMBERS));
+      setMembers(listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS));
     }
   }, [selectedGroupId]);
 
@@ -91,8 +91,8 @@ export function FandomOnboarding() {
       case 4: return !!companyAnswer;
       case 5: return memberCountInput.trim().length > 0;
       case 6: return !!leaderAnswer;
-      case 7: return !!biasId;
-      case 8: return !!biasWreckerId;
+      case 7: return !!favoritePlayerId;
+      case 8: return !!secondPlayerId;
       case 9: return favoriteSong.trim().length > 0;
       case 10: return nickname.trim().length >= 2;
       default: return false;
@@ -116,20 +116,20 @@ export function FandomOnboarding() {
       setVerifyResult(result);
 
       if (result.passed) {
-        const biasMember = groupMembers.find((m) => m.id === biasId);
-        const wreckerMember = groupMembers.find((m) => m.id === biasWreckerId);
+        const favoriteMember = groupMembers.find((m) => m.id === favoritePlayerId);
+        const secondMember = groupMembers.find((m) => m.id === secondPlayerId);
         const profile: FandomUserProfile = {
           id: generateId("fan"),
           nickname,
           groupId: selectedGroupId,
           groupName: selectedGroup?.name || "",
           fandomName: fandomNameInput,
-          favoritePlayer: biasMember?.name || "",
-          secondPlayer: wreckerMember?.name || "",
+          favoritePlayer: favoriteMember?.name || "",
+          secondPlayer: secondMember?.name || "",
           answers: {
             ...answers,
-            favoritePlayer: biasMember?.name || "",
-            secondPlayer: wreckerMember?.name || "",
+            favoritePlayer: favoriteMember?.name || "",
+            secondPlayer: secondMember?.name || "",
             favoriteScene: favoriteSong,
           },
           verified: true,
@@ -423,7 +423,7 @@ export function FandomOnboarding() {
             </div>
           )}
 
-          {/* Step 7: Bias */}
+          {/* Step 7: Favorite Player */}
           {step === 7 && (
             <div className="space-y-6 text-center">
               <Heart className="w-10 h-10 mx-auto text-rose-500" />
@@ -435,14 +435,14 @@ export function FandomOnboarding() {
                 {groupMembers.map((m) => (
                   <button
                     key={m.id}
-                    onClick={() => setBiasId(m.id)}
+                    onClick={() => setFavoritePlayerId(m.id)}
                     className={`p-4 rounded-2xl border-2 transition-all ${
-                      biasId === m.id
+                      favoritePlayerId === m.id
                         ? "shadow-lg scale-[1.02]"
                         : "border-border hover:border-muted-foreground/30"
                     }`}
                     style={
-                      biasId === m.id
+                      favoritePlayerId === m.id
                         ? { borderColor: m.color, background: `${m.color}15` }
                         : {}
                     }
@@ -461,7 +461,7 @@ export function FandomOnboarding() {
             </div>
           )}
 
-          {/* Step 8: Bias wrecker */}
+          {/* Step 8: Second Player */}
           {step === 8 && (
             <div className="space-y-6 text-center">
               <Heart className="w-10 h-10 mx-auto text-pink-500" />
@@ -473,14 +473,14 @@ export function FandomOnboarding() {
                 {groupMembers.map((m) => (
                   <button
                     key={m.id}
-                    onClick={() => setBiasWreckerId(m.id)}
+                    onClick={() => setSecondPlayerId(m.id)}
                     className={`p-4 rounded-2xl border-2 transition-all ${
-                      biasWreckerId === m.id
+                      secondPlayerId === m.id
                         ? "shadow-lg scale-[1.02]"
                         : "border-border hover:border-muted-foreground/30"
                     }`}
                     style={
-                      biasWreckerId === m.id
+                      secondPlayerId === m.id
                         ? { borderColor: m.color, background: `${m.color}15` }
                         : {}
                     }

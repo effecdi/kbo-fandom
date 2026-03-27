@@ -42,7 +42,7 @@ export function Signup() {
               새로운 계정 만들기
             </h2>
             <p className="text-muted-foreground">
-              K-POP 팬아트를 만들고 팬덤 활동을 시작하세요
+              KBO 팬아트를 만들고 팬덤 활동을 시작하세요
             </p>
           </div>
 
@@ -213,7 +213,7 @@ export function Signup() {
       <div className="hidden lg:flex lg:w-1/2 p-12 items-center justify-center bg-gradient-to-br from-[#00e5cc] to-[#00b3a6]">
         <div className="max-w-lg text-white">
           <h2 className="text-4xl font-black mb-6">
-            K-POP 팬아트의 새로운 세계
+            KBO 팬아트의 새로운 세계
           </h2>
           <p className="text-xl text-white/90 mb-8">
             AI로 나만의 팬아트를 만들고, 팬덤 친구들과 함께하세요
@@ -224,7 +224,7 @@ export function Signup() {
               <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-bold text-lg mb-1">AI 팬아트 생성</h3>
-                <p className="text-white/80">텍스트만으로 최애 아이돌 팬아트를 만드세요</p>
+                <p className="text-white/80">텍스트만으로 최애 선수 팬아트를 만드세요</p>
               </div>
             </div>
             <div className="flex items-start gap-3">

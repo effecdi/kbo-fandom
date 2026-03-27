@@ -87,7 +87,7 @@ export function Pricing() {
     },
     {
       q: "팬아트는 어떤 그룹을 지원하나요?",
-      a: "BTS, BLACKPINK, NewJeans, aespa, Stray Kids, SEVENTEEN, IVE, LE SSERAFIM 등 주요 K-POP 그룹을 지원하며, 지속적으로 새로운 그룹이 추가됩니다."
+      a: "LG 트윈스, KT 위즈, SSG 랜더스, NC 다이노스, 두산 베어스, KIA 타이거즈, 롯데 자이언츠, 삼성 라이온즈, 한화 이글스, 키움 히어로즈 등 KBO 10개 구단을 지원합니다."
     },
     {
       q: "이벤트는 어떻게 참여하나요?",
@@ -116,7 +116,7 @@ export function Pricing() {
         <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#00e5cc]/20 to-[#00b3a6]/20 rounded-full px-4 py-2 mb-6">
           <Sparkles className="w-5 h-5 text-[#00e5cc]" />
           <span className="text-sm font-bold text-teal-600 dark:text-[#00e5cc]">
-            K-POP 팬덤 요금제
+            KBO 팬덤 요금제
           </span>
         </div>
         <h1 className="text-4xl md:text-5xl font-black mb-4 text-foreground">
@@ -237,7 +237,7 @@ export function Pricing() {
             모든 플랜에 포함된 기본 기능
           </h3>
           <p className="text-sm text-muted-foreground">
-            모든 플랜에는 기본 보안, 정기 업데이트, K-POP 팬덤 커뮤니티 접근이 포함됩니다.
+            모든 플랜에는 기본 보안, 정기 업데이트, KBO 팬덤 커뮤니티 접근이 포함됩니다.
           </p>
         </div>
       </div>
@@ -286,7 +286,7 @@ export function Pricing() {
             지금 바로 시작하세요
           </h2>
           <p className="text-lg md:text-xl text-white/90 mb-8">
-            무료로 시작하고 K-POP 팬아트의 세계를 경험하세요
+            무료로 시작하고 KBO 팬아트의 세계를 경험하세요
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button

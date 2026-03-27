@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Users, Heart, Calendar, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { IdolGroup } from "@/lib/local-store";
+import type { KboTeam } from "@/lib/local-store";
 
 interface FandomGroupHeaderProps {
-  group: IdolGroup;
+  group: KboTeam;
 }
 
 export function FandomGroupHeader({ group }: FandomGroupHeaderProps) {

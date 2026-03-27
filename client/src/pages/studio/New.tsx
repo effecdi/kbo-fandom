@@ -183,7 +183,7 @@ export function StudioNew() {
           </div>
           <div className="flex-1">
             <h3 className="font-bold text-foreground">그룹 & 멤버 선택해서 만들기</h3>
-            <p className="text-sm text-muted-foreground">아이돌 그룹과 멤버를 먼저 선택하고 팬아트를 시작합니다</p>
+            <p className="text-sm text-muted-foreground">구단과 선수를 먼저 선택하고 팬아트를 시작합니다</p>
           </div>
           <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
         </button>

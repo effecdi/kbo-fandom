@@ -69,7 +69,7 @@ export const STORE_KEYS = {
   FAN_DMS: "olli-fandom-dms",
   FAN_TALK_POSTS: "olli-fandom-talk",
   // Fandom Editor Content
-  EDITOR_PLAYER_PROFILES: "olli-editor-idol-profiles",
+  EDITOR_PLAYER_PROFILES: "olli-editor-player-profiles",
   EDITOR_FANART: "olli-editor-fanart",
   EDITOR_FANFIC: "olli-editor-fanfic",
   EDITOR_EVENTS: "olli-editor-events",
@@ -85,10 +85,6 @@ export const STORE_KEYS = {
   PHOTOCARD_COLLECTION: "olli-photocard-collection",
   GOODS_TRADES: "olli-goods-trades",
 } as const;
-
-// Backward compatibility aliases
-export const IDOL_GROUPS_KEY = STORE_KEYS.KBO_TEAMS;
-export const IDOL_MEMBERS_KEY = STORE_KEYS.KBO_PLAYERS;
 
 // ─── ID Generator ────────────────────────────────────────────────────────────
 
@@ -222,10 +218,6 @@ export interface KboPlayer {
   jerseyNumber: number;
   color: string;
 }
-
-// Backward compatibility aliases
-export type IdolGroup = KboTeam;
-export type IdolMember = KboPlayer;
 
 // ─── KBO Game Schedule ──────────────────────────────────────────────────────
 
@@ -439,7 +431,7 @@ export interface FanTalkReply {
 
 // ─── Fandom Editor Content Types ────────────────────────────────────────────
 
-export type EditorContentType = "idol-profile" | "fanart" | "fanfic" | "event" | "poll";
+export type EditorContentType = "team-profile" | "fanart" | "fanfic" | "event" | "poll";
 export type EditorContentStatus = "draft" | "published";
 
 export interface EditorContentBase {
@@ -450,8 +442,8 @@ export interface EditorContentBase {
   authorName: string;
   fandomId: string;
   fandomName: string;
-  idolId?: string;
-  idolName?: string;
+  playerId?: string;
+  playerName?: string;
   tags: string[];
   status: EditorContentStatus;
   likes: number;
@@ -461,8 +453,8 @@ export interface EditorContentBase {
   updatedAt: string;
 }
 
-export interface EditorIdolProfile extends EditorContentBase {
-  type: "idol-profile";
+export interface EditorTeamProfile extends EditorContentBase {
+  type: "team-profile";
   groupName: string;
   company: string;
   debutDate: string;
@@ -504,7 +496,7 @@ export interface EditorPoll extends EditorContentBase {
   totalVotes: number;
 }
 
-export type EditorContent = EditorIdolProfile | EditorFanArt | EditorFanFic | EditorEventContent | EditorPoll;
+export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | EditorEventContent | EditorPoll;
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
@@ -543,64 +535,64 @@ export function seedIfEmpty(): void {
   if (listItems(STORE_KEYS.KBO_PLAYERS).length === 0) {
     const players: KboPlayer[] = [
       // LG Twins
-      { id: "plr-lg-1", groupId: "team-lg", name: "오지환", nameKo: "오지환", position: "내야수", jerseyNumber: 10, color: "#C60C30" },
+      { id: "plr-lg-1", groupId: "team-lg", name: "홍창기", nameKo: "홍창기", position: "외야수", jerseyNumber: 51, color: "#C60C30" },
       { id: "plr-lg-2", groupId: "team-lg", name: "박해민", nameKo: "박해민", position: "외야수", jerseyNumber: 17, color: "#C60C30" },
-      { id: "plr-lg-3", groupId: "team-lg", name: "임찬규", nameKo: "임찬규", position: "투수", jerseyNumber: 29, color: "#C60C30" },
-      { id: "plr-lg-4", groupId: "team-lg", name: "오스틴", nameKo: "오스틴", position: "외야수", jerseyNumber: 30, color: "#C60C30" },
-      { id: "plr-lg-5", groupId: "team-lg", name: "박동원", nameKo: "박동원", position: "포수", jerseyNumber: 22, color: "#C60C30" },
+      { id: "plr-lg-3", groupId: "team-lg", name: "오스틴 딘", nameKo: "오스틴 딘", position: "외야수", jerseyNumber: 30, color: "#C60C30" },
+      { id: "plr-lg-4", groupId: "team-lg", name: "치리노스", nameKo: "치리노스", position: "포수", jerseyNumber: 38, color: "#C60C30" },
+      { id: "plr-lg-5", groupId: "team-lg", name: "임찬규", nameKo: "임찬규", position: "투수", jerseyNumber: 29, color: "#C60C30" },
       // KT Wiz
-      { id: "plr-kt-1", groupId: "team-kt", name: "강백호", nameKo: "강백호", position: "내야수", jerseyNumber: 50, color: "#ED1C24" },
-      { id: "plr-kt-2", groupId: "team-kt", name: "소형준", nameKo: "소형준", position: "투수", jerseyNumber: 11, color: "#ED1C24" },
-      { id: "plr-kt-3", groupId: "team-kt", name: "장성우", nameKo: "장성우", position: "포수", jerseyNumber: 27, color: "#ED1C24" },
-      { id: "plr-kt-4", groupId: "team-kt", name: "김민혁", nameKo: "김민혁", position: "외야수", jerseyNumber: 8, color: "#ED1C24" },
-      { id: "plr-kt-5", groupId: "team-kt", name: "쿠에바스", nameKo: "쿠에바스", position: "투수", jerseyNumber: 34, color: "#ED1C24" },
+      { id: "plr-kt-1", groupId: "team-kt", name: "김현수", nameKo: "김현수", position: "외야수", jerseyNumber: 22, color: "#ED1C24" },
+      { id: "plr-kt-2", groupId: "team-kt", name: "소크라테스", nameKo: "소크라테스", position: "외야수", jerseyNumber: 30, color: "#ED1C24" },
+      { id: "plr-kt-3", groupId: "team-kt", name: "쿠에바스", nameKo: "쿠에바스", position: "투수", jerseyNumber: 34, color: "#ED1C24" },
+      { id: "plr-kt-4", groupId: "team-kt", name: "박영현", nameKo: "박영현", position: "투수", jerseyNumber: 19, color: "#ED1C24" },
+      { id: "plr-kt-5", groupId: "team-kt", name: "소형준", nameKo: "소형준", position: "투수", jerseyNumber: 11, color: "#ED1C24" },
       // SSG Landers
-      { id: "plr-ssg-1", groupId: "team-ssg", name: "최정", nameKo: "최정", position: "내야수", jerseyNumber: 14, color: "#CE0E2D" },
-      { id: "plr-ssg-2", groupId: "team-ssg", name: "김광현", nameKo: "김광현", position: "투수", jerseyNumber: 29, color: "#CE0E2D" },
-      { id: "plr-ssg-3", groupId: "team-ssg", name: "추신수", nameKo: "추신수", position: "외야수", jerseyNumber: 17, color: "#CE0E2D" },
-      { id: "plr-ssg-4", groupId: "team-ssg", name: "한유섬", nameKo: "한유섬", position: "외야수", jerseyNumber: 52, color: "#CE0E2D" },
-      { id: "plr-ssg-5", groupId: "team-ssg", name: "오원석", nameKo: "오원석", position: "투수", jerseyNumber: 47, color: "#CE0E2D" },
+      { id: "plr-ssg-1", groupId: "team-ssg", name: "김광현", nameKo: "김광현", position: "투수", jerseyNumber: 29, color: "#CE0E2D" },
+      { id: "plr-ssg-2", groupId: "team-ssg", name: "최정", nameKo: "최정", position: "내야수", jerseyNumber: 14, color: "#CE0E2D" },
+      { id: "plr-ssg-3", groupId: "team-ssg", name: "한유섬", nameKo: "한유섬", position: "외야수", jerseyNumber: 52, color: "#CE0E2D" },
+      { id: "plr-ssg-4", groupId: "team-ssg", name: "에레디아", nameKo: "에레디아", position: "내야수", jerseyNumber: 6, color: "#CE0E2D" },
+      { id: "plr-ssg-5", groupId: "team-ssg", name: "로맥", nameKo: "로맥", position: "내야수", jerseyNumber: 25, color: "#CE0E2D" },
       // NC Dinos
       { id: "plr-nc-1", groupId: "team-nc", name: "박건우", nameKo: "박건우", position: "외야수", jerseyNumber: 33, color: "#315288" },
       { id: "plr-nc-2", groupId: "team-nc", name: "에릭 양", nameKo: "에릭 양", position: "투수", jerseyNumber: 54, color: "#315288" },
-      { id: "plr-nc-3", groupId: "team-nc", name: "손아섭", nameKo: "손아섭", position: "외야수", jerseyNumber: 15, color: "#315288" },
+      { id: "plr-nc-3", groupId: "team-nc", name: "고준휘", nameKo: "고준휘", position: "외야수", jerseyNumber: 1, color: "#315288" },
       { id: "plr-nc-4", groupId: "team-nc", name: "노진혁", nameKo: "노진혁", position: "내야수", jerseyNumber: 7, color: "#315288" },
       { id: "plr-nc-5", groupId: "team-nc", name: "양의지", nameKo: "양의지", position: "포수", jerseyNumber: 25, color: "#315288" },
       // Doosan Bears
       { id: "plr-doo-1", groupId: "team-doo", name: "양의지", nameKo: "양의지", position: "포수", jerseyNumber: 25, color: "#131230" },
-      { id: "plr-doo-2", groupId: "team-doo", name: "허경민", nameKo: "허경민", position: "내야수", jerseyNumber: 16, color: "#131230" },
-      { id: "plr-doo-3", groupId: "team-doo", name: "곽빈", nameKo: "곽빈", position: "투수", jerseyNumber: 22, color: "#131230" },
-      { id: "plr-doo-4", groupId: "team-doo", name: "정수빈", nameKo: "정수빈", position: "외야수", jerseyNumber: 51, color: "#131230" },
+      { id: "plr-doo-2", groupId: "team-doo", name: "박찬호", nameKo: "박찬호", position: "투수", jerseyNumber: 61, color: "#131230" },
+      { id: "plr-doo-3", groupId: "team-doo", name: "허경민", nameKo: "허경민", position: "내야수", jerseyNumber: 16, color: "#131230" },
+      { id: "plr-doo-4", groupId: "team-doo", name: "잭 로그", nameKo: "잭 로그", position: "투수", jerseyNumber: 45, color: "#131230" },
       { id: "plr-doo-5", groupId: "team-doo", name: "김재환", nameKo: "김재환", position: "지명타자", jerseyNumber: 32, color: "#131230" },
       // KIA Tigers
       { id: "plr-kia-1", groupId: "team-kia", name: "양현종", nameKo: "양현종", position: "투수", jerseyNumber: 54, color: "#EA0029" },
       { id: "plr-kia-2", groupId: "team-kia", name: "나성범", nameKo: "나성범", position: "외야수", jerseyNumber: 47, color: "#EA0029" },
       { id: "plr-kia-3", groupId: "team-kia", name: "김도영", nameKo: "김도영", position: "내야수", jerseyNumber: 5, color: "#EA0029" },
-      { id: "plr-kia-4", groupId: "team-kia", name: "소크라테스", nameKo: "소크라테스", position: "외야수", jerseyNumber: 30, color: "#EA0029" },
+      { id: "plr-kia-4", groupId: "team-kia", name: "니일", nameKo: "니일", position: "투수", jerseyNumber: 31, color: "#EA0029" },
       { id: "plr-kia-5", groupId: "team-kia", name: "한승택", nameKo: "한승택", position: "포수", jerseyNumber: 22, color: "#EA0029" },
       // Lotte Giants
       { id: "plr-lot-1", groupId: "team-lot", name: "전준우", nameKo: "전준우", position: "외야수", jerseyNumber: 22, color: "#041E42" },
-      { id: "plr-lot-2", groupId: "team-lot", name: "안치홍", nameKo: "안치홍", position: "내야수", jerseyNumber: 13, color: "#041E42" },
-      { id: "plr-lot-3", groupId: "team-lot", name: "박세웅", nameKo: "박세웅", position: "투수", jerseyNumber: 11, color: "#041E42" },
-      { id: "plr-lot-4", groupId: "team-lot", name: "윤동희", nameKo: "윤동희", position: "외야수", jerseyNumber: 51, color: "#041E42" },
-      { id: "plr-lot-5", groupId: "team-lot", name: "나균안", nameKo: "나균안", position: "투수", jerseyNumber: 18, color: "#041E42" },
+      { id: "plr-lot-2", groupId: "team-lot", name: "나균안", nameKo: "나균안", position: "투수", jerseyNumber: 18, color: "#041E42" },
+      { id: "plr-lot-3", groupId: "team-lot", name: "안치홍", nameKo: "안치홍", position: "내야수", jerseyNumber: 13, color: "#041E42" },
+      { id: "plr-lot-4", groupId: "team-lot", name: "박정민", nameKo: "박정민", position: "내야수", jerseyNumber: 2, color: "#041E42" },
+      { id: "plr-lot-5", groupId: "team-lot", name: "레예스", nameKo: "레예스", position: "외야수", jerseyNumber: 50, color: "#041E42" },
       // Samsung Lions
       { id: "plr-sam-1", groupId: "team-sam", name: "구자욱", nameKo: "구자욱", position: "외야수", jerseyNumber: 42, color: "#074CA1" },
-      { id: "plr-sam-2", groupId: "team-sam", name: "오승환", nameKo: "오승환", position: "투수", jerseyNumber: 26, color: "#074CA1" },
-      { id: "plr-sam-3", groupId: "team-sam", name: "김영웅", nameKo: "김영웅", position: "내야수", jerseyNumber: 6, color: "#074CA1" },
-      { id: "plr-sam-4", groupId: "team-sam", name: "이재현", nameKo: "이재현", position: "포수", jerseyNumber: 35, color: "#074CA1" },
-      { id: "plr-sam-5", groupId: "team-sam", name: "원태인", nameKo: "원태인", position: "투수", jerseyNumber: 17, color: "#074CA1" },
+      { id: "plr-sam-2", groupId: "team-sam", name: "최형우", nameKo: "최형우", position: "지명타자", jerseyNumber: 34, color: "#074CA1" },
+      { id: "plr-sam-3", groupId: "team-sam", name: "원태인", nameKo: "원태인", position: "투수", jerseyNumber: 17, color: "#074CA1" },
+      { id: "plr-sam-4", groupId: "team-sam", name: "오승환", nameKo: "오승환", position: "투수", jerseyNumber: 26, color: "#074CA1" },
+      { id: "plr-sam-5", groupId: "team-sam", name: "장찬희", nameKo: "장찬희", position: "내야수", jerseyNumber: 3, color: "#074CA1" },
       // Hanwha Eagles
-      { id: "plr-han-1", groupId: "team-han", name: "노시환", nameKo: "노시환", position: "내야수", jerseyNumber: 52, color: "#FF6600" },
-      { id: "plr-han-2", groupId: "team-han", name: "문동주", nameKo: "문동주", position: "투수", jerseyNumber: 21, color: "#FF6600" },
-      { id: "plr-han-3", groupId: "team-han", name: "채은성", nameKo: "채은성", position: "내야수", jerseyNumber: 44, color: "#FF6600" },
-      { id: "plr-han-4", groupId: "team-han", name: "황준서", nameKo: "황준서", position: "투수", jerseyNumber: 19, color: "#FF6600" },
-      { id: "plr-han-5", groupId: "team-han", name: "이주형", nameKo: "이주형", position: "외야수", jerseyNumber: 15, color: "#FF6600" },
+      { id: "plr-han-1", groupId: "team-han", name: "강백호", nameKo: "강백호", position: "내야수", jerseyNumber: 50, color: "#FF6600" },
+      { id: "plr-han-2", groupId: "team-han", name: "손아섭", nameKo: "손아섭", position: "외야수", jerseyNumber: 15, color: "#FF6600" },
+      { id: "plr-han-3", groupId: "team-han", name: "문동주", nameKo: "문동주", position: "투수", jerseyNumber: 21, color: "#FF6600" },
+      { id: "plr-han-4", groupId: "team-han", name: "류현진", nameKo: "류현진", position: "투수", jerseyNumber: 99, color: "#FF6600" },
+      { id: "plr-han-5", groupId: "team-han", name: "오재원", nameKo: "오재원", position: "내야수", jerseyNumber: 4, color: "#FF6600" },
       // Kiwoom Heroes
-      { id: "plr-kiw-1", groupId: "team-kiw", name: "이정후", nameKo: "이정후", position: "외야수", jerseyNumber: 51, color: "#820024" },
-      { id: "plr-kiw-2", groupId: "team-kiw", name: "안우진", nameKo: "안우진", position: "투수", jerseyNumber: 43, color: "#820024" },
-      { id: "plr-kiw-3", groupId: "team-kiw", name: "김혜성", nameKo: "김혜성", position: "내야수", jerseyNumber: 3, color: "#820024" },
-      { id: "plr-kiw-4", groupId: "team-kiw", name: "송성문", nameKo: "송성문", position: "내야수", jerseyNumber: 7, color: "#820024" },
+      { id: "plr-kiw-1", groupId: "team-kiw", name: "김혜성", nameKo: "김혜성", position: "내야수", jerseyNumber: 3, color: "#820024" },
+      { id: "plr-kiw-2", groupId: "team-kiw", name: "알칸타라", nameKo: "알칸타라", position: "투수", jerseyNumber: 49, color: "#820024" },
+      { id: "plr-kiw-3", groupId: "team-kiw", name: "송성문", nameKo: "송성문", position: "내야수", jerseyNumber: 7, color: "#820024" },
+      { id: "plr-kiw-4", groupId: "team-kiw", name: "박한결", nameKo: "박한결", position: "외야수", jerseyNumber: 62, color: "#820024" },
       { id: "plr-kiw-5", groupId: "team-kiw", name: "이용찬", nameKo: "이용찬", position: "투수", jerseyNumber: 28, color: "#820024" },
     ];
     players.forEach((p) => addItem(STORE_KEYS.KBO_PLAYERS, p));
@@ -733,7 +725,7 @@ export function seedIfEmpty(): void {
   if (listItems(STORE_KEYS.EDITOR_CONTENT).length === 0) {
     const editorContent: EditorContent[] = [
       {
-        id: "ec-1", type: "idol-profile", title: "LG 트윈스 구단 프로필", description: "LG 트윈스 공식 프로필 정리", authorName: "트윈스드로잉",
+        id: "ec-1", type: "team-profile", title: "LG 트윈스 구단 프로필", description: "LG 트윈스 공식 프로필 정리", authorName: "트윈스드로잉",
         fandomId: "team-lg", fandomName: "LG Twins", tags: ["LG", "트윈스", "잠실"], status: "published",
         likes: 234, views: 1560, commentCount: 12, createdAt: "2026-03-20", updatedAt: "2026-03-22",
         groupName: "LG Twins", company: "LG", debutDate: "1982-01-01", bio: "서울을 대표하는 전통 구단 LG 트윈스. 1982년 창단 이후 잠실야구장을 홈으로 하는 명문 구단입니다.",
@@ -742,7 +734,7 @@ export function seedIfEmpty(): void {
       },
       {
         id: "ec-2", type: "fanart", title: "NC 다이노스 우승 팬아트", description: "2020 한국시리즈 우승 영감 팬아트",
-        authorName: "다이노스작가", fandomId: "team-nc", fandomName: "NC Dinos", idolId: "plr-nc-1", idolName: "박건우",
+        authorName: "다이노스작가", fandomId: "team-nc", fandomName: "NC Dinos", playerId: "plr-nc-1", playerName: "박건우",
         tags: ["NC", "다이노스", "우승", "팬아트"], status: "published",
         likes: 456, views: 2340, commentCount: 23, createdAt: "2026-03-19", updatedAt: "2026-03-19",
         imageUrls: [], dimensions: "3:4", medium: "디지털",
@@ -780,7 +772,7 @@ export function seedIfEmpty(): void {
       },
       {
         id: "ec-6", type: "fanart", title: "SSG 랜더스 최정 500홈런 아트", description: "최정 500홈런 기념 팬아트",
-        authorName: "랜더스그림", fandomId: "team-ssg", fandomName: "SSG Landers", idolId: "plr-ssg-1", idolName: "최정",
+        authorName: "랜더스그림", fandomId: "team-ssg", fandomName: "SSG Landers", playerId: "plr-ssg-1", playerName: "최정",
         tags: ["SSG", "최정", "500홈런", "팬아트"], status: "draft",
         likes: 0, views: 0, commentCount: 0, createdAt: "2026-03-24", updatedAt: "2026-03-24",
         imageUrls: [], dimensions: "1:1", medium: "디지털",
@@ -801,71 +793,60 @@ export function seedIfEmpty(): void {
   // ── KBO Schedule Seed ──────────────────────────────────────────────────────
   if (listItems(STORE_KEYS.KBO_SCHEDULE).length === 0) {
     const schedule: KboGameSchedule[] = [
-      // 3/27 (어제, 종료)
-      { id: "game-6", homeTeamId: "team-kia", awayTeamId: "team-lg", homeTeamName: "KIA 타이거즈", awayTeamName: "LG 트윈스", date: "2026-03-27", time: "18:30", stadium: "광주-기아챔피언스필드", status: "finished", homeScore: 5, awayScore: 3 },
-      { id: "game-7", homeTeamId: "team-doo", awayTeamId: "team-ssg", homeTeamName: "두산 베어스", awayTeamName: "SSG 랜더스", date: "2026-03-27", time: "18:30", stadium: "잠실야구장", status: "finished", homeScore: 2, awayScore: 7 },
-      { id: "game-8", homeTeamId: "team-nc", awayTeamId: "team-han", homeTeamName: "NC 다이노스", awayTeamName: "한화 이글스", date: "2026-03-27", time: "18:30", stadium: "창원NC파크", status: "finished", homeScore: 4, awayScore: 4 },
-      { id: "game-9", homeTeamId: "team-sam", awayTeamId: "team-kt", homeTeamName: "삼성 라이온즈", awayTeamName: "KT 위즈", date: "2026-03-27", time: "18:30", stadium: "대구삼성라이온즈파크", status: "finished", homeScore: 6, awayScore: 1 },
-      { id: "game-10", homeTeamId: "team-kiw", awayTeamId: "team-lot", homeTeamName: "키움 히어로즈", awayTeamName: "롯데 자이언츠", date: "2026-03-27", time: "18:30", stadium: "고척스카이돔", status: "finished", homeScore: 3, awayScore: 5 },
-      // 3/28 (오늘 개막일)
-      { id: "game-1", homeTeamId: "team-lg", awayTeamId: "team-doo", homeTeamName: "LG 트윈스", awayTeamName: "두산 베어스", date: "2026-03-28", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-2", homeTeamId: "team-kt", awayTeamId: "team-nc", homeTeamName: "KT 위즈", awayTeamName: "NC 다이노스", date: "2026-03-28", time: "18:30", stadium: "수원KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-3", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-03-28", time: "18:30", stadium: "인천SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-4", homeTeamId: "team-lot", awayTeamId: "team-sam", homeTeamName: "롯데 자이언츠", awayTeamName: "삼성 라이온즈", date: "2026-03-28", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-5", homeTeamId: "team-han", awayTeamId: "team-kiw", homeTeamName: "한화 이글스", awayTeamName: "키움 히어로즈", date: "2026-03-28", time: "18:30", stadium: "한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
-      // 3/29
-      { id: "game-11", homeTeamId: "team-lg", awayTeamId: "team-kia", homeTeamName: "LG 트윈스", awayTeamName: "KIA 타이거즈", date: "2026-03-29", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-12", homeTeamId: "team-ssg", awayTeamId: "team-doo", homeTeamName: "SSG 랜더스", awayTeamName: "두산 베어스", date: "2026-03-29", time: "14:00", stadium: "인천SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-13", homeTeamId: "team-han", awayTeamId: "team-nc", homeTeamName: "한화 이글스", awayTeamName: "NC 다이노스", date: "2026-03-29", time: "14:00", stadium: "한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-14", homeTeamId: "team-kt", awayTeamId: "team-sam", homeTeamName: "KT 위즈", awayTeamName: "삼성 라이온즈", date: "2026-03-29", time: "14:00", stadium: "수원KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-15", homeTeamId: "team-lot", awayTeamId: "team-kiw", homeTeamName: "롯데 자이언츠", awayTeamName: "키움 히어로즈", date: "2026-03-29", time: "14:00", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
-      // 3/30
-      { id: "game-16", homeTeamId: "team-doo", awayTeamId: "team-kt", homeTeamName: "두산 베어스", awayTeamName: "KT 위즈", date: "2026-03-30", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-17", homeTeamId: "team-kia", awayTeamId: "team-lot", homeTeamName: "KIA 타이거즈", awayTeamName: "롯데 자이언츠", date: "2026-03-30", time: "14:00", stadium: "광주-기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-18", homeTeamId: "team-nc", awayTeamId: "team-kiw", homeTeamName: "NC 다이노스", awayTeamName: "키움 히어로즈", date: "2026-03-30", time: "14:00", stadium: "창원NC파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-51", homeTeamId: "team-ssg", awayTeamId: "team-lg", homeTeamName: "SSG 랜더스", awayTeamName: "LG 트윈스", date: "2026-03-30", time: "14:00", stadium: "인천SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-52", homeTeamId: "team-sam", awayTeamId: "team-han", homeTeamName: "삼성 라이온즈", awayTeamName: "한화 이글스", date: "2026-03-30", time: "14:00", stadium: "대구삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      // 3/31
-      { id: "game-19", homeTeamId: "team-sam", awayTeamId: "team-han", homeTeamName: "삼성 라이온즈", awayTeamName: "한화 이글스", date: "2026-03-31", time: "18:30", stadium: "대구삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-20", homeTeamId: "team-kiw", awayTeamId: "team-ssg", homeTeamName: "키움 히어로즈", awayTeamName: "SSG 랜더스", date: "2026-03-31", time: "18:30", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-53", homeTeamId: "team-lg", awayTeamId: "team-nc", homeTeamName: "LG 트윈스", awayTeamName: "NC 다이노스", date: "2026-03-31", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-54", homeTeamId: "team-doo", awayTeamId: "team-kia", homeTeamName: "두산 베어스", awayTeamName: "KIA 타이거즈", date: "2026-03-31", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-55", homeTeamId: "team-lot", awayTeamId: "team-kt", homeTeamName: "롯데 자이언츠", awayTeamName: "KT 위즈", date: "2026-03-31", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
-      // 4/1
-      { id: "game-21", homeTeamId: "team-lg", awayTeamId: "team-sam", homeTeamName: "LG 트윈스", awayTeamName: "삼성 라이온즈", date: "2026-04-01", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-22", homeTeamId: "team-kia", awayTeamId: "team-ssg", homeTeamName: "KIA 타이거즈", awayTeamName: "SSG 랜더스", date: "2026-04-01", time: "18:30", stadium: "광주-기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-23", homeTeamId: "team-doo", awayTeamId: "team-nc", homeTeamName: "두산 베어스", awayTeamName: "NC 다이노스", date: "2026-04-01", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-24", homeTeamId: "team-han", awayTeamId: "team-lot", homeTeamName: "한화 이글스", awayTeamName: "롯데 자이언츠", date: "2026-04-01", time: "18:30", stadium: "한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-25", homeTeamId: "team-kiw", awayTeamId: "team-kt", homeTeamName: "키움 히어로즈", awayTeamName: "KT 위즈", date: "2026-04-01", time: "18:30", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
-      // 4/2
-      { id: "game-26", homeTeamId: "team-sam", awayTeamId: "team-lg", homeTeamName: "삼성 라이온즈", awayTeamName: "LG 트윈스", date: "2026-04-02", time: "18:30", stadium: "대구삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-27", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-04-02", time: "18:30", stadium: "인천SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-28", homeTeamId: "team-nc", awayTeamId: "team-doo", homeTeamName: "NC 다이노스", awayTeamName: "두산 베어스", date: "2026-04-02", time: "18:30", stadium: "창원NC파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-29", homeTeamId: "team-lot", awayTeamId: "team-han", homeTeamName: "롯데 자이언츠", awayTeamName: "한화 이글스", date: "2026-04-02", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-30", homeTeamId: "team-kt", awayTeamId: "team-kiw", homeTeamName: "KT 위즈", awayTeamName: "키움 히어로즈", date: "2026-04-02", time: "18:30", stadium: "수원KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      // 4/3
-      { id: "game-31", homeTeamId: "team-sam", awayTeamId: "team-lg", homeTeamName: "삼성 라이온즈", awayTeamName: "LG 트윈스", date: "2026-04-03", time: "18:30", stadium: "대구삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-32", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-04-03", time: "18:30", stadium: "인천SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-33", homeTeamId: "team-nc", awayTeamId: "team-doo", homeTeamName: "NC 다이노스", awayTeamName: "두산 베어스", date: "2026-04-03", time: "18:30", stadium: "창원NC파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-34", homeTeamId: "team-lot", awayTeamId: "team-han", homeTeamName: "롯데 자이언츠", awayTeamName: "한화 이글스", date: "2026-04-03", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-35", homeTeamId: "team-kt", awayTeamId: "team-kiw", homeTeamName: "KT 위즈", awayTeamName: "키움 히어로즈", date: "2026-04-03", time: "18:30", stadium: "수원KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      // 4/4-4/5 (주말)
-      { id: "game-36", homeTeamId: "team-kia", awayTeamId: "team-doo", homeTeamName: "KIA 타이거즈", awayTeamName: "두산 베어스", date: "2026-04-04", time: "14:00", stadium: "광주-기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-37", homeTeamId: "team-lg", awayTeamId: "team-lot", homeTeamName: "LG 트윈스", awayTeamName: "롯데 자이언츠", date: "2026-04-04", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-38", homeTeamId: "team-han", awayTeamId: "team-kt", homeTeamName: "한화 이글스", awayTeamName: "KT 위즈", date: "2026-04-04", time: "14:00", stadium: "한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-39", homeTeamId: "team-kiw", awayTeamId: "team-nc", homeTeamName: "키움 히어로즈", awayTeamName: "NC 다이노스", date: "2026-04-04", time: "14:00", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-40", homeTeamId: "team-sam", awayTeamId: "team-ssg", homeTeamName: "삼성 라이온즈", awayTeamName: "SSG 랜더스", date: "2026-04-04", time: "14:00", stadium: "대구삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-41", homeTeamId: "team-kia", awayTeamId: "team-doo", homeTeamName: "KIA 타이거즈", awayTeamName: "두산 베어스", date: "2026-04-05", time: "14:00", stadium: "광주-기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-42", homeTeamId: "team-lg", awayTeamId: "team-lot", homeTeamName: "LG 트윈스", awayTeamName: "롯데 자이언츠", date: "2026-04-05", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-43", homeTeamId: "team-han", awayTeamId: "team-kt", homeTeamName: "한화 이글스", awayTeamName: "KT 위즈", date: "2026-04-05", time: "14:00", stadium: "한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-44", homeTeamId: "team-kiw", awayTeamId: "team-nc", homeTeamName: "키움 히어로즈", awayTeamName: "NC 다이노스", date: "2026-04-05", time: "14:00", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-45", homeTeamId: "team-sam", awayTeamId: "team-ssg", homeTeamName: "삼성 라이온즈", awayTeamName: "SSG 랜더스", date: "2026-04-05", time: "14:00", stadium: "대구삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      // 4/7-4/8
-      { id: "game-46", homeTeamId: "team-doo", awayTeamId: "team-sam", homeTeamName: "두산 베어스", awayTeamName: "삼성 라이온즈", date: "2026-04-07", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-47", homeTeamId: "team-lot", awayTeamId: "team-ssg", homeTeamName: "롯데 자이언츠", awayTeamName: "SSG 랜더스", date: "2026-04-07", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-48", homeTeamId: "team-kt", awayTeamId: "team-kia", homeTeamName: "KT 위즈", awayTeamName: "KIA 타이거즈", date: "2026-04-07", time: "18:30", stadium: "수원KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-49", homeTeamId: "team-nc", awayTeamId: "team-lg", homeTeamName: "NC 다이노스", awayTeamName: "LG 트윈스", date: "2026-04-07", time: "18:30", stadium: "창원NC파크", status: "scheduled", homeScore: null, awayScore: null },
-      { id: "game-50", homeTeamId: "team-kiw", awayTeamId: "team-han", homeTeamName: "키움 히어로즈", awayTeamName: "한화 이글스", date: "2026-04-07", time: "18:30", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
+      // 3/28 개막전 (토) 14:00 - 5경기
+      { id: "game-1", homeTeamId: "team-lg", awayTeamId: "team-kt", homeTeamName: "LG 트윈스", awayTeamName: "KT 위즈", date: "2026-03-28", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-2", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-03-28", time: "14:00", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-3", homeTeamId: "team-han", awayTeamId: "team-kiw", homeTeamName: "한화 이글스", awayTeamName: "키움 히어로즈", date: "2026-03-28", time: "14:00", stadium: "대전 한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-4", homeTeamId: "team-sam", awayTeamId: "team-lot", homeTeamName: "삼성 라이온즈", awayTeamName: "롯데 자이언츠", date: "2026-03-28", time: "14:00", stadium: "대구 삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-5", homeTeamId: "team-nc", awayTeamId: "team-doo", homeTeamName: "NC 다이노스", awayTeamName: "두산 베어스", date: "2026-03-28", time: "14:00", stadium: "창원 NC파크", status: "scheduled", homeScore: null, awayScore: null },
+      // 3/29 2연전 (일) 14:00 - same matchups
+      { id: "game-6", homeTeamId: "team-lg", awayTeamId: "team-kt", homeTeamName: "LG 트윈스", awayTeamName: "KT 위즈", date: "2026-03-29", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-7", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-03-29", time: "14:00", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-8", homeTeamId: "team-han", awayTeamId: "team-kiw", homeTeamName: "한화 이글스", awayTeamName: "키움 히어로즈", date: "2026-03-29", time: "14:00", stadium: "대전 한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-9", homeTeamId: "team-sam", awayTeamId: "team-lot", homeTeamName: "삼성 라이온즈", awayTeamName: "롯데 자이언츠", date: "2026-03-29", time: "14:00", stadium: "대구 삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-10", homeTeamId: "team-nc", awayTeamId: "team-doo", homeTeamName: "NC 다이노스", awayTeamName: "두산 베어스", date: "2026-03-29", time: "14:00", stadium: "창원 NC파크", status: "scheduled", homeScore: null, awayScore: null },
+      // 3/31 새 카드 3연전 (화) 18:30
+      { id: "game-11", homeTeamId: "team-kt", awayTeamId: "team-ssg", homeTeamName: "KT 위즈", awayTeamName: "SSG 랜더스", date: "2026-03-31", time: "18:30", stadium: "수원 KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-12", homeTeamId: "team-lg", awayTeamId: "team-nc", homeTeamName: "LG 트윈스", awayTeamName: "NC 다이노스", date: "2026-03-31", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-13", homeTeamId: "team-doo", awayTeamId: "team-kia", homeTeamName: "두산 베어스", awayTeamName: "KIA 타이거즈", date: "2026-03-31", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-14", homeTeamId: "team-lot", awayTeamId: "team-han", homeTeamName: "롯데 자이언츠", awayTeamName: "한화 이글스", date: "2026-03-31", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-15", homeTeamId: "team-kiw", awayTeamId: "team-sam", homeTeamName: "키움 히어로즈", awayTeamName: "삼성 라이온즈", date: "2026-03-31", time: "18:30", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
+      // 4/1 3연전 2일차 (수) 18:30
+      { id: "game-16", homeTeamId: "team-kt", awayTeamId: "team-ssg", homeTeamName: "KT 위즈", awayTeamName: "SSG 랜더스", date: "2026-04-01", time: "18:30", stadium: "수원 KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-17", homeTeamId: "team-lg", awayTeamId: "team-nc", homeTeamName: "LG 트윈스", awayTeamName: "NC 다이노스", date: "2026-04-01", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-18", homeTeamId: "team-doo", awayTeamId: "team-kia", homeTeamName: "두산 베어스", awayTeamName: "KIA 타이거즈", date: "2026-04-01", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-19", homeTeamId: "team-lot", awayTeamId: "team-han", homeTeamName: "롯데 자이언츠", awayTeamName: "한화 이글스", date: "2026-04-01", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-20", homeTeamId: "team-kiw", awayTeamId: "team-sam", homeTeamName: "키움 히어로즈", awayTeamName: "삼성 라이온즈", date: "2026-04-01", time: "18:30", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
+      // 4/2 3연전 3일차 (목) 18:30
+      { id: "game-21", homeTeamId: "team-kt", awayTeamId: "team-ssg", homeTeamName: "KT 위즈", awayTeamName: "SSG 랜더스", date: "2026-04-02", time: "18:30", stadium: "수원 KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-22", homeTeamId: "team-lg", awayTeamId: "team-nc", homeTeamName: "LG 트윈스", awayTeamName: "NC 다이노스", date: "2026-04-02", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-23", homeTeamId: "team-doo", awayTeamId: "team-kia", homeTeamName: "두산 베어스", awayTeamName: "KIA 타이거즈", date: "2026-04-02", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-24", homeTeamId: "team-lot", awayTeamId: "team-han", homeTeamName: "롯데 자이언츠", awayTeamName: "한화 이글스", date: "2026-04-02", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-25", homeTeamId: "team-kiw", awayTeamId: "team-sam", homeTeamName: "키움 히어로즈", awayTeamName: "삼성 라이온즈", date: "2026-04-02", time: "18:30", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
+      // 4/3 새 카드 (금) 18:30
+      { id: "game-26", homeTeamId: "team-kia", awayTeamId: "team-lg", homeTeamName: "KIA 타이거즈", awayTeamName: "LG 트윈스", date: "2026-04-03", time: "18:30", stadium: "광주 기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-27", homeTeamId: "team-ssg", awayTeamId: "team-doo", homeTeamName: "SSG 랜더스", awayTeamName: "두산 베어스", date: "2026-04-03", time: "18:30", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-28", homeTeamId: "team-han", awayTeamId: "team-nc", homeTeamName: "한화 이글스", awayTeamName: "NC 다이노스", date: "2026-04-03", time: "18:30", stadium: "대전 한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-29", homeTeamId: "team-sam", awayTeamId: "team-kiw", homeTeamName: "삼성 라이온즈", awayTeamName: "키움 히어로즈", date: "2026-04-03", time: "18:30", stadium: "대구 삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-30", homeTeamId: "team-lot", awayTeamId: "team-kt", homeTeamName: "롯데 자이언츠", awayTeamName: "KT 위즈", date: "2026-04-03", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
+      // 4/4 (토) 14:00
+      { id: "game-31", homeTeamId: "team-kia", awayTeamId: "team-lg", homeTeamName: "KIA 타이거즈", awayTeamName: "LG 트윈스", date: "2026-04-04", time: "14:00", stadium: "광주 기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-32", homeTeamId: "team-ssg", awayTeamId: "team-doo", homeTeamName: "SSG 랜더스", awayTeamName: "두산 베어스", date: "2026-04-04", time: "14:00", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-33", homeTeamId: "team-han", awayTeamId: "team-nc", homeTeamName: "한화 이글스", awayTeamName: "NC 다이노스", date: "2026-04-04", time: "14:00", stadium: "대전 한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-34", homeTeamId: "team-sam", awayTeamId: "team-kiw", homeTeamName: "삼성 라이온즈", awayTeamName: "키움 히어로즈", date: "2026-04-04", time: "14:00", stadium: "대구 삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-35", homeTeamId: "team-lot", awayTeamId: "team-kt", homeTeamName: "롯데 자이언츠", awayTeamName: "KT 위즈", date: "2026-04-04", time: "14:00", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
+      // 4/5 (일) 14:00
+      { id: "game-36", homeTeamId: "team-kia", awayTeamId: "team-lg", homeTeamName: "KIA 타이거즈", awayTeamName: "LG 트윈스", date: "2026-04-05", time: "14:00", stadium: "광주 기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-37", homeTeamId: "team-ssg", awayTeamId: "team-doo", homeTeamName: "SSG 랜더스", awayTeamName: "두산 베어스", date: "2026-04-05", time: "14:00", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-38", homeTeamId: "team-han", awayTeamId: "team-nc", homeTeamName: "한화 이글스", awayTeamName: "NC 다이노스", date: "2026-04-05", time: "14:00", stadium: "대전 한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-39", homeTeamId: "team-sam", awayTeamId: "team-kiw", homeTeamName: "삼성 라이온즈", awayTeamName: "키움 히어로즈", date: "2026-04-05", time: "14:00", stadium: "대구 삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-40", homeTeamId: "team-lot", awayTeamId: "team-kt", homeTeamName: "롯데 자이언츠", awayTeamName: "KT 위즈", date: "2026-04-05", time: "14:00", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
+      // 4/6 (월) 14:00
+      { id: "game-41", homeTeamId: "team-kia", awayTeamId: "team-lg", homeTeamName: "KIA 타이거즈", awayTeamName: "LG 트윈스", date: "2026-04-06", time: "14:00", stadium: "광주 기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-42", homeTeamId: "team-ssg", awayTeamId: "team-doo", homeTeamName: "SSG 랜더스", awayTeamName: "두산 베어스", date: "2026-04-06", time: "14:00", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-43", homeTeamId: "team-han", awayTeamId: "team-nc", homeTeamName: "한화 이글스", awayTeamName: "NC 다이노스", date: "2026-04-06", time: "14:00", stadium: "대전 한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-44", homeTeamId: "team-sam", awayTeamId: "team-kiw", homeTeamName: "삼성 라이온즈", awayTeamName: "키움 히어로즈", date: "2026-04-06", time: "14:00", stadium: "대구 삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-45", homeTeamId: "team-lot", awayTeamId: "team-kt", homeTeamName: "롯데 자이언츠", awayTeamName: "KT 위즈", date: "2026-04-06", time: "14:00", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
     ];
     schedule.forEach((g) => addItem(STORE_KEYS.KBO_SCHEDULE, g));
   }
@@ -957,14 +938,15 @@ export function seedIfEmpty(): void {
   // ── Stadium Guides Seed ────────────────────────────────────────────────────
   if (listItems(STORE_KEYS.STADIUM_GUIDES).length === 0) {
     const guides: StadiumGuide[] = [
-      { id: "sg-1", teamId: "team-lg", stadiumName: "잠실야구장", address: "서울특별시 송파구 올림픽로 25", capacity: 25000, transportation: ["2호선 종합운동장역 5번 출구 도보 5분", "9호선 종합운동장역 5번 출구", "버스 302, 3217 종합운동장 하차"], nearbyFood: [{ name: "잠실 먹자골목", desc: "경기장 주변 다양한 음식점 밀집" }, { name: "롯데월드몰", desc: "경기 전후 쇼핑 및 식사 가능" }, { name: "석촌호수 카페거리", desc: "경기 전 여유롭게 카페 이용" }], tips: ["3루석(LG)이 햇빛 덜 받아요 (저녁 경기 기준)", "치킨+맥주 반입 가능 (캔 불가, 컵으로 옮겨야 함)", "잠실 나루역에서 걸어오면 덜 붐벼요", "우천시 지붕 없으니 우비 필수"], sections: [{ name: "1루 내야석", desc: "두산 베어스 응원석", priceRange: "15,000~25,000원" }, { name: "3루 내야석", desc: "LG 트윈스 응원석", priceRange: "15,000~25,000원" }, { name: "외야석", desc: "저렴하고 자유로운 분위기", priceRange: "8,000~12,000원" }, { name: "중앙지정석", desc: "가장 좋은 시야", priceRange: "25,000~40,000원" }], parkingInfo: "잠실종합운동장 주차장 (2,000대 수용, 5,000원)" },
-      { id: "sg-2", teamId: "team-kt", stadiumName: "수원KT위즈파크", address: "경기도 수원시 장안구 경수대로 893", capacity: 20000, transportation: ["수원역에서 버스 13, 36 이용 (약 15분)", "수원월드컵경기장역 도보 10분", "경기장 셔틀버스 운행 (경기일)"], nearbyFood: [{ name: "수원 통닭거리", desc: "경기 전 수원 명물 통닭!" }, { name: "행궁동 카페거리", desc: "예쁜 카페가 많은 거리" }], tips: ["신축 구장이라 시설 최고!", "1루석 뒤 '위즈 키친' 푸드코트 추천", "구장 내 편의시설 잘 되어 있음"], sections: [{ name: "1루 내야석", desc: "KT 위즈 응원석", priceRange: "15,000~22,000원" }, { name: "3루 내야석", desc: "원정팀 응원석", priceRange: "15,000~22,000원" }, { name: "테이블석", desc: "단체 관람에 좋은 테이블 좌석", priceRange: "30,000~50,000원" }], parkingInfo: "경기장 주차장 (1,500대 수용, 3,000원)" },
-      { id: "sg-3", teamId: "team-ssg", stadiumName: "인천SSG랜더스필드", address: "인천광역시 미추홀구 매소홀로 618", capacity: 23000, transportation: ["1호선 문학경기장역 1번 출구 도보 10분", "인천지하철 문학경기장역", "경기일 셔틀버스 운행"], nearbyFood: [{ name: "랜더스필드 푸드존", desc: "구장 내 다양한 먹거리" }, { name: "문학동 음식점", desc: "경기장 주변 맛집" }], tips: ["인천 바닷바람 때문에 저녁엔 추울 수 있어요", "랜더스필드 내 쇼핑존에서 굿즈 구매 가능", "주차장이 넓어 자차 이용 편리"], sections: [{ name: "1루 내야석", desc: "SSG 랜더스 응원석", priceRange: "15,000~25,000원" }, { name: "프리미엄석", desc: "VIP 좌석", priceRange: "40,000~80,000원" }], parkingInfo: "경기장 전용 주차장 (2,000대, 5,000원)" },
-      { id: "sg-4", teamId: "team-nc", stadiumName: "창원NC파크", address: "경상남도 창원시 마산회원구 삼호로 63", capacity: 22000, transportation: ["마산역에서 택시 10분", "창원중앙역에서 버스 이용 가능", "경기일 셔틀버스 운행"], nearbyFood: [{ name: "마산 어시장", desc: "신선한 해산물 맛집 밀집" }, { name: "아구찜 골목", desc: "마산 명물 아구찜!" }], tips: ["NC파크 잔디광장에서 피크닉 가능", "구장 시설이 깨끗하고 쾌적", "바다 바람이 불어 선선함"], sections: [{ name: "1루 내야석", desc: "NC 다이노스 응원석", priceRange: "13,000~20,000원" }, { name: "잔디석", desc: "피크닉 분위기의 좌석", priceRange: "10,000~15,000원" }], parkingInfo: "경기장 주차장 (1,200대, 3,000원)" },
-      { id: "sg-5", teamId: "team-kia", stadiumName: "광주-기아챔피언스필드", address: "광주광역시 북구 서림로 10", capacity: 20500, transportation: ["광주송정역에서 버스 또는 택시 20분", "문화전당역에서 버스 이용", "경기일 셔틀버스 운행"], nearbyFood: [{ name: "충장로 먹자골목", desc: "광주 대표 먹자골목" }, { name: "무등산 보리밥", desc: "경기 전 든든한 한끼" }], tips: ["광주의 열정적인 응원 문화가 인상적!", "3루석 응원이 매우 뜨거움", "챔필 먹거리 종류가 다양함"], sections: [{ name: "1루 내야석", desc: "KIA 타이거즈 응원석", priceRange: "13,000~22,000원" }, { name: "외야 그린석", desc: "잔디 위 피크닉 관람", priceRange: "8,000~12,000원" }], parkingInfo: "경기장 주변 주차장 (800대, 3,000원)" },
-      { id: "sg-6", teamId: "team-lot", stadiumName: "사직야구장", address: "부산광역시 동래구 사직로 45", capacity: 24000, transportation: ["3호선 사직역 1번 출구 도보 5분", "부산역에서 지하철 환승 약 30분", "경기일 주변 교통 혼잡 주의"], nearbyFood: [{ name: "사직 먹자골목", desc: "치킨, 족발 등 야식 천국" }, { name: "온천장 음식점", desc: "경기 전후 식사 가능" }], tips: ["사직 응원 문화는 KBO 최고!", "비닐봉지 응원은 필수 체험", "부산 특유의 뜨거운 분위기", "여름엔 매우 덥습니다 - 선크림 필수"], sections: [{ name: "1루 내야석", desc: "롯데 자이언츠 응원석", priceRange: "14,000~23,000원" }, { name: "외야석", desc: "가성비 좋은 자유석", priceRange: "7,000~10,000원" }], parkingInfo: "사직야구장 주차장 (1,000대, 3,000원)" },
-      { id: "sg-7", teamId: "team-sam", stadiumName: "대구삼성라이온즈파크", address: "대구광역시 수성구 야구전로 1", capacity: 24000, transportation: ["대구지하철 대공원역 3번 출구 도보 10분", "동대구역에서 택시 15분", "경기일 셔틀버스 운행"], nearbyFood: [{ name: "수성못 맛집거리", desc: "경기장 근처 다양한 음식점" }, { name: "대구 막창골목", desc: "대구 명물 막창!" }], tips: ["라이온즈파크 시설이 매우 좋음", "파크 내 아이들 놀이시설 있음", "주말 경기는 일찍 가서 자리 잡기"], sections: [{ name: "1루 내야석", desc: "삼성 라이온즈 응원석", priceRange: "14,000~24,000원" }, { name: "스카이박스", desc: "프리미엄 관람", priceRange: "50,000~100,000원" }], parkingInfo: "경기장 주차장 (2,000대, 4,000원)" },
-      { id: "sg-8", teamId: "team-kiw", stadiumName: "고척스카이돔", address: "서울특별시 구로구 경인로 430", capacity: 16744, transportation: ["7호선 신풍역 1번 출구 도보 10분", "구일역에서 도보 15분", "1호선 구로역에서 마을버스"], nearbyFood: [{ name: "구로디지털단지 맛집", desc: "경기장 근처 다양한 음식점" }, { name: "신도림 테크노마트", desc: "식당가 이용 가능" }], tips: ["국내 유일 돔구장! 비와도 관람 가능", "돔 내부라 소리가 웅장함", "에어컨 완비 - 여름에 쾌적", "좌석 간격이 넓어 편안함"], sections: [{ name: "1루 내야석", desc: "키움 히어로즈 응원석", priceRange: "15,000~25,000원" }, { name: "외야석", desc: "경제적인 관람석", priceRange: "8,000~12,000원" }], parkingInfo: "고척돔 주차장 (500대, 5,000원) - 대중교통 권장" },
+      { id: "sg-1", teamId: "team-lg", stadiumName: "잠실야구장", address: "서울특별시 송파구 올림픽로 25", capacity: 23750, transportation: ["지하철 2호선 종합운동장역 5·6번 출구 도보 5분", "지하철 9호선 종합운동장역 1번 출구 도보 3분", "잠실역 6번출구 셔틀버스"], nearbyFood: [{ name: "치킨앤비어 (3루 매점 대표)", desc: "잠실 직관의 대표 먹거리" }, { name: "곱창 (잠실 명물 직관푸드)", desc: "잠실야구장 하면 곱창!" }, { name: "떡볶이 & 순대 (1루측 푸드존)", desc: "가성비 좋은 간식" }], tips: ["잠실은 LG/두산 공용. LG 홈경기시 1루=LG, 3루=원정", "외야 잔디석은 경기 당일 선착순 무료 개방하는 날 있음", "우천시 돔이 아니므로 우비 필수"], sections: [{ name: "중앙지정석", desc: "메인 관람 좌석", priceRange: "20,000~25,000원" }, { name: "외야자유석", desc: "응원 열기가 가장 뜨거운 곳", priceRange: "8,000~10,000원" }, { name: "테이블석", desc: "편하게 관람", priceRange: "35,000~50,000원" }], parkingInfo: "잠실종합운동장 주차장 (1일 10,000원, 수용 2000대)" },
+      { id: "sg-2", teamId: "team-kt", stadiumName: "수원 KT위즈파크", address: "경기도 수원시 장안구 경수대로 893", capacity: 18700, transportation: ["수원역에서 셔틀버스 (경기일 운행)", "KTX 수원역 하차 → 택시 10분"], nearbyFood: [{ name: "치킨 (KT위즈파크 명물 후라이드)", desc: "위즈파크 내 치킨이 유명" }, { name: "핫도그 & 감자튀김 (매점)", desc: "간편한 직관 간식" }, { name: "편의점 (구장 내부)", desc: "구장 내 편의점 운영" }], tips: ["수원역에서 셔틀버스 이용이 가장 편리", "날씨가 추울 수 있으니 담요 준비", "외야석 응원 분위기가 매우 좋음"], sections: [{ name: "1루 내야석", desc: "KT 위즈 응원석", priceRange: "15,000~22,000원" }, { name: "3루 내야석", desc: "원정팀 응원석", priceRange: "15,000~22,000원" }, { name: "테이블석", desc: "단체 관람에 좋은 테이블 좌석", priceRange: "30,000~50,000원" }], parkingInfo: "KT위즈파크 주차장 (5,000원)" },
+      { id: "sg-3", teamId: "team-ssg", stadiumName: "인천 SSG랜더스필드", address: "인천광역시 미추홀구 매소홀로 618", capacity: 23000, transportation: ["인천1호선 문학경기장역 1번 출구 도보 10분", "수인분당선 인천역에서 버스"], nearbyFood: [{ name: "랜더스버거 (SSG 시그니처)", desc: "SSG 구단 자체 시그니처 버거" }, { name: "치맥 세트 (3루 매점)", desc: "직관 필수 치킨+맥주" }, { name: "수제 핫도그", desc: "랜더스필드 인기 간식" }], tips: ["노브랜드 존에서 저렴한 간식 가능", "SSG 자체 앱으로 좌석 업그레이드 이벤트", "주차 후 셔틀 이용 추천"], sections: [{ name: "1루 내야석", desc: "SSG 랜더스 응원석", priceRange: "15,000~25,000원" }, { name: "프리미엄석", desc: "VIP 좌석", priceRange: "40,000~80,000원" }, { name: "외야석", desc: "자유로운 분위기의 관람석", priceRange: "8,000~12,000원" }], parkingInfo: "문학경기장 주차장 (5,000원, 2500대)" },
+      { id: "sg-4", teamId: "team-han", stadiumName: "대전 한화생명이글스파크", address: "대전광역시 중구 대종로 373", capacity: 13000, transportation: ["대전역에서 택시 10분", "대전지하철 중앙로역에서 도보 15분", "경기일 셔틀버스 운행"], nearbyFood: [{ name: "성심당 (대전 명물 빵집)", desc: "대전 대표 빵집, 경기 전 필수 코스" }, { name: "칼국수 골목", desc: "대전 명물 칼국수" }, { name: "구장 내 매점", desc: "치킨, 핫도그 등" }], tips: ["대전역에서 가까워 접근성 좋음", "소규모 구장이라 선수가 가까이 보임", "한화 팬들의 열정적인 응원이 인상적", "여름엔 매우 더워요 - 선풍기 필수"], sections: [{ name: "1루 내야석", desc: "한화 이글스 응원석", priceRange: "13,000~20,000원" }, { name: "외야석", desc: "가성비 좋은 관람석", priceRange: "7,000~10,000원" }, { name: "중앙지정석", desc: "좋은 시야의 좌석", priceRange: "20,000~30,000원" }], parkingInfo: "이글스파크 주차장 (3,000원, 500대)" },
+      { id: "sg-5", teamId: "team-sam", stadiumName: "대구 삼성라이온즈파크", address: "대구광역시 수성구 야구전로 1", capacity: 24000, transportation: ["대구지하철 대공원역 3번 출구 도보 10분", "동대구역에서 택시 15분", "경기일 셔틀버스 운행"], nearbyFood: [{ name: "대구 막창골목", desc: "대구 명물 막창!" }, { name: "수성못 맛집거리", desc: "경기장 근처 다양한 음식점" }, { name: "구장 내 푸드코트", desc: "다양한 먹거리 입점" }], tips: ["라이온즈파크 시설이 KBO 최상급", "파크 내 아이들 놀이시설 있음", "주말 경기는 일찍 가서 자리 잡기", "야간 경기 시 대공원 야경이 아름다움"], sections: [{ name: "1루 내야석", desc: "삼성 라이온즈 응원석", priceRange: "14,000~24,000원" }, { name: "스카이박스", desc: "프리미엄 관람", priceRange: "50,000~100,000원" }, { name: "잔디석", desc: "피크닉 분위기", priceRange: "10,000~15,000원" }], parkingInfo: "경기장 주차장 (2,000대, 4,000원)" },
+      { id: "sg-6", teamId: "team-kia", stadiumName: "광주 기아챔피언스필드", address: "광주광역시 북구 서림로 10", capacity: 20500, transportation: ["광주송정역에서 버스 또는 택시 20분", "문화전당역에서 버스 이용", "경기일 셔틀버스 운행"], nearbyFood: [{ name: "충장로 먹자골목", desc: "광주 대표 먹자골목" }, { name: "무등산 보리밥", desc: "경기 전 든든한 한끼" }, { name: "챔필 내 먹거리 존", desc: "다양한 직관푸드" }], tips: ["광주의 열정적인 응원 문화가 인상적!", "3루석 응원이 매우 뜨거움", "챔필 먹거리 종류가 KBO에서 가장 다양", "광주 특유의 인정 넘치는 팬 문화"], sections: [{ name: "1루 내야석", desc: "KIA 타이거즈 응원석", priceRange: "13,000~22,000원" }, { name: "외야 그린석", desc: "잔디 위 피크닉 관람", priceRange: "8,000~12,000원" }, { name: "테이블석", desc: "편안한 관람", priceRange: "30,000~45,000원" }], parkingInfo: "경기장 주변 주차장 (800대, 3,000원)" },
+      { id: "sg-7", teamId: "team-nc", stadiumName: "창원 NC파크", address: "경상남도 창원시 마산회원구 삼호로 63", capacity: 22000, transportation: ["마산역에서 택시 10분", "창원중앙역에서 버스 이용 가능", "경기일 셔틀버스 운행"], nearbyFood: [{ name: "마산 어시장", desc: "신선한 해산물 맛집 밀집" }, { name: "아구찜 골목", desc: "마산 명물 아구찜!" }, { name: "NC파크 푸드존", desc: "구장 내 다양한 먹거리" }], tips: ["NC파크 잔디광장에서 피크닉 가능", "구장 시설이 깨끗하고 쾌적", "바다 바람이 불어 선선함", "주차 공간이 넉넉한 편"], sections: [{ name: "1루 내야석", desc: "NC 다이노스 응원석", priceRange: "13,000~20,000원" }, { name: "잔디석", desc: "피크닉 분위기의 좌석", priceRange: "10,000~15,000원" }, { name: "중앙지정석", desc: "좋은 시야", priceRange: "18,000~25,000원" }], parkingInfo: "경기장 주차장 (1,200대, 3,000원)" },
+      { id: "sg-8", teamId: "team-lot", stadiumName: "사직야구장", address: "부산광역시 동래구 사직로 45", capacity: 24000, transportation: ["3호선 사직역 1번 출구 도보 5분", "부산역에서 지하철 환승 약 30분", "경기일 주변 교통 혼잡 주의"], nearbyFood: [{ name: "사직 먹자골목", desc: "치킨, 족발 등 야식 천국" }, { name: "온천장 음식점", desc: "경기 전후 식사 가능" }, { name: "부산 돼지국밥", desc: "부산 명물!" }], tips: ["사직 응원 문화는 KBO 최고!", "비닐봉지 응원은 필수 체험", "부산 특유의 뜨거운 분위기", "여름엔 매우 덥습니다 - 선크림 필수"], sections: [{ name: "1루 내야석", desc: "롯데 자이언츠 응원석", priceRange: "14,000~23,000원" }, { name: "외야석", desc: "가성비 좋은 자유석", priceRange: "7,000~10,000원" }, { name: "중앙지정석", desc: "최고의 시야", priceRange: "22,000~35,000원" }], parkingInfo: "사직야구장 주차장 (1,000대, 3,000원)" },
+      { id: "sg-9", teamId: "team-kiw", stadiumName: "고척스카이돔", address: "서울특별시 구로구 경인로 430", capacity: 16744, transportation: ["7호선 신풍역 1번 출구 도보 10분", "구일역에서 도보 15분", "1호선 구로역에서 마을버스"], nearbyFood: [{ name: "구로디지털단지 맛집", desc: "경기장 근처 다양한 음식점" }, { name: "신도림 테크노마트", desc: "식당가 이용 가능" }, { name: "돔 내 매점", desc: "핫도그, 치킨 등" }], tips: ["국내 유일 돔구장! 비와도 관람 가능", "돔 내부라 소리가 웅장함", "에어컨 완비 - 여름에 쾌적", "좌석 간격이 넓어 편안함"], sections: [{ name: "1루 내야석", desc: "키움 히어로즈 응원석", priceRange: "15,000~25,000원" }, { name: "외야석", desc: "경제적인 관람석", priceRange: "8,000~12,000원" }, { name: "테이블석", desc: "편안한 관람", priceRange: "35,000~50,000원" }], parkingInfo: "고척돔 주차장 (500대, 5,000원) - 대중교통 권장" },
     ];
     guides.forEach((g) => addItem(STORE_KEYS.STADIUM_GUIDES, g));
   }

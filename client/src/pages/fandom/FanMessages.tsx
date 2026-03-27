@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import {
   listItems, addItem, seedIfEmpty, STORE_KEYS, getFandomProfile, generateId,
-  type FanDM, type FanCreator, type IdolGroup,
+  type FanDM, type FanCreator, type KboTeam,
 } from "@/lib/local-store";
 
 interface Conversation {
@@ -44,7 +44,7 @@ export function FanMessages() {
   }, [selectedPeer, dms]);
 
   // Build conversation list
-  const groups = listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS);
+  const groups = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
   const conversations: Conversation[] = [];
   const seenPeers = new Set<string>();
 

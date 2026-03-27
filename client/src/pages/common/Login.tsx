@@ -173,7 +173,7 @@ export function Login() {
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 mb-8">
             <Heart className="w-5 h-5 text-white" />
             <span className="text-white font-bold text-sm">
-              나만의 아이돌 팬덤 세계
+              나만의 야구 팬덤 세계
             </span>
           </div>
 
@@ -193,7 +193,7 @@ export function Login() {
               </div>
               <div>
                 <h3 className="text-white font-bold mb-1">AI 팬아트 제작</h3>
-                <p className="text-white/80 text-sm">좋아하는 아이돌의 팬아트를 AI로 간편하게</p>
+                <p className="text-white/80 text-sm">좋아하는 팀과 선수의 팬아트를 AI로 간편하게</p>
               </div>
             </div>
             <div className="flex items-start gap-4">

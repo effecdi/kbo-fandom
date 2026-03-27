@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import {
   listItems, seedIfEmpty, STORE_KEYS, getFandomProfile, generateId, addItem,
-  type FanCreator, type FanFollow, type IdolGroup,
+  type FanCreator, type FanFollow, type KboTeam,
 } from "@/lib/local-store";
 
 type SortKey = "followers" | "fanart" | "likes" | "recent";
@@ -37,7 +37,7 @@ export function FanCreators() {
     setFollows(listItems<FanFollow>(STORE_KEYS.FAN_FOLLOWS));
   }, []);
 
-  const groups = listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS);
+  const groups = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
 
   const isFollowing = (creatorId: string) =>
     follows.some((f) => f.followerId === "me" && f.followingId === creatorId);

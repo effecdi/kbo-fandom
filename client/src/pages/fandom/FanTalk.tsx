@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import {
   listItems, addItem, seedIfEmpty, STORE_KEYS, getFandomProfile, generateId,
-  type FanTalkPost, type FanTalkReply, type FanCreator, type IdolGroup,
+  type FanTalkPost, type FanTalkReply, type FanCreator, type KboTeam,
 } from "@/lib/local-store";
 
 type TopicFilter = "전체" | "잡담" | "질문" | "추천" | "소식" | "인증";
@@ -83,7 +83,7 @@ export function FanTalk() {
     .sort((a, b) => b.followerCount - a.followerCount)
     .slice(0, 5);
 
-  const groups = listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS);
+  const groups = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
 
   const handlePost = () => {
     if (!newPost.trim() || !profile) return;
@@ -422,7 +422,7 @@ export function FanTalk() {
           </div>
 
           {/* Right Sidebar */}
-          <div className="w-72 shrink-0 hidden lg:block space-y-4">
+          <div className="w-72 shrink-0 hidden xl:block space-y-4">
             {/* Popular Creators */}
             <div className="bg-card border border-border rounded-2xl p-4">
               <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
@@ -487,11 +487,11 @@ export function FanTalk() {
               </h3>
               <div className="space-y-2">
                 {[
-                  { tag: "#BTS_데뷔13주년", count: 234 },
-                  { tag: "#뉴진스_인스타툰", count: 156 },
-                  { tag: "#팬아트_챌린지", count: 189 },
-                  { tag: "#호시_밈", count: 312 },
-                  { tag: "#제니_솔로", count: 112 },
+                  { tag: "#KBO_개막전", count: 1542 },
+                  { tag: "#잠실직관", count: 856 },
+                  { tag: "#팬아트_챌린지", count: 634 },
+                  { tag: "#양현종_200승", count: 423 },
+                  { tag: "#강백호_한화이적", count: 312 },
                 ].map((topic, i) => (
                   <div key={i} className="flex items-center justify-between py-1.5">
                     <div className="flex items-center gap-2">

@@ -7,7 +7,7 @@ import type {
   FandomSticker,
   PhotocardFrame,
   ConcertEffect,
-  KpopAestheticFilterId,
+  AestheticFilterId,
 } from "./workspace-types";
 
 // ─── Template Definitions ────────────────────────────────────────────────────
@@ -714,14 +714,11 @@ export const CONCERT_EFFECTS = STADIUM_EFFECTS;
 // ─── Baseball Aesthetic Filters ──────────────────────────────────────────────
 
 export interface BaseballAestheticFilter {
-  id: KpopAestheticFilterId;
+  id: AestheticFilterId;
   label: string;
   prompt: string;
   color: string;
 }
-
-// backward compat alias
-export type KpopAestheticFilter = BaseballAestheticFilter;
 
 export const BASEBALL_AESTHETIC_FILTERS: BaseballAestheticFilter[] = [
   { id: "classic",        label: "클래식",       prompt: "classic baseball, timeless, clean white uniform, blue sky", color: "#1E3A5F" },
@@ -739,8 +736,6 @@ export const BASEBALL_AESTHETIC_FILTERS: BaseballAestheticFilter[] = [
   { id: "kitsch-heritage", label: "키치 헤리티지", prompt: "heritage kitsch, old school baseball, pennant flags, classic typography", color: "#8B4513" },
 ];
 
-// backward compat alias
-export const KPOP_AESTHETIC_FILTERS = BASEBALL_AESTHETIC_FILTERS;
 
 // ─── Fandom Color Palettes (expanded from LIGHTSTICK_COLORS) ────────────────
 
@@ -853,9 +848,6 @@ export interface BaseballTextPreset {
   lang: "ko" | "en";
 }
 
-// backward compat alias
-export type KpopTextPreset = BaseballTextPreset;
-
 export const BASEBALL_TEXT_PRESETS: BaseballTextPreset[] = [
   { id: "t1",  text: "화이팅!",            category: "cheer",    lang: "ko" },
   { id: "t2",  text: "홈런 치자!",         category: "cheer",    lang: "ko" },
@@ -877,5 +869,3 @@ export const BASEBALL_TEXT_PRESETS: BaseballTextPreset[] = [
   { id: "t17", text: "야구장 가자!",        category: "general",  lang: "ko" },
 ];
 
-// backward compat alias
-export const KPOP_TEXT_PRESETS = BASEBALL_TEXT_PRESETS;

@@ -154,13 +154,13 @@ export function ScheduleCalendarView({
                 onClick={() =>
                   setSelectedDate(isSelected ? null : cd.dateStr)
                 }
-                className={`relative min-h-[72px] p-1.5 border-b border-r border-border text-left transition-all hover:bg-muted/50 ${
+                className={`relative min-h-[56px] sm:min-h-[72px] p-1 sm:p-1.5 border-b border-r border-border text-left transition-all hover:bg-muted/50 ${
                   !cd.isCurrentMonth ? "opacity-30" : ""
                 } ${isSelected ? "bg-primary/10 ring-1 ring-primary/40" : ""}`}
               >
                 {/* Day number */}
                 <span
-                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                  className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-xs font-bold ${
                     cd.isToday
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground"

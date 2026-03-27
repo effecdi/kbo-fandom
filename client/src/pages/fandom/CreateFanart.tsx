@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { StudioLayout } from "@/components/StudioLayout";
-import { IdolMemberPicker } from "@/components/fandom/idol-member-picker";
+import { PlayerPicker } from "@/components/fandom/player-picker";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -36,8 +36,8 @@ import {
   seedIfEmpty,
   getFandomProfile,
   STORE_KEYS,
-  type IdolGroup,
-  type IdolMember,
+  type KboTeam,
+  type KboPlayer,
   type ProjectRecord,
 } from "@/lib/local-store";
 import type { FandomEditorMeta, FandomTemplateType, FandomStylePreset } from "@/lib/workspace-types";
@@ -50,10 +50,10 @@ import {
   MOOD_CHIPS,
   POSE_OUTFIT_TEMPLATES,
   TEMPLATE_LABELS,
-  KPOP_AESTHETIC_FILTERS,
+  BASEBALL_AESTHETIC_FILTERS,
 } from "@/lib/fandom-templates";
 import { isGoodsTemplate, PHYSICAL_SIZES, GOODS_PHYSICAL_SIZE_MAP } from "@/lib/fandom-goods-config";
-import type { KpopAestheticFilterId } from "@/lib/workspace-types";
+import type { AestheticFilterId } from "@/lib/workspace-types";
 
 type Step = "group" | "template" | "style" | "details";
 
@@ -98,18 +98,18 @@ export function FandomCreateFanart() {
   const [selectedPose, setSelectedPose] = useState<string | null>(null);
   const [selectedOutfit, setSelectedOutfit] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedAesthetic, setSelectedAesthetic] = useState<KpopAestheticFilterId | null>(null);
+  const [selectedAesthetic, setSelectedAesthetic] = useState<AestheticFilterId | null>(null);
   const [selectedDpi, setSelectedDpi] = useState<72 | 150 | 300>(300);
   const [activeCategory, setActiveCategory] = useState<string>("popular");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [groups, setGroups] = useState<IdolGroup[]>([]);
-  const [members, setMembers] = useState<IdolMember[]>([]);
+  const [groups, setGroups] = useState<KboTeam[]>([]);
+  const [members, setMembers] = useState<KboPlayer[]>([]);
 
   useEffect(() => {
     seedIfEmpty();
-    setGroups(listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS));
-    setMembers(listItems<IdolMember>(STORE_KEYS.IDOL_MEMBERS));
+    setGroups(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
+    setMembers(listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS));
     const profile = getFandomProfile();
     if (profile?.groupId) {
       setSelectedGroupId(profile.groupId);
@@ -203,7 +203,7 @@ export function FandomCreateFanart() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">팬아트 만들기</h1>
-            <p className="text-sm text-muted-foreground">아이돌의 모든 것을 다양한 스타일로 만들어보세요</p>
+            <p className="text-sm text-muted-foreground">선수와 팀의 모든 것을 다양한 스타일로 만들어보세요</p>
           </div>
         </div>
 
@@ -236,7 +236,7 @@ export function FandomCreateFanart() {
           {/* ── Step 1: Group & Members ── */}
           {step === "group" && (
             <div className="space-y-6">
-              <IdolMemberPicker
+              <PlayerPicker
                 selectedGroupId={selectedGroupId}
                 selectedMembers={selectedMembers}
                 onGroupChange={setSelectedGroupId}
@@ -422,9 +422,9 @@ export function FandomCreateFanart() {
 
               {/* Aesthetic Filter */}
               <div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">K-POP 미학 필터</label>
+                <label className="text-sm font-semibold text-foreground mb-2 block">야구 미학 필터</label>
                 <div className="grid grid-cols-5 gap-2">
-                  {KPOP_AESTHETIC_FILTERS.map((filter) => (
+                  {BASEBALL_AESTHETIC_FILTERS.map((filter) => (
                     <button
                       key={filter.id}
                       onClick={() => setSelectedAesthetic(selectedAesthetic === filter.id ? null : filter.id)}
@@ -544,7 +544,7 @@ export function FandomCreateFanart() {
                   {selectedPose && <p>포즈: <span className="font-semibold">{selectedPose}</span></p>}
                   {selectedOutfit && <p>의상: <span className="font-semibold">{selectedOutfit}</span></p>}
                   {selectedMood && <p>분위기: <span className="font-semibold">{selectedMood}</span></p>}
-                  {selectedAesthetic && <p>미학: <span className="font-semibold">{KPOP_AESTHETIC_FILTERS.find(f => f.id === selectedAesthetic)?.label}</span></p>}
+                  {selectedAesthetic && <p>미학: <span className="font-semibold">{BASEBALL_AESTHETIC_FILTERS.find(f => f.id === selectedAesthetic)?.label}</span></p>}
                   {templateDef && isGoodsTemplate(templateDef.type) && <p>해상도: <span className="font-semibold">{selectedDpi} DPI</span></p>}
                 </div>
               </div>

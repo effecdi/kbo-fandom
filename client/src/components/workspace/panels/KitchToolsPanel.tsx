@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useCopilot } from "@/hooks/use-copilot";
 import {
-  KPOP_AESTHETIC_FILTERS,
+  BASEBALL_AESTHETIC_FILTERS,
   FANDOM_DESIGN_ELEMENTS,
-  KPOP_TEXT_PRESETS,
+  BASEBALL_TEXT_PRESETS,
 } from "@/lib/fandom-templates";
-import type { KpopAestheticFilterId } from "@/lib/workspace-types";
+import type { AestheticFilterId } from "@/lib/workspace-types";
 import {
   Sparkles,
   Star,
@@ -70,17 +70,17 @@ export function KitchToolsPanel() {
     sendMessage(`${prompt} 효과를 추가해줘`);
   }
 
-  function handleAestheticFilter(filterId: KpopAestheticFilterId) {
+  function handleAestheticFilter(filterId: AestheticFilterId) {
     const current = state.activeAestheticFilter;
     const newFilter = current === filterId ? null : filterId;
     dispatch({ type: "SET_AESTHETIC_FILTER", filterId: newFilter });
     if (newFilter) {
-      const filter = KPOP_AESTHETIC_FILTERS.find(f => f.id === newFilter);
+      const filter = BASEBALL_AESTHETIC_FILTERS.find(f => f.id === newFilter);
       if (filter) sendMessage(`${filter.label} 스타일로 변경해줘`);
     }
   }
 
-  const kitschFilters = KPOP_AESTHETIC_FILTERS.filter(f =>
+  const kitschFilters = BASEBALL_AESTHETIC_FILTERS.filter(f =>
     f.id === "kitsch-retro" || f.id === "kitsch-pop" || f.id === "kitsch-heritage"
   );
 
@@ -88,7 +88,7 @@ export function KitchToolsPanel() {
     ["y2k-sticker", "chrome-text", "masking-tape", "gem-sticker", "neon-frame"].includes(e.id)
   );
 
-  const kitschTextPresets = KPOP_TEXT_PRESETS.filter(t =>
+  const kitschTextPresets = BASEBALL_TEXT_PRESETS.filter(t =>
     ["t13", "t14", "t15", "t16", "t17"].includes(t.id)
   );
 

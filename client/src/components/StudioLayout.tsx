@@ -31,6 +31,8 @@ import {
   BarChart3,
   Camera,
   ShoppingBag,
+  Menu,
+  X,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useTheme } from "@/components/theme-provider";
@@ -56,6 +58,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
   const { theme, toggleTheme } = useTheme();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     "내 팬덤": true,
     "야구": true,
@@ -130,8 +133,16 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
 
   return (
     <div className="min-h-screen flex bg-background">
+      {/* Mobile Sidebar Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Left Sidebar */}
-      <aside className="w-60 border-r flex flex-col fixed h-screen bg-card border-border">
+      <aside className={`w-60 border-r flex flex-col fixed h-screen bg-card border-border z-50 transition-transform duration-300 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
         {/* Logo / Group Badge */}
         <div className="p-5 border-b border-border">
           <Link to="/fandom" className="flex items-center gap-3">
@@ -196,6 +207,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
                         <Link
                           key={item.path}
                           to={item.path}
+                          onClick={() => setMobileMenuOpen(false)}
                           className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
                             isActive(item.path)
                               ? "font-semibold"
@@ -264,9 +276,37 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 ml-60">
-        {/* Top Header */}
-        <header className="h-16 border-b fixed top-0 right-0 left-60 z-10 bg-card border-border">
+      <div className="flex-1 ml-0 md:ml-60">
+        {/* Mobile Header */}
+        <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-card border-b border-border flex items-center px-4 gap-3">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5 text-foreground" /> : <Menu className="w-5 h-5 text-foreground" />}
+          </button>
+          <Link to="/fandom" className="flex items-center gap-2 flex-1 min-w-0">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm"
+              style={{ background: themeColor }}
+            >
+              {fandomProfile?.groupName?.charAt(0) || <Heart className="w-4 h-4" />}
+            </div>
+            <span className="text-sm font-black truncate" style={{ color: themeColor }}>
+              {fandomProfile ? fandomProfile.groupName : "MY FANDOM"}
+            </span>
+          </Link>
+          <button className="relative p-2 rounded-lg hover:bg-muted">
+            <Bell className="w-5 h-5 text-muted-foreground" />
+            <span
+              className="absolute top-1 right-1 w-2 h-2 rounded-full"
+              style={{ background: themeColor }}
+            />
+          </button>
+        </div>
+
+        {/* Top Header (Desktop) */}
+        <header className="h-16 border-b fixed top-0 right-0 left-0 md:left-60 z-10 bg-card border-border hidden md:block">
           <div className="h-full px-8 flex items-center justify-between">
             {/* Search */}
             <div className="flex-1 max-w-xl">
@@ -345,7 +385,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
         </header>
 
         {/* Content Area */}
-        <main className={`pt-24 ${noPadding ? "" : "px-8 pb-8"}`}>
+        <main className={`pt-20 md:pt-24 ${noPadding ? "" : "px-4 md:px-8 pb-8"}`}>
           {children}
         </main>
       </div>

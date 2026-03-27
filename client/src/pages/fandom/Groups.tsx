@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
 import { StudioLayout } from "@/components/StudioLayout";
 import { Search, Users } from "lucide-react";
-import { IdolGroupCard } from "@/components/fandom/idol-group-card";
-import { listItems, seedIfEmpty, STORE_KEYS, type IdolGroup } from "@/lib/local-store";
+import { TeamCard } from "@/components/fandom/team-card";
+import { listItems, seedIfEmpty, STORE_KEYS, type KboTeam } from "@/lib/local-store";
 
 const themeColor = "var(--fandom-primary, #7B2FF7)";
 
 const CITIES = ["전체", "서울", "수원", "인천", "창원", "광주", "부산", "대구", "대전"];
 
 export function FandomGroups() {
-  const [groups, setGroups] = useState<IdolGroup[]>([]);
+  const [groups, setGroups] = useState<KboTeam[]>([]);
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("전체");
 
   useEffect(() => {
     seedIfEmpty();
-    setGroups(listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS));
+    setGroups(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
   }, []);
 
   const filtered = groups.filter((g) => {
@@ -77,7 +77,7 @@ export function FandomGroups() {
         {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filtered.map((group) => (
-            <IdolGroupCard key={group.id} group={group} />
+            <TeamCard key={group.id} group={group} />
           ))}
         </div>
 

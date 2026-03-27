@@ -7,7 +7,7 @@ import {
   listItems,
   STORE_KEYS,
   type CheerSong,
-  type IdolGroup,
+  type KboTeam,
 } from "@/lib/local-store";
 
 type SongTab = "all" | "team" | "player" | "situation";
@@ -21,13 +21,13 @@ const TABS: { id: SongTab; label: string }[] = [
 
 export function FandomCheerSongs() {
   const [songs, setSongs] = useState<CheerSong[]>([]);
-  const [teams, setTeams] = useState<IdolGroup[]>([]);
+  const [teams, setTeams] = useState<KboTeam[]>([]);
   const [tab, setTab] = useState<SongTab>("all");
   const [teamFilter, setTeamFilter] = useState<string | null>(null);
 
   useEffect(() => {
     setSongs(listItems<CheerSong>(STORE_KEYS.CHEER_SONGS));
-    setTeams(listItems<IdolGroup>(STORE_KEYS.KBO_TEAMS));
+    setTeams(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
   }, []);
 
   // Build team color lookup

@@ -8,8 +8,6 @@ import {
   type FandomUserProfile,
   type KboTeam,
   type KboPlayer,
-  type IdolGroup,
-  type IdolMember,
 } from "@/lib/local-store";
 
 interface FandomContextValue {

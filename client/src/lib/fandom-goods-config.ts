@@ -1,4 +1,4 @@
-// ─── K-POP Goods Physical Size & Print Config ─────────────────────────────────
+// ─── KBO Goods Physical Size & Print Config ─────────────────────────────────
 
 export const PHYSICAL_SIZES = {
   photocard:      { widthMm: 55,  heightMm: 85,  label: "포토카드 (55×85mm)" },

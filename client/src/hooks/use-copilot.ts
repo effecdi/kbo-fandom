@@ -12,7 +12,6 @@ import {
   getTemplateChips,
   TEMPLATE_LABELS,
   BASEBALL_AESTHETIC_FILTERS,
-  KPOP_AESTHETIC_FILTERS,
 } from "@/lib/fandom-templates";
 
 // ─── Types for API responses ────────────────────────────────────────────────

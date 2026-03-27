@@ -7,7 +7,7 @@ import {
   listItems,
   STORE_KEYS,
   type GoodsTrade,
-  type IdolGroup,
+  type KboTeam,
 } from "@/lib/local-store";
 
 // ─── Trade type tabs ────────────────────────────────────────────────────────
@@ -35,14 +35,14 @@ const CATEGORY_PILLS: { id: CategoryFilter; label: string }[] = [
 
 export function FandomGoodsTrades() {
   const [trades, setTrades] = useState<GoodsTrade[]>([]);
-  const [teams, setTeams] = useState<IdolGroup[]>([]);
+  const [teams, setTeams] = useState<KboTeam[]>([]);
   const [tab, setTab] = useState<TradeTab>("all");
   const [teamFilter, setTeamFilter] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
 
   useEffect(() => {
     setTrades(listItems<GoodsTrade>(STORE_KEYS.GOODS_TRADES));
-    setTeams(listItems<IdolGroup>(STORE_KEYS.KBO_TEAMS));
+    setTeams(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
   }, []);
 
   // Build team color lookup

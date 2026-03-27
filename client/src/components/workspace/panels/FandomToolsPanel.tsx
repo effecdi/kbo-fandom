@@ -5,14 +5,14 @@ import {
   PHOTOCARD_FRAMES,
   LIGHTSTICK_COLORS,
   CONCERT_EFFECTS,
-  KPOP_AESTHETIC_FILTERS,
+  BASEBALL_AESTHETIC_FILTERS,
   FANDOM_DESIGN_ELEMENTS,
-  KPOP_TEXT_PRESETS,
+  BASEBALL_TEXT_PRESETS,
   WALLPAPER_LAYOUTS,
   type PhotocardFrame,
   type ConcertEffect,
 } from "@/lib/fandom-templates";
-import type { KpopAestheticFilterId } from "@/lib/workspace-types";
+import type { AestheticFilterId } from "@/lib/workspace-types";
 import {
   Camera,
   Palette,
@@ -62,12 +62,12 @@ export function FandomToolsPanel() {
     if (effectDef) sendMessage(effectDef.prompt);
   }
 
-  function handleAestheticFilter(filterId: KpopAestheticFilterId) {
+  function handleAestheticFilter(filterId: AestheticFilterId) {
     const current = state.activeAestheticFilter;
     const newFilter = current === filterId ? null : filterId;
     dispatch({ type: "SET_AESTHETIC_FILTER", filterId: newFilter });
     if (newFilter) {
-      const filter = KPOP_AESTHETIC_FILTERS.find(f => f.id === newFilter);
+      const filter = BASEBALL_AESTHETIC_FILTERS.find(f => f.id === newFilter);
       if (filter) sendMessage(`${filter.label} 스타일로 변경해줘`);
     }
   }
@@ -205,12 +205,12 @@ export function FandomToolsPanel() {
         </div>
       )}
 
-      {/* ── K-POP Aesthetic Filters ── */}
+      {/* ── Baseball Aesthetic Filters ── */}
       {activeSection === "aesthetics" && (
         <div className="space-y-2">
           <p className="text-[11px] text-white/40 px-1">AI 생성 시 스타일이 적용됩니다</p>
           <div className="grid grid-cols-2 gap-1.5">
-            {KPOP_AESTHETIC_FILTERS.map((filter) => {
+            {BASEBALL_AESTHETIC_FILTERS.map((filter) => {
               const isActive = state.activeAestheticFilter === filter.id;
               return (
                 <button
@@ -304,7 +304,7 @@ export function FandomToolsPanel() {
       {activeSection === "text-overlay" && (
         <div className="space-y-3">
           {(["cheer", "birthday", "love", "general"] as const).map((cat) => {
-            const items = KPOP_TEXT_PRESETS.filter(t => t.category === cat);
+            const items = BASEBALL_TEXT_PRESETS.filter(t => t.category === cat);
             const catLabel = cat === "cheer" ? "응원" : cat === "birthday" ? "생일" : cat === "love" ? "사랑" : "일반";
             return (
               <div key={cat} className="space-y-1.5">

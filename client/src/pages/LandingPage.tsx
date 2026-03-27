@@ -24,17 +24,17 @@ import {
   listItems,
   seedIfEmpty,
   STORE_KEYS,
-  type IdolGroup,
+  type KboTeam,
 } from "@/lib/local-store";
 
 export function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const [groups, setGroups] = useState<IdolGroup[]>([]);
+  const [groups, setGroups] = useState<KboTeam[]>([]);
 
   useEffect(() => {
     seedIfEmpty();
-    setGroups(listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS));
+    setGroups(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
   }, []);
 
   const totalFanart = groups.reduce((sum, g) => sum + g.fanartCount, 0);

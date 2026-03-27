@@ -18,7 +18,7 @@ import type {
   PhotocardFrame,
   PrintSettings,
   BirthdayCafePackage,
-  KpopAestheticFilterId,
+  AestheticFilterId,
 } from "@/lib/workspace-types";
 import type { CanvaEditorHandle } from "@/components/canva-editor/types";
 

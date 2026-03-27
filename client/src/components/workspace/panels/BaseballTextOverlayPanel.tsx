@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useCopilot } from "@/hooks/use-copilot";
-import { KPOP_TEXT_PRESETS, FANDOM_COLOR_PALETTES } from "@/lib/fandom-templates";
+import { BASEBALL_TEXT_PRESETS, FANDOM_COLOR_PALETTES } from "@/lib/fandom-templates";
 import { Type, Palette } from "lucide-react";
 
 type TextCategory = "cheer" | "birthday" | "love" | "general";
@@ -13,7 +13,7 @@ const FONT_SUGGESTIONS = [
   { id: "elegant", label: "우아한", desc: "세련된 세리프체" },
 ];
 
-export function KpopTextOverlayPanel() {
+export function BaseballTextOverlayPanel() {
   const { state } = useWorkspace();
   const { sendMessage } = useCopilot();
   const fandomMeta = state.fandomMeta;
@@ -45,12 +45,12 @@ export function KpopTextOverlayPanel() {
     { id: "general", label: "일반" },
   ];
 
-  const filteredPresets = KPOP_TEXT_PRESETS.filter(t => t.category === activeCategory);
+  const filteredPresets = BASEBALL_TEXT_PRESETS.filter(t => t.category === activeCategory);
 
   return (
     <div className="space-y-4">
       <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider px-1">
-        K-POP 텍스트
+        야구 텍스트
       </h3>
 
       {/* Font Style */}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Heart, Star, ChevronDown, ChevronRight, Palette } from "lucide-react";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useCopilot } from "@/hooks/use-copilot";
-import { listItems, STORE_KEYS, type IdolMember } from "@/lib/local-store";
+import { listItems, STORE_KEYS, type KboPlayer } from "@/lib/local-store";
 import {
   STYLE_PRESETS,
   POSE_CHIPS,
@@ -14,13 +14,13 @@ import type { FandomStylePreset } from "@/lib/workspace-types";
 export function MemberPanel() {
   const { state, dispatch } = useWorkspace();
   const { sendMessage } = useCopilot();
-  const [members, setMembers] = useState<IdolMember[]>([]);
+  const [members, setMembers] = useState<KboPlayer[]>([]);
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const meta = state.fandomMeta;
 
   useEffect(() => {
     if (!meta) return;
-    const all = listItems<IdolMember>(STORE_KEYS.IDOL_MEMBERS);
+    const all = listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS);
     setMembers(all.filter((m) => m.groupId === meta.groupId));
   }, [meta]);
 
@@ -50,7 +50,7 @@ export function MemberPanel() {
         style={{ backgroundColor: meta.coverColor + "20" }}
       >
         <Heart className="w-4 h-4" style={{ color: meta.coverColor }} />
-        <span className="text-xs font-bold text-white/90">{meta.groupName} 멤버</span>
+        <span className="text-xs font-bold text-white/90">{meta.groupName} 선수</span>
         <span className="text-[10px] text-white/40 ml-auto">{members.length}명</span>
       </div>
 

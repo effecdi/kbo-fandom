@@ -69,7 +69,7 @@ export interface BirthdayCafePackage {
 
 // ─── Baseball Aesthetic Filter ───────────────────────────────────────────────
 
-export type KpopAestheticFilterId =
+export type AestheticFilterId =
   | "classic" | "retro" | "dynamic" | "night-game" | "victory"
   | "daytime" | "stadium" | "magazine" | "summer-day" | "autumn-series"
   | "kitsch-retro" | "kitsch-pop" | "kitsch-heritage";
@@ -249,7 +249,7 @@ export interface WorkspaceState {
   fandomMeta: FandomEditorMeta | null;
   printSettings: PrintSettings | null;
   birthdayCafePackage: BirthdayCafePackage | null;
-  activeAestheticFilter: KpopAestheticFilterId | null;
+  activeAestheticFilter: AestheticFilterId | null;
 }
 
 // ─── Actions ────────────────────────────────────────────────────────────────
@@ -303,5 +303,5 @@ export type WorkspaceAction =
   | { type: "APPLY_FANDOM_COLOR"; color: string }
   | { type: "SET_PRINT_SETTINGS"; settings: PrintSettings | null }
   | { type: "SET_BIRTHDAY_CAFE_PACKAGE"; package: BirthdayCafePackage | null }
-  | { type: "SET_AESTHETIC_FILTER"; filterId: KpopAestheticFilterId | null }
+  | { type: "SET_AESTHETIC_FILTER"; filterId: AestheticFilterId | null }
   | { type: "SET_PHYSICAL_CANVAS_SIZE"; widthMm: number; heightMm: number; dpi: number };

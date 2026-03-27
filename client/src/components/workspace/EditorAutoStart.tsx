@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from "react-router";
 import { useCopilot } from "@/hooks/use-copilot";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { genId } from "@/contexts/workspace-context";
-import type { FandomEditorMeta, Cut, KpopAestheticFilterId } from "@/lib/workspace-types";
+import type { FandomEditorMeta, Cut, AestheticFilterId } from "@/lib/workspace-types";
 import {
   FANDOM_TEMPLATES,
   TEMPLATE_LABELS,
@@ -133,7 +133,7 @@ export function EditorAutoStart() {
         try {
           const ext = JSON.parse(extRaw);
           if (ext.aestheticFilter) {
-            dispatch({ type: "SET_AESTHETIC_FILTER", filterId: ext.aestheticFilter as KpopAestheticFilterId });
+            dispatch({ type: "SET_AESTHETIC_FILTER", filterId: ext.aestheticFilter as AestheticFilterId });
           }
           if (ext.isGoods && ext.dpi) {
             // Goods mode: set print settings from template defaults

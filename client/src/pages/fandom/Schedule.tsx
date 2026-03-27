@@ -26,7 +26,6 @@ import {
   type KboGameSchedule,
   type KboTeam,
   type KboAttendance,
-  type IdolGroup,
 } from "@/lib/local-store";
 
 type ViewMode = "week" | "list" | "calendar";
@@ -198,8 +197,8 @@ export function FandomSchedule() {
     weekday: "short",
   });
 
-  // Use teams as IdolGroup[] for FandomFilterBar
-  const groups = teams as IdolGroup[];
+  // Use teams as KboTeam[] for FandomFilterBar
+  const groups = teams as KboTeam[];
 
   return (
     <StudioLayout>
@@ -318,7 +317,7 @@ export function FandomSchedule() {
                   </div>
 
                   {/* Game cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {dayGames.map((game) => (
                       <GameScheduleCard
                         key={game.id}

@@ -1,28 +1,28 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
-import { listItems, STORE_KEYS, type IdolGroup, type IdolMember } from "@/lib/local-store";
+import { listItems, STORE_KEYS, type KboTeam, type KboPlayer } from "@/lib/local-store";
 
 const themeColor = "var(--fandom-primary, #7B2FF7)";
 
-interface IdolMemberPickerProps {
+interface PlayerPickerProps {
   selectedGroupId: string | null;
   selectedMembers: string[];
   onGroupChange: (groupId: string) => void;
   onMemberToggle: (memberId: string) => void;
 }
 
-export function IdolMemberPicker({
+export function PlayerPicker({
   selectedGroupId,
   selectedMembers,
   onGroupChange,
   onMemberToggle,
-}: IdolMemberPickerProps) {
-  const [groups, setGroups] = useState<IdolGroup[]>([]);
-  const [members, setMembers] = useState<IdolMember[]>([]);
+}: PlayerPickerProps) {
+  const [groups, setGroups] = useState<KboTeam[]>([]);
+  const [members, setMembers] = useState<KboPlayer[]>([]);
 
   useEffect(() => {
-    setGroups(listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS));
-    setMembers(listItems<IdolMember>(STORE_KEYS.IDOL_MEMBERS));
+    setGroups(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
+    setMembers(listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS));
   }, []);
 
   const filteredMembers = selectedGroupId
@@ -35,7 +35,7 @@ export function IdolMemberPicker({
     <div className="space-y-4">
       {/* Group selection */}
       <div>
-        <label className="text-sm font-semibold text-foreground mb-2 block">그룹 선택</label>
+        <label className="text-sm font-semibold text-foreground mb-2 block">구단 선택</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {groups.map((group) => (
             <button
@@ -65,7 +65,7 @@ export function IdolMemberPicker({
       {selectedGroupId && filteredMembers.length > 0 && (
         <div>
           <label className="text-sm font-semibold text-foreground mb-2 block">
-            멤버 태그 (선택)
+            선수 태그 (선택)
           </label>
           <div className="flex flex-wrap gap-2">
             {filteredMembers.map((member) => {

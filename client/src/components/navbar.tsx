@@ -42,7 +42,7 @@ export function Navbar() {
         { path: "/fandom", label: "팬덤 홈", icon: Heart },
         { path: "/fandom/feed", label: "팬덤 피드", icon: Rss },
         { path: "/fandom/talk", label: "팬 토크", icon: MessageCircle },
-        { path: "/fandom/groups", label: "아이돌 그룹", icon: Users },
+        { path: "/fandom/groups", label: "KBO 구단", icon: Users },
         { path: "/fandom/events", label: "이벤트/챌린지", icon: Trophy },
         { path: "/fandom/create", label: "팬아트 만들기", icon: Palette },
       ],

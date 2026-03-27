@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listItems, STORE_KEYS, type IdolGroup } from "@/lib/local-store";
+import { listItems, STORE_KEYS, type KboTeam } from "@/lib/local-store";
 
 const themeColor = "var(--fandom-primary, #7B2FF7)";
 
@@ -9,10 +9,10 @@ interface FandomFilterBarProps {
 }
 
 export function FandomFilterBar({ selected, onChange }: FandomFilterBarProps) {
-  const [groups, setGroups] = useState<IdolGroup[]>([]);
+  const [groups, setGroups] = useState<KboTeam[]>([]);
 
   useEffect(() => {
-    setGroups(listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS));
+    setGroups(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
   }, []);
 
   return (

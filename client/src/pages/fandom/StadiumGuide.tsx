@@ -7,17 +7,17 @@ import {
   STORE_KEYS,
   getFandomProfile,
   type StadiumGuide,
-  type IdolGroup,
+  type KboTeam,
 } from "@/lib/local-store";
 
 export function FandomStadiumGuide() {
   const [guides, setGuides] = useState<StadiumGuide[]>([]);
-  const [teams, setTeams] = useState<IdolGroup[]>([]);
+  const [teams, setTeams] = useState<KboTeam[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadedGuides = listItems<StadiumGuide>(STORE_KEYS.STADIUM_GUIDES);
-    const loadedTeams = listItems<IdolGroup>(STORE_KEYS.KBO_TEAMS);
+    const loadedTeams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
     setGuides(loadedGuides);
     setTeams(loadedTeams);
 

@@ -9,7 +9,7 @@ import {
   STORE_KEYS,
   getFandomProfile,
   type PhotocardItem,
-  type IdolGroup,
+  type KboTeam,
 } from "@/lib/local-store";
 
 type MainTab = "gallery" | "mine" | "trading";
@@ -31,14 +31,14 @@ const RARITY_TABS: { id: RarityFilter; label: string }[] = [
 
 export function FandomPhotocards() {
   const [cards, setCards] = useState<PhotocardItem[]>([]);
-  const [teams, setTeams] = useState<IdolGroup[]>([]);
+  const [teams, setTeams] = useState<KboTeam[]>([]);
   const [tab, setTab] = useState<MainTab>("gallery");
   const [teamFilter, setTeamFilter] = useState<string | null>(null);
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
 
   useEffect(() => {
     setCards(listItems<PhotocardItem>(STORE_KEYS.PHOTOCARD_COLLECTION));
-    setTeams(listItems<IdolGroup>(STORE_KEYS.KBO_TEAMS));
+    setTeams(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
   }, []);
 
   // Build team color lookup
