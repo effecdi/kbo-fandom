@@ -24,6 +24,7 @@ import type { PinnedCharacter } from "@/lib/workspace-types";
 import {
   getQuickActions,
   getTemplatePlaceholder,
+  getOnboardingPrompts,
   isSingleImageTemplate,
   TEMPLATE_LABELS,
 } from "@/lib/fandom-templates";
@@ -316,7 +317,9 @@ export function CopilotDock() {
                           {fandomMeta.groupName.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-white">{fandomMeta.groupName} 팬아트</p>
+                          <p className="text-sm font-bold text-white">
+                            {fandomMeta.groupName} {TEMPLATE_LABELS[fandomMeta.templateType]}
+                          </p>
                           <p className="text-[11px] text-white/50 truncate">
                             {fandomMeta.memberTags.length > 0
                               ? `멤버: ${fandomMeta.memberTags.join(", ")}`
@@ -327,15 +330,12 @@ export function CopilotDock() {
                         </div>
                       </div>
 
-                      {/* Fandom prompt suggestions */}
+                      {/* Template-specific prompt suggestions */}
                       <div className="space-y-1.5">
-                        <p className="text-[11px] text-white/40 font-medium px-1">이런 것도 만들어보세요</p>
-                        {[
-                          `${fandomMeta.memberTags[0] || fandomMeta.groupName} 카페 일상 팬아트`,
-                          `${fandomMeta.groupName} 연습실 일상 인스타툰`,
-                          `${fandomMeta.memberTags[0] || "멤버"} 셀카 스타일 팬아트`,
-                          `${fandomMeta.groupName} 무대 비하인드 4컷`,
-                        ].map((prompt) => (
+                        <p className="text-[11px] text-white/40 font-medium px-1">
+                          {getTemplatePlaceholder(fandomMeta.templateType)}
+                        </p>
+                        {getOnboardingPrompts(fandomMeta).map((prompt) => (
                           <button
                             key={prompt}
                             onClick={() => sendMessage(prompt)}
@@ -354,7 +354,7 @@ export function CopilotDock() {
                         무엇을 만들어볼까요?
                       </p>
                       <p className="text-xs text-white/40 mt-1">
-                        자연어로 요청하면 AI가 인스타툰을 만들어드려요
+                        자연어로 요청하면 AI가 만들어드려요
                       </p>
                     </div>
                   )

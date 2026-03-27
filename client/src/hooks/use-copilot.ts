@@ -77,6 +77,8 @@ function getGoodsPromptSuffix(templateType: string): string | null {
       return "acrylic stand design, clear outline, full body character, transparent background ready";
     case "phonecase":
       return "phone case design, full coverage pattern, considering camera cutout area";
+    case "meme":
+      return "2-panel meme comic layout, bold text captions, humorous";
     default:
       return null;
   }

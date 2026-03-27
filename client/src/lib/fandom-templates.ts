@@ -123,6 +123,7 @@ export const TEMPLATE_RATIOS: Record<FandomTemplateType, CanvasAspectRatio[]> = 
 
 const SINGLE_IMAGE_TYPES: FandomTemplateType[] = [
   "portrait", "photocard", "wallpaper", "fanart", "sticker", "concept", "edit",
+  "meme",
   "cupsleeve", "slogan", "stickersheet", "acrylicstand", "phonecase",
   "deco-photocard", "retro-magazine", "diary-page", "kitsch-collage", "ticket-bookmark", "profile-deco",
 ];
@@ -197,7 +198,7 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
       parts.push(`${meta.groupName}의 ${memberPart} 4컷 인스타툰을 만들어줘`);
       break;
     case "meme":
-      parts.push(`${memberPart} 밈/코믹`);
+      parts.push(`${memberPart} 2컷 밈 코믹, 재미있는 상황, 위아래 2패널 레이아웃`);
       break;
     case "cupsleeve":
       parts.push(`${memberPart} 생일카페 컵슬리브 디자인`);

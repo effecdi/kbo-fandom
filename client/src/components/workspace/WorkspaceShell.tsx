@@ -17,11 +17,17 @@ import { CopilotDock } from "./CopilotDock";
 import { OnboardingOverlay } from "./OnboardingOverlay";
 import { ModuleDialog } from "./ModuleDialog";
 import { EditorAutoStart } from "./EditorAutoStart";
+import { isSingleImageTemplate } from "@/lib/fandom-templates";
 
 export function WorkspaceShell() {
   const { state } = useWorkspace();
   const { showToolbar, showSidePanels, showStoryboard } = useProgressiveUI();
   useWorkspaceShortcuts();
+
+  const isSingleImage = state.fandomMeta
+    ? isSingleImageTemplate(state.fandomMeta.templateType)
+    : false;
+  const effectiveShowStoryboard = showStoryboard && !isSingleImage;
 
   // ── Fandom theme CSS variables ────────────────────────────────────────
   useEffect(() => {
@@ -49,7 +55,7 @@ export function WorkspaceShell() {
 
       {/* Main workspace area */}
       <div className="flex-1 flex flex-col min-h-0">
-        {showStoryboard ? (
+        {effectiveShowStoryboard ? (
           <ResizablePanelGroup direction="vertical" className="flex-1">
             {/* Main horizontal area */}
             <ResizablePanel defaultSize={85} minSize={60}>
