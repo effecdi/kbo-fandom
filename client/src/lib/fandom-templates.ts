@@ -24,32 +24,32 @@ export interface FandomTemplate {
 
 export const FANDOM_TEMPLATES: FandomTemplate[] = [
   // 인기
-  { id: "photocard", type: "photocard", label: "포토카드", desc: "K-pop 포토카드 사이즈", panels: 1, aspect: "2:3", category: "popular" },
-  { id: "portrait", type: "portrait", label: "아이돌 포트레이트", desc: "솔로 또는 그룹 초상화", panels: 1, aspect: "3:4", category: "popular" },
+  { id: "playercard", type: "playercard", label: "선수 카드", desc: "야구 선수 카드 사이즈", panels: 1, aspect: "2:3", category: "popular" },
+  { id: "portrait", type: "portrait", label: "선수 포트레이트", desc: "솔로 또는 팀 초상화", panels: 1, aspect: "3:4", category: "popular" },
   { id: "wallpaper", type: "wallpaper", label: "폰 배경화면", desc: "핸드폰 배경화면", panels: 1, aspect: "9:16", category: "popular" },
   // 포토
-  { id: "concept", type: "concept", label: "컨셉 포토", desc: "앨범 컨셉 포토 스타일", panels: 1, aspect: "3:4", category: "photo" },
+  { id: "matchday", type: "matchday", label: "경기날 포토", desc: "경기장 컨셉 포토 스타일", panels: 1, aspect: "3:4", category: "photo" },
   { id: "edit", type: "edit", label: "에디트/콜라주", desc: "사진 에디트 & 콜라주", panels: 1, aspect: "1:1", category: "photo" },
   // 아트
   { id: "fanart", type: "fanart", label: "팬아트 일러스트", desc: "자유 형식 팬아트", panels: 1, aspect: "3:4", category: "art" },
   { id: "sticker", type: "sticker", label: "스티커/이모지", desc: "귀여운 스티커 세트", panels: 1, aspect: "1:1", category: "art" },
   // 코믹
-  { id: "instatoon", type: "instatoon", label: "4컷 인스타툰", desc: "클래식 4컷 인스타툰", panels: 4, aspect: "3:4", category: "comic" },
-  { id: "meme", type: "meme", label: "밈/코믹", desc: "밈이나 코믹", panels: 2, aspect: "1:1", category: "comic" },
+  { id: "instatoon", type: "instatoon", label: "4컷 인스타툰", desc: "야구 일상 4컷 인스타툰", panels: 4, aspect: "3:4", category: "comic" },
+  { id: "meme", type: "meme", label: "밈/코믹", desc: "야구 밈이나 코믹", panels: 2, aspect: "1:1", category: "comic" },
   // 굿즈
-  { id: "cupsleeve", type: "cupsleeve", label: "컵슬리브", desc: "생일카페 컵슬리브", panels: 1, aspect: "3:4", category: "goods" },
-  { id: "slogan", type: "slogan", label: "슬로건 배너", desc: "콘서트 슬로건/배너", panels: 1, aspect: "16:9", category: "goods" },
+  { id: "cheerbanner", type: "cheerbanner", label: "응원 배너", desc: "경기장 응원 배너", panels: 1, aspect: "3:4", category: "goods" },
+  { id: "slogan", type: "slogan", label: "슬로건 배너", desc: "야구장 응원 슬로건", panels: 1, aspect: "16:9", category: "goods" },
   { id: "stickersheet", type: "stickersheet", label: "스티커시트", desc: "키스컷 스티커 시트", panels: 1, aspect: "3:4", category: "goods" },
-  { id: "birthday-set", type: "birthday-set", label: "생카 패키지", desc: "생일카페 일괄 패키지", panels: 4, aspect: "3:4", category: "goods" },
+  { id: "stadium-set", type: "stadium-set", label: "경기장 패키지", desc: "관람 굿즈 일괄 패키지", panels: 4, aspect: "3:4", category: "goods" },
   { id: "acrylicstand", type: "acrylicstand", label: "아크릴 스탠드", desc: "아크릴 스탠드/키링", panels: 1, aspect: "2:3", category: "goods" },
   { id: "phonecase", type: "phonecase", label: "폰케이스", desc: "스마트폰 케이스 디자인", panels: 1, aspect: "9:16", category: "goods" },
   // 키치
-  { id: "deco-photocard", type: "deco-photocard", label: "꾸미기 포카", desc: "Y2K 스티커, 젬, 리본으로 꾸민 포토카드", panels: 1, aspect: "2:3", category: "kitsch" },
-  { id: "retro-magazine", type: "retro-magazine", label: "키치 매거진", desc: "레트로 Y2K 매거진 커버", panels: 1, aspect: "3:4", category: "kitsch" },
-  { id: "diary-page", type: "diary-page", label: "아이돌 다꾸", desc: "다이어리 꾸미기 페이지", panels: 1, aspect: "1:1", category: "kitsch" },
+  { id: "deco-playercard", type: "deco-playercard", label: "꾸미기 선수카드", desc: "스티커와 장식으로 꾸민 선수카드", panels: 1, aspect: "2:3", category: "kitsch" },
+  { id: "retro-magazine", type: "retro-magazine", label: "레트로 매거진", desc: "레트로 야구 매거진 커버", panels: 1, aspect: "3:4", category: "kitsch" },
+  { id: "scorebook-page", type: "scorebook-page", label: "스코어북 꾸미기", desc: "스코어북/다이어리 꾸미기", panels: 1, aspect: "1:1", category: "kitsch" },
   { id: "kitsch-collage", type: "kitsch-collage", label: "키치 콜라주", desc: "네온, 크롬, 반짝이 맥시멀리스트 콜라주", panels: 1, aspect: "1:1", category: "kitsch" },
-  { id: "ticket-bookmark", type: "ticket-bookmark", label: "키치 티켓", desc: "레트로 콘서트 티켓 & 북마크", panels: 1, aspect: "2:3", category: "kitsch" },
-  { id: "profile-deco", type: "profile-deco", label: "프로필 꾸미기", desc: "Y2K 키치 SNS 프로필 세트", panels: 1, aspect: "1:1", category: "kitsch" },
+  { id: "ticket-bookmark", type: "ticket-bookmark", label: "관람 티켓", desc: "레트로 관람 티켓 & 북마크", panels: 1, aspect: "2:3", category: "kitsch" },
+  { id: "profile-deco", type: "profile-deco", label: "프로필 꾸미기", desc: "SNS 프로필 세트", panels: 1, aspect: "1:1", category: "kitsch" },
 ];
 
 export const TEMPLATE_CATEGORIES = [
@@ -84,36 +84,36 @@ export const STYLE_PRESETS: StylePreset[] = [
 
 // ─── Pose / Outfit / Mood Chips ──────────────────────────────────────────────
 
-export const POSE_CHIPS = ["셀카", "상반신", "전신", "그룹샷", "프로필"];
-export const OUTFIT_CHIPS = ["무대의상", "교복", "캐주얼", "한복", "연습복"];
-export const MOOD_CHIPS = ["밝은", "다크", "몽환적", "레트로", "청순한", "시크한", "귀여운"];
+export const POSE_CHIPS = ["타격", "투구", "수비", "응원", "단체"];
+export const OUTFIT_CHIPS = ["홈유니폼", "원정유니폼", "연습복", "시상식", "캐주얼"];
+export const MOOD_CHIPS = ["역동적", "승리", "열정적", "레트로", "감성적", "파워풀", "귀여운"];
 
 /** Templates where pose/outfit chips are relevant */
 export const POSE_OUTFIT_TEMPLATES: FandomTemplateType[] = [
-  "portrait", "photocard", "concept",
+  "portrait", "playercard", "matchday",
 ];
 
 // ─── Template → Canvas Aspect Ratios ─────────────────────────────────────────
 
 export const TEMPLATE_RATIOS: Record<FandomTemplateType, CanvasAspectRatio[]> = {
   portrait: ["3:4", "2:3", "4:5"],
-  photocard: ["2:3"],
+  playercard: ["2:3"],
   wallpaper: ["9:16"],
   fanart: ["3:4", "1:1", "4:5"],
   sticker: ["1:1"],
-  concept: ["3:4", "4:5", "16:9"],
+  matchday: ["3:4", "4:5", "16:9"],
   edit: ["1:1", "4:5", "3:4"],
   instatoon: ["3:4", "1:1"],
   meme: ["1:1", "3:4"],
-  cupsleeve: ["3:4"],
+  cheerbanner: ["3:4"],
   slogan: ["16:9"],
   stickersheet: ["3:4", "4:5"],
-  "birthday-set": ["3:4"],
+  "stadium-set": ["3:4"],
   acrylicstand: ["2:3", "3:4"],
   phonecase: ["9:16"],
-  "deco-photocard": ["2:3"],
+  "deco-playercard": ["2:3"],
   "retro-magazine": ["3:4", "4:5"],
-  "diary-page": ["1:1"],
+  "scorebook-page": ["1:1"],
   "kitsch-collage": ["1:1", "4:5"],
   "ticket-bookmark": ["2:3"],
   "profile-deco": ["1:1"],
@@ -122,10 +122,10 @@ export const TEMPLATE_RATIOS: Record<FandomTemplateType, CanvasAspectRatio[]> = 
 // ─── Single Image Templates (skip breakdown, go straight to generate) ────────
 
 const SINGLE_IMAGE_TYPES: FandomTemplateType[] = [
-  "portrait", "photocard", "wallpaper", "fanart", "sticker", "concept", "edit",
+  "portrait", "playercard", "wallpaper", "fanart", "sticker", "matchday", "edit",
   "meme",
-  "cupsleeve", "slogan", "stickersheet", "acrylicstand", "phonecase",
-  "deco-photocard", "retro-magazine", "diary-page", "kitsch-collage", "ticket-bookmark", "profile-deco",
+  "cheerbanner", "slogan", "stickersheet", "acrylicstand", "phonecase",
+  "deco-playercard", "retro-magazine", "scorebook-page", "kitsch-collage", "ticket-bookmark", "profile-deco",
 ];
 
 export function isSingleImageTemplate(type: FandomTemplateType): boolean {
@@ -136,25 +136,25 @@ export function isSingleImageTemplate(type: FandomTemplateType): boolean {
 
 export const TEMPLATE_LABELS: Record<FandomTemplateType, string> = {
   portrait: "포트레이트",
-  photocard: "포토카드",
+  playercard: "선수 카드",
   wallpaper: "배경화면",
   fanart: "팬아트",
   sticker: "스티커",
-  concept: "컨셉 포토",
+  matchday: "경기날 포토",
   edit: "에디트",
   instatoon: "인스타툰",
   meme: "밈",
-  cupsleeve: "컵슬리브",
+  cheerbanner: "응원 배너",
   slogan: "슬로건",
   stickersheet: "스티커시트",
-  "birthday-set": "생카 패키지",
+  "stadium-set": "경기장 패키지",
   acrylicstand: "아크릴 스탠드",
   phonecase: "폰케이스",
-  "deco-photocard": "꾸미기 포카",
-  "retro-magazine": "키치 매거진",
-  "diary-page": "아이돌 다꾸",
+  "deco-playercard": "꾸미기 선수카드",
+  "retro-magazine": "레트로 매거진",
+  "scorebook-page": "스코어북 꾸미기",
   "kitsch-collage": "키치 콜라주",
-  "ticket-bookmark": "키치 티켓",
+  "ticket-bookmark": "관람 티켓",
   "profile-deco": "프로필 꾸미기",
 };
 
@@ -173,11 +173,11 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
 
   switch (meta.templateType) {
     case "portrait":
-      parts.push(`${memberPart} 아이돌 포트레이트`);
+      parts.push(`${memberPart} 야구선수 포트레이트`);
       if (meta.poseHint) parts.push(`${meta.poseHint} 포즈`);
       break;
-    case "photocard":
-      parts.push(`${memberPart} 포토카드`);
+    case "playercard":
+      parts.push(`${memberPart} 선수 카드`);
       break;
     case "wallpaper":
       parts.push(`${memberPart} 폰 배경화면`);
@@ -185,8 +185,8 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
     case "sticker":
       parts.push(`${memberPart} 귀여운 스티커 세트, 다양한 표정`);
       break;
-    case "concept":
-      parts.push(`${memberPart} 앨범 컨셉 포토`);
+    case "matchday":
+      parts.push(`${memberPart} 경기날 컨셉 포토`);
       break;
     case "fanart":
       parts.push(`${memberPart} 팬아트 일러스트`);
@@ -200,17 +200,17 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
     case "meme":
       parts.push(`${memberPart} 2컷 밈 코믹, 재미있는 상황, 위아래 2패널 레이아웃`);
       break;
-    case "cupsleeve":
-      parts.push(`${memberPart} 생일카페 컵슬리브 디자인`);
+    case "cheerbanner":
+      parts.push(`${memberPart} 야구장 응원 배너 디자인`);
       break;
     case "slogan":
-      parts.push(`${memberPart} 콘서트 슬로건 배너`);
+      parts.push(`${memberPart} 야구장 응원 슬로건 배너`);
       break;
     case "stickersheet":
       parts.push(`${memberPart} 귀여운 스티커 시트, 다양한 포즈와 표정`);
       break;
-    case "birthday-set":
-      parts.push(`${memberPart} 생일카페 패키지 디자인`);
+    case "stadium-set":
+      parts.push(`${memberPart} 경기장 관람 패키지 디자인`);
       break;
     case "acrylicstand":
       parts.push(`${memberPart} 아크릴 스탠드 디자인`);
@@ -218,23 +218,23 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
     case "phonecase":
       parts.push(`${memberPart} 폰케이스 디자인`);
       break;
-    case "deco-photocard":
-      parts.push(`${memberPart} Y2K 꾸미기 포토카드, 스티커와 젬 장식`);
+    case "deco-playercard":
+      parts.push(`${memberPart} 꾸미기 선수카드, 스티커와 장식`);
       break;
     case "retro-magazine":
-      parts.push(`${memberPart} 레트로 Y2K 매거진 커버`);
+      parts.push(`${memberPart} 레트로 야구 매거진 커버`);
       break;
-    case "diary-page":
-      parts.push(`${memberPart} 아이돌 다이어리 꾸미기 페이지`);
+    case "scorebook-page":
+      parts.push(`${memberPart} 스코어북 다이어리 꾸미기 페이지`);
       break;
     case "kitsch-collage":
       parts.push(`${memberPart} 네온 크롬 맥시멀리스트 키치 콜라주`);
       break;
     case "ticket-bookmark":
-      parts.push(`${memberPart} 레트로 콘서트 티켓 & 북마크`);
+      parts.push(`${memberPart} 레트로 관람 티켓 & 북마크`);
       break;
     case "profile-deco":
-      parts.push(`${memberPart} Y2K 키치 SNS 프로필 데코 세트`);
+      parts.push(`${memberPart} SNS 프로필 데코 세트`);
       break;
   }
 
@@ -253,22 +253,22 @@ export function getOnboardingPrompts(meta: FandomEditorMeta): string[] {
 
   const basePrompts: Record<FandomTemplateType, string[]> = {
     portrait: [
-      `${m} 셀카 포즈로 그려줘`,
-      `${m} 무대의상 상반신`,
-      `${m} 꽃과 함께 몽환적 포트레이트`,
+      `${m} 타격 포즈 포트레이트`,
+      `${m} 홈유니폼 상반신`,
+      `${m} 승리 세레머니 포트레이트`,
     ],
-    photocard: [
-      `${m} 셀카 포토카드`,
-      `시크한 포토카드`,
-      `반짝이 효과 포토카드`,
+    playercard: [
+      `${m} 선수 카드`,
+      `역동적인 선수 카드`,
+      `홀로그래픽 선수 카드`,
     ],
     wallpaper: [
-      `${m} 몽환적 배경화면`,
-      `다크 무드 배경화면`,
-      `꽃밭 배경화면`,
+      `${m} 역동적 배경화면`,
+      `${meta.groupName} 야간경기 배경화면`,
+      `${m} 경기장 배경화면`,
     ],
     fanart: [
-      `${m} 카페에서 팬아트`,
+      `${m} 홈런 장면 팬아트`,
       `${m} 수채화 스타일 팬아트`,
       `${m} 치비 스타일 팬아트`,
     ],
@@ -277,45 +277,45 @@ export function getOnboardingPrompts(meta: FandomEditorMeta): string[] {
       `귀여운 치비 스티커 세트`,
       `${m} 이모지 세트`,
     ],
-    concept: [
-      `${m} 앨범 컨셉 포토`,
-      `시크한 다크 컨셉`,
-      `청순한 화이트 컨셉`,
+    matchday: [
+      `${m} 경기날 컨셉 포토`,
+      `${meta.groupName} 홈경기 포토`,
+      `${m} 승리 포토`,
     ],
     edit: [
       `${m} 에디트/콜라주`,
-      `무대 사진 에디트`,
+      `경기 사진 에디트`,
       `레트로 필터 콜라주`,
     ],
     instatoon: [
-      `${meta.groupName} 연습실 일상 4컷`,
-      `${m} 카페 일상 인스타툰`,
-      `${meta.groupName} 무대 비하인드 4컷`,
+      `${meta.groupName} 훈련장 일상 4컷`,
+      `${m} 야구장 일상 인스타툰`,
+      `${meta.groupName} 경기 비하인드 4컷`,
     ],
     meme: [
       `${m} 밈 만들어줘`,
       `${meta.groupName} 코믹`,
       `${m} 리액션 밈`,
     ],
-    cupsleeve: [
-      `${m} 생일카페 컵슬리브`,
-      `꽃 테마 컵슬리브`,
-      `${m} 컬러 컵슬리브`,
+    cheerbanner: [
+      `${m} 응원 배너 디자인`,
+      `${meta.groupName} 팀컬러 배너`,
+      `${m} 화이팅 배너`,
     ],
     slogan: [
-      `${m} 콘서트 슬로건`,
-      `${m}아 사랑해 배너`,
-      `${meta.groupName} 화이팅 슬로건`,
+      `${m} 야구장 슬로건`,
+      `${m} 화이팅 배너`,
+      `${meta.groupName} 승리 슬로건`,
     ],
     stickersheet: [
       `${m} 귀여운 스티커 시트`,
       `${m} 다양한 표정 스티커`,
       `치비 스타일 스티커`,
     ],
-    "birthday-set": [
-      `${m} 생일카페 풀세트`,
-      `핑크 테마 생카 패키지`,
-      `${m} 생일 축하 패키지`,
+    "stadium-set": [
+      `${m} 경기장 관람 풀세트`,
+      `${meta.groupName} 테마 패키지`,
+      `${m} 직관 응원 패키지`,
     ],
     acrylicstand: [
       `${m} 아크릴 스탠드`,
@@ -325,22 +325,22 @@ export function getOnboardingPrompts(meta: FandomEditorMeta): string[] {
     phonecase: [
       `${m} 폰케이스`,
       `${meta.groupName} 로고 폰케이스`,
-      `${m} 몽환적 폰케이스`,
+      `${m} 역동적 폰케이스`,
     ],
-    "deco-photocard": [
-      `${m} Y2K 꾸미기 포카`,
-      `반짝이 젬 스티커 포카`,
-      `${m} 리본 데코 포토카드`,
+    "deco-playercard": [
+      `${m} 꾸미기 선수카드`,
+      `반짝이 젬 스티커 선수카드`,
+      `${m} 리본 데코 선수카드`,
     ],
     "retro-magazine": [
-      `${m} 틴 매거진 커버`,
-      `Y2K 매거진 표지`,
+      `${m} 레트로 야구 매거진 커버`,
+      `${meta.groupName} 스포츠 매거진 표지`,
       `${m} 레트로 잡지 커버`,
     ],
-    "diary-page": [
-      `${m} 다꾸 페이지`,
-      `${m} 다이어리 꾸미기`,
-      `마스킹테이프 다꾸`,
+    "scorebook-page": [
+      `${m} 스코어북 꾸미기`,
+      `${m} 직관 기록 페이지`,
+      `마스킹테이프 스코어북`,
     ],
     "kitsch-collage": [
       `${m} 네온 키치 콜라주`,
@@ -348,12 +348,12 @@ export function getOnboardingPrompts(meta: FandomEditorMeta): string[] {
       `${m} 맥시멀리스트 콜라주`,
     ],
     "ticket-bookmark": [
-      `${m} 레트로 콘서트 티켓`,
+      `${m} 레트로 관람 티켓`,
       `${m} 키치 북마크`,
       `빈티지 티켓 디자인`,
     ],
     "profile-deco": [
-      `${m} Y2K 프로필 꾸미기`,
+      `${m} 야구 프로필 꾸미기`,
       `키치 SNS 프로필 세트`,
       `${m} 프로필 데코`,
     ],
@@ -373,12 +373,12 @@ export interface QuickAction {
 export function getQuickActions(type: FandomTemplateType): QuickAction[] {
   switch (type) {
     case "portrait":
-    case "photocard":
-    case "concept":
+    case "playercard":
+    case "matchday":
       return [
         { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
         { id: "pose", label: "포즈 변경", prompt: "다른 포즈로 변경해줘" },
-        { id: "outfit", label: "의상 변경", prompt: "의상을 변경해줘" },
+        { id: "outfit", label: "유니폼 변경", prompt: "유니폼을 변경해줘" },
         { id: "expression", label: "표정 변경", prompt: "표정을 변경해줘" },
         { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
       ];
@@ -424,11 +424,11 @@ export function getQuickActions(type: FandomTemplateType): QuickAction[] {
         { id: "text", label: "텍스트 변경", prompt: "텍스트를 변경해줘" },
         { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
       ];
-    case "cupsleeve":
+    case "cheerbanner":
       return [
         { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
         { id: "theme", label: "테마 변경", prompt: "테마를 변경해줘" },
-        { id: "text", label: "텍스트 편집", prompt: "카페명과 날짜를 변경해줘" },
+        { id: "text", label: "텍스트 편집", prompt: "응원 문구를 변경해줘" },
         { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
       ];
     case "slogan":
@@ -445,7 +445,7 @@ export function getQuickActions(type: FandomTemplateType): QuickAction[] {
         { id: "style", label: "스타일 변경", prompt: "스타일을 변경해줘" },
         { id: "layout", label: "배열 변경", prompt: "스티커 배열을 변경해줘" },
       ];
-    case "birthday-set":
+    case "stadium-set":
       return [
         { id: "regen", label: "전체 재생성", prompt: "전체 패키지를 다시 생성해줘" },
         { id: "theme", label: "테마 변경", prompt: "테마를 변경해줘" },
@@ -466,10 +466,10 @@ export function getQuickActions(type: FandomTemplateType): QuickAction[] {
         { id: "color", label: "컬러 변경", prompt: "컬러를 변경해줘" },
         { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
       ];
-    case "deco-photocard":
+    case "deco-playercard":
       return [
         { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
-        { id: "sticker", label: "스티커 추가", prompt: "Y2K 스티커를 더 추가해줘" },
+        { id: "sticker", label: "스티커 추가", prompt: "스티커를 더 추가해줘" },
         { id: "gem", label: "젬 장식", prompt: "반짝이 젬을 추가해줘" },
         { id: "frame", label: "프레임 변경", prompt: "프레임을 변경해줘" },
       ];
@@ -480,11 +480,11 @@ export function getQuickActions(type: FandomTemplateType): QuickAction[] {
         { id: "layout", label: "레이아웃", prompt: "레이아웃을 변경해줘" },
         { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
       ];
-    case "diary-page":
+    case "scorebook-page":
       return [
         { id: "regen", label: "다시 생성", prompt: "다시 생성해줘" },
         { id: "tape", label: "테이프 추가", prompt: "마스킹테이프를 추가해줘" },
-        { id: "deco", label: "데코 추가", prompt: "다꾸 데코 요소를 추가해줘" },
+        { id: "deco", label: "데코 추가", prompt: "꾸미기 데코 요소를 추가해줘" },
         { id: "style", label: "스타일", prompt: "스타일을 변경해줘" },
       ];
     case "kitsch-collage":
@@ -522,14 +522,14 @@ export function getTemplateChips(type: FandomTemplateType): string[] {
   switch (type) {
     case "portrait":
       return ["포트레이트 생성", "다른 포즈로", "의상 변경", "스타일 변경"];
-    case "photocard":
-      return ["포토카드 생성", "반짝이 효과", "프레임 추가"];
+    case "playercard":
+      return ["선수카드 생성", "홀로그래픽 효과", "프레임 추가"];
     case "wallpaper":
       return ["배경화면 생성", "어두운 분위기", "밝은 분위기"];
     case "sticker":
       return ["스티커 생성", "다른 표정으로", "치비 스타일"];
-    case "concept":
-      return ["컨셉 포토 생성", "다크 컨셉", "밝은 컨셉", "스타일 변경"];
+    case "matchday":
+      return ["경기날 포토 생성", "홈경기 컨셉", "원정 컨셉", "스타일 변경"];
     case "fanart":
       return ["팬아트 생성", "수채화 스타일", "스타일 변경"];
     case "edit":
@@ -538,24 +538,24 @@ export function getTemplateChips(type: FandomTemplateType): string[] {
       return ["4컷 자동 생성", "컷 추가", "배경 생성"];
     case "meme":
       return ["밈 생성", "텍스트 변경", "스타일 변경"];
-    case "cupsleeve":
-      return ["컵슬리브 생성", "테마 변경", "텍스트 편집"];
+    case "cheerbanner":
+      return ["응원배너 생성", "테마 변경", "텍스트 편집"];
     case "slogan":
       return ["슬로건 생성", "문구 변경", "컬러 변경"];
     case "stickersheet":
       return ["스티커 생성", "더 추가", "배열 변경"];
-    case "birthday-set":
+    case "stadium-set":
       return ["패키지 생성", "테마 변경", "굿즈 추가"];
     case "acrylicstand":
       return ["아크릴 생성", "포즈 변경", "스타일 변경"];
     case "phonecase":
       return ["폰케이스 생성", "레이아웃 변경", "컬러 변경"];
-    case "deco-photocard":
-      return ["꾸미기 포카 생성", "스티커 추가", "젬 장식"];
+    case "deco-playercard":
+      return ["꾸미기 선수카드 생성", "스티커 추가", "젬 장식"];
     case "retro-magazine":
       return ["매거진 커버 생성", "헤드라인 변경", "레이아웃 변경"];
-    case "diary-page":
-      return ["다꾸 페이지 생성", "테이프 추가", "데코 추가"];
+    case "scorebook-page":
+      return ["스코어북 꾸미기 생성", "테이프 추가", "데코 추가"];
     case "kitsch-collage":
       return ["키치 콜라주 생성", "네온 효과", "크롬 텍스트"];
     case "ticket-bookmark":
@@ -572,23 +572,23 @@ export function getTemplateChips(type: FandomTemplateType): string[] {
 export function getTemplatePlaceholder(type: FandomTemplateType): string {
   switch (type) {
     case "portrait": return "어떤 포즈로 그릴까요?";
-    case "photocard": return "어떤 포토카드를 만들까요?";
+    case "playercard": return "어떤 선수카드를 만들까요?";
     case "wallpaper": return "어떤 분위기의 배경화면?";
     case "sticker": return "어떤 스티커를 만들까요?";
-    case "concept": return "어떤 컨셉 포토를 찍을까요?";
+    case "matchday": return "어떤 경기날 포토를 만들까요?";
     case "fanart": return "어떤 팬아트를 그릴까요?";
     case "edit": return "어떤 에디트를 만들까요?";
     case "instatoon": return "어떤 인스타툰을 만들까요?";
     case "meme": return "어떤 밈을 만들까요?";
-    case "cupsleeve": return "어떤 컵슬리브를 만들까요?";
+    case "cheerbanner": return "어떤 응원 배너를 만들까요?";
     case "slogan": return "어떤 슬로건을 만들까요?";
     case "stickersheet": return "어떤 스티커를 만들까요?";
-    case "birthday-set": return "생카 패키지 테마를 정해주세요";
+    case "stadium-set": return "경기장 패키지 테마를 정해주세요";
     case "acrylicstand": return "어떤 아크릴 스탠드를 만들까요?";
     case "phonecase": return "어떤 폰케이스를 만들까요?";
-    case "deco-photocard": return "어떤 꾸미기 포카를 만들까요?";
+    case "deco-playercard": return "어떤 꾸미기 선수카드를 만들까요?";
     case "retro-magazine": return "어떤 매거진 커버를 만들까요?";
-    case "diary-page": return "어떤 다꾸 페이지를 만들까요?";
+    case "scorebook-page": return "어떤 스코어북 페이지를 만들까요?";
     case "kitsch-collage": return "어떤 키치 콜라주를 만들까요?";
     case "ticket-bookmark": return "어떤 티켓/북마크를 만들까요?";
     case "profile-deco": return "어떤 프로필 데코를 만들까요?";
@@ -608,13 +608,13 @@ export const FANDOM_STICKER_PACKS: FandomSticker[] = [
   { id: "s-heart-4", category: "heart", imageUrl: "💗", label: "두근 하트" },
   { id: "s-heart-5", category: "heart", imageUrl: "🩷", label: "핑크 하트" },
   { id: "s-heart-6", category: "heart", imageUrl: "🤍", label: "흰 하트" },
-  // Lightstick
-  { id: "s-ls-1", category: "lightstick", imageUrl: "🔦", label: "응원봉" },
-  { id: "s-ls-2", category: "lightstick", imageUrl: "✨", label: "반짝이" },
-  { id: "s-ls-3", category: "lightstick", imageUrl: "🌟", label: "별" },
-  { id: "s-ls-4", category: "lightstick", imageUrl: "💫", label: "슈팅스타" },
-  { id: "s-ls-5", category: "lightstick", imageUrl: "🪄", label: "마법봉" },
-  { id: "s-ls-6", category: "lightstick", imageUrl: "⭐", label: "노란 별" },
+  // Cheer
+  { id: "s-ch-1", category: "cheer", imageUrl: "📣", label: "응원" },
+  { id: "s-ch-2", category: "cheer", imageUrl: "✨", label: "반짝이" },
+  { id: "s-ch-3", category: "cheer", imageUrl: "🌟", label: "별" },
+  { id: "s-ch-4", category: "cheer", imageUrl: "🎺", label: "응원나팔" },
+  { id: "s-ch-5", category: "cheer", imageUrl: "👏", label: "박수" },
+  { id: "s-ch-6", category: "cheer", imageUrl: "⭐", label: "노란 별" },
   // Emoji
   { id: "s-emo-1", category: "emoji", imageUrl: "🥰", label: "사랑 눈" },
   { id: "s-emo-2", category: "emoji", imageUrl: "😍", label: "하트 눈" },
@@ -623,12 +623,12 @@ export const FANDOM_STICKER_PACKS: FandomSticker[] = [
   { id: "s-emo-5", category: "emoji", imageUrl: "🫶", label: "하트 손" },
   { id: "s-emo-6", category: "emoji", imageUrl: "🙌", label: "만세" },
   // Logo
-  { id: "s-logo-1", category: "logo", imageUrl: "🎵", label: "음표" },
-  { id: "s-logo-2", category: "logo", imageUrl: "🎶", label: "음표들" },
-  { id: "s-logo-3", category: "logo", imageUrl: "🎤", label: "마이크" },
-  { id: "s-logo-4", category: "logo", imageUrl: "🎧", label: "헤드폰" },
-  { id: "s-logo-5", category: "logo", imageUrl: "🎸", label: "기타" },
-  { id: "s-logo-6", category: "logo", imageUrl: "🥁", label: "드럼" },
+  { id: "s-logo-1", category: "logo", imageUrl: "⚾", label: "야구공" },
+  { id: "s-logo-2", category: "logo", imageUrl: "🏟️", label: "경기장" },
+  { id: "s-logo-3", category: "logo", imageUrl: "🧢", label: "야구모자" },
+  { id: "s-logo-4", category: "logo", imageUrl: "🏆", label: "트로피" },
+  { id: "s-logo-5", category: "logo", imageUrl: "🥇", label: "금메달" },
+  { id: "s-logo-6", category: "logo", imageUrl: "🎖️", label: "훈장" },
   // Text
   { id: "s-txt-1", category: "text", imageUrl: "💬", label: "말풍선" },
   { id: "s-txt-2", category: "text", imageUrl: "🗯️", label: "외침" },
@@ -636,13 +636,13 @@ export const FANDOM_STICKER_PACKS: FandomSticker[] = [
   { id: "s-txt-4", category: "text", imageUrl: "📢", label: "확성기" },
   { id: "s-txt-5", category: "text", imageUrl: "🏷️", label: "태그" },
   { id: "s-txt-6", category: "text", imageUrl: "📝", label: "메모" },
-  // Concert
-  { id: "s-con-1", category: "concert", imageUrl: "🎉", label: "파티" },
-  { id: "s-con-2", category: "concert", imageUrl: "🎊", label: "컨페티" },
-  { id: "s-con-3", category: "concert", imageUrl: "🪩", label: "미러볼" },
-  { id: "s-con-4", category: "concert", imageUrl: "🔥", label: "불꽃" },
-  { id: "s-con-5", category: "concert", imageUrl: "💥", label: "폭발" },
-  { id: "s-con-6", category: "concert", imageUrl: "🌈", label: "무지개" },
+  // Stadium
+  { id: "s-std-1", category: "stadium", imageUrl: "🎉", label: "축하" },
+  { id: "s-std-2", category: "stadium", imageUrl: "🎊", label: "컨페티" },
+  { id: "s-std-3", category: "stadium", imageUrl: "🎆", label: "불꽃놀이" },
+  { id: "s-std-4", category: "stadium", imageUrl: "🔥", label: "불꽃" },
+  { id: "s-std-5", category: "stadium", imageUrl: "💥", label: "폭발" },
+  { id: "s-std-6", category: "stadium", imageUrl: "🌈", label: "무지개" },
 ];
 
 // ─── Photocard Frames ──────────────────────────────────────────────────────
@@ -656,73 +656,91 @@ export interface PhotocardFrameDef {
 export const PHOTOCARD_FRAMES: PhotocardFrameDef[] = [
   { id: "basic", label: "기본", desc: "깔끔한 기본 프레임" },
   { id: "polaroid", label: "폴라로이드", desc: "하단 여백 폴라로이드 스타일" },
-  { id: "idol-card", label: "아이돌 카드", desc: "공식 포토카드 스타일" },
+  { id: "player-card", label: "선수 카드", desc: "공식 선수카드 스타일" },
   { id: "holographic", label: "홀로그래픽", desc: "반짝이는 홀로 효과" },
   { id: "vintage", label: "빈티지", desc: "레트로 빈티지 느낌" },
   { id: "neon", label: "네온", desc: "화려한 네온 테두리" },
 ];
 
-// ─── Lightstick Colors ─────────────────────────────────────────────────────
+// ─── Team Colors ──────────────────────────────────────────────────────────
 
-export interface LightstickColor {
+export interface TeamColor {
   groupName: string;
   color: string;
 }
 
-export const LIGHTSTICK_COLORS: LightstickColor[] = [
-  { groupName: "BTS", color: "#A855F7" },
-  { groupName: "BLACKPINK", color: "#EC4899" },
-  { groupName: "TWICE", color: "#F97316" },
-  { groupName: "aespa", color: "#6366F1" },
-  { groupName: "NewJeans", color: "#3B82F6" },
-  { groupName: "IVE", color: "#EF4444" },
-  { groupName: "LE SSERAFIM", color: "#14B8A6" },
-  { groupName: "Stray Kids", color: "#EAB308" },
-  { groupName: "(G)I-DLE", color: "#8B5CF6" },
-  { groupName: "SEVENTEEN", color: "#F472B6" },
+// backward compat alias
+export type LightstickColor = TeamColor;
+
+export const TEAM_COLORS: TeamColor[] = [
+  { groupName: "LG 트윈스", color: "#C60C30" },
+  { groupName: "KT 위즈", color: "#000000" },
+  { groupName: "SSG 랜더스", color: "#CE0E2D" },
+  { groupName: "NC 다이노스", color: "#315288" },
+  { groupName: "두산 베어스", color: "#131230" },
+  { groupName: "KIA 타이거즈", color: "#EA0029" },
+  { groupName: "롯데 자이언츠", color: "#041E42" },
+  { groupName: "삼성 라이온즈", color: "#074CA1" },
+  { groupName: "한화 이글스", color: "#FF6600" },
+  { groupName: "키움 히어로즈", color: "#820024" },
 ];
 
-// ─── Concert Effects ───────────────────────────────────────────────────────
+// backward compat alias
+export const LIGHTSTICK_COLORS = TEAM_COLORS;
 
-export interface ConcertEffectDef {
+// ─── Stadium Effects ──────────────────────────────────────────────────────
+
+export interface StadiumEffectDef {
   id: ConcertEffect;
   label: string;
   desc: string;
   prompt: string;
 }
 
-export const CONCERT_EFFECTS: ConcertEffectDef[] = [
-  { id: "lightstick-glow", label: "응원봉 빛", desc: "응원봉 글로우 효과", prompt: "응원봉 빛 효과를 추가해줘" },
-  { id: "spotlight", label: "무대 조명", desc: "스포트라이트 효과", prompt: "무대 스포트라이트 조명 효과를 추가해줘" },
-  { id: "confetti", label: "컨페티", desc: "축하 컨페티 효과", prompt: "컨페티 효과를 추가해줘" },
-  { id: "stage-smoke", label: "스모그", desc: "무대 연기 효과", prompt: "무대 스모그 효과를 추가해줘" },
+// backward compat alias
+export type ConcertEffectDef = StadiumEffectDef;
+
+export const STADIUM_EFFECTS: StadiumEffectDef[] = [
+  { id: "cheer-glow", label: "응원 빛", desc: "응원 글로우 효과", prompt: "응원 빛 효과를 추가해줘" },
+  { id: "spotlight", label: "조명", desc: "경기장 스포트라이트", prompt: "경기장 스포트라이트 조명을 추가해줘" },
+  { id: "confetti", label: "컨페티", desc: "승리 축하 컨페티", prompt: "승리 컨페티 효과를 추가해줘" },
+  { id: "firework", label: "불꽃놀이", desc: "경기장 불꽃놀이", prompt: "불꽃놀이 효과를 추가해줘" },
   { id: "laser", label: "레이저", desc: "레이저 빔 효과", prompt: "레이저 빔 효과를 추가해줘" },
 ];
 
-// ─── K-POP Aesthetic Filters ─────────────────────────────────────────────────
+// backward compat alias
+export const CONCERT_EFFECTS = STADIUM_EFFECTS;
 
-export interface KpopAestheticFilter {
+// ─── Baseball Aesthetic Filters ──────────────────────────────────────────────
+
+export interface BaseballAestheticFilter {
   id: KpopAestheticFilterId;
   label: string;
   prompt: string;
   color: string;
 }
 
-export const KPOP_AESTHETIC_FILTERS: KpopAestheticFilter[] = [
-  { id: "dreamy",      label: "몽환적",     prompt: "dreamy soft focus ethereal glow pastel tones", color: "#E8B4F8" },
-  { id: "y2k",         label: "Y2K",        prompt: "Y2K aesthetic, chrome, bubble, sparkle, neon pink", color: "#FF69B4" },
-  { id: "holographic", label: "홀로그래픽",  prompt: "holographic iridescent rainbow shimmer", color: "#87CEEB" },
-  { id: "retro-film",  label: "필름 레트로", prompt: "vintage film grain, warm tones, light leak", color: "#D4A574" },
-  { id: "fairy",       label: "요정 코어",   prompt: "fairy core, sparkles, butterfly, pastel bloom", color: "#FFB6C1" },
-  { id: "dark-royal",  label: "다크 로열",   prompt: "dark royal, velvet, gold accents, dramatic", color: "#4A0E5C" },
-  { id: "concert",     label: "콘서트",      prompt: "concert stage, dramatic lighting, lens flare", color: "#1E3A5F" },
-  { id: "magazine",    label: "매거진",      prompt: "fashion magazine editorial, clean typography", color: "#2C2C2C" },
-  { id: "summer-pop",  label: "썸머 팝",     prompt: "bright summer pop, vivid, tropical, cheerful", color: "#FF6347" },
-  { id: "winter-soft", label: "겨울 소프트", prompt: "soft winter, snow, white tones, cozy warm", color: "#B0C4DE" },
-  { id: "kitsch-y2k",     label: "키치 Y2K",     prompt: "Y2K kitsch, bubblegum pink, chrome hearts, butterfly clips, sparkle gems", color: "#FF69B4" },
-  { id: "kitsch-retro",   label: "키치 레트로",   prompt: "retro kitsch, checkerboard, neon signs, vintage stickers, maximalist", color: "#FF6F61" },
-  { id: "kitsch-dreampop", label: "키치 드림팝",  prompt: "dreampop kitsch, pastel rainbow, glitter, soft glow, kawaii deco", color: "#DDA0DD" },
+// backward compat alias
+export type KpopAestheticFilter = BaseballAestheticFilter;
+
+export const BASEBALL_AESTHETIC_FILTERS: BaseballAestheticFilter[] = [
+  { id: "classic",        label: "클래식",       prompt: "classic baseball, timeless, clean white uniform, blue sky", color: "#1E3A5F" },
+  { id: "retro",          label: "레트로",       prompt: "retro vintage baseball, sepia tones, old stadium, film grain", color: "#D4A574" },
+  { id: "dynamic",        label: "역동적",       prompt: "dynamic action shot, motion blur, powerful swing, dramatic angle", color: "#EF4444" },
+  { id: "night-game",     label: "야간경기",     prompt: "night game atmosphere, stadium lights, dramatic shadows, neon glow", color: "#1A1A2E" },
+  { id: "victory",        label: "승리",         prompt: "victory celebration, confetti, golden light, triumphant mood", color: "#FFD700" },
+  { id: "daytime",        label: "주간경기",     prompt: "bright daytime game, sunny, blue sky, vivid green field", color: "#4CAF50" },
+  { id: "stadium",        label: "경기장",       prompt: "stadium atmosphere, crowd, wide angle, grand scale", color: "#37474F" },
+  { id: "magazine",       label: "매거진",       prompt: "sports magazine editorial, clean typography, professional photography", color: "#2C2C2C" },
+  { id: "summer-day",     label: "여름 야구",    prompt: "bright summer baseball, vivid, tropical, cheerful, sunny day", color: "#FF6347" },
+  { id: "autumn-series",  label: "가을 야구",    prompt: "autumn baseball, golden leaves, warm tones, playoff atmosphere", color: "#D4763A" },
+  { id: "kitsch-retro",   label: "키치 레트로",   prompt: "retro kitsch baseball, checkerboard, neon signs, vintage stickers, maximalist", color: "#FF6F61" },
+  { id: "kitsch-pop",     label: "키치 팝",       prompt: "pop art baseball, bold colors, comic style, halftone dots", color: "#FF69B4" },
+  { id: "kitsch-heritage", label: "키치 헤리티지", prompt: "heritage kitsch, old school baseball, pennant flags, classic typography", color: "#8B4513" },
 ];
+
+// backward compat alias
+export const KPOP_AESTHETIC_FILTERS = BASEBALL_AESTHETIC_FILTERS;
 
 // ─── Fandom Color Palettes (expanded from LIGHTSTICK_COLORS) ────────────────
 
@@ -736,16 +754,16 @@ export interface FandomColorPalette {
 }
 
 export const FANDOM_COLOR_PALETTES: FandomColorPalette[] = [
-  { groupName: "BTS",         primary: "#A855F7", secondary: "#7C3AED", accent: "#C084FC", gradient: ["#A855F7", "#7C3AED"], lightstick: "#A855F7" },
-  { groupName: "BLACKPINK",   primary: "#EC4899", secondary: "#DB2777", accent: "#F472B6", gradient: ["#EC4899", "#DB2777"], lightstick: "#EC4899" },
-  { groupName: "TWICE",       primary: "#F97316", secondary: "#EA580C", accent: "#FB923C", gradient: ["#F97316", "#FBBF24"], lightstick: "#F97316" },
-  { groupName: "aespa",       primary: "#6366F1", secondary: "#4F46E5", accent: "#818CF8", gradient: ["#6366F1", "#A855F7"], lightstick: "#6366F1" },
-  { groupName: "NewJeans",    primary: "#3B82F6", secondary: "#2563EB", accent: "#60A5FA", gradient: ["#3B82F6", "#06B6D4"], lightstick: "#3B82F6" },
-  { groupName: "IVE",         primary: "#EF4444", secondary: "#DC2626", accent: "#F87171", gradient: ["#EF4444", "#F97316"], lightstick: "#EF4444" },
-  { groupName: "LE SSERAFIM", primary: "#14B8A6", secondary: "#0D9488", accent: "#2DD4BF", gradient: ["#14B8A6", "#06B6D4"], lightstick: "#14B8A6" },
-  { groupName: "Stray Kids",  primary: "#EAB308", secondary: "#CA8A04", accent: "#FACC15", gradient: ["#EAB308", "#F97316"], lightstick: "#EAB308" },
-  { groupName: "(G)I-DLE",    primary: "#8B5CF6", secondary: "#7C3AED", accent: "#A78BFA", gradient: ["#8B5CF6", "#EC4899"], lightstick: "#8B5CF6" },
-  { groupName: "SEVENTEEN",   primary: "#F472B6", secondary: "#EC4899", accent: "#F9A8D4", gradient: ["#F472B6", "#A855F7"], lightstick: "#F472B6" },
+  { groupName: "LG 트윈스",     primary: "#C60C30", secondary: "#1D1D1D", accent: "#E8384F", gradient: ["#C60C30", "#8B0000"], lightstick: "#C60C30" },
+  { groupName: "KT 위즈",       primary: "#000000", secondary: "#E30613", accent: "#333333", gradient: ["#000000", "#E30613"], lightstick: "#000000" },
+  { groupName: "SSG 랜더스",    primary: "#CE0E2D", secondary: "#FFD700", accent: "#E8384F", gradient: ["#CE0E2D", "#8B0000"], lightstick: "#CE0E2D" },
+  { groupName: "NC 다이노스",   primary: "#315288", secondary: "#C1A57B", accent: "#4A7AB5", gradient: ["#315288", "#1A365D"], lightstick: "#315288" },
+  { groupName: "두산 베어스",   primary: "#131230", secondary: "#ED1C24", accent: "#2D2B5F", gradient: ["#131230", "#ED1C24"], lightstick: "#131230" },
+  { groupName: "KIA 타이거즈",  primary: "#EA0029", secondary: "#000000", accent: "#FF3355", gradient: ["#EA0029", "#8B0000"], lightstick: "#EA0029" },
+  { groupName: "롯데 자이언츠", primary: "#041E42", secondary: "#D00F31", accent: "#1B3A6B", gradient: ["#041E42", "#D00F31"], lightstick: "#041E42" },
+  { groupName: "삼성 라이온즈", primary: "#074CA1", secondary: "#FFFFFF", accent: "#2A6FC9", gradient: ["#074CA1", "#03306B"], lightstick: "#074CA1" },
+  { groupName: "한화 이글스",   primary: "#FF6600", secondary: "#1D1D1D", accent: "#FF8833", gradient: ["#FF6600", "#CC5200"], lightstick: "#FF6600" },
+  { groupName: "키움 히어로즈", primary: "#820024", secondary: "#000000", accent: "#A3003A", gradient: ["#820024", "#4A0015"], lightstick: "#820024" },
 ];
 
 // ─── Wallpaper Widget Layouts ────────────────────────────────────────────────
@@ -806,52 +824,58 @@ export const FANDOM_DESIGN_ELEMENTS: FandomDesignElement[] = [
   { id: "film-grain", label: "필름 그레인", category: "texture", prompt: "vintage film grain texture" },
   // Overlays
   { id: "bokeh", label: "보케 오버레이", category: "overlay", prompt: "soft bokeh light circles overlay" },
-  { id: "lightstick-sea", label: "응원봉 바다", category: "overlay", prompt: "sea of concert lightsticks glowing background" },
-  { id: "confetti-overlay", label: "컨페티", category: "overlay", prompt: "colorful confetti falling overlay" },
+  { id: "cheer-lights", label: "응원 조명", category: "overlay", prompt: "stadium cheer lights glowing background" },
+  { id: "confetti-overlay", label: "컨페티", category: "overlay", prompt: "victory confetti falling overlay" },
   { id: "lens-flare", label: "렌즈 플레어", category: "overlay", prompt: "anamorphic lens flare light" },
   // Patterns
-  { id: "heart-pattern", label: "하트 패턴", category: "pattern", prompt: "repeating heart pattern background" },
-  { id: "star-pattern", label: "별 패턴", category: "pattern", prompt: "repeating star pattern background" },
-  { id: "lightstick-pattern", label: "응원봉 패턴", category: "pattern", prompt: "repeating lightstick icon pattern" },
+  { id: "baseball-pattern", label: "야구공 패턴", category: "pattern", prompt: "repeating baseball stitching pattern background" },
+  { id: "diamond-pattern", label: "다이아몬드 패턴", category: "pattern", prompt: "repeating baseball diamond field pattern" },
+  { id: "grass-texture", label: "잔디 텍스처", category: "pattern", prompt: "green grass field texture background" },
   // Deco
-  { id: "butterfly", label: "나비", category: "deco", prompt: "decorative butterflies scattered" },
+  { id: "pennant", label: "페넌트", category: "deco", prompt: "decorative baseball pennant flags" },
   { id: "flower-frame", label: "꽃 프레임", category: "deco", prompt: "floral frame border decoration" },
   { id: "ribbon", label: "리본 장식", category: "deco", prompt: "cute ribbon bow decoration" },
   // Kitsch deco
-  { id: "y2k-sticker", label: "Y2K 스티커", category: "deco", prompt: "Y2K style decorative stickers, chrome hearts, stars, butterflies" },
+  { id: "retro-sticker", label: "레트로 스티커", category: "deco", prompt: "retro vintage baseball stickers, stars, badges" },
   { id: "chrome-text", label: "크롬 텍스트", category: "deco", prompt: "chrome metallic 3D text effect" },
   { id: "masking-tape", label: "마스킹테이프", category: "deco", prompt: "colorful washi masking tape strips decoration" },
-  { id: "checkerboard", label: "체커보드", category: "pattern", prompt: "retro checkerboard pattern, pink and white" },
+  { id: "checkerboard", label: "체커보드", category: "pattern", prompt: "retro checkerboard pattern, team colors" },
   { id: "gem-sticker", label: "젬 스티커", category: "deco", prompt: "sparkly gem rhinestone sticker decorations" },
-  { id: "neon-frame", label: "네온 프레임", category: "overlay", prompt: "glowing neon frame border, pink and blue" },
+  { id: "neon-frame", label: "네온 프레임", category: "overlay", prompt: "glowing neon frame border, team colors" },
 ];
 
-// ─── K-POP Text Presets ──────────────────────────────────────────────────────
+// ─── Baseball Text Presets ───────────────────────────────────────────────────
 
-export interface KpopTextPreset {
+export interface BaseballTextPreset {
   id: string;
   text: string;
-  category: "cheer" | "birthday" | "love" | "general";
+  category: "cheer" | "victory" | "love" | "general";
   lang: "ko" | "en";
 }
 
-export const KPOP_TEXT_PRESETS: KpopTextPreset[] = [
-  { id: "t1",  text: "사랑해요",          category: "love",     lang: "ko" },
-  { id: "t2",  text: "영원히 함께",        category: "love",     lang: "ko" },
-  { id: "t3",  text: "최고의 아이돌",      category: "cheer",    lang: "ko" },
-  { id: "t4",  text: "화이팅!",           category: "cheer",    lang: "ko" },
-  { id: "t5",  text: "생일 축하해!",       category: "birthday", lang: "ko" },
-  { id: "t6",  text: "태어나줘서 고마워",   category: "birthday", lang: "ko" },
-  { id: "t7",  text: "오늘도 빛나는 너",    category: "general",  lang: "ko" },
-  { id: "t8",  text: "Forever Young",     category: "general",  lang: "en" },
-  { id: "t9",  text: "My Universe",       category: "love",     lang: "en" },
-  { id: "t10", text: "Happy Birthday!",   category: "birthday", lang: "en" },
-  { id: "t11", text: "You Are My Star",   category: "love",     lang: "en" },
-  { id: "t12", text: "Shine On!",         category: "cheer",    lang: "en" },
+// backward compat alias
+export type KpopTextPreset = BaseballTextPreset;
+
+export const BASEBALL_TEXT_PRESETS: BaseballTextPreset[] = [
+  { id: "t1",  text: "화이팅!",            category: "cheer",    lang: "ko" },
+  { id: "t2",  text: "홈런 치자!",         category: "cheer",    lang: "ko" },
+  { id: "t3",  text: "승리의 함성",         category: "victory",  lang: "ko" },
+  { id: "t4",  text: "우승하자!",           category: "victory",  lang: "ko" },
+  { id: "t5",  text: "오늘도 직관!",        category: "general",  lang: "ko" },
+  { id: "t6",  text: "영원한 팬",           category: "love",     lang: "ko" },
+  { id: "t7",  text: "최고의 선수",         category: "cheer",    lang: "ko" },
+  { id: "t8",  text: "Play Ball!",         category: "general",  lang: "en" },
+  { id: "t9",  text: "Home Run!",          category: "cheer",    lang: "en" },
+  { id: "t10", text: "MVP!",               category: "victory",  lang: "en" },
+  { id: "t11", text: "We Are Champions",   category: "victory",  lang: "en" },
+  { id: "t12", text: "Go! Go! Go!",        category: "cheer",    lang: "en" },
   // Kitsch text presets
-  { id: "t13", text: "My Star",           category: "love",     lang: "en" },
-  { id: "t14", text: "XOXO",              category: "love",     lang: "en" },
-  { id: "t15", text: "Dream On",          category: "general",  lang: "en" },
-  { id: "t16", text: "너만 볼 거야",       category: "love",     lang: "ko" },
-  { id: "t17", text: "덕질은 나의 힘",     category: "cheer",    lang: "ko" },
+  { id: "t13", text: "My Player",          category: "love",     lang: "en" },
+  { id: "t14", text: "Strike Out!",        category: "cheer",    lang: "en" },
+  { id: "t15", text: "Grand Slam",         category: "victory",  lang: "en" },
+  { id: "t16", text: "직관은 나의 힘",      category: "cheer",    lang: "ko" },
+  { id: "t17", text: "야구장 가자!",        category: "general",  lang: "ko" },
 ];
+
+// backward compat alias
+export const KPOP_TEXT_PRESETS = BASEBALL_TEXT_PRESETS;
