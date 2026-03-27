@@ -13,6 +13,10 @@ import {
   Palette,
   MessageCircle,
   Flame,
+  Calendar,
+  MapPin,
+  BarChart3,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
@@ -56,42 +60,42 @@ export function LandingPage() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated background */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-20 w-96 h-96 rounded-full blur-3xl opacity-20 bg-violet-500 animate-pulse" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl opacity-20 bg-pink-500 animate-pulse" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-10 bg-purple-500" />
+          <div className="absolute top-20 left-20 w-96 h-96 rounded-full blur-3xl opacity-20 bg-red-500 animate-pulse" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl opacity-20 bg-orange-500 animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-10 bg-amber-500" />
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 py-32 text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-6 py-2 mb-8">
-            <Heart className="w-4 h-4 text-violet-500" />
-            <span className="text-sm font-bold text-violet-500">K-POP 팬덤 플랫폼</span>
+          <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-full px-6 py-2 mb-8">
+            <Flame className="w-4 h-4 text-red-500" />
+            <span className="text-sm font-bold text-red-500">2026 KBO 시즌 개막!</span>
           </div>
 
           {/* Title */}
           <h1 className="mb-8">
-            <div className="text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-4 bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-              MY FANDOM
+            <div className="text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-4 bg-gradient-to-r from-red-500 via-orange-500 to-amber-500 bg-clip-text text-transparent">
+              KBO FANDOM
             </div>
             <div className="text-3xl md:text-5xl font-black text-foreground">
-              나만의 아이돌 팬덤 세계
+              나만의 야구 팬덤 세계
             </div>
           </h1>
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto text-muted-foreground">
-            팬아트 제작, 팬덤 인증, 이벤트 참여까지
+            경기 일정, 응원가, 직관 가이드, 팬아트까지
             <br />
-            <span className="font-bold text-foreground">진정한 팬을 위한 올인원 플랫폼</span>
+            <span className="font-bold text-foreground">KBO 10개 구단 팬을 위한 올인원 플랫폼</span>
           </p>
 
           {/* CTA */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
             <Button
               onClick={() => navigate("/login")}
-              className="px-10 py-7 text-lg font-black bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-2xl hover:scale-105 transition-all shadow-lg hover:shadow-xl hover:shadow-violet-500/25"
+              className="px-10 py-7 text-lg font-black bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-2xl hover:scale-105 transition-all shadow-lg hover:shadow-xl hover:shadow-red-500/25"
             >
-              <Heart className="w-6 h-6 mr-2" />
+              <Flame className="w-6 h-6 mr-2" />
               팬덤 시작하기
             </Button>
             <Button
@@ -106,7 +110,7 @@ export function LandingPage() {
 
           {/* Scroll indicator */}
           <div className="animate-bounce">
-            <div className="w-1 h-16 mx-auto rounded-full bg-gradient-to-b from-violet-500 to-transparent" />
+            <div className="w-1 h-16 mx-auto rounded-full bg-gradient-to-b from-red-500 to-transparent" />
           </div>
         </div>
       </section>
@@ -116,10 +120,10 @@ export function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { icon: Users, label: "활성 팬", value: totalFollowers.toLocaleString(), color: "text-violet-500" },
+              { icon: Users, label: "활성 팬", value: totalFollowers.toLocaleString(), color: "text-red-500" },
               { icon: Heart, label: "팬아트", value: totalFanart.toLocaleString(), color: "text-rose-500" },
-              { icon: Music, label: "아이돌 그룹", value: String(groups.length), color: "text-cyan-500" },
-              { icon: Trophy, label: "이벤트", value: "8+", color: "text-amber-500" },
+              { icon: Star, label: "KBO 구단", value: String(groups.length), color: "text-orange-500" },
+              { icon: Calendar, label: "2026 경기", value: "720", color: "text-amber-500" },
             ].map((stat, i) => (
               <div key={i} className="text-center p-6 rounded-2xl bg-card border border-border">
                 <stat.icon className={`w-10 h-10 mx-auto mb-3 ${stat.color}`} />
@@ -135,39 +139,39 @@ export function LandingPage() {
       <section className="py-24 px-6 bg-background">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-block px-6 py-2 rounded-full text-sm font-bold mb-6 bg-violet-500/10 text-violet-500 border border-violet-500/20">
+            <div className="inline-block px-6 py-2 rounded-full text-sm font-bold mb-6 bg-red-500/10 text-red-500 border border-red-500/20">
               핵심 기능
             </div>
             <h2 className="text-4xl md:text-6xl font-black text-foreground">
-              왜 <span className="bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">MY FANDOM</span>인가?
+              왜 <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">KBO FANDOM</span>인가?
             </h2>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
+                icon: Calendar,
+                title: "경기 일정 & 직관",
+                desc: "내 팀 경기 일정 확인, 직관 예정 관리까지 한 곳에서",
+                color: "#EF4444",
+              },
+              {
+                icon: Music,
+                title: "응원가 & 직관 가이드",
+                desc: "구단별 응원가 가사, 구장 정보, 맛집, 교통편 총정리",
+                color: "#F97316",
+              },
+              {
                 icon: Palette,
-                title: "AI 팬아트 제작",
-                desc: "AI로 좋아하는 아이돌의 팬아트를 간편하게 제작하세요",
-                color: "#8B5CF6",
-              },
-              {
-                icon: MessageCircle,
-                title: "팬덤 소통",
-                desc: "같은 팬들과 작품을 공유하고 댓글로 소통하세요",
-                color: "#EC4899",
-              },
-              {
-                icon: Trophy,
-                title: "이벤트 & 챌린지",
-                desc: "공식 이벤트에 참여하고 특별한 굿즈를 받으세요",
+                title: "팬아트 & 포토카드",
+                desc: "AI 팬아트 제작, 포토카드 컬렉션과 트레이딩",
                 color: "#F59E0B",
               },
               {
-                icon: Star,
-                title: "팬덤 인증",
-                desc: "10문답 퀴즈를 통해 진정한 팬임을 인증하세요",
-                color: "#00B4D8",
+                icon: MessageCircle,
+                title: "팬덤 커뮤니티",
+                desc: "같은 팀 팬들과 소통, 굿즈 교환, 랭킹 경쟁",
+                color: "#10B981",
               },
             ].map((feature, i) => (
               <div
@@ -192,17 +196,17 @@ export function LandingPage() {
       <section className="py-24 px-6 bg-muted">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-block px-6 py-2 rounded-full text-sm font-bold mb-6 bg-pink-500/10 text-pink-500 border border-pink-500/20">
+            <div className="inline-block px-6 py-2 rounded-full text-sm font-bold mb-6 bg-orange-500/10 text-orange-500 border border-orange-500/20">
               <Flame className="w-4 h-4 inline mr-1" />
-              인기 그룹
+              KBO 10개 구단
             </div>
             <h2 className="text-4xl md:text-6xl font-black text-foreground">
-              지금 <span className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">핫한</span> 그룹
+              내 <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">팀</span>을 선택하세요
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {groups.slice(0, 8).map((group) => (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            {groups.slice(0, 10).map((group) => (
               <div
                 key={group.id}
                 className="group p-6 rounded-2xl border bg-card border-border hover:shadow-xl transition-all hover:-translate-y-1 text-center cursor-pointer"
@@ -236,17 +240,17 @@ export function LandingPage() {
       <section className="py-32 px-6 bg-background">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-6xl font-black text-foreground mb-6">
-            지금 바로<br/>
-            <span className="bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">팬덤</span>에 합류하세요
+            2026 시즌,<br/>
+            <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">야구</span>와 함께하세요
           </h2>
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            10가지 문답으로 팬덤을 인증하고, 나만의 개인화된 팬덤 세계를 경험하세요
+            내 팀을 선택하고, 경기 일정부터 응원가, 직관 가이드까지 모든 팬덤 활동을 한 곳에서
           </p>
           <Button
             onClick={() => navigate("/login")}
-            className="px-12 py-7 text-xl font-black bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-2xl hover:scale-105 transition-all shadow-xl hover:shadow-2xl hover:shadow-violet-500/25"
+            className="px-12 py-7 text-xl font-black bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-2xl hover:scale-105 transition-all shadow-xl hover:shadow-2xl hover:shadow-red-500/25"
           >
-            <Sparkles className="w-6 h-6 mr-2" />
+            <Flame className="w-6 h-6 mr-2" />
             팬덤 시작하기
           </Button>
         </div>
@@ -258,20 +262,20 @@ export function LandingPage() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="md:col-span-1">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
-                  <Heart className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+                  <Flame className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-2xl font-black bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">
-                  MY FANDOM
+                <span className="text-2xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+                  KBO FANDOM
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">
-                K-POP 팬덤을 위한 올인원 플랫폼
+                KBO 야구 팬을 위한 올인원 플랫폼
               </p>
             </div>
             {[
-              { title: "서비스", links: ["팬아트 제작", "팬덤 피드", "이벤트"] },
-              { title: "팬덤", links: ["그룹 목록", "팬덤 인증", "갤러리"] },
+              { title: "서비스", links: ["경기 일정", "응원가", "직관 가이드"] },
+              { title: "팬덤", links: ["KBO 구단", "팬아트", "포토카드"] },
               { title: "법적 고지", links: [{ label: "이용약관", path: "/legal/terms" }, { label: "개인정보", path: "/legal/privacy" }, { label: "환불정책", path: "/legal/refund" }] },
             ].map((section) => (
               <div key={section.title}>
@@ -297,7 +301,7 @@ export function LandingPage() {
           </div>
           <div className="pt-8 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
-              © 2026 MY FANDOM. All rights reserved.
+              © 2026 KBO FANDOM. All rights reserved.
             </p>
           </div>
         </div>
