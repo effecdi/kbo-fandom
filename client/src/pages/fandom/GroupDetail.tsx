@@ -6,10 +6,12 @@ import { FandomFeedPostCard } from "@/components/fandom/fandom-feed-post-card";
 import { FandomEventCard } from "@/components/fandom/fandom-event-card";
 import { FandomRankingList } from "@/components/fandom/fandom-ranking-list";
 import { CommentSection } from "@/components/fandom/comment-section";
-import { Sparkles, Users as UsersIcon, Trophy, BarChart3, ArrowLeft } from "lucide-react";
+import { Sparkles, Users as UsersIcon, Trophy, BarChart3, ArrowLeft, Music, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
+import { CheerSongCard } from "@/components/fandom/cheer-song-card";
+import { StadiumInfoCard } from "@/components/fandom/stadium-info-card";
 import {
   getItem,
   listItems,
@@ -18,17 +20,21 @@ import {
   type IdolGroup,
   type IdolMember,
   type KboGameSchedule,
+  type CheerSong,
+  type StadiumGuide,
   type FandomFeedPost,
   type FandomEvent,
 } from "@/lib/local-store";
 import { Calendar } from "lucide-react";
 
-type GroupTab = "fanart" | "members" | "schedule" | "events" | "rankings";
+type GroupTab = "fanart" | "members" | "schedule" | "events" | "rankings" | "cheersongs" | "stadium";
 
 const TABS: { id: GroupTab; label: string; icon: typeof Sparkles }[] = [
   { id: "fanart", label: "팬아트", icon: Sparkles },
   { id: "members", label: "선수", icon: UsersIcon },
   { id: "schedule", label: "경기일정", icon: Calendar },
+  { id: "cheersongs", label: "응원가", icon: Music },
+  { id: "stadium", label: "직관", icon: MapPin },
   { id: "events", label: "이벤트", icon: Trophy },
   { id: "rankings", label: "랭킹", icon: BarChart3 },
 ];
@@ -42,6 +48,8 @@ export function FandomGroupDetail() {
   const [tab, setTab] = useState<GroupTab>("fanart");
   const [selectedPost, setSelectedPost] = useState<FandomFeedPost | null>(null);
   const [games, setGames] = useState<KboGameSchedule[]>([]);
+  const [cheerSongs, setCheerSongs] = useState<CheerSong[]>([]);
+  const [stadiumGuide, setStadiumGuide] = useState<StadiumGuide | null>(null);
   const [allTeams, setAllTeams] = useState<IdolGroup[]>([]);
 
   useEffect(() => {
@@ -63,6 +71,16 @@ export function FandomGroupDetail() {
 
     const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
     setGames(allGames.filter((g) => g.homeTeamId === id || g.awayTeamId === id));
+
+    // Load cheer songs for this team
+    const allSongs = listItems<CheerSong>(STORE_KEYS.CHEER_SONGS);
+    setCheerSongs(allSongs.filter((s) => s.teamId === id).sort((a, b) => a.order - b.order));
+
+    // Load stadium guide (LG and Doosan share Jamsil)
+    const allGuides = listItems<StadiumGuide>(STORE_KEYS.STADIUM_GUIDES);
+    const teamGuide = allGuides.find((sg) => sg.teamId === id);
+    const fallbackGuide = id === "team-doo" ? allGuides.find((sg) => sg.teamId === "team-lg") : null;
+    setStadiumGuide(teamGuide || fallbackGuide || null);
   }, [id]);
 
   if (!group) {
@@ -187,6 +205,36 @@ export function FandomGroupDetail() {
                 {events.map((event) => (
                   <FandomEventCard key={event.id} event={event} />
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "cheersongs" && (
+          <div>
+            {cheerSongs.length === 0 ? (
+              <div className="text-center py-12">
+                <Music className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">등록된 응원가가 없습니다</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {cheerSongs.map((song) => (
+                  <CheerSongCard key={song.id} song={song} teamColor={group.coverColor} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "stadium" && (
+          <div>
+            {stadiumGuide ? (
+              <StadiumInfoCard guide={stadiumGuide} teamColor={group.coverColor} />
+            ) : (
+              <div className="text-center py-12">
+                <MapPin className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">구장 정보가 없습니다</p>
               </div>
             )}
           </div>

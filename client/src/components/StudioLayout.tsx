@@ -25,6 +25,12 @@ import {
   Crown,
   Pen,
   Send,
+  Calendar,
+  Music,
+  MapPin,
+  BarChart3,
+  Camera,
+  ShoppingBag,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useTheme } from "@/components/theme-provider";
@@ -52,6 +58,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     "내 팬덤": true,
+    "야구": true,
     "창작": true,
     "커뮤니티": true,
   });
@@ -75,19 +82,30 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
       ],
     },
     {
+      title: "야구",
+      items: [
+        { icon: Calendar, label: "경기 일정", path: "/fandom/schedule" },
+        { icon: BarChart3, label: "순위표", path: "/fandom/standings" },
+        { icon: Music, label: "응원가", path: "/fandom/cheer-songs" },
+        { icon: MapPin, label: "직관 가이드", path: "/fandom/stadium-guide" },
+      ],
+    },
+    {
       title: "창작",
       items: [
         { icon: Pen, label: "에디터", path: "/editor/new" },
         { icon: Sparkles, label: "팬아트 만들기", path: "/fandom/create" },
+        { icon: Camera, label: "포토카드", path: "/fandom/photocards" },
         { icon: FolderOpen, label: "내 작품", path: "/studio" },
       ],
     },
     {
       title: "커뮤니티",
       items: [
-        { icon: Users, label: "아이돌 그룹", path: "/fandom/groups" },
+        { icon: Users, label: "KBO 구단", path: "/fandom/groups" },
         { icon: Crown, label: "크리에이터", path: "/fandom/fans" },
         { icon: Trophy, label: "이벤트 / 챌린지", path: "/fandom/events" },
+        { icon: ShoppingBag, label: "굿즈 교환", path: "/fandom/goods" },
         { icon: TrendingUp, label: "팬아트 랭킹", path: "/fandom/feed" },
         { icon: MessageCircle, label: "팬 토크", path: "/fandom/talk" },
         { icon: Send, label: "다이렉트 메시지", path: "/fandom/messages" },

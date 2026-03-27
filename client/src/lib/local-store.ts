@@ -254,6 +254,7 @@ export interface KboAttendance {
 }
 
 export interface KboStanding {
+  id: string;
   teamId: string;
   teamName: string;
   teamColor: string;
@@ -875,16 +876,16 @@ export function seedIfEmpty(): void {
   // ── KBO Standings Seed ─────────────────────────────────────────────────────
   if (listItems(STORE_KEYS.KBO_STANDINGS).length === 0) {
     const standings: KboStanding[] = [
-      { teamId: "team-lg", teamName: "LG 트윈스", teamColor: "#C60C30", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 1 },
-      { teamId: "team-kia", teamName: "KIA 타이거즈", teamColor: "#EA0029", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 2 },
-      { teamId: "team-sam", teamName: "삼성 라이온즈", teamColor: "#074CA1", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 3 },
-      { teamId: "team-doo", teamName: "두산 베어스", teamColor: "#131230", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 4 },
-      { teamId: "team-ssg", teamName: "SSG 랜더스", teamColor: "#CE0E2D", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 5 },
-      { teamId: "team-nc", teamName: "NC 다이노스", teamColor: "#315288", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 6 },
-      { teamId: "team-lot", teamName: "롯데 자이언츠", teamColor: "#041E42", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 7 },
-      { teamId: "team-kt", teamName: "KT 위즈", teamColor: "#000000", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 8 },
-      { teamId: "team-han", teamName: "한화 이글스", teamColor: "#FF6600", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 9 },
-      { teamId: "team-kiw", teamName: "키움 히어로즈", teamColor: "#820024", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 10 },
+      { id: "st-1", teamId: "team-lg", teamName: "LG 트윈스", teamColor: "#C60C30", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 1 },
+      { id: "st-2", teamId: "team-kia", teamName: "KIA 타이거즈", teamColor: "#EA0029", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 2 },
+      { id: "st-3", teamId: "team-sam", teamName: "삼성 라이온즈", teamColor: "#074CA1", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 3 },
+      { id: "st-4", teamId: "team-doo", teamName: "두산 베어스", teamColor: "#131230", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 4 },
+      { id: "st-5", teamId: "team-ssg", teamName: "SSG 랜더스", teamColor: "#CE0E2D", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 5 },
+      { id: "st-6", teamId: "team-nc", teamName: "NC 다이노스", teamColor: "#315288", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 6 },
+      { id: "st-7", teamId: "team-lot", teamName: "롯데 자이언츠", teamColor: "#041E42", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 7 },
+      { id: "st-8", teamId: "team-kt", teamName: "KT 위즈", teamColor: "#000000", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 8 },
+      { id: "st-9", teamId: "team-han", teamName: "한화 이글스", teamColor: "#FF6600", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 9 },
+      { id: "st-10", teamId: "team-kiw", teamName: "키움 히어로즈", teamColor: "#820024", wins: 0, losses: 0, draws: 0, winRate: ".000", gamesBack: "-", streak: "-", last10: "-", rank: 10 },
     ];
     standings.forEach((s) => addItem(STORE_KEYS.KBO_STANDINGS, s));
   }

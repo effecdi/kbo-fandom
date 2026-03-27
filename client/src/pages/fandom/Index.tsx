@@ -12,11 +12,19 @@ import {
   Palette,
   Pen,
   FolderOpen,
+  Calendar,
+  Music,
+  MapPin,
+  Camera,
+  BarChart3,
+  ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IdolGroupCard } from "@/components/fandom/idol-group-card";
 import { FandomEventCard } from "@/components/fandom/fandom-event-card";
 import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
+import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
+import { StandingsTable } from "@/components/fandom/standings-table";
 import {
   listItems,
   seedIfEmpty,
@@ -25,6 +33,7 @@ import {
   type IdolGroup,
   type KboTeam,
   type KboGameSchedule,
+  type KboStanding,
   type FandomFeedPost,
   type FandomEvent,
   type ProjectRecord,
@@ -33,6 +42,7 @@ import {
 export function FandomIndex() {
   const [groups, setGroups] = useState<IdolGroup[]>([]);
   const [todayGames, setTodayGames] = useState<KboGameSchedule[]>([]);
+  const [standings, setStandings] = useState<KboStanding[]>([]);
   const [feedCount, setFeedCount] = useState(0);
   const [events, setEvents] = useState<FandomEvent[]>([]);
   const [myGroupPosts, setMyGroupPosts] = useState<FandomFeedPost[]>([]);
@@ -57,6 +67,10 @@ export function FandomIndex() {
     const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
     const today = new Date().toISOString().split("T")[0];
     setTodayGames(allGames.filter((g) => g.date === today));
+
+    // Load standings
+    const allStandings = listItems<KboStanding>(STORE_KEYS.KBO_STANDINGS);
+    setStandings(allStandings.sort((a, b) => a.rank - b.rank));
 
     // Load recent projects
     try {
@@ -159,6 +173,47 @@ export function FandomIndex() {
           </div>
         )}
 
+        {/* Next Game Countdown + Quick Links */}
+        {fandomProfile && myGroup && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <NextGameCountdown
+              teamId={myGroup.id}
+              teamName={myGroup.nameKo}
+              teamColor={themeColor}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                to="/fandom/schedule"
+                className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
+              >
+                <Calendar className="w-7 h-7 mb-2" style={{ color: themeColor }} />
+                <p className="text-sm font-bold text-foreground">경기 일정</p>
+              </Link>
+              <Link
+                to="/fandom/cheer-songs"
+                className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
+              >
+                <Music className="w-7 h-7 text-emerald-500 mb-2" />
+                <p className="text-sm font-bold text-foreground">응원가</p>
+              </Link>
+              <Link
+                to="/fandom/stadium-guide"
+                className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
+              >
+                <MapPin className="w-7 h-7 text-blue-500 mb-2" />
+                <p className="text-sm font-bold text-foreground">직관 가이드</p>
+              </Link>
+              <Link
+                to="/fandom/photocards"
+                className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
+              >
+                <Camera className="w-7 h-7 text-pink-500 mb-2" />
+                <p className="text-sm font-bold text-foreground">포토카드</p>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Today's Games */}
         {todayGames.length > 0 && (
           <div className="mb-8">
@@ -187,7 +242,7 @@ export function FandomIndex() {
               <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
             </div>
             <p className="text-2xl font-black text-foreground">{groups.length}</p>
-            <p className="text-sm text-muted-foreground">아이돌 그룹</p>
+            <p className="text-sm text-muted-foreground">KBO 구단</p>
           </Link>
 
           <Link
@@ -228,6 +283,26 @@ export function FandomIndex() {
             <p className="text-sm text-muted-foreground">진행중 이벤트</p>
           </Link>
         </div>
+
+        {/* KBO Standings (compact) */}
+        {standings.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" style={{ color: themeColor }} />
+                <h2 className="text-lg font-bold text-foreground">KBO 순위</h2>
+              </div>
+              <Link to="/fandom/standings" className="text-sm hover:underline" style={{ color: themeColor }}>
+                전체 보기
+              </Link>
+            </div>
+            <StandingsTable
+              standings={standings}
+              myTeamId={fandomProfile?.groupId}
+              compact
+            />
+          </div>
+        )}
 
         {/* My Group Events (if any) */}
         {myGroupEvents.length > 0 && (
