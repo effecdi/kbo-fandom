@@ -60,9 +60,6 @@ export const STORE_KEYS = {
   FANDOM_USER_PROFILE: "olli-fandom-user-profile",
   KBO_TEAMS: "olli-fandom-groups",
   KBO_PLAYERS: "olli-fandom-members",
-  // Backward compatibility aliases (same localStorage keys)
-  IDOL_GROUPS: "olli-fandom-groups",
-  IDOL_MEMBERS: "olli-fandom-members",
   FANDOM_FEED: "olli-fandom-feed",
   FANDOM_COMMENTS: "olli-fandom-comments",
   FANDOM_EVENTS: "olli-fandom-events",
@@ -72,7 +69,7 @@ export const STORE_KEYS = {
   FAN_DMS: "olli-fandom-dms",
   FAN_TALK_POSTS: "olli-fandom-talk",
   // Fandom Editor Content
-  EDITOR_IDOL_PROFILES: "olli-editor-idol-profiles",
+  EDITOR_PLAYER_PROFILES: "olli-editor-idol-profiles",
   EDITOR_FANART: "olli-editor-fanart",
   EDITOR_FANFIC: "olli-editor-fanfic",
   EDITOR_EVENTS: "olli-editor-events",

@@ -1,12 +1,12 @@
 import { Link } from "react-router";
 import { Users, Heart } from "lucide-react";
-import type { IdolGroup } from "@/lib/local-store";
+import type { KboTeam } from "@/lib/local-store";
 
-interface IdolGroupCardProps {
-  group: IdolGroup;
+interface TeamCardProps {
+  group: KboTeam;
 }
 
-export function IdolGroupCard({ group }: IdolGroupCardProps) {
+export function TeamCard({ group }: TeamCardProps) {
   return (
     <Link
       to={`/fandom/groups/${group.id}`}
