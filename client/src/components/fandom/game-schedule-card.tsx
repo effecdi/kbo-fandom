@@ -1,9 +1,14 @@
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Calendar, MapPin, Clock, Star } from "lucide-react";
 import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
 
 interface GameScheduleCardProps {
   game: KboGameSchedule;
   teams: KboTeam[];
+  showAttendButton?: boolean;    // show "직관 예정" star toggle
+  isAttending?: boolean;         // whether user marked this game
+  onToggleAttend?: (gameId: string) => void;
+  myTeamId?: string;             // highlight when my team is playing
+  compact?: boolean;             // compact mode for calendar view
 }
 
 const STATUS_LABELS: Record<KboGameSchedule["status"], { label: string; color: string }> = {
