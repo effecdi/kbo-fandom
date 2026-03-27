@@ -134,7 +134,7 @@ export function FanProfile() {
                     {creator.groupName}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">최애: {creator.bias}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">최애: {creator.favoritePlayer}</p>
               </div>
             </div>
 

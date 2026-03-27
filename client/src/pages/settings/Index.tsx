@@ -62,8 +62,8 @@ export function SettingsIndex() {
     const fp = getFandomProfile();
     if (fp) {
       setFandom(fp);
-      setEditBias(fp.bias);
-      setEditBiasWrecker(fp.biasWrecker);
+      setEditBias(fp.favoritePlayer);
+      setEditBiasWrecker(fp.secondPlayer);
       setEditNickname(fp.nickname);
     }
 
@@ -101,8 +101,8 @@ export function SettingsIndex() {
     if (!fandom) return;
     const updated: FandomUserProfile = {
       ...fandom,
-      bias: editBias,
-      biasWrecker: editBiasWrecker,
+      favoritePlayer: editBias,
+      secondPlayer: editBiasWrecker,
       nickname: editNickname,
     };
     setFandomProfile(updated);

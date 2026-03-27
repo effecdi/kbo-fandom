@@ -81,7 +81,7 @@ export function KitchToolsPanel() {
   }
 
   const kitschFilters = KPOP_AESTHETIC_FILTERS.filter(f =>
-    f.id === "kitsch-y2k" || f.id === "kitsch-retro" || f.id === "kitsch-dreampop" || f.id === "y2k"
+    f.id === "kitsch-retro" || f.id === "kitsch-pop" || f.id === "kitsch-heritage"
   );
 
   const kitschDesignElements = FANDOM_DESIGN_ELEMENTS.filter(e =>

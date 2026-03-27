@@ -64,22 +64,22 @@ export function FandomOnboarding() {
     }
   }, [selectedGroupId]);
 
-  // Generate 4 choices for debut year (3 wrong + 1 correct)
-  const debutYearChoices = selectedGroup
+  // Generate 4 choices for founded year (3 wrong + 1 correct)
+  const foundedYearChoices = selectedGroup
     ? [
-        selectedGroup.debutYear,
-        selectedGroup.debutYear - 1,
-        selectedGroup.debutYear + 1,
-        selectedGroup.debutYear - 2,
+        selectedGroup.foundedYear,
+        selectedGroup.foundedYear - 1,
+        selectedGroup.foundedYear + 1,
+        selectedGroup.foundedYear - 2,
       ].sort()
     : [];
 
-  // Generate 4 choices for company
-  const allCompanies = [...new Set(groups.map((g) => g.company))];
-  const companyChoices = selectedGroup
+  // Generate 4 choices for city
+  const allCities = Array.from(new Set(groups.map((g) => g.city)));
+  const cityChoices = selectedGroup
     ? [
-        selectedGroup.company,
-        ...allCompanies.filter((c) => c !== selectedGroup.company).slice(0, 3),
+        selectedGroup.city,
+        ...allCities.filter((c) => c !== selectedGroup.city).slice(0, 3),
       ].sort()
     : [];
 
@@ -107,10 +107,10 @@ export function FandomOnboarding() {
       // Final step — verify
       const answers = {
         fandomName: fandomNameInput,
-        debutYear: debutYearAnswer,
-        company: companyAnswer,
+        foundedYear: debutYearAnswer,
+        city: companyAnswer,
         memberCount: memberCountInput,
-        leader: leaderAnswer,
+        captain: leaderAnswer,
       };
       const result = verifyFandomAnswers(selectedGroupId, answers);
       setVerifyResult(result);
@@ -124,13 +124,13 @@ export function FandomOnboarding() {
           groupId: selectedGroupId,
           groupName: selectedGroup?.name || "",
           fandomName: fandomNameInput,
-          bias: biasMember?.name || "",
-          biasWrecker: wreckerMember?.name || "",
+          favoritePlayer: biasMember?.name || "",
+          secondPlayer: wreckerMember?.name || "",
           answers: {
             ...answers,
-            bias: biasMember?.name || "",
-            biasWrecker: wreckerMember?.name || "",
-            favoriteSong,
+            favoritePlayer: biasMember?.name || "",
+            secondPlayer: wreckerMember?.name || "",
+            favoriteScene: favoriteSong,
           },
           verified: true,
           verifiedAt: new Date().toISOString(),
@@ -253,12 +253,12 @@ export function FandomOnboarding() {
           {step === 1 && (
             <div className="space-y-6">
               <div className="text-center">
-                <Music className="w-10 h-10 mx-auto mb-3 text-violet-500" />
+                <Star className="w-10 h-10 mx-auto mb-3 text-violet-500" />
                 <h1 className="text-2xl font-black text-foreground">
-                  당신의 아이돌 그룹은?
+                  당신의 KBO 구단은?
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  좋아하는 그룹을 선택하세요
+                  좋아하는 구단을 선택하세요
                 </p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -309,7 +309,7 @@ export function FandomOnboarding() {
               <p className="text-muted-foreground">팬덤 공식 이름을 입력하세요</p>
               <Input
                 className="max-w-sm mx-auto text-center text-lg h-14"
-                placeholder="예: ARMY, BLINK..."
+                placeholder="예: 트팬, 위즈, 랜더스..."
                 value={fandomNameInput}
                 onChange={(e) => setFandomNameInput(e.target.value)}
               />
@@ -321,10 +321,10 @@ export function FandomOnboarding() {
             <div className="space-y-6 text-center">
               <Sparkles className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
               <h1 className="text-2xl font-black text-foreground">
-                {selectedGroup?.name}의 데뷔 연도는?
+                {selectedGroup?.name}의 창단 연도는?
               </h1>
               <div className="flex gap-4 justify-center">
-                {debutYearChoices.map((y) => (
+                {foundedYearChoices.map((y) => (
                   <button
                     key={y}
                     onClick={() => setDebutYearAnswer(String(y))}
@@ -351,10 +351,10 @@ export function FandomOnboarding() {
             <div className="space-y-6 text-center">
               <Sparkles className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
               <h1 className="text-2xl font-black text-foreground">
-                {selectedGroup?.name}의 소속사는?
+                {selectedGroup?.name}의 연고지는?
               </h1>
               <div className="flex flex-wrap gap-4 justify-center">
-                {companyChoices.map((c) => (
+                {cityChoices.map((c) => (
                   <button
                     key={c}
                     onClick={() => setCompanyAnswer(c)}
@@ -381,7 +381,7 @@ export function FandomOnboarding() {
             <div className="space-y-6 text-center">
               <Sparkles className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
               <h1 className="text-2xl font-black text-foreground">
-                {selectedGroup?.name}의 멤버 수는?
+                {selectedGroup?.name}의 등록 선수 수는?
               </h1>
               <Input
                 type="number"
@@ -398,7 +398,7 @@ export function FandomOnboarding() {
             <div className="space-y-6 text-center">
               <Sparkles className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
               <h1 className="text-2xl font-black text-foreground">
-                {selectedGroup?.name}의 리더는?
+                {selectedGroup?.name}의 주장은?
               </h1>
               <div className="flex flex-wrap gap-3 justify-center">
                 {groupMembers.map((m) => (
@@ -428,9 +428,9 @@ export function FandomOnboarding() {
             <div className="space-y-6 text-center">
               <Heart className="w-10 h-10 mx-auto text-rose-500" />
               <h1 className="text-2xl font-black text-foreground">
-                당신의 최애(bias)는?
+                당신의 최애 선수는?
               </h1>
-              <p className="text-muted-foreground">가장 좋아하는 멤버를 선택하세요</p>
+              <p className="text-muted-foreground">가장 좋아하는 선수를 선택하세요</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-lg mx-auto">
                 {groupMembers.map((m) => (
                   <button
@@ -466,9 +466,9 @@ export function FandomOnboarding() {
             <div className="space-y-6 text-center">
               <Heart className="w-10 h-10 mx-auto text-pink-500" />
               <h1 className="text-2xl font-black text-foreground">
-                차애(bias wrecker)는?
+                차애 선수는?
               </h1>
-              <p className="text-muted-foreground">최애 다음으로 좋아하는 멤버!</p>
+              <p className="text-muted-foreground">최애 다음으로 좋아하는 선수!</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-lg mx-auto">
                 {groupMembers.map((m) => (
                   <button
@@ -502,14 +502,14 @@ export function FandomOnboarding() {
           {/* Step 9: Favorite song */}
           {step === 9 && (
             <div className="space-y-6 text-center">
-              <Music className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
+              <Star className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
               <h1 className="text-2xl font-black text-foreground">
-                {selectedGroup?.name}의 대표곡은?
+                {selectedGroup?.name}의 최고의 명장면은?
               </h1>
-              <p className="text-muted-foreground">가장 좋아하는 곡을 알려주세요</p>
+              <p className="text-muted-foreground">가장 기억에 남는 명장면을 알려주세요</p>
               <Input
                 className="max-w-sm mx-auto text-center text-lg h-14"
-                placeholder="예: Dynamite, Pink Venom..."
+                placeholder="예: 2024 한국시리즈 우승..."
                 value={favoriteSong}
                 onChange={(e) => setFavoriteSong(e.target.value)}
               />

@@ -149,7 +149,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{fandomProfile.nickname}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  최애: {fandomProfile.bias}
+                  최애: {fandomProfile.favoritePlayer}
                 </p>
               </div>
             </div>

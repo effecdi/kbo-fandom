@@ -87,8 +87,8 @@ export function FandomIndex() {
             </h1>
             <p className="text-muted-foreground mt-1">
               {fandomProfile
-                ? `최애: ${fandomProfile.bias} | 팬덤: ${fandomProfile.fandomName}`
-                : "좋아하는 아이돌의 팬아트를 만들고, 팬덤과 소통하세요"}
+                ? `최애 선수: ${fandomProfile.favoritePlayer} | 팬덤: ${fandomProfile.fandomName}`
+                : "좋아하는 구단의 팬아트를 만들고, 팬덤과 소통하세요"}
             </p>
           </div>
           <div className="flex gap-2">

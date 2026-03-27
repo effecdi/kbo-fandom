@@ -6,12 +6,12 @@ import { listItems, seedIfEmpty, STORE_KEYS, type IdolGroup } from "@/lib/local-
 
 const themeColor = "var(--fandom-primary, #7B2FF7)";
 
-const COMPANIES = ["전체", "HYBE", "YG", "SM", "JYP", "ADOR", "PLEDIS", "STARSHIP", "SOURCE"];
+const CITIES = ["전체", "서울", "수원", "인천", "창원", "광주", "부산", "대구", "대전"];
 
 export function FandomGroups() {
   const [groups, setGroups] = useState<IdolGroup[]>([]);
   const [search, setSearch] = useState("");
-  const [companyFilter, setCompanyFilter] = useState("전체");
+  const [cityFilter, setCityFilter] = useState("전체");
 
   useEffect(() => {
     seedIfEmpty();
@@ -28,7 +28,7 @@ export function FandomGroups() {
       )
         return false;
     }
-    if (companyFilter !== "전체" && g.company !== companyFilter) return false;
+    if (cityFilter !== "전체" && g.city !== cityFilter) return false;
     return true;
   });
 
@@ -37,8 +37,8 @@ export function FandomGroups() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">아이돌 / 그룹</h1>
-          <p className="text-sm text-muted-foreground mt-1">좋아하는 그룹을 찾아 팬아트를 만들어보세요</p>
+          <h1 className="text-2xl font-bold text-foreground">KBO 구단</h1>
+          <p className="text-sm text-muted-foreground mt-1">좋아하는 구단을 찾아 팬아트를 만들어보세요</p>
         </div>
 
         {/* Search & Filters */}
@@ -57,16 +57,16 @@ export function FandomGroups() {
           </div>
 
           <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1">
-            {COMPANIES.map((c) => (
+            {CITIES.map((c) => (
               <button
                 key={c}
-                onClick={() => setCompanyFilter(c)}
+                onClick={() => setCityFilter(c)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  companyFilter === c
+                  cityFilter === c
                     ? "text-white"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
-                style={companyFilter === c ? { background: themeColor } : undefined}
+                style={cityFilter === c ? { background: themeColor } : undefined}
               >
                 {c}
               </button>

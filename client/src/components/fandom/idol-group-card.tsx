@@ -31,7 +31,7 @@ export function IdolGroupCard({ group }: IdolGroupCardProps) {
       <div className="p-4 pt-8 space-y-2">
         <div>
           <h3 className="text-sm font-bold text-foreground">{group.name}</h3>
-          <p className="text-xs text-muted-foreground">{group.nameKo} · {group.company}</p>
+          <p className="text-xs text-muted-foreground">{group.nameKo} · {group.city}</p>
         </div>
         <div className="flex items-center gap-1">
           <span

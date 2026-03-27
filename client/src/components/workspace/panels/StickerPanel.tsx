@@ -5,20 +5,20 @@ import { Heart, Star, Music, Type, Sparkles, PartyPopper } from "lucide-react";
 
 const CATEGORY_ICONS: Record<FandomStickerCategory, typeof Heart> = {
   heart: Heart,
-  lightstick: Star,
+  cheer: Star,
   emoji: Sparkles,
   logo: Music,
   text: Type,
-  concert: PartyPopper,
+  stadium: PartyPopper,
 };
 
 const CATEGORY_LABELS: Record<FandomStickerCategory, string> = {
   heart: "하트",
-  lightstick: "응원봉",
+  cheer: "응원",
   emoji: "이모지",
   logo: "로고",
   text: "텍스트",
-  concert: "콘서트",
+  stadium: "경기장",
 };
 
 export function StickerPanel() {
@@ -26,7 +26,7 @@ export function StickerPanel() {
   const fandomMeta = state.fandomMeta;
   const [activeCategory, setActiveCategory] = useState<FandomStickerCategory>("heart");
 
-  const categories: FandomStickerCategory[] = ["heart", "lightstick", "emoji", "logo", "text", "concert"];
+  const categories: FandomStickerCategory[] = ["heart", "cheer", "emoji", "logo", "text", "stadium"];
 
   const stickers = FANDOM_STICKER_PACKS.filter(
     (s) => s.category === activeCategory && (!s.groupId || s.groupId === fandomMeta?.groupId)

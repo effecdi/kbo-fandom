@@ -31,7 +31,7 @@ export function FandomGroupHeader({ group }: FandomGroupHeaderProps) {
           </div>
           <div className="flex-1 pb-1">
             <h1 className="text-2xl font-black text-foreground">{group.name}</h1>
-            <p className="text-sm text-muted-foreground">{group.nameKo} · {group.company}</p>
+            <p className="text-sm text-muted-foreground">{group.nameKo} · {group.city}</p>
           </div>
           <Button
             onClick={() => setFollowing(!following)}
@@ -65,7 +65,7 @@ export function FandomGroupHeader({ group }: FandomGroupHeaderProps) {
           </span>
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
-            {group.debutYear}년 데뷔
+            {group.foundedYear}년 창단
           </span>
         </div>
       </div>

@@ -63,7 +63,7 @@ export function FanCreators() {
     .filter((c) => {
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        return c.nickname.toLowerCase().includes(q) || c.groupName.toLowerCase().includes(q) || c.bias.toLowerCase().includes(q);
+        return c.nickname.toLowerCase().includes(q) || c.groupName.toLowerCase().includes(q) || c.favoritePlayer.toLowerCase().includes(q);
       }
       return true;
     })
@@ -208,7 +208,7 @@ export function FanCreators() {
                       >
                         {creator.groupName}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">최애 {creator.bias}</span>
+                      <span className="text-[11px] text-muted-foreground">최애 {creator.favoritePlayer}</span>
                     </div>
                   </div>
                   {sortBy === "followers" && (

@@ -38,7 +38,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
   const [memberName, setMemberName] = useState(fandomMeta?.memberTags[0] || "");
   const [birthdayDate, setBirthdayDate] = useState("");
   const [cafeName, setCafeName] = useState("");
-  const [selectedGoods, setSelectedGoods] = useState<BirthdayGoodsType[]>(["cupsleeve", "banner", "photocard"]);
+  const [selectedGoods, setSelectedGoods] = useState<BirthdayGoodsType[]>(["cheerbanner", "banner", "playercard"]);
   const [themeColors, setThemeColors] = useState<string[]>([fandomMeta?.coverColor || "#EC4899"]);
   const [coordinatedStyle, setCoordinatedStyle] = useState("dreamy");
   const [generating, setGenerating] = useState(false);
@@ -67,10 +67,10 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
     setGenerating(true);
 
     const pkg: BirthdayCafePackage = {
-      memberId: fandomMeta?.groupId || "",
-      memberName,
-      birthdayDate,
-      cafeName,
+      playerId: fandomMeta?.groupId || "",
+      playerName: memberName,
+      matchDate: birthdayDate,
+      stadiumName: cafeName,
       themeColors,
       selectedGoods: selectedGoods as BirthdayCafePackage["selectedGoods"],
       coordinatedStyle,
