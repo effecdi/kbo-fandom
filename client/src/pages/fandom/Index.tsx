@@ -16,12 +16,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { IdolGroupCard } from "@/components/fandom/idol-group-card";
 import { FandomEventCard } from "@/components/fandom/fandom-event-card";
+import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
 import {
   listItems,
   seedIfEmpty,
   STORE_KEYS,
   getFandomProfile,
   type IdolGroup,
+  type KboTeam,
+  type KboGameSchedule,
   type FandomFeedPost,
   type FandomEvent,
   type ProjectRecord,
@@ -29,6 +32,7 @@ import {
 
 export function FandomIndex() {
   const [groups, setGroups] = useState<IdolGroup[]>([]);
+  const [todayGames, setTodayGames] = useState<KboGameSchedule[]>([]);
   const [feedCount, setFeedCount] = useState(0);
   const [events, setEvents] = useState<FandomEvent[]>([]);
   const [myGroupPosts, setMyGroupPosts] = useState<FandomFeedPost[]>([]);
@@ -48,6 +52,11 @@ export function FandomIndex() {
         allPosts.filter((p) => p.groupId === fandomProfile.groupId).slice(0, 4)
       );
     }
+
+    // Load today's games
+    const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
+    const today = new Date().toISOString().split("T")[0];
+    setTodayGames(allGames.filter((g) => g.date === today));
 
     // Load recent projects
     try {
@@ -147,6 +156,23 @@ export function FandomIndex() {
                 진행중 이벤트 {activeEvents.length}개
               </p>
             </Link>
+          </div>
+        )}
+
+        {/* Today's Games */}
+        {todayGames.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-foreground">오늘의 경기</h2>
+              <span className="text-xs text-muted-foreground">
+                {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {todayGames.map((game) => (
+                <GameScheduleCard key={game.id} game={game} teams={groups} />
+              ))}
+            </div>
           </div>
         )}
 

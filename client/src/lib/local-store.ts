@@ -223,6 +223,22 @@ export interface KboPlayer {
 export type IdolGroup = KboTeam;
 export type IdolMember = KboPlayer;
 
+// ─── KBO Game Schedule ──────────────────────────────────────────────────────
+
+export interface KboGameSchedule {
+  id: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  date: string;       // "2026-03-28"
+  time: string;       // "18:30"
+  stadium: string;
+  status: "scheduled" | "live" | "finished" | "postponed";
+  homeScore: number | null;
+  awayScore: number | null;
+}
+
 export interface FandomFeedPost {
   id: string;
   authorName: string;
@@ -692,5 +708,36 @@ export function seedIfEmpty(): void {
       },
     ];
     editorContent.forEach((c) => addItem(STORE_KEYS.EDITOR_CONTENT, c));
+  }
+
+  // ── KBO Schedule Seed ──────────────────────────────────────────────────────
+  if (listItems(STORE_KEYS.KBO_SCHEDULE).length === 0) {
+    const schedule: KboGameSchedule[] = [
+      // 오늘 경기 (2026-03-28)
+      { id: "game-1", homeTeamId: "team-lg", awayTeamId: "team-doosan", homeTeamName: "LG 트윈스", awayTeamName: "두산 베어스", date: "2026-03-28", time: "18:30", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-2", homeTeamId: "team-kt", awayTeamId: "team-nc", homeTeamName: "KT 위즈", awayTeamName: "NC 다이노스", date: "2026-03-28", time: "18:30", stadium: "수원KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-3", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-03-28", time: "18:30", stadium: "인천SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-4", homeTeamId: "team-lot", awayTeamId: "team-samsung", homeTeamName: "롯데 자이언츠", awayTeamName: "삼성 라이온즈", date: "2026-03-28", time: "18:30", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-5", homeTeamId: "team-hanwha", awayTeamId: "team-kiwoom", homeTeamName: "한화 이글스", awayTeamName: "키움 히어로즈", date: "2026-03-28", time: "18:30", stadium: "한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      // 어제 경기 (종료)
+      { id: "game-6", homeTeamId: "team-kia", awayTeamId: "team-lg", homeTeamName: "KIA 타이거즈", awayTeamName: "LG 트윈스", date: "2026-03-27", time: "18:30", stadium: "광주-기아챔피언스필드", status: "finished", homeScore: 5, awayScore: 3 },
+      { id: "game-7", homeTeamId: "team-doosan", awayTeamId: "team-ssg", homeTeamName: "두산 베어스", awayTeamName: "SSG 랜더스", date: "2026-03-27", time: "18:30", stadium: "잠실야구장", status: "finished", homeScore: 2, awayScore: 7 },
+      { id: "game-8", homeTeamId: "team-nc", awayTeamId: "team-hanwha", homeTeamName: "NC 다이노스", awayTeamName: "한화 이글스", date: "2026-03-27", time: "18:30", stadium: "창원NC파크", status: "finished", homeScore: 4, awayScore: 4 },
+      { id: "game-9", homeTeamId: "team-samsung", awayTeamId: "team-kt", homeTeamName: "삼성 라이온즈", awayTeamName: "KT 위즈", date: "2026-03-27", time: "18:30", stadium: "대구삼성라이온즈파크", status: "finished", homeScore: 6, awayScore: 1 },
+      { id: "game-10", homeTeamId: "team-kiwoom", awayTeamId: "team-lot", homeTeamName: "키움 히어로즈", awayTeamName: "롯데 자이언츠", date: "2026-03-27", time: "18:30", stadium: "고척스카이돔", status: "finished", homeScore: 3, awayScore: 5 },
+      // 내일 경기
+      { id: "game-11", homeTeamId: "team-lg", awayTeamId: "team-kia", homeTeamName: "LG 트윈스", awayTeamName: "KIA 타이거즈", date: "2026-03-29", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-12", homeTeamId: "team-ssg", awayTeamId: "team-doosan", homeTeamName: "SSG 랜더스", awayTeamName: "두산 베어스", date: "2026-03-29", time: "14:00", stadium: "인천SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-13", homeTeamId: "team-hanwha", awayTeamId: "team-nc", homeTeamName: "한화 이글스", awayTeamName: "NC 다이노스", date: "2026-03-29", time: "14:00", stadium: "한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-14", homeTeamId: "team-kt", awayTeamId: "team-samsung", homeTeamName: "KT 위즈", awayTeamName: "삼성 라이온즈", date: "2026-03-29", time: "14:00", stadium: "수원KT위즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-15", homeTeamId: "team-lot", awayTeamId: "team-kiwoom", homeTeamName: "롯데 자이언츠", awayTeamName: "키움 히어로즈", date: "2026-03-29", time: "14:00", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
+      // 추가 경기 (3/30 ~ 4/1)
+      { id: "game-16", homeTeamId: "team-doosan", awayTeamId: "team-kt", homeTeamName: "두산 베어스", awayTeamName: "KT 위즈", date: "2026-03-30", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-17", homeTeamId: "team-kia", awayTeamId: "team-lot", homeTeamName: "KIA 타이거즈", awayTeamName: "롯데 자이언츠", date: "2026-03-30", time: "14:00", stadium: "광주-기아챔피언스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-18", homeTeamId: "team-nc", awayTeamId: "team-kiwoom", homeTeamName: "NC 다이노스", awayTeamName: "키움 히어로즈", date: "2026-03-30", time: "14:00", stadium: "창원NC파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-19", homeTeamId: "team-samsung", awayTeamId: "team-hanwha", homeTeamName: "삼성 라이온즈", awayTeamName: "한화 이글스", date: "2026-03-31", time: "18:30", stadium: "대구삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-20", homeTeamId: "team-kiwoom", awayTeamId: "team-ssg", homeTeamName: "키움 히어로즈", awayTeamName: "SSG 랜더스", date: "2026-03-31", time: "18:30", stadium: "고척스카이돔", status: "scheduled", homeScore: null, awayScore: null },
+    ];
+    schedule.forEach((g) => addItem(STORE_KEYS.KBO_SCHEDULE, g));
   }
 }

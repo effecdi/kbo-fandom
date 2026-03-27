@@ -9,6 +9,7 @@ import { CommentSection } from "@/components/fandom/comment-section";
 import { Sparkles, Users as UsersIcon, Trophy, BarChart3, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
 import {
   getItem,
   listItems,
@@ -16,15 +17,18 @@ import {
   STORE_KEYS,
   type IdolGroup,
   type IdolMember,
+  type KboGameSchedule,
   type FandomFeedPost,
   type FandomEvent,
 } from "@/lib/local-store";
+import { Calendar } from "lucide-react";
 
-type GroupTab = "fanart" | "members" | "events" | "rankings";
+type GroupTab = "fanart" | "members" | "schedule" | "events" | "rankings";
 
 const TABS: { id: GroupTab; label: string; icon: typeof Sparkles }[] = [
   { id: "fanart", label: "팬아트", icon: Sparkles },
-  { id: "members", label: "멤버", icon: UsersIcon },
+  { id: "members", label: "선수", icon: UsersIcon },
+  { id: "schedule", label: "경기일정", icon: Calendar },
   { id: "events", label: "이벤트", icon: Trophy },
   { id: "rankings", label: "랭킹", icon: BarChart3 },
 ];
@@ -37,11 +41,15 @@ export function FandomGroupDetail() {
   const [events, setEvents] = useState<FandomEvent[]>([]);
   const [tab, setTab] = useState<GroupTab>("fanart");
   const [selectedPost, setSelectedPost] = useState<FandomFeedPost | null>(null);
+  const [games, setGames] = useState<KboGameSchedule[]>([]);
+  const [allTeams, setAllTeams] = useState<IdolGroup[]>([]);
 
   useEffect(() => {
     seedIfEmpty();
     if (!id) return;
-    const g = getItem<IdolGroup>(STORE_KEYS.IDOL_GROUPS, id);
+    const allGroups = listItems<IdolGroup>(STORE_KEYS.IDOL_GROUPS);
+    setAllTeams(allGroups);
+    const g = allGroups.find((gr) => gr.id === id) || null;
     setGroup(g);
 
     const allMembers = listItems<IdolMember>(STORE_KEYS.IDOL_MEMBERS);
@@ -52,6 +60,9 @@ export function FandomGroupDetail() {
 
     const allEvents = listItems<FandomEvent>(STORE_KEYS.FANDOM_EVENTS);
     setEvents(allEvents.filter((e) => e.groupId === id));
+
+    const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
+    setGames(allGames.filter((g) => g.homeTeamId === id || g.awayTeamId === id));
   }, [id]);
 
   if (!group) {
@@ -144,6 +155,23 @@ export function FandomGroupDetail() {
                 <p className="text-[11px] text-muted-foreground mt-1">{member.position}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {tab === "schedule" && (
+          <div>
+            {games.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">등록된 경기 일정이 없습니다</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {games.map((game) => (
+                  <GameScheduleCard key={game.id} game={game} teams={allTeams} />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
