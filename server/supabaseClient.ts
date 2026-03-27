@@ -6,7 +6,7 @@ import { logger } from "./logger";
 let supabase: ReturnType<typeof createClient>;
 try {
   if (!config.supabaseUrl || !config.supabaseKey) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development" || process.env.AUTH_BYPASS === "true") {
       logger.warn("Supabase 설정이 없습니다. 인증 기능이 동작하지 않습니다.");
       // 더미 클라이언트 생성 (실제 사용 시 에러 발생)
       supabase = createClient("https://dummy.supabase.co", "dummy-key");
@@ -17,7 +17,7 @@ try {
     supabase = createClient(config.supabaseUrl, config.supabaseKey);
   }
 } catch (error) {
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === "development" || process.env.AUTH_BYPASS === "true") {
     logger.warn("Supabase 클라이언트 생성 실패", error);
     supabase = createClient("https://dummy.supabase.co", "dummy-key");
   } else {

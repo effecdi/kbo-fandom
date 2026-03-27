@@ -7,9 +7,9 @@ const { Pool } = pg;
 
 function createDbConnection() {
   if (!process.env.DATABASE_URL) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development" || process.env.AUTH_BYPASS === "true") {
       logger.warn("DATABASE_URL이 설정되지 않았습니다. 헬스체크는 동작하지만 데이터베이스 기능은 사용할 수 없습니다.");
-      // 개발 모드에서는 더미 객체 반환 (실제 사용 시 에러 발생)
+      // AUTH_BYPASS 또는 개발 모드에서는 더미 객체 반환 (실제 사용 시 에러 발생)
       return { pool: null as any, db: null as any };
     }
     throw new Error(

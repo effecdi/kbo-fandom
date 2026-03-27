@@ -112,7 +112,7 @@ app.use((req, res, next) => {
     await registerRoutes(httpServer, app);
   } catch (error: any) {
     logger.error("라우트 등록 중 오류 발생", error);
-    if (!process.env.DATABASE_URL && process.env.NODE_ENV === "development") {
+    if (!process.env.DATABASE_URL && (process.env.NODE_ENV === "development" || process.env.AUTH_BYPASS === "true")) {
       logger.warn("데이터베이스가 없어도 헬스체크는 동작합니다.");
     } else {
       throw error;
