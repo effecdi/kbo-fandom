@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, ReactNode } from "react";
-import { GripVertical, X, Plus, RotateCcw, Settings2 } from "lucide-react";
+import { GripVertical, X, Plus, RotateCcw, Settings2, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
 
 const ORDER_STORAGE_KEY = "kbo-dashboard-order-v3";
 const HIDDEN_WIDGETS_KEY = "kbo-dashboard-hidden-v3";
@@ -132,6 +132,25 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
     dragOverItemRef.current = null;
   }, [orderedWidgets, saveOrder]);
 
+  // Move widget up/down in order
+  const moveWidget = useCallback((widgetId: string, direction: "up" | "down") => {
+    const ids = orderedWidgets.map((w) => w.id);
+    const idx = ids.indexOf(widgetId);
+    if (idx === -1) return;
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= ids.length) return;
+    ids.splice(idx, 1);
+    ids.splice(targetIdx, 0, widgetId);
+    saveOrder(ids);
+  }, [orderedWidgets, saveOrder]);
+
+  // All widgets for the management panel (ordered: visible first, then hidden)
+  const allWidgetsForPanel = useMemo(() => {
+    const visible = orderedWidgets.map((w) => ({ ...w, visible: true }));
+    const hidden = hiddenWidgets.map((w) => ({ ...w, visible: false }));
+    return [...visible, ...hidden];
+  }, [orderedWidgets, hiddenWidgets]);
+
   return (
     <div>
       {/* Edit Mode Toggle */}
@@ -146,7 +165,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
           style={editMode ? { background: themeColor } : {}}
         >
           <Settings2 className="w-4 h-4" />
-          {editMode ? "편집 완료" : "대시보드 편집"}
+          {editMode ? "편집 완료" : "위젯 관리"}
         </button>
 
         {editMode && (
@@ -160,22 +179,82 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
         )}
       </div>
 
-      {/* Hidden Widgets Picker */}
-      {editMode && hiddenWidgets.length > 0 && (
-        <div className="mb-4 p-4 rounded-2xl border-2 border-dashed bg-muted/30" style={{ borderColor: `${themeColor}40` }}>
-          <p className="text-sm font-medium text-muted-foreground mb-3">숨겨진 섹션 (클릭하여 추가)</p>
-          <div className="flex flex-wrap gap-2">
-            {hiddenWidgets.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => showWidget(w.id)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card text-sm font-medium text-foreground hover:shadow-md transition-all"
-              >
-                <Plus className="w-4 h-4" style={{ color: themeColor }} />
-                <w.icon className="w-4 h-4" />
-                {w.title}
-              </button>
-            ))}
+      {/* Widget Management Panel */}
+      {editMode && (
+        <div className="mb-6 rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-4 py-3 bg-muted/50 border-b border-border">
+            <p className="text-sm font-bold text-foreground">위젯 관리</p>
+            <p className="text-xs text-muted-foreground mt-0.5">토글로 위젯을 켜고 끄세요. 드래그 또는 화살표로 순서를 변경하세요.</p>
+          </div>
+          <div className="divide-y divide-border">
+            {allWidgetsForPanel.map((w, idx) => {
+              const isVisible = w.visible;
+              const isRequired = w.required;
+              const visibleIdx = orderedWidgets.findIndex((ow) => ow.id === w.id);
+
+              return (
+                <div
+                  key={w.id}
+                  className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                    !isVisible ? "opacity-50 bg-muted/20" : "bg-card"
+                  }`}
+                >
+                  {/* Drag handle */}
+                  {isVisible ? (
+                    <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  ) : (
+                    <div className="w-4 h-4 flex-shrink-0" />
+                  )}
+
+                  {/* Icon + Title */}
+                  <w.icon className="w-4 h-4 flex-shrink-0" style={{ color: isVisible ? themeColor : "#999" }} />
+                  <span className={`text-sm flex-1 min-w-0 truncate ${isVisible ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
+                    {w.title}
+                    {isRequired && <span className="text-[10px] text-muted-foreground ml-1.5">(필수)</span>}
+                  </span>
+
+                  {/* Move up/down */}
+                  {isVisible && (
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      <button
+                        onClick={() => moveWidget(w.id, "up")}
+                        disabled={visibleIdx === 0}
+                        className="p-1 rounded-lg hover:bg-muted disabled:opacity-20 transition-colors"
+                        title="위로 이동"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                      <button
+                        onClick={() => moveWidget(w.id, "down")}
+                        disabled={visibleIdx === orderedWidgets.length - 1}
+                        className="p-1 rounded-lg hover:bg-muted disabled:opacity-20 transition-colors"
+                        title="아래로 이동"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Toggle switch */}
+                  {!isRequired && (
+                    <button
+                      onClick={() => isVisible ? hideWidget(w.id) : showWidget(w.id)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full flex-shrink-0 transition-colors ${
+                        isVisible ? "" : "bg-muted"
+                      }`}
+                      style={isVisible ? { backgroundColor: themeColor } : {}}
+                      title={isVisible ? "위젯 끄기" : "위젯 켜기"}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                          isVisible ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -191,7 +270,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
             onDrop={handleDrop}
             className={`transition-all ${editMode ? "cursor-move" : ""}`}
           >
-            {/* Section header (only in edit mode or when widget has title bar content) */}
+            {/* Section header */}
             {(editMode || widget.moreLink) && (
               <div className="flex items-center gap-2 mb-2">
                 {editMode && (
@@ -208,9 +287,9 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
                   <button
                     onClick={() => hideWidget(widget.id)}
                     className="p-1 rounded-lg hover:bg-destructive/10 transition-colors"
-                    title="섹션 숨기기"
+                    title="위젯 숨기기"
                   >
-                    <X className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                    <EyeOff className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
                   </button>
                 )}
               </div>

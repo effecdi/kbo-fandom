@@ -294,17 +294,20 @@ export function FandomIndex() {
       content: <FanPollWidget themeColor={themeColor} teamName={fandomProfile?.groupName} />,
     });
 
-    // 8. Upcoming Games (My Team Schedule)
+    // 8. Upcoming Games (My Team Schedule) — horizontal scroll
     if (upcomingGames.length > 0) {
       w.push({
         id: "my-schedule",
         title: `${fandomProfile?.groupName || "내 팀"} 경기 일정`,
         icon: Calendar,
         moreLink: "/fandom/schedule",
+        noPadding: true,
         content: (
-          <div className="space-y-2">
+          <div className="flex gap-3 overflow-x-auto pb-2 px-3 pt-1 scrollbar-hide">
             {upcomingGames.map((game) => (
-              <GameScheduleCard key={game.id} game={game} teams={groups} compact />
+              <div key={game.id} className="min-w-[280px] max-w-[320px] flex-shrink-0">
+                <GameScheduleCard game={game} teams={groups} compact />
+              </div>
             ))}
           </div>
         ),
