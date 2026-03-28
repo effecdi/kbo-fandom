@@ -323,12 +323,12 @@ export function FandomOnboarding() {
               <h1 className="text-2xl font-black text-foreground">
                 {selectedGroup?.name}의 창단 연도는?
               </h1>
-              <div className="flex gap-4 justify-center">
+              <div className="grid grid-cols-2 sm:flex gap-3 sm:gap-4 justify-center max-w-sm sm:max-w-none mx-auto">
                 {foundedYearChoices.map((y) => (
                   <button
                     key={y}
                     onClick={() => setDebutYearAnswer(String(y))}
-                    className={`px-8 py-4 rounded-xl border-2 font-bold text-lg transition-all ${
+                    className={`px-6 py-4 rounded-xl border-2 font-bold text-lg transition-all ${
                       debutYearAnswer === String(y)
                         ? "text-white shadow-lg"
                         : "border-border text-foreground hover:border-muted-foreground/30"
