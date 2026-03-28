@@ -8,10 +8,10 @@ interface TeamLogoProps {
 }
 
 const SIZE_CLASSES = {
-  xs: "w-5 h-5",
-  sm: "w-7 h-7",
+  xs: "w-6 h-6",
+  sm: "w-8 h-8",
   md: "w-10 h-10",
-  lg: "w-12 h-12",
+  lg: "w-14 h-14",
 };
 
 const TEXT_CLASSES = {

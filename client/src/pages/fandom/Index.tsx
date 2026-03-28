@@ -322,7 +322,7 @@ export function FandomIndex() {
         content: (
           <div className="flex gap-3 overflow-x-auto pb-2 px-3 pt-1 scrollbar-hide">
             {upcomingGames.map((game) => (
-              <div key={game.id} className="min-w-[280px] max-w-[320px] flex-shrink-0">
+              <div key={game.id} className="min-w-[260px] max-w-[300px] flex-shrink-0">
                 <GameScheduleCard game={game} teams={groups} compact />
               </div>
             ))}
