@@ -223,32 +223,32 @@ export function FandomIndex() {
       });
     }
 
-    // 5. Quick Stats
+    // 5. Quick Stats — 4-column horizontal layout, modern design
     w.push({
       id: "quick-stats",
       title: "한눈에 보기",
       icon: TrendingUp,
       content: (
-        <div className="grid grid-cols-2 gap-3 h-full">
-          <Link to="/fandom/groups" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
-            <Users className="w-6 h-6 text-violet-500 mb-1" />
-            <p className="text-xl font-black text-foreground">{groups.length}</p>
-            <p className="text-[13px] text-muted-foreground">KBO 구단</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Link to="/fandom/groups" className="rounded-2xl p-5 bg-gradient-to-br from-violet-500/10 to-violet-500/5 border border-violet-500/20 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10 transition-all">
+            <Users className="w-7 h-7 text-violet-500 mb-3" />
+            <p className="text-2xl font-black text-foreground leading-none">{groups.length}</p>
+            <p className="text-base text-muted-foreground mt-1.5">KBO 구단</p>
           </Link>
-          <Link to="/fandom/feed" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
-            <Heart className="w-6 h-6 text-rose-500 mb-1" />
-            <p className="text-xl font-black text-foreground">{totalFanart.toLocaleString()}</p>
-            <p className="text-[13px] text-muted-foreground">팬아트</p>
+          <Link to="/fandom/feed" className="rounded-2xl p-5 bg-gradient-to-br from-rose-500/10 to-rose-500/5 border border-rose-500/20 hover:border-rose-500/40 hover:shadow-lg hover:shadow-rose-500/10 transition-all">
+            <Heart className="w-7 h-7 text-rose-500 mb-3" />
+            <p className="text-2xl font-black text-foreground leading-none">{totalFanart.toLocaleString()}</p>
+            <p className="text-base text-muted-foreground mt-1.5">팬아트</p>
           </Link>
-          <Link to="/fandom/feed" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
-            <Rss className="w-6 h-6 text-cyan-500 mb-1" />
-            <p className="text-xl font-black text-foreground">{feedPosts.length}</p>
-            <p className="text-[13px] text-muted-foreground">피드 포스트</p>
+          <Link to="/fandom/feed" className="rounded-2xl p-5 bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20 hover:border-cyan-500/40 hover:shadow-lg hover:shadow-cyan-500/10 transition-all">
+            <Rss className="w-7 h-7 text-cyan-500 mb-3" />
+            <p className="text-2xl font-black text-foreground leading-none">{feedPosts.length}</p>
+            <p className="text-base text-muted-foreground mt-1.5">피드 포스트</p>
           </Link>
-          <Link to="/fandom/events" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
-            <Trophy className="w-6 h-6 text-amber-500 mb-1" />
-            <p className="text-xl font-black text-foreground">{activeEvents.length}</p>
-            <p className="text-[13px] text-muted-foreground">진행중 이벤트</p>
+          <Link to="/fandom/events" className="rounded-2xl p-5 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10 transition-all">
+            <Trophy className="w-7 h-7 text-amber-500 mb-3" />
+            <p className="text-2xl font-black text-foreground leading-none">{activeEvents.length}</p>
+            <p className="text-base text-muted-foreground mt-1.5">진행중 이벤트</p>
           </Link>
         </div>
       ),

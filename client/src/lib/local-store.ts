@@ -624,7 +624,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 10;
+const SEED_VERSION = 11;
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);
@@ -837,94 +837,28 @@ export function seedIfEmpty(): void {
     players.forEach((p) => addItem(STORE_KEYS.KBO_PLAYERS, p));
   }
 
-  // Fandom Feed Posts (KBO 야구 팬아트)
+  // Fandom Feed Posts — 실제 사용자 데이터만 사용 (가짜 시드 제거)
   if (listItems(STORE_KEYS.FANDOM_FEED).length === 0) {
     const posts: FandomFeedPost[] = [
-      { id: "fp-1", authorId: "fan-1", authorName: "트윈스드로잉", authorAvatar: "TD", groupId: "team-lg", groupName: "LG Twins", memberTags: ["오지환", "박해민"], title: "오지환 & 박해민 더블플레이 팬아트", description: "잠실의 철벽 콤비를 그려봤어요!", imageUrl: null, likes: 892, liked: false, saved: false, saveCount: 156, shareCount: 89, commentCount: 45, type: "fanart", createdAt: "2026-03-23" },
-      { id: "fp-2", authorId: "fan-2", authorName: "타이거즈아트", authorAvatar: "TA", groupId: "team-kia", groupName: "KIA Tigers", memberTags: ["양현종"], title: "양현종 에이스 포트레이트", description: "KIA의 전설 양현종 투구 팬아트", imageUrl: null, likes: 756, liked: false, saved: false, saveCount: 98, shareCount: 54, commentCount: 38, type: "fanart", createdAt: "2026-03-23" },
-      { id: "fp-3", authorId: "fan-3", authorName: "다이노스작가", authorAvatar: "DJ", groupId: "team-nc", groupName: "NC Dinos", memberTags: ["박건우", "양의지"], title: "NC 다이노스 우승 인스타툰", description: "2020 우승의 감동을 4컷 인스타툰으로!", imageUrl: null, likes: 1203, liked: false, saved: false, saveCount: 234, shareCount: 167, commentCount: 67, type: "instatoon", createdAt: "2026-03-22" },
-      { id: "fp-4", authorId: "fan-4", authorName: "랜더스그림", authorAvatar: "RG", groupId: "team-ssg", groupName: "SSG Landers", memberTags: ["최정", "추신수"], title: "최정 & 추신수 레전드 일러스트", description: "SSG 최정의 500홈런 기념 팬아트", imageUrl: null, likes: 645, liked: false, saved: false, saveCount: 87, shareCount: 45, commentCount: 29, type: "fanart", createdAt: "2026-03-22" },
-      { id: "fp-5", authorId: "fan-5", authorName: "베어스팬아트", authorAvatar: "BA", groupId: "team-doo", groupName: "Doosan Bears", memberTags: ["허경민"], title: "허경민 수비 팬아트", description: "두산의 철벽 유격수 팬아트", imageUrl: null, likes: 534, liked: false, saved: false, saveCount: 72, shareCount: 34, commentCount: 22, type: "fanart", createdAt: "2026-03-21" },
-      { id: "fp-6", authorId: "fan-6", authorName: "자이언츠크리", authorAvatar: "GC", groupId: "team-lot", groupName: "Lotte Giants", memberTags: ["전준우"], title: "사직구장 응원 밈 인스타툰", description: "롯데 팬들의 열정적인 응원 밈 ㅋㅋ", imageUrl: null, likes: 1567, liked: false, saved: false, saveCount: 312, shareCount: 245, commentCount: 89, type: "meme", createdAt: "2026-03-21" },
-      { id: "fp-7", authorId: "fan-7", authorName: "라이온즈아트", authorAvatar: "LA", groupId: "team-sam", groupName: "Samsung Lions", memberTags: ["구자욱", "오승환"], title: "삼성 라이온즈 4연패 팬아트", description: "삼성의 황금기를 기억하며", imageUrl: null, likes: 423, liked: false, saved: false, saveCount: 56, shareCount: 28, commentCount: 18, type: "fanart", createdAt: "2026-03-20" },
-      { id: "fp-8", authorId: "fan-8", authorName: "이글스작가", authorAvatar: "EW", groupId: "team-han", groupName: "Hanwha Eagles", memberTags: ["노시환", "문동주"], title: "한화 이글스 희망의 투수진", description: "문동주의 역투 장면 일러스트", imageUrl: null, likes: 389, liked: false, saved: false, saveCount: 45, shareCount: 21, commentCount: 15, type: "fanart", createdAt: "2026-03-20" },
-      { id: "fp-9", authorId: "fan-1", authorName: "트윈스드로잉", authorAvatar: "TD", groupId: "team-lg", groupName: "LG Twins", memberTags: ["임찬규"], title: "임찬규 삼진 인스타툰", description: "LG의 에이스 임찬규의 삼진 장면을 4컷으로!", imageUrl: null, likes: 2103, liked: false, saved: false, saveCount: 389, shareCount: 278, commentCount: 112, type: "instatoon", createdAt: "2026-03-19" },
-      { id: "fp-10", authorId: "fan-2", authorName: "타이거즈아트", authorAvatar: "TA", groupId: "team-kia", groupName: "KIA Tigers", memberTags: ["김도영"], title: "김도영 풀스윙 에디트", description: "김도영의 역동적인 타격 에디트", imageUrl: null, likes: 934, liked: false, saved: false, saveCount: 145, shareCount: 98, commentCount: 41, type: "edit", createdAt: "2026-03-19" },
-      { id: "fp-11", authorId: "fan-6", authorName: "자이언츠크리", authorAvatar: "GC", groupId: "team-lot", groupName: "Lotte Giants", memberTags: ["안치홍"], title: "부산 사직 응원 밈", description: "사직구장 응원 문화 밈 모음!", imageUrl: null, likes: 1876, liked: false, saved: false, saveCount: 356, shareCount: 289, commentCount: 95, type: "meme", createdAt: "2026-03-18" },
-      { id: "fp-12", authorId: "fan-10", authorName: "위즈아트", authorAvatar: "WA", groupId: "team-kt", groupName: "KT Wiz", memberTags: ["강백호", "소형준"], title: "강백호 & 소형준 케미 팬아트", description: "KT의 미래 듀오 팬아트", imageUrl: null, likes: 678, liked: false, saved: false, saveCount: 89, shareCount: 56, commentCount: 34, type: "fanart", createdAt: "2026-03-18" },
-      { id: "fp-13", authorId: "fan-11", authorName: "히어로즈그림", authorAvatar: "HG", groupId: "team-kiw", groupName: "Kiwoom Heroes", memberTags: ["이정후", "안우진"], title: "고척돔 일상 인스타툰", description: "키움 히어로즈 고척돔 일상 4컷", imageUrl: null, likes: 412, liked: false, saved: false, saveCount: 56, shareCount: 32, commentCount: 19, type: "instatoon", createdAt: "2026-03-17" },
-      { id: "fp-14", authorId: "fan-7", authorName: "라이온즈아트", authorAvatar: "LA", groupId: "team-sam", groupName: "Samsung Lions", memberTags: ["원태인", "김영웅"], title: "삼성 투타 콤비 팬아트", description: "원태인-김영웅 콤비 일러스트", imageUrl: null, likes: 567, liked: false, saved: false, saveCount: 78, shareCount: 42, commentCount: 28, type: "fanart", createdAt: "2026-03-17" },
-      { id: "fp-15", authorId: "fan-5", authorName: "베어스팬아트", authorAvatar: "BA", groupId: "team-doo", groupName: "Doosan Bears", memberTags: ["정수빈", "김재환"], title: "두산 타선 인스타툰", description: "두산 베어스 타선의 화력 4컷!", imageUrl: null, likes: 345, liked: false, saved: false, saveCount: 45, shareCount: 23, commentCount: 14, type: "instatoon", createdAt: "2026-03-16" },
-      { id: "fp-16", authorId: "fan-8", authorName: "이글스작가", authorAvatar: "EW", groupId: "team-han", groupName: "Hanwha Eagles", memberTags: ["황준서"], title: "황준서 팬아트", description: "한화의 미래 에이스 황준서 일러스트", imageUrl: null, likes: 501, liked: false, saved: false, saveCount: 67, shareCount: 38, commentCount: 23, type: "fanart", createdAt: "2026-03-16" },
-      { id: "fp-17", authorId: "fan-1", authorName: "트윈스드로잉", authorAvatar: "TD", groupId: "team-lg", groupName: "LG Twins", memberTags: ["오스틴"], title: "오스틴 홈런 팬아트", description: "LG 오스틴의 대포 홈런 장면 팬아트", imageUrl: null, likes: 1456, liked: false, saved: false, saveCount: 267, shareCount: 189, commentCount: 72, type: "fanart", createdAt: "2026-03-15" },
-      { id: "fp-18", authorId: "fan-3", authorName: "다이노스작가", authorAvatar: "DJ", groupId: "team-nc", groupName: "NC Dinos", memberTags: ["손아섭", "노진혁"], title: "NC 다이노스 경기 인스타툰", description: "NC 다이노스 경기 하이라이트 4컷!", imageUrl: null, likes: 923, liked: false, saved: false, saveCount: 167, shareCount: 112, commentCount: 48, type: "instatoon", createdAt: "2026-03-15" },
     ];
     posts.forEach((p) => addItem(STORE_KEYS.FANDOM_FEED, p));
   }
 
-  // Fandom Comments (KBO 야구)
+  // Fandom Comments — 실제 사용자 데이터만 사용 (가짜 시드 제거)
   if (listItems(STORE_KEYS.FANDOM_COMMENTS).length === 0) {
-    const comments: FandomComment[] = [
-      { id: "fc-1", postId: "fp-1", authorName: "LG팬1004", authorAvatar: "L1", content: "더블플레이 장면 진짜 소름 돋게 그리셨어요!", likes: 23, liked: false, createdAt: "2026-03-23" },
-      { id: "fc-2", postId: "fp-1", authorName: "잠실직관러", authorAvatar: "JG", content: "색감이 너무 좋아요!! 잠실 분위기 살아있네요", likes: 15, liked: false, createdAt: "2026-03-23" },
-      { id: "fc-3", postId: "fp-1", authorName: "트윈스팬", authorAvatar: "TP", content: "오지환 수비 포즈 완벽 캡처! 대단해요", likes: 8, liked: false, parentId: "fc-1", createdAt: "2026-03-23" },
-      { id: "fc-4", postId: "fp-3", authorName: "NC팬덤", authorAvatar: "NF", content: "2020 우승 인스타툰 너무 감동이에요! 그때 기억나네요", likes: 45, liked: false, createdAt: "2026-03-22" },
-      { id: "fc-5", postId: "fp-3", authorName: "창원직관", authorAvatar: "CG", content: "4컷 스토리텔링 진짜 잘하시네요 ㅎㅎ", likes: 12, liked: false, createdAt: "2026-03-22" },
-      { id: "fc-6", postId: "fp-6", authorName: "부산사직팬", authorAvatar: "BS", content: "사직구장 응원 ㅋㅋㅋ 공감 100%", likes: 67, liked: false, createdAt: "2026-03-21" },
-      { id: "fc-7", postId: "fp-6", authorName: "롯데팬사랑", authorAvatar: "RL", content: "이거 공유해도 되나요?? 너무 웃겨요 ㅋㅋ", likes: 23, liked: false, createdAt: "2026-03-21" },
-      { id: "fc-8", postId: "fp-6", authorName: "자이언츠", authorAvatar: "GI", content: "사직 가본 사람은 진짜 공감할 듯 ㅋㅋㅋ", likes: 34, liked: false, parentId: "fc-6", createdAt: "2026-03-21" },
-      { id: "fc-9", postId: "fp-9", authorName: "임찬규팬", authorAvatar: "IC", content: "임찬규 삼진 인스타툰 진짜 잘 만드셨어요!! 대박", likes: 89, liked: false, createdAt: "2026-03-19" },
-      { id: "fc-10", postId: "fp-9", authorName: "야구팬아트", authorAvatar: "YA", content: "퀄리티 미쳤다... 프로 크리에이터시죠?", likes: 56, liked: false, createdAt: "2026-03-19" },
-      { id: "fc-11", postId: "fp-11", authorName: "사직러버", authorAvatar: "SL", content: "사직 응원 밈 너무 공감ㅋㅋㅋ", likes: 78, liked: false, createdAt: "2026-03-18" },
-      { id: "fc-12", postId: "fp-11", authorName: "롯데1", authorAvatar: "L1", content: "이 밈 진짜 레전드다 ㅋㅋㅋ", likes: 45, liked: false, createdAt: "2026-03-18" },
-      { id: "fc-13", postId: "fp-2", authorName: "KIA팬1", authorAvatar: "K1", content: "양현종 투구 폼 완벽해요!", likes: 34, liked: false, createdAt: "2026-03-23" },
-      { id: "fc-14", postId: "fp-4", authorName: "SSG팬", authorAvatar: "SF", content: "최정 추신수 레전드 조합 최고!", likes: 19, liked: false, createdAt: "2026-03-22" },
-      { id: "fc-15", postId: "fp-5", authorName: "두산1", authorAvatar: "D1", content: "허경민 수비 라인 살아있네요!", likes: 22, liked: false, createdAt: "2026-03-21" },
-      { id: "fc-16", postId: "fp-7", authorName: "삼성팬", authorAvatar: "SF", content: "4연패 시절 추억이 새록새록!", likes: 15, liked: false, createdAt: "2026-03-20" },
-      { id: "fc-17", postId: "fp-8", authorName: "한화팬1", authorAvatar: "H1", content: "문동주 역투 장면 팬아트 대박!", likes: 11, liked: false, createdAt: "2026-03-20" },
-      { id: "fc-18", postId: "fp-10", authorName: "KIA팬2", authorAvatar: "K2", content: "김도영 에디트 완전 프로급이에요!", likes: 28, liked: false, createdAt: "2026-03-19" },
-      { id: "fc-19", postId: "fp-12", authorName: "KT팬", authorAvatar: "KF", content: "강백호 소형준 콤비 최고!! ♥", likes: 31, liked: false, createdAt: "2026-03-18" },
-      { id: "fc-20", postId: "fp-13", authorName: "키움팬", authorAvatar: "KW", content: "고척돔 일상 인스타툰 귀여워요 ㅎㅎ", likes: 14, liked: false, createdAt: "2026-03-17" },
-      { id: "fc-21", postId: "fp-14", authorName: "삼성2", authorAvatar: "S2", content: "원태인 김영웅 콤비 팬아트 감동이에요!", likes: 20, liked: false, createdAt: "2026-03-17" },
-      { id: "fc-22", postId: "fp-15", authorName: "두산2", authorAvatar: "D2", content: "두산 타선 인스타툰 화력 폭발!", likes: 9, liked: false, createdAt: "2026-03-16" },
-      { id: "fc-23", postId: "fp-16", authorName: "한화2", authorAvatar: "H2", content: "황준서 일러스트 너무 멋져요!", likes: 17, liked: false, createdAt: "2026-03-16" },
-      { id: "fc-24", postId: "fp-17", authorName: "LG팬3", authorAvatar: "L3", content: "오스틴 홈런 장면 완전 멋져요!!", likes: 43, liked: false, createdAt: "2026-03-15" },
-      { id: "fc-25", postId: "fp-17", authorName: "잠실팬", authorAvatar: "JS", content: "디테일 미쳤다... 오스틴 그 자체!", likes: 38, liked: false, createdAt: "2026-03-15" },
-    ];
+    const comments: FandomComment[] = [];
     comments.forEach((c) => addItem(STORE_KEYS.FANDOM_COMMENTS, c));
   }
 
-  // Fandom Events (KBO 이벤트)
+  // Fandom Events — 실제 사용자 데이터만 사용 (가짜 시드 제거)
   if (listItems(STORE_KEYS.FANDOM_EVENTS).length === 0) {
-    const events: FandomEvent[] = [
-      { id: "evt-1", title: "KIA 타이거즈 2026 시즌 응원 팬아트 챌린지", description: "KIA 타이거즈 2026 시즌 개막을 기념하는 팬아트 챌린지! 선수별 또는 팀 팬아트를 제출하세요.", groupId: "team-kia", groupName: "KIA Tigers", type: "challenge", status: "active", participants: 234, prize: "KIA 시즌 관람권 + 공식 굿즈", startDate: "2026-03-01", endDate: "2026-04-30", coverColor: "#EA0029" },
-      { id: "evt-2", title: "NC 다이노스 인스타툰 콘테스트", description: "NC 다이노스의 경기 하이라이트를 4컷 인스타툰으로 만들어주세요!", groupId: "team-nc", groupName: "NC Dinos", type: "contest", status: "active", participants: 156, prize: "NC 사인볼 + 유니폼 세트", startDate: "2026-03-15", endDate: "2026-04-15", coverColor: "#315288" },
-      { id: "evt-3", title: "롯데 자이언츠 응원 밈 챌린지", description: "사직구장의 열정적인 응원 문화를 밈/인스타툰으로 만들어주세요!", groupId: "team-lot", groupName: "Lotte Giants", type: "challenge", status: "active", participants: 189, prize: "롯데 MD + 사직 시즌권", startDate: "2026-03-10", endDate: "2026-04-10", coverColor: "#041E42" },
-      { id: "evt-4", title: "LG 트윈스 x 크리에이터 콜라보", description: "LG 트윈스 공식 콜라보! 최우수 팬아트는 구단 공식 SNS에 게시됩니다.", groupId: "team-lg", groupName: "LG Twins", type: "collab", status: "active", participants: 312, prize: "구단 공식 SNS 게시 + 시즌권", startDate: "2026-03-01", endDate: "2026-04-30", coverColor: "#C60C30" },
-      { id: "evt-5", title: "KBO 올스타전 기념 팬아트 페스타", description: "KBO 올스타전을 기념하는 팬아트 이벤트! 10개 구단 선수를 자유롭게 그려주세요.", groupId: "team-sam", groupName: "Samsung Lions", type: "contest", status: "upcoming", participants: 0, prize: "올스타전 관람권 2매 + 굿즈 패키지", startDate: "2026-07-01", endDate: "2026-07-31", coverColor: "#074CA1" },
-      { id: "evt-6", title: "한화 이글스 팬아트 챌린지", description: "한화 이글스의 젊은 투수진을 응원하는 팬아트 챌린지! 문동주, 황준서를 그려주세요.", groupId: "team-han", groupName: "Hanwha Eagles", type: "challenge", status: "upcoming", participants: 0, prize: "한화 사인볼 + 유니폼", startDate: "2026-04-15", endDate: "2026-05-15", coverColor: "#FF6600" },
-      { id: "evt-7", title: "두산 베어스 창단 기념 이벤트", description: "두산 베어스의 전통을 기리는 팬아트 & 인스타툰 공모전!", groupId: "team-doo", groupName: "Doosan Bears", type: "anniversary", status: "ended", participants: 145, prize: "두산 시즌권 + 사인 유니폼", startDate: "2026-01-01", endDate: "2026-02-01", coverColor: "#131230" },
-      { id: "evt-8", title: "SSG 랜더스 팬아트 챌린지", description: "인천의 자존심 SSG 랜더스 선수들을 팬아트로 표현하세요!", groupId: "team-ssg", groupName: "SSG Landers", type: "challenge", status: "ended", participants: 98, prize: "SSG 관람권 세트", startDate: "2026-02-01", endDate: "2026-03-01", coverColor: "#CE0E2D" },
-    ];
+    const events: FandomEvent[] = [];
     events.forEach((e) => addItem(STORE_KEYS.FANDOM_EVENTS, e));
   }
 
-  // Fan Creators (KBO 팬 크리에이터)
+  // Fan Creators — 실제 사용자 데이터만 사용 (가짜 시드 제거)
   if (listItems(STORE_KEYS.FAN_CREATORS).length === 0) {
-    const creators: FanCreator[] = [
-      { id: "fan-1", nickname: "트윈스드로잉", avatar: "TD", bio: "LG 트윈스 팬아트 전문 크리에이터 잠실 직관러", groupId: "team-lg", groupName: "LG Twins", favoritePlayer: "오지환", fanartCount: 48, followerCount: 1230, followingCount: 45, totalLikes: 15600, totalSaves: 2890, totalShares: 1780, engagementScore: 32740, badge: "top", joinedAt: "2025-06-15" },
-      { id: "fan-2", nickname: "타이거즈아트", avatar: "TA", bio: "KIA 타이거즈 일러스트레이터 광주 챔필 홈팬", groupId: "team-kia", groupName: "KIA Tigers", favoritePlayer: "양현종", fanartCount: 35, followerCount: 890, followingCount: 32, totalLikes: 9800, totalSaves: 1540, totalShares: 890, engagementScore: 19200, badge: "popular", joinedAt: "2025-08-20" },
-      { id: "fan-3", nickname: "다이노스작가", avatar: "DJ", bio: "NC 다이노스 인스타툰 크리에이터 창원직관러", groupId: "team-nc", groupName: "NC Dinos", favoritePlayer: "박건우", fanartCount: 52, followerCount: 2100, followingCount: 38, totalLikes: 22400, totalSaves: 4120, totalShares: 2560, engagementScore: 49820, badge: "top", joinedAt: "2025-05-10" },
-      { id: "fan-4", nickname: "랜더스그림", avatar: "RG", bio: "SSG 랜더스 팬아트 그리는 인천팬", groupId: "team-ssg", groupName: "SSG Landers", favoritePlayer: "최정", fanartCount: 28, followerCount: 560, followingCount: 51, totalLikes: 5400, totalSaves: 780, totalShares: 430, engagementScore: 11650, badge: "rising", joinedAt: "2025-09-01" },
-      { id: "fan-5", nickname: "베어스팬아트", avatar: "BA", bio: "두산 베어스 팬아트 & 밈 제작 잠실 단골", groupId: "team-doo", groupName: "Doosan Bears", favoritePlayer: "허경민", fanartCount: 31, followerCount: 720, followingCount: 28, totalLikes: 7200, totalSaves: 1120, totalShares: 670, engagementScore: 15650, badge: "popular", joinedAt: "2025-07-22" },
-      { id: "fan-6", nickname: "자이언츠크리", avatar: "GC", bio: "롯데 자이언츠 밈 장인 ㅋㅋ 사직 응원문화 전파", groupId: "team-lot", groupName: "Lotte Giants", favoritePlayer: "전준우", fanartCount: 44, followerCount: 1560, followingCount: 41, totalLikes: 18900, totalSaves: 3560, totalShares: 2450, engagementScore: 41570, badge: "top", joinedAt: "2025-04-05" },
-      { id: "fan-7", nickname: "라이온즈아트", avatar: "LA", bio: "삼성 라이온즈 팬아트 크리에이터 대구팬", groupId: "team-sam", groupName: "Samsung Lions", favoritePlayer: "구자욱", fanartCount: 22, followerCount: 380, followingCount: 55, totalLikes: 3800, totalSaves: 530, totalShares: 290, engagementScore: 7630, badge: "rising", joinedAt: "2025-10-12" },
-      { id: "fan-8", nickname: "이글스작가", avatar: "EW", bio: "한화 이글스 팬아트 전문 대전직관러", groupId: "team-han", groupName: "Hanwha Eagles", favoritePlayer: "노시환", fanartCount: 19, followerCount: 340, followingCount: 29, totalLikes: 3200, totalSaves: 450, totalShares: 250, engagementScore: 6600, badge: "rising", joinedAt: "2025-11-01" },
-      { id: "fan-9", nickname: "KBO작가", avatar: "KB", bio: "KBO 전 구단 크리에이터 다양한 구단 팬아트", groupId: "team-lg", groupName: "LG Twins", favoritePlayer: "박해민", fanartCount: 67, followerCount: 3200, followingCount: 120, totalLikes: 34500, totalSaves: 6700, totalShares: 4200, engagementScore: 76100, badge: "top", joinedAt: "2025-01-15" },
-      { id: "fan-10", nickname: "위즈아트", avatar: "WA", bio: "KT 위즈 일러스트 & 굿즈 제작", groupId: "team-kt", groupName: "KT Wiz", favoritePlayer: "강백호", fanartCount: 15, followerCount: 210, followingCount: 67, totalLikes: 1800, totalSaves: 230, totalShares: 120, engagementScore: 3570, badge: "rising", joinedAt: "2026-01-20" },
-      { id: "fan-11", nickname: "히어로즈그림", avatar: "HG", bio: "키움 히어로즈 팬아트 고척돔 직관러", groupId: "team-kiw", groupName: "Kiwoom Heroes", favoritePlayer: "이정후", fanartCount: 12, followerCount: 180, followingCount: 34, totalLikes: 1200, totalSaves: 170, totalShares: 95, engagementScore: 2625, badge: "rookie", joinedAt: "2026-02-10" },
-      { id: "fan-12", nickname: "임찬규팬", avatar: "IC", bio: "임찬규 팬아트 모아 놓는 계정", groupId: "team-lg", groupName: "LG Twins", favoritePlayer: "임찬규", fanartCount: 25, followerCount: 890, followingCount: 42, totalLikes: 8900, totalSaves: 1340, totalShares: 780, engagementScore: 18870, badge: "popular", joinedAt: "2025-08-05" },
-    ];
+    const creators: FanCreator[] = [];
     creators.forEach((c) => addItem(STORE_KEYS.FAN_CREATORS, c));
   }
 
