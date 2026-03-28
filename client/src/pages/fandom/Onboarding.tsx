@@ -299,17 +299,17 @@ export function FandomOnboarding() {
             </div>
           )}
 
-          {/* Step 2: Fandom name */}
+          {/* Step 2: Team Korean name */}
           {step === 2 && (
             <div className="space-y-6 text-center">
               <Star className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
               <h1 className="text-2xl font-black text-foreground">
-                {selectedGroup?.name}의 팬덤 이름은?
+                우리 구단의 정식 이름은?
               </h1>
-              <p className="text-muted-foreground">팬 그룹의 공식 이름을 입력하세요</p>
+              <p className="text-muted-foreground">구단의 한글 정식 명칭을 입력하세요</p>
               <Input
                 className="max-w-sm mx-auto text-center text-lg h-14"
-                placeholder={selectedGroup ? `예: ${selectedGroup.fandomName}` : "예: 트윈스 팬, 위즈 팬..."}
+                placeholder={selectedGroup ? `예: ${selectedGroup.nameKo}` : "예: 한화 이글스, LG 트윈스..."}
                 value={fandomNameInput}
                 onChange={(e) => setFandomNameInput(e.target.value)}
               />

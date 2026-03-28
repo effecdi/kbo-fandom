@@ -258,11 +258,10 @@ export function verifyFandomAnswers(
 
   const wrongKeys: string[] = [];
 
-  // Q2: fandom name
-  if (
-    (answers.fandomName || "").trim().toLowerCase() !==
-    team.fandomName.trim().toLowerCase()
-  )
+  // Q2: 구단 정식 이름 (nameKo 또는 fandomName 둘 다 허용)
+  const nameAnswer = (answers.fandomName || "").trim().replace(/\s+/g, "").toLowerCase();
+  const nameKoNorm = team.nameKo.trim().replace(/\s+/g, "").toLowerCase();
+  if (nameAnswer !== nameKoNorm && nameAnswer !== team.fandomName.trim().replace(/\s+/g, "").toLowerCase())
     wrongKeys.push("fandomName");
 
   // Q3: founded year (창단 연도)
