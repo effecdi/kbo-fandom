@@ -54,7 +54,7 @@ export default function LanyardCard({
 
   return (
     <div
-      className="flex flex-col items-center justify-start pt-1"
+      className="flex flex-col items-center justify-start"
       style={{ height, perspective: '800px' }}
     >
       {/* Lanyard string */}

@@ -395,10 +395,10 @@ export function FandomIndex() {
 
   return (
     <StudioLayout>
-      {/* 포토카드 — 우측 상단 고정 (데스크톱만), 클릭 시 에디터 */}
+      {/* 포토카드 — 헤더 border에 붙어서 매달림 (데스크톱만), 클릭 시 에디터 */}
       <Link
         to="/fandom/create"
-        className="fixed top-20 right-4 lg:right-8 z-20 hidden md:block"
+        className="fixed top-16 right-4 lg:right-8 z-20 hidden md:block"
         title="포토카드 디자인하기"
       >
         <Suspense fallback={null}>
