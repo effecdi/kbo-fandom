@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { StudioLayout } from "@/components/StudioLayout";
 import { Link } from "react-router";
 import {
@@ -32,6 +32,9 @@ import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
 import { DashboardGrid, type DashboardWidget } from "@/components/fandom/dashboard-grid";
 import { lazy, Suspense } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+gsap.registerPlugin(ScrollTrigger);
 const LanyardCard = lazy(() => import("@/components/fandom/lanyard-card"));
 import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
 import { useKboStandings } from "@/hooks/use-kbo-standings";
@@ -154,25 +157,7 @@ export function FandomIndex() {
       icon: Zap,
       defaultColSpan: 2,
       content: (
-        <div className="flex flex-wrap gap-2">
-          {[
-            { to: "/fandom/schedule", icon: Calendar, label: "경기 일정", color: themeColor },
-            { to: "/fandom/standings", icon: BarChart3, label: "순위표", color: "#10b981" },
-            { to: "/fandom/create", icon: Palette, label: "팬아트", color: themeColor },
-            { to: "/fandom/stadium-guide", icon: MapPin, label: "직관 가이드", color: "#3b82f6" },
-            { to: "/fandom/photocards", icon: Camera, label: "포토카드", color: "#ec4899" },
-            { to: "/fandom/goods", icon: ShoppingBag, label: "굿즈 교환", color: "#f97316" },
-          ].map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 border border-border bg-muted/30 hover:bg-muted hover:border-foreground/20 transition-all"
-            >
-              <item.icon className="w-4 h-4 shrink-0" style={{ color: item.color }} />
-              <span className="text-[13px] font-semibold text-foreground whitespace-nowrap">{item.label}</span>
-            </Link>
-          ))}
-        </div>
+        <QuickActionPills themeColor={themeColor} />
       ),
     });
 
@@ -205,22 +190,22 @@ export function FandomIndex() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Link to="/fandom/groups" className="rounded-2xl p-5 bg-gradient-to-br from-violet-500/10 to-violet-500/5 border border-violet-500/20 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10 transition-all">
             <Users className="w-7 h-7 text-violet-500 mb-3" />
-            <p className="text-2xl font-black text-foreground leading-none">{groups.length}</p>
+            <CountUp value={groups.length} className="text-2xl font-black text-foreground leading-none" />
             <p className="text-base text-muted-foreground mt-1.5">KBO 구단</p>
           </Link>
           <Link to="/fandom/feed" className="rounded-2xl p-5 bg-gradient-to-br from-rose-500/10 to-rose-500/5 border border-rose-500/20 hover:border-rose-500/40 hover:shadow-lg hover:shadow-rose-500/10 transition-all">
             <Heart className="w-7 h-7 text-rose-500 mb-3" />
-            <p className="text-2xl font-black text-foreground leading-none">{totalFanart.toLocaleString()}</p>
+            <CountUp value={totalFanart} className="text-2xl font-black text-foreground leading-none" />
             <p className="text-base text-muted-foreground mt-1.5">팬아트</p>
           </Link>
           <Link to="/fandom/feed" className="rounded-2xl p-5 bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20 hover:border-cyan-500/40 hover:shadow-lg hover:shadow-cyan-500/10 transition-all">
             <Rss className="w-7 h-7 text-cyan-500 mb-3" />
-            <p className="text-2xl font-black text-foreground leading-none">{feedPosts.length}</p>
+            <CountUp value={feedPosts.length} className="text-2xl font-black text-foreground leading-none" />
             <p className="text-base text-muted-foreground mt-1.5">피드 포스트</p>
           </Link>
           <Link to="/fandom/events" className="rounded-2xl p-5 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10 transition-all">
             <Trophy className="w-7 h-7 text-amber-500 mb-3" />
-            <p className="text-2xl font-black text-foreground leading-none">{activeEvents.length}</p>
+            <CountUp value={activeEvents.length} className="text-2xl font-black text-foreground leading-none" />
             <p className="text-base text-muted-foreground mt-1.5">진행중 이벤트</p>
           </Link>
         </div>
@@ -393,13 +378,37 @@ export function FandomIndex() {
     return null;
   }, [liveGames, fandomProfile]);
 
+  // GSAP entrance animations
+  const headerRef = useRef<HTMLDivElement>(null);
+  const lanyardRef = useRef<HTMLAnchorElement>(null);
+  useEffect(() => {
+    // Header text entrance
+    if (headerRef.current) {
+      gsap.fromTo(
+        headerRef.current,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+      );
+    }
+    // Lanyard card swing-in from right
+    if (lanyardRef.current) {
+      gsap.fromTo(
+        lanyardRef.current,
+        { opacity: 0, x: 60, rotate: 8 },
+        { opacity: 1, x: 0, rotate: 0, duration: 1, delay: 0.3, ease: "elastic.out(1, 0.6)" },
+      );
+    }
+  }, []);
+
   return (
     <StudioLayout>
       {/* 포토카드 — 헤더 border에 붙어서 매달림 (데스크톱만), 클릭 시 에디터 */}
       <Link
+        ref={lanyardRef}
         to="/fandom/create"
         className="fixed top-16 right-4 lg:right-8 z-20 hidden md:block"
         title="포토카드 디자인하기"
+        style={{ opacity: 0 }}
       >
         <Suspense fallback={null}>
           <LanyardCard
@@ -414,7 +423,7 @@ export function FandomIndex() {
 
       <div className="max-w-6xl mx-auto overflow-x-hidden">
         {/* Personalized Header */}
-        <div className="mb-6">
+        <div ref={headerRef} className="mb-6" style={{ opacity: 0 }}>
           <div className="flex items-center gap-4 flex-wrap">
             <h1 className="text-2xl sm:text-[28px] md:text-[32px] font-black text-foreground">
               {fandomProfile ? (
@@ -460,6 +469,60 @@ export function FandomIndex() {
         <DashboardGrid widgets={widgets} themeColor={themeColor} />
       </div>
     </StudioLayout>
+  );
+}
+
+/** Quick action pills with stagger animation */
+function QuickActionPills({ themeColor }: { themeColor: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const pills = containerRef.current.querySelectorAll("a");
+    if (pills.length === 0) return;
+
+    gsap.set(pills, { opacity: 0, y: 12, scale: 0.9 });
+    const tween = gsap.to(pills, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 0.4,
+      stagger: 0.06,
+      ease: "back.out(1.4)",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top 90%",
+      },
+    });
+
+    return () => {
+      tween.scrollTrigger?.kill();
+      tween.kill();
+    };
+  }, []);
+
+  const items = [
+    { to: "/fandom/schedule", icon: Calendar, label: "경기 일정", color: themeColor },
+    { to: "/fandom/standings", icon: BarChart3, label: "순위표", color: "#10b981" },
+    { to: "/fandom/create", icon: Palette, label: "팬아트", color: themeColor },
+    { to: "/fandom/stadium-guide", icon: MapPin, label: "직관 가이드", color: "#3b82f6" },
+    { to: "/fandom/photocards", icon: Camera, label: "포토카드", color: "#ec4899" },
+    { to: "/fandom/goods", icon: ShoppingBag, label: "굿즈 교환", color: "#f97316" },
+  ];
+
+  return (
+    <div ref={containerRef} className="flex flex-wrap gap-2">
+      {items.map((item) => (
+        <Link
+          key={item.to}
+          to={item.to}
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2 border border-border bg-muted/30 hover:bg-muted hover:border-foreground/20 transition-all"
+        >
+          <item.icon className="w-4 h-4 shrink-0" style={{ color: item.color }} />
+          <span className="text-[13px] font-semibold text-foreground whitespace-nowrap">{item.label}</span>
+        </Link>
+      ))}
+    </div>
   );
 }
 
@@ -610,4 +673,38 @@ function FanPollWidget({
       )}
     </div>
   );
+}
+
+/** Animated number counter — rolls up from 0 on scroll */
+function CountUp({ value, className }: { value: number; className?: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (!ref.current || value === 0) return;
+    const el = ref.current;
+    el.textContent = "0";
+
+    const obj = { val: 0 };
+    const tween = gsap.to(obj, {
+      val: value,
+      duration: 1,
+      delay: 0.2,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: el,
+        start: "top 92%",
+        toggleActions: "play none none none",
+      },
+      onUpdate: () => {
+        el.textContent = Math.round(obj.val).toLocaleString();
+      },
+    });
+
+    return () => {
+      tween.scrollTrigger?.kill();
+      tween.kill();
+    };
+  }, [value]);
+
+  return <p ref={ref} className={className}>{value.toLocaleString()}</p>;
 }

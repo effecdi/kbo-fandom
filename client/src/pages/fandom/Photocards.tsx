@@ -1,4 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 import { StudioLayout } from "@/components/StudioLayout";
 import { FandomFilterBar } from "@/components/fandom/fandom-filter-bar";
 import { PhotocardItemCard } from "@/components/fandom/photocard-item";
@@ -220,7 +224,7 @@ export function FandomPhotocards() {
             <p className="text-sm text-muted-foreground">{emptyMessage}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <PhotocardGrid>
             {filtered.map((card) => (
               <PhotocardItemCard
                 key={card.id}
@@ -231,9 +235,45 @@ export function FandomPhotocards() {
                 isProfileCard={profileCardId === card.id}
               />
             ))}
-          </div>
+          </PhotocardGrid>
         )}
       </div>
     </StudioLayout>
+  );
+}
+
+/** Animated grid — stagger-reveals cards on scroll */
+function PhotocardGrid({ children }: { children: React.ReactNode }) {
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!gridRef.current) return;
+    const cards = gridRef.current.querySelectorAll(":scope > *");
+    if (cards.length === 0) return;
+
+    gsap.set(cards, { opacity: 0, y: 24, scale: 0.96 });
+    const tween = gsap.to(cards, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 0.5,
+      stagger: 0.06,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: gridRef.current,
+        start: "top 90%",
+      },
+    });
+
+    return () => {
+      tween.scrollTrigger?.kill();
+      tween.kill();
+    };
+  }, [children]);
+
+  return (
+    <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {children}
+    </div>
   );
 }

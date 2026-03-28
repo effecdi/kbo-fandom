@@ -1,4 +1,5 @@
-import { useState, ReactNode } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
+import gsap from "gsap";
 import {
   LayoutDashboard,
   Users,
@@ -379,10 +380,34 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
         </header>
 
         {/* Content Area */}
-        <main className={`pt-20 md:pt-24 overflow-x-hidden ${noPadding ? "" : "px-4 md:px-8 pb-8"}`}>
+        <PageTransition key={location.pathname} noPadding={noPadding}>
           {children}
-        </main>
+        </PageTransition>
       </div>
     </div>
+  );
+}
+
+/** Smooth page entrance animation */
+function PageTransition({ children, noPadding }: { children: ReactNode; noPadding?: boolean }) {
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!mainRef.current) return;
+    gsap.fromTo(
+      mainRef.current,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+    );
+  }, []);
+
+  return (
+    <main
+      ref={mainRef}
+      className={`pt-20 md:pt-24 overflow-x-hidden ${noPadding ? "" : "px-4 md:px-8 pb-8"}`}
+      style={{ opacity: 0 }}
+    >
+      {children}
+    </main>
   );
 }

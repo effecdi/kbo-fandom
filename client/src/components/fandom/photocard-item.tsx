@@ -1,4 +1,6 @@
+import { useRef, useCallback } from "react";
 import { Heart, ArrowRightLeft, UserCircle } from "lucide-react";
+import gsap from "gsap";
 import type { PhotocardItem } from "@/lib/local-store";
 
 const RARITY_CONFIG: Record<
@@ -66,11 +68,35 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike, onSetProfi
   const rarity = RARITY_CONFIG[card.rarity];
   const frameStyle = getFrameStyle(card.frameType, teamColor);
   const initials = (card.playerName || card.teamName || "??").slice(0, 2);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    if (!cardRef.current) return;
+    gsap.to(cardRef.current, {
+      scale: 1.04,
+      boxShadow: `0 12px 32px ${teamColor}25, 0 4px 12px rgba(0,0,0,0.15)`,
+      duration: 0.35,
+      ease: "power2.out",
+    });
+  }, [teamColor]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (!cardRef.current) return;
+    gsap.to(cardRef.current, {
+      scale: 1,
+      boxShadow: "none",
+      duration: 0.4,
+      ease: "power2.out",
+    });
+  }, []);
 
   return (
     <div
-      className="group relative flex flex-col bg-card overflow-hidden transition-transform duration-200 hover:scale-[1.03]"
+      ref={cardRef}
+      className="group relative flex flex-col bg-card overflow-hidden"
       style={frameStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Player-card gradient header strip */}
       {card.frameType === "player-card" && (
@@ -199,12 +225,21 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike, onSetProfi
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                // Heart pop animation
+                const heart = e.currentTarget.querySelector(".heart-icon");
+                if (heart) {
+                  gsap.fromTo(
+                    heart,
+                    { scale: 1 },
+                    { scale: 1.6, duration: 0.15, yoyo: true, repeat: 1, ease: "power2.out" },
+                  );
+                }
                 onLike?.(card.id);
               }}
               className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-red-400 transition-colors"
             >
               <Heart
-                className={`w-3.5 h-3.5 transition-colors ${
+                className={`heart-icon w-3.5 h-3.5 transition-colors ${
                   card.liked
                     ? "fill-red-500 text-red-500"
                     : "text-muted-foreground"

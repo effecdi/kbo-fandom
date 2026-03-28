@@ -1,5 +1,9 @@
-import { useState, useCallback, useMemo, useRef, ReactNode } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect, ReactNode } from "react";
 import { GripVertical, X, Plus, RotateCcw, Settings2, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const ORDER_STORAGE_KEY = "kbo-dashboard-order-v3";
 const HIDDEN_WIDGETS_KEY = "kbo-dashboard-hidden-v3";
@@ -161,13 +165,25 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
     const toIdx = ids.indexOf(to);
     if (fromIdx === -1 || toIdx === -1) return;
 
+    const fromWidget = orderedWidgets[fromIdx];
+    const toWidget = orderedWidgets[toIdx];
+
+    // Auto 1단→2단: when dropping a full-width widget onto another,
+    // convert both to half-width so they sit side-by-side
+    if (!fromWidget.required && getColSpan(fromWidget) === 2) {
+      setWidgetColSpan(from, 1);
+    }
+    if (!toWidget.required && getColSpan(toWidget) === 2) {
+      setWidgetColSpan(to, 1);
+    }
+
     ids.splice(fromIdx, 1);
     ids.splice(toIdx, 0, from);
     saveOrder(ids);
 
     dragItemRef.current = null;
     dragOverItemRef.current = null;
-  }, [orderedWidgets, saveOrder]);
+  }, [orderedWidgets, saveOrder, getColSpan, setWidgetColSpan]);
 
   // Move widget up/down in order
   const moveWidget = useCallback(
@@ -190,6 +206,39 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
     const hidden = hiddenWidgets.map((w) => ({ ...w, visible: false }));
     return [...visible, ...hidden];
   }, [orderedWidgets, hiddenWidgets]);
+
+  // GSAP scroll reveal for widget sections
+  const gridRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!gridRef.current || editMode) return;
+    const sections = gridRef.current.querySelectorAll("[data-widget]");
+    if (sections.length === 0) return;
+
+    const tweens: gsap.core.Tween[] = [];
+    sections.forEach((section, i) => {
+      gsap.set(section, { opacity: 0, y: 30 });
+      const tween = gsap.to(section, {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        delay: i * 0.08,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: section,
+          start: "top 90%",
+          toggleActions: "play none none none",
+        },
+      });
+      tweens.push(tween);
+    });
+
+    return () => {
+      tweens.forEach((t) => {
+        t.scrollTrigger?.kill();
+        t.kill();
+      });
+    };
+  }, [orderedWidgets, editMode]);
 
   return (
     <div>
@@ -338,13 +387,14 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
       )}
 
       {/* Widget Grid — 2-column on md+, generous spacing */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10">
+      <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10">
         {orderedWidgets.map((widget) => {
           const span = getColSpan(widget);
 
           return (
             <section
               key={widget.id}
+              data-widget={widget.id}
               className={`transition-all ${
                 span === 2 ? "md:col-span-2" : ""
               } ${
