@@ -124,6 +124,8 @@ export interface FandomUserProfile {
   creatorId?: string;
   /** Bio for creator profile */
   bio?: string;
+  /** Custom lanyard card image URL (from editor/photocard) */
+  lanyardCardUrl?: string;
 }
 
 export function getFandomProfile(): FandomUserProfile | null {

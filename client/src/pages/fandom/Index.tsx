@@ -395,17 +395,22 @@ export function FandomIndex() {
 
   return (
     <StudioLayout>
-      {/* 포토카드 — 우측 상단 고정 (데스크톱만) */}
-      <div className="fixed top-20 right-4 md:right-8 z-20 hidden md:block pointer-events-auto">
+      {/* 포토카드 — 우측 상단 고정 (데스크톱만), 클릭 시 에디터 */}
+      <Link
+        to="/fandom/create"
+        className="fixed top-20 right-4 lg:right-8 z-20 hidden md:block"
+        title="포토카드 디자인하기"
+      >
         <Suspense fallback={null}>
           <LanyardCard
             teamColor={themeColor}
             teamName={myGroup?.nameKo || "KBO"}
             playerName={fandomProfile?.favoritePlayer}
-            height={260}
+            cardImageUrl={fandomProfile?.lanyardCardUrl}
+            height={360}
           />
         </Suspense>
-      </div>
+      </Link>
 
       <div className="max-w-6xl mx-auto overflow-x-hidden">
         {/* Personalized Header */}
@@ -422,72 +427,32 @@ export function FandomIndex() {
               )}
             </h1>
 
-            {/* Victory Placard — 타이틀 바로 옆 */}
+            {/* Victory/Defeat/Draw — clean text only */}
             {myTeamWin && myTeamWin.won && (
-              <div
-                className="relative overflow-hidden rounded-2xl text-white flex items-center gap-3 px-5 py-2.5 animate-in slide-in-from-right duration-500"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColor}, ${themeColor}DD, ${themeColor}AA)`,
-                  boxShadow: `0 4px 24px ${themeColor}55, 0 0 60px ${themeColor}22`,
-                }}
-              >
-                {/* Sparkle effects */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  <div className="absolute top-1 left-3 w-2 h-2 rounded-full bg-white/40 animate-ping" />
-                  <div className="absolute bottom-1.5 right-4 w-1.5 h-1.5 rounded-full bg-white/30 animate-ping" style={{ animationDelay: "0.3s" }} />
-                  <div className="absolute top-2 right-12 w-1 h-1 rounded-full bg-white/25 animate-ping" style={{ animationDelay: "0.7s" }} />
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 animate-pulse" />
-                </div>
-
-                <div className="relative z-10 flex items-center gap-3">
-                  {/* Score */}
-                  <div className="text-center leading-none">
-                    <p className="text-[13px] font-bold opacity-70 mb-0.5">vs {myTeamWin.oppName}</p>
-                    <p className="text-[32px] md:text-[40px] font-black tracking-tighter">
-                      {myTeamWin.myScore} : {myTeamWin.oppScore}
-                    </p>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="w-px h-12 bg-white/30" />
-
-                  {/* 이겼다!!!! text */}
-                  <div className="text-center">
-                    <p className="text-[28px] md:text-[32px] font-black tracking-tight" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
-                      이겼다!!!!
-                    </p>
-                  </div>
-                </div>
+              <div className="flex items-center gap-3 animate-in slide-in-from-right duration-500">
+                <span className="text-[13px] font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
+                <span className="text-[32px] md:text-[40px] font-black tracking-tighter" style={{ color: themeColor }}>
+                  {myTeamWin.myScore} : {myTeamWin.oppScore}
+                </span>
+                <span className="text-2xl md:text-[28px] font-black" style={{ color: themeColor }}>
+                  이겼다!!!!
+                </span>
               </div>
             )}
-
-            {/* 패배/무승부 — 작게 */}
             {myTeamWin && myTeamWin.won === false && (
-              <div className="rounded-xl bg-muted/60 border border-border px-4 py-2 flex items-center gap-2">
-                <span className="text-base font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[13px] font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
                 <span className="text-2xl font-black text-foreground">{myTeamWin.myScore} : {myTeamWin.oppScore}</span>
                 <span className="text-base font-bold text-muted-foreground">아쉬운 패배</span>
               </div>
             )}
             {myTeamWin && myTeamWin.won === null && (
-              <div className="rounded-xl bg-muted/60 border border-border px-4 py-2 flex items-center gap-2">
-                <span className="text-base font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[13px] font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
                 <span className="text-2xl font-black text-foreground">{myTeamWin.myScore} : {myTeamWin.oppScore}</span>
                 <span className="text-base font-bold text-muted-foreground">무승부</span>
               </div>
             )}
-          </div>
-
-          <div className="flex items-center justify-end mt-2">
-            <Link to="/fandom/create" className="shrink-0">
-              <Button
-                className="font-bold gap-2 text-white text-[13px]"
-                style={{ background: themeColor }}
-              >
-                <Sparkles className="w-4 h-4" />
-                팬아트 만들기
-              </Button>
-            </Link>
           </div>
         </div>
 

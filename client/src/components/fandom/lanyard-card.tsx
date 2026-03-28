@@ -13,7 +13,7 @@ export default function LanyardCard({
   teamName = 'KBO',
   playerName,
   cardImageUrl,
-  height = 260,
+  height = 360,
 }: LanyardCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -55,13 +55,13 @@ export default function LanyardCard({
   return (
     <div
       className="flex flex-col items-center justify-start pt-1"
-      style={{ height, perspective: '600px' }}
+      style={{ height, perspective: '800px' }}
     >
       {/* Lanyard string */}
       <div
         className="w-[2px] rounded-full"
         style={{
-          height: 30,
+          height: 40,
           background: `linear-gradient(180deg, ${teamColor}88, ${teamColor})`,
           transformOrigin: 'top center',
           transform: `rotateZ(${swingDeg * 0.3}deg)`,
@@ -74,8 +74,8 @@ export default function LanyardCard({
         ref={cardRef}
         className="relative cursor-grab active:cursor-grabbing select-none"
         style={{
-          width: 140,
-          height: 196,
+          width: 180,
+          height: 252,
           transformOrigin: 'top center',
           transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${swingDeg * 0.5}deg)`,
           transition: isDragging ? 'none' : 'transform 0.3s ease-out',
@@ -88,45 +88,45 @@ export default function LanyardCard({
       >
         {/* Clip */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 -top-1.5 w-3 h-3 rounded-full border-2 z-10"
+          className="absolute left-1/2 -translate-x-1/2 -top-1.5 w-3.5 h-3.5 rounded-full border-2 z-10"
           style={{ borderColor: '#999', backgroundColor: '#bbb' }}
         />
 
         {/* Card face */}
         <div
-          className="absolute inset-0 rounded-xl overflow-hidden shadow-2xl"
+          className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl"
           style={{
             background: cardImageUrl
               ? `url(${cardImageUrl}) center/cover`
               : `linear-gradient(135deg, ${teamColor}, ${teamColor}CC, ${teamColor}88)`,
-            boxShadow: `0 14px 40px ${teamColor}44, 0 6px 16px rgba(0,0,0,0.3)`,
+            boxShadow: `0 16px 48px ${teamColor}44, 0 6px 20px rgba(0,0,0,0.3)`,
           }}
         >
           {/* Only show generated content when no custom image */}
           {!cardImageUrl && (
-            <div className="relative flex flex-col items-center justify-center h-full text-white px-3">
+            <div className="relative flex flex-col items-center justify-center h-full text-white px-4">
               {/* Scan lines overlay */}
               <div className="absolute inset-0 opacity-[0.03]" style={{
                 backgroundImage: 'repeating-linear-gradient(0deg, #fff 0px, #fff 1px, transparent 1px, transparent 3px)',
               }} />
 
               {/* Top badge */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/20 px-3 py-0.5 rounded-full">
+              <div className="absolute top-3.5 left-1/2 -translate-x-1/2 bg-black/20 px-3.5 py-0.5 rounded-full">
                 <span className="text-[13px] font-bold tracking-wider">KBO FANDOM</span>
               </div>
 
               {/* Team circle */}
               <div
-                className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2"
+                className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-2.5"
               >
-                <span className="text-2xl font-black">{teamName.slice(0, 2)}</span>
+                <span className="text-[28px] font-black">{teamName.slice(0, 2)}</span>
               </div>
 
               {/* Team name */}
-              <p className="text-base font-black tracking-tight">{teamName}</p>
+              <p className="text-[19px] font-black tracking-tight">{teamName}</p>
 
               {/* Divider */}
-              <div className="w-8 h-[1px] bg-white/25 my-1.5" />
+              <div className="w-10 h-[1px] bg-white/25 my-2" />
 
               {/* Player name */}
               {playerName && (
@@ -134,7 +134,7 @@ export default function LanyardCard({
               )}
 
               {/* Bottom */}
-              <p className="absolute bottom-3 text-[13px] opacity-30 tracking-widest">2026</p>
+              <p className="absolute bottom-3.5 text-[13px] opacity-30 tracking-widest">2026</p>
             </div>
           )}
 
@@ -150,7 +150,7 @@ export default function LanyardCard({
 
         {/* Card back (visible when flipped) */}
         <div
-          className="absolute inset-0 rounded-xl"
+          className="absolute inset-0 rounded-2xl"
           style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
