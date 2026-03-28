@@ -31,8 +31,28 @@ import { LiveGameSection } from "@/components/fandom/live-game-section";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
 import { DashboardGrid, type DashboardWidget } from "@/components/fandom/dashboard-grid";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Component, type ReactNode, type ErrorInfo } from "react";
 const LanyardCard = lazy(() => import("@/components/fandom/lanyard-card"));
+
+/** ErrorBoundary to prevent 3D widget crashes from breaking the entire app */
+class LanyardErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.warn("[Lanyard] 3D 렌더링 실패:", error.message);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-2">
+          <Camera className="w-8 h-8 opacity-30" />
+          <p className="text-[13px]">3D 카드를 불러올 수 없습니다</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
 import { useKboStandings } from "@/hooks/use-kbo-standings";
 import {
@@ -121,14 +141,16 @@ export function FandomIndex() {
       icon: Camera,
       noPadding: true,
       content: (
-        <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-muted-foreground text-[13px]">로딩중...</div>}>
-          <LanyardCard
-            teamColor={themeColor}
-            teamName={myGroup?.nameKo || "KBO"}
-            playerName={fandomProfile?.favoritePlayer}
-            height={400}
-          />
-        </Suspense>
+        <LanyardErrorBoundary>
+          <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-muted-foreground text-[13px]">로딩중...</div>}>
+            <LanyardCard
+              teamColor={themeColor}
+              teamName={myGroup?.nameKo || "KBO"}
+              playerName={fandomProfile?.favoritePlayer}
+              height={400}
+            />
+          </Suspense>
+        </LanyardErrorBoundary>
       ),
     });
 
