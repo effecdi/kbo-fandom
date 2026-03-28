@@ -79,7 +79,8 @@ export async function analyzeCharacterImage(imageUrl: string): Promise<string[]>
   }
 
   const cleanedText = textPart.text.replace(/```json|```/g, "").trim();
-  const names = JSON.parse(cleanedText);
+  let names: any;
+  try { names = JSON.parse(cleanedText); } catch { return ["캐릭터"]; }
 
   if (!Array.isArray(names) || names.length === 0) {
     return ["캐릭터"];
@@ -245,7 +246,8 @@ export async function analyzeAdMatch(data: {
   }
 
   const cleanedText = textPart.text.replace(/```json|```/g, '').trim();
-  const parsed = JSON.parse(cleanedText);
+  let parsed: any;
+  try { parsed = JSON.parse(cleanedText); } catch { throw new Error("Failed to parse ad match analysis (invalid JSON)"); }
   return parsed;
 }
 
@@ -391,7 +393,8 @@ ${data.panelCount !== 4 && data.panelCount !== 7 ? `위 예시를 참고하되, 
   }
 
   const cleanedText = textPart.text.replace(/```json|```/g, '').trim();
-  const result = JSON.parse(cleanedText);
+  let result: any;
+  try { result = JSON.parse(cleanedText); } catch { throw new Error("Failed to parse story scripts (invalid JSON)"); }
 
   // Post-process: enforce max 2 bubbles per panel
   if (result.panels) {
@@ -432,7 +435,7 @@ ${genreHint}
   }
 
   const cleanedText = textPart.text.replace(/```json|```/g, '').trim();
-  return JSON.parse(cleanedText);
+  try { return JSON.parse(cleanedText); } catch { throw new Error("Failed to parse topic suggestions (invalid JSON)"); }
 }
 
 export interface WebtoonScene {
@@ -628,7 +631,13 @@ ${prevContext}
   }
 
   const cleanedText = textPart.text.replace(/```json|```/g, '').trim();
-  const result = JSON.parse(cleanedText);
+  let result: any;
+  try {
+    result = JSON.parse(cleanedText);
+  } catch (parseErr) {
+    logger.error(`Gemini JSON parse failed — raw text: ${cleanedText.slice(0, 500)}`);
+    throw new Error("Failed to parse webtoon scene breakdown (invalid JSON from AI)");
+  }
 
   // 장면 수 보정 + 괄호 감정 태그 제거 + bubbles 배열 정규화
   if (result.scenes) {

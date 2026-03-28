@@ -1542,7 +1542,8 @@ export async function registerRoutes(
       res.json(result);
     } catch (error: any) {
       logger.error("Auto-webtoon breakdown error", error);
-      res.status(500).json({ message: "장면 분해에 실패했습니다." });
+      const detail = error.message?.includes("invalid JSON") ? " (AI 응답 파싱 오류)" : error.message?.includes("API error") ? " (AI API 오류)" : "";
+      res.status(500).json({ message: `장면 분해에 실패했습니다.${detail}` });
     }
   });
 
@@ -1582,7 +1583,8 @@ export async function registerRoutes(
       res.json({ imageUrl: imageDataUrl });
     } catch (error: any) {
       logger.error("Auto-webtoon scene generation error", error);
-      res.status(500).json({ message: "장면 이미지 생성에 실패했습니다." });
+      const detail = error.message?.includes("blocked") ? " (콘텐츠 정책 차단)" : error.message?.includes("API") ? " (AI API 오류)" : "";
+      res.status(500).json({ message: `장면 이미지 생성에 실패했습니다.${detail}` });
     }
   });
 
