@@ -110,7 +110,7 @@ export function StudioProjects() {
             <h1 className="text-2xl font-black text-foreground">내 작품</h1>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {profile ? `${profile.groupName} 팬아트 프로젝트` : "나의 팬아트 프로젝트"}
+            {profile ? `${profile.groupName} 팬아트 프로젝트` : "나의 야구 팬아트 프로젝트"}
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export function StudioProjects() {
         {/* Divider */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground font-medium">
+          <span className="text-[13px] text-muted-foreground font-medium">
             또는 기존 프로젝트 이어서 작업
           </span>
           <div className="flex-1 h-px bg-border" />
@@ -154,7 +154,7 @@ export function StudioProjects() {
               <button
                 key={f.id}
                 onClick={() => setStatusFilter(f.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                   statusFilter === f.id
                     ? "text-white"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -170,7 +170,7 @@ export function StudioProjects() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="px-3 py-2 bg-card border border-border rounded-xl text-xs text-muted-foreground focus:outline-none cursor-pointer"
+            className="px-3 py-2 bg-card border border-border rounded-xl text-[13px] text-muted-foreground focus:outline-none cursor-pointer"
           >
             <option value="updatedAt">최근 수정순</option>
             <option value="createdAt">생성일순</option>
@@ -205,7 +205,7 @@ export function StudioProjects() {
                     )}
                     <div className="absolute top-3 right-3">
                       <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${statusLabel[project.status].color}`}
+                        className={`text-[13px] px-2 py-1 rounded-full font-medium ${statusLabel[project.status].color}`}
                       >
                         {statusLabel[project.status].text}
                       </span>
@@ -270,11 +270,11 @@ export function StudioProjects() {
                   </div>
 
                   <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                       <FileText className="w-5 h-5" />
                       <span>{project.panels}컷</span>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
                       <Clock className="w-5 h-5" />
                       <span>{project.updatedAt}</span>
                     </div>

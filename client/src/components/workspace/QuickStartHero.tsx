@@ -1,32 +1,32 @@
 import { useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router";
-import { Sparkles, ArrowRight, Heart, Layers, Scissors, Paintbrush } from "lucide-react";
+import { Sparkles, ArrowRight, Trophy, Camera, Flag, Zap } from "lucide-react";
 import { getFandomProfile } from "@/lib/local-store";
 
 const QUICK_TEMPLATES = [
   {
-    id: "instatoon",
-    icon: Layers,
-    label: "최애 인스타툰",
-    prompt: "최애 멤버로 4컷 인스타툰을 만들어줘",
+    id: "player-card",
+    icon: Trophy,
+    label: "선수 응원 카드",
+    prompt: "좋아하는 선수의 응원 카드를 만들어줘",
   },
   {
-    id: "fanart",
-    icon: Heart,
-    label: "팬아트",
-    prompt: "예쁜 팬아트 일러스트를 만들어줘",
+    id: "game-proof",
+    icon: Camera,
+    label: "직관 인증",
+    prompt: "오늘 직관 인증 포토카드를 만들어줘",
   },
   {
-    id: "meme",
-    icon: Scissors,
-    label: "밈 / 코믹",
-    prompt: "재미있는 밈을 만들어줘",
+    id: "cheer-banner",
+    icon: Flag,
+    label: "응원 배너",
+    prompt: "경기장에서 쓸 응원 배너를 만들어줘",
   },
   {
-    id: "free",
-    icon: Paintbrush,
-    label: "자유 주제",
-    prompt: "",
+    id: "game-result",
+    icon: Zap,
+    label: "경기 결과 카드",
+    prompt: "오늘 경기 결과 카드를 만들어줘",
   },
 ];
 
@@ -74,10 +74,10 @@ export function QuickStartHero() {
           <Sparkles className="w-7 h-7 text-white" />
         </div>
         <h1 className="text-3xl font-black text-foreground mb-2">
-          {profile ? `${profile.groupName} 팬아트를 만들어보세요` : "무엇을 만들고 싶으세요?"}
+          {profile ? `${profile.groupName} 팬아트를 만들어보세요` : "나만의 야구 팬아트를 만들어보세요"}
         </h1>
         <p className="text-muted-foreground">
-          아이디어를 입력하면 AI가 팬아트를 만들어드려요
+          응원 카드, 직관 인증, 경기 기록까지 AI가 만들어드려요
         </p>
       </div>
 
@@ -104,7 +104,7 @@ export function QuickStartHero() {
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={profile ? `${profile.groupName} 팬아트 아이디어를 입력하세요...` : "예: 멤버들의 귀여운 4컷 인스타툰 만들어줘"}
+              placeholder={profile ? `${profile.groupName} 선수 카드, 응원 배너, 직관 인증 뭐든 가능!` : "예: 우리 팀 에이스 응원 카드 만들어줘"}
               className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground/50 focus:outline-none text-base"
             />
             <button
