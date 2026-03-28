@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { TeamCard } from "@/components/fandom/team-card";
 import { FandomEventCard } from "@/components/fandom/fandom-event-card";
 import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
+import { LiveGameCarousel } from "@/components/fandom/live-game-carousel";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
 import {
@@ -62,10 +63,25 @@ export function FandomIndex() {
       );
     }
 
-    // Load today's games
+    // Load live or today's games (fallback to next game day)
     const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
     const today = new Date().toISOString().split("T")[0];
-    setTodayGames(allGames.filter((g) => g.date === today));
+    const liveGames = allGames.filter((g) => g.status === "live");
+    if (liveGames.length > 0) {
+      setTodayGames(liveGames);
+    } else {
+      const todayFiltered = allGames.filter((g) => g.date === today);
+      if (todayFiltered.length > 0) {
+        setTodayGames(todayFiltered);
+      } else {
+        // Show next game day
+        const upcoming = allGames.filter((g) => g.date > today && g.status === "scheduled").sort((a, b) => a.date.localeCompare(b.date));
+        if (upcoming.length > 0) {
+          const nextDate = upcoming[0].date;
+          setTodayGames(upcoming.filter((g) => g.date === nextDate));
+        }
+      }
+    }
 
     // Load standings
     const allStandings = listItems<KboStanding>(STORE_KEYS.KBO_STANDINGS);
@@ -213,20 +229,28 @@ export function FandomIndex() {
           </div>
         )}
 
-        {/* Today's Games */}
+        {/* Live / Today's Games Carousel */}
         {todayGames.length > 0 && (
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground">오늘의 경기</h2>
-              <span className="text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 mb-2">
+              {todayGames.some((g) => g.status === "live") && (
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                </span>
+              )}
+              <h2 className="text-lg font-bold text-foreground">
+                {todayGames.some((g) => g.status === "live") ? "LIVE 경기" : "오늘의 경기"}
+              </h2>
+              <span className="text-xs text-muted-foreground ml-auto">
                 {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {todayGames.map((game) => (
-                <GameScheduleCard key={game.id} game={game} teams={groups} />
-              ))}
-            </div>
+            <LiveGameCarousel
+              games={todayGames}
+              teams={groups}
+              myTeamId={fandomProfile?.groupId}
+            />
           </div>
         )}
 
