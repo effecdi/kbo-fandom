@@ -1,27 +1,6 @@
-import { Trophy, Heart, Image } from "lucide-react";
-
-const themeColor = "var(--fandom-primary, #7B2FF7)";
-
-interface RankingEntry {
-  rank: number;
-  name: string;
-  avatar: string;
-  fanartCount: number;
-  totalLikes: number;
-}
-
-const MOCK_RANKINGS: RankingEntry[] = [
-  { rank: 1, name: "아미드로잉", avatar: "AD", fanartCount: 89, totalLikes: 12450 },
-  { rank: 2, name: "블링크아트", avatar: "BA", fanartCount: 72, totalLikes: 9870 },
-  { rank: 3, name: "버니작가", avatar: "BJ", fanartCount: 65, totalLikes: 8920 },
-  { rank: 4, name: "캐럿크리에이터", avatar: "CC", fanartCount: 58, totalLikes: 7650 },
-  { rank: 5, name: "스테이아트", avatar: "SA", fanartCount: 51, totalLikes: 6340 },
-  { rank: 6, name: "마이드로우", avatar: "MD", fanartCount: 47, totalLikes: 5890 },
-  { rank: 7, name: "다이브아트", avatar: "DA", fanartCount: 42, totalLikes: 4560 },
-  { rank: 8, name: "피어낫작가", avatar: "FN", fanartCount: 38, totalLikes: 3920 },
-  { rank: 9, name: "올리작가", avatar: "OA", fanartCount: 35, totalLikes: 3450 },
-  { rank: 10, name: "드림스케이프", avatar: "DS", fanartCount: 31, totalLikes: 2890 },
-];
+import { useState, useEffect } from "react";
+import { Trophy, Heart, Image, Bookmark, Share2 } from "lucide-react";
+import { getCreatorRanking, type FanCreator } from "@/lib/local-store";
 
 const RANK_COLORS: Record<number, string> = {
   1: "bg-yellow-500 text-black",
@@ -31,44 +10,92 @@ const RANK_COLORS: Record<number, string> = {
 
 interface FandomRankingListProps {
   groupId?: string;
+  themeColor?: string;
 }
 
-export function FandomRankingList({ groupId }: FandomRankingListProps) {
+export function FandomRankingList({ groupId, themeColor = "#7B2FF7" }: FandomRankingListProps) {
+  const [rankings, setRankings] = useState<FanCreator[]>([]);
+
+  useEffect(() => {
+    let ranked = getCreatorRanking(20);
+    if (groupId) {
+      ranked = ranked.filter((c) => c.groupId === groupId);
+    }
+    setRankings(ranked.slice(0, 10));
+  }, [groupId]);
+
+  if (rankings.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground text-sm">
+        아직 랭킹 데이터가 없습니다
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
-      {MOCK_RANKINGS.map((entry) => (
-        <div
-          key={entry.rank}
-          className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors"
-        >
+      {rankings.map((entry, idx) => {
+        const rank = idx + 1;
+        return (
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-black ${
-              RANK_COLORS[entry.rank] || "bg-muted text-muted-foreground"
-            }`}
+            key={entry.id}
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors"
           >
-            {entry.rank}
-          </div>
-          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: themeColor }}>
-            <span className="text-[13px] text-white font-bold">{entry.avatar}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">{entry.name}</p>
-            <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Image className="w-3 h-3" />
-                {entry.fanartCount}
-              </span>
-              <span className="flex items-center gap-1">
-                <Heart className="w-3 h-3" />
-                {entry.totalLikes.toLocaleString()}
-              </span>
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-black ${
+                RANK_COLORS[rank] || "bg-muted text-muted-foreground"
+              }`}
+            >
+              {rank}
+            </div>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style={{ background: themeColor }}>
+              <span className="text-[13px]">{entry.avatar}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-foreground truncate">{entry.nickname}</p>
+                {entry.badge && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white font-bold ${
+                    entry.badge === "top" ? "bg-amber-500" :
+                    entry.badge === "popular" ? "bg-pink-500" :
+                    entry.badge === "rising" ? "bg-emerald-500" :
+                    "bg-blue-500"
+                  }`}>
+                    {entry.badge === "top" ? "TOP" : entry.badge === "popular" ? "인기" : entry.badge === "rising" ? "성장" : "신규"}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-0.5">
+                  <Image className="w-3 h-3" />
+                  {entry.fanartCount}
+                </span>
+                <span className="flex items-center gap-0.5">
+                  <Heart className="w-3 h-3" />
+                  {entry.totalLikes.toLocaleString()}
+                </span>
+                <span className="flex items-center gap-0.5">
+                  <Bookmark className="w-3 h-3" />
+                  {(entry.totalSaves || 0).toLocaleString()}
+                </span>
+                <span className="flex items-center gap-0.5">
+                  <Share2 className="w-3 h-3" />
+                  {(entry.totalShares || 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+            {rank <= 3 && (
+              <Trophy className={`w-4 h-4 shrink-0 ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : "text-amber-700"}`} />
+            )}
+            <div className="text-right shrink-0">
+              <p className="text-[11px] font-bold text-muted-foreground">
+                {(entry.engagementScore || 0).toLocaleString()}
+              </p>
+              <p className="text-[9px] text-muted-foreground/60">점수</p>
             </div>
           </div>
-          {entry.rank <= 3 && (
-            <Trophy className={`w-4 h-4 ${entry.rank === 1 ? "text-yellow-500" : entry.rank === 2 ? "text-gray-400" : "text-amber-700"}`} />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

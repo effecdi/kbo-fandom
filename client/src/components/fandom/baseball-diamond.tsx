@@ -9,23 +9,24 @@ interface BaseballDiamondProps {
 }
 
 // Diamond field positions (percentage-based coordinates)
+// Adjusted so catcher/batter aren't clipped at bottom
 const FIELD_POSITIONS: Record<string, { x: number; y: number }> = {
-  pitcher:   { x: 50, y: 52 },
-  catcher:   { x: 50, y: 88 },
-  first:     { x: 72, y: 56 },
-  second:    { x: 62, y: 40 },
-  third:     { x: 28, y: 56 },
-  shortstop: { x: 38, y: 40 },
-  left:      { x: 15, y: 22 },
-  center:    { x: 50, y: 12 },
-  right:     { x: 85, y: 22 },
+  pitcher:   { x: 50, y: 48 },
+  catcher:   { x: 50, y: 78 },
+  first:     { x: 72, y: 52 },
+  second:    { x: 62, y: 36 },
+  third:     { x: 28, y: 52 },
+  shortstop: { x: 38, y: 36 },
+  left:      { x: 15, y: 18 },
+  center:    { x: 50, y: 8 },
+  right:     { x: 85, y: 18 },
 };
 
 // Base positions
 const BASE_POSITIONS = {
-  first:  { x: 72, y: 62 },
-  second: { x: 50, y: 38 },
-  third:  { x: 28, y: 62 },
+  first:  { x: 72, y: 56 },
+  second: { x: 50, y: 34 },
+  third:  { x: 28, y: 56 },
 };
 
 function PlayerNode({
@@ -199,13 +200,13 @@ export function BaseballDiamond({
         <div className="absolute inset-0">
           {/* Field lines SVG */}
           <svg
-            viewBox="0 0 200 200"
+            viewBox="0 0 200 180"
             className="absolute inset-0 w-full h-full"
             preserveAspectRatio="xMidYMid meet"
           >
             {/* Outfield arc */}
             <path
-              d="M 10,50 Q 100,-10 190,50"
+              d="M 10,40 Q 100,-15 190,40"
               fill="none"
               stroke="rgba(255,255,255,0.15)"
               strokeWidth="0.5"
@@ -213,7 +214,7 @@ export function BaseballDiamond({
 
             {/* Infield diamond */}
             <polygon
-              points="100,70 140,105 100,140 60,105"
+              points="100,55 140,90 100,125 60,90"
               fill="rgba(139,90,43,0.35)"
               stroke="rgba(255,255,255,0.3)"
               strokeWidth="0.8"
@@ -221,44 +222,44 @@ export function BaseballDiamond({
 
             {/* Foul lines */}
             <line
-              x1="100" y1="140" x2="10" y2="50"
+              x1="100" y1="125" x2="10" y2="40"
               stroke="rgba(255,255,255,0.2)" strokeWidth="0.5"
             />
             <line
-              x1="100" y1="140" x2="190" y2="50"
+              x1="100" y1="125" x2="190" y2="40"
               stroke="rgba(255,255,255,0.2)" strokeWidth="0.5"
             />
 
             {/* Pitcher's mound */}
             <circle
-              cx="100" cy="105" r="5"
+              cx="100" cy="90" r="5"
               fill="rgba(139,90,43,0.5)"
               stroke="rgba(255,255,255,0.3)" strokeWidth="0.5"
             />
 
             {/* Bases */}
             <rect
-              x="96" y="66" width="8" height="8"
+              x="96" y="51" width="8" height="8"
               fill={relay.bases.second ? "#FBBF24" : "white"}
-              transform="rotate(45, 100, 70)"
+              transform="rotate(45, 100, 55)"
               opacity={relay.bases.second ? 1 : 0.6}
             />
             <rect
-              x="136" y="101" width="8" height="8"
+              x="136" y="86" width="8" height="8"
               fill={relay.bases.first ? "#FBBF24" : "white"}
-              transform="rotate(45, 140, 105)"
+              transform="rotate(45, 140, 90)"
               opacity={relay.bases.first ? 1 : 0.6}
             />
             <rect
-              x="56" y="101" width="8" height="8"
+              x="56" y="86" width="8" height="8"
               fill={relay.bases.third ? "#FBBF24" : "white"}
-              transform="rotate(45, 60, 105)"
+              transform="rotate(45, 60, 90)"
               opacity={relay.bases.third ? 1 : 0.6}
             />
 
             {/* Home plate */}
             <polygon
-              points="97,138 100,135 103,138 103,141 97,141"
+              points="97,123 100,120 103,123 103,126 97,126"
               fill="white"
               opacity="0.8"
             />
@@ -285,7 +286,7 @@ export function BaseballDiamond({
             <PlayerNode
               name={relay.currentBatter.name}
               x={42}
-              y={90}
+              y={80}
               isBatter
             />
           )}

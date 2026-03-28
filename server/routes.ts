@@ -2513,12 +2513,19 @@ export async function registerRoutes(
       const offBatters = offEntry?.batter || [];
 
       // Map defensive positions: last player assigned to each position wins
+      // Include both full names and abbreviations from Naver API
       const POS_MAP: Record<string, string> = {
         "투수": "pitcher", "포수": "catcher",
         "1루수": "first", "2루수": "second", "3루수": "third",
         "유격수": "shortstop",
         "좌익수": "left", "중견수": "center", "우익수": "right",
         "지명타자": "dh",
+        // Abbreviated variants sometimes returned by Naver
+        "1루": "first", "2루": "second", "3루": "third",
+        "유격": "shortstop",
+        "좌익": "left", "중견": "center", "우익": "right",
+        "좌전": "left", "중전": "center", "우전": "right",
+        "지타": "dh", "DH": "dh",
       };
 
       const defense: Record<string, { name: string; pcode: string }> = {};
