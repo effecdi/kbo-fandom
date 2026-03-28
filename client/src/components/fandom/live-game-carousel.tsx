@@ -7,6 +7,8 @@ interface LiveGameCarouselProps {
   games: KboGameSchedule[];
   teams: KboTeam[];
   myTeamId?: string;
+  onActiveIndexChange?: (index: number) => void;
+  compact?: boolean;
 }
 
 const STATUS_CONFIG: Record<
@@ -23,9 +25,14 @@ const STATUS_CONFIG: Record<
  * Determine responsive x-offsets based on window width.
  * On smaller screens (< 768px / md breakpoint), offsets are reduced by ~30%.
  */
-function getOffsets(): { adj: number; far: number; hidden: number } {
+function getOffsets(compact = false): { adj: number; far: number; hidden: number } {
   const isMobile =
     typeof window !== "undefined" && window.innerWidth < 768;
+  if (compact) {
+    return isMobile
+      ? { adj: 150, far: 270, hidden: 360 }
+      : { adj: 200, far: 360, hidden: 480 };
+  }
   if (isMobile) {
     return { adj: 182, far: 322, hidden: 420 };
   }
@@ -36,6 +43,8 @@ export function LiveGameCarousel({
   games,
   teams,
   myTeamId,
+  onActiveIndexChange,
+  compact = false,
 }: LiveGameCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -50,6 +59,7 @@ export function LiveGameCarousel({
       );
       if (idx >= 0) {
         setActiveIndex(idx);
+        onActiveIndexChange?.(idx);
         animateCards(idx, false);
       }
     }
@@ -59,7 +69,7 @@ export function LiveGameCarousel({
   // ── GSAP animation ──────────────────────────────────────────────────────────
   const animateCards = useCallback(
     (targetIndex: number, animate = true) => {
-      const offsets = getOffsets();
+      const offsets = getOffsets(compact);
 
       cardRefs.current.forEach((card, i) => {
         if (!card) return;
@@ -151,21 +161,26 @@ export function LiveGameCarousel({
     (index: number) => {
       if (index < 0 || index >= games.length) return;
       setActiveIndex(index);
+      onActiveIndexChange?.(index);
     },
-    [games.length],
+    [games.length, onActiveIndexChange],
   );
 
   const goNext = useCallback(() => {
     if (activeIndex < games.length - 1) {
-      setActiveIndex((prev) => prev + 1);
+      const next = activeIndex + 1;
+      setActiveIndex(next);
+      onActiveIndexChange?.(next);
     }
-  }, [activeIndex, games.length]);
+  }, [activeIndex, games.length, onActiveIndexChange]);
 
   const goPrev = useCallback(() => {
     if (activeIndex > 0) {
-      setActiveIndex((prev) => prev - 1);
+      const prev = activeIndex - 1;
+      setActiveIndex(prev);
+      onActiveIndexChange?.(prev);
     }
-  }, [activeIndex]);
+  }, [activeIndex, onActiveIndexChange]);
 
   // ── Pointer / drag handlers ─────────────────────────────────────────────────
   const handlePointerDown = useCallback(
@@ -206,7 +221,7 @@ export function LiveGameCarousel({
   // ── Empty state ─────────────────────────────────────────────────────────────
   if (games.length === 0) {
     return (
-      <div className="relative py-4 h-[220px] md:h-[260px] flex items-center justify-center">
+      <div className={`relative py-4 flex items-center justify-center ${compact ? "h-[200px] md:h-[240px]" : "h-[220px] md:h-[260px]"}`}>
         <p className="text-sm text-muted-foreground">
           오늘 예정된 경기가 없습니다.
         </p>
@@ -219,7 +234,7 @@ export function LiveGameCarousel({
       {/* ── Carousel container ────────────────────────────────────────────── */}
       <div
         ref={containerRef}
-        className="relative h-[220px] md:h-[260px] mx-auto max-w-4xl overflow-visible"
+        className={`relative mx-auto overflow-visible ${compact ? "h-[200px] md:h-[240px]" : "h-[220px] md:h-[260px] max-w-4xl"}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -244,7 +259,7 @@ export function LiveGameCarousel({
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] md:w-[320px] rounded-2xl p-4 md:p-5 cursor-pointer select-none"
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl p-4 md:p-5 cursor-pointer select-none ${compact ? "w-[240px] md:w-[260px]" : "w-[280px] md:w-[320px]"}`}
               style={{
                 ...cardBg,
                 opacity: 0,

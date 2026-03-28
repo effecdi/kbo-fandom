@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { TeamCard } from "@/components/fandom/team-card";
 import { FandomEventCard } from "@/components/fandom/fandom-event-card";
 import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
-import { LiveGameCarousel } from "@/components/fandom/live-game-carousel";
+import { LiveGameSection } from "@/components/fandom/live-game-section";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
 import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
@@ -234,7 +234,7 @@ export function FandomIndex() {
                 {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
               </span>
             </div>
-            <LiveGameCarousel
+            <LiveGameSection
               games={liveGames}
               teams={groups}
               myTeamId={fandomProfile?.groupId}
