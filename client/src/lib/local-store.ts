@@ -276,20 +276,23 @@ export function verifyFandomAnswers(
   )
     wrongKeys.push("city");
 
-  // Q5: stadium (홈구장)
+  // Q5: stadium (홈구장) — 부분 일치 허용
+  const stadiumAnswer = (answers.stadium || "").trim().toLowerCase();
   if (
-    (answers.stadium || "").trim() !== "" &&
-    !(team.stadium.toLowerCase().includes((answers.stadium || "").trim().toLowerCase()))
+    stadiumAnswer !== "" &&
+    !team.stadium.toLowerCase().includes(stadiumAnswer) &&
+    !stadiumAnswer.includes(team.stadium.toLowerCase().replace(/\s/g, "").slice(0, 3))
   )
     wrongKeys.push("stadium");
 
-  // Q6: captain/representative player
-  const captains = players
-    .slice(0, 3) // 대표 선수 (처음 3명 중 매칭)
+  // Q6: 구단 대표선수 (에이스/핵심/4번타자/3번타자/마감 역할 매칭)
+  const keyRoles = ["에이스", "4번타자", "3번타자", "마감", "핵심"];
+  const keyPlayers = players
+    .filter((m) => m.role && keyRoles.includes(m.role))
     .map((m) => m.name.toLowerCase());
   if (
     (answers.captain || "").trim() !== "" &&
-    !captains.includes((answers.captain || "").trim().toLowerCase())
+    !keyPlayers.includes((answers.captain || "").trim().toLowerCase())
   )
     wrongKeys.push("captain");
 

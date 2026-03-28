@@ -101,7 +101,7 @@ export function StandingsTable({ standings, liveStandings, myTeamId, compact }: 
 
   return (
     <div className="rounded-xl overflow-hidden border border-border bg-card max-w-full overflow-x-auto">
-      <table className="w-full text-sm min-w-[480px]">
+      <table className="w-full text-sm">
         <thead>
           <tr className="bg-muted/60 text-muted-foreground text-[13px]">
             <th className="px-3 py-3 text-left font-semibold w-12">순위</th>

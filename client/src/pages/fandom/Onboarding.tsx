@@ -109,7 +109,7 @@ export function FandomOnboarding() {
         fandomName: fandomNameInput,
         foundedYear: debutYearAnswer,
         city: companyAnswer,
-        memberCount: memberCountInput,
+        stadium: memberCountInput,
         captain: leaderAnswer,
       };
       const result = verifyFandomAnswers(selectedGroupId, answers);
@@ -261,7 +261,7 @@ export function FandomOnboarding() {
                   좋아하는 구단을 선택하세요
                 </p>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                 {groups.map((g) => (
                   <button
                     key={g.id}
@@ -306,10 +306,10 @@ export function FandomOnboarding() {
               <h1 className="text-2xl font-black text-foreground">
                 {selectedGroup?.name}의 팬덤 이름은?
               </h1>
-              <p className="text-muted-foreground">팬덤 공식 이름을 입력하세요</p>
+              <p className="text-muted-foreground">팬 그룹의 공식 이름을 입력하세요</p>
               <Input
                 className="max-w-sm mx-auto text-center text-lg h-14"
-                placeholder="예: 트팬, 위즈, 랜더스..."
+                placeholder={selectedGroup ? `예: ${selectedGroup.fandomName}` : "예: 트윈스 팬, 위즈 팬..."}
                 value={fandomNameInput}
                 onChange={(e) => setFandomNameInput(e.target.value)}
               />
@@ -376,36 +376,39 @@ export function FandomOnboarding() {
             </div>
           )}
 
-          {/* Step 5: Member count */}
+          {/* Step 5: Stadium */}
           {step === 5 && (
             <div className="space-y-6 text-center">
               <Sparkles className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
               <h1 className="text-2xl font-black text-foreground">
-                {selectedGroup?.name}의 등록 선수 수는?
+                {selectedGroup?.name}의 홈구장은?
               </h1>
+              <p className="text-muted-foreground">홈구장 이름을 입력하세요</p>
               <Input
-                type="number"
-                className="max-w-[120px] mx-auto text-center text-2xl h-16 font-bold"
-                placeholder="?"
+                className="max-w-sm mx-auto text-center text-lg h-14"
+                placeholder="예: 잠실야구장, 고척스카이돔..."
                 value={memberCountInput}
                 onChange={(e) => setMemberCountInput(e.target.value)}
               />
             </div>
           )}
 
-          {/* Step 6: Leader */}
+          {/* Step 6: Ace pitcher */}
           {step === 6 && (
             <div className="space-y-6 text-center">
               <Sparkles className="w-10 h-10 mx-auto" style={{ color: themeColor }} />
               <h1 className="text-2xl font-black text-foreground">
-                {selectedGroup?.name}의 주장은?
+                {selectedGroup?.name}의 에이스는?
               </h1>
-              <div className="flex flex-wrap gap-3 justify-center">
-                {groupMembers.map((m) => (
+              <p className="text-muted-foreground">구단 대표 선수를 선택하세요</p>
+              <div className="flex flex-wrap gap-3 justify-center max-w-xl mx-auto">
+                {groupMembers
+                  .filter((m) => m.role === "에이스" || m.role === "4번타자" || m.role === "3번타자" || m.role === "마감" || m.role === "핵심")
+                  .map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setLeaderAnswer(m.name)}
-                    className={`px-6 py-3 rounded-xl border-2 font-semibold transition-all ${
+                    className={`px-5 py-3 rounded-xl border-2 font-semibold transition-all flex items-center gap-2 ${
                       leaderAnswer === m.name
                         ? "text-white shadow-lg"
                         : "border-border text-foreground hover:border-muted-foreground/30"
@@ -416,7 +419,8 @@ export function FandomOnboarding() {
                         : {}
                     }
                   >
-                    {m.name}
+                    <span>{m.name}</span>
+                    <span className="text-[13px] opacity-80">{m.position}</span>
                   </button>
                 ))}
               </div>
@@ -431,12 +435,12 @@ export function FandomOnboarding() {
                 당신의 최애 선수는?
               </h1>
               <p className="text-muted-foreground">가장 좋아하는 선수를 선택하세요</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-lg mx-auto">
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-3 max-w-2xl mx-auto">
                 {groupMembers.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setFavoritePlayerId(m.id)}
-                    className={`p-4 rounded-2xl border-2 transition-all ${
+                    className={`p-3 rounded-2xl border-2 transition-all ${
                       favoritePlayerId === m.id
                         ? "shadow-lg scale-[1.02]"
                         : "border-border hover:border-muted-foreground/30"
@@ -448,13 +452,13 @@ export function FandomOnboarding() {
                     }
                   >
                     <div
-                      className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold"
+                      className="w-10 h-10 rounded-full mx-auto mb-1.5 flex items-center justify-center text-white font-bold text-sm"
                       style={{ background: m.color }}
                     >
-                      {m.name.charAt(0)}
+                      {m.jerseyNumber}
                     </div>
                     <p className="text-sm font-bold text-foreground">{m.name}</p>
-                    <p className="text-[13px] text-muted-foreground">{m.nameKo}</p>
+                    <p className="text-[13px] text-muted-foreground">{m.position}</p>
                   </button>
                 ))}
               </div>
@@ -469,12 +473,12 @@ export function FandomOnboarding() {
                 차애 선수는?
               </h1>
               <p className="text-muted-foreground">최애 다음으로 좋아하는 선수!</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-lg mx-auto">
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-3 max-w-2xl mx-auto">
                 {groupMembers.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setSecondPlayerId(m.id)}
-                    className={`p-4 rounded-2xl border-2 transition-all ${
+                    className={`p-3 rounded-2xl border-2 transition-all ${
                       secondPlayerId === m.id
                         ? "shadow-lg scale-[1.02]"
                         : "border-border hover:border-muted-foreground/30"
@@ -486,13 +490,13 @@ export function FandomOnboarding() {
                     }
                   >
                     <div
-                      className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold"
+                      className="w-10 h-10 rounded-full mx-auto mb-1.5 flex items-center justify-center text-white font-bold text-sm"
                       style={{ background: m.color }}
                     >
-                      {m.name.charAt(0)}
+                      {m.jerseyNumber}
                     </div>
                     <p className="text-sm font-bold text-foreground">{m.name}</p>
-                    <p className="text-[13px] text-muted-foreground">{m.nameKo}</p>
+                    <p className="text-[13px] text-muted-foreground">{m.position}</p>
                   </button>
                 ))}
               </div>
