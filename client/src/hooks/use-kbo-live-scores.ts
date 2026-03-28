@@ -28,7 +28,7 @@ interface KboScoresResponse {
  * Hook that polls the server for live KBO scores every `intervalMs` milliseconds.
  * Returns an array of KboGameSchedule-compatible objects with real scores.
  */
-export function useKboLiveScores(intervalMs = 30000) {
+export function useKboLiveScores(intervalMs = 10000) {
   const [liveGames, setLiveGames] = useState<KboGameSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

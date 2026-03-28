@@ -2367,7 +2367,7 @@ export async function registerRoutes(
   };
 
   let kboScoresCache: { data: any; timestamp: number } | null = null;
-  const KBO_CACHE_TTL = 30000; // 30 seconds
+  const KBO_CACHE_TTL = 10000; // 10 seconds
 
   app.get("/api/kbo/scores", async (req, res) => {
     try {

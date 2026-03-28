@@ -22,7 +22,7 @@ export function LiveGameSection({
   // Only fetch relay data for live games
   const relayGameId =
     selectedGame?.status === "live" ? selectedGame.id : null;
-  const { relay, isLoading: relayLoading } = useKboGameRelay(relayGameId, 15000);
+  const { relay, isLoading: relayLoading } = useKboGameRelay(relayGameId, 10000);
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-stretch gap-4">

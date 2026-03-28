@@ -174,7 +174,13 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 min-h-0 p-4 overflow-y-auto" style={{ overscrollBehavior: "contain" }}>
+        <nav
+          data-lenis-prevent
+          className="flex-1 min-h-0 p-4 overflow-y-auto"
+          style={{ overscrollBehavior: "contain" }}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
           <div className="space-y-4">
             {navSections.map((section) => {
               const isSectionExpanded = expandedSections[section.title] !== false;

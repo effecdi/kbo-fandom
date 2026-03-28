@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { StudioLayout } from "@/components/StudioLayout";
 import { Link } from "react-router";
 import {
@@ -18,14 +18,19 @@ import {
   Camera,
   BarChart3,
   ShoppingBag,
+  Flame,
+  Vote,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamCard } from "@/components/fandom/team-card";
 import { FandomEventCard } from "@/components/fandom/fandom-event-card";
+import { FandomFeedPostCard } from "@/components/fandom/fandom-feed-post-card";
 import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
 import { LiveGameSection } from "@/components/fandom/live-game-section";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
+import { DashboardGrid, type DashboardWidget } from "@/components/fandom/dashboard-grid";
 import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
 import {
   listItems,
@@ -43,34 +48,44 @@ import {
 export function FandomIndex() {
   const [groups, setGroups] = useState<KboTeam[]>([]);
   const [standings, setStandings] = useState<KboStanding[]>([]);
-  const [feedCount, setFeedCount] = useState(0);
+  const [feedPosts, setFeedPosts] = useState<FandomFeedPost[]>([]);
   const [events, setEvents] = useState<FandomEvent[]>([]);
   const [myGroupPosts, setMyGroupPosts] = useState<FandomFeedPost[]>([]);
   const [recentProjects, setRecentProjects] = useState<ProjectRecord[]>([]);
+  const [upcomingGames, setUpcomingGames] = useState<KboGameSchedule[]>([]);
 
   const fandomProfile = getFandomProfile();
 
-  // Real-time KBO scores from Naver Sports API (polls every 30s)
-  const { liveGames, hasLiveGames, isLoading: scoresLoading } = useKboLiveScores(30000);
+  // Real-time KBO scores from Naver Sports API (polls every 10s)
+  const { liveGames, hasLiveGames, isLoading: scoresLoading } = useKboLiveScores(10000);
 
   useEffect(() => {
     seedIfEmpty();
-    setGroups(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
+    const allGroups = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
+    setGroups(allGroups);
     const allPosts = listItems<FandomFeedPost>(STORE_KEYS.FANDOM_FEED);
-    setFeedCount(allPosts.length);
+    setFeedPosts(allPosts);
     setEvents(listItems<FandomEvent>(STORE_KEYS.FANDOM_EVENTS));
 
     if (fandomProfile?.groupId) {
       setMyGroupPosts(
-        allPosts.filter((p) => p.groupId === fandomProfile.groupId).slice(0, 4)
+        allPosts.filter((p) => p.groupId === fandomProfile.groupId).slice(0, 6)
       );
     }
 
-    // Load standings
     const allStandings = listItems<KboStanding>(STORE_KEYS.KBO_STANDINGS);
     setStandings(allStandings.sort((a, b) => a.rank - b.rank));
 
-    // Load recent projects
+    // Upcoming games for my team
+    const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
+    if (fandomProfile?.groupId) {
+      setUpcomingGames(
+        allGames
+          .filter((g) => g.homeTeamId === fandomProfile.groupId || g.awayTeamId === fandomProfile.groupId)
+          .slice(0, 4)
+      );
+    }
+
     try {
       const projects = listItems<ProjectRecord>(STORE_KEYS.PROJECTS);
       setRecentProjects(projects.slice(0, 3));
@@ -90,13 +105,343 @@ export function FandomIndex() {
   const myGroup = groups.find((g) => g.id === fandomProfile?.groupId);
   const themeColor = myGroup?.coverColor || "#7B2FF7";
 
+  // Build dashboard widgets
+  const widgets: DashboardWidget[] = useMemo(() => {
+    const w: DashboardWidget[] = [];
+    let yOffset = 0;
+
+    // 1. Live Score (always visible when there are games)
+    if (liveGames.length > 0) {
+      w.push({
+        id: "live-score",
+        title: hasLiveGames ? "LIVE 경기" : "오늘의 경기",
+        icon: Flame,
+        required: true,
+        noPadding: true,
+        defaultLayout: {
+          lg: { x: 0, y: yOffset, w: 4, h: 5, i: "live-score" },
+          md: { x: 0, y: yOffset, w: 2, h: 5, i: "live-score" },
+          sm: { x: 0, y: yOffset, w: 1, h: 5, i: "live-score" },
+        },
+        content: (
+          <div className="p-3">
+            <LiveGameSection
+              games={liveGames}
+              teams={groups}
+              myTeamId={fandomProfile?.groupId}
+            />
+          </div>
+        ),
+      });
+      yOffset += 5;
+    }
+
+    // 2. Next Game Countdown
+    if (fandomProfile && myGroup) {
+      w.push({
+        id: "next-game",
+        title: "다음 경기",
+        icon: Calendar,
+        noPadding: true,
+        defaultLayout: {
+          lg: { x: 0, y: yOffset, w: 2, h: 3, i: "next-game" },
+          md: { x: 0, y: yOffset, w: 1, h: 3, i: "next-game" },
+          sm: { x: 0, y: yOffset, w: 1, h: 3, i: "next-game" },
+        },
+        content: (
+          <div className="p-3 h-full">
+            <NextGameCountdown
+              teamId={myGroup.id}
+              teamName={myGroup.nameKo}
+              teamColor={themeColor}
+            />
+          </div>
+        ),
+      });
+    }
+
+    // 3. Quick Actions (shortcuts)
+    w.push({
+      id: "quick-actions",
+      title: "바로가기",
+      icon: Zap,
+      defaultLayout: {
+        lg: { x: 2, y: yOffset, w: 2, h: 3, i: "quick-actions" },
+        md: { x: 1, y: yOffset, w: 1, h: 3, i: "quick-actions" },
+        sm: { x: 0, y: yOffset + 3, w: 1, h: 3, i: "quick-actions" },
+      },
+      content: (
+        <div className="grid grid-cols-2 gap-2 h-full">
+          <Link
+            to="/fandom/schedule"
+            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
+          >
+            <Calendar className="w-6 h-6 mb-1.5" style={{ color: themeColor }} />
+            <p className="text-xs font-bold text-foreground">경기 일정</p>
+          </Link>
+          <Link
+            to="/fandom/standings"
+            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
+          >
+            <BarChart3 className="w-6 h-6 text-emerald-500 mb-1.5" />
+            <p className="text-xs font-bold text-foreground">순위표</p>
+          </Link>
+          <Link
+            to="/fandom/create"
+            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
+          >
+            <Palette className="w-6 h-6 mb-1.5" style={{ color: themeColor }} />
+            <p className="text-xs font-bold text-foreground">팬아트</p>
+          </Link>
+          <Link
+            to="/fandom/stadium-guide"
+            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
+          >
+            <MapPin className="w-6 h-6 text-blue-500 mb-1.5" />
+            <p className="text-xs font-bold text-foreground">직관 가이드</p>
+          </Link>
+          <Link
+            to="/fandom/photocards"
+            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
+          >
+            <Camera className="w-6 h-6 text-pink-500 mb-1.5" />
+            <p className="text-xs font-bold text-foreground">포토카드</p>
+          </Link>
+          <Link
+            to="/fandom/goods"
+            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
+          >
+            <ShoppingBag className="w-6 h-6 text-orange-500 mb-1.5" />
+            <p className="text-xs font-bold text-foreground">굿즈 교환</p>
+          </Link>
+        </div>
+      ),
+    });
+    yOffset += 3;
+
+    // 4. KBO Standings
+    if (standings.length > 0) {
+      w.push({
+        id: "standings",
+        title: "KBO 순위",
+        icon: BarChart3,
+        moreLink: "/fandom/standings",
+        defaultLayout: {
+          lg: { x: 0, y: yOffset, w: 2, h: 5, i: "standings" },
+          md: { x: 0, y: yOffset, w: 2, h: 5, i: "standings" },
+          sm: { x: 0, y: yOffset, w: 1, h: 5, i: "standings" },
+        },
+        content: (
+          <StandingsTable
+            standings={standings}
+            myTeamId={fandomProfile?.groupId}
+            compact
+          />
+        ),
+      });
+    }
+
+    // 5. Quick Stats
+    w.push({
+      id: "quick-stats",
+      title: "한눈에 보기",
+      icon: TrendingUp,
+      defaultLayout: {
+        lg: { x: 2, y: yOffset, w: 2, h: 2, i: "quick-stats" },
+        md: { x: 0, y: yOffset + 5, w: 2, h: 2, i: "quick-stats" },
+        sm: { x: 0, y: yOffset + 5, w: 1, h: 2, i: "quick-stats" },
+      },
+      content: (
+        <div className="grid grid-cols-2 gap-3 h-full">
+          <Link to="/fandom/groups" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
+            <Users className="w-6 h-6 text-violet-500 mb-1" />
+            <p className="text-xl font-black text-foreground">{groups.length}</p>
+            <p className="text-xs text-muted-foreground">KBO 구단</p>
+          </Link>
+          <Link to="/fandom/feed" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
+            <Heart className="w-6 h-6 text-rose-500 mb-1" />
+            <p className="text-xl font-black text-foreground">{totalFanart.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">팬아트</p>
+          </Link>
+          <Link to="/fandom/feed" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
+            <Rss className="w-6 h-6 text-cyan-500 mb-1" />
+            <p className="text-xl font-black text-foreground">{feedPosts.length}</p>
+            <p className="text-xs text-muted-foreground">피드 포스트</p>
+          </Link>
+          <Link to="/fandom/events" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
+            <Trophy className="w-6 h-6 text-amber-500 mb-1" />
+            <p className="text-xl font-black text-foreground">{activeEvents.length}</p>
+            <p className="text-xs text-muted-foreground">진행중 이벤트</p>
+          </Link>
+        </div>
+      ),
+    });
+
+    // 6. My Team Feed
+    if (myGroupPosts.length > 0 && fandomProfile) {
+      w.push({
+        id: "my-feed",
+        title: `${fandomProfile.groupName} 팬아트`,
+        icon: Heart,
+        moreLink: "/fandom/feed",
+        defaultLayout: {
+          lg: { x: 2, y: yOffset + 2, w: 2, h: 3, i: "my-feed" },
+          md: { x: 0, y: yOffset + 7, w: 2, h: 3, i: "my-feed" },
+          sm: { x: 0, y: yOffset + 7, w: 1, h: 3, i: "my-feed" },
+        },
+        content: (
+          <div className="grid grid-cols-2 gap-2">
+            {myGroupPosts.slice(0, 4).map((post) => (
+              <div
+                key={post.id}
+                className="rounded-xl overflow-hidden border border-border bg-muted/30"
+              >
+                {post.imageUrl ? (
+                  <img src={post.imageUrl} alt={post.title} className="w-full aspect-square object-cover" />
+                ) : (
+                  <div className="w-full aspect-square flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-muted-foreground/20" />
+                  </div>
+                )}
+                <div className="p-2">
+                  <p className="text-xs font-medium text-foreground truncate">{post.title}</p>
+                  <p className="text-[11px] text-muted-foreground">{post.authorName}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ),
+      });
+    }
+    yOffset += 5;
+
+    // 7. Fan Prediction Poll (NEW)
+    w.push({
+      id: "fan-poll",
+      title: "팬 투표",
+      icon: Vote,
+      defaultLayout: {
+        lg: { x: 0, y: yOffset, w: 2, h: 3, i: "fan-poll" },
+        md: { x: 0, y: yOffset, w: 1, h: 3, i: "fan-poll" },
+        sm: { x: 0, y: yOffset, w: 1, h: 3, i: "fan-poll" },
+      },
+      content: <FanPollWidget themeColor={themeColor} teamName={fandomProfile?.groupName} />,
+    });
+
+    // 8. Upcoming Games (My Team Schedule)
+    if (upcomingGames.length > 0) {
+      w.push({
+        id: "my-schedule",
+        title: `${fandomProfile?.groupName || "내 팀"} 경기 일정`,
+        icon: Calendar,
+        moreLink: "/fandom/schedule",
+        defaultLayout: {
+          lg: { x: 2, y: yOffset, w: 2, h: 3, i: "my-schedule" },
+          md: { x: 1, y: yOffset, w: 1, h: 3, i: "my-schedule" },
+          sm: { x: 0, y: yOffset + 3, w: 1, h: 3, i: "my-schedule" },
+        },
+        content: (
+          <div className="space-y-2">
+            {upcomingGames.map((game) => (
+              <GameScheduleCard key={game.id} game={game} teams={groups} compact />
+            ))}
+          </div>
+        ),
+      });
+    }
+    yOffset += 3;
+
+    // 9. Trending Groups
+    w.push({
+      id: "trending",
+      title: "인기 구단",
+      icon: TrendingUp,
+      moreLink: "/fandom/groups",
+      defaultLayout: {
+        lg: { x: 0, y: yOffset, w: 2, h: 3, i: "trending" },
+        md: { x: 0, y: yOffset, w: 2, h: 3, i: "trending" },
+        sm: { x: 0, y: yOffset, w: 1, h: 3, i: "trending" },
+      },
+      content: (
+        <div className="grid grid-cols-2 gap-2">
+          {trendingGroups.map((group) => (
+            <TeamCard key={group.id} group={group} />
+          ))}
+        </div>
+      ),
+    });
+
+    // 10. Events
+    const allVisibleEvents = [...myGroupEvents, ...otherActiveEvents].slice(0, 3);
+    if (allVisibleEvents.length > 0) {
+      w.push({
+        id: "events",
+        title: "진행중 이벤트",
+        icon: Trophy,
+        moreLink: "/fandom/events",
+        defaultLayout: {
+          lg: { x: 2, y: yOffset, w: 2, h: 3, i: "events" },
+          md: { x: 0, y: yOffset + 3, w: 2, h: 3, i: "events" },
+          sm: { x: 0, y: yOffset + 3, w: 1, h: 3, i: "events" },
+        },
+        content: (
+          <div className="space-y-3">
+            {allVisibleEvents.map((event) => (
+              <FandomEventCard key={event.id} event={event} />
+            ))}
+          </div>
+        ),
+      });
+    }
+    yOffset += 3;
+
+    // 11. Recent Projects
+    if (recentProjects.length > 0) {
+      w.push({
+        id: "projects",
+        title: "최근 프로젝트",
+        icon: FolderOpen,
+        moreLink: "/studio",
+        defaultLayout: {
+          lg: { x: 0, y: yOffset, w: 2, h: 2, i: "projects" },
+          md: { x: 0, y: yOffset, w: 2, h: 2, i: "projects" },
+          sm: { x: 0, y: yOffset, w: 1, h: 2, i: "projects" },
+        },
+        content: (
+          <div className="space-y-2">
+            {recentProjects.map((project) => (
+              <Link
+                key={project.id}
+                to={`/editor/${project.id}`}
+                className="flex items-center justify-between rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{project.title}</p>
+                  <p className="text-xs text-muted-foreground">{project.panels}컷 · {project.updatedAt}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0" />
+              </Link>
+            ))}
+          </div>
+        ),
+      });
+    }
+
+    return w;
+  }, [
+    liveGames, hasLiveGames, groups, fandomProfile, myGroup, themeColor,
+    standings, feedPosts, myGroupPosts, activeEvents, myGroupEvents,
+    otherActiveEvents, totalFanart, trendingGroups, upcomingGames,
+    recentProjects,
+  ]);
+
   return (
     <StudioLayout>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto overflow-x-hidden">
         {/* Personalized Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-black text-foreground">
+            <h1 className="text-2xl md:text-3xl font-black text-foreground">
               {fandomProfile ? (
                 <>
                   <span style={{ color: themeColor }}>{fandomProfile.nickname}</span>님의{" "}
@@ -106,307 +451,109 @@ export function FandomIndex() {
                 "팬덤 허브"
               )}
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {fandomProfile
                 ? `최애 선수: ${fandomProfile.favoritePlayer} | 팬덤: ${fandomProfile.fandomName}`
                 : "좋아하는 구단의 팬아트를 만들고, 팬덤과 소통하세요"}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Link to="/editor/new">
-              <Button
-                variant="outline"
-                className="font-bold gap-2"
-              >
-                <Pen className="w-5 h-5" />
-                에디터 열기
-              </Button>
-            </Link>
+          <div className="flex gap-2 shrink-0">
             <Link to="/fandom/create">
               <Button
-                className="font-bold gap-2 text-white"
+                className="font-bold gap-2 text-white text-sm"
                 style={{ background: themeColor }}
               >
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-4 h-4" />
                 팬아트 만들기
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Live / Today's Games (Real-time from Naver Sports API) - TOP PRIORITY */}
-        {liveGames.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              {hasLiveGames && (
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-                </span>
-              )}
-              <h2 className="text-lg font-bold text-foreground">
-                {hasLiveGames ? "LIVE 경기" : liveGames.some((g) => g.status === "finished") ? "오늘의 경기 결과" : "오늘의 경기"}
-              </h2>
-              {hasLiveGames && (
-                <span className="text-[13px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  실시간 업데이트
-                </span>
-              )}
-              <span className="text-[13px] text-muted-foreground ml-auto">
-                {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
-              </span>
-            </div>
-            <LiveGameSection
-              games={liveGames}
-              teams={groups}
-              myTeamId={fandomProfile?.groupId}
-            />
-          </div>
-        )}
-
-        {/* Quick Action Cards */}
-        {fandomProfile && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Link
-              to="/fandom/create"
-              className="rounded-2xl p-5 border-2 transition-all hover:shadow-lg group"
-              style={{ borderColor: `${themeColor}30`, background: `${themeColor}08` }}
-            >
-              <Palette className="w-8 h-8 mb-2" style={{ color: themeColor }} />
-              <p className="font-bold text-foreground">내 그룹 팬아트 만들기</p>
-              <p className="text-[13px] text-muted-foreground mt-1">
-                {fandomProfile.groupName} 멤버의 팬아트를 제작하세요
-              </p>
-            </Link>
-            <Link
-              to="/fandom/feed"
-              className="rounded-2xl p-5 border bg-card border-border hover:shadow-lg transition-all group"
-            >
-              <Rss className="w-8 h-8 text-cyan-500 mb-2" />
-              <p className="font-bold text-foreground">팬덤 피드 보기</p>
-              <p className="text-[13px] text-muted-foreground mt-1">
-                {fandomProfile.groupName} 최신 팬아트 확인
-              </p>
-            </Link>
-            <Link
-              to="/fandom/events"
-              className="rounded-2xl p-5 border bg-card border-border hover:shadow-lg transition-all group"
-            >
-              <Trophy className="w-8 h-8 text-amber-500 mb-2" />
-              <p className="font-bold text-foreground">이벤트 참여하기</p>
-              <p className="text-[13px] text-muted-foreground mt-1">
-                진행중 이벤트 {activeEvents.length}개
-              </p>
-            </Link>
-          </div>
-        )}
-
-        {/* Next Game Countdown + Quick Links */}
-        {fandomProfile && myGroup && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <NextGameCountdown
-              teamId={myGroup.id}
-              teamName={myGroup.nameKo}
-              teamColor={themeColor}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                to="/fandom/schedule"
-                className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
-              >
-                <Calendar className="w-7 h-7 mb-2" style={{ color: themeColor }} />
-                <p className="text-sm font-bold text-foreground">경기 일정</p>
-              </Link>
-              <Link
-                to="/fandom/standings"
-                className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
-              >
-                <BarChart3 className="w-7 h-7 text-emerald-500 mb-2" />
-                <p className="text-sm font-bold text-foreground">순위표</p>
-              </Link>
-              <Link
-                to="/fandom/stadium-guide"
-                className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
-              >
-                <MapPin className="w-7 h-7 text-blue-500 mb-2" />
-                <p className="text-sm font-bold text-foreground">직관 가이드</p>
-              </Link>
-              <Link
-                to="/fandom/photocards"
-                className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
-              >
-                <Camera className="w-7 h-7 text-pink-500 mb-2" />
-                <p className="text-sm font-bold text-foreground">포토카드</p>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Link
-            to="/fandom/groups"
-            className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-all group"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <Users className="w-8 h-8 text-violet-500" />
-              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-            </div>
-            <p className="text-2xl font-black text-foreground">{groups.length}</p>
-            <p className="text-sm text-muted-foreground">KBO 구단</p>
-          </Link>
-
-          <Link
-            to="/fandom/feed"
-            className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-all group"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <Heart className="w-8 h-8 text-rose-500" />
-              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-            </div>
-            <p className="text-2xl font-black text-foreground">{totalFanart.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground">팬아트</p>
-          </Link>
-
-          <Link
-            to="/fandom/feed"
-            className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-all group"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <Rss className="w-8 h-8 text-cyan-500" />
-              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-            </div>
-            <p className="text-2xl font-black text-foreground">{feedCount}</p>
-            <p className="text-sm text-muted-foreground">피드 포스트</p>
-          </Link>
-
-          <Link
-            to="/fandom/events"
-            className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-all group"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <Trophy className="w-8 h-8 text-amber-500" />
-              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-            </div>
-            <p className="text-2xl font-black text-foreground">
-              {activeEvents.length}
-            </p>
-            <p className="text-sm text-muted-foreground">진행중 이벤트</p>
-          </Link>
-        </div>
-
-        {/* KBO Standings (compact) */}
-        {standings.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" style={{ color: themeColor }} />
-                <h2 className="text-lg font-bold text-foreground">KBO 순위</h2>
-              </div>
-              <Link to="/fandom/standings" className="text-sm hover:underline" style={{ color: themeColor }}>
-                전체 보기
-              </Link>
-            </div>
-            <StandingsTable
-              standings={standings}
-              myTeamId={fandomProfile?.groupId}
-              compact
-            />
-          </div>
-        )}
-
-        {/* My Group Events (if any) */}
-        {myGroupEvents.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5" style={{ color: themeColor }} />
-                <h2 className="text-lg font-bold text-foreground">
-                  {fandomProfile?.groupName} 이벤트
-                </h2>
-              </div>
-              <Link to="/fandom/events" className="text-sm hover:underline" style={{ color: themeColor }}>
-                전체 보기
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {myGroupEvents.map((event) => (
-                <FandomEventCard key={event.id} event={event} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recent Projects */}
-        {recentProjects.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <FolderOpen className="w-5 h-5" style={{ color: themeColor }} />
-                <h2 className="text-lg font-bold text-foreground">최근 프로젝트</h2>
-              </div>
-              <Link to="/studio" className="text-sm hover:underline" style={{ color: themeColor }}>
-                전체 보기
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {recentProjects.map((project) => (
-                <Link
-                  key={project.id}
-                  to={`/editor/${project.id}`}
-                  className="rounded-2xl p-5 border bg-card border-border hover:shadow-lg transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-bold text-foreground truncate">{project.title}</p>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0" />
-                  </div>
-                  <p className="text-[13px] text-muted-foreground">
-                    {project.panels}컷 · {project.updatedAt}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Trending Groups */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-violet-500" />
-              <h2 className="text-lg font-bold text-foreground">트렌딩 그룹</h2>
-            </div>
-            <Link to="/fandom/groups" className="text-sm text-violet-500 hover:underline">
-              전체 보기
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {trendingGroups.map((group) => (
-              <TeamCard key={group.id} group={group} />
-            ))}
-          </div>
-        </div>
-
-        {/* Other Active Events */}
-        {otherActiveEvents.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-500" />
-                <h2 className="text-lg font-bold text-foreground">진행중 이벤트</h2>
-              </div>
-              <Link to="/fandom/events" className="text-sm text-amber-500 hover:underline">
-                전체 보기
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {otherActiveEvents.map((event) => (
-                <FandomEventCard key={event.id} event={event} />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Dashboard Grid (draggable widgets) */}
+        <DashboardGrid widgets={widgets} themeColor={themeColor} />
       </div>
     </StudioLayout>
+  );
+}
+
+/** Fan Poll widget (new feature based on research) */
+function FanPollWidget({ themeColor, teamName }: { themeColor: string; teamName?: string }) {
+  const [voted, setVoted] = useState<string | null>(null);
+  const [votes, setVotes] = useState({ win: 67, lose: 33 });
+
+  const handleVote = (choice: string) => {
+    if (voted) return;
+    setVoted(choice);
+    if (choice === "win") {
+      setVotes((prev) => ({ ...prev, win: prev.win + 1 }));
+    } else {
+      setVotes((prev) => ({ ...prev, lose: prev.lose + 1 }));
+    }
+  };
+
+  const total = votes.win + votes.lose;
+  const winPct = Math.round((votes.win / total) * 100);
+  const losePct = 100 - winPct;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-sm font-bold text-foreground mb-1">오늘의 예측</p>
+        <p className="text-xs text-muted-foreground">
+          {teamName || "내 팀"} 오늘 경기 결과는?
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <button
+          onClick={() => handleVote("win")}
+          className={`w-full rounded-xl p-3 text-left transition-all border ${
+            voted === "win" ? "border-current" : "border-border hover:border-foreground/20"
+          }`}
+          style={voted === "win" ? { borderColor: themeColor, background: `${themeColor}10` } : {}}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm font-bold text-foreground">승리</span>
+            {voted && <span className="text-sm font-black" style={{ color: themeColor }}>{winPct}%</span>}
+          </div>
+          {voted && (
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${winPct}%`, background: themeColor }}
+              />
+            </div>
+          )}
+        </button>
+
+        <button
+          onClick={() => handleVote("lose")}
+          className={`w-full rounded-xl p-3 text-left transition-all border ${
+            voted === "lose" ? "border-current" : "border-border hover:border-foreground/20"
+          }`}
+          style={voted === "lose" ? { borderColor: "#ef4444", background: "#ef444410" } : {}}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm font-bold text-foreground">패배</span>
+            {voted && <span className="text-sm font-black text-red-500">{losePct}%</span>}
+          </div>
+          {voted && (
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-red-500 transition-all duration-500"
+                style={{ width: `${losePct}%` }}
+              />
+            </div>
+          )}
+        </button>
+      </div>
+
+      {voted && (
+        <p className="text-xs text-muted-foreground text-center">
+          총 {total}명 참여
+        </p>
+      )}
+    </div>
   );
 }

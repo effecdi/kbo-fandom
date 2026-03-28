@@ -250,6 +250,8 @@ html.lenis, html.lenis body {
 
 .lenis.lenis-smooth [data-lenis-prevent] {
   overscroll-behavior: contain;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 .lenis.lenis-stopped {
@@ -260,6 +262,20 @@ html.lenis, html.lenis body {
   pointer-events: none;
 }
 
+/* React Grid Layout customization */
+.react-grid-item.react-grid-placeholder {
+  background: var(--fandom-primary, #7B2FF7) !important;
+  opacity: 0.15;
+  border-radius: 1rem;
+}
+.react-grid-item.react-draggable-dragging {
+  opacity: 0.9;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  border-radius: 1rem;
+}
+.react-grid-item > .react-resizable-handle {
+  display: none !important;
+}
 
 /**
  * Using the elevate system.

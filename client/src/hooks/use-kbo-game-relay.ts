@@ -17,7 +17,7 @@ export interface GameRelayData {
 /**
  * Polls the server for live KBO relay data (lineup, count, bases) for a specific game.
  */
-export function useKboGameRelay(gameId: string | null, intervalMs = 15000) {
+export function useKboGameRelay(gameId: string | null, intervalMs = 10000) {
   const [relay, setRelay] = useState<GameRelayData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
