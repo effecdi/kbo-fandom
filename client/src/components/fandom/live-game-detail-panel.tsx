@@ -29,7 +29,7 @@ export function LiveGameDetailPanel({
   // Diamond only for live games with relay data
   if (game.status === "live" && relay) {
     return (
-      <div key={game.id} className="rounded-2xl overflow-hidden animate-in fade-in duration-300">
+      <div key={game.id} className="rounded-2xl overflow-hidden animate-in fade-in duration-300 h-full">
         <BaseballDiamond
           relay={relay}
           homeColor={homeTeam?.coverColor}
@@ -41,7 +41,7 @@ export function LiveGameDetailPanel({
 
   if (game.status === "live" && relayLoading) {
     return (
-      <div className="rounded-2xl overflow-hidden h-[300px] flex items-center justify-center bg-gradient-to-b from-[#2d5a27] to-[#3a7233]">
+      <div className="rounded-2xl overflow-hidden h-full min-h-[300px] flex items-center justify-center bg-gradient-to-b from-[#2d5a27] to-[#3a7233]">
         <div className="text-white/50 text-[13px] animate-pulse">
           중계 데이터 로딩 중...
         </div>

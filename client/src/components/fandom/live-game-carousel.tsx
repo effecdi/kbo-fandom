@@ -247,10 +247,11 @@ export function LiveGameCarousel({
           const isActive = index === activeIndex;
           const statusCfg = STATUS_CONFIG[game.status];
 
-          // Card background: center card uses home team gradient, side cards use dark gray
+          // Card background: center card uses bold home team color, side cards are dark gray
           const cardBg: React.CSSProperties = isActive
             ? {
-                background: `linear-gradient(135deg, ${homeTeam?.coverColor || "#27272a"}dd 0%, ${homeTeam?.coverColor || "#27272a"}88 50%, ${homeTeam?.secondaryColor || "#18181b"}cc 100%)`,
+                background: `linear-gradient(135deg, ${homeTeam?.coverColor || "#27272a"} 0%, ${homeTeam?.coverColor || "#27272a"}cc 60%, ${homeTeam?.secondaryColor || "#18181b"} 100%)`,
+                boxShadow: `0 8px 32px ${homeTeam?.coverColor || "#000"}60, 0 0 0 2px ${homeTeam?.coverColor || "#fff"}40`,
               }
             : { backgroundColor: "#27272a" };
 

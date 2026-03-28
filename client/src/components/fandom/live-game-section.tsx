@@ -25,9 +25,9 @@ export function LiveGameSection({
   const { relay, isLoading: relayLoading } = useKboGameRelay(relayGameId, 15000);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
+    <div className="flex flex-col lg:flex-row lg:items-stretch gap-4">
       {/* Left: Carousel + Lineup */}
-      <div className="w-full lg:w-[55%] overflow-hidden">
+      <div className="w-full lg:w-[55%] overflow-hidden flex flex-col">
         <LiveGameCarousel
           games={games}
           teams={teams}
@@ -36,21 +36,25 @@ export function LiveGameSection({
           compact
         />
         {/* Lineup below carousel */}
-        <GameLineupPanel
-          game={selectedGame}
-          teams={teams}
-          relay={relay}
-        />
+        <div className="flex-1">
+          <GameLineupPanel
+            game={selectedGame}
+            teams={teams}
+            relay={relay}
+          />
+        </div>
       </div>
 
       {/* Right: Baseball Diamond only */}
-      <div className="w-full lg:w-[45%]">
-        <LiveGameDetailPanel
-          game={selectedGame}
-          teams={teams}
-          relay={relay}
-          relayLoading={relayLoading}
-        />
+      <div className="w-full lg:w-[45%] flex flex-col">
+        <div className="flex-1 flex flex-col">
+          <LiveGameDetailPanel
+            game={selectedGame}
+            teams={teams}
+            relay={relay}
+            relayLoading={relayLoading}
+          />
+        </div>
       </div>
     </div>
   );
