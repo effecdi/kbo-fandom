@@ -108,7 +108,6 @@ export function FandomIndex() {
   // Build dashboard widgets
   const widgets: DashboardWidget[] = useMemo(() => {
     const w: DashboardWidget[] = [];
-    let yOffset = 0;
 
     // 1. Live Score (always visible when there are games)
     if (liveGames.length > 0) {
@@ -118,11 +117,6 @@ export function FandomIndex() {
         icon: Flame,
         required: true,
         noPadding: true,
-        defaultLayout: {
-          lg: { x: 0, y: yOffset, w: 4, h: 5, i: "live-score" },
-          md: { x: 0, y: yOffset, w: 2, h: 5, i: "live-score" },
-          sm: { x: 0, y: yOffset, w: 1, h: 5, i: "live-score" },
-        },
         content: (
           <div className="p-3">
             <LiveGameSection
@@ -133,7 +127,6 @@ export function FandomIndex() {
           </div>
         ),
       });
-      yOffset += 5;
     }
 
     // 2. Next Game Countdown
@@ -143,11 +136,6 @@ export function FandomIndex() {
         title: "다음 경기",
         icon: Calendar,
         noPadding: true,
-        defaultLayout: {
-          lg: { x: 0, y: yOffset, w: 2, h: 3, i: "next-game" },
-          md: { x: 0, y: yOffset, w: 1, h: 3, i: "next-game" },
-          sm: { x: 0, y: yOffset, w: 1, h: 3, i: "next-game" },
-        },
         content: (
           <div className="p-3 h-full">
             <NextGameCountdown
@@ -165,11 +153,6 @@ export function FandomIndex() {
       id: "quick-actions",
       title: "바로가기",
       icon: Zap,
-      defaultLayout: {
-        lg: { x: 2, y: yOffset, w: 2, h: 3, i: "quick-actions" },
-        md: { x: 1, y: yOffset, w: 1, h: 3, i: "quick-actions" },
-        sm: { x: 0, y: yOffset + 3, w: 1, h: 3, i: "quick-actions" },
-      },
       content: (
         <div className="grid grid-cols-2 gap-2 h-full">
           <Link
@@ -217,7 +200,6 @@ export function FandomIndex() {
         </div>
       ),
     });
-    yOffset += 3;
 
     // 4. KBO Standings
     if (standings.length > 0) {
@@ -226,11 +208,6 @@ export function FandomIndex() {
         title: "KBO 순위",
         icon: BarChart3,
         moreLink: "/fandom/standings",
-        defaultLayout: {
-          lg: { x: 0, y: yOffset, w: 2, h: 5, i: "standings" },
-          md: { x: 0, y: yOffset, w: 2, h: 5, i: "standings" },
-          sm: { x: 0, y: yOffset, w: 1, h: 5, i: "standings" },
-        },
         content: (
           <StandingsTable
             standings={standings}
@@ -246,11 +223,6 @@ export function FandomIndex() {
       id: "quick-stats",
       title: "한눈에 보기",
       icon: TrendingUp,
-      defaultLayout: {
-        lg: { x: 2, y: yOffset, w: 2, h: 2, i: "quick-stats" },
-        md: { x: 0, y: yOffset + 5, w: 2, h: 2, i: "quick-stats" },
-        sm: { x: 0, y: yOffset + 5, w: 1, h: 2, i: "quick-stats" },
-      },
       content: (
         <div className="grid grid-cols-2 gap-3 h-full">
           <Link to="/fandom/groups" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
@@ -284,11 +256,6 @@ export function FandomIndex() {
         title: `${fandomProfile.groupName} 팬아트`,
         icon: Heart,
         moreLink: "/fandom/feed",
-        defaultLayout: {
-          lg: { x: 2, y: yOffset + 2, w: 2, h: 3, i: "my-feed" },
-          md: { x: 0, y: yOffset + 7, w: 2, h: 3, i: "my-feed" },
-          sm: { x: 0, y: yOffset + 7, w: 1, h: 3, i: "my-feed" },
-        },
         content: (
           <div className="grid grid-cols-2 gap-2">
             {myGroupPosts.slice(0, 4).map((post) => (
@@ -313,18 +280,12 @@ export function FandomIndex() {
         ),
       });
     }
-    yOffset += 5;
 
     // 7. Fan Prediction Poll (NEW)
     w.push({
       id: "fan-poll",
       title: "팬 투표",
       icon: Vote,
-      defaultLayout: {
-        lg: { x: 0, y: yOffset, w: 2, h: 3, i: "fan-poll" },
-        md: { x: 0, y: yOffset, w: 1, h: 3, i: "fan-poll" },
-        sm: { x: 0, y: yOffset, w: 1, h: 3, i: "fan-poll" },
-      },
       content: <FanPollWidget themeColor={themeColor} teamName={fandomProfile?.groupName} />,
     });
 
@@ -335,11 +296,6 @@ export function FandomIndex() {
         title: `${fandomProfile?.groupName || "내 팀"} 경기 일정`,
         icon: Calendar,
         moreLink: "/fandom/schedule",
-        defaultLayout: {
-          lg: { x: 2, y: yOffset, w: 2, h: 3, i: "my-schedule" },
-          md: { x: 1, y: yOffset, w: 1, h: 3, i: "my-schedule" },
-          sm: { x: 0, y: yOffset + 3, w: 1, h: 3, i: "my-schedule" },
-        },
         content: (
           <div className="space-y-2">
             {upcomingGames.map((game) => (
@@ -349,7 +305,6 @@ export function FandomIndex() {
         ),
       });
     }
-    yOffset += 3;
 
     // 9. Trending Groups
     w.push({
@@ -357,11 +312,6 @@ export function FandomIndex() {
       title: "인기 구단",
       icon: TrendingUp,
       moreLink: "/fandom/groups",
-      defaultLayout: {
-        lg: { x: 0, y: yOffset, w: 2, h: 3, i: "trending" },
-        md: { x: 0, y: yOffset, w: 2, h: 3, i: "trending" },
-        sm: { x: 0, y: yOffset, w: 1, h: 3, i: "trending" },
-      },
       content: (
         <div className="grid grid-cols-2 gap-2">
           {trendingGroups.map((group) => (
@@ -379,11 +329,6 @@ export function FandomIndex() {
         title: "진행중 이벤트",
         icon: Trophy,
         moreLink: "/fandom/events",
-        defaultLayout: {
-          lg: { x: 2, y: yOffset, w: 2, h: 3, i: "events" },
-          md: { x: 0, y: yOffset + 3, w: 2, h: 3, i: "events" },
-          sm: { x: 0, y: yOffset + 3, w: 1, h: 3, i: "events" },
-        },
         content: (
           <div className="space-y-3">
             {allVisibleEvents.map((event) => (
@@ -393,7 +338,6 @@ export function FandomIndex() {
         ),
       });
     }
-    yOffset += 3;
 
     // 11. Recent Projects
     if (recentProjects.length > 0) {
@@ -402,11 +346,6 @@ export function FandomIndex() {
         title: "최근 프로젝트",
         icon: FolderOpen,
         moreLink: "/studio",
-        defaultLayout: {
-          lg: { x: 0, y: yOffset, w: 2, h: 2, i: "projects" },
-          md: { x: 0, y: yOffset, w: 2, h: 2, i: "projects" },
-          sm: { x: 0, y: yOffset, w: 1, h: 2, i: "projects" },
-        },
         content: (
           <div className="space-y-2">
             {recentProjects.map((project) => (

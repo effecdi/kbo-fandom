@@ -1,20 +1,19 @@
-import { useState, useCallback, useMemo, ReactNode } from "react";
-import { ResponsiveGridLayout, useContainerWidth } from "react-grid-layout";
-import type { Layout, Layouts } from "react-grid-layout";
+import { useState, useCallback, useMemo, useRef, ReactNode } from "react";
 import { GripVertical, X, Plus, RotateCcw, Settings2 } from "lucide-react";
-import "react-grid-layout/css/styles.css";
 
-const LAYOUT_STORAGE_KEY = "kbo-dashboard-layout-v2";
-const HIDDEN_WIDGETS_KEY = "kbo-dashboard-hidden-v2";
+const ORDER_STORAGE_KEY = "kbo-dashboard-order-v3";
+const HIDDEN_WIDGETS_KEY = "kbo-dashboard-hidden-v3";
 
 export interface DashboardWidget {
   id: string;
   title: string;
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-  defaultLayout: { lg: Layout; md: Layout; sm: Layout };
   content: ReactNode;
+  /** If true, cannot be hidden */
   required?: boolean;
+  /** If true, no padding on content area */
   noPadding?: boolean;
+  /** Link for "전체 보기" */
   moreLink?: string;
 }
 
@@ -25,7 +24,18 @@ interface DashboardGridProps {
 
 export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
   const [editMode, setEditMode] = useState(false);
-  const { width, containerRef } = useContainerWidth({ initialWidth: 1280 });
+  const dragItemRef = useRef<string | null>(null);
+  const dragOverItemRef = useRef<string | null>(null);
+
+  // Saved order (widget IDs)
+  const [savedOrder, setSavedOrder] = useState<string[] | null>(() => {
+    try {
+      const stored = localStorage.getItem(ORDER_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const [hiddenWidgetIds, setHiddenWidgetIds] = useState<string[]>(() => {
     try {
@@ -36,54 +46,38 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
     }
   });
 
-  const [savedLayouts, setSavedLayouts] = useState<Layouts | null>(() => {
-    try {
-      const stored = localStorage.getItem(LAYOUT_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  // Build ordered, visible widget list
+  const orderedWidgets = useMemo(() => {
+    const visible = widgets.filter((w) => !hiddenWidgetIds.includes(w.id));
+    if (!savedOrder) return visible;
 
-  const visibleWidgets = useMemo(
-    () => widgets.filter((w) => !hiddenWidgetIds.includes(w.id)),
-    [widgets, hiddenWidgetIds],
-  );
+    const widgetMap = new Map(visible.map((w) => [w.id, w]));
+    const ordered: DashboardWidget[] = [];
+
+    // Add widgets in saved order
+    for (const id of savedOrder) {
+      const w = widgetMap.get(id);
+      if (w) {
+        ordered.push(w);
+        widgetMap.delete(id);
+      }
+    }
+    // Append any new widgets not in saved order
+    for (const w of widgetMap.values()) {
+      ordered.push(w);
+    }
+    return ordered;
+  }, [widgets, savedOrder, hiddenWidgetIds]);
 
   const hiddenWidgets = useMemo(
     () => widgets.filter((w) => hiddenWidgetIds.includes(w.id) && !w.required),
     [widgets, hiddenWidgetIds],
   );
 
-  const defaultLayouts = useMemo(() => {
-    const lg: Layout[] = [];
-    const md: Layout[] = [];
-    const sm: Layout[] = [];
-    for (const w of visibleWidgets) {
-      lg.push({ ...w.defaultLayout.lg, i: w.id });
-      md.push({ ...w.defaultLayout.md, i: w.id });
-      sm.push({ ...w.defaultLayout.sm, i: w.id });
-    }
-    return { lg, md, sm };
-  }, [visibleWidgets]);
-
-  const layouts = useMemo(() => {
-    if (!savedLayouts) return defaultLayouts;
-    const visibleIds = new Set(visibleWidgets.map((w) => w.id));
-    const merged: Layouts = {};
-    for (const bp of ["lg", "md", "sm"] as const) {
-      const saved = (savedLayouts[bp] || []).filter((l: Layout) => visibleIds.has(l.i));
-      const savedIds = new Set(saved.map((l: Layout) => l.i));
-      const defaults = defaultLayouts[bp].filter((l) => !savedIds.has(l.i));
-      merged[bp] = [...saved, ...defaults];
-    }
-    return merged;
-  }, [savedLayouts, defaultLayouts, visibleWidgets]);
-
-  const handleLayoutChange = useCallback((_layout: Layout[], allLayouts: Layouts) => {
-    setSavedLayouts(allLayouts);
+  const saveOrder = useCallback((ids: string[]) => {
+    setSavedOrder(ids);
     try {
-      localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(allLayouts));
+      localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(ids));
     } catch { /* quota */ }
   }, []);
 
@@ -104,20 +98,42 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
   }, []);
 
   const resetLayout = useCallback(() => {
-    setSavedLayouts(null);
+    setSavedOrder(null);
     setHiddenWidgetIds([]);
-    localStorage.removeItem(LAYOUT_STORAGE_KEY);
+    localStorage.removeItem(ORDER_STORAGE_KEY);
     localStorage.removeItem(HIDDEN_WIDGETS_KEY);
   }, []);
 
-  const widgetMap = useMemo(() => {
-    const map = new Map<string, DashboardWidget>();
-    for (const w of widgets) map.set(w.id, w);
-    return map;
-  }, [widgets]);
+  // Drag handlers
+  const handleDragStart = useCallback((widgetId: string) => {
+    dragItemRef.current = widgetId;
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, widgetId: string) => {
+    e.preventDefault();
+    dragOverItemRef.current = widgetId;
+  }, []);
+
+  const handleDrop = useCallback(() => {
+    const from = dragItemRef.current;
+    const to = dragOverItemRef.current;
+    if (!from || !to || from === to) return;
+
+    const ids = orderedWidgets.map((w) => w.id);
+    const fromIdx = ids.indexOf(from);
+    const toIdx = ids.indexOf(to);
+    if (fromIdx === -1 || toIdx === -1) return;
+
+    ids.splice(fromIdx, 1);
+    ids.splice(toIdx, 0, from);
+    saveOrder(ids);
+
+    dragItemRef.current = null;
+    dragOverItemRef.current = null;
+  }, [orderedWidgets, saveOrder]);
 
   return (
-    <div ref={containerRef}>
+    <div>
       {/* Edit Mode Toggle */}
       <div className="flex items-center gap-2 mb-4">
         <button
@@ -147,7 +163,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
       {/* Hidden Widgets Picker */}
       {editMode && hiddenWidgets.length > 0 && (
         <div className="mb-4 p-4 rounded-2xl border-2 border-dashed bg-muted/30" style={{ borderColor: `${themeColor}40` }}>
-          <p className="text-sm font-medium text-muted-foreground mb-3">숨겨진 위젯 (클릭하여 추가)</p>
+          <p className="text-sm font-medium text-muted-foreground mb-3">숨겨진 섹션 (클릭하여 추가)</p>
           <div className="flex flex-wrap gap-2">
             {hiddenWidgets.map((w) => (
               <button
@@ -164,64 +180,49 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
         </div>
       )}
 
-      {/* Grid */}
-      <ResponsiveGridLayout
-        width={width}
-        layouts={layouts}
-        breakpoints={{ lg: 1024, md: 768, sm: 0 }}
-        cols={{ lg: 4, md: 2, sm: 1 }}
-        rowHeight={90}
-        isDraggable={editMode}
-        isResizable={false}
-        draggableHandle=".widget-drag-handle"
-        onLayoutChange={handleLayoutChange}
-        margin={[12, 12]}
-        containerPadding={[0, 0]}
-        useCSSTransforms
-      >
-        {visibleWidgets.map((widget) => (
-          <div key={widget.id}>
-            <div
-              className={`h-full rounded-2xl border overflow-hidden flex flex-col transition-shadow ${
-                editMode ? "ring-2 ring-offset-2 ring-offset-background" : ""
-              } bg-card border-border`}
-              style={editMode ? { "--tw-ring-color": `${themeColor}40` } as any : {}}
-            >
-              {/* Widget Header */}
-              <div
-                className={`flex items-center gap-2 px-4 py-2.5 border-b border-border shrink-0 ${
-                  editMode ? "widget-drag-handle cursor-grab active:cursor-grabbing bg-muted/50" : ""
-                }`}
-              >
+      {/* Sections (natural flow, no fixed height) */}
+      <div className="space-y-6">
+        {orderedWidgets.map((widget) => (
+          <div
+            key={widget.id}
+            draggable={editMode}
+            onDragStart={() => handleDragStart(widget.id)}
+            onDragOver={(e) => handleDragOver(e, widget.id)}
+            onDrop={handleDrop}
+            className={`transition-all ${editMode ? "cursor-move" : ""}`}
+          >
+            {/* Section header (only in edit mode or when widget has title bar content) */}
+            {(editMode || widget.moreLink) && (
+              <div className="flex items-center gap-2 mb-2">
                 {editMode && (
-                  <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
                 )}
-                <widget.icon className="w-4 h-4 shrink-0" style={{ color: themeColor }} />
-                <span className="text-sm font-bold text-foreground truncate flex-1">{widget.title}</span>
+                <widget.icon className="w-4 h-4" style={{ color: themeColor }} />
+                <span className="text-sm font-bold text-foreground flex-1">{widget.title}</span>
                 {widget.moreLink && !editMode && (
-                  <a href={widget.moreLink} className="text-xs font-medium shrink-0 hover:underline" style={{ color: themeColor }}>
+                  <a href={widget.moreLink} className="text-xs font-medium hover:underline" style={{ color: themeColor }}>
                     전체 보기
                   </a>
                 )}
                 {editMode && !widget.required && (
                   <button
                     onClick={() => hideWidget(widget.id)}
-                    className="p-1 rounded-lg hover:bg-destructive/10 transition-colors shrink-0"
-                    title="위젯 숨기기"
+                    className="p-1 rounded-lg hover:bg-destructive/10 transition-colors"
+                    title="섹션 숨기기"
                   >
                     <X className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
                   </button>
                 )}
               </div>
+            )}
 
-              {/* Widget Content */}
-              <div className={`flex-1 overflow-y-auto overflow-x-hidden ${widget.noPadding ? "" : "p-4"}`}>
-                {widget.content}
-              </div>
+            {/* Section content - natural height, no scroll */}
+            <div className={editMode ? "ring-1 ring-border rounded-2xl p-3" : ""}>
+              {widget.content}
             </div>
           </div>
         ))}
-      </ResponsiveGridLayout>
+      </div>
     </div>
   );
 }
