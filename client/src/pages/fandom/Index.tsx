@@ -407,7 +407,7 @@ export function FandomIndex() {
         {/* Personalized Header */}
         <div className="mb-6">
           <div className="flex items-center gap-4 flex-wrap">
-            <h1 className="text-2xl md:text-3xl font-black text-foreground shrink-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-foreground">
               {fandomProfile ? (
                 <>
                   <span style={{ color: themeColor }}>{fandomProfile.nickname}</span>님의{" "}
@@ -474,8 +474,8 @@ export function FandomIndex() {
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+            <p className="text-sm text-muted-foreground truncate">
               {fandomProfile
                 ? `최애 선수: ${fandomProfile.favoritePlayer} | 팬덤: ${fandomProfile.fandomName}`
                 : "좋아하는 구단의 팬아트를 만들고, 팬덤과 소통하세요"}

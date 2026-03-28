@@ -48,23 +48,23 @@ export function FandomGroupHeader({ group }: FandomGroupHeaderProps) {
 
         <p className="text-sm text-muted-foreground mt-3">{group.description}</p>
 
-        <div className="flex items-center gap-6 mt-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-5 mt-4">
           <span
-            className="px-3 py-1 rounded-full text-sm font-bold text-white"
+            className="px-3 py-1 rounded-full text-[13px] sm:text-sm font-bold text-white"
             style={{ backgroundColor: group.coverColor }}
           >
             {group.fandomName}
           </span>
-          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Users className="w-4 h-4" />
+          <span className="flex items-center gap-1.5 text-[13px] sm:text-sm text-muted-foreground whitespace-nowrap">
+            <Users className="w-4 h-4 shrink-0" />
             <span className="font-semibold text-foreground">{group.followers.toLocaleString()}</span> 팔로워
           </span>
-          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Heart className="w-4 h-4" />
+          <span className="flex items-center gap-1.5 text-[13px] sm:text-sm text-muted-foreground whitespace-nowrap">
+            <Heart className="w-4 h-4 shrink-0" />
             <span className="font-semibold text-foreground">{group.fanartCount.toLocaleString()}</span> 팬아트
           </span>
-          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Calendar className="w-4 h-4" />
+          <span className="flex items-center gap-1.5 text-[13px] sm:text-sm text-muted-foreground whitespace-nowrap">
+            <Calendar className="w-4 h-4 shrink-0" />
             {group.foundedYear}년 창단
           </span>
         </div>
