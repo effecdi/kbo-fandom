@@ -157,7 +157,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
       <div className="flex items-center gap-2 mb-4">
         <button
           onClick={() => setEditMode(!editMode)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium transition-all ${
             editMode
               ? "text-white shadow-lg"
               : "bg-muted text-muted-foreground hover:text-foreground"
@@ -171,7 +171,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
         {editMode && (
           <button
             onClick={resetLayout}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
           >
             <RotateCcw className="w-4 h-4" />
             초기화
@@ -183,7 +183,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
       {editMode && (
         <div className="mb-6 rounded-2xl border border-border bg-card overflow-hidden">
           <div className="px-4 py-3 bg-muted/50 border-b border-border">
-            <p className="text-[15px] font-bold text-foreground">위젯 관리</p>
+            <p className="text-[19px] font-bold text-foreground">위젯 관리</p>
             <p className="text-[13px] text-muted-foreground mt-0.5">토글로 위젯을 켜고 끄세요. 드래그 또는 화살표로 순서를 변경하세요.</p>
           </div>
           <div className="divide-y divide-border">
@@ -208,7 +208,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
 
                   {/* Icon + Title */}
                   <w.icon className="w-4 h-4 flex-shrink-0" style={{ color: isVisible ? themeColor : "#999" }} />
-                  <span className={`text-sm flex-1 min-w-0 truncate ${isVisible ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
+                  <span className={`text-[13px] flex-1 min-w-0 truncate ${isVisible ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
                     {w.title}
                     {isRequired && <span className="text-[13px] text-muted-foreground ml-1.5">(필수)</span>}
                   </span>
@@ -272,14 +272,14 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
           >
             {/* Section header */}
             {(editMode || widget.moreLink) && (
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2.5 mb-3">
                 {editMode && (
                   <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
                 )}
-                <widget.icon className="w-4 h-4" style={{ color: themeColor }} />
-                <span className="text-[15px] font-bold text-foreground flex-1">{widget.title}</span>
+                <widget.icon className="w-5 h-5" style={{ color: themeColor }} />
+                <span className="text-2xl font-black text-foreground flex-1">{widget.title}</span>
                 {widget.moreLink && !editMode && (
-                  <a href={widget.moreLink} className="text-[13px] font-medium hover:underline" style={{ color: themeColor }}>
+                  <a href={widget.moreLink} className="text-[13px] font-semibold hover:underline" style={{ color: themeColor }}>
                     전체 보기
                   </a>
                 )}

@@ -331,8 +331,8 @@ export function FandomIndex() {
                 {group.name.slice(0, 2)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-bold text-foreground truncate">{group.nameKo}</p>
-                <p className="text-[12px] text-muted-foreground truncate">{group.fandomName} · {group.city}</p>
+                <p className="text-base font-bold text-foreground truncate">{group.nameKo}</p>
+                <p className="text-[13px] text-muted-foreground truncate">{group.fandomName} · {group.city}</p>
               </div>
               <ArrowRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
             </Link>
@@ -375,7 +375,7 @@ export function FandomIndex() {
                 className="flex items-center justify-between rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group"
               >
                 <div className="min-w-0">
-                  <p className="text-[15px] font-bold text-foreground truncate">{project.title}</p>
+                  <p className="text-base font-bold text-foreground truncate">{project.title}</p>
                   <p className="text-[13px] text-muted-foreground">{project.panels}컷 · {project.updatedAt}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0" />
@@ -419,7 +419,7 @@ export function FandomIndex() {
         {/* Personalized Header */}
         <div className="mb-6">
           <div className="flex items-center gap-4 flex-wrap">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-foreground">
+            <h1 className="text-2xl sm:text-[28px] md:text-[32px] font-black text-foreground">
               {fandomProfile ? (
                 <>
                   <span style={{ color: themeColor }}>{fandomProfile.nickname}</span>님의{" "}
@@ -451,7 +451,7 @@ export function FandomIndex() {
                   {/* Score */}
                   <div className="text-center leading-none">
                     <p className="text-[13px] font-bold opacity-70 mb-0.5">vs {myTeamWin.oppName}</p>
-                    <p className="text-3xl md:text-4xl font-black tracking-tighter">
+                    <p className="text-[32px] md:text-[40px] font-black tracking-tighter">
                       {myTeamWin.myScore} : {myTeamWin.oppScore}
                     </p>
                   </div>
@@ -461,7 +461,7 @@ export function FandomIndex() {
 
                   {/* 이겼다!!!! text */}
                   <div className="text-center">
-                    <p className="text-2xl md:text-3xl font-black tracking-tight" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+                    <p className="text-[28px] md:text-[32px] font-black tracking-tight" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
                       이겼다!!!!
                     </p>
                   </div>
@@ -472,16 +472,16 @@ export function FandomIndex() {
             {/* 패배/무승부 — 작게 */}
             {myTeamWin && myTeamWin.won === false && (
               <div className="rounded-xl bg-muted/60 border border-border px-4 py-2 flex items-center gap-2">
-                <span className="text-[15px] font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
-                <span className="text-xl font-black text-foreground">{myTeamWin.myScore} : {myTeamWin.oppScore}</span>
-                <span className="text-[15px] font-bold text-muted-foreground">아쉬운 패배</span>
+                <span className="text-base font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
+                <span className="text-2xl font-black text-foreground">{myTeamWin.myScore} : {myTeamWin.oppScore}</span>
+                <span className="text-base font-bold text-muted-foreground">아쉬운 패배</span>
               </div>
             )}
             {myTeamWin && myTeamWin.won === null && (
               <div className="rounded-xl bg-muted/60 border border-border px-4 py-2 flex items-center gap-2">
-                <span className="text-[15px] font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
-                <span className="text-xl font-black text-foreground">{myTeamWin.myScore} : {myTeamWin.oppScore}</span>
-                <span className="text-[15px] font-bold text-muted-foreground">무승부</span>
+                <span className="text-base font-bold text-muted-foreground">vs {myTeamWin.oppName}</span>
+                <span className="text-2xl font-black text-foreground">{myTeamWin.myScore} : {myTeamWin.oppScore}</span>
+                <span className="text-base font-bold text-muted-foreground">무승부</span>
               </div>
             )}
           </div>
@@ -489,7 +489,7 @@ export function FandomIndex() {
           <div className="flex items-center justify-end mt-2">
             <Link to="/fandom/create" className="shrink-0">
               <Button
-                className="font-bold gap-2 text-white text-sm"
+                className="font-bold gap-2 text-white text-[13px]"
                 style={{ background: themeColor }}
               >
                 <Sparkles className="w-4 h-4" />
@@ -564,7 +564,7 @@ function FanPollWidget({
   if (!myGame) {
     return (
       <div className="text-center py-6">
-        <p className="text-[15px] font-bold text-foreground mb-1">오늘의 예측</p>
+        <p className="text-base font-bold text-foreground mb-1">오늘의 예측</p>
         <p className="text-[13px] text-muted-foreground">
           {teamName || "내 팀"} 오늘 경기가 없습니다
         </p>
@@ -575,7 +575,7 @@ function FanPollWidget({
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-[15px] font-bold text-foreground mb-1">오늘의 예측</p>
+        <p className="text-base font-bold text-foreground mb-1">오늘의 예측</p>
         <p className="text-[13px] text-muted-foreground">
           {teamName || "내 팀"} vs {oppName} — {myGame.status === "live" ? "경기 진행중!" : isFinished ? "경기 종료" : `${myGame.time} 시작`}
         </p>
@@ -591,8 +591,8 @@ function FanPollWidget({
               : "linear-gradient(135deg, #374151, #1f2937)",
           }}
         >
-          <p className="text-2xl font-black">{myScore} : {oppScore}</p>
-          <p className="text-[15px] font-bold mt-1">
+          <p className="text-[28px] font-black">{myScore} : {oppScore}</p>
+          <p className="text-base font-bold mt-1">
             {actualWin ? "승리!!!" : myScore === oppScore ? "무승부" : "아쉬운 패배"}
           </p>
           {voted && (
@@ -615,8 +615,8 @@ function FanPollWidget({
             style={voted === "win" ? { borderColor: themeColor, background: `${themeColor}10` } : {}}
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[15px] font-bold text-foreground">{teamName} 승리</span>
-              {voted && <span className="text-[15px] font-black" style={{ color: themeColor }}>{winPct}%</span>}
+              <span className="text-base font-bold text-foreground">{teamName} 승리</span>
+              {voted && <span className="text-base font-black" style={{ color: themeColor }}>{winPct}%</span>}
             </div>
             {voted && (
               <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -634,8 +634,8 @@ function FanPollWidget({
             style={voted === "lose" ? { borderColor: "#ef4444", background: "#ef444410" } : {}}
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[15px] font-bold text-foreground">{oppName} 승리</span>
-              {voted && <span className="text-[15px] font-black text-red-500">{losePct}%</span>}
+              <span className="text-base font-bold text-foreground">{oppName} 승리</span>
+              {voted && <span className="text-base font-black text-red-500">{losePct}%</span>}
             </div>
             {voted && (
               <div className="h-2 rounded-full bg-muted overflow-hidden">
