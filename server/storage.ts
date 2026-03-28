@@ -144,6 +144,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async ensureUser(data: UpsertUser): Promise<void> {
+    if (process.env.AUTH_BYPASS === "true" && !process.env.DATABASE_URL) return;
     const db = this.getDb();
     const [existing] = await db.select().from(users).where(eq(users.id, data.id!));
     if (existing) {
@@ -492,6 +493,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserCredits(userId: string): Promise<UserCredits> {
+    if (process.env.AUTH_BYPASS === "true" && !process.env.DATABASE_URL) {
+      return { id: 0, userId, credits: 9999, tier: "pro", authorName: null, totalGenerations: 0, dailyBonusCredits: 0, lastDailyBonusAt: null, creatorProfile: null, bubbleUsesRemaining: 99, storyUsesRemaining: 99, lastBubbleResetAt: null, lastStoryResetAt: null } as UserCredits;
+    }
     return this.ensureUserCredits(userId);
   }
 
@@ -653,6 +657,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async incrementTotalGenerations(userId: string): Promise<void> {
+    if (process.env.AUTH_BYPASS === "true" && !process.env.DATABASE_URL) return;
     await this.ensureUserCredits(userId);
     const db = this.getDb();
     await db.update(userCredits)
