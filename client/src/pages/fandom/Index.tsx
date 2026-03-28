@@ -114,24 +114,6 @@ export function FandomIndex() {
   const widgets: DashboardWidget[] = useMemo(() => {
     const w: DashboardWidget[] = [];
 
-    // 0. Lanyard 3D Card — 내 포토카드 목걸이
-    w.push({
-      id: "lanyard-card",
-      title: "내 포토카드",
-      icon: Camera,
-      noPadding: true,
-      content: (
-        <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-muted-foreground text-[13px]">로딩중...</div>}>
-          <LanyardCard
-            teamColor={themeColor}
-            teamName={myGroup?.nameKo || "KBO"}
-            playerName={fandomProfile?.favoritePlayer}
-            height={400}
-          />
-        </Suspense>
-      ),
-    });
-
     // 1. Live Score (always visible when there are games)
     if (liveGames.length > 0) {
       w.push({
@@ -413,6 +395,18 @@ export function FandomIndex() {
 
   return (
     <StudioLayout>
+      {/* 포토카드 — 우측 상단 고정 (데스크톱만) */}
+      <div className="fixed top-20 right-4 md:right-8 z-20 hidden md:block pointer-events-auto">
+        <Suspense fallback={null}>
+          <LanyardCard
+            teamColor={themeColor}
+            teamName={myGroup?.nameKo || "KBO"}
+            playerName={fandomProfile?.favoritePlayer}
+            height={260}
+          />
+        </Suspense>
+      </div>
+
       <div className="max-w-6xl mx-auto overflow-x-hidden">
         {/* Personalized Header */}
         <div className="mb-6">

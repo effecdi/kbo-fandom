@@ -345,21 +345,20 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
           return (
             <section
               key={widget.id}
-              className={`bg-card border border-border rounded-2xl overflow-hidden transition-all ${
+              className={`transition-all ${
                 span === 2 ? "md:col-span-2" : ""
-              } ${editMode ? "cursor-move" : "hover:border-foreground/10"}`}
-              style={
+              } ${
                 editMode
-                  ? { outline: `2px dashed ${themeColor}66`, outlineOffset: "2px" }
-                  : {}
-              }
+                  ? "cursor-move border border-dashed border-muted-foreground/30 rounded-2xl bg-muted/5 p-4"
+                  : ""
+              }`}
               draggable={editMode}
               onDragStart={() => handleDragStart(widget.id)}
               onDragOver={(e) => handleDragOver(e, widget.id)}
               onDrop={handleDrop}
             >
-              {/* Section header — always visible */}
-              <div className="flex items-center gap-3 px-5 pt-5 pb-4 md:px-7 md:pt-7 md:pb-5">
+              {/* Section header */}
+              <div className="flex items-center gap-3 pt-2 pb-3">
                 {editMode && (
                   <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab active:cursor-grabbing shrink-0" />
                 )}
@@ -378,7 +377,6 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
                 )}
                 {editMode && !widget.required && (
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* Col span toggle on the card header */}
                     <div className="flex items-center rounded-lg overflow-hidden border border-border">
                       <button
                         onClick={() => setWidgetColSpan(widget.id, 2)}
@@ -415,7 +413,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
               </div>
 
               {/* Section content */}
-              <div className={widget.noPadding ? "" : "px-5 pb-6 md:px-7 md:pb-8"}>
+              <div className={widget.noPadding ? "" : "pb-2"}>
                 {widget.content}
               </div>
             </section>
