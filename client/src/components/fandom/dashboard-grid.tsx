@@ -338,7 +338,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
       )}
 
       {/* Widget Grid — 2-column on md+, generous spacing */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10">
         {orderedWidgets.map((widget) => {
           const span = getColSpan(widget);
 
@@ -359,7 +359,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
               onDrop={handleDrop}
             >
               {/* Section header — always visible */}
-              <div className="flex items-center gap-3 px-5 pt-5 pb-3 md:px-6 md:pt-6 md:pb-4">
+              <div className="flex items-center gap-3 px-5 pt-5 pb-4 md:px-7 md:pt-7 md:pb-5">
                 {editMode && (
                   <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab active:cursor-grabbing shrink-0" />
                 )}
@@ -415,7 +415,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
               </div>
 
               {/* Section content */}
-              <div className={widget.noPadding ? "" : "px-5 pb-5 md:px-6 md:pb-6"}>
+              <div className={widget.noPadding ? "" : "px-5 pb-6 md:px-7 md:pb-8"}>
                 {widget.content}
               </div>
             </section>

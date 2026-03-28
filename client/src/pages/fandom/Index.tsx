@@ -296,7 +296,7 @@ export function FandomIndex() {
         noPadding: true,
         defaultColSpan: 2,
         content: (
-          <div className="flex gap-3 overflow-x-auto pb-5 px-5 md:pb-6 md:px-6 scrollbar-hide">
+          <div className="flex gap-3 overflow-x-auto pb-6 px-5 md:pb-8 md:px-7 scrollbar-hide">
             {upcomingGames.map((game) => (
               <div key={game.id} className="min-w-[260px] max-w-[300px] flex-shrink-0">
                 <GameScheduleCard game={game} teams={groups} compact />
