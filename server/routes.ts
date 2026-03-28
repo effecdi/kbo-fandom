@@ -1510,6 +1510,9 @@ export async function registerRoutes(
 
   // 자동화툰 - 스토리 → 장면 분해
   app.post("/api/auto-webtoon/breakdown", isAuthenticated, async (req: AuthRequest, res) => {
+    if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+      return res.status(503).json({ message: "AI 기능이 비활성화되어 있습니다. (API 키 미설정)" });
+    }
     try {
       const userId = req.userId!;
       const { storyPrompt, canvasCount, cutsPerCanvas, characterDescriptions } = req.body;
@@ -1545,6 +1548,9 @@ export async function registerRoutes(
 
   // 자동 웹툰 전용 장면 이미지 생성 (주제 컨텍스트 포함)
   app.post("/api/auto-webtoon/generate-scene", isAuthenticated, async (req: AuthRequest, res) => {
+    if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+      return res.status(503).json({ message: "AI 기능이 비활성화되어 있습니다. (API 키 미설정)" });
+    }
     try {
       const userId = req.userId!;
       const { sceneDescription, storyContext, sourceImageDataList, aspectRatio, sceneIndex, totalScenes, previousSceneDescription, characterNames } = req.body;
