@@ -2455,18 +2455,40 @@ export async function registerRoutes(
       const gs = relay.currentGameState || {};
       const isTopInning = relay.homeOrAway === "0"; // 0=초(top), 1=말(bottom)
 
-      // Find current pitcher and batter from entries
-      const allPitchers = [
-        ...(relay.homeEntry?.pitcher || []).map((p: any) => ({ ...p, team: "home" })),
-        ...(relay.awayEntry?.pitcher || []).map((p: any) => ({ ...p, team: "away" })),
-      ];
-      const allBatters = [
-        ...(relay.homeEntry?.batter || []).map((b: any) => ({ ...b, team: "home" })),
-        ...(relay.awayEntry?.batter || []).map((b: any) => ({ ...b, team: "away" })),
-      ];
+      // Build comprehensive pcode → player map from all entries
+      const pcodeMap: Record<string, { name: string; pos: string; style?: string }> = {};
+      for (const p of (relay.homeEntry?.pitcher || [])) {
+        pcodeMap[p.pcode] = { name: p.name, pos: "투수", style: p.pitchingStyle };
+      }
+      for (const p of (relay.awayEntry?.pitcher || [])) {
+        pcodeMap[p.pcode] = { name: p.name, pos: "투수", style: p.pitchingStyle };
+      }
+      for (const b of (relay.homeEntry?.batter || [])) {
+        pcodeMap[b.pcode] = { name: b.name, pos: b.pos };
+      }
+      for (const b of (relay.awayEntry?.batter || [])) {
+        pcodeMap[b.pcode] = { name: b.name, pos: b.pos };
+      }
 
-      const currentPitcher = allPitchers.find((p: any) => p.pcode === gs.pitcher);
-      const currentBatter = allBatters.find((b: any) => b.pcode === gs.batter);
+      // Also extract batter names from textRelays (catches substituted players)
+      const textRelays = relay.textRelays || [];
+      for (const tr of textRelays) {
+        const title = tr.title || "";
+        const m = title.match(/(\d+)번타자\s+(.+)/);
+        if (m) {
+          const batterName = m[2].trim();
+          for (const opt of (tr.textOptions || [])) {
+            const trGs = opt.currentGameState || {};
+            if (trGs.batter && !pcodeMap[trGs.batter]) {
+              pcodeMap[trGs.batter] = { name: batterName, pos: "타자" };
+            }
+          }
+        }
+      }
+
+      // Find current pitcher and batter
+      const pitcherInfo = pcodeMap[gs.pitcher];
+      const batterInfo = pcodeMap[gs.batter];
 
       // Defensive team lineup (field positions)
       const defEntry = isTopInning ? relay.homeEntry : relay.awayEntry;
@@ -2491,8 +2513,8 @@ export async function registerRoutes(
         }
       }
       // Current pitcher overrides
-      if (currentPitcher) {
-        defense["pitcher"] = { name: currentPitcher.name, pcode: currentPitcher.pcode };
+      if (pitcherInfo) {
+        defense["pitcher"] = { name: pitcherInfo.name, pcode: gs.pitcher };
       }
 
       // Batting order for the offensive team
@@ -2507,8 +2529,8 @@ export async function registerRoutes(
         gameId,
         inning: relay.inn,
         isTopInning,
-        currentPitcher: currentPitcher ? { name: currentPitcher.name, style: currentPitcher.pitchingStyle } : null,
-        currentBatter: currentBatter ? { name: currentBatter.name, pos: currentBatter.pos, hittype: currentBatter.hittype } : null,
+        currentPitcher: pitcherInfo ? { name: pitcherInfo.name, style: pitcherInfo.style || "" } : null,
+        currentBatter: batterInfo ? { name: batterInfo.name, pos: batterInfo.pos, hittype: "" } : null,
         count: {
           ball: parseInt(gs.ball) || 0,
           strike: parseInt(gs.strike) || 0,
