@@ -15,9 +15,9 @@ const SIZE_CLASSES = {
 };
 
 const TEXT_CLASSES = {
-  xs: "text-[7px]",
-  sm: "text-[9px]",
-  md: "text-xs",
+  xs: "text-[13px]",
+  sm: "text-[13px]",
+  md: "text-[13px]",
   lg: "text-sm",
 };
 

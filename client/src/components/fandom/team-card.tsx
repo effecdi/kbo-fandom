@@ -30,7 +30,7 @@ export function TeamCard({ group }: TeamCardProps) {
       {/* Info */}
       <div className="p-4 pt-8 space-y-2">
         <div>
-          <h3 className="text-sm font-bold text-foreground">{group.name}</h3>
+          <h3 className="text-[15px] font-bold text-foreground">{group.name}</h3>
           <p className="text-[13px] text-muted-foreground">{group.nameKo} · {group.city}</p>
         </div>
         <div className="flex items-center gap-1">

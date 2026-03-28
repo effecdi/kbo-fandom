@@ -56,7 +56,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-bold text-foreground">
+      <h3 className="text-[15px] font-bold text-foreground">
         댓글 {comments.length}개
       </h3>
 

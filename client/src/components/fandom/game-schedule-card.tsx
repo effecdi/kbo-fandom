@@ -62,7 +62,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
             {hasScore ? (
               <>
                 <span className="text-sm font-black text-foreground w-5 text-right">{game.awayScore ?? 0}</span>
-                <span className="text-[11px] text-muted-foreground/50">:</span>
+                <span className="text-[13px] text-muted-foreground/50">:</span>
                 <span className="text-sm font-black text-foreground w-5 text-left">{game.homeScore ?? 0}</span>
               </>
             ) : (
@@ -78,7 +78,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
 
           {/* Status badge */}
           <span
-            className="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white shrink-0"
+            className="px-1.5 py-0.5 rounded-full text-[13px] font-bold text-white shrink-0"
             style={{ backgroundColor: status.color }}
           >
             {status.label}
@@ -103,7 +103,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
 
         {/* Stadium + Date (secondary line) */}
         {game.stadium && (
-          <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-3 mt-1.5 text-[13px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               {game.stadium}

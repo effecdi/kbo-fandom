@@ -183,7 +183,7 @@ export function StandingsTable({ standings, liveStandings, myTeamId, compact }: 
                     <td className="px-3 py-3 text-center text-muted-foreground">{row.streak}</td>
                     {hasLiveData ? (
                       <>
-                        <td className="px-3 py-3 text-center text-muted-foreground font-mono text-[12px]">
+                        <td className="px-3 py-3 text-center text-muted-foreground font-mono text-[13px]">
                           {row.last5 || "-"}
                         </td>
                         <td className="px-3 py-3 text-center text-muted-foreground">{row.battingAvg || "-"}</td>

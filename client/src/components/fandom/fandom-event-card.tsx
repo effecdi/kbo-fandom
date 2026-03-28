@@ -52,7 +52,7 @@ export function FandomEventCard({ event }: FandomEventCardProps) {
 
       {/* Info */}
       <div className="p-4 space-y-2">
-        <h3 className="text-sm font-bold text-foreground group-hover:text-[var(--fandom-primary)] transition-colors">
+        <h3 className="text-[15px] font-bold text-foreground group-hover:text-[var(--fandom-primary)] transition-colors">
           {event.title}
         </h3>
         <p className="text-[13px] text-muted-foreground line-clamp-2">{event.description}</p>

@@ -88,7 +88,7 @@ export function LiveGameDetailPanel({
           {/* Away team */}
           <div className={`flex flex-col items-center gap-2 ${awayWon ? "" : "opacity-60"}`}>
             <TeamLogo team={awayTeam} size="lg" />
-            <span className="text-sm font-bold text-foreground">{game.awayTeamName}</span>
+            <span className="text-[15px] font-bold text-foreground">{game.awayTeamName}</span>
           </div>
 
           {/* Score */}
@@ -105,12 +105,12 @@ export function LiveGameDetailPanel({
           {/* Home team */}
           <div className={`flex flex-col items-center gap-2 ${homeWon ? "" : "opacity-60"}`}>
             <TeamLogo team={homeTeam} size="lg" />
-            <span className="text-sm font-bold text-foreground">{game.homeTeamName}</span>
+            <span className="text-[15px] font-bold text-foreground">{game.homeTeamName}</span>
           </div>
         </div>
 
         {game.stadium && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
             <MapPin className="w-3 h-3" />
             <span>{game.stadium}</span>
           </div>
@@ -139,7 +139,7 @@ export function LiveGameDetailPanel({
         {/* Away team */}
         <div className="flex flex-col items-center gap-2">
           <TeamLogo team={awayTeam} size="lg" />
-          <span className="text-sm font-bold text-foreground">{game.awayTeamName}</span>
+          <span className="text-[15px] font-bold text-foreground">{game.awayTeamName}</span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -150,12 +150,12 @@ export function LiveGameDetailPanel({
         {/* Home team */}
         <div className="flex flex-col items-center gap-2">
           <TeamLogo team={homeTeam} size="lg" />
-          <span className="text-sm font-bold text-foreground">{game.homeTeamName}</span>
+          <span className="text-[15px] font-bold text-foreground">{game.homeTeamName}</span>
         </div>
       </div>
 
       {game.stadium && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
           <MapPin className="w-3 h-3" />
           <span>{game.stadium}</span>
         </div>

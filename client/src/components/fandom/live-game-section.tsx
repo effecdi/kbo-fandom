@@ -74,7 +74,7 @@ export function LiveGameSection({
         {/* Schedule shortcut */}
         <Link
           to="/fandom/schedule"
-          className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted text-sm font-bold text-foreground hover:bg-muted/80 transition-all border border-border"
+          className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted text-[15px] font-bold text-foreground hover:bg-muted/80 transition-all border border-border"
         >
           <Calendar className="w-4 h-4" />
           <span className="hidden sm:inline">경기 일정</span>

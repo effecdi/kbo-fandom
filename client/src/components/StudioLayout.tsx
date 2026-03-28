@@ -145,7 +145,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
                 {fandomProfile ? `${fandomProfile.groupName}` : "MY FANDOM"}
               </span>
               {fandomProfile && (
-                <span className="text-xs text-muted-foreground truncate block">
+                <span className="text-[13px] text-muted-foreground truncate block">
                   {fandomProfile.fandomName}
                 </span>
               )}
@@ -164,8 +164,8 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
                 {fandomProfile.nickname.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{fandomProfile.nickname}</p>
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-[15px] font-semibold text-foreground truncate">{fandomProfile.nickname}</p>
+                <p className="text-[13px] text-muted-foreground truncate">
                   최애: {fandomProfile.favoritePlayer}
                 </p>
               </div>
@@ -188,7 +188,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
                 <div key={section.title}>
                   <button
                     onClick={() => toggleSection(section.title)}
-                    className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center justify-between w-full px-3 py-1.5 text-[13px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <span>{section.title}</span>
                     <ChevronRight
@@ -238,8 +238,8 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
               {fandomProfile?.nickname?.charAt(0) || "?"}
             </div>
             <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-foreground">{fandomProfile?.nickname || "게스트"}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[15px] font-semibold text-foreground">{fandomProfile?.nickname || "게스트"}</p>
+              <p className="text-[13px] text-muted-foreground">
                 {fandomProfile?.groupName || "팬덤 미인증"}
               </p>
             </div>

@@ -141,7 +141,7 @@ export function FanCreators() {
             </p>
 
             <div className="mb-4">
-              <label className="text-sm font-bold text-foreground block mb-1.5">
+              <label className="text-[15px] font-bold text-foreground block mb-1.5">
                 자기소개 (Bio)
               </label>
               <textarea
@@ -153,12 +153,12 @@ export function FanCreators() {
                 rows={3}
                 maxLength={100}
               />
-              <p className="text-xs text-muted-foreground mt-1">{bio.length}/100자</p>
+              <p className="text-[13px] text-muted-foreground mt-1">{bio.length}/100자</p>
             </div>
 
             <div className="p-4 rounded-xl bg-muted/50 mb-4">
-              <p className="text-sm font-bold text-foreground mb-2">등록 후 이런 혜택이!</p>
-              <ul className="space-y-1.5 text-xs text-muted-foreground">
+              <p className="text-[15px] font-bold text-foreground mb-2">등록 후 이런 혜택이!</p>
+              <ul className="space-y-1.5 text-[13px] text-muted-foreground">
                 <li>- 팬아트 게시 시 크리에이터 뱃지 표시</li>
                 <li>- 좋아요, 저장, 공유 수에 따라 engagement 점수 누적</li>
                 <li>- 점수 기반 자동 뱃지 부여 (신규 → 성장 → 인기 → TOP)</li>
@@ -187,8 +187,8 @@ export function FanCreators() {
 
         {/* Ranking formula info */}
         <div className="mb-4 p-3 rounded-xl bg-muted/50 border border-border">
-          <p className="text-xs font-bold text-foreground mb-1">랭킹 점수 계산 방식</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[13px] font-bold text-foreground mb-1">랭킹 점수 계산 방식</p>
+          <p className="text-[13px] text-muted-foreground">
             <span className="text-rose-400 font-bold">좋아요 ×1</span> + <span className="text-amber-400 font-bold">저장 ×2</span> + <span className="text-blue-400 font-bold">공유 ×3</span> + <span className="text-violet-400 font-bold">팔로워 ×5</span> = engagement 점수
           </p>
         </div>
@@ -291,7 +291,7 @@ export function FanCreators() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => navigate(`/fandom/fans/${creator.id}`)}
-                        className="text-sm font-bold text-foreground hover:underline truncate"
+                        className="text-[15px] font-bold text-foreground hover:underline truncate"
                       >
                         {creator.nickname}
                       </button>
@@ -327,22 +327,22 @@ export function FanCreators() {
 
                 {/* Stats - enhanced with saves/shares */}
                 <div className="grid grid-cols-2 gap-2 mb-3 pb-3 border-b border-border">
-                  <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
                     <Image className="w-3 h-3" />
                     <span className="font-bold text-foreground">{creator.fanartCount}</span>
                     <span>작품</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
                     <Users className="w-3 h-3" />
                     <span className="font-bold text-foreground">{creator.followerCount.toLocaleString()}</span>
                     <span>팔로워</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
                     <Heart className="w-3 h-3 text-rose-400" />
                     <span className="font-bold text-foreground">{creator.totalLikes.toLocaleString()}</span>
                     <span>좋아요</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
                     <Bookmark className="w-3 h-3 text-amber-400" />
                     <span className="font-bold text-foreground">{(creator.totalSaves || 0).toLocaleString()}</span>
                     <span>저장</span>
@@ -351,7 +351,7 @@ export function FanCreators() {
 
                 {/* Engagement score bar */}
                 <div className="mb-3">
-                  <div className="flex items-center justify-between text-[11px] mb-1">
+                  <div className="flex items-center justify-between text-[13px] mb-1">
                     <span className="text-muted-foreground font-medium">engagement 점수</span>
                     <span className="font-black text-foreground">{(creator.engagementScore || 0).toLocaleString()}</span>
                   </div>

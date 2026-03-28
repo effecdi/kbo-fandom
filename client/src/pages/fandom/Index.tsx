@@ -163,42 +163,42 @@ export function FandomIndex() {
             className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
           >
             <Calendar className="w-6 h-6 mb-1.5" style={{ color: themeColor }} />
-            <p className="text-xs font-bold text-foreground">경기 일정</p>
+            <p className="text-[13px] font-bold text-foreground">경기 일정</p>
           </Link>
           <Link
             to="/fandom/standings"
             className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
           >
             <BarChart3 className="w-6 h-6 text-emerald-500 mb-1.5" />
-            <p className="text-xs font-bold text-foreground">순위표</p>
+            <p className="text-[13px] font-bold text-foreground">순위표</p>
           </Link>
           <Link
             to="/fandom/create"
             className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
           >
             <Palette className="w-6 h-6 mb-1.5" style={{ color: themeColor }} />
-            <p className="text-xs font-bold text-foreground">팬아트</p>
+            <p className="text-[13px] font-bold text-foreground">팬아트</p>
           </Link>
           <Link
             to="/fandom/stadium-guide"
             className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
           >
             <MapPin className="w-6 h-6 text-blue-500 mb-1.5" />
-            <p className="text-xs font-bold text-foreground">직관 가이드</p>
+            <p className="text-[13px] font-bold text-foreground">직관 가이드</p>
           </Link>
           <Link
             to="/fandom/photocards"
             className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
           >
             <Camera className="w-6 h-6 text-pink-500 mb-1.5" />
-            <p className="text-xs font-bold text-foreground">포토카드</p>
+            <p className="text-[13px] font-bold text-foreground">포토카드</p>
           </Link>
           <Link
             to="/fandom/goods"
             className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
           >
             <ShoppingBag className="w-6 h-6 text-orange-500 mb-1.5" />
-            <p className="text-xs font-bold text-foreground">굿즈 교환</p>
+            <p className="text-[13px] font-bold text-foreground">굿즈 교환</p>
           </Link>
         </div>
       ),
@@ -233,22 +233,22 @@ export function FandomIndex() {
           <Link to="/fandom/groups" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
             <Users className="w-6 h-6 text-violet-500 mb-1" />
             <p className="text-xl font-black text-foreground">{groups.length}</p>
-            <p className="text-xs text-muted-foreground">KBO 구단</p>
+            <p className="text-[13px] text-muted-foreground">KBO 구단</p>
           </Link>
           <Link to="/fandom/feed" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
             <Heart className="w-6 h-6 text-rose-500 mb-1" />
             <p className="text-xl font-black text-foreground">{totalFanart.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">팬아트</p>
+            <p className="text-[13px] text-muted-foreground">팬아트</p>
           </Link>
           <Link to="/fandom/feed" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
             <Rss className="w-6 h-6 text-cyan-500 mb-1" />
             <p className="text-xl font-black text-foreground">{feedPosts.length}</p>
-            <p className="text-xs text-muted-foreground">피드 포스트</p>
+            <p className="text-[13px] text-muted-foreground">피드 포스트</p>
           </Link>
           <Link to="/fandom/events" className="rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group flex flex-col justify-center">
             <Trophy className="w-6 h-6 text-amber-500 mb-1" />
             <p className="text-xl font-black text-foreground">{activeEvents.length}</p>
-            <p className="text-xs text-muted-foreground">진행중 이벤트</p>
+            <p className="text-[13px] text-muted-foreground">진행중 이벤트</p>
           </Link>
         </div>
       ),
@@ -276,8 +276,8 @@ export function FandomIndex() {
                   </div>
                 )}
                 <div className="p-2">
-                  <p className="text-xs font-medium text-foreground truncate">{post.title}</p>
-                  <p className="text-[11px] text-muted-foreground">{post.authorName}</p>
+                  <p className="text-[13px] font-medium text-foreground truncate">{post.title}</p>
+                  <p className="text-[13px] text-muted-foreground">{post.authorName}</p>
                 </div>
               </div>
             ))}
@@ -363,8 +363,8 @@ export function FandomIndex() {
                 className="flex items-center justify-between rounded-xl p-3 bg-muted/30 hover:bg-muted transition-all group"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-foreground truncate">{project.title}</p>
-                  <p className="text-xs text-muted-foreground">{project.panels}컷 · {project.updatedAt}</p>
+                  <p className="text-[15px] font-bold text-foreground truncate">{project.title}</p>
+                  <p className="text-[13px] text-muted-foreground">{project.panels}컷 · {project.updatedAt}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0" />
               </Link>
@@ -446,8 +446,8 @@ function FanPollWidget({ themeColor, teamName }: { themeColor: string; teamName?
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm font-bold text-foreground mb-1">오늘의 예측</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[15px] font-bold text-foreground mb-1">오늘의 예측</p>
+        <p className="text-[13px] text-muted-foreground">
           {teamName || "내 팀"} 오늘 경기 결과는?
         </p>
       </div>
@@ -461,7 +461,7 @@ function FanPollWidget({ themeColor, teamName }: { themeColor: string; teamName?
           style={voted === "win" ? { borderColor: themeColor, background: `${themeColor}10` } : {}}
         >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-sm font-bold text-foreground">승리</span>
+            <span className="text-[15px] font-bold text-foreground">승리</span>
             {voted && <span className="text-sm font-black" style={{ color: themeColor }}>{winPct}%</span>}
           </div>
           {voted && (
@@ -482,7 +482,7 @@ function FanPollWidget({ themeColor, teamName }: { themeColor: string; teamName?
           style={voted === "lose" ? { borderColor: "#ef4444", background: "#ef444410" } : {}}
         >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-sm font-bold text-foreground">패배</span>
+            <span className="text-[15px] font-bold text-foreground">패배</span>
             {voted && <span className="text-sm font-black text-red-500">{losePct}%</span>}
           </div>
           {voted && (
@@ -497,7 +497,7 @@ function FanPollWidget({ themeColor, teamName }: { themeColor: string; teamName?
       </div>
 
       {voted && (
-        <p className="text-xs text-muted-foreground text-center">
+        <p className="text-[13px] text-muted-foreground text-center">
           총 {total}명 참여
         </p>
       )}

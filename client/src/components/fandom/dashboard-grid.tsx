@@ -183,8 +183,8 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
       {editMode && (
         <div className="mb-6 rounded-2xl border border-border bg-card overflow-hidden">
           <div className="px-4 py-3 bg-muted/50 border-b border-border">
-            <p className="text-sm font-bold text-foreground">위젯 관리</p>
-            <p className="text-xs text-muted-foreground mt-0.5">토글로 위젯을 켜고 끄세요. 드래그 또는 화살표로 순서를 변경하세요.</p>
+            <p className="text-[15px] font-bold text-foreground">위젯 관리</p>
+            <p className="text-[13px] text-muted-foreground mt-0.5">토글로 위젯을 켜고 끄세요. 드래그 또는 화살표로 순서를 변경하세요.</p>
           </div>
           <div className="divide-y divide-border">
             {allWidgetsForPanel.map((w, idx) => {
@@ -210,7 +210,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
                   <w.icon className="w-4 h-4 flex-shrink-0" style={{ color: isVisible ? themeColor : "#999" }} />
                   <span className={`text-sm flex-1 min-w-0 truncate ${isVisible ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
                     {w.title}
-                    {isRequired && <span className="text-[10px] text-muted-foreground ml-1.5">(필수)</span>}
+                    {isRequired && <span className="text-[13px] text-muted-foreground ml-1.5">(필수)</span>}
                   </span>
 
                   {/* Move up/down */}
@@ -277,9 +277,9 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
                   <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
                 )}
                 <widget.icon className="w-4 h-4" style={{ color: themeColor }} />
-                <span className="text-sm font-bold text-foreground flex-1">{widget.title}</span>
+                <span className="text-[15px] font-bold text-foreground flex-1">{widget.title}</span>
                 {widget.moreLink && !editMode && (
-                  <a href={widget.moreLink} className="text-xs font-medium hover:underline" style={{ color: themeColor }}>
+                  <a href={widget.moreLink} className="text-[13px] font-medium hover:underline" style={{ color: themeColor }}>
                     전체 보기
                   </a>
                 )}

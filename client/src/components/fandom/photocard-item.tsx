@@ -130,7 +130,7 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike }: Photocar
         }`}
       >
         {/* Title */}
-        <h3 className="text-sm font-bold text-foreground truncate">
+        <h3 className="text-[15px] font-bold text-foreground truncate">
           {card.title}
         </h3>
 

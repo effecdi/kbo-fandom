@@ -37,7 +37,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <Train className="w-4 h-4" style={{ color: teamColor }} />
-              <h3 className="text-sm font-bold text-foreground">교통편</h3>
+              <h3 className="text-[15px] font-bold text-foreground">교통편</h3>
             </div>
             <ul className="space-y-2">
               {guide.transportation.map((item, idx) => (
@@ -61,7 +61,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4" style={{ color: teamColor }} />
-              <h3 className="text-sm font-bold text-foreground">좌석 안내</h3>
+              <h3 className="text-[15px] font-bold text-foreground">좌석 안내</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {guide.sections.map((sec, idx) => (
@@ -88,7 +88,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <UtensilsCrossed className="w-4 h-4" style={{ color: teamColor }} />
-              <h3 className="text-sm font-bold text-foreground">주변 맛집</h3>
+              <h3 className="text-[15px] font-bold text-foreground">주변 맛집</h3>
             </div>
             <div className="space-y-2">
               {guide.nearbyFood.map((food, idx) => (
@@ -115,7 +115,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <Lightbulb className="w-4 h-4" style={{ color: teamColor }} />
-              <h3 className="text-sm font-bold text-foreground">직관 꿀팁</h3>
+              <h3 className="text-[15px] font-bold text-foreground">직관 꿀팁</h3>
             </div>
             <ul className="space-y-2">
               {guide.tips.map((tip, idx) => (
@@ -139,7 +139,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <ParkingCircle className="w-4 h-4" style={{ color: teamColor }} />
-              <h3 className="text-sm font-bold text-foreground">주차 정보</h3>
+              <h3 className="text-[15px] font-bold text-foreground">주차 정보</h3>
             </div>
             <p className="text-[13px] text-muted-foreground bg-muted/30 rounded-xl p-3">
               {guide.parkingInfo}
