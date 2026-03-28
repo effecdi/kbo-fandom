@@ -19,26 +19,51 @@ export function EmojiReactions({ gameId }: EmojiReactionsProps) {
   const wsRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Connect WebSocket
+  // Connect WebSocket with auto-reconnect
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws/reactions`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
+    let unmounted = false;
 
-    ws.onmessage = (event) => {
+    const connect = () => {
+      if (unmounted) return;
       try {
-        const data = JSON.parse(event.data);
-        if (data.type === "reaction" && data.gameId === gameId) {
-          addFloatingEmoji(data.emoji);
-        }
-      } catch { /* ignore */ }
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${protocol}//${window.location.host}/ws/reactions`;
+        ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => { attempts = 0; };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "reaction" && data.gameId === gameId) {
+              addFloatingEmoji(data.emoji);
+            }
+          } catch { /* ignore */ }
+        };
+
+        ws.onerror = () => { /* silent */ };
+
+        ws.onclose = () => {
+          wsRef.current = null;
+          if (!unmounted && attempts < 5) {
+            const delay = Math.min(2000 * Math.pow(2, attempts), 30000);
+            attempts++;
+            reconnectTimer = setTimeout(connect, delay);
+          }
+        };
+      } catch { /* WebSocket constructor can throw in some environments */ }
     };
 
-    ws.onerror = () => { /* silent */ };
+    connect();
 
     return () => {
-      ws.close();
+      unmounted = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) { ws.onclose = null; ws.close(); }
       wsRef.current = null;
     };
   }, [gameId]);

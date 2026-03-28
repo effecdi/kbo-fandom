@@ -114,6 +114,9 @@ export async function registerRoutes(
 
   app.post("/api/generate-character", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+        return res.status(503).json({ message: "이미지 생성 기능이 비활성화되어 있습니다. (API 키 미설정)" });
+      }
       const userId = req.userId!;
       const parsed = generateCharacterSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -192,6 +195,9 @@ export async function registerRoutes(
   // ─── Logo Generation ──────────────────────────────────────────────────────
   app.post("/api/generate-logo", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+        return res.status(503).json({ message: "이미지 생성 기능이 비활성화되어 있습니다. (API 키 미설정)" });
+      }
       const userId = req.userId!;
       const { prompt, style, sourceImageData, source: reqSource } = req.body as {
         prompt?: string;
@@ -246,6 +252,9 @@ export async function registerRoutes(
 
   app.post("/api/generate-pose", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+        return res.status(503).json({ message: "이미지 생성 기능이 비활성화되어 있습니다. (API 키 미설정)" });
+      }
       const userId = req.userId!;
       const parsed = generatePoseSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -309,6 +318,10 @@ export async function registerRoutes(
 
   app.post("/api/generate-background", isAuthenticated, async (req: AuthRequest, res) => {
     try {
+      // Gemini API 키 없으면 503 반환
+      if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+        return res.status(503).json({ message: "이미지 생성 기능이 비활성화되어 있습니다. (API 키 미설정)" });
+      }
       const userId = req.userId!;
       const parsed = generateBackgroundSchema.safeParse(req.body);
       if (!parsed.success) {
