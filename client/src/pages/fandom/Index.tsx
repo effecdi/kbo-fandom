@@ -134,6 +134,36 @@ export function FandomIndex() {
           </div>
         </div>
 
+        {/* Live / Today's Games (Real-time from Naver Sports API) - TOP PRIORITY */}
+        {liveGames.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              {hasLiveGames && (
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                </span>
+              )}
+              <h2 className="text-lg font-bold text-foreground">
+                {hasLiveGames ? "LIVE 경기" : liveGames.some((g) => g.status === "finished") ? "오늘의 경기 결과" : "오늘의 경기"}
+              </h2>
+              {hasLiveGames && (
+                <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  실시간 업데이트
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground ml-auto">
+                {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
+              </span>
+            </div>
+            <LiveGameSection
+              games={liveGames}
+              teams={groups}
+              myTeamId={fandomProfile?.groupId}
+            />
+          </div>
+        )}
+
         {/* Quick Action Cards */}
         {fandomProfile && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -209,36 +239,6 @@ export function FandomIndex() {
                 <p className="text-sm font-bold text-foreground">포토카드</p>
               </Link>
             </div>
-          </div>
-        )}
-
-        {/* Live / Today's Games Carousel (Real-time from Naver Sports API) */}
-        {liveGames.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              {hasLiveGames && (
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-                </span>
-              )}
-              <h2 className="text-lg font-bold text-foreground">
-                {hasLiveGames ? "LIVE 경기" : liveGames.some((g) => g.status === "finished") ? "오늘의 경기 결과" : "오늘의 경기"}
-              </h2>
-              {hasLiveGames && (
-                <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  30초마다 업데이트
-                </span>
-              )}
-              <span className="text-xs text-muted-foreground ml-auto">
-                {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
-              </span>
-            </div>
-            <LiveGameSection
-              games={liveGames}
-              teams={groups}
-              myTeamId={fandomProfile?.groupId}
-            />
           </div>
         )}
 

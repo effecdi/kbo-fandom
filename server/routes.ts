@@ -2427,5 +2427,111 @@ export async function registerRoutes(
     }
   });
 
+  // ── KBO Game Relay (real-time lineup & game state) ─────────────────────────
+  const kboRelayCache: Record<string, { data: any; timestamp: number }> = {};
+  const RELAY_CACHE_TTL = 15000; // 15 seconds
+
+  app.get("/api/kbo/relay/:gameId", async (req, res) => {
+    try {
+      const { gameId } = req.params;
+      if (!gameId) return res.status(400).json({ error: "gameId required" });
+
+      // Cache check
+      if (kboRelayCache[gameId] && kboRelayCache[gameId].timestamp > Date.now() - RELAY_CACHE_TTL) {
+        return res.json(kboRelayCache[gameId].data);
+      }
+
+      const naverUrl = `https://api-gw.sports.naver.com/schedule/games/${gameId}/relay`;
+      const response = await axios.get(naverUrl, {
+        timeout: 8000,
+        headers: { "User-Agent": "Mozilla/5.0" },
+      });
+
+      const relay = response.data?.result?.textRelayData;
+      if (!relay) {
+        return res.json({ lineup: null });
+      }
+
+      const gs = relay.currentGameState || {};
+      const isTopInning = relay.homeOrAway === "0"; // 0=초(top), 1=말(bottom)
+
+      // Find current pitcher and batter from entries
+      const allPitchers = [
+        ...(relay.homeEntry?.pitcher || []).map((p: any) => ({ ...p, team: "home" })),
+        ...(relay.awayEntry?.pitcher || []).map((p: any) => ({ ...p, team: "away" })),
+      ];
+      const allBatters = [
+        ...(relay.homeEntry?.batter || []).map((b: any) => ({ ...b, team: "home" })),
+        ...(relay.awayEntry?.batter || []).map((b: any) => ({ ...b, team: "away" })),
+      ];
+
+      const currentPitcher = allPitchers.find((p: any) => p.pcode === gs.pitcher);
+      const currentBatter = allBatters.find((b: any) => b.pcode === gs.batter);
+
+      // Defensive team lineup (field positions)
+      const defEntry = isTopInning ? relay.homeEntry : relay.awayEntry;
+      const offEntry = isTopInning ? relay.awayEntry : relay.homeEntry;
+      const defBatters = defEntry?.batter || [];
+      const offBatters = offEntry?.batter || [];
+
+      // Map defensive positions: last player assigned to each position wins
+      const POS_MAP: Record<string, string> = {
+        "투수": "pitcher", "포수": "catcher",
+        "1루수": "first", "2루수": "second", "3루수": "third",
+        "유격수": "shortstop",
+        "좌익수": "left", "중견수": "center", "우익수": "right",
+        "지명타자": "dh",
+      };
+
+      const defense: Record<string, { name: string; pcode: string }> = {};
+      for (const b of defBatters) {
+        const posKey = POS_MAP[b.pos];
+        if (posKey && posKey !== "dh") {
+          defense[posKey] = { name: b.name, pcode: b.pcode };
+        }
+      }
+      // Current pitcher overrides
+      if (currentPitcher) {
+        defense["pitcher"] = { name: currentPitcher.name, pcode: currentPitcher.pcode };
+      }
+
+      // Batting order for the offensive team
+      const battingOrder = offBatters.map((b: any, i: number) => ({
+        order: i + 1,
+        name: b.name,
+        pos: b.pos,
+        pcode: b.pcode,
+      }));
+
+      const result = {
+        gameId,
+        inning: relay.inn,
+        isTopInning,
+        currentPitcher: currentPitcher ? { name: currentPitcher.name, style: currentPitcher.pitchingStyle } : null,
+        currentBatter: currentBatter ? { name: currentBatter.name, pos: currentBatter.pos, hittype: currentBatter.hittype } : null,
+        count: {
+          ball: parseInt(gs.ball) || 0,
+          strike: parseInt(gs.strike) || 0,
+          out: parseInt(gs.out) || 0,
+        },
+        bases: {
+          first: parseInt(gs.base1) > 0,
+          second: parseInt(gs.base2) > 0,
+          third: parseInt(gs.base3) > 0,
+        },
+        defense,
+        battingOrder,
+        inningScore: relay.inningScore || null,
+        matchup: relay.pitcherVsBatterCareerStats || null,
+      };
+
+      kboRelayCache[gameId] = { data: result, timestamp: Date.now() };
+      res.json(result);
+    } catch (error: any) {
+      logger.error("KBO relay fetch error", error?.message);
+      res.status(500).json({ lineup: null, error: "중계 데이터 조회에 실패했습니다." });
+    }
+  });
+
   return httpServer;
 }

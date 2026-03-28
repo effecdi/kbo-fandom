@@ -1,13 +1,8 @@
 import { useState } from "react";
 import { LiveGameCarousel } from "./live-game-carousel";
 import { LiveGameDetailPanel } from "./live-game-detail-panel";
-import {
-  listItems,
-  STORE_KEYS,
-  type KboGameSchedule,
-  type KboTeam,
-  type KboPlayer,
-} from "@/lib/local-store";
+import { useKboGameRelay } from "@/hooks/use-kbo-game-relay";
+import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
 
 interface LiveGameSectionProps {
   games: KboGameSchedule[];
@@ -21,14 +16,17 @@ export function LiveGameSection({
   myTeamId,
 }: LiveGameSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const players = listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS);
 
   const selectedGame = games[activeIndex] || null;
+  // Only fetch relay data for live games
+  const relayGameId =
+    selectedGame?.status === "live" ? selectedGame.id : null;
+  const { relay, isLoading: relayLoading } = useKboGameRelay(relayGameId, 15000);
 
   return (
     <div className="flex flex-col lg:flex-row gap-4">
       {/* Left: Carousel */}
-      <div className="w-full lg:w-[58%]">
+      <div className="w-full lg:w-[55%]">
         <LiveGameCarousel
           games={games}
           teams={teams}
@@ -38,12 +36,13 @@ export function LiveGameSection({
         />
       </div>
 
-      {/* Right: Game Detail Panel */}
-      <div className="w-full lg:w-[42%]">
+      {/* Right: Game Detail Panel with Diamond */}
+      <div className="w-full lg:w-[45%]">
         <LiveGameDetailPanel
           game={selectedGame}
           teams={teams}
-          players={players}
+          relay={relay}
+          relayLoading={relayLoading}
         />
       </div>
     </div>

@@ -1,11 +1,14 @@
-import { Tv, Radio, MapPin, Clock, Users } from "lucide-react";
-import type { KboGameSchedule, KboTeam, KboPlayer } from "@/lib/local-store";
+import { Tv, Radio, MapPin, Clock } from "lucide-react";
+import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
+import type { GameRelayData } from "@/hooks/use-kbo-game-relay";
 import { getBroadcastForGame } from "@/lib/kbo-broadcast";
+import { BaseballDiamond } from "./baseball-diamond";
 
 interface LiveGameDetailPanelProps {
   game: KboGameSchedule | null;
   teams: KboTeam[];
-  players: KboPlayer[];
+  relay: GameRelayData | null;
+  relayLoading?: boolean;
 }
 
 const STATUS_CONFIG: Record<
@@ -18,24 +21,11 @@ const STATUS_CONFIG: Record<
   postponed: { label: "연기", badgeClass: "bg-amber-500" },
 };
 
-// Sort players: pitchers first, then position players
-function sortPlayers(players: KboPlayer[]): KboPlayer[] {
-  const order: Record<string, number> = {
-    "투수": 0,
-    "포수": 1,
-    "내야수": 2,
-    "외야수": 3,
-    "지명타자": 4,
-  };
-  return [...players].sort(
-    (a, b) => (order[a.position] ?? 5) - (order[b.position] ?? 5),
-  );
-}
-
 export function LiveGameDetailPanel({
   game,
   teams,
-  players,
+  relay,
+  relayLoading,
 }: LiveGameDetailPanelProps) {
   if (!game) {
     return (
@@ -50,13 +40,6 @@ export function LiveGameDetailPanel({
   const statusCfg = STATUS_CONFIG[game.status];
   const broadcast = getBroadcastForGame(game.homeTeamId);
 
-  const homePlayers = sortPlayers(
-    players.filter((p) => p.groupId === game.homeTeamId),
-  );
-  const awayPlayers = sortPlayers(
-    players.filter((p) => p.groupId === game.awayTeamId),
-  );
-
   return (
     <div
       key={game.id}
@@ -64,13 +47,13 @@ export function LiveGameDetailPanel({
     >
       {/* ── Score Header ──────────────────────────────────────────────── */}
       <div
-        className="p-4 md:p-5"
+        className="p-4"
         style={{
           background: `linear-gradient(135deg, ${homeTeam?.coverColor || "#27272a"}cc 0%, ${homeTeam?.secondaryColor || "#18181b"}cc 100%)`,
         }}
       >
         {/* Status + Inning */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <span
             className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${statusCfg.badgeClass}`}
           >
@@ -87,24 +70,27 @@ export function LiveGameDetailPanel({
               {game.inning}
             </span>
           )}
+          {/* Broadcast inline */}
+          <div className="ml-auto flex items-center gap-1.5 text-[10px] text-white/50">
+            <Tv className="w-3 h-3" />
+            <span>{broadcast.tv[0]}</span>
+          </div>
         </div>
 
         {/* Teams + Score */}
         <div className="flex items-center justify-between">
-          {/* Home */}
           <div className="flex-1 text-center">
             <div
-              className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center text-white font-black text-[10px] border-2 border-white/20"
+              className="w-9 h-9 rounded-full mx-auto mb-1 flex items-center justify-center text-white font-black text-[10px] border-2 border-white/20"
               style={{ backgroundColor: homeTeam?.coverColor || "#666" }}
             >
               {game.homeTeamName.slice(0, 2)}
             </div>
-            <p className="text-xs font-bold text-white truncate">
+            <p className="text-[11px] font-bold text-white truncate">
               {game.homeTeamName}
             </p>
           </div>
 
-          {/* Score */}
           <div className="text-center min-w-[60px]">
             {game.status === "finished" || game.status === "live" ? (
               <div className="flex items-center justify-center gap-1.5">
@@ -121,22 +107,21 @@ export function LiveGameDetailPanel({
             )}
           </div>
 
-          {/* Away */}
           <div className="flex-1 text-center">
             <div
-              className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center text-white font-black text-[10px] border-2 border-white/20"
+              className="w-9 h-9 rounded-full mx-auto mb-1 flex items-center justify-center text-white font-black text-[10px] border-2 border-white/20"
               style={{ backgroundColor: awayTeam?.coverColor || "#666" }}
             >
               {game.awayTeamName.slice(0, 2)}
             </div>
-            <p className="text-xs font-bold text-white truncate">
+            <p className="text-[11px] font-bold text-white truncate">
               {game.awayTeamName}
             </p>
           </div>
         </div>
 
         {/* Stadium + Time */}
-        <div className="flex items-center justify-between mt-3 text-[11px] text-white/60">
+        <div className="flex items-center justify-between mt-2 text-[10px] text-white/50">
           <div className="flex items-center gap-1">
             <MapPin className="w-3 h-3" />
             <span>{game.stadium}</span>
@@ -148,98 +133,38 @@ export function LiveGameDetailPanel({
         </div>
       </div>
 
-      {/* ── Broadcast Info ────────────────────────────────────────────── */}
-      <div className="px-4 md:px-5 py-3 border-b border-border">
-        <h4 className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
-          <Tv className="w-3.5 h-3.5" />
-          중계
-        </h4>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground w-8 shrink-0">TV</span>
-            <span className="text-foreground font-medium">
-              {broadcast.tv.join(", ")}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <Radio className="w-3 h-3 text-muted-foreground" />
-            <span className="text-foreground font-medium">
-              {broadcast.radio.join(", ")}
-            </span>
+      {/* ── Baseball Diamond (live relay) ─────────────────────────────── */}
+      {game.status === "live" && relay ? (
+        <BaseballDiamond
+          relay={relay}
+          homeColor={homeTeam?.coverColor}
+          awayColor={awayTeam?.coverColor}
+        />
+      ) : game.status === "live" && relayLoading ? (
+        <div className="h-[200px] flex items-center justify-center bg-gradient-to-b from-[#2d5a27] to-[#3a7233]">
+          <div className="text-white/50 text-xs animate-pulse">
+            중계 데이터 로딩 중...
           </div>
         </div>
-      </div>
-
-      {/* ── Key Players ───────────────────────────────────────────────── */}
-      <div className="px-4 md:px-5 py-3">
-        <h4 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5">
-          <Users className="w-3.5 h-3.5" />
-          주요 선수
-        </h4>
-        <div className="grid grid-cols-2 gap-x-4">
-          {/* Home Team Players */}
-          <div>
-            <p
-              className="text-[11px] font-bold mb-2 pb-1 border-b"
-              style={{
-                color: homeTeam?.coverColor || "#888",
-                borderColor: `${homeTeam?.coverColor || "#888"}30`,
-              }}
-            >
-              {game.homeTeamName}
-            </p>
-            <div className="space-y-1">
-              {homePlayers.map((player) => (
-                <div
-                  key={player.id}
-                  className="flex items-center gap-1.5 text-[11px]"
-                >
-                  <span className="text-muted-foreground font-mono w-5 text-right shrink-0">
-                    {player.jerseyNumber}
-                  </span>
-                  <span className="text-foreground font-medium truncate">
-                    {player.nameKo}
-                  </span>
-                  <span className="text-muted-foreground text-[10px] shrink-0">
-                    {player.position}
-                  </span>
-                </div>
-              ))}
+      ) : (
+        /* Broadcast info for non-live games */
+        <div className="px-4 py-3 border-t border-border">
+          <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-1.5">
+              <Tv className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-foreground font-medium">
+                {broadcast.tv.join(", ")}
+              </span>
             </div>
-          </div>
-
-          {/* Away Team Players */}
-          <div>
-            <p
-              className="text-[11px] font-bold mb-2 pb-1 border-b"
-              style={{
-                color: awayTeam?.coverColor || "#888",
-                borderColor: `${awayTeam?.coverColor || "#888"}30`,
-              }}
-            >
-              {game.awayTeamName}
-            </p>
-            <div className="space-y-1">
-              {awayPlayers.map((player) => (
-                <div
-                  key={player.id}
-                  className="flex items-center gap-1.5 text-[11px]"
-                >
-                  <span className="text-muted-foreground font-mono w-5 text-right shrink-0">
-                    {player.jerseyNumber}
-                  </span>
-                  <span className="text-foreground font-medium truncate">
-                    {player.nameKo}
-                  </span>
-                  <span className="text-muted-foreground text-[10px] shrink-0">
-                    {player.position}
-                  </span>
-                </div>
-              ))}
+            <div className="flex items-center gap-1.5">
+              <Radio className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-foreground font-medium">
+                {broadcast.radio.join(", ")}
+              </span>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
