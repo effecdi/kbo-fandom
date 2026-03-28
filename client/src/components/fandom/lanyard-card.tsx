@@ -22,7 +22,7 @@ export default function LanyardCard({
   return (
     <div className="relative z-0 w-full flex justify-center items-center" style={{ height }}>
       <Canvas
-        camera={{ position: [0, 0, 12], fov: 30 }}
+        camera={{ position: [0, 0, 8], fov: 35 }}
         dpr={[1, 2]}
         gl={{ alpha: true, antialias: true }}
         onCreated={({ gl }) => gl.setClearColor(new THREE.Color(0x000000), 0)}
@@ -121,8 +121,8 @@ function useCardTexture(teamColor: string, teamName: string, playerName?: string
 
 const GRAVITY = 9.8;
 const DAMPING = 0.97;
-const SEG_LEN = 0.5;
-const NUM_PTS = 6;
+const SEG_LEN = 0.6;
+const NUM_PTS = 5;
 const ITERS = 10;
 
 interface Pt { pos: THREE.Vector3; prev: THREE.Vector3 }
@@ -188,7 +188,7 @@ function SwingingCard({ teamColor, teamName, playerName, cardImageUrl }: {
 
   const cardMap = imgTex || texture;
 
-  const anchor = useMemo(() => new THREE.Vector3(0, 3.2, 0), []);
+  const anchor = useMemo(() => new THREE.Vector3(0, 3.5, 0), []);
   const rope = useRef<Pt[]>(initRope(anchor));
   const isDragging = useRef(false);
   const dragOffset = useRef(new THREE.Vector3());
@@ -252,7 +252,7 @@ function SwingingCard({ teamColor, teamName, playerName, cardImageUrl }: {
   });
 
   // Card dimensions (real ID card ratio ≈ 85.6 x 54mm → 3:2 portrait → 1.0 x 1.4)
-  const cardW = 1.0, cardH = 1.4, cardR = 0.06;
+  const cardW = 1.8, cardH = 2.5, cardR = 0.1;
 
   // Rounded rect shape
   const cardShape = useMemo(() => {
@@ -316,14 +316,14 @@ function BandTube({ rope, anchor, color }: { rope: React.RefObject<Pt[]>; anchor
     if (!meshRef.current || !rope.current) return;
     const pts = rope.current;
     const curve = new THREE.CatmullRomCurve3(pts.map(p => p.pos.clone()), false, 'chordal');
-    const geo = new THREE.TubeGeometry(curve, 32, 0.025, 6, false);
+    const geo = new THREE.TubeGeometry(curve, 32, 0.04, 6, false);
     meshRef.current.geometry.dispose();
     meshRef.current.geometry = geo;
   });
 
   return (
     <mesh ref={meshRef}>
-      <tubeGeometry args={[new THREE.CatmullRomCurve3([anchor.clone(), anchor.clone().add(new THREE.Vector3(0, -1, 0))]), 4, 0.025, 6, false]} />
+      <tubeGeometry args={[new THREE.CatmullRomCurve3([anchor.clone(), anchor.clone().add(new THREE.Vector3(0, -1, 0))]), 4, 0.04, 6, false]} />
       <meshStandardMaterial color={color} roughness={0.6} metalness={0.3} />
     </mesh>
   );
