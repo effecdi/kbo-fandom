@@ -31,8 +31,8 @@ function getOffsets(compact = false): { adj: number; far: number; hidden: number
     typeof window !== "undefined" && window.innerWidth < 768;
   if (compact) {
     return isMobile
-      ? { adj: 130, far: 230, hidden: 310 }
-      : { adj: 160, far: 290, hidden: 380 };
+      ? { adj: 150, far: 270, hidden: 360 }
+      : { adj: 200, far: 360, hidden: 480 };
   }
   if (isMobile) {
     return { adj: 182, far: 322, hidden: 420 };
@@ -222,7 +222,7 @@ export function LiveGameCarousel({
   // ── Empty state ─────────────────────────────────────────────────────────────
   if (games.length === 0) {
     return (
-      <div className={`relative py-4 flex items-center justify-center ${compact ? "h-[200px] md:h-[240px]" : "h-[220px] md:h-[260px]"}`}>
+      <div className={`relative py-4 flex items-center justify-center ${compact ? "h-[220px] md:h-[260px]" : "h-[220px] md:h-[260px]"}`}>
         <p className="text-sm text-muted-foreground">
           오늘 예정된 경기가 없습니다.
         </p>
@@ -235,7 +235,7 @@ export function LiveGameCarousel({
       {/* ── Carousel container ────────────────────────────────────────────── */}
       <div
         ref={containerRef}
-        className={`relative mx-auto ${compact ? "h-[200px] md:h-[240px] overflow-hidden" : "h-[220px] md:h-[260px] max-w-4xl overflow-visible"}`}
+        className={`relative mx-auto ${compact ? "h-[220px] md:h-[260px] overflow-hidden" : "h-[220px] md:h-[260px] max-w-4xl overflow-visible"}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -250,7 +250,7 @@ export function LiveGameCarousel({
           // Card background: center card uses bold home team color, side cards are dark gray
           const cardBg: React.CSSProperties = isActive
             ? {
-                background: `linear-gradient(135deg, ${homeTeam?.coverColor || "#27272a"} 0%, ${homeTeam?.coverColor || "#27272a"}cc 60%, ${homeTeam?.secondaryColor || "#18181b"} 100%)`,
+                background: `linear-gradient(135deg, ${homeTeam?.coverColor || "#27272a"} 0%, ${homeTeam?.coverColor || "#27272a"} 60%, ${homeTeam?.secondaryColor || "#18181b"} 100%)`,
                 boxShadow: `0 8px 32px ${homeTeam?.coverColor || "#000"}60, 0 0 0 2px ${homeTeam?.coverColor || "#fff"}40`,
               }
             : { backgroundColor: "#27272a" };
@@ -261,7 +261,7 @@ export function LiveGameCarousel({
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl p-4 md:p-5 cursor-pointer select-none ${compact ? "w-[220px] md:w-[240px]" : "w-[280px] md:w-[320px]"}`}
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl p-4 md:p-5 cursor-pointer select-none ${compact ? "w-[260px] md:w-[300px]" : "w-[280px] md:w-[320px]"}`}
               style={{
                 ...cardBg,
                 opacity: 0,
