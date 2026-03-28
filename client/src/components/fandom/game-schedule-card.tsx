@@ -38,18 +38,18 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
     ? { borderColor: myTeamMatch.coverColor, boxShadow: `0 0 8px ${myTeamMatch.coverColor}33` }
     : {};
 
-  // ── Compact mode ──────────────────────────────────────────────────────────
+  // ── Compact mode (vertical stack for weekly/calendar grid) ────────────────
   if (compact) {
     return (
       <div
-        className={`bg-card border rounded-lg p-1.5 hover:border-foreground/15 transition-all ${myTeamMatch ? "ring-1" : "border-border"}`}
+        className={`bg-card border rounded-lg p-2 hover:border-foreground/15 transition-all ${myTeamMatch ? "ring-1" : "border-border"}`}
         style={{
           ...cardStyle,
           ...(myTeamMatch ? { "--tw-ring-color": myTeamMatch.coverColor } as React.CSSProperties : {}),
         }}
       >
-        {/* Status + Attend (compact) */}
-        <div className="flex items-center justify-between mb-1">
+        {/* Status + Attend row */}
+        <div className="flex items-center justify-between mb-2">
           <span
             className="px-1.5 py-px rounded-full text-[13px] font-bold text-white leading-tight"
             style={{ backgroundColor: status.color }}
@@ -65,43 +65,41 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
               title={isAttending ? "직관 예정 취소" : "직관 예정"}
             >
               <Star
-                className={`w-3 h-3 transition-colors ${isAttending ? "text-amber-400" : "text-muted-foreground/30 hover:text-amber-300"}`}
+                className={`w-3.5 h-3.5 transition-colors ${isAttending ? "text-amber-400" : "text-muted-foreground/30 hover:text-amber-300"}`}
                 {...(isAttending ? { fill: "currentColor" } : {})}
               />
             </button>
           )}
         </div>
 
-        {/* Teams (compact) */}
-        <div className="flex items-center gap-1">
-          {/* Home Team (compact) */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="xs" className="flex-shrink-0" />
-              <p className="text-[13px] font-bold text-foreground truncate">{game.homeTeamName}</p>
-            </div>
-          </div>
-
-          {/* Score / VS (compact) */}
-          <div className="text-center flex-shrink-0">
-            {game.status === "finished" || game.status === "live" ? (
-              <span className="text-[13px] font-black text-foreground">{game.homeScore ?? 0}:{game.awayScore ?? 0}</span>
-            ) : (
-              <span className="text-[13px] font-bold text-muted-foreground">vs</span>
+        {/* Vertical team stack */}
+        <div className="flex flex-col items-center gap-1">
+          {/* Home */}
+          <div className="flex items-center gap-1.5 w-full">
+            <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="xs" className="flex-shrink-0" />
+            <span className="text-[13px] font-bold text-foreground truncate">{game.homeTeamName}</span>
+            {(game.status === "finished" || game.status === "live") && (
+              <span className="text-[13px] font-black text-foreground ml-auto">{game.homeScore ?? 0}</span>
             )}
           </div>
 
-          {/* Away Team (compact) */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 justify-end">
-              <p className="text-[13px] font-bold text-foreground truncate">{game.awayTeamName}</p>
-              <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="xs" className="flex-shrink-0" />
-            </div>
+          {/* VS / Score divider */}
+          {game.status !== "finished" && game.status !== "live" && (
+            <span className="text-[13px] font-bold text-muted-foreground/50">vs</span>
+          )}
+
+          {/* Away */}
+          <div className="flex items-center gap-1.5 w-full">
+            <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="xs" className="flex-shrink-0" />
+            <span className="text-[13px] font-bold text-foreground truncate">{game.awayTeamName}</span>
+            {(game.status === "finished" || game.status === "live") && (
+              <span className="text-[13px] font-black text-foreground ml-auto">{game.awayScore ?? 0}</span>
+            )}
           </div>
         </div>
 
-        {/* Time (compact) */}
-        <p className="text-[13px] text-muted-foreground text-center mt-1">{game.time}</p>
+        {/* Time */}
+        <p className="text-[13px] text-muted-foreground text-center mt-2">{game.time}</p>
       </div>
     );
   }

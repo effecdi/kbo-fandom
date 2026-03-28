@@ -54,67 +54,67 @@ export function ScheduleWeekView({
   }, [games, weekStart]);
 
   return (
-    <div className="overflow-x-auto -mx-2 px-2">
-    <div className="grid grid-cols-7 gap-1.5 min-w-[840px]">
-      {columns.map((col) => {
-        const isToday = col.dateStr === today;
-        return (
-          <div
-            key={col.dateStr}
-            className={`min-h-[200px] rounded-xl border p-2 transition-all ${
-              isToday
-                ? "border-primary ring-1 ring-primary/30 bg-primary/5"
-                : "border-border bg-card"
-            }`}
-          >
-            {/* Day header */}
-            <div className="text-center mb-2 pb-2 border-b border-border">
-              <p
-                className={`text-[13px] font-bold ${
-                  isToday ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                {col.dayName}
-              </p>
-              <p
-                className={`text-sm font-bold ${
-                  isToday ? "text-foreground" : "text-foreground/80"
-                }`}
-              >
-                {formatDate(col.date)}
-              </p>
-              {isToday && (
-                <span className="inline-block mt-1 px-1.5 py-0.5 rounded-full text-[13px] font-bold bg-primary text-primary-foreground">
-                  오늘
-                </span>
-              )}
-            </div>
-
-            {/* Games */}
-            <div className="space-y-2">
-              {col.games.length > 0 ? (
-                col.games.map((game) => (
-                  <GameScheduleCard
-                    key={game.id}
-                    game={game}
-                    teams={teams}
-                    showAttendButton
-                    isAttending={attendingGameIds.includes(game.id)}
-                    onToggleAttend={onToggleAttend}
-                    myTeamId={myTeamId}
-                    compact
-                  />
-                ))
-              ) : (
-                <p className="text-[13px] text-muted-foreground/50 text-center py-4">
-                  경기 없음
+    <div className="overflow-x-auto -mx-2 px-2 pb-2">
+      <div className="grid grid-cols-7 gap-1 min-w-[700px]">
+        {columns.map((col) => {
+          const isToday = col.dateStr === today;
+          return (
+            <div
+              key={col.dateStr}
+              className={`min-h-[180px] rounded-xl border p-1.5 transition-all ${
+                isToday
+                  ? "border-primary ring-1 ring-primary/30 bg-primary/5"
+                  : "border-border bg-card"
+              }`}
+            >
+              {/* Day header */}
+              <div className="text-center mb-1.5 pb-1.5 border-b border-border">
+                <p
+                  className={`text-[13px] font-bold ${
+                    isToday ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {col.dayName}
                 </p>
-              )}
+                <p
+                  className={`text-sm font-bold ${
+                    isToday ? "text-foreground" : "text-foreground/80"
+                  }`}
+                >
+                  {formatDate(col.date)}
+                </p>
+                {isToday && (
+                  <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[13px] font-bold bg-primary text-primary-foreground">
+                    오늘
+                  </span>
+                )}
+              </div>
+
+              {/* Games */}
+              <div className="space-y-1.5">
+                {col.games.length > 0 ? (
+                  col.games.map((game) => (
+                    <GameScheduleCard
+                      key={game.id}
+                      game={game}
+                      teams={teams}
+                      showAttendButton
+                      isAttending={attendingGameIds.includes(game.id)}
+                      onToggleAttend={onToggleAttend}
+                      myTeamId={myTeamId}
+                      compact
+                    />
+                  ))
+                ) : (
+                  <p className="text-[13px] text-muted-foreground/50 text-center py-4">
+                    경기 없음
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
