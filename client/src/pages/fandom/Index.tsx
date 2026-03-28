@@ -32,6 +32,7 @@ import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
 import { DashboardGrid, type DashboardWidget } from "@/components/fandom/dashboard-grid";
 import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
+import { useKboStandings } from "@/hooks/use-kbo-standings";
 import {
   listItems,
   seedIfEmpty,
@@ -58,6 +59,8 @@ export function FandomIndex() {
 
   // Real-time KBO scores from Naver Sports API (polls every 10s)
   const { liveGames, hasLiveGames, isLoading: scoresLoading } = useKboLiveScores(10000);
+  // Real-time KBO standings (polls every 60s)
+  const { standings: liveStandings } = useKboStandings(60000);
 
   useEffect(() => {
     seedIfEmpty();
@@ -201,8 +204,9 @@ export function FandomIndex() {
       ),
     });
 
-    // 4. KBO Standings
-    if (standings.length > 0) {
+    // 4. KBO Standings (live data preferred, fallback to local seed)
+    const hasLiveStandings = liveStandings.length > 0;
+    if (hasLiveStandings || standings.length > 0) {
       w.push({
         id: "standings",
         title: "KBO 순위",
@@ -211,6 +215,7 @@ export function FandomIndex() {
         content: (
           <StandingsTable
             standings={standings}
+            liveStandings={hasLiveStandings ? liveStandings : undefined}
             myTeamId={fandomProfile?.groupId}
             compact
           />
@@ -369,7 +374,7 @@ export function FandomIndex() {
     return w;
   }, [
     liveGames, hasLiveGames, groups, fandomProfile, myGroup, themeColor,
-    standings, feedPosts, myGroupPosts, activeEvents, myGroupEvents,
+    standings, liveStandings, feedPosts, myGroupPosts, activeEvents, myGroupEvents,
     otherActiveEvents, totalFanart, trendingGroups, upcomingGames,
     recentProjects,
   ]);

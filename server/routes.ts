@@ -2578,5 +2578,72 @@ export async function registerRoutes(
     }
   });
 
+  // ── KBO Live Standings from Naver Sports API ─────────────────────────────
+  let kboStandingsCache: { data: any; timestamp: number } | null = null;
+  const STANDINGS_CACHE_TTL = 60000; // 1 minute
+
+  // Team code → our internal team ID mapping
+  const NAVER_TEAM_MAP: Record<string, string> = {
+    "LG": "team-lg", "KT": "team-kt", "SSG": "team-ssg", "SK": "team-ssg",
+    "NC": "team-nc", "OB": "team-doo", "두산": "team-doo",
+    "HT": "team-kia", "KIA": "team-kia",
+    "LT": "team-lot", "롯데": "team-lot",
+    "SS": "team-sam", "삼성": "team-sam",
+    "HH": "team-han", "한화": "team-han",
+    "WO": "team-kiw", "키움": "team-kiw",
+  };
+
+  app.get("/api/kbo/standings", async (req, res) => {
+    try {
+      // Return cached if fresh
+      if (kboStandingsCache && kboStandingsCache.timestamp > Date.now() - STANDINGS_CACHE_TTL) {
+        return res.json(kboStandingsCache.data);
+      }
+
+      const year = new Date().getFullYear();
+      const naverUrl = `https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/${year}/teams?gameType=REGULAR_SEASON`;
+      const response = await axios.get(naverUrl, {
+        timeout: 8000,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Referer": "https://m.sports.naver.com/",
+          "X-Sports-Backend": "kotlin",
+          "Accept": "application/json",
+        },
+      });
+
+      if (!response.data?.result?.seasonTeamStats) {
+        return res.json({ standings: [], year });
+      }
+
+      const standings = response.data.result.seasonTeamStats.map((t: any) => ({
+        teamId: NAVER_TEAM_MAP[t.teamId] || NAVER_TEAM_MAP[t.teamName] || t.teamId,
+        teamName: t.keyword || t.teamName,
+        teamCode: t.teamId,
+        teamImageUrl: t.teamImageUrl,
+        rank: t.ranking,
+        wins: t.winGameCount || 0,
+        losses: t.loseGameCount || 0,
+        draws: t.drawnGameCount || 0,
+        games: t.gameCount || 0,
+        winRate: t.wra != null ? t.wra.toFixed(3) : ".000",
+        gamesBack: t.gameBehind != null ? (t.gameBehind === 0 ? "-" : t.gameBehind.toFixed(1)) : "-",
+        streak: t.continuousGameResult || "-",
+        last5: t.lastFiveGames || "-",
+        era: t.defenseEra != null ? t.defenseEra.toFixed(2) : "-",
+        battingAvg: t.offenseHra != null ? t.offenseHra.toFixed(3) : "-",
+        runs: t.offenseRun || 0,
+        homeRuns: t.offenseHr || 0,
+      }));
+
+      const result = { standings, year, gameType: response.data.result.gameType };
+      kboStandingsCache = { data: result, timestamp: Date.now() };
+      res.json(result);
+    } catch (error: any) {
+      logger.error("KBO standings fetch error", error?.message);
+      res.status(500).json({ standings: [], error: "순위 데이터 조회에 실패했습니다." });
+    }
+  });
+
   return httpServer;
 }
