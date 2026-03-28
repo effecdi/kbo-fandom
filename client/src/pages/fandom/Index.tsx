@@ -26,6 +26,7 @@ import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
 import { LiveGameCarousel } from "@/components/fandom/live-game-carousel";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
+import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
 import {
   listItems,
   seedIfEmpty,
@@ -41,7 +42,6 @@ import {
 
 export function FandomIndex() {
   const [groups, setGroups] = useState<KboTeam[]>([]);
-  const [todayGames, setTodayGames] = useState<KboGameSchedule[]>([]);
   const [standings, setStandings] = useState<KboStanding[]>([]);
   const [feedCount, setFeedCount] = useState(0);
   const [events, setEvents] = useState<FandomEvent[]>([]);
@@ -49,6 +49,9 @@ export function FandomIndex() {
   const [recentProjects, setRecentProjects] = useState<ProjectRecord[]>([]);
 
   const fandomProfile = getFandomProfile();
+
+  // Real-time KBO scores from Naver Sports API (polls every 30s)
+  const { liveGames, hasLiveGames, isLoading: scoresLoading } = useKboLiveScores(30000);
 
   useEffect(() => {
     seedIfEmpty();
@@ -61,26 +64,6 @@ export function FandomIndex() {
       setMyGroupPosts(
         allPosts.filter((p) => p.groupId === fandomProfile.groupId).slice(0, 4)
       );
-    }
-
-    // Load live or today's games (fallback to next game day)
-    const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
-    const today = new Date().toISOString().split("T")[0];
-    const liveGames = allGames.filter((g) => g.status === "live");
-    if (liveGames.length > 0) {
-      setTodayGames(liveGames);
-    } else {
-      const todayFiltered = allGames.filter((g) => g.date === today);
-      if (todayFiltered.length > 0) {
-        setTodayGames(todayFiltered);
-      } else {
-        // Show next game day
-        const upcoming = allGames.filter((g) => g.date > today && g.status === "scheduled").sort((a, b) => a.date.localeCompare(b.date));
-        if (upcoming.length > 0) {
-          const nextDate = upcoming[0].date;
-          setTodayGames(upcoming.filter((g) => g.date === nextDate));
-        }
-      }
     }
 
     // Load standings
@@ -229,25 +212,30 @@ export function FandomIndex() {
           </div>
         )}
 
-        {/* Live / Today's Games Carousel */}
-        {todayGames.length > 0 && (
+        {/* Live / Today's Games Carousel (Real-time from Naver Sports API) */}
+        {liveGames.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
-              {todayGames.some((g) => g.status === "live") && (
+              {hasLiveGames && (
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
                 </span>
               )}
               <h2 className="text-lg font-bold text-foreground">
-                {todayGames.some((g) => g.status === "live") ? "LIVE 경기" : "오늘의 경기"}
+                {hasLiveGames ? "LIVE 경기" : liveGames.some((g) => g.status === "finished") ? "오늘의 경기 결과" : "오늘의 경기"}
               </h2>
+              {hasLiveGames && (
+                <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  30초마다 업데이트
+                </span>
+              )}
               <span className="text-xs text-muted-foreground ml-auto">
                 {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
               </span>
             </div>
             <LiveGameCarousel
-              games={todayGames}
+              games={liveGames}
               teams={groups}
               myTeamId={fandomProfile?.groupId}
             />

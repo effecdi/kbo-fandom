@@ -2347,5 +2347,85 @@ export async function registerRoutes(
     }
   });
 
+  // ── KBO Live Scores (Naver Sports API Proxy) ──────────────────────────────
+  const NAVER_TEAM_CODE_MAP: Record<string, string> = {
+    LG: "team-lg", KT: "team-kt", SK: "team-ssg", HT: "team-kia",
+    OB: "team-doo", NC: "team-nc", LT: "team-lot", SS: "team-sam",
+    HH: "team-han", WO: "team-kiw",
+  };
+  const NAVER_TEAM_NAME_MAP: Record<string, string> = {
+    LG: "LG 트윈스", KT: "KT 위즈", SK: "SSG 랜더스", SSG: "SSG 랜더스",
+    HT: "KIA 타이거즈", KIA: "KIA 타이거즈", OB: "두산 베어스",
+    NC: "NC 다이노스", LT: "롯데 자이언츠", SS: "삼성 라이온즈",
+    HH: "한화 이글스", WO: "키움 히어로즈",
+  };
+  const STADIUM_NAME_MAP: Record<string, string> = {
+    잠실: "잠실야구장", 문학: "인천 SSG랜더스필드", 수원: "수원 KT위즈파크",
+    대전: "대전 한화생명이글스파크", 대구: "대구 삼성라이온즈파크",
+    광주: "광주 기아챔피언스필드", 창원: "창원 NC파크",
+    사직: "사직야구장", 고척: "고척스카이돔",
+  };
+
+  let kboScoresCache: { data: any; timestamp: number } | null = null;
+  const KBO_CACHE_TTL = 30000; // 30 seconds
+
+  app.get("/api/kbo/scores", async (req, res) => {
+    try {
+      const date = (req.query.date as string) || new Date().toISOString().split("T")[0];
+
+      // Return cached data if fresh
+      const cacheKey = date;
+      if (kboScoresCache && kboScoresCache.timestamp > Date.now() - KBO_CACHE_TTL) {
+        return res.json(kboScoresCache.data);
+      }
+
+      const naverUrl = `https://api-gw.sports.naver.com/schedule/games?fields=basic,superCategoryId,categoryName,stadium,statusNum,gameOnAir&upperCategoryId=kbaseball&category=kbo&date=${date}`;
+      const response = await axios.get(naverUrl, {
+        timeout: 8000,
+        headers: { "User-Agent": "Mozilla/5.0" },
+      });
+
+      if (!response.data?.result?.games) {
+        return res.json({ games: [], date });
+      }
+
+      const kboGames = response.data.result.games
+        .filter((g: any) => g.categoryId === "kbo")
+        .map((g: any) => {
+          const homeCode = g.homeTeamCode;
+          const awayCode = g.awayTeamCode;
+          let status: string = "scheduled";
+          if (g.cancel) status = "postponed";
+          else if (g.statusCode === "STARTED" || g.statusNum === 2) status = "live";
+          else if (g.statusCode === "RESULT" || g.statusNum === 4) status = "finished";
+
+          return {
+            gameId: g.gameId,
+            homeTeamId: NAVER_TEAM_CODE_MAP[homeCode] || homeCode,
+            awayTeamId: NAVER_TEAM_CODE_MAP[awayCode] || awayCode,
+            homeTeamName: NAVER_TEAM_NAME_MAP[g.homeTeamName] || NAVER_TEAM_NAME_MAP[homeCode] || g.homeTeamName,
+            awayTeamName: NAVER_TEAM_NAME_MAP[g.awayTeamName] || NAVER_TEAM_NAME_MAP[awayCode] || g.awayTeamName,
+            homeScore: g.homeTeamScore,
+            awayScore: g.awayTeamScore,
+            status,
+            inning: g.statusInfo || null,
+            stadium: STADIUM_NAME_MAP[g.stadium] || g.stadium,
+            date: g.gameDate,
+            time: g.gameDateTime ? g.gameDateTime.split("T")[1]?.slice(0, 5) : "14:00",
+            homeEmblemUrl: g.homeTeamEmblemUrl,
+            awayEmblemUrl: g.awayTeamEmblemUrl,
+            gameOnAir: g.gameOnAir,
+          };
+        });
+
+      const result = { games: kboGames, date };
+      kboScoresCache = { data: result, timestamp: Date.now() };
+      res.json(result);
+    } catch (error: any) {
+      logger.error("KBO scores fetch error", error?.message);
+      res.status(500).json({ games: [], error: "KBO 점수 조회에 실패했습니다." });
+    }
+  });
+
   return httpServer;
 }

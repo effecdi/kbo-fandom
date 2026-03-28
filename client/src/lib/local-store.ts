@@ -506,7 +506,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);
@@ -830,11 +830,11 @@ export function seedIfEmpty(): void {
   if (listItems(STORE_KEYS.KBO_SCHEDULE).length === 0) {
     const schedule: KboGameSchedule[] = [
       // 3/28 개막전 (토) 14:00 - 5경기
-      { id: "game-1", homeTeamId: "team-lg", awayTeamId: "team-kt", homeTeamName: "LG 트윈스", awayTeamName: "KT 위즈", date: "2026-03-28", time: "14:00", stadium: "잠실야구장", status: "live", homeScore: 3, awayScore: 1, inning: "5회초" },
-      { id: "game-2", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-03-28", time: "14:00", stadium: "인천 SSG랜더스필드", status: "live", homeScore: 2, awayScore: 4, inning: "4회말" },
-      { id: "game-3", homeTeamId: "team-han", awayTeamId: "team-kiw", homeTeamName: "한화 이글스", awayTeamName: "키움 히어로즈", date: "2026-03-28", time: "14:00", stadium: "대전 한화생명이글스파크", status: "live", homeScore: 5, awayScore: 2, inning: "6회초" },
-      { id: "game-4", homeTeamId: "team-sam", awayTeamId: "team-lot", homeTeamName: "삼성 라이온즈", awayTeamName: "롯데 자이언츠", date: "2026-03-28", time: "14:00", stadium: "대구 삼성라이온즈파크", status: "live", homeScore: 1, awayScore: 1, inning: "3회말" },
-      { id: "game-5", homeTeamId: "team-nc", awayTeamId: "team-doo", homeTeamName: "NC 다이노스", awayTeamName: "두산 베어스", date: "2026-03-28", time: "14:00", stadium: "창원 NC파크", status: "live", homeScore: 0, awayScore: 3, inning: "4회초" },
+      { id: "game-1", homeTeamId: "team-lg", awayTeamId: "team-kt", homeTeamName: "LG 트윈스", awayTeamName: "KT 위즈", date: "2026-03-28", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-2", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-03-28", time: "14:00", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-3", homeTeamId: "team-han", awayTeamId: "team-kiw", homeTeamName: "한화 이글스", awayTeamName: "키움 히어로즈", date: "2026-03-28", time: "14:00", stadium: "대전 한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-4", homeTeamId: "team-sam", awayTeamId: "team-lot", homeTeamName: "삼성 라이온즈", awayTeamName: "롯데 자이언츠", date: "2026-03-28", time: "14:00", stadium: "대구 삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
+      { id: "game-5", homeTeamId: "team-nc", awayTeamId: "team-doo", homeTeamName: "NC 다이노스", awayTeamName: "두산 베어스", date: "2026-03-28", time: "14:00", stadium: "창원 NC파크", status: "scheduled", homeScore: null, awayScore: null },
       // 3/29 2연전 (일) 14:00 - same matchups
       { id: "game-6", homeTeamId: "team-lg", awayTeamId: "team-kt", homeTeamName: "LG 트윈스", awayTeamName: "KT 위즈", date: "2026-03-29", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
       { id: "game-7", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-03-29", time: "14:00", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
