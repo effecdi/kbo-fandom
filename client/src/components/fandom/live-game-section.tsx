@@ -26,7 +26,7 @@ export function LiveGameSection({
   return (
     <div className="flex flex-col lg:flex-row gap-4">
       {/* Left: Carousel */}
-      <div className="w-full lg:w-[55%]">
+      <div className="w-full lg:w-[55%] overflow-hidden">
         <LiveGameCarousel
           games={games}
           teams={teams}
