@@ -73,7 +73,7 @@ export function FandomCheerSongs() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
                 tab === t.id
                   ? "bg-foreground text-background"
                   : "bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted"

@@ -212,7 +212,7 @@ export function FandomCreateFanart() {
           {STEPS.map((s, i) => (
             <div key={s.id} className="flex items-center gap-2">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${
                   i <= currentStepIdx
                     ? "text-white"
                     : "bg-muted text-muted-foreground"
@@ -221,7 +221,7 @@ export function FandomCreateFanart() {
               >
                 {i < currentStepIdx ? <Check className="w-4 h-4" /> : s.num}
               </div>
-              <span className={`text-xs font-medium ${i <= currentStepIdx ? "text-foreground" : "text-muted-foreground"}`}>
+              <span className={`text-[13px] font-medium ${i <= currentStepIdx ? "text-foreground" : "text-muted-foreground"}`}>
                 {s.label}
               </span>
               {i < STEPS.length - 1 && (
@@ -267,7 +267,7 @@ export function FandomCreateFanart() {
                     <button
                       key={cat.id}
                       onClick={() => setActiveCategory(cat.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                      className={`px-3 py-1.5 rounded-full text-[13px] font-bold transition-all ${
                         activeCategory === cat.id
                           ? "text-white"
                           : "text-muted-foreground bg-muted hover:text-foreground"
@@ -302,10 +302,10 @@ export function FandomCreateFanart() {
                             <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                               <IconComp className="w-5 h-5 text-muted-foreground" />
                             </div>
-                            <span className="text-[10px] text-muted-foreground font-mono">{tmpl.aspect}</span>
+                            <span className="text-[13px] text-muted-foreground font-mono">{tmpl.aspect}</span>
                           </div>
                           <p className="text-sm font-semibold text-foreground">{tmpl.label}</p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">{tmpl.desc}</p>
+                          <p className="text-[13px] text-muted-foreground mt-0.5">{tmpl.desc}</p>
                         </button>
                       );
                     })}
@@ -340,7 +340,7 @@ export function FandomCreateFanart() {
                     <button
                       key={style.id}
                       onClick={() => setSelectedStyle(selectedStyle === style.id ? null : style.id)}
-                      className={`px-3 py-2.5 rounded-xl border text-center transition-all text-xs font-medium ${
+                      className={`px-3 py-2.5 rounded-xl border text-center transition-all text-[13px] font-medium ${
                         selectedStyle === style.id
                           ? "text-white"
                           : "border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
@@ -362,7 +362,7 @@ export function FandomCreateFanart() {
                       <button
                         key={pose}
                         onClick={() => setSelectedPose(selectedPose === pose ? null : pose)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                        className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all ${
                           selectedPose === pose
                             ? "text-white border-transparent"
                             : "border-border text-muted-foreground hover:border-muted-foreground"
@@ -385,7 +385,7 @@ export function FandomCreateFanart() {
                       <button
                         key={outfit}
                         onClick={() => setSelectedOutfit(selectedOutfit === outfit ? null : outfit)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                        className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all ${
                           selectedOutfit === outfit
                             ? "text-white border-transparent"
                             : "border-border text-muted-foreground hover:border-muted-foreground"
@@ -407,7 +407,7 @@ export function FandomCreateFanart() {
                     <button
                       key={mood}
                       onClick={() => setSelectedMood(selectedMood === mood ? null : mood)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all ${
                         selectedMood === mood
                           ? "text-white border-transparent"
                           : "border-border text-muted-foreground hover:border-muted-foreground"
@@ -428,7 +428,7 @@ export function FandomCreateFanart() {
                     <button
                       key={filter.id}
                       onClick={() => setSelectedAesthetic(selectedAesthetic === filter.id ? null : filter.id)}
-                      className={`px-2 py-2 rounded-xl border text-center transition-all text-xs font-medium ${
+                      className={`px-2 py-2 rounded-xl border text-center transition-all text-[13px] font-medium ${
                         selectedAesthetic === filter.id
                           ? "text-white border-transparent"
                           : "border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
@@ -453,7 +453,7 @@ export function FandomCreateFanart() {
                       <button
                         key={d}
                         onClick={() => setSelectedDpi(d)}
-                        className={`flex-1 px-3 py-2 rounded-lg border text-center text-xs font-medium transition-all ${
+                        className={`flex-1 px-3 py-2 rounded-lg border text-center text-[13px] font-medium transition-all ${
                           selectedDpi === d
                             ? "text-white border-transparent"
                             : "border-border text-muted-foreground hover:border-muted-foreground"
@@ -461,21 +461,21 @@ export function FandomCreateFanart() {
                         style={selectedDpi === d ? { background: themeColor } : {}}
                       >
                         {d} DPI
-                        <span className="block text-[10px] opacity-70">
+                        <span className="block text-[13px] opacity-70">
                           {d === 72 ? "화면용" : d === 150 ? "보통" : "인쇄용"}
                         </span>
                       </button>
                     ))}
                   </div>
                   {GOODS_PHYSICAL_SIZE_MAP[templateDef.type] && (
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       물리 사이즈: {PHYSICAL_SIZES[GOODS_PHYSICAL_SIZE_MAP[templateDef.type][0]]?.label}
                     </p>
                   )}
                 </div>
               )}
 
-              <p className="text-[11px] text-muted-foreground">모든 옵션은 선택사항이에요. 건너뛸 수 있어요.</p>
+              <p className="text-[13px] text-muted-foreground">모든 옵션은 선택사항이에요. 건너뛸 수 있어요.</p>
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep("template")} className="gap-2">
@@ -529,7 +529,7 @@ export function FandomCreateFanart() {
 
               {/* Summary */}
               <div className="rounded-xl bg-muted/50 p-4 space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">요약</p>
+                <p className="text-[13px] font-semibold text-muted-foreground uppercase">요약</p>
                 <div className="text-sm text-foreground space-y-0.5">
                   <p>그룹: <span className="font-semibold">{selectedGroup?.name}</span></p>
                   {selectedMemberNames.length > 0 && (

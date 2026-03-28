@@ -224,7 +224,7 @@ export function FandomSchedule() {
                 variant={viewMode === vt.id ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode(vt.id)}
-                className="gap-1.5 text-xs"
+                className="gap-1.5 text-[13px]"
               >
                 <vt.icon className="w-3.5 h-3.5" />
                 {vt.label}
@@ -238,7 +238,7 @@ export function FandomSchedule() {
               variant={myTeamOnly ? "default" : "outline"}
               size="sm"
               onClick={() => setMyTeamOnly((v) => !v)}
-              className="gap-1.5 text-xs"
+              className="gap-1.5 text-[13px]"
             >
               <Star className={`w-3.5 h-3.5 ${myTeamOnly ? "fill-current" : ""}`} />
               내 팀 경기만
@@ -310,7 +310,7 @@ export function FandomSchedule() {
                     <span className="text-sm font-bold text-foreground whitespace-nowrap">
                       {formatKoreanDate(date)}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[13px] text-muted-foreground">
                       {dayGames.length}경기
                     </span>
                     <div className="h-px flex-1 bg-border" />

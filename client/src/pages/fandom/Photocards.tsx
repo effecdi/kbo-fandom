@@ -125,19 +125,19 @@ export function FandomPhotocards() {
 
         {/* Stats Bar */}
         <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-xl border border-border">
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 text-[13px]">
             <Image className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">전체</span>
             <span className="font-bold text-foreground">{stats.total}</span>
           </div>
           <div className="w-px h-4 bg-border" />
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 text-[13px]">
             <Heart className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">내 카드</span>
             <span className="font-bold text-foreground">{stats.mine}</span>
           </div>
           <div className="w-px h-4 bg-border" />
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 text-[13px]">
             <ArrowRightLeft className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">거래중</span>
             <span className="font-bold text-foreground">{stats.trading}</span>
@@ -150,7 +150,7 @@ export function FandomPhotocards() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
                 tab === t.id
                   ? "bg-foreground text-background"
                   : "bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -170,7 +170,7 @@ export function FandomPhotocards() {
             <button
               key={r.id}
               onClick={() => setRarityFilter(r.id)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
                 rarityFilter === r.id
                   ? "bg-foreground text-background"
                   : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted"

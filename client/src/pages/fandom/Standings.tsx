@@ -38,7 +38,7 @@ export function FandomStandings() {
         />
 
         {/* Note */}
-        <p className="text-xs text-muted-foreground text-center py-4">
+        <p className="text-[13px] text-muted-foreground text-center py-4">
           개막일 기준 순위입니다. 경기 결과에 따라 업데이트됩니다.
         </p>
       </div>

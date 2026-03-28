@@ -51,7 +51,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
         {/* Status + Attend (compact) */}
         <div className="flex items-center justify-between mb-1">
           <span
-            className="px-1.5 py-px rounded-full text-[8px] font-bold text-white leading-tight"
+            className="px-1.5 py-px rounded-full text-[13px] font-bold text-white leading-tight"
             style={{ backgroundColor: status.color }}
           >
             {status.label}
@@ -78,30 +78,30 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
               <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="xs" className="flex-shrink-0" />
-              <p className="text-[9px] font-bold text-foreground truncate">{game.homeTeamName}</p>
+              <p className="text-[13px] font-bold text-foreground truncate">{game.homeTeamName}</p>
             </div>
           </div>
 
           {/* Score / VS (compact) */}
           <div className="text-center flex-shrink-0">
             {game.status === "finished" || game.status === "live" ? (
-              <span className="text-[10px] font-black text-foreground">{game.homeScore ?? 0}:{game.awayScore ?? 0}</span>
+              <span className="text-[13px] font-black text-foreground">{game.homeScore ?? 0}:{game.awayScore ?? 0}</span>
             ) : (
-              <span className="text-[9px] font-bold text-muted-foreground">vs</span>
+              <span className="text-[13px] font-bold text-muted-foreground">vs</span>
             )}
           </div>
 
           {/* Away Team (compact) */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 justify-end">
-              <p className="text-[9px] font-bold text-foreground truncate">{game.awayTeamName}</p>
+              <p className="text-[13px] font-bold text-foreground truncate">{game.awayTeamName}</p>
               <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="xs" className="flex-shrink-0" />
             </div>
           </div>
         </div>
 
         {/* Time (compact) */}
-        <p className="text-[8px] text-muted-foreground text-center mt-1">{game.time}</p>
+        <p className="text-[13px] text-muted-foreground text-center mt-1">{game.time}</p>
       </div>
     );
   }
@@ -117,7 +117,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
     >
       {/* Status + Date */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           <Calendar className="w-3.5 h-3.5" />
           <span>{game.date}</span>
           <Clock className="w-3.5 h-3.5 ml-1" />
@@ -139,7 +139,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
             </button>
           )}
           <span
-            className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
+            className="px-2 py-0.5 rounded-full text-[13px] font-bold text-white"
             style={{ backgroundColor: status.color }}
           >
             {status.label}
@@ -152,8 +152,8 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
         {/* Home Team */}
         <div className="flex-1 text-center">
           <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="md" className="mx-auto mb-1.5" />
-          <p className="text-xs font-bold text-foreground truncate">{game.homeTeamName}</p>
-          <p className="text-[10px] text-muted-foreground">홈</p>
+          <p className="text-[13px] font-bold text-foreground truncate">{game.homeTeamName}</p>
+          <p className="text-[13px] text-muted-foreground">홈</p>
         </div>
 
         {/* Score / VS */}
@@ -172,13 +172,13 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
         {/* Away Team */}
         <div className="flex-1 text-center">
           <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="md" className="mx-auto mb-1.5" />
-          <p className="text-xs font-bold text-foreground truncate">{game.awayTeamName}</p>
-          <p className="text-[10px] text-muted-foreground">원정</p>
+          <p className="text-[13px] font-bold text-foreground truncate">{game.awayTeamName}</p>
+          <p className="text-[13px] text-muted-foreground">원정</p>
         </div>
       </div>
 
       {/* Stadium */}
-      <div className="flex items-center gap-1.5 mt-3 text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-1.5 mt-3 text-[13px] text-muted-foreground">
         <MapPin className="w-3 h-3" />
         <span>{game.stadium}</span>
       </div>

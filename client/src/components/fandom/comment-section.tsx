@@ -82,7 +82,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
       <div className="flex items-center gap-2 pt-2 border-t border-border">
         <div className="flex-1 relative">
           {replyTo && (
-            <div className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
+            <div className="text-[13px] text-muted-foreground mb-1 flex items-center gap-1">
               답글 작성 중...
               <button
                 onClick={() => setReplyTo(null)}

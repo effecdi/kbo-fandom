@@ -43,7 +43,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
               {guide.transportation.map((item, idx) => (
                 <li
                   key={idx}
-                  className="flex items-start gap-2 text-xs text-muted-foreground"
+                  className="flex items-start gap-2 text-[13px] text-muted-foreground"
                 >
                   <span
                     className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -69,10 +69,10 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
                   key={idx}
                   className="bg-muted/30 border border-border rounded-xl p-3 space-y-1"
                 >
-                  <p className="text-xs font-bold text-foreground">{sec.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{sec.desc}</p>
+                  <p className="text-[13px] font-bold text-foreground">{sec.name}</p>
+                  <p className="text-[13px] text-muted-foreground">{sec.desc}</p>
                   <p
-                    className="text-[11px] font-semibold"
+                    className="text-[13px] font-semibold"
                     style={{ color: teamColor }}
                   >
                     {sec.priceRange}
@@ -94,7 +94,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
               {guide.nearbyFood.map((food, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2 text-xs"
+                  className="flex items-start gap-2 text-[13px]"
                 >
                   <span
                     className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -121,7 +121,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
               {guide.tips.map((tip, idx) => (
                 <li
                   key={idx}
-                  className="flex items-start gap-2 text-xs text-muted-foreground"
+                  className="flex items-start gap-2 text-[13px] text-muted-foreground"
                 >
                   <span
                     className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -141,7 +141,7 @@ export function StadiumInfoCard({ guide, teamColor }: StadiumInfoCardProps) {
               <ParkingCircle className="w-4 h-4" style={{ color: teamColor }} />
               <h3 className="text-sm font-bold text-foreground">주차 정보</h3>
             </div>
-            <p className="text-xs text-muted-foreground bg-muted/30 rounded-xl p-3">
+            <p className="text-[13px] text-muted-foreground bg-muted/30 rounded-xl p-3">
               {guide.parkingInfo}
             </p>
           </section>

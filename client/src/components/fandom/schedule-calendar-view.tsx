@@ -128,7 +128,7 @@ export function ScheduleCalendarView({
           {DAY_HEADERS.map((dh) => (
             <div
               key={dh}
-              className="text-center py-2 text-xs font-bold text-muted-foreground"
+              className="text-center py-2 text-[13px] font-bold text-muted-foreground"
             >
               {dh}
             </div>
@@ -160,7 +160,7 @@ export function ScheduleCalendarView({
               >
                 {/* Day number */}
                 <span
-                  className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-xs font-bold ${
+                  className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[13px] sm:text-[13px] font-bold ${
                     cd.isToday
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground"
@@ -184,7 +184,7 @@ export function ScheduleCalendarView({
 
                 {/* Game count badge */}
                 {cd.games.length > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-muted text-[10px] font-bold text-foreground">
+                  <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-muted text-[13px] font-bold text-foreground">
                     {cd.games.length}
                   </span>
                 )}

@@ -20,7 +20,7 @@ export function FandomFilterBar({ selected, onChange }: FandomFilterBarProps) {
     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
       <button
         onClick={() => onChange(null)}
-        className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+        className={`px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
           selected === null
             ? "text-white"
             : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -33,7 +33,7 @@ export function FandomFilterBar({ selected, onChange }: FandomFilterBarProps) {
         <button
           key={group.id}
           onClick={() => onChange(group.id === selected ? null : group.id)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
             selected === group.id
               ? "text-white"
               : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted"

@@ -92,7 +92,7 @@ export function FandomGoodsTrades() {
         </div>
 
         {/* Stats bar */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground bg-muted/30 rounded-xl px-4 py-3 border border-border">
+        <div className="flex items-center gap-4 text-[13px] text-muted-foreground bg-muted/30 rounded-xl px-4 py-3 border border-border">
           <div className="flex items-center gap-1.5">
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>전체 <span className="text-foreground font-bold">{stats.total}</span>건</span>
@@ -121,7 +121,7 @@ export function FandomGoodsTrades() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
                 tab === t.id
                   ? "bg-foreground text-background"
                   : "bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -138,7 +138,7 @@ export function FandomGoodsTrades() {
             <button
               key={c.id}
               onClick={() => setCategoryFilter(c.id)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
                 categoryFilter === c.id
                   ? "bg-foreground/10 text-foreground border border-foreground/20"
                   : "bg-muted/30 border border-border text-muted-foreground hover:text-foreground hover:bg-muted"

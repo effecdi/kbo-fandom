@@ -31,17 +31,17 @@ export function TeamCard({ group }: TeamCardProps) {
       <div className="p-4 pt-8 space-y-2">
         <div>
           <h3 className="text-sm font-bold text-foreground">{group.name}</h3>
-          <p className="text-xs text-muted-foreground">{group.nameKo} · {group.city}</p>
+          <p className="text-[13px] text-muted-foreground">{group.nameKo} · {group.city}</p>
         </div>
         <div className="flex items-center gap-1">
           <span
-            className="px-2 py-0.5 rounded-full text-[11px] font-bold text-white"
+            className="px-2 py-0.5 rounded-full text-[13px] font-bold text-white"
             style={{ backgroundColor: group.coverColor }}
           >
             {group.fandomName}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-[12px] text-muted-foreground pt-1">
+        <div className="flex items-center gap-3 text-[13px] text-muted-foreground pt-1">
           <span className="flex items-center gap-1">
             <Users className="w-3.5 h-3.5" />
             {group.followers.toLocaleString()}

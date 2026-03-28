@@ -169,8 +169,8 @@ export function FandomGroupDetail() {
                   {member.name.slice(0, 1)}
                 </div>
                 <p className="text-sm font-bold text-foreground">{member.name}</p>
-                <p className="text-xs text-muted-foreground">{member.nameKo}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">{member.position}</p>
+                <p className="text-[13px] text-muted-foreground">{member.nameKo}</p>
+                <p className="text-[13px] text-muted-foreground mt-1">{member.position}</p>
               </div>
             ))}
           </div>
@@ -248,7 +248,7 @@ export function FandomGroupDetail() {
                 <div className="p-5 space-y-4 flex flex-col">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: group.coverColor }}>
-                      <span className="text-xs text-white font-bold">{selectedPost.authorAvatar}</span>
+                      <span className="text-[13px] text-white font-bold">{selectedPost.authorAvatar}</span>
                     </div>
                     <span className="text-sm font-semibold text-foreground">{selectedPost.authorName}</span>
                   </div>

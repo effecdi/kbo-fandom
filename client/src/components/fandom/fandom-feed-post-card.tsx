@@ -63,7 +63,7 @@ export function FandomFeedPostCard({ post, onClick }: FandomFeedPostCardProps) {
         )}
         {/* Type badge */}
         <div className="absolute top-2 left-2">
-          <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${TYPE_COLORS[post.type]}`}>
+          <span className={`px-2 py-1 rounded-full text-[13px] font-bold ${TYPE_COLORS[post.type]}`}>
             {TYPE_LABELS[post.type]}
           </span>
         </div>
@@ -86,7 +86,7 @@ export function FandomFeedPostCard({ post, onClick }: FandomFeedPostCardProps) {
         <div className="flex items-center gap-1 flex-wrap">
           <FandomTagBadge groupId={post.groupId} groupName={post.groupName} />
           {post.memberTags.slice(0, 2).map((m) => (
-            <span key={m} className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
+            <span key={m} className="px-1.5 py-0.5 rounded-full text-[13px] font-medium bg-muted text-muted-foreground">
               {m}
             </span>
           ))}
@@ -96,13 +96,13 @@ export function FandomFeedPostCard({ post, onClick }: FandomFeedPostCardProps) {
 
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-[10px] text-white font-bold">{post.authorAvatar}</span>
+            <span className="text-[13px] text-white font-bold">{post.authorAvatar}</span>
           </div>
-          <span className="text-xs text-muted-foreground">{post.authorName}</span>
-          <span className="text-[11px] text-muted-foreground/50 ml-auto">{post.createdAt}</span>
+          <span className="text-[13px] text-muted-foreground">{post.authorName}</span>
+          <span className="text-[13px] text-muted-foreground/50 ml-auto">{post.createdAt}</span>
         </div>
 
-        <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
+        <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
           <button
             onClick={toggleLike}
             className={`flex items-center gap-1 transition-colors ${liked ? "text-rose-400" : ""}`}

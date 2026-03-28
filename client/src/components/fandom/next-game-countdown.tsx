@@ -89,13 +89,13 @@ export function NextGameCountdown({ teamId, teamName, teamColor }: NextGameCount
               <p className="text-lg font-black">
                 {teamName} vs {opponentName}
               </p>
-              <p className="text-xs opacity-75 mt-0.5">
+              <p className="text-[13px] opacity-75 mt-0.5">
                 {isHome ? "홈 경기" : "원정 경기"}
               </p>
             </div>
 
             {/* Details */}
-            <div className="flex flex-wrap items-center gap-3 text-xs opacity-80">
+            <div className="flex flex-wrap items-center gap-3 text-[13px] opacity-80">
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" />
                 <span>{nextGame.date}</span>

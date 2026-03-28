@@ -195,7 +195,7 @@ export function FanMessages() {
                     </div>
                     {convo.unread > 0 && (
                       <span
-                        className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full text-[10px] text-white font-bold flex items-center justify-center"
+                        className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full text-[13px] text-white font-bold flex items-center justify-center"
                         style={{ background: convo.groupColor }}
                       >
                         {convo.unread}
@@ -207,11 +207,11 @@ export function FanMessages() {
                       <span className={`text-sm truncate ${convo.unread > 0 ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
                         {convo.peerName}
                       </span>
-                      <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                      <span className="text-[13px] text-muted-foreground shrink-0 ml-2">
                         {convo.lastTime ? formatDate(convo.lastTime) : "새 대화"}
                       </span>
                     </div>
-                    <p className={`text-xs truncate ${convo.unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                    <p className={`text-[13px] truncate ${convo.unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                       {convo.lastMessage || "메시지를 보내보세요"}
                     </p>
                   </div>
@@ -221,7 +221,7 @@ export function FanMessages() {
               <div className="text-center py-12 text-muted-foreground">
                 <MessageCircle className="w-10 h-10 mx-auto mb-2 opacity-30" />
                 <p className="text-sm">대화가 없습니다</p>
-                <p className="text-xs mt-1">팬 크리에이터 프로필에서 DM을 보내보세요</p>
+                <p className="text-[13px] mt-1">팬 크리에이터 프로필에서 DM을 보내보세요</p>
               </div>
             )}
           </div>
@@ -251,7 +251,7 @@ export function FanMessages() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">{selectedConvo.peerName}</p>
-                    <p className="text-[11px] text-muted-foreground">프로필 보기</p>
+                    <p className="text-[13px] text-muted-foreground">프로필 보기</p>
                   </div>
                 </button>
               </div>
@@ -280,7 +280,7 @@ export function FanMessages() {
                           {msg.content}
                         </div>
                         <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : ""}`}>
-                          <span className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
+                          <span className="text-[13px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
                           {isMine && (
                             msg.read
                               ? <CheckCheck className="w-3 h-3 text-blue-400" />

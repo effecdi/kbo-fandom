@@ -61,7 +61,7 @@ export function FandomGroups() {
               <button
                 key={c}
                 onClick={() => setCityFilter(c)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                   cityFilter === c
                     ? "text-white"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"

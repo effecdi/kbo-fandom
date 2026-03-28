@@ -62,7 +62,7 @@ function PlayerNode({
       style={{ left: `${x}%`, top: `${y}%` }}
     >
       <div
-        className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white text-[9px] md:text-[10px] font-bold border-2 shadow-md ${
+        className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white text-[13px] md:text-[13px] font-bold border-2 shadow-md ${
           isPitcher
             ? "border-red-400"
             : isBatter
@@ -74,7 +74,7 @@ function PlayerNode({
         {isPitcher ? "P" : isBatter ? "B" : name.slice(0, 1)}
       </div>
       <span
-        className={`text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${
+        className={`text-[13px] md:text-[13px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${
           isPitcher
             ? "bg-red-500/90 text-white"
             : isBatter
@@ -116,7 +116,7 @@ function CountDisplay({
   count: { ball: number; strike: number; out: number };
 }) {
   return (
-    <div className="flex gap-2 text-[10px] md:text-xs font-bold">
+    <div className="flex gap-2 text-[13px] md:text-[13px] font-bold">
       <div className="flex items-center gap-1">
         <span className="text-green-400">B</span>
         <div className="flex gap-0.5">
@@ -176,7 +176,7 @@ export function BaseballDiamond({
 
       {/* Matchup info - top left */}
       <div className="absolute top-2 left-2 z-30">
-        <div className="text-[9px] md:text-[10px] text-white/70">
+        <div className="text-[13px] md:text-[13px] text-white/70">
           <span className="bg-red-500/80 text-white px-1.5 py-0.5 rounded font-bold mr-1">
             투
           </span>
@@ -301,7 +301,7 @@ export function BaseballDiamond({
       {/* Batting order at bottom */}
       {relay.battingOrder.length > 0 && (
         <div className="px-3 py-2 bg-black/30 border-t border-white/10">
-          <p className="text-[9px] text-white/50 mb-1 font-bold">
+          <p className="text-[13px] text-white/50 mb-1 font-bold">
             {relay.isTopInning ? "원정" : "홈"} 타선
           </p>
           <div className="flex gap-1 overflow-x-auto scrollbar-hide">
@@ -310,7 +310,7 @@ export function BaseballDiamond({
               return (
                 <div
                   key={b.order}
-                  className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] md:text-[10px] ${
+                  className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[13px] md:text-[13px] ${
                     isCurrentBatter
                       ? "bg-yellow-500/90 text-black font-bold"
                       : "bg-white/10 text-white/70"

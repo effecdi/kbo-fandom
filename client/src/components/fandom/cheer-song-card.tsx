@@ -35,7 +35,7 @@ export function CheerSongCard({ song, teamColor }: CheerSongCardProps) {
               {song.title}
             </h3>
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${typeInfo.color} ${typeInfo.bg}`}
+              className={`px-2 py-0.5 rounded-full text-[13px] font-bold ${typeInfo.color} ${typeInfo.bg}`}
             >
               {typeInfo.label}
             </span>
@@ -43,7 +43,7 @@ export function CheerSongCard({ song, teamColor }: CheerSongCardProps) {
 
           {/* Player name (for player songs) */}
           {song.type === "player" && song.playerName && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+            <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1">
               <User className="w-3 h-3" />
               <span>{song.playerName}</span>
             </div>
@@ -71,7 +71,7 @@ export function CheerSongCard({ song, teamColor }: CheerSongCardProps) {
 
           {/* Description */}
           {song.description && (
-            <p className="text-xs text-muted-foreground px-1">
+            <p className="text-[13px] text-muted-foreground px-1">
               {song.description}
             </p>
           )}

@@ -86,10 +86,10 @@ export function FandomEventDetail() {
             <div className="absolute inset-0 bg-black/20" />
             <div className="absolute bottom-4 left-6 right-6">
               <div className="flex items-center gap-2 mb-2">
-                <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${status.color}`}>
+                <span className={`px-2 py-1 rounded-full text-[13px] font-bold ${status.color}`}>
                   {status.label}
                 </span>
-                <span className="px-2 py-1 rounded-full text-[11px] font-bold bg-white/20 text-white backdrop-blur-sm">
+                <span className="px-2 py-1 rounded-full text-[13px] font-bold bg-white/20 text-white backdrop-blur-sm">
                   {TYPE_LABELS[event.type]}
                 </span>
               </div>
@@ -105,29 +105,29 @@ export function FandomEventDetail() {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
                 <div>
-                  <p className="text-[11px] text-muted-foreground">시작</p>
+                  <p className="text-[13px] text-muted-foreground">시작</p>
                   <p className="font-medium text-foreground">{event.startDate}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="w-4 h-4" />
                 <div>
-                  <p className="text-[11px] text-muted-foreground">마감</p>
+                  <p className="text-[13px] text-muted-foreground">마감</p>
                   <p className="font-medium text-foreground">{event.endDate}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="w-4 h-4" />
                 <div>
-                  <p className="text-[11px] text-muted-foreground">참여자</p>
+                  <p className="text-[13px] text-muted-foreground">참여자</p>
                   <p className="font-medium text-foreground">{event.participants}명</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Trophy className="w-4 h-4 text-amber-500" />
                 <div>
-                  <p className="text-[11px] text-muted-foreground">상품</p>
-                  <p className="font-medium text-foreground text-[12px]">{event.prize}</p>
+                  <p className="text-[13px] text-muted-foreground">상품</p>
+                  <p className="font-medium text-foreground text-[13px]">{event.prize}</p>
                 </div>
               </div>
             </div>

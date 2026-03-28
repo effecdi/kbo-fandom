@@ -36,17 +36,17 @@ export function FandomEventCard({ event }: FandomEventCardProps) {
       >
         <div className="absolute inset-0 bg-black/10" />
         <div className="absolute top-3 left-3">
-          <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${status.color}`}>
+          <span className={`px-2 py-1 rounded-full text-[13px] font-bold ${status.color}`}>
             {status.label}
           </span>
         </div>
         <div className="absolute top-3 right-3">
-          <span className="px-2 py-1 rounded-full text-[11px] font-bold bg-white/20 text-white backdrop-blur-sm">
+          <span className="px-2 py-1 rounded-full text-[13px] font-bold bg-white/20 text-white backdrop-blur-sm">
             {TYPE_LABELS[event.type]}
           </span>
         </div>
         <div className="absolute bottom-3 left-3">
-          <span className="text-white/80 text-xs font-medium">{event.groupName}</span>
+          <span className="text-white/80 text-[13px] font-medium">{event.groupName}</span>
         </div>
       </div>
 
@@ -55,8 +55,8 @@ export function FandomEventCard({ event }: FandomEventCardProps) {
         <h3 className="text-sm font-bold text-foreground group-hover:text-[var(--fandom-primary)] transition-colors">
           {event.title}
         </h3>
-        <p className="text-xs text-muted-foreground line-clamp-2">{event.description}</p>
-        <div className="flex items-center gap-3 text-[12px] text-muted-foreground pt-1">
+        <p className="text-[13px] text-muted-foreground line-clamp-2">{event.description}</p>
+        <div className="flex items-center gap-3 text-[13px] text-muted-foreground pt-1">
           <span className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" />
             {event.startDate} ~ {event.endDate}
@@ -67,7 +67,7 @@ export function FandomEventCard({ event }: FandomEventCardProps) {
           </span>
         </div>
         {event.prize && (
-          <div className="flex items-center gap-1.5 text-[12px]">
+          <div className="flex items-center gap-1.5 text-[13px]">
             <Trophy className="w-3.5 h-3.5 text-amber-500" />
             <span className="text-muted-foreground">{event.prize}</span>
           </div>

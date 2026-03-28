@@ -21,7 +21,7 @@ export function StandingsTable({ standings, myTeamId, compact }: StandingsTableP
     <div className="rounded-xl overflow-hidden border border-border bg-card">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-muted/60 text-muted-foreground text-xs">
+          <tr className="bg-muted/60 text-muted-foreground text-[13px]">
             <th className="px-4 py-3 text-left font-semibold">순위</th>
             <th className="px-4 py-3 text-left font-semibold">팀명</th>
             <th className="px-4 py-3 text-center font-semibold">승</th>

@@ -110,7 +110,7 @@ export function FanProfile() {
             {badgeInfo && (
               <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
                 <badgeInfo.icon className="w-3.5 h-3.5 text-white" />
-                <span className="text-xs font-semibold text-white">{badgeInfo.label}</span>
+                <span className="text-[13px] font-semibold text-white">{badgeInfo.label}</span>
               </div>
             )}
           </div>
@@ -128,7 +128,7 @@ export function FanProfile() {
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl font-black text-foreground">{creator.nickname}</h1>
                   <span
-                    className="text-[10px] px-2 py-0.5 rounded-full text-white font-semibold"
+                    className="text-[13px] px-2 py-0.5 rounded-full text-white font-semibold"
                     style={{ background: group?.coverColor }}
                   >
                     {creator.groupName}
@@ -145,19 +145,19 @@ export function FanProfile() {
             <div className="flex items-center gap-6 mt-4">
               <div className="text-center">
                 <p className="text-lg font-black text-foreground">{creator.fanartCount}</p>
-                <p className="text-[11px] text-muted-foreground">팬아트</p>
+                <p className="text-[13px] text-muted-foreground">팬아트</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-black text-foreground">{followerCount.toLocaleString()}</p>
-                <p className="text-[11px] text-muted-foreground">팔로워</p>
+                <p className="text-[13px] text-muted-foreground">팔로워</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-black text-foreground">{creator.followingCount}</p>
-                <p className="text-[11px] text-muted-foreground">팔로잉</p>
+                <p className="text-[13px] text-muted-foreground">팔로잉</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-black text-foreground">{creator.totalLikes.toLocaleString()}</p>
-                <p className="text-[11px] text-muted-foreground">총 좋아요</p>
+                <p className="text-[13px] text-muted-foreground">총 좋아요</p>
               </div>
             </div>
 
@@ -192,7 +192,7 @@ export function FanProfile() {
             </div>
 
             {/* Joined date */}
-            <div className="flex items-center gap-1.5 mt-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 mt-4 text-[13px] text-muted-foreground">
               <Calendar className="w-3.5 h-3.5" />
               {new Date(creator.joinedAt).getFullYear()}년 {new Date(creator.joinedAt).getMonth() + 1}월 가입
             </div>
@@ -221,8 +221,8 @@ export function FanProfile() {
                     <Sparkles className="w-8 h-8 opacity-30" style={{ color: group?.coverColor }} />
                   </div>
                   <h3 className="text-sm font-semibold text-foreground mb-1">{post.title}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{post.description}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground line-clamp-2 mb-2">{post.description}</p>
+                  <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <ThumbsUp className="w-3.5 h-3.5" />
                       {post.likes}
@@ -232,7 +232,7 @@ export function FanProfile() {
                       {post.commentCount}
                     </span>
                     <span
-                      className="text-[10px] px-1.5 py-0.5 rounded-full text-white"
+                      className="text-[13px] px-1.5 py-0.5 rounded-full text-white"
                       style={{ background: group?.coverColor }}
                     >
                       {post.type}

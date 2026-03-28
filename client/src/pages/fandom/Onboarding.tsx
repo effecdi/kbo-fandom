@@ -284,7 +284,7 @@ export function FandomOnboarding() {
                       {g.name.charAt(0)}
                     </div>
                     <p className="font-bold text-sm text-foreground">{g.name}</p>
-                    <p className="text-xs text-muted-foreground">{g.nameKo}</p>
+                    <p className="text-[13px] text-muted-foreground">{g.nameKo}</p>
                     {selectedGroupId === g.id && (
                       <div
                         className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
@@ -454,7 +454,7 @@ export function FandomOnboarding() {
                       {m.name.charAt(0)}
                     </div>
                     <p className="text-sm font-bold text-foreground">{m.name}</p>
-                    <p className="text-xs text-muted-foreground">{m.nameKo}</p>
+                    <p className="text-[13px] text-muted-foreground">{m.nameKo}</p>
                   </button>
                 ))}
               </div>
@@ -492,7 +492,7 @@ export function FandomOnboarding() {
                       {m.name.charAt(0)}
                     </div>
                     <p className="text-sm font-bold text-foreground">{m.name}</p>
-                    <p className="text-xs text-muted-foreground">{m.nameKo}</p>
+                    <p className="text-[13px] text-muted-foreground">{m.nameKo}</p>
                   </button>
                 ))}
               </div>

@@ -42,18 +42,18 @@ export function FandomRankingList({ groupId }: FandomRankingListProps) {
           className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors"
         >
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-black ${
               RANK_COLORS[entry.rank] || "bg-muted text-muted-foreground"
             }`}
           >
             {entry.rank}
           </div>
           <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: themeColor }}>
-            <span className="text-xs text-white font-bold">{entry.avatar}</span>
+            <span className="text-[13px] text-white font-bold">{entry.avatar}</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{entry.name}</p>
-            <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
+            <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Image className="w-3 h-3" />
                 {entry.fanartCount}

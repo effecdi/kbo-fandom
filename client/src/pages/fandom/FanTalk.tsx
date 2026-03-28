@@ -186,7 +186,7 @@ export function FanTalk() {
                       <button
                         key={t}
                         onClick={() => setNewPostTopic(t)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                        className={`px-3 py-1 rounded-full text-[13px] font-semibold transition-all ${
                           newPostTopic === t
                             ? "text-white"
                             : "bg-muted text-muted-foreground hover:text-foreground"
@@ -226,7 +226,7 @@ export function FanTalk() {
                 <button
                   key={t.label}
                   onClick={() => setTopicFilter(t.label)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${
                     topicFilter === t.label
                       ? "text-white"
                       : "bg-muted text-muted-foreground hover:text-foreground"
@@ -244,7 +244,7 @@ export function FanTalk() {
               <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
                 <button
                   onClick={() => setSortBy("latest")}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-[13px] font-medium transition-all ${
                     sortBy === "latest" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                   }`}
                 >
@@ -252,7 +252,7 @@ export function FanTalk() {
                 </button>
                 <button
                   onClick={() => setSortBy("popular")}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-[13px] font-medium transition-all ${
                     sortBy === "popular" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                   }`}
                 >
@@ -265,7 +265,7 @@ export function FanTalk() {
             <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
               <button
                 onClick={() => setGroupFilter(null)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${
                   !groupFilter ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -275,7 +275,7 @@ export function FanTalk() {
                 <button
                   key={g.id}
                   onClick={() => setGroupFilter(g.id === groupFilter ? null : g.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${
                     groupFilter === g.id ? "text-white" : "bg-muted text-muted-foreground hover:text-foreground"
                   }`}
                   style={groupFilter === g.id ? { background: g.coverColor } : {}}
@@ -313,16 +313,16 @@ export function FanTalk() {
                             {post.authorName}
                           </button>
                           <span
-                            className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold text-white"
+                            className="text-[13px] px-1.5 py-0.5 rounded-full font-semibold text-white"
                             style={{ background: group?.coverColor || "#888" }}
                           >
                             {post.groupName}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground">{formatTime(post.createdAt)}</p>
+                        <p className="text-[13px] text-muted-foreground">{formatTime(post.createdAt)}</p>
                       </div>
                       <span
-                        className="text-[10px] px-2 py-0.5 rounded-full font-semibold text-white"
+                        className="text-[13px] px-2 py-0.5 rounded-full font-semibold text-white"
                         style={{ background: topicInfo?.color }}
                       >
                         {post.topic}
@@ -338,7 +338,7 @@ export function FanTalk() {
                     <div className="flex items-center gap-4 pt-2 border-t border-border">
                       <button
                         onClick={() => handleLike(post.id)}
-                        className={`flex items-center gap-1.5 text-xs transition-all ${
+                        className={`flex items-center gap-1.5 text-[13px] transition-all ${
                           post.liked ? "font-semibold" : "text-muted-foreground hover:text-foreground"
                         }`}
                         style={post.liked ? { color: topicInfo?.color } : {}}
@@ -348,7 +348,7 @@ export function FanTalk() {
                       </button>
                       <button
                         onClick={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
-                        className={`flex items-center gap-1.5 text-xs transition-all ${
+                        className={`flex items-center gap-1.5 text-[13px] transition-all ${
                           expandedPost === post.id ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
@@ -367,18 +367,18 @@ export function FanTalk() {
                             <div key={reply.id} className="flex gap-2.5 ml-2">
                               <button
                                 onClick={() => reply.authorId !== "me" && navigate(`/fandom/fans/${reply.authorId}`)}
-                                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
                                 style={{ background: group?.coverColor || themeColor }}
                               >
                                 {reply.authorAvatar}
                               </button>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-semibold text-foreground">{reply.authorName}</span>
-                                  <span className="text-[10px] text-muted-foreground">{formatTime(reply.createdAt)}</span>
+                                  <span className="text-[13px] font-semibold text-foreground">{reply.authorName}</span>
+                                  <span className="text-[13px] text-muted-foreground">{formatTime(reply.createdAt)}</span>
                                 </div>
-                                <p className="text-xs text-foreground mt-0.5">{reply.content}</p>
-                                <button className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1 hover:text-foreground">
+                                <p className="text-[13px] text-foreground mt-0.5">{reply.content}</p>
+                                <button className="flex items-center gap-1 text-[13px] text-muted-foreground mt-1 hover:text-foreground">
                                   <ThumbsUp className="w-3 h-3" />
                                   {reply.likes}
                                 </button>
@@ -394,13 +394,13 @@ export function FanTalk() {
                             value={replyText[post.id] || ""}
                             onChange={(e) => setReplyText((prev) => ({ ...prev, [post.id]: e.target.value }))}
                             onKeyDown={(e) => e.key === "Enter" && handleReply(post.id)}
-                            className="flex-1 bg-muted rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 border-0 text-foreground placeholder-muted-foreground"
+                            className="flex-1 bg-muted rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 border-0 text-foreground placeholder-muted-foreground"
                             style={{ "--tw-ring-color": themeColor } as any}
                           />
                           <button
                             onClick={() => handleReply(post.id)}
                             disabled={!replyText[post.id]?.trim()}
-                            className="px-3 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50 transition-all"
+                            className="px-3 py-2 rounded-lg text-white text-[13px] font-semibold disabled:opacity-50 transition-all"
                             style={{ background: group?.coverColor || themeColor }}
                           >
                             <Send className="w-3.5 h-3.5" />
@@ -441,12 +441,12 @@ export function FanTalk() {
                     >
                       <div className="relative">
                         <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
                           style={{ background: group?.coverColor || themeColor }}
                         >
                           {creator.avatar}
                         </div>
-                        <span className="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-card text-[10px] font-bold flex items-center justify-center border border-border">
+                        <span className="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-card text-[13px] font-bold flex items-center justify-center border border-border">
                           {i + 1}
                         </span>
                       </div>
@@ -455,14 +455,14 @@ export function FanTalk() {
                           <span className="text-sm font-semibold text-foreground truncate">{creator.nickname}</span>
                           {badgeInfo && (
                             <span
-                              className="text-[9px] px-1.5 py-0.5 rounded-full text-white font-semibold"
+                              className="text-[13px] px-1.5 py-0.5 rounded-full text-white font-semibold"
                               style={{ background: badgeInfo.color }}
                             >
                               {badgeInfo.label}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground truncate">
+                        <p className="text-[13px] text-muted-foreground truncate">
                           팔로워 {creator.followerCount.toLocaleString()} · {creator.groupName}
                         </p>
                       </div>
@@ -472,7 +472,7 @@ export function FanTalk() {
               </div>
               <button
                 onClick={() => navigate("/fandom/fans")}
-                className="w-full text-center text-xs font-semibold mt-3 py-2 rounded-lg transition-all hover:bg-muted"
+                className="w-full text-center text-[13px] font-semibold mt-3 py-2 rounded-lg transition-all hover:bg-muted"
                 style={{ color: themeColor }}
               >
                 크리에이터 더보기 →
@@ -495,12 +495,12 @@ export function FanTalk() {
                 ].map((topic, i) => (
                   <div key={i} className="flex items-center justify-between py-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-muted-foreground">{i + 1}</span>
+                      <span className="text-[13px] font-bold text-muted-foreground">{i + 1}</span>
                       <span className="text-sm font-medium" style={{ color: themeColor }}>
                         {topic.tag}
                       </span>
                     </div>
-                    <span className="text-[11px] text-muted-foreground">{topic.count}개</span>
+                    <span className="text-[13px] text-muted-foreground">{topic.count}개</span>
                   </div>
                 ))}
               </div>
@@ -520,7 +520,7 @@ export function FanTalk() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">다이렉트 메시지</p>
-                  <p className="text-xs text-muted-foreground">팬 크리에이터에게 DM 보내기</p>
+                  <p className="text-[13px] text-muted-foreground">팬 크리에이터에게 DM 보내기</p>
                 </div>
               </div>
             </button>

@@ -112,7 +112,7 @@ export function FandomFeed() {
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={() => setSortBy("latest")}
-              className={`flex items-center gap-1 px-3 py-1.5 text-xs rounded-full transition-all ${
+              className={`flex items-center gap-1 px-3 py-1.5 text-[13px] rounded-full transition-all ${
                 sortBy === "latest" ? "bg-muted text-foreground font-semibold" : "text-muted-foreground"
               }`}
             >
@@ -120,7 +120,7 @@ export function FandomFeed() {
             </button>
             <button
               onClick={() => setSortBy("popular")}
-              className={`flex items-center gap-1 px-3 py-1.5 text-xs rounded-full transition-all ${
+              className={`flex items-center gap-1 px-3 py-1.5 text-[13px] rounded-full transition-all ${
                 sortBy === "popular" ? "bg-muted text-foreground font-semibold" : "text-muted-foreground"
               }`}
             >
@@ -167,11 +167,11 @@ export function FandomFeed() {
                 <div className="p-5 space-y-4 flex flex-col">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
-                      <span className="text-xs text-white font-bold">{selectedPost.authorAvatar}</span>
+                      <span className="text-[13px] text-white font-bold">{selectedPost.authorAvatar}</span>
                     </div>
                     <div>
                       <span className="text-sm font-semibold text-foreground">{selectedPost.authorName}</span>
-                      <p className="text-[11px] text-muted-foreground">{selectedPost.groupName} · {selectedPost.memberTags.join(", ")}</p>
+                      <p className="text-[13px] text-muted-foreground">{selectedPost.groupName} · {selectedPost.memberTags.join(", ")}</p>
                     </div>
                   </div>
                   <h2 className="text-lg font-bold text-foreground">{selectedPost.title}</h2>

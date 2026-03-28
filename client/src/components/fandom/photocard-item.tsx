@@ -100,7 +100,7 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike }: Photocar
         {/* Rarity badge - top right */}
         <div className="absolute top-2 right-2 z-10">
           <span
-            className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-black ${rarity.color} ${rarity.bg} backdrop-blur-sm`}
+            className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[13px] font-black ${rarity.color} ${rarity.bg} backdrop-blur-sm`}
           >
             {rarity.star ? "\u2605" : ""}
             {rarity.letter}
@@ -110,7 +110,7 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike }: Photocar
         {/* Trade badge - top left */}
         {card.isForTrade && (
           <div className="absolute top-2 left-2 z-10">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-bold bg-emerald-500/20 text-emerald-400 backdrop-blur-sm">
               <ArrowRightLeft className="w-3 h-3" />
               거래 가능
             </span>
@@ -137,12 +137,12 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike }: Photocar
         {/* Player name + Team badge */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {card.playerName && (
-            <span className="text-xs text-muted-foreground truncate">
+            <span className="text-[13px] text-muted-foreground truncate">
               {card.playerName}
             </span>
           )}
           <span
-            className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium text-white/90"
+            className="inline-block px-1.5 py-0.5 rounded text-[13px] font-medium text-white/90"
             style={{ backgroundColor: `${teamColor}80` }}
           >
             {card.teamName}
@@ -151,7 +151,7 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike }: Photocar
 
         {/* Owner + Like */}
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-muted-foreground truncate max-w-[60%]">
+          <span className="text-[13px] text-muted-foreground truncate max-w-[60%]">
             @{card.ownerName}
           </span>
           <button
@@ -160,7 +160,7 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike }: Photocar
               e.stopPropagation();
               onLike?.(card.id);
             }}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-400 transition-colors"
+            className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-red-400 transition-colors"
           >
             <Heart
               className={`w-3.5 h-3.5 transition-colors ${

@@ -70,7 +70,7 @@ export function ScheduleWeekView({
             {/* Day header */}
             <div className="text-center mb-2 pb-2 border-b border-border">
               <p
-                className={`text-xs font-bold ${
+                className={`text-[13px] font-bold ${
                   isToday ? "text-primary" : "text-muted-foreground"
                 }`}
               >
@@ -84,7 +84,7 @@ export function ScheduleWeekView({
                 {formatDate(col.date)}
               </p>
               {isToday && (
-                <span className="inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-primary text-primary-foreground">
+                <span className="inline-block mt-1 px-1.5 py-0.5 rounded-full text-[13px] font-bold bg-primary text-primary-foreground">
                   오늘
                 </span>
               )}
@@ -106,7 +106,7 @@ export function ScheduleWeekView({
                   />
                 ))
               ) : (
-                <p className="text-[10px] text-muted-foreground/50 text-center py-4">
+                <p className="text-[13px] text-muted-foreground/50 text-center py-4">
                   경기 없음
                 </p>
               )}

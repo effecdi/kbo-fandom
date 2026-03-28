@@ -60,7 +60,7 @@ export function GoodsTradeCard({ trade, teamColor }: GoodsTradeCardProps) {
       <div className="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-muted to-muted/50">
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <span className="text-4xl">{CATEGORY_EMOJI[trade.category]}</span>
-          <span className="text-xs text-muted-foreground/60 font-medium">
+          <span className="text-[13px] text-muted-foreground/60 font-medium">
             {CATEGORY_LABELS[trade.category]}
           </span>
         </div>
@@ -76,7 +76,7 @@ export function GoodsTradeCard({ trade, teamColor }: GoodsTradeCardProps) {
 
         {/* Trade type badge (top-left) */}
         <div className="absolute top-2 left-2">
-          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold ${tradeType.color}`}>
+          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-bold ${tradeType.color}`}>
             <TradeIcon className="w-3 h-3" />
             {tradeType.label}
           </span>
@@ -84,7 +84,7 @@ export function GoodsTradeCard({ trade, teamColor }: GoodsTradeCardProps) {
 
         {/* Condition badge (top-right) */}
         <div className="absolute top-2 right-2">
-          <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${condition.color}`}>
+          <span className={`px-2 py-1 rounded-full text-[13px] font-bold ${condition.color}`}>
             {condition.label}
           </span>
         </div>
@@ -98,7 +98,7 @@ export function GoodsTradeCard({ trade, teamColor }: GoodsTradeCardProps) {
         </h3>
 
         {/* Price / Wanted / Giveaway info */}
-        <div className="text-xs">
+        <div className="text-[13px]">
           {trade.tradeType === "sell" && trade.price != null && (
             <span className="text-green-400 font-bold text-sm">
               {trade.price.toLocaleString()}\uC6D0
@@ -119,31 +119,31 @@ export function GoodsTradeCard({ trade, teamColor }: GoodsTradeCardProps) {
         </div>
 
         {/* Description (2-line clamp) */}
-        <p className="text-xs text-muted-foreground line-clamp-2">
+        <p className="text-[13px] text-muted-foreground line-clamp-2">
           {trade.description}
         </p>
 
         {/* Seller info */}
         <div className="flex items-center gap-2 pt-1">
           <div
-            className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[9px]"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[13px]"
             style={{ backgroundColor: teamColor || "#666" }}
           >
             {trade.sellerAvatar}
           </div>
-          <span className="text-xs text-muted-foreground">{trade.sellerName}</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
+          <span className="text-[13px] text-muted-foreground">{trade.sellerName}</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[13px] font-medium bg-muted text-muted-foreground">
             {trade.teamName}
           </span>
         </div>
 
         {/* Bottom: Likes + Date */}
         <div className="flex items-center justify-between pt-1 border-t border-border/50">
-          <div className="flex items-center gap-1 text-[12px] text-muted-foreground">
+          <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
             <Heart className="w-3.5 h-3.5" />
             <span>{trade.likes}</span>
           </div>
-          <span className="text-[11px] text-muted-foreground/50">
+          <span className="text-[13px] text-muted-foreground/50">
             {trade.createdAt}
           </span>
         </div>

@@ -42,7 +42,7 @@ export function LiveGameDetailPanel({
   if (game.status === "live" && relayLoading) {
     return (
       <div className="rounded-2xl overflow-hidden h-[300px] flex items-center justify-center bg-gradient-to-b from-[#2d5a27] to-[#3a7233]">
-        <div className="text-white/50 text-xs animate-pulse">
+        <div className="text-white/50 text-[13px] animate-pulse">
           중계 데이터 로딩 중...
         </div>
       </div>

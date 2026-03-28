@@ -273,7 +273,7 @@ export function LiveGameCarousel({
               {/* ── Status badge ─────────────────────────────────────────── */}
               <div className="flex items-center gap-2 mb-3 md:mb-4">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${statusCfg.badgeClass}`}
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[13px] font-bold text-white ${statusCfg.badgeClass}`}
                 >
                   {game.status === "live" && (
                     <span className="relative flex h-2 w-2">
@@ -284,7 +284,7 @@ export function LiveGameCarousel({
                   {statusCfg.label}
                 </span>
                 {game.status === "live" && game.inning && (
-                  <span className="text-[11px] font-semibold text-white/80">
+                  <span className="text-[13px] font-semibold text-white/80">
                     {game.inning}
                   </span>
                 )}
@@ -298,7 +298,7 @@ export function LiveGameCarousel({
                     <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="lg" className="border-2 border-white/20 mx-auto" />
                   </div>
                   <p
-                    className={`font-bold text-white truncate ${isActive ? "text-xs" : "text-[10px]"}`}
+                    className={`font-bold text-white truncate ${isActive ? "text-[13px]" : "text-[13px]"}`}
                   >
                     {game.homeTeamName}
                   </p>
@@ -337,7 +337,7 @@ export function LiveGameCarousel({
                     <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="lg" className="border-2 border-white/20 mx-auto" />
                   </div>
                   <p
-                    className={`font-bold text-white truncate ${isActive ? "text-xs" : "text-[10px]"}`}
+                    className={`font-bold text-white truncate ${isActive ? "text-[13px]" : "text-[13px]"}`}
                   >
                     {game.awayTeamName}
                   </p>
@@ -345,7 +345,7 @@ export function LiveGameCarousel({
               </div>
 
               {/* ── Stadium + Time ───────────────────────────────────────── */}
-              <div className="flex items-center justify-between mt-3 md:mt-4 text-[11px] text-white/60">
+              <div className="flex items-center justify-between mt-3 md:mt-4 text-[13px] text-white/60">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   <span className="truncate max-w-[120px]">

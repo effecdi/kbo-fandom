@@ -148,11 +148,11 @@ export function FandomIndex() {
                 {hasLiveGames ? "LIVE 경기" : liveGames.some((g) => g.status === "finished") ? "오늘의 경기 결과" : "오늘의 경기"}
               </h2>
               {hasLiveGames && (
-                <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                <span className="text-[13px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   실시간 업데이트
                 </span>
               )}
-              <span className="text-xs text-muted-foreground ml-auto">
+              <span className="text-[13px] text-muted-foreground ml-auto">
                 {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
               </span>
             </div>
@@ -174,7 +174,7 @@ export function FandomIndex() {
             >
               <Palette className="w-8 h-8 mb-2" style={{ color: themeColor }} />
               <p className="font-bold text-foreground">내 그룹 팬아트 만들기</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground mt-1">
                 {fandomProfile.groupName} 멤버의 팬아트를 제작하세요
               </p>
             </Link>
@@ -184,7 +184,7 @@ export function FandomIndex() {
             >
               <Rss className="w-8 h-8 text-cyan-500 mb-2" />
               <p className="font-bold text-foreground">팬덤 피드 보기</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground mt-1">
                 {fandomProfile.groupName} 최신 팬아트 확인
               </p>
             </Link>
@@ -194,7 +194,7 @@ export function FandomIndex() {
             >
               <Trophy className="w-8 h-8 text-amber-500 mb-2" />
               <p className="font-bold text-foreground">이벤트 참여하기</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground mt-1">
                 진행중 이벤트 {activeEvents.length}개
               </p>
             </Link>
@@ -360,7 +360,7 @@ export function FandomIndex() {
                     <p className="font-bold text-foreground truncate">{project.title}</p>
                     <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     {project.panels}컷 · {project.updatedAt}
                   </p>
                 </Link>

@@ -49,13 +49,13 @@ export function PlayerPicker({
               style={selectedGroupId === group.id ? { borderColor: themeColor, background: `color-mix(in srgb, ${themeColor} 10%, transparent)` } : undefined}
             >
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold mb-2"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[13px] font-bold mb-2"
                 style={{ backgroundColor: group.coverColor }}
               >
                 {group.name.slice(0, 2)}
               </div>
               <p className="text-sm font-semibold text-foreground">{group.name}</p>
-              <p className="text-[11px] text-muted-foreground">{group.fandomName}</p>
+              <p className="text-[13px] text-muted-foreground">{group.fandomName}</p>
             </button>
           ))}
         </div>
@@ -88,7 +88,7 @@ export function PlayerPicker({
                     {isSelected && <Check className="w-3 h-3 text-white" />}
                   </div>
                   <span className="font-medium">{member.name}</span>
-                  <span className="text-[11px] text-muted-foreground">{member.position}</span>
+                  <span className="text-[13px] text-muted-foreground">{member.position}</span>
                 </button>
               );
             })}

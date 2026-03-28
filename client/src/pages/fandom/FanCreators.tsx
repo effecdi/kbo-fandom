@@ -112,7 +112,7 @@ export function FanCreators() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             <button
               onClick={() => setGroupFilter(null)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${
                 !groupFilter ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -122,7 +122,7 @@ export function FanCreators() {
               <button
                 key={g.id}
                 onClick={() => setGroupFilter(g.id === groupFilter ? null : g.id)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${
                   groupFilter === g.id ? "text-white" : "bg-muted text-muted-foreground hover:text-foreground"
                 }`}
                 style={groupFilter === g.id ? { background: g.coverColor } : {}}
@@ -140,7 +140,7 @@ export function FanCreators() {
               <button
                 key={key}
                 onClick={() => setBadgeFilter(badgeFilter === key ? null : key)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[13px] font-semibold transition-all ${
                   badgeFilter === key ? "text-white" : "bg-muted text-muted-foreground hover:text-foreground"
                 }`}
                 style={badgeFilter === key ? { background: info.color } : {}}
@@ -154,7 +154,7 @@ export function FanCreators() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="text-xs bg-muted border-0 rounded-lg px-3 py-1.5 text-foreground focus:outline-none"
+            className="text-[13px] bg-muted border-0 rounded-lg px-3 py-1.5 text-foreground focus:outline-none"
           >
             <option value="followers">팔로워순</option>
             <option value="fanart">팬아트순</option>
@@ -194,7 +194,7 @@ export function FanCreators() {
                       </button>
                       {badge && (
                         <span
-                          className="text-[9px] px-1.5 py-0.5 rounded-full text-white font-bold shrink-0"
+                          className="text-[13px] px-1.5 py-0.5 rounded-full text-white font-bold shrink-0"
                           style={{ background: badge.color }}
                         >
                           {badge.label}
@@ -203,12 +203,12 @@ export function FanCreators() {
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span
-                        className="text-[9px] px-1.5 py-0.5 rounded-full text-white font-semibold"
+                        className="text-[13px] px-1.5 py-0.5 rounded-full text-white font-semibold"
                         style={{ background: group?.coverColor }}
                       >
                         {creator.groupName}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">최애 {creator.favoritePlayer}</span>
+                      <span className="text-[13px] text-muted-foreground">최애 {creator.favoritePlayer}</span>
                     </div>
                   </div>
                   {sortBy === "followers" && (
@@ -219,12 +219,12 @@ export function FanCreators() {
                 </div>
 
                 {/* Bio */}
-                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-3">
+                <p className="text-[13px] text-muted-foreground line-clamp-2 leading-relaxed mb-3">
                   {creator.bio}
                 </p>
 
                 {/* Stats */}
-                <div className="flex items-center gap-4 text-[11px] text-muted-foreground mb-3 pb-3 border-b border-border">
+                <div className="flex items-center gap-4 text-[13px] text-muted-foreground mb-3 pb-3 border-b border-border">
                   <span className="flex items-center gap-1">
                     <Image className="w-3 h-3" />
                     {creator.fanartCount}
@@ -243,7 +243,7 @@ export function FanCreators() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleFollow(creator.id)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[13px] font-semibold transition-all ${
                       following ? "bg-muted text-foreground" : "text-white"
                     }`}
                     style={!following ? { background: group?.coverColor || themeColor } : {}}

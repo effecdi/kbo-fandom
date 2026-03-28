@@ -62,10 +62,10 @@ export function GameLineupPanel({
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: offColor || "#666" }}
             />
-            <span className="text-[11px] font-bold text-foreground">
+            <span className="text-[13px] font-bold text-foreground">
               {offTeamName}
             </span>
-            <span className="text-[9px] text-muted-foreground ml-auto">공격</span>
+            <span className="text-[13px] text-muted-foreground ml-auto">공격</span>
           </div>
           <div className="space-y-0.5">
             {relay.battingOrder.slice(0, 9).map((b) => {
@@ -73,7 +73,7 @@ export function GameLineupPanel({
               return (
                 <div
                   key={b.order}
-                  className={`flex items-center gap-1.5 text-[11px] px-1.5 py-0.5 rounded ${
+                  className={`flex items-center gap-1.5 text-[13px] px-1.5 py-0.5 rounded ${
                     isActive ? "bg-yellow-500/15 font-bold" : ""
                   }`}
                 >
@@ -83,7 +83,7 @@ export function GameLineupPanel({
                   <span className={`truncate ${isActive ? "text-foreground" : "text-foreground/80"}`}>
                     {b.name}
                   </span>
-                  <span className="text-muted-foreground text-[9px] ml-auto shrink-0">
+                  <span className="text-muted-foreground text-[13px] ml-auto shrink-0">
                     {POS_SHORT[b.pos] || b.pos}
                   </span>
                 </div>
@@ -99,10 +99,10 @@ export function GameLineupPanel({
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: defColor || "#666" }}
             />
-            <span className="text-[11px] font-bold text-foreground">
+            <span className="text-[13px] font-bold text-foreground">
               {defTeamName}
             </span>
-            <span className="text-[9px] text-muted-foreground ml-auto">수비</span>
+            <span className="text-[13px] text-muted-foreground ml-auto">수비</span>
           </div>
           <div className="space-y-0.5">
             {defenseList.map((d) => {
@@ -110,11 +110,11 @@ export function GameLineupPanel({
               return (
                 <div
                   key={d.pos}
-                  className={`flex items-center gap-1.5 text-[11px] px-1.5 py-0.5 rounded ${
+                  className={`flex items-center gap-1.5 text-[13px] px-1.5 py-0.5 rounded ${
                     isActive ? "bg-red-500/15 font-bold" : ""
                   }`}
                 >
-                  <span className="text-muted-foreground w-4 text-right shrink-0 text-[9px]">
+                  <span className="text-muted-foreground w-4 text-right shrink-0 text-[13px]">
                     {posLabel[d.pos] || d.pos}
                   </span>
                   <span className={`truncate ${isActive ? "text-foreground" : "text-foreground/80"}`}>
