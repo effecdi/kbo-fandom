@@ -113,26 +113,11 @@ export function FandomIndex() {
   const myGroup = groups.find((g) => g.id === fandomProfile?.groupId);
   const themeColor = myGroup?.coverColor || "#7B2FF7";
 
-  // Build dashboard widgets
+  // Build dashboard widgets (static — no liveGames dependency)
   const widgets: DashboardWidget[] = useMemo(() => {
     const w: DashboardWidget[] = [];
 
-    // 1. Live Score (always visible when there are games)
-    if (liveGames.length > 0) {
-      w.push({
-        id: "live-score",
-        title: hasLiveGames ? "LIVE 경기" : "오늘의 경기",
-        icon: Flame,
-        required: true,
-        content: (
-          <LiveGameSection
-            games={liveGames}
-            teams={groups}
-            myTeamId={fandomProfile?.groupId}
-          />
-        ),
-      });
-    }
+    // 1. Live Score → rendered OUTSIDE grid (see JSX below)
 
     // 2. Next Game Countdown
     if (fandomProfile && myGroup) {
@@ -245,12 +230,12 @@ export function FandomIndex() {
       });
     }
 
-    // 7. Fan Prediction Poll (NEW)
+    // 7. Fan Prediction Poll — polls its own live data (60s)
     w.push({
       id: "fan-poll",
       title: "팬 투표",
       icon: Vote,
-      content: <FanPollWidget themeColor={themeColor} teamName={myGroup?.nameKo || fandomProfile?.groupName} teamId={fandomProfile?.groupId} liveGames={liveGames} />,
+      content: <FanPollWidget themeColor={themeColor} teamName={myGroup?.nameKo || fandomProfile?.groupName} teamId={fandomProfile?.groupId} />,
     });
 
     // 8. Upcoming Games (My Team Schedule) — horizontal scroll
@@ -353,7 +338,7 @@ export function FandomIndex() {
 
     return w;
   }, [
-    liveGames, hasLiveGames, groups, fandomProfile, myGroup, themeColor,
+    groups, fandomProfile, myGroup, themeColor,
     standings, liveStandings, feedPosts, myGroupPosts, activeEvents, myGroupEvents,
     otherActiveEvents, totalFanart, trendingGroups, upcomingGames,
     recentProjects,
@@ -465,7 +450,24 @@ export function FandomIndex() {
           </div>
         </div>
 
-        {/* Dashboard Grid (draggable widgets) */}
+        {/* Live Score — independent from dashboard grid, polls every 10s */}
+        {liveGames.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3 pt-2 pb-3">
+              <Flame className="w-5 h-5 shrink-0" style={{ color: themeColor }} />
+              <span className="text-2xl font-black text-foreground">
+                {hasLiveGames ? "LIVE 경기" : "오늘의 경기"}
+              </span>
+            </div>
+            <LiveGameSection
+              games={liveGames}
+              teams={groups}
+              myTeamId={fandomProfile?.groupId}
+            />
+          </div>
+        )}
+
+        {/* Dashboard Grid (draggable widgets — no 10s polling) */}
         <DashboardGrid widgets={widgets} themeColor={themeColor} />
       </div>
     </StudioLayout>
@@ -526,18 +528,17 @@ function QuickActionPills({ themeColor }: { themeColor: string }) {
   );
 }
 
-/** Fan Poll widget — uses actual live game data */
+/** Fan Poll widget — polls its own live data every 60s (independent of dashboard) */
 function FanPollWidget({
   themeColor,
   teamName,
   teamId,
-  liveGames,
 }: {
   themeColor: string;
   teamName?: string;
   teamId?: string;
-  liveGames: KboGameSchedule[];
 }) {
+  const { liveGames } = useKboLiveScores(60000); // 60s poll (not 10s)
   const POLL_KEY = "kbo-fan-poll-v1";
   const today = new Date().toISOString().split("T")[0];
 
