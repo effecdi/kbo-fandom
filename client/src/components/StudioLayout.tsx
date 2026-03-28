@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useTheme } from "@/components/theme-provider";
-import { getFandomProfile, clearFandomProfile } from "@/lib/local-store";
+import { getFandomProfile, clearFandomProfile, listItems, STORE_KEYS, type KboTeam } from "@/lib/local-store";
 
 interface NavSection {
   title: string;
@@ -68,6 +68,11 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
   });
 
   const fandomProfile = getFandomProfile();
+  // Look up Korean team name (fix for profiles stored with English name)
+  const myTeam = fandomProfile?.groupId
+    ? listItems<KboTeam>(STORE_KEYS.KBO_TEAMS).find((t) => t.id === fandomProfile.groupId)
+    : null;
+  const groupDisplayName = myTeam?.nameKo || fandomProfile?.groupName || "";
   const themeColor = "var(--fandom-primary, #7B2FF7)";
 
   const toggleSection = (label: string) => {
@@ -139,11 +144,11 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
               className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black"
               style={{ background: themeColor }}
             >
-              {fandomProfile?.groupName?.charAt(0) || <Heart className="w-5 h-5" />}
+              {groupDisplayName?.charAt(0) || <Heart className="w-5 h-5" />}
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-lg font-black block truncate" style={{ color: themeColor }}>
-                {fandomProfile ? `${fandomProfile.groupName}` : "MY FANDOM"}
+                {fandomProfile ? groupDisplayName : "MY FANDOM"}
               </span>
               {fandomProfile && (
                 <span className="text-[13px] text-muted-foreground truncate block">
@@ -241,7 +246,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
             <div className="flex-1 text-left">
               <p className="text-[15px] font-semibold text-foreground">{fandomProfile?.nickname || "게스트"}</p>
               <p className="text-[13px] text-muted-foreground">
-                {fandomProfile?.groupName || "팬덤 미인증"}
+                {groupDisplayName || "팬덤 미인증"}
               </p>
             </div>
             <ChevronDown className="w-5 h-5 text-muted-foreground" />
@@ -285,10 +290,10 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm"
               style={{ background: themeColor }}
             >
-              {fandomProfile?.groupName?.charAt(0) || <Heart className="w-4 h-4" />}
+              {groupDisplayName?.charAt(0) || <Heart className="w-4 h-4" />}
             </div>
             <span className="text-sm font-black truncate" style={{ color: themeColor }}>
-              {fandomProfile ? fandomProfile.groupName : "MY FANDOM"}
+              {fandomProfile ? groupDisplayName : "MY FANDOM"}
             </span>
           </Link>
           <button className="relative p-2 rounded-lg hover:bg-muted">

@@ -216,7 +216,7 @@ export function FandomIndex() {
     if (myGroupPosts.length > 0 && fandomProfile) {
       w.push({
         id: "my-feed",
-        title: `${fandomProfile.groupName} 팬아트`,
+        title: `${myGroup?.nameKo || fandomProfile.groupName} 팬아트`,
         icon: Heart,
         moreLink: "/fandom/feed",
         defaultColSpan: 2,
@@ -250,14 +250,14 @@ export function FandomIndex() {
       id: "fan-poll",
       title: "팬 투표",
       icon: Vote,
-      content: <FanPollWidget themeColor={themeColor} teamName={fandomProfile?.groupName} teamId={fandomProfile?.groupId} liveGames={liveGames} />,
+      content: <FanPollWidget themeColor={themeColor} teamName={myGroup?.nameKo || fandomProfile?.groupName} teamId={fandomProfile?.groupId} liveGames={liveGames} />,
     });
 
     // 8. Upcoming Games (My Team Schedule) — horizontal scroll
     if (upcomingGames.length > 0) {
       w.push({
         id: "my-schedule",
-        title: `${fandomProfile?.groupName || "내 팀"} 경기 일정`,
+        title: `${myGroup?.nameKo || fandomProfile?.groupName || "내 팀"} 경기 일정`,
         icon: Calendar,
         moreLink: "/fandom/schedule",
         noPadding: true,
@@ -265,7 +265,7 @@ export function FandomIndex() {
         content: (
           <div className="flex gap-3 overflow-x-auto pb-6 px-5 md:pb-8 md:px-7 scrollbar-hide">
             {upcomingGames.map((game) => (
-              <div key={game.id} className="min-w-[260px] max-w-[300px] flex-shrink-0">
+              <div key={game.id} className="min-w-[220px] max-w-[280px] flex-shrink-0">
                 <GameScheduleCard game={game} teams={groups} compact />
               </div>
             ))}
@@ -429,7 +429,7 @@ export function FandomIndex() {
               {fandomProfile ? (
                 <>
                   <span style={{ color: themeColor }}>{fandomProfile.nickname}</span>님의{" "}
-                  {fandomProfile.groupName} 팬덤
+                  {myGroup?.nameKo || fandomProfile.groupName} 팬덤
                 </>
               ) : (
                 "팬덤 허브"

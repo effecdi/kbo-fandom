@@ -122,7 +122,7 @@ export function FandomOnboarding() {
           id: generateId("fan"),
           nickname,
           groupId: selectedGroupId,
-          groupName: selectedGroup?.name || "",
+          groupName: selectedGroup?.nameKo || selectedGroup?.name || "",
           fandomName: fandomNameInput,
           favoritePlayer: favoriteMember?.name || "",
           secondPlayer: secondMember?.name || "",

@@ -395,7 +395,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
             <section
               key={widget.id}
               data-widget={widget.id}
-              className={`transition-all ${
+              className={`transition-all overflow-hidden ${
                 span === 2 ? "md:col-span-2" : ""
               } ${
                 editMode
