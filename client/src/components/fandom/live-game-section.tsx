@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LiveGameCarousel } from "./live-game-carousel";
 import { LiveGameDetailPanel } from "./live-game-detail-panel";
+import { GameLineupPanel } from "./game-lineup-panel";
 import { useKboGameRelay } from "@/hooks/use-kbo-game-relay";
 import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
 
@@ -25,7 +26,7 @@ export function LiveGameSection({
 
   return (
     <div className="flex flex-col lg:flex-row gap-4">
-      {/* Left: Carousel */}
+      {/* Left: Carousel + Lineup */}
       <div className="w-full lg:w-[55%] overflow-hidden">
         <LiveGameCarousel
           games={games}
@@ -34,9 +35,15 @@ export function LiveGameSection({
           onActiveIndexChange={setActiveIndex}
           compact
         />
+        {/* Lineup below carousel */}
+        <GameLineupPanel
+          game={selectedGame}
+          teams={teams}
+          relay={relay}
+        />
       </div>
 
-      {/* Right: Game Detail Panel with Diamond */}
+      {/* Right: Baseball Diamond only */}
       <div className="w-full lg:w-[45%]">
         <LiveGameDetailPanel
           game={selectedGame}
