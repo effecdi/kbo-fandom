@@ -421,7 +421,7 @@ export function FandomIndex() {
         </Suspense>
       </Link>
 
-      <div className="max-w-6xl mx-auto overflow-x-hidden">
+      <div className="max-w-6xl mx-auto">
         {/* Personalized Header */}
         <div ref={headerRef} className="mb-6" style={{ opacity: 0 }}>
           <div className="flex items-center gap-4 flex-wrap">

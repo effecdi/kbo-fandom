@@ -151,7 +151,7 @@ export function FanTalk() {
 
   return (
     <StudioLayout>
-      <div className="max-w-5xl mx-auto overflow-x-hidden">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>

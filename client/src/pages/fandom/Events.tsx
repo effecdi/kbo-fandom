@@ -39,7 +39,7 @@ export function FandomEvents() {
 
   return (
     <StudioLayout>
-      <div className="space-y-6 max-w-full overflow-x-hidden">
+      <div className="space-y-6 max-w-full">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">이벤트 / 챌린지</h1>

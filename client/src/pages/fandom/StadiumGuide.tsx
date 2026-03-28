@@ -62,7 +62,7 @@ export function FandomStadiumGuide() {
 
   return (
     <StudioLayout>
-      <div className="space-y-6 max-w-full overflow-x-hidden">
+      <div className="space-y-6 max-w-full">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">

@@ -26,7 +26,7 @@ export function FandomStandings() {
 
   return (
     <StudioLayout>
-      <div className="space-y-6 max-w-full overflow-x-hidden">
+      <div className="space-y-6 max-w-full">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
