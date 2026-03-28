@@ -2490,17 +2490,7 @@ export async function registerRoutes(
           // Map pitcher from text "투수 XXX : 투수 YYY (으)로 교체"
           const pitcherChangeMatch = text.match(/투수\s+(.+?)\s*:\s*투수\s+(.+?)\s*\(?으?\)?로\s*교체/);
           if (pitcherChangeMatch && trGs.pitcher) {
-            // After the change, the new pitcher is the current one
             pitcherPcodeMap[trGs.pitcher] = pitcherChangeMatch[2].trim();
-          }
-
-          // Also track pitcher pcode from the current game state against known entries
-          if (trGs.pitcher && !pcodeMap[trGs.pitcher] && !pitcherPcodeMap[trGs.pitcher]) {
-            // Check if we can find the name from relay titles mentioning pitching
-            const pitchMatch = text.match(/투수\s+(\S+)\s/);
-            if (pitchMatch) {
-              pitcherPcodeMap[trGs.pitcher] = pitchMatch[1].trim();
-            }
           }
         }
       }
