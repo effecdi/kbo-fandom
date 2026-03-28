@@ -619,7 +619,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 6;
+const SEED_VERSION = 7;
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);
@@ -631,6 +631,8 @@ export function seedIfEmpty(): void {
     // v6: reset feed & creators for new engagement fields
     localStorage.removeItem(STORE_KEYS.FANDOM_FEED);
     localStorage.removeItem(STORE_KEYS.FAN_CREATORS);
+    // v7: reset stadium guides (한화 이글스 데이터 누락 수정)
+    localStorage.removeItem(STORE_KEYS.STADIUM_GUIDES);
   }
 
   // ─── Projects (used by Studio) ──────────────────────────────────────────────
