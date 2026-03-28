@@ -96,7 +96,6 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
     {
       title: "창작",
       items: [
-        { icon: Pen, label: "에디터", path: "/editor/new" },
         { icon: Sparkles, label: "팬아트 만들기", path: "/fandom/create" },
         { icon: Camera, label: "포토카드", path: "/fandom/photocards" },
         { icon: FolderOpen, label: "내 작품", path: "/studio" },
@@ -106,19 +105,8 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
       title: "커뮤니티",
       items: [
         { icon: Users, label: "KBO 구단", path: "/fandom/groups" },
-        { icon: Crown, label: "크리에이터", path: "/fandom/fans" },
-        { icon: Trophy, label: "이벤트 / 챌린지", path: "/fandom/events" },
         { icon: ShoppingBag, label: "굿즈 교환", path: "/fandom/goods" },
-        { icon: TrendingUp, label: "팬아트 랭킹", path: "/fandom/feed" },
         { icon: MessageCircle, label: "팬 토크", path: "/fandom/talk" },
-        { icon: Send, label: "다이렉트 메시지", path: "/fandom/messages" },
-      ],
-    },
-    {
-      title: "설정",
-      items: [
-        { icon: Settings, label: "프로필 설정", path: "/settings" },
-        { icon: RefreshCw, label: "팬덤 재인증", path: "/fandom/onboarding" },
       ],
     },
   ];
@@ -142,7 +130,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
       )}
 
       {/* Left Sidebar */}
-      <aside className={`w-60 border-r flex flex-col fixed h-screen bg-card border-border z-50 transition-transform duration-300 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
+      <aside data-lenis-prevent className={`w-60 border-r flex flex-col fixed h-screen bg-card border-border z-50 transition-transform duration-300 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
         {/* Logo / Group Badge */}
         <div className="p-5 border-b border-border">
           <Link to="/fandom" className="flex items-center gap-3">
@@ -186,7 +174,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 min-h-0 p-4 overflow-y-auto">
+        <nav className="flex-1 min-h-0 p-4 overflow-y-auto" style={{ overscrollBehavior: "contain" }}>
           <div className="space-y-4">
             {navSections.map((section) => {
               const isSectionExpanded = expandedSections[section.title] !== false;
@@ -276,7 +264,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 ml-0 md:ml-60">
+      <div className="flex-1 ml-0 md:ml-60 overflow-x-hidden max-w-full">
         {/* Mobile Header */}
         <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-card border-b border-border flex items-center px-4 gap-3">
           <button
@@ -385,7 +373,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
         </header>
 
         {/* Content Area */}
-        <main className={`pt-20 md:pt-24 ${noPadding ? "" : "px-4 md:px-8 pb-8"}`}>
+        <main className={`pt-20 md:pt-24 overflow-x-hidden ${noPadding ? "" : "px-4 md:px-8 pb-8"}`}>
           {children}
         </main>
       </div>

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
 import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
 
@@ -53,9 +53,76 @@ export function ScheduleWeekView({
     return cols;
   }, [games, weekStart]);
 
+  // Mobile: find today's index or first day with games
+  const defaultMobileDay = useMemo(() => {
+    const todayIdx = columns.findIndex((c) => c.dateStr === today);
+    if (todayIdx >= 0) return todayIdx;
+    const firstWithGames = columns.findIndex((c) => c.games.length > 0);
+    return firstWithGames >= 0 ? firstWithGames : 0;
+  }, [columns, today]);
+
+  const [selectedDayIdx, setSelectedDayIdx] = useState(defaultMobileDay);
+
+  const selectedCol = columns[selectedDayIdx];
+
   return (
-    <div className="overflow-x-auto -mx-2 px-2 pb-2">
-      <div className="grid grid-cols-7 gap-1 min-w-[700px]">
+    <>
+      {/* ── Mobile: Day tabs + single day view ─────────────────────── */}
+      <div className="lg:hidden">
+        {/* Day tab bar */}
+        <div className="flex items-center gap-1 mb-4">
+          {columns.map((col, idx) => {
+            const isToday = col.dateStr === today;
+            const isSelected = idx === selectedDayIdx;
+            const hasGames = col.games.length > 0;
+            return (
+              <button
+                key={col.dateStr}
+                onClick={() => setSelectedDayIdx(idx)}
+                className={`flex-1 flex flex-col items-center py-2 rounded-lg transition-all text-center ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground"
+                    : isToday
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <span className="text-[13px] font-bold">{col.dayName}</span>
+                <span className={`text-[13px] ${isSelected ? "font-bold" : ""}`}>
+                  {formatDate(col.date)}
+                </span>
+                {hasGames && !isSelected && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-0.5" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Selected day games */}
+        <div className="space-y-3">
+          {selectedCol && selectedCol.games.length > 0 ? (
+            selectedCol.games.map((game) => (
+              <GameScheduleCard
+                key={game.id}
+                game={game}
+                teams={teams}
+                showAttendButton
+                isAttending={attendingGameIds.includes(game.id)}
+                onToggleAttend={onToggleAttend}
+                myTeamId={myTeamId}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-[13px] text-muted-foreground">경기 없음</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Desktop: 7-column grid ─────────────────────────────────── */}
+      <div className="hidden lg:grid grid-cols-7 gap-1">
         {columns.map((col) => {
           const isToday = col.dateStr === today;
           return (
@@ -115,6 +182,6 @@ export function ScheduleWeekView({
           );
         })}
       </div>
-    </div>
+    </>
   );
 }

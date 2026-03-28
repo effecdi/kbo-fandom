@@ -427,6 +427,11 @@ html.lenis, html.lenis body {
   background-color: hsl(var(--muted));
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   background-color: black;
   color: hsl(var(--foreground));
