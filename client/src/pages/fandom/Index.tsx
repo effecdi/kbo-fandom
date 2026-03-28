@@ -291,7 +291,7 @@ export function FandomIndex() {
       id: "fan-poll",
       title: "팬 투표",
       icon: Vote,
-      content: <FanPollWidget themeColor={themeColor} teamName={fandomProfile?.groupName} />,
+      content: <FanPollWidget themeColor={themeColor} teamName={fandomProfile?.groupName} teamId={fandomProfile?.groupId} liveGames={liveGames} />,
     });
 
     // 8. Upcoming Games (My Team Schedule) — horizontal scroll
@@ -382,10 +382,29 @@ export function FandomIndex() {
     recentProjects,
   ]);
 
+  // Find my team's finished game today → victory placard
+  const myTeamWin = useMemo(() => {
+    if (!fandomProfile?.groupId) return null;
+    const myId = fandomProfile.groupId;
+    const finished = liveGames.filter((g) => g.status === "finished");
+    for (const g of finished) {
+      const isHome = g.homeTeamId === myId;
+      const isAway = g.awayTeamId === myId;
+      if (!isHome && !isAway) continue;
+      const myScore = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
+      const oppScore = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
+      const oppName = isHome ? g.awayTeamName : g.homeTeamName;
+      if (myScore > oppScore) return { myScore, oppScore, oppName, won: true as const };
+      if (myScore < oppScore) return { myScore, oppScore, oppName, won: false as const };
+      return { myScore, oppScore, oppName, won: null }; // draw
+    }
+    return null;
+  }, [liveGames, fandomProfile]);
+
   return (
     <StudioLayout>
       <div className="max-w-6xl mx-auto overflow-x-hidden">
-        {/* Personalized Header */}
+        {/* Personalized Header + Victory Placard */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-foreground">
@@ -404,7 +423,38 @@ export function FandomIndex() {
                 : "좋아하는 구단의 팬아트를 만들고, 팬덤과 소통하세요"}
             </p>
           </div>
-          <div className="flex gap-2 shrink-0">
+
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Victory / Defeat Placard */}
+            {myTeamWin && (
+              <div
+                className="relative overflow-hidden rounded-2xl px-5 py-3 text-white text-center min-w-[180px]"
+                style={{
+                  background: myTeamWin.won
+                    ? `linear-gradient(135deg, ${themeColor}, ${themeColor}CC)`
+                    : myTeamWin.won === false
+                      ? "linear-gradient(135deg, #374151, #1f2937)"
+                      : "linear-gradient(135deg, #6B7280, #4B5563)",
+                }}
+              >
+                {myTeamWin.won && (
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-white/20 animate-ping" />
+                    <div className="absolute -bottom-1 -right-2 w-3 h-3 rounded-full bg-white/15 animate-ping" style={{ animationDelay: "0.5s" }} />
+                  </div>
+                )}
+                <p className="text-[13px] font-bold opacity-80">
+                  vs {myTeamWin.oppName}
+                </p>
+                <p className="text-2xl font-black tracking-tight">
+                  {myTeamWin.myScore} : {myTeamWin.oppScore}
+                </p>
+                <p className="text-lg font-black mt-0.5">
+                  {myTeamWin.won ? "승리!!!" : myTeamWin.won === false ? "아쉬운 패배" : "무승부"}
+                </p>
+              </div>
+            )}
+
             <Link to="/fandom/create">
               <Button
                 className="font-bold gap-2 text-white text-sm"
@@ -424,81 +474,149 @@ export function FandomIndex() {
   );
 }
 
-/** Fan Poll widget (new feature based on research) */
-function FanPollWidget({ themeColor, teamName }: { themeColor: string; teamName?: string }) {
-  const [voted, setVoted] = useState<string | null>(null);
-  const [votes, setVotes] = useState({ win: 67, lose: 33 });
+/** Fan Poll widget — uses actual live game data */
+function FanPollWidget({
+  themeColor,
+  teamName,
+  teamId,
+  liveGames,
+}: {
+  themeColor: string;
+  teamName?: string;
+  teamId?: string;
+  liveGames: KboGameSchedule[];
+}) {
+  const POLL_KEY = "kbo-fan-poll-v1";
+  const today = new Date().toISOString().split("T")[0];
+
+  // Find my team's game today
+  const myGame = teamId
+    ? liveGames.find((g) => g.homeTeamId === teamId || g.awayTeamId === teamId)
+    : null;
+
+  const isHome = myGame?.homeTeamId === teamId;
+  const oppName = myGame ? (isHome ? myGame.awayTeamName : myGame.homeTeamName) : null;
+  const isFinished = myGame?.status === "finished";
+  const myScore = myGame ? (isHome ? (myGame.homeScore ?? 0) : (myGame.awayScore ?? 0)) : 0;
+  const oppScore = myGame ? (isHome ? (myGame.awayScore ?? 0) : (myGame.homeScore ?? 0)) : 0;
+  const actualWin = isFinished ? myScore > oppScore : null;
+
+  // Vote state persisted per day
+  const [voted, setVoted] = useState<string | null>(() => {
+    try {
+      const data = JSON.parse(localStorage.getItem(POLL_KEY) || "{}");
+      return data.date === today ? data.choice : null;
+    } catch { return null; }
+  });
+  const [votes, setVotes] = useState(() => {
+    try {
+      const data = JSON.parse(localStorage.getItem(POLL_KEY) || "{}");
+      return data.date === today && data.votes ? data.votes : { win: 67, lose: 33 };
+    } catch { return { win: 67, lose: 33 }; }
+  });
 
   const handleVote = (choice: string) => {
-    if (voted) return;
+    if (voted || isFinished) return;
+    const newVotes = { ...votes, [choice === "win" ? "win" : "lose"]: votes[choice === "win" ? "win" : "lose"] + 1 };
     setVoted(choice);
-    if (choice === "win") {
-      setVotes((prev) => ({ ...prev, win: prev.win + 1 }));
-    } else {
-      setVotes((prev) => ({ ...prev, lose: prev.lose + 1 }));
-    }
+    setVotes(newVotes);
+    try { localStorage.setItem(POLL_KEY, JSON.stringify({ date: today, choice, votes: newVotes })); } catch {}
   };
 
   const total = votes.win + votes.lose;
   const winPct = Math.round((votes.win / total) * 100);
   const losePct = 100 - winPct;
+  const predictedCorrect = isFinished && voted && ((voted === "win" && actualWin === true) || (voted === "lose" && actualWin === false));
+
+  // No game today
+  if (!myGame) {
+    return (
+      <div className="text-center py-6">
+        <p className="text-[15px] font-bold text-foreground mb-1">오늘의 예측</p>
+        <p className="text-[13px] text-muted-foreground">
+          {teamName || "내 팀"} 오늘 경기가 없습니다
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div>
         <p className="text-[15px] font-bold text-foreground mb-1">오늘의 예측</p>
         <p className="text-[13px] text-muted-foreground">
-          {teamName || "내 팀"} 오늘 경기 결과는?
+          {teamName || "내 팀"} vs {oppName} — {myGame.status === "live" ? "경기 진행중!" : isFinished ? "경기 종료" : `${myGame.time} 시작`}
         </p>
       </div>
 
-      <div className="space-y-2">
-        <button
-          onClick={() => handleVote("win")}
-          className={`w-full rounded-xl p-3 text-left transition-all border ${
-            voted === "win" ? "border-current" : "border-border hover:border-foreground/20"
-          }`}
-          style={voted === "win" ? { borderColor: themeColor, background: `${themeColor}10` } : {}}
+      {/* Result banner when finished */}
+      {isFinished && (
+        <div
+          className="rounded-xl p-3 text-center text-white"
+          style={{
+            background: actualWin
+              ? `linear-gradient(135deg, ${themeColor}, ${themeColor}BB)`
+              : "linear-gradient(135deg, #374151, #1f2937)",
+          }}
         >
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[15px] font-bold text-foreground">승리</span>
-            {voted && <span className="text-sm font-black" style={{ color: themeColor }}>{winPct}%</span>}
-          </div>
+          <p className="text-2xl font-black">{myScore} : {oppScore}</p>
+          <p className="text-[15px] font-bold mt-1">
+            {actualWin ? "승리!!!" : myScore === oppScore ? "무승부" : "아쉬운 패배"}
+          </p>
           {voted && (
-            <div className="h-2 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${winPct}%`, background: themeColor }}
-              />
-            </div>
+            <p className="text-[13px] mt-1 opacity-80">
+              {predictedCorrect ? "예측 적중!" : "예측이 빗나갔어요"}
+            </p>
           )}
-        </button>
+        </div>
+      )}
 
-        <button
-          onClick={() => handleVote("lose")}
-          className={`w-full rounded-xl p-3 text-left transition-all border ${
-            voted === "lose" ? "border-current" : "border-border hover:border-foreground/20"
-          }`}
-          style={voted === "lose" ? { borderColor: "#ef4444", background: "#ef444410" } : {}}
-        >
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[15px] font-bold text-foreground">패배</span>
-            {voted && <span className="text-sm font-black text-red-500">{losePct}%</span>}
-          </div>
-          {voted && (
-            <div className="h-2 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full bg-red-500 transition-all duration-500"
-                style={{ width: `${losePct}%` }}
-              />
+      {/* Vote buttons (disabled after game ends) */}
+      {!isFinished && (
+        <div className="space-y-2">
+          <button
+            onClick={() => handleVote("win")}
+            disabled={!!voted}
+            className={`w-full rounded-xl p-3 text-left transition-all border ${
+              voted === "win" ? "border-current" : "border-border hover:border-foreground/20"
+            } disabled:cursor-default`}
+            style={voted === "win" ? { borderColor: themeColor, background: `${themeColor}10` } : {}}
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[15px] font-bold text-foreground">{teamName} 승리</span>
+              {voted && <span className="text-[15px] font-black" style={{ color: themeColor }}>{winPct}%</span>}
             </div>
-          )}
-        </button>
-      </div>
+            {voted && (
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${winPct}%`, background: themeColor }} />
+              </div>
+            )}
+          </button>
 
-      {voted && (
+          <button
+            onClick={() => handleVote("lose")}
+            disabled={!!voted}
+            className={`w-full rounded-xl p-3 text-left transition-all border ${
+              voted === "lose" ? "border-current" : "border-border hover:border-foreground/20"
+            } disabled:cursor-default`}
+            style={voted === "lose" ? { borderColor: "#ef4444", background: "#ef444410" } : {}}
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[15px] font-bold text-foreground">{oppName} 승리</span>
+              {voted && <span className="text-[15px] font-black text-red-500">{losePct}%</span>}
+            </div>
+            {voted && (
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full bg-red-500 transition-all duration-500" style={{ width: `${losePct}%` }} />
+              </div>
+            )}
+          </button>
+        </div>
+      )}
+
+      {voted && !isFinished && (
         <p className="text-[13px] text-muted-foreground text-center">
-          총 {total}명 참여
+          총 {total}명 참여 · 경기 종료 후 결과 확인!
         </p>
       )}
     </div>
