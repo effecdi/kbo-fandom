@@ -8,9 +8,11 @@ import {
   updateItem,
   STORE_KEYS,
   getFandomProfile,
+  setFandomProfile,
   type PhotocardItem,
   type KboTeam,
 } from "@/lib/local-store";
+import { useToast } from "@/hooks/use-toast";
 
 type MainTab = "gallery" | "mine" | "trading";
 type RarityFilter = "all" | "common" | "rare" | "epic" | "legendary";
@@ -35,10 +37,19 @@ export function FandomPhotocards() {
   const [tab, setTab] = useState<MainTab>("gallery");
   const [teamFilter, setTeamFilter] = useState<string | null>(null);
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
+  const [profileCardId, setProfileCardId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     setCards(listItems<PhotocardItem>(STORE_KEYS.PHOTOCARD_COLLECTION));
     setTeams(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
+    // Check which card is currently set as profile card
+    const profile = getFandomProfile();
+    if (profile?.lanyardCardUrl) {
+      const allCards = listItems<PhotocardItem>(STORE_KEYS.PHOTOCARD_COLLECTION);
+      const match = allCards.find((c) => c.imageUrl === profile.lanyardCardUrl);
+      if (match) setProfileCardId(match.id);
+    }
   }, []);
 
   // Build team color lookup
@@ -95,6 +106,27 @@ export function FandomPhotocards() {
       );
     },
     [],
+  );
+
+  // Set photocard as profile lanyard card
+  const handleSetProfile = useCallback(
+    (card: PhotocardItem) => {
+      const profile = getFandomProfile();
+      if (!profile) return;
+      // Use card image or generate a placeholder reference
+      const imageUrl = card.imageUrl || null;
+      setFandomProfile({
+        ...profile,
+        lanyardCardUrl: imageUrl || undefined,
+        favoritePlayer: card.playerName || profile.favoritePlayer,
+      });
+      setProfileCardId(card.id);
+      toast({
+        title: "프로필카드 설정 완료",
+        description: `${card.title}이(가) 목걸이 카드로 설정되었습니다. 홈에서 확인하세요!`,
+      });
+    },
+    [toast],
   );
 
   // Empty state message per tab
@@ -195,6 +227,8 @@ export function FandomPhotocards() {
                 card={card}
                 teamColor={teamColorMap.get(card.teamId) || "#666"}
                 onLike={handleLike}
+                onSetProfile={handleSetProfile}
+                isProfileCard={profileCardId === card.id}
               />
             ))}
           </div>

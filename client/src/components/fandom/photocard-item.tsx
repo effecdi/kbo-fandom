@@ -1,4 +1,4 @@
-import { Heart, ArrowRightLeft } from "lucide-react";
+import { Heart, ArrowRightLeft, UserCircle } from "lucide-react";
 import type { PhotocardItem } from "@/lib/local-store";
 
 const RARITY_CONFIG: Record<
@@ -15,6 +15,8 @@ interface PhotocardItemCardProps {
   card: PhotocardItem;
   teamColor?: string;
   onLike?: (id: string) => void;
+  onSetProfile?: (card: PhotocardItem) => void;
+  isProfileCard?: boolean;
 }
 
 function getFrameStyle(
@@ -60,7 +62,7 @@ function getFrameStyle(
   }
 }
 
-export function PhotocardItemCard({ card, teamColor = "#666", onLike }: PhotocardItemCardProps) {
+export function PhotocardItemCard({ card, teamColor = "#666", onLike, onSetProfile, isProfileCard }: PhotocardItemCardProps) {
   const rarity = RARITY_CONFIG[card.rarity];
   const frameStyle = getFrameStyle(card.frameType, teamColor);
   const initials = (card.playerName || card.teamName || "??").slice(0, 2);
@@ -82,20 +84,39 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike }: Photocar
 
       {/* Image area - 2:3 aspect ratio */}
       <div className="relative aspect-[2/3] overflow-hidden">
-        {/* Gradient placeholder */}
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{
-            background: `linear-gradient(145deg, ${teamColor}30, ${teamColor}10, ${teamColor}25)`,
-          }}
-        >
-          <span
-            className="text-3xl font-black opacity-30 select-none"
-            style={{ color: teamColor }}
+        {/* Image or gradient placeholder */}
+        {card.imageUrl ? (
+          <img
+            src={card.imageUrl}
+            alt={card.title}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              background: `linear-gradient(145deg, ${teamColor}30, ${teamColor}10, ${teamColor}25)`,
+            }}
           >
-            {initials}
-          </span>
-        </div>
+            <span
+              className="text-3xl font-black opacity-30 select-none"
+              style={{ color: teamColor }}
+            >
+              {initials}
+            </span>
+          </div>
+        )}
+
+        {/* Profile card indicator */}
+        {isProfileCard && (
+          <div className="absolute bottom-2 left-2 z-10">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-bold bg-black/50 text-white backdrop-blur-sm">
+              <UserCircle className="w-3 h-3" />
+              프로필
+            </span>
+          </div>
+        )}
 
         {/* Rarity badge - top right */}
         <div className="absolute top-2 right-2 z-10">
@@ -154,25 +175,46 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike }: Photocar
           <span className="text-[13px] text-muted-foreground truncate max-w-[60%]">
             @{card.ownerName}
           </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onLike?.(card.id);
-            }}
-            className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-red-400 transition-colors"
-          >
-            <Heart
-              className={`w-3.5 h-3.5 transition-colors ${
-                card.liked
-                  ? "fill-red-500 text-red-500"
-                  : "text-muted-foreground"
-              }`}
-            />
-            <span className={card.liked ? "text-red-400" : ""}>
-              {card.likes}
-            </span>
-          </button>
+          <div className="flex items-center gap-2">
+            {onSetProfile && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSetProfile(card);
+                }}
+                className={`flex items-center gap-1 text-[13px] font-bold transition-colors ${
+                  isProfileCard
+                    ? "text-muted-foreground"
+                    : "hover:opacity-80"
+                }`}
+                style={!isProfileCard ? { color: teamColor } : {}}
+                title={isProfileCard ? "현재 프로필카드" : "프로필카드로 설정"}
+              >
+                <UserCircle className="w-3.5 h-3.5" />
+                {isProfileCard ? "설정됨" : "프로필"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onLike?.(card.id);
+              }}
+              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-red-400 transition-colors"
+            >
+              <Heart
+                className={`w-3.5 h-3.5 transition-colors ${
+                  card.liked
+                    ? "fill-red-500 text-red-500"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <span className={card.liked ? "text-red-400" : ""}>
+                {card.likes}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
