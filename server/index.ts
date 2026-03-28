@@ -6,6 +6,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { logger } from "./logger";
+import { WebSocketServer, WebSocket } from "ws";
 
 const app = express();
 const httpServer = createServer(app);
@@ -143,6 +144,31 @@ app.use((req, res, next) => {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
+
+  // --- WebSocket for real-time emoji reactions ---
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws/reactions" });
+
+  wss.on("connection", (ws) => {
+    ws.on("message", (raw) => {
+      try {
+        const data = JSON.parse(raw.toString());
+        if (data.type === "reaction" && data.emoji && data.gameId) {
+          // Broadcast to all connected clients
+          const msg = JSON.stringify({
+            type: "reaction",
+            emoji: data.emoji,
+            gameId: data.gameId,
+            ts: Date.now(),
+          });
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(msg);
+            }
+          });
+        }
+      } catch { /* ignore bad messages */ }
+    });
+  });
 
   const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(

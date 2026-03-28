@@ -115,6 +115,11 @@ function CountDisplay({
 }: {
   count: { ball: number; strike: number; out: number };
 }) {
+  // Clamp values to valid ranges
+  const ball = Math.min(Math.max(count.ball || 0, 0), 3);
+  const strike = Math.min(Math.max(count.strike || 0, 0), 2);
+  const out = Math.min(Math.max(count.out || 0, 0), 2);
+
   return (
     <div className="flex gap-2 text-[13px] md:text-[13px] font-bold">
       <div className="flex items-center gap-1">
@@ -124,7 +129,7 @@ function CountDisplay({
             <div
               key={i}
               className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${
-                i < count.ball ? "bg-green-400" : "bg-white/20"
+                i < ball ? "bg-green-400" : "bg-white/20"
               }`}
             />
           ))}
@@ -137,7 +142,7 @@ function CountDisplay({
             <div
               key={i}
               className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${
-                i < count.strike ? "bg-yellow-400" : "bg-white/20"
+                i < strike ? "bg-yellow-400" : "bg-white/20"
               }`}
             />
           ))}
@@ -150,7 +155,7 @@ function CountDisplay({
             <div
               key={i}
               className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${
-                i < count.out ? "bg-red-400" : "bg-white/20"
+                i < out ? "bg-red-400" : "bg-white/20"
               }`}
             />
           ))}
