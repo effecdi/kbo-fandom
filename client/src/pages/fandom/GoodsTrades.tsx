@@ -79,7 +79,7 @@ export function FandomGoodsTrades() {
 
   return (
     <StudioLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-full overflow-x-hidden">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -92,7 +92,7 @@ export function FandomGoodsTrades() {
         </div>
 
         {/* Stats bar */}
-        <div className="flex items-center gap-4 text-[13px] text-muted-foreground bg-muted/30 rounded-xl px-4 py-3 border border-border">
+        <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground bg-muted/30 rounded-xl px-4 py-3 border border-border">
           <div className="flex items-center gap-1.5">
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>전체 <span className="text-foreground font-bold">{stats.total}</span>건</span>
@@ -116,7 +116,7 @@ export function FandomGoodsTrades() {
         <FandomFilterBar selected={teamFilter} onChange={setTeamFilter} />
 
         {/* Trade type tab pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center gap-2 max-w-full overflow-x-auto pb-1 scrollbar-hide">
           {TRADE_TABS.map((t) => (
             <button
               key={t.id}
@@ -133,7 +133,7 @@ export function FandomGoodsTrades() {
         </div>
 
         {/* Category filter pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center gap-1.5 max-w-full overflow-x-auto pb-1 scrollbar-hide">
           {CATEGORY_PILLS.map((c) => (
             <button
               key={c.id}

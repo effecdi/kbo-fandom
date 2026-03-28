@@ -41,7 +41,7 @@ export function LandingPage() {
   const totalFollowers = groups.reduce((sum, g) => sum + g.followers, 0);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Dark Mode Toggle */}
       <div className="fixed top-6 right-6 z-50">
         <button

@@ -304,13 +304,13 @@ export function BaseballDiamond({
           <p className="text-[13px] text-white/50 mb-1 font-bold">
             {relay.isTopInning ? "원정" : "홈"} 타선
           </p>
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+          <div className="flex flex-wrap gap-1">
             {relay.battingOrder.slice(0, 9).map((b) => {
               const isCurrentBatter = relay.currentBatter?.name === b.name;
               return (
                 <div
                   key={b.order}
-                  className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[13px] md:text-[13px] ${
+                  className={`px-1.5 py-0.5 rounded text-[13px] md:text-[13px] ${
                     isCurrentBatter
                       ? "bg-yellow-500/90 text-black font-bold"
                       : "bg-white/10 text-white/70"

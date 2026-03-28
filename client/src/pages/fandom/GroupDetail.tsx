@@ -109,12 +109,12 @@ export function FandomGroupDetail() {
         <FandomGroupHeader group={group} />
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-border">
+        <div className="flex items-center gap-1 border-b border-border max-w-full overflow-x-auto scrollbar-hide">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all ${
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
                 tab === t.id
                   ? ""
                   : "border-transparent text-muted-foreground hover:text-foreground"

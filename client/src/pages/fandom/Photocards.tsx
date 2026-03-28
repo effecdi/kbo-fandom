@@ -111,7 +111,7 @@ export function FandomPhotocards() {
 
   return (
     <StudioLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-full overflow-x-hidden">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -145,7 +145,7 @@ export function FandomPhotocards() {
         </div>
 
         {/* Main Tab Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center gap-2 max-w-full overflow-x-auto pb-1 scrollbar-hide">
           {MAIN_TABS.map((t) => (
             <button
               key={t.id}
@@ -165,7 +165,7 @@ export function FandomPhotocards() {
         <FandomFilterBar selected={teamFilter} onChange={setTeamFilter} />
 
         {/* Rarity Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center gap-2 max-w-full overflow-x-auto pb-1 scrollbar-hide">
           {RARITY_TABS.map((r) => (
             <button
               key={r.id}

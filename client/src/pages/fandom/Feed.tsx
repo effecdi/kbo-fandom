@@ -79,7 +79,7 @@ export function FandomFeed() {
 
   return (
     <StudioLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-full overflow-x-hidden">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">팬덤 피드</h1>

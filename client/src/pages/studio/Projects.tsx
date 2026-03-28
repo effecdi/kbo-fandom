@@ -102,7 +102,7 @@ export function StudioProjects() {
 
   return (
     <StudioLayout>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto overflow-x-hidden">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3">
@@ -129,7 +129,7 @@ export function StudioProjects() {
         {/* Search & Filter Bar */}
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <div className="relative flex-1 min-w-0 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"

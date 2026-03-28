@@ -235,7 +235,7 @@ export function LiveGameCarousel({
       {/* ── Carousel container ────────────────────────────────────────────── */}
       <div
         ref={containerRef}
-        className={`relative mx-auto ${compact ? "h-[220px] md:h-[260px] overflow-hidden" : "h-[220px] md:h-[260px] max-w-4xl overflow-visible"}`}
+        className={`relative mx-auto ${compact ? "h-[220px] md:h-[260px] overflow-hidden" : "h-[220px] md:h-[260px] max-w-4xl overflow-hidden"}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

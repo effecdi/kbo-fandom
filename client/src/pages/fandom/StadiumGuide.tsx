@@ -62,7 +62,7 @@ export function FandomStadiumGuide() {
 
   return (
     <StudioLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-full overflow-x-hidden">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -75,7 +75,7 @@ export function FandomStadiumGuide() {
         </div>
 
         {/* Team Selector Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center gap-2 max-w-full overflow-x-auto pb-1 scrollbar-hide">
           {teams.map((team) => (
             <button
               key={team.id}

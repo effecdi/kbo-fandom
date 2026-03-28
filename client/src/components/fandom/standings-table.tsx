@@ -18,8 +18,8 @@ export function StandingsTable({ standings, myTeamId, compact }: StandingsTableP
   const rows = compact ? sorted.slice(0, 5) : sorted;
 
   return (
-    <div className="rounded-xl overflow-hidden border border-border bg-card">
-      <table className="w-full text-sm">
+    <div className="rounded-xl overflow-hidden border border-border bg-card max-w-full overflow-x-auto">
+      <table className="w-full text-sm min-w-[480px]">
         <thead>
           <tr className="bg-muted/60 text-muted-foreground text-[13px]">
             <th className="px-4 py-3 text-left font-semibold">순위</th>

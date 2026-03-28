@@ -151,7 +151,7 @@ export function FanTalk() {
 
   return (
     <StudioLayout>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto overflow-x-hidden">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -221,7 +221,7 @@ export function FanTalk() {
             )}
 
             {/* Topic Filter */}
-            <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+            <div className="flex items-center gap-2 mb-4 max-w-full overflow-x-auto pb-1 scrollbar-hide">
               {TOPICS.map((t) => (
                 <button
                   key={t.label}
@@ -262,7 +262,7 @@ export function FanTalk() {
             </div>
 
             {/* Group Filter Chips */}
-            <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+            <div className="flex items-center gap-2 mb-4 max-w-full overflow-x-auto pb-1 scrollbar-hide">
               <button
                 onClick={() => setGroupFilter(null)}
                 className={`px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${

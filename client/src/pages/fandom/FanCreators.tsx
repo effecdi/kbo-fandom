@@ -81,7 +81,7 @@ export function FanCreators() {
 
   return (
     <StudioLayout>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto overflow-x-hidden">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-black text-foreground flex items-center gap-2">
@@ -109,7 +109,7 @@ export function FanCreators() {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
           {/* Group filter */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 max-w-full overflow-x-auto pb-1 scrollbar-hide">
             <button
               onClick={() => setGroupFilter(null)}
               className={`px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${

@@ -212,7 +212,7 @@ export function FandomOnboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1.5 bg-muted">
         <div
