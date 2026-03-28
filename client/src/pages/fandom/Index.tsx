@@ -31,6 +31,8 @@ import { LiveGameSection } from "@/components/fandom/live-game-section";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
 import { DashboardGrid, type DashboardWidget } from "@/components/fandom/dashboard-grid";
+import { lazy, Suspense } from "react";
+const LanyardCard = lazy(() => import("@/components/fandom/lanyard-card"));
 import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
 import { useKboStandings } from "@/hooks/use-kbo-standings";
 import {
@@ -111,6 +113,24 @@ export function FandomIndex() {
   // Build dashboard widgets
   const widgets: DashboardWidget[] = useMemo(() => {
     const w: DashboardWidget[] = [];
+
+    // 0. Lanyard 3D Card — 내 포토카드 목걸이
+    w.push({
+      id: "lanyard-card",
+      title: "내 포토카드",
+      icon: Camera,
+      noPadding: true,
+      content: (
+        <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-muted-foreground text-[13px]">로딩중...</div>}>
+          <LanyardCard
+            teamColor={themeColor}
+            teamName={myGroup?.nameKo || "KBO"}
+            playerName={fandomProfile?.favoritePlayer}
+            height={400}
+          />
+        </Suspense>
+      ),
+    });
 
     // 1. Live Score (always visible when there are games)
     if (liveGames.length > 0) {
