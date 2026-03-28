@@ -1,17 +1,8 @@
 /* eslint-disable react/no-unknown-property */
 'use client';
-import { useEffect, useRef, useState, useMemo } from 'react';
-import { Canvas, extend, useFrame } from '@react-three/fiber';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, useTexture, Environment, Lightformer } from '@react-three/drei';
-import {
-  BallCollider,
-  CuboidCollider,
-  Physics,
-  RigidBody,
-  useRopeJoint,
-  useSphericalJoint,
-} from '@react-three/rapier';
-import type { RigidBodyProps } from '@react-three/rapier';
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline';
 import * as THREE from 'three';
 
@@ -21,15 +12,10 @@ import lanyardPng from '@/assets/lanyard/lanyard.png';
 extend({ MeshLineGeometry, MeshLineMaterial });
 
 interface LanyardCardProps {
-  /** Team color for the card gradient */
   teamColor?: string;
-  /** Team name (Korean) */
   teamName?: string;
-  /** Player name to display */
   playerName?: string;
-  /** Optional photocard image URL — if provided, replaces the generated card */
   cardImageUrl?: string;
-  /** Height of the widget */
   height?: number;
 }
 
@@ -49,14 +35,12 @@ export default function LanyardCard({
         onCreated={({ gl }) => gl.setClearColor(new THREE.Color(0x000000), 0)}
       >
         <ambientLight intensity={Math.PI} />
-        <Physics gravity={[0, -40, 0]} timeStep={1 / 60}>
-          <Band
-            teamColor={teamColor}
-            teamName={teamName}
-            playerName={playerName}
-            cardImageUrl={cardImageUrl}
-          />
-        </Physics>
+        <SwingingCard
+          teamColor={teamColor}
+          teamName={teamName}
+          playerName={playerName}
+          cardImageUrl={cardImageUrl}
+        />
         <Environment blur={0.75}>
           <Lightformer intensity={2} color="white" position={[0, -1, 5]} rotation={[0, 0, Math.PI / 3]} scale={[100, 0.1, 1]} />
           <Lightformer intensity={3} color="white" position={[-1, -1, 1]} rotation={[0, 0, Math.PI / 3]} scale={[100, 0.1, 1]} />
@@ -84,7 +68,7 @@ function useCardTexture(teamColor: string, teamName: string, playerName?: string
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Subtle pattern overlay
+    // Subtle scan lines
     ctx.fillStyle = 'rgba(255,255,255,0.04)';
     for (let i = 0; i < canvas.height; i += 4) {
       ctx.fillRect(0, i, canvas.width, 2);
@@ -100,10 +84,9 @@ function useCardTexture(teamColor: string, teamName: string, playerName?: string
     ctx.textAlign = 'center';
     ctx.fillText('KBO FANDOM', 256, 64);
 
-    // Team name — large
+    // Team name
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 48px sans-serif';
-    ctx.textAlign = 'center';
     ctx.fillText(teamName, 256, 340);
 
     // Divider
@@ -133,54 +116,76 @@ function useCardTexture(teamColor: string, teamName: string, playerName?: string
   }, [teamColor, teamName, playerName]);
 }
 
-interface BandProps {
-  maxSpeed?: number;
-  minSpeed?: number;
+// ── Simple rope chain simulation (no WASM/Rapier) ──────────────────────────
+
+const GRAVITY = 40;
+const DAMPING = 0.96;
+const SEGMENT_LEN = 1.0;
+const NUM_POINTS = 4; // anchor + 3 segments
+const CONSTRAINT_ITERS = 8;
+
+interface RopePoint {
+  pos: THREE.Vector3;
+  prev: THREE.Vector3;
+}
+
+function createRopePoints(anchor: THREE.Vector3): RopePoint[] {
+  const pts: RopePoint[] = [];
+  for (let i = 0; i < NUM_POINTS; i++) {
+    const p = anchor.clone().add(new THREE.Vector3(i * 0.5, -i * SEGMENT_LEN, 0));
+    pts.push({ pos: p.clone(), prev: p.clone() });
+  }
+  return pts;
+}
+
+function solveConstraints(pts: RopePoint[], anchor: THREE.Vector3) {
+  // Pin the first point to anchor
+  pts[0].pos.copy(anchor);
+  pts[0].prev.copy(anchor);
+
+  for (let iter = 0; iter < CONSTRAINT_ITERS; iter++) {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i].pos;
+      const b = pts[i + 1].pos;
+      const diff = new THREE.Vector3().subVectors(b, a);
+      const dist = diff.length();
+      if (dist === 0) continue;
+      const correction = diff.multiplyScalar((dist - SEGMENT_LEN) / dist * 0.5);
+      if (i === 0) {
+        // First point is pinned, only move b
+        b.sub(correction.clone().multiplyScalar(2));
+      } else {
+        a.add(correction);
+        b.sub(correction);
+      }
+    }
+  }
+}
+
+interface SwingingCardProps {
   teamColor: string;
   teamName: string;
   playerName?: string;
   cardImageUrl?: string;
 }
 
-function Band({ maxSpeed = 50, minSpeed = 0, teamColor, teamName, playerName, cardImageUrl }: BandProps) {
-  const band = useRef<any>(null);
-  const fixed = useRef<any>(null);
-  const j1 = useRef<any>(null);
-  const j2 = useRef<any>(null);
-  const j3 = useRef<any>(null);
-  const card = useRef<any>(null);
-
-  const vec = new THREE.Vector3();
-  const ang = new THREE.Vector3();
-  const rot = new THREE.Vector3();
-  const dir = new THREE.Vector3();
-
-  const segmentProps: any = {
-    type: 'dynamic' as RigidBodyProps['type'],
-    canSleep: true,
-    colliders: false,
-    angularDamping: 4,
-    linearDamping: 4,
-  };
+function SwingingCard({ teamColor, teamName, playerName, cardImageUrl }: SwingingCardProps) {
+  const bandRef = useRef<any>(null);
+  const cardGroupRef = useRef<THREE.Group>(null);
+  const { camera } = useThree();
 
   const { nodes, materials } = useGLTF(cardGLB) as any;
   const bandTexture = useTexture(lanyardPng);
   const generatedTexture = useCardTexture(teamColor, teamName, playerName);
 
-  // If cardImageUrl provided, load it as texture
+  // Custom texture from URL
   const [customTexture, setCustomTexture] = useState<THREE.Texture | null>(null);
   useEffect(() => {
-    if (!cardImageUrl) {
-      setCustomTexture(null);
-      return;
-    }
+    if (!cardImageUrl) { setCustomTexture(null); return; }
     const loader = new THREE.TextureLoader();
     loader.load(
       cardImageUrl,
-      (tex) => {
-        tex.flipY = false;
-        setCustomTexture(tex);
-      },
+      (tex) => { tex.flipY = false; setCustomTexture(tex); },
       undefined,
       () => setCustomTexture(null),
     );
@@ -188,16 +193,23 @@ function Band({ maxSpeed = 50, minSpeed = 0, teamColor, teamName, playerName, ca
 
   const cardMap = customTexture || generatedTexture;
 
-  const [curve] = useState(
-    () => new THREE.CatmullRomCurve3([new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()])
-  );
-  const [dragged, drag] = useState<false | THREE.Vector3>(false);
-  const [hovered, hover] = useState(false);
+  // Anchor at top center
+  const anchorPos = useMemo(() => new THREE.Vector3(0, 4, 0), []);
 
-  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
-  useSphericalJoint(j3, card, [[0, 0, 0], [0, 1.45, 0]]);
+  // Rope simulation state
+  const ropeRef = useRef<RopePoint[]>(createRopePoints(anchorPos));
+
+  // Curve for drawing the band
+  const [curve] = useState(
+    () => new THREE.CatmullRomCurve3(
+      Array.from({ length: NUM_POINTS }, () => new THREE.Vector3()),
+    ),
+  );
+
+  // Drag state
+  const [dragged, setDragged] = useState(false);
+  const dragOffsetRef = useRef(new THREE.Vector3());
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     if (hovered) {
@@ -206,88 +218,113 @@ function Band({ maxSpeed = 50, minSpeed = 0, teamColor, teamName, playerName, ca
     }
   }, [hovered, dragged]);
 
+  const handlePointerDown = useCallback((e: any) => {
+    e.stopPropagation();
+    e.target.setPointerCapture(e.pointerId);
+    setDragged(true);
+    // Store offset from pointer to card position
+    const lastPt = ropeRef.current[NUM_POINTS - 1].pos;
+    dragOffsetRef.current.copy(e.point).sub(lastPt);
+  }, []);
+
+  const handlePointerUp = useCallback((e: any) => {
+    e.target.releasePointerCapture(e.pointerId);
+    setDragged(false);
+  }, []);
+
+  // Temp vectors (avoid allocation in frame loop)
+  const tempVec = useMemo(() => new THREE.Vector3(), []);
+  const tempDir = useMemo(() => new THREE.Vector3(), []);
+
   useFrame((state, delta) => {
-    if (dragged && typeof dragged !== 'boolean') {
-      vec.set(state.pointer.x, state.pointer.y, 0.5).unproject(state.camera);
-      dir.copy(vec).sub(state.camera.position).normalize();
-      vec.add(dir.multiplyScalar(state.camera.position.length()));
-      [card, j1, j2, j3, fixed].forEach((ref) => ref.current?.wakeUp());
-      card.current?.setNextKinematicTranslation({
-        x: vec.x - dragged.x,
-        y: vec.y - dragged.y,
-        z: vec.z - dragged.z,
-      });
+    const dt = Math.min(delta, 1 / 30); // cap delta
+    const pts = ropeRef.current;
+
+    // Verlet integration for non-anchor points
+    for (let i = 1; i < pts.length; i++) {
+      const p = pts[i];
+      const vel = p.pos.clone().sub(p.prev);
+      vel.multiplyScalar(DAMPING);
+      p.prev.copy(p.pos);
+
+      // Apply gravity
+      vel.y -= GRAVITY * dt * dt;
+
+      p.pos.add(vel);
     }
-    if (fixed.current) {
-      [j1, j2].forEach((ref) => {
-        if (!ref.current.lerped) ref.current.lerped = new THREE.Vector3().copy(ref.current.translation());
-        const clampedDistance = Math.max(0.1, Math.min(1, ref.current.lerped.distanceTo(ref.current.translation())));
-        ref.current.lerped.lerp(
-          ref.current.translation(),
-          delta * (minSpeed + clampedDistance * (maxSpeed - minSpeed)),
-        );
-      });
-      curve.points[0].copy(j3.current.translation());
-      curve.points[1].copy(j2.current.lerped);
-      curve.points[2].copy(j1.current.lerped);
-      curve.points[3].copy(fixed.current.translation());
-      band.current.geometry.setPoints(curve.getPoints(32));
-      ang.copy(card.current.angvel());
-      rot.copy(card.current.rotation());
-      card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z });
+
+    // If dragging, move the last point toward pointer
+    if (dragged) {
+      tempVec.set(state.pointer.x, state.pointer.y, 0.5).unproject(camera);
+      tempDir.copy(tempVec).sub(camera.position).normalize();
+      tempVec.copy(camera.position).add(tempDir.multiplyScalar(camera.position.length()));
+
+      const lastPt = pts[NUM_POINTS - 1];
+      lastPt.pos.lerp(tempVec.sub(dragOffsetRef.current), 0.3);
+      lastPt.prev.copy(lastPt.pos);
+    }
+
+    // Solve distance constraints
+    solveConstraints(pts, anchorPos);
+
+    // Update band curve
+    curve.curveType = 'chordal';
+    for (let i = 0; i < NUM_POINTS; i++) {
+      curve.points[i].copy(pts[i].pos);
+    }
+    if (bandRef.current) {
+      bandRef.current.geometry.setPoints(curve.getPoints(32));
+    }
+
+    // Update card position & rotation
+    if (cardGroupRef.current) {
+      const cardPt = pts[NUM_POINTS - 1].pos;
+      const prevPt = pts[NUM_POINTS - 2].pos;
+
+      cardGroupRef.current.position.copy(cardPt);
+
+      // Rotate card based on the rope direction
+      const ropeDir = tempVec.subVectors(cardPt, prevPt).normalize();
+      const swingAngle = Math.atan2(ropeDir.x, -ropeDir.y);
+      cardGroupRef.current.rotation.z = swingAngle * 0.8;
+
+      // Slight Y-axis rotation based on X velocity
+      const xVel = cardPt.x - pts[NUM_POINTS - 1].prev.x;
+      cardGroupRef.current.rotation.y += (xVel * 0.3 - cardGroupRef.current.rotation.y) * 0.1;
     }
   });
 
-  curve.curveType = 'chordal';
   bandTexture.wrapS = bandTexture.wrapT = THREE.RepeatWrapping;
 
   return (
     <>
-      <group position={[0, 4, 0]}>
-        <RigidBody ref={fixed} {...segmentProps} type={'fixed' as RigidBodyProps['type']} />
-        <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps} type={'dynamic' as RigidBodyProps['type']}>
-          <BallCollider args={[0.1]} />
-        </RigidBody>
-        <RigidBody position={[1, 0, 0]} ref={j2} {...segmentProps} type={'dynamic' as RigidBodyProps['type']}>
-          <BallCollider args={[0.1]} />
-        </RigidBody>
-        <RigidBody position={[1.5, 0, 0]} ref={j3} {...segmentProps} type={'dynamic' as RigidBodyProps['type']}>
-          <BallCollider args={[0.1]} />
-        </RigidBody>
-        <RigidBody
-          position={[2, 0, 0]}
-          ref={card}
-          {...segmentProps}
-          type={dragged ? ('kinematicPosition' as RigidBodyProps['type']) : ('dynamic' as RigidBodyProps['type'])}
+      {/* Card mesh */}
+      <group ref={cardGroupRef}>
+        <group
+          scale={2.25}
+          position={[0, -1.2, -0.05]}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
         >
-          <CuboidCollider args={[0.8, 1.125, 0.01]} />
-          <group
-            scale={2.25}
-            position={[0, -1.2, -0.05]}
-            onPointerOver={() => hover(true)}
-            onPointerOut={() => hover(false)}
-            onPointerUp={(e: any) => { e.target.releasePointerCapture(e.pointerId); drag(false); }}
-            onPointerDown={(e: any) => {
-              e.target.setPointerCapture(e.pointerId);
-              drag(new THREE.Vector3().copy(e.point).sub(vec.copy(card.current.translation())));
-            }}
-          >
-            <mesh geometry={nodes.card.geometry}>
-              <meshPhysicalMaterial
-                map={cardMap}
-                map-anisotropy={16}
-                clearcoat={1}
-                clearcoatRoughness={0.15}
-                roughness={0.9}
-                metalness={0.8}
-              />
-            </mesh>
-            <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
-            <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
-          </group>
-        </RigidBody>
+          <mesh geometry={nodes.card.geometry}>
+            <meshPhysicalMaterial
+              map={cardMap}
+              map-anisotropy={16}
+              clearcoat={1}
+              clearcoatRoughness={0.15}
+              roughness={0.9}
+              metalness={0.8}
+            />
+          </mesh>
+          <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
+          <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
+        </group>
       </group>
-      <mesh ref={band}>
+
+      {/* Band (rope) */}
+      <mesh ref={bandRef}>
         <meshLineGeometry />
         <meshLineMaterial
           color="white"
