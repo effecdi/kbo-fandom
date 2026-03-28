@@ -71,7 +71,7 @@ import { FanProfile } from "@/pages/fandom/FanProfile";
 import { FanMessages } from "@/pages/fandom/FanMessages";
 import { FanCreators } from "@/pages/fandom/FanCreators";
 import { FandomSchedule } from "@/pages/fandom/Schedule";
-import { FandomCheerSongs } from "@/pages/fandom/CheerSongs";
+
 import { FandomStadiumGuide } from "@/pages/fandom/StadiumGuide";
 import { FandomStandings } from "@/pages/fandom/Standings";
 import { FandomPhotocards } from "@/pages/fandom/Photocards";
@@ -109,7 +109,7 @@ const router = createBrowserRouter([
   { path: "/fandom/fans/:id", element: <FandomGuard><FanProfile /></FandomGuard> },
   { path: "/fandom/messages", element: <FandomGuard><FanMessages /></FandomGuard> },
   { path: "/fandom/schedule", element: <FandomGuard><FandomSchedule /></FandomGuard> },
-  { path: "/fandom/cheer-songs", element: <FandomGuard><FandomCheerSongs /></FandomGuard> },
+
   { path: "/fandom/stadium-guide", element: <FandomGuard><FandomStadiumGuide /></FandomGuard> },
   { path: "/fandom/standings", element: <FandomGuard><FandomStandings /></FandomGuard> },
   { path: "/fandom/photocards", element: <FandomGuard><FandomPhotocards /></FandomGuard> },

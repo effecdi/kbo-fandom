@@ -218,11 +218,11 @@ export function FandomIndex() {
                 <p className="text-sm font-bold text-foreground">경기 일정</p>
               </Link>
               <Link
-                to="/fandom/cheer-songs"
+                to="/fandom/standings"
                 className="rounded-2xl p-4 border bg-card border-border hover:shadow-lg transition-all group flex flex-col items-center justify-center text-center"
               >
-                <Music className="w-7 h-7 text-emerald-500 mb-2" />
-                <p className="text-sm font-bold text-foreground">응원가</p>
+                <BarChart3 className="w-7 h-7 text-emerald-500 mb-2" />
+                <p className="text-sm font-bold text-foreground">순위표</p>
               </Link>
               <Link
                 to="/fandom/stadium-guide"

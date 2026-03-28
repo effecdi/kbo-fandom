@@ -84,7 +84,7 @@ export function LandingPage() {
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto text-muted-foreground">
-            경기 일정, 응원가, 직관 가이드, 팬아트까지
+            경기 일정, 실시간 중계, 직관 가이드, 팬아트까지
             <br />
             <span className="font-bold text-foreground">KBO 10개 구단 팬을 위한 올인원 플랫폼</span>
           </p>
@@ -157,8 +157,8 @@ export function LandingPage() {
               },
               {
                 icon: Music,
-                title: "응원가 & 직관 가이드",
-                desc: "구단별 응원가 가사, 구장 정보, 맛집, 교통편 총정리",
+                title: "실시간 중계 & 직관 가이드",
+                desc: "실시간 경기 중계, 구장 정보, 맛집, 교통편 총정리",
                 color: "#F97316",
               },
               {
@@ -244,7 +244,7 @@ export function LandingPage() {
             <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">야구</span>와 함께하세요
           </h2>
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            내 팀을 선택하고, 경기 일정부터 응원가, 직관 가이드까지 모든 팬덤 활동을 한 곳에서
+            내 팀을 선택하고, 경기 일정부터 실시간 중계, 직관 가이드까지 모든 팬덤 활동을 한 곳에서
           </p>
           <Button
             onClick={() => navigate("/login")}
@@ -274,7 +274,7 @@ export function LandingPage() {
               </p>
             </div>
             {[
-              { title: "서비스", links: ["경기 일정", "응원가", "직관 가이드"] },
+              { title: "서비스", links: ["경기 일정", "실시간 중계", "직관 가이드"] },
               { title: "팬덤", links: ["KBO 구단", "팬아트", "포토카드"] },
               { title: "법적 고지", links: [{ label: "이용약관", path: "/legal/terms" }, { label: "개인정보", path: "/legal/privacy" }, { label: "환불정책", path: "/legal/refund" }] },
             ].map((section) => (

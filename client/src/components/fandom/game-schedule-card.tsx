@@ -1,5 +1,6 @@
 import { Calendar, MapPin, Clock, Star } from "lucide-react";
 import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
+import { TeamLogo } from "./team-logo";
 
 interface GameScheduleCardProps {
   game: KboGameSchedule;
@@ -41,75 +42,66 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
   if (compact) {
     return (
       <div
-        className={`bg-card border rounded-xl p-2 hover:border-foreground/15 transition-all ${myTeamMatch ? "ring-2" : "border-border"}`}
+        className={`bg-card border rounded-lg p-1.5 hover:border-foreground/15 transition-all ${myTeamMatch ? "ring-1" : "border-border"}`}
         style={{
           ...cardStyle,
           ...(myTeamMatch ? { "--tw-ring-color": myTeamMatch.coverColor } as React.CSSProperties : {}),
         }}
       >
-        {/* Teams (compact) */}
-        <div className="flex items-center justify-between gap-2">
-          {/* Home Team (compact) */}
-          <div className="flex-1 text-center">
-            <div
-              className="w-7 h-7 rounded-full mx-auto mb-1 flex items-center justify-center text-white font-black text-[9px]"
-              style={{ backgroundColor: homeTeam?.coverColor || "#666" }}
-            >
-              {game.homeTeamName.slice(0, 2)}
-            </div>
-            <p className="text-[10px] font-bold text-foreground truncate">{game.homeTeamName}</p>
-          </div>
-
-          {/* Score / VS (compact) */}
-          <div className="text-center min-w-[40px]">
-            {game.status === "finished" || game.status === "live" ? (
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-black text-foreground">{game.homeScore ?? 0}</span>
-                <span className="text-[10px] text-muted-foreground">:</span>
-                <span className="text-sm font-black text-foreground">{game.awayScore ?? 0}</span>
-              </div>
-            ) : (
-              <span className="text-xs font-bold text-muted-foreground">VS</span>
-            )}
-          </div>
-
-          {/* Away Team (compact) */}
-          <div className="flex-1 text-center">
-            <div
-              className="w-7 h-7 rounded-full mx-auto mb-1 flex items-center justify-center text-white font-black text-[9px]"
-              style={{ backgroundColor: awayTeam?.coverColor || "#666" }}
-            >
-              {game.awayTeamName.slice(0, 2)}
-            </div>
-            <p className="text-[10px] font-bold text-foreground truncate">{game.awayTeamName}</p>
-          </div>
-
-          {/* Attend button in compact mode */}
+        {/* Status + Attend (compact) */}
+        <div className="flex items-center justify-between mb-1">
+          <span
+            className="px-1.5 py-px rounded-full text-[8px] font-bold text-white leading-tight"
+            style={{ backgroundColor: status.color }}
+          >
+            {status.label}
+          </span>
           {showAttendButton && (
             <button
               type="button"
               onClick={() => onToggleAttend?.(game.id)}
-              className="ml-1 flex-shrink-0"
+              className="flex-shrink-0"
               aria-label={isAttending ? "직관 예정 취소" : "직관 예정 등록"}
               title={isAttending ? "직관 예정 취소" : "직관 예정"}
             >
               <Star
-                className={`w-4 h-4 transition-colors ${isAttending ? "text-amber-400" : "text-muted-foreground/50 hover:text-amber-300"}`}
+                className={`w-3 h-3 transition-colors ${isAttending ? "text-amber-400" : "text-muted-foreground/30 hover:text-amber-300"}`}
                 {...(isAttending ? { fill: "currentColor" } : {})}
               />
             </button>
           )}
         </div>
 
-        {/* Status badge (compact) */}
-        <div className="flex items-center justify-center mt-1.5">
-          <span
-            className="px-2 py-0.5 rounded-full text-[9px] font-bold text-white"
-            style={{ backgroundColor: status.color }}
-          >
-            {status.label}
-          </span>
+        {/* Teams (compact) */}
+        <div className="flex items-center gap-1">
+          {/* Home Team (compact) */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="xs" className="flex-shrink-0" />
+              <p className="text-[9px] font-bold text-foreground truncate">{game.homeTeamName}</p>
+            </div>
+          </div>
+
+          {/* Score / VS (compact) */}
+          <div className="text-center flex-shrink-0">
+            {game.status === "finished" || game.status === "live" ? (
+              <span className="text-[10px] font-black text-foreground">{game.homeScore ?? 0}:{game.awayScore ?? 0}</span>
+            ) : (
+              <span className="text-[9px] font-bold text-muted-foreground">vs</span>
+            )}
+          </div>
+
+          {/* Away Team (compact) */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 justify-end">
+              <p className="text-[9px] font-bold text-foreground truncate">{game.awayTeamName}</p>
+              <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="xs" className="flex-shrink-0" />
+            </div>
+          </div>
         </div>
+
+        {/* Time (compact) */}
+        <p className="text-[8px] text-muted-foreground text-center mt-1">{game.time}</p>
       </div>
     );
   }
@@ -159,12 +151,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
       <div className="flex items-center justify-between gap-4">
         {/* Home Team */}
         <div className="flex-1 text-center">
-          <div
-            className="w-10 h-10 rounded-full mx-auto mb-1.5 flex items-center justify-center text-white font-black text-xs"
-            style={{ backgroundColor: homeTeam?.coverColor || "#666" }}
-          >
-            {game.homeTeamName.slice(0, 2)}
-          </div>
+          <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="md" className="mx-auto mb-1.5" />
           <p className="text-xs font-bold text-foreground truncate">{game.homeTeamName}</p>
           <p className="text-[10px] text-muted-foreground">홈</p>
         </div>
@@ -184,12 +171,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
 
         {/* Away Team */}
         <div className="flex-1 text-center">
-          <div
-            className="w-10 h-10 rounded-full mx-auto mb-1.5 flex items-center justify-center text-white font-black text-xs"
-            style={{ backgroundColor: awayTeam?.coverColor || "#666" }}
-          >
-            {game.awayTeamName.slice(0, 2)}
-          </div>
+          <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="md" className="mx-auto mb-1.5" />
           <p className="text-xs font-bold text-foreground truncate">{game.awayTeamName}</p>
           <p className="text-[10px] text-muted-foreground">원정</p>
         </div>

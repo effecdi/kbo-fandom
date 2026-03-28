@@ -54,8 +54,8 @@ export function ScheduleWeekView({
   }, [games, weekStart]);
 
   return (
-    <div className="overflow-x-auto">
-    <div className="grid grid-cols-7 gap-2 min-w-[700px]">
+    <div className="overflow-x-auto -mx-2 px-2">
+    <div className="grid grid-cols-7 gap-1.5 min-w-[840px]">
       {columns.map((col) => {
         const isToday = col.dateStr === today;
         return (

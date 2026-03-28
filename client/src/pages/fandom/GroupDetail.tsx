@@ -27,13 +27,13 @@ import {
 } from "@/lib/local-store";
 import { Calendar } from "lucide-react";
 
-type GroupTab = "fanart" | "members" | "schedule" | "events" | "rankings" | "cheersongs" | "stadium";
+type GroupTab = "fanart" | "members" | "schedule" | "events" | "rankings" | "stadium";
 
 const TABS: { id: GroupTab; label: string; icon: typeof Sparkles }[] = [
   { id: "fanart", label: "팬아트", icon: Sparkles },
   { id: "members", label: "선수", icon: UsersIcon },
   { id: "schedule", label: "경기일정", icon: Calendar },
-  { id: "cheersongs", label: "응원가", icon: Music },
+
   { id: "stadium", label: "직관", icon: MapPin },
   { id: "events", label: "이벤트", icon: Trophy },
   { id: "rankings", label: "랭킹", icon: BarChart3 },
@@ -204,23 +204,6 @@ export function FandomGroupDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {events.map((event) => (
                   <FandomEventCard key={event.id} event={event} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === "cheersongs" && (
-          <div>
-            {cheerSongs.length === 0 ? (
-              <div className="text-center py-12">
-                <Music className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">등록된 응원가가 없습니다</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {cheerSongs.map((song) => (
-                  <CheerSongCard key={song.id} song={song} teamColor={group.coverColor} />
                 ))}
               </div>
             )}

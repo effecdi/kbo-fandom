@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listItems, STORE_KEYS, type KboTeam } from "@/lib/local-store";
+import { TeamLogo } from "./team-logo";
 
 const themeColor = "var(--fandom-primary, #7B2FF7)";
 
@@ -32,13 +33,14 @@ export function FandomFilterBar({ selected, onChange }: FandomFilterBarProps) {
         <button
           key={group.id}
           onClick={() => onChange(group.id === selected ? null : group.id)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
             selected === group.id
               ? "text-white"
               : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
           style={selected === group.id ? { backgroundColor: group.coverColor } : undefined}
         >
+          <TeamLogo team={group} size="xs" />
           {group.name}
         </button>
       ))}

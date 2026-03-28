@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import gsap from "gsap";
 import { ChevronLeft, ChevronRight, MapPin, Clock } from "lucide-react";
 import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
+import { TeamLogo } from "./team-logo";
 
 interface LiveGameCarouselProps {
   games: KboGameSchedule[];
@@ -293,13 +294,8 @@ export function LiveGameCarousel({
               <div className="flex items-center justify-between gap-3">
                 {/* Home team */}
                 <div className="flex-1 text-center">
-                  <div
-                    className="w-11 h-11 md:w-12 md:h-12 rounded-full mx-auto mb-1.5 flex items-center justify-center text-white font-black text-[11px] md:text-xs border-2 border-white/20"
-                    style={{
-                      backgroundColor: homeTeam?.coverColor || "#666",
-                    }}
-                  >
-                    {game.homeTeamName.slice(0, 2)}
+                  <div className="mx-auto mb-1.5 w-11 h-11 md:w-12 md:h-12">
+                    <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="lg" className="border-2 border-white/20 mx-auto" />
                   </div>
                   <p
                     className={`font-bold text-white truncate ${isActive ? "text-xs" : "text-[10px]"}`}
@@ -337,13 +333,8 @@ export function LiveGameCarousel({
 
                 {/* Away team */}
                 <div className="flex-1 text-center">
-                  <div
-                    className="w-11 h-11 md:w-12 md:h-12 rounded-full mx-auto mb-1.5 flex items-center justify-center text-white font-black text-[11px] md:text-xs border-2 border-white/20"
-                    style={{
-                      backgroundColor: awayTeam?.coverColor || "#666",
-                    }}
-                  >
-                    {game.awayTeamName.slice(0, 2)}
+                  <div className="mx-auto mb-1.5 w-11 h-11 md:w-12 md:h-12">
+                    <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="lg" className="border-2 border-white/20 mx-auto" />
                   </div>
                   <p
                     className={`font-bold text-white truncate ${isActive ? "text-xs" : "text-[10px]"}`}

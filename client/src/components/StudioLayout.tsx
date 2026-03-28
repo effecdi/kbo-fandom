@@ -89,7 +89,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
       items: [
         { icon: Calendar, label: "경기 일정", path: "/fandom/schedule" },
         { icon: BarChart3, label: "순위표", path: "/fandom/standings" },
-        { icon: Music, label: "응원가", path: "/fandom/cheer-songs" },
+
         { icon: MapPin, label: "직관 가이드", path: "/fandom/stadium-guide" },
       ],
     },
