@@ -151,55 +151,30 @@ export function FandomIndex() {
       });
     }
 
-    // 3. Quick Actions (shortcuts)
+    // 3. Quick Actions — compact pill buttons
     w.push({
       id: "quick-actions",
       title: "바로가기",
       icon: Zap,
       content: (
-        <div className="grid grid-cols-2 gap-2 h-full">
-          <Link
-            to="/fandom/schedule"
-            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
-          >
-            <Calendar className="w-6 h-6 mb-1.5" style={{ color: themeColor }} />
-            <p className="text-[13px] font-bold text-foreground">경기 일정</p>
-          </Link>
-          <Link
-            to="/fandom/standings"
-            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
-          >
-            <BarChart3 className="w-6 h-6 text-emerald-500 mb-1.5" />
-            <p className="text-[13px] font-bold text-foreground">순위표</p>
-          </Link>
-          <Link
-            to="/fandom/create"
-            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
-          >
-            <Palette className="w-6 h-6 mb-1.5" style={{ color: themeColor }} />
-            <p className="text-[13px] font-bold text-foreground">팬아트</p>
-          </Link>
-          <Link
-            to="/fandom/stadium-guide"
-            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
-          >
-            <MapPin className="w-6 h-6 text-blue-500 mb-1.5" />
-            <p className="text-[13px] font-bold text-foreground">직관 가이드</p>
-          </Link>
-          <Link
-            to="/fandom/photocards"
-            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
-          >
-            <Camera className="w-6 h-6 text-pink-500 mb-1.5" />
-            <p className="text-[13px] font-bold text-foreground">포토카드</p>
-          </Link>
-          <Link
-            to="/fandom/goods"
-            className="rounded-xl p-3 border bg-muted/30 border-border hover:shadow-md transition-all flex flex-col items-center justify-center text-center"
-          >
-            <ShoppingBag className="w-6 h-6 text-orange-500 mb-1.5" />
-            <p className="text-[13px] font-bold text-foreground">굿즈 교환</p>
-          </Link>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { to: "/fandom/schedule", icon: Calendar, label: "경기 일정", color: themeColor },
+            { to: "/fandom/standings", icon: BarChart3, label: "순위표", color: "#10b981" },
+            { to: "/fandom/create", icon: Palette, label: "팬아트", color: themeColor },
+            { to: "/fandom/stadium-guide", icon: MapPin, label: "직관 가이드", color: "#3b82f6" },
+            { to: "/fandom/photocards", icon: Camera, label: "포토카드", color: "#ec4899" },
+            { to: "/fandom/goods", icon: ShoppingBag, label: "굿즈 교환", color: "#f97316" },
+          ].map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2 border border-border bg-muted/30 hover:bg-muted hover:border-foreground/20 transition-all"
+            >
+              <item.icon className="w-4 h-4 shrink-0" style={{ color: item.color }} />
+              <span className="text-[13px] font-semibold text-foreground whitespace-nowrap">{item.label}</span>
+            </Link>
+          ))}
         </div>
       ),
     });
@@ -314,16 +289,33 @@ export function FandomIndex() {
       });
     }
 
-    // 9. Trending Groups
+    // 9. Trending Groups — compact list
     w.push({
       id: "trending",
       title: "인기 구단",
       icon: TrendingUp,
       moreLink: "/fandom/groups",
       content: (
-        <div className="grid grid-cols-2 gap-2">
-          {trendingGroups.map((group) => (
-            <TeamCard key={group.id} group={group} />
+        <div className="divide-y divide-border">
+          {trendingGroups.map((group, i) => (
+            <Link
+              key={group.id}
+              to={`/fandom/groups/${group.id}`}
+              className="flex items-center gap-3 py-3 px-1 hover:bg-muted/40 transition-colors rounded-lg"
+            >
+              <span className="text-[13px] font-black text-muted-foreground w-5 text-center">{i + 1}</span>
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0"
+                style={{ backgroundColor: group.coverColor }}
+              >
+                {group.name.slice(0, 2)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-bold text-foreground truncate">{group.nameKo}</p>
+                <p className="text-[12px] text-muted-foreground truncate">{group.fandomName} · {group.city}</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+            </Link>
           ))}
         </div>
       ),
@@ -474,12 +466,7 @@ export function FandomIndex() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-            <p className="text-sm text-muted-foreground truncate">
-              {fandomProfile
-                ? `최애 선수: ${fandomProfile.favoritePlayer} | 팬덤: ${fandomProfile.fandomName}`
-                : "좋아하는 구단의 팬아트를 만들고, 팬덤과 소통하세요"}
-            </p>
+          <div className="flex items-center justify-end mt-2">
             <Link to="/fandom/create" className="shrink-0">
               <Button
                 className="font-bold gap-2 text-white text-sm"
