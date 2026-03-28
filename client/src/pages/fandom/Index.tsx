@@ -31,28 +31,8 @@ import { LiveGameSection } from "@/components/fandom/live-game-section";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
 import { DashboardGrid, type DashboardWidget } from "@/components/fandom/dashboard-grid";
-import { lazy, Suspense, Component, type ReactNode, type ErrorInfo } from "react";
+import { lazy, Suspense } from "react";
 const LanyardCard = lazy(() => import("@/components/fandom/lanyard-card"));
-
-/** ErrorBoundary to prevent 3D widget crashes from breaking the entire app */
-class LanyardErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.warn("[Lanyard] 3D 렌더링 실패:", error.message);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-2">
-          <Camera className="w-8 h-8 opacity-30" />
-          <p className="text-[13px]">3D 카드를 불러올 수 없습니다</p>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
 import { useKboStandings } from "@/hooks/use-kbo-standings";
 import {
@@ -141,16 +121,14 @@ export function FandomIndex() {
       icon: Camera,
       noPadding: true,
       content: (
-        <LanyardErrorBoundary>
-          <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-muted-foreground text-[13px]">로딩중...</div>}>
-            <LanyardCard
-              teamColor={themeColor}
-              teamName={myGroup?.nameKo || "KBO"}
-              playerName={fandomProfile?.favoritePlayer}
-              height={400}
-            />
-          </Suspense>
-        </LanyardErrorBoundary>
+        <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-muted-foreground text-[13px]">로딩중...</div>}>
+          <LanyardCard
+            teamColor={themeColor}
+            teamName={myGroup?.nameKo || "KBO"}
+            playerName={fandomProfile?.favoritePlayer}
+            height={400}
+          />
+        </Suspense>
       ),
     });
 
@@ -161,15 +139,12 @@ export function FandomIndex() {
         title: hasLiveGames ? "LIVE 경기" : "오늘의 경기",
         icon: Flame,
         required: true,
-        noPadding: true,
         content: (
-          <div className="p-3">
-            <LiveGameSection
-              games={liveGames}
-              teams={groups}
-              myTeamId={fandomProfile?.groupId}
-            />
-          </div>
+          <LiveGameSection
+            games={liveGames}
+            teams={groups}
+            myTeamId={fandomProfile?.groupId}
+          />
         ),
       });
     }
@@ -180,15 +155,12 @@ export function FandomIndex() {
         id: "next-game",
         title: "다음 경기",
         icon: Calendar,
-        noPadding: true,
         content: (
-          <div className="p-3 h-full">
-            <NextGameCountdown
-              teamId={myGroup.id}
-              teamName={myGroup.nameKo}
-              teamColor={themeColor}
-            />
-          </div>
+          <NextGameCountdown
+            teamId={myGroup.id}
+            teamName={myGroup.nameKo}
+            teamColor={themeColor}
+          />
         ),
       });
     }
@@ -198,6 +170,7 @@ export function FandomIndex() {
       id: "quick-actions",
       title: "바로가기",
       icon: Zap,
+      defaultColSpan: 2,
       content: (
         <div className="flex flex-wrap gap-2">
           {[
@@ -245,6 +218,7 @@ export function FandomIndex() {
       id: "quick-stats",
       title: "한눈에 보기",
       icon: TrendingUp,
+      defaultColSpan: 2,
       content: (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Link to="/fandom/groups" className="rounded-2xl p-5 bg-gradient-to-br from-violet-500/10 to-violet-500/5 border border-violet-500/20 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10 transition-all">
@@ -278,6 +252,7 @@ export function FandomIndex() {
         title: `${fandomProfile.groupName} 팬아트`,
         icon: Heart,
         moreLink: "/fandom/feed",
+        defaultColSpan: 2,
         content: (
           <div className="grid grid-cols-2 gap-2">
             {myGroupPosts.slice(0, 4).map((post) => (
@@ -319,8 +294,9 @@ export function FandomIndex() {
         icon: Calendar,
         moreLink: "/fandom/schedule",
         noPadding: true,
+        defaultColSpan: 2,
         content: (
-          <div className="flex gap-3 overflow-x-auto pb-2 px-3 pt-1 scrollbar-hide">
+          <div className="flex gap-3 overflow-x-auto pb-5 px-5 md:pb-6 md:px-6 scrollbar-hide">
             {upcomingGames.map((game) => (
               <div key={game.id} className="min-w-[260px] max-w-[300px] flex-shrink-0">
                 <GameScheduleCard game={game} teams={groups} compact />
