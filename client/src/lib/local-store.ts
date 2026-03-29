@@ -1,7 +1,7 @@
 // ─── localStorage-based CRUD for fandom prototype ──────────────────────────────
 // Used for features without backend APIs (fandom feed, events, creators, etc.)
 
-import type { FandomTemplateType } from "./workspace-types";
+import type { FandomTemplateType, FandomStylePreset } from "./workspace-types";
 import { generateKbo2026Schedule } from "./kbo-schedule-generator";
 
 function getStore<T>(key: string): T[] {
@@ -105,6 +105,14 @@ export interface ProjectRecord {
   thumbnail: string | null;
   updatedAt: string;
   createdAt: string;
+  // Fandom metadata (populated from CreateFanart)
+  templateType?: FandomTemplateType;
+  teamId?: string;
+  teamName?: string;
+  teamColor?: string;
+  stylePreset?: FandomStylePreset;
+  memberTags?: string[];
+  description?: string;
 }
 
 // ─── Fandom User Profile ────────────────────────────────────────────────────

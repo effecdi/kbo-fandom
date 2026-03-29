@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { StudioLayout } from "@/components/StudioLayout";
 import { Link, useNavigate } from "react-router";
 import {
@@ -10,6 +10,8 @@ import {
   ChevronDown,
   MoreVertical,
   Heart,
+  Palette,
+  Users,
 } from "lucide-react";
 import { QuickStartHero } from "@/components/workspace/QuickStartHero";
 import {
@@ -20,6 +22,8 @@ import {
   STORE_KEYS,
   type ProjectRecord,
 } from "@/lib/local-store";
+import { TEMPLATE_LABELS, STYLE_PRESETS } from "@/lib/fandom-templates";
+import type { FandomEditorMeta } from "@/lib/workspace-types";
 
 type StatusKey = ProjectRecord["status"];
 type SortKey = "updatedAt" | "createdAt" | "title";
@@ -84,6 +88,58 @@ export function StudioProjects() {
     setMenuOpenId(null);
     loadProjects();
   }
+
+  // Enrich projects with fandom metadata (from ProjectRecord fields or localStorage fallback)
+  interface EnrichedMeta {
+    templateLabel?: string;
+    teamName?: string;
+    teamColor?: string;
+    styleLabel?: string;
+    memberTags?: string[];
+  }
+
+  const enrichedMetaMap = useMemo(() => {
+    const map = new Map<string, EnrichedMeta>();
+    for (const p of projects) {
+      const meta: EnrichedMeta = {};
+      // Try ProjectRecord fields first
+      if (p.templateType) {
+        meta.templateLabel = TEMPLATE_LABELS[p.templateType] || p.templateType;
+      }
+      if (p.teamName) meta.teamName = p.teamName;
+      if (p.teamColor) meta.teamColor = p.teamColor;
+      if (p.stylePreset) {
+        const sp = STYLE_PRESETS.find((s) => s.id === p.stylePreset);
+        meta.styleLabel = sp?.label || p.stylePreset;
+      }
+      if (p.memberTags && p.memberTags.length > 0) meta.memberTags = p.memberTags;
+
+      // Fallback: read FandomEditorMeta from localStorage
+      if (!meta.templateLabel) {
+        try {
+          const raw = localStorage.getItem(`olli-fandom-editor-${p.id}`);
+          if (raw) {
+            const editorMeta: FandomEditorMeta = JSON.parse(raw);
+            if (editorMeta.templateType) {
+              meta.templateLabel = TEMPLATE_LABELS[editorMeta.templateType] || editorMeta.templateType;
+            }
+            if (!meta.teamName && editorMeta.groupName) meta.teamName = editorMeta.groupName;
+            if (!meta.teamColor && editorMeta.coverColor) meta.teamColor = editorMeta.coverColor;
+            if (!meta.styleLabel && editorMeta.stylePreset) {
+              const sp = STYLE_PRESETS.find((s) => s.id === editorMeta.stylePreset);
+              meta.styleLabel = sp?.label || editorMeta.stylePreset;
+            }
+            if (!meta.memberTags && editorMeta.memberTags?.length) meta.memberTags = editorMeta.memberTags;
+          }
+        } catch { /* ignore */ }
+      }
+
+      if (meta.templateLabel || meta.teamName) {
+        map.set(p.id, meta);
+      }
+    }
+    return map;
+  }, [projects]);
 
   const filtered = projects
     .filter((p) => {
@@ -269,10 +325,49 @@ export function StudioProjects() {
                     </div>
                   </div>
 
+                  {/* Fandom metadata badges */}
+                  {(() => {
+                    const meta = enrichedMetaMap.get(project.id);
+                    if (!meta) return null;
+                    return (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {meta.templateLabel && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-primary/10 text-primary border border-primary/10">
+                            <Palette className="w-3 h-3" />
+                            {meta.templateLabel}
+                          </span>
+                        )}
+                        {meta.teamName && (
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium text-white/90"
+                            style={{ backgroundColor: `${meta.teamColor || "#666"}90` }}
+                          >
+                            {meta.teamName}
+                          </span>
+                        )}
+                        {meta.styleLabel && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[13px] font-medium bg-muted text-muted-foreground border border-border">
+                            {meta.styleLabel}
+                          </span>
+                        )}
+                        {meta.memberTags && meta.memberTags.length > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-muted text-muted-foreground border border-border">
+                            <Users className="w-3 h-3" />
+                            {meta.memberTags.join(", ")}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-                      <FileText className="w-5 h-5" />
-                      <span>{project.panels}컷</span>
+                      {project.panels > 1 && (
+                        <>
+                          <FileText className="w-5 h-5" />
+                          <span>{project.panels}컷</span>
+                        </>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
                       <Clock className="w-5 h-5" />

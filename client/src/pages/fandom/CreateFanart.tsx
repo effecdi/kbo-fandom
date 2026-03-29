@@ -163,6 +163,14 @@ export function FandomCreateFanart() {
       thumbnail: null,
       updatedAt: now,
       createdAt: now,
+      // Fandom metadata for photocard creation & 내 작품 display
+      templateType,
+      teamId: selectedGroup.id,
+      teamName: selectedGroup.name,
+      teamColor: selectedGroup.coverColor,
+      stylePreset: selectedStyle || undefined,
+      memberTags: selectedMemberNames.length > 0 ? selectedMemberNames : undefined,
+      description: description.trim() || undefined,
     };
     addItem(STORE_KEYS.PROJECTS, project);
 

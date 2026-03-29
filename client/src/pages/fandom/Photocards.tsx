@@ -117,11 +117,16 @@ export function FandomPhotocards() {
     (card: PhotocardItem) => {
       const profile = getFandomProfile();
       if (!profile) return;
-      // Use card image or generate a placeholder reference
-      const imageUrl = card.imageUrl || null;
+      if (!card.imageUrl) {
+        toast({
+          title: "설정 불가",
+          description: "직접 만든 포토카드만 프로필카드로 설정할 수 있습니다.",
+        });
+        return;
+      }
       setFandomProfile({
         ...profile,
-        lanyardCardUrl: imageUrl || undefined,
+        lanyardCardUrl: card.imageUrl,
         favoritePlayer: card.playerName || profile.favoritePlayer,
       });
       setProfileCardId(card.id);
@@ -129,6 +134,47 @@ export function FandomPhotocards() {
         title: "프로필카드 설정 완료",
         description: `${card.title}이(가) 목걸이 카드로 설정되었습니다. 홈에서 확인하세요!`,
       });
+    },
+    [toast],
+  );
+
+  // Download photocard image
+  const handleDownload = useCallback(
+    (card: PhotocardItem) => {
+      if (!card.imageUrl) return;
+      const a = document.createElement("a");
+      a.href = card.imageUrl;
+      a.download = `${card.title || "photocard"}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast({ title: "다운로드 완료", description: `${card.title} 이미지를 저장했습니다.` });
+    },
+    [toast],
+  );
+
+  // Share photocard
+  const handleShare = useCallback(
+    async (card: PhotocardItem) => {
+      if (!card.imageUrl) return;
+      try {
+        // Try Web Share API with image
+        if (navigator.share) {
+          const blob = await fetch(card.imageUrl).then((r) => r.blob());
+          const file = new File([blob], `${card.title || "photocard"}.png`, { type: blob.type });
+          await navigator.share({ title: card.title, files: [file] });
+          return;
+        }
+      } catch {
+        // fallback
+      }
+      // Fallback: copy image URL to clipboard
+      try {
+        await navigator.clipboard.writeText(card.imageUrl);
+        toast({ title: "링크 복사됨", description: "클립보드에 이미지 링크가 복사되었습니다." });
+      } catch {
+        toast({ title: "공유 실패", description: "이 브라우저에서는 공유를 지원하지 않습니다." });
+      }
     },
     [toast],
   );
@@ -232,6 +278,8 @@ export function FandomPhotocards() {
                 teamColor={teamColorMap.get(card.teamId) || "#666"}
                 onLike={handleLike}
                 onSetProfile={handleSetProfile}
+                onShare={handleShare}
+                onDownload={handleDownload}
                 isProfileCard={profileCardId === card.id}
               />
             ))}

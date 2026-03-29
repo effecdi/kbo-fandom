@@ -32,11 +32,14 @@ import {
   addItem,
   generateId,
   listItems,
+  updateItem,
   getFandomProfile,
   setFandomProfile,
   STORE_KEYS,
   type FandomFeedPost,
   type FandomEvent,
+  type PhotocardItem,
+  type ProjectRecord,
 } from "@/lib/local-store";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -375,6 +378,51 @@ export function PublishDialog({ open, onClose }: Props) {
         createdAt: new Date().toISOString().slice(0, 10),
       };
       addItem(STORE_KEYS.FANDOM_FEED, post);
+
+      // Auto-create PhotocardItem from the published work
+      const thumbnail = allCuts[0]?.thumbnailUrl || null;
+      if (thumbnail) {
+        const frameTypeMap: Record<string, string> = {
+          playercard: "player-card",
+          portrait: "player-card",
+          wallpaper: "basic",
+          fanart: "polaroid",
+          photocard: "player-card",
+          concept: "holographic",
+          sticker: "basic",
+          edit: "neon",
+        };
+        const templateType = fandomMeta.templateType;
+        const frameType = frameTypeMap[templateType] || "basic";
+        const rarity: PhotocardItem["rarity"] =
+          frameType === "holographic" ? "legendary"
+          : frameType === "player-card" ? "rare"
+          : "common";
+        const photocard: PhotocardItem = {
+          id: generateId("pc"),
+          ownerId: "me",
+          ownerName: "나",
+          teamId: fandomMeta.groupId,
+          teamName: fandomMeta.groupName,
+          playerName: fandomMeta.memberTags?.[0] || undefined,
+          title: title.trim(),
+          imageUrl: thumbnail,
+          frameType,
+          rarity,
+          likes: 0,
+          liked: false,
+          createdAt: new Date().toISOString().slice(0, 10),
+          isForTrade: false,
+        };
+        addItem(STORE_KEYS.PHOTOCARD_COLLECTION, photocard);
+      }
+
+      // Update ProjectRecord status to "published" + save thumbnail
+      updateItem<ProjectRecord>(STORE_KEYS.PROJECTS, state.project.id, {
+        status: "published",
+        thumbnail: thumbnail || undefined,
+        updatedAt: new Date().toISOString().slice(0, 10),
+      });
 
       // Lanyard mode: set generated image as lanyard card
       const lanyardProjectId = localStorage.getItem("olli-lanyard-project");

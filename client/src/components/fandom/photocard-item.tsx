@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import { Heart, ArrowRightLeft, UserCircle } from "lucide-react";
+import { Heart, ArrowRightLeft, UserCircle, Share2, Download } from "lucide-react";
 import gsap from "gsap";
 import type { PhotocardItem } from "@/lib/local-store";
 
@@ -18,6 +18,8 @@ interface PhotocardItemCardProps {
   teamColor?: string;
   onLike?: (id: string) => void;
   onSetProfile?: (card: PhotocardItem) => void;
+  onShare?: (card: PhotocardItem) => void;
+  onDownload?: (card: PhotocardItem) => void;
   isProfileCard?: boolean;
 }
 
@@ -64,7 +66,7 @@ function getFrameStyle(
   }
 }
 
-export function PhotocardItemCard({ card, teamColor = "#666", onLike, onSetProfile, isProfileCard }: PhotocardItemCardProps) {
+export function PhotocardItemCard({ card, teamColor = "#666", onLike, onSetProfile, onShare, onDownload, isProfileCard }: PhotocardItemCardProps) {
   const rarity = RARITY_CONFIG[card.rarity];
   const frameStyle = getFrameStyle(card.frameType, teamColor);
   const initials = (card.playerName || card.teamName || "??").slice(0, 2);
@@ -161,6 +163,32 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike, onSetProfi
               <ArrowRightLeft className="w-3 h-3" />
               거래 가능
             </span>
+          </div>
+        )}
+
+        {/* Share / Download overlay buttons (only for cards with real images) */}
+        {card.imageUrl && (onShare || onDownload) && (
+          <div className="absolute bottom-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {onShare && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onShare(card); }}
+                className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                title="공유"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {onDownload && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onDownload(card); }}
+                className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                title="다운로드"
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         )}
 
