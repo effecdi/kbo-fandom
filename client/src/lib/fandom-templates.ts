@@ -184,6 +184,7 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
       break;
     case "playercard":
       parts.push(`${randExpr} ${memberPart} 선수 카드, ${randAngle}`);
+      if (meta.poseHint) parts.push(`${meta.poseHint} 포즈`);
       break;
     case "wallpaper":
       parts.push(`${randExpr} ${memberPart} 폰 배경화면, ${randAngle}`);
@@ -193,6 +194,7 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
       break;
     case "matchday":
       parts.push(`${randExpr} ${memberPart} 경기날 컨셉 포토, ${randAngle}`);
+      if (meta.poseHint) parts.push(`${meta.poseHint} 포즈`);
       break;
     case "fanart":
       parts.push(`${randExpr} ${memberPart} 팬아트 일러스트, ${randAngle}`);
