@@ -826,15 +826,41 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
   },
 };
 
+// ─── English→Korean team name mapping (KboTeam.name → KBO_TEAM_IDENTITY key) ─
+const TEAM_NAME_TO_KOREAN: Record<string, string> = {
+  "LG Twins": "LG 트윈스",
+  "KT Wiz": "KT 위즈",
+  "SSG Landers": "SSG 랜더스",
+  "NC Dinos": "NC 다이노스",
+  "Doosan Bears": "두산 베어스",
+  "KIA Tigers": "KIA 타이거즈",
+  "Lotte Giants": "롯데 자이언츠",
+  "Samsung Lions": "삼성 라이온즈",
+  "Hanwha Eagles": "한화 이글스",
+  "Kiwoom Heroes": "키움 히어로즈",
+};
+
+/** Resolve English or Korean team name to KBO_TEAM_IDENTITY key */
+function resolveTeamKey(groupName: string): string {
+  return TEAM_NAME_TO_KOREAN[groupName] || groupName;
+}
+
 /**
  * Returns an English prompt segment describing the team's visual identity
  * for accurate AI image generation (colors, uniforms, logos).
+ * Accepts both English ("LG Twins") and Korean ("LG 트윈스") team names.
  */
 export function getTeamIdentityPrompt(groupName: string): string | null {
-  const team = KBO_TEAM_IDENTITY[groupName];
+  const team = KBO_TEAM_IDENTITY[resolveTeamKey(groupName)];
   if (!team) return null;
 
   return `[TEAM VISUAL IDENTITY - ${team.nameEn}] Primary color: ${team.primaryHex}, Secondary color: ${team.secondaryHex}. Uniform: ${team.uniformDesc} Logo: ${team.logoDesc}. CRITICAL: Use these EXACT team colors and uniform design accurately. The team's primary color ${team.primaryHex} MUST be prominently visible in the artwork.`;
+}
+
+/** Find fandom color palette by English or Korean team name */
+export function findFandomPalette(groupName: string): FandomColorPalette | undefined {
+  const key = resolveTeamKey(groupName);
+  return FANDOM_COLOR_PALETTES.find(p => p.groupName === key);
 }
 
 // ─── Fandom Color Palettes (expanded from LIGHTSTICK_COLORS) ────────────────

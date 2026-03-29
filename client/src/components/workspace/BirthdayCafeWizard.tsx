@@ -4,6 +4,7 @@ import { useCopilot } from "@/hooks/use-copilot";
 import {
   FANDOM_COLOR_PALETTES,
   LIGHTSTICK_COLORS,
+  findFandomPalette,
 } from "@/lib/fandom-templates";
 import {
   BIRTHDAY_GOODS_OPTIONS,
@@ -46,7 +47,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
   if (!open) return null;
 
   const groupColor = fandomMeta?.coverColor || "#7B2FF7";
-  const palette = FANDOM_COLOR_PALETTES.find(p => p.groupName === fandomMeta?.groupName);
+  const palette = fandomMeta?.groupName ? findFandomPalette(fandomMeta.groupName) : undefined;
   const suggestedColors = palette
     ? [palette.primary, palette.secondary, palette.accent]
     : [groupColor, "#EC4899", "#F472B6"];

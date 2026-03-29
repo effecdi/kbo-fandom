@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useCopilot } from "@/hooks/use-copilot";
-import { BASEBALL_TEXT_PRESETS, FANDOM_COLOR_PALETTES } from "@/lib/fandom-templates";
+import { BASEBALL_TEXT_PRESETS, FANDOM_COLOR_PALETTES, findFandomPalette } from "@/lib/fandom-templates";
 import { Type, Palette } from "lucide-react";
 
 type TextCategory = "cheer" | "birthday" | "love" | "general";
@@ -24,7 +24,7 @@ export function BaseballTextOverlayPanel() {
 
   const groupName = fandomMeta?.groupName || "";
   const memberName = fandomMeta?.memberTags[0] || "";
-  const palette = FANDOM_COLOR_PALETTES.find(p => p.groupName === groupName);
+  const palette = findFandomPalette(groupName);
 
   function handlePresetClick(text: string) {
     const resolved = text
