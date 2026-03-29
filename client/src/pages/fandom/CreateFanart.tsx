@@ -192,6 +192,7 @@ export function FandomCreateFanart() {
       outfitHint: selectedOutfit || undefined,
       moodHint: selectedMood || undefined,
       playerPhotos: playerPhotos.length > 0 ? playerPhotos : undefined,
+      teamLogoUrl: selectedGroup.logoUrl || undefined,
     };
     localStorage.setItem(`olli-fandom-editor-${projectId}`, JSON.stringify(meta));
 

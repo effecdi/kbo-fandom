@@ -389,6 +389,23 @@ export function useCopilot() {
         }
       }
 
+      // Fetch team logo image as reference for AI generation
+      if (fandomMeta?.teamLogoUrl) {
+        try {
+          const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(fandomMeta.teamLogoUrl)}`);
+          if (logoResp.ok) {
+            const logoBlob = await logoResp.blob();
+            const logoDataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(logoBlob);
+            });
+            charImageUrls.push(logoDataUrl);
+            charNames.push(`CURRENT OFFICIAL TEAM LOGO/EMBLEM (2025-2026 season) — copy this EXACTLY`);
+          }
+        } catch { /* skip logo fetch error */ }
+      }
+
       // Prepend style prefix if fandom meta has a style preset
       let styledPrompt = prompt;
       if (fandomMeta?.stylePreset) {

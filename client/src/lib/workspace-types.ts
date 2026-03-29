@@ -89,6 +89,7 @@ export interface FandomEditorMeta {
   outfitHint?: string;
   moodHint?: string;
   playerPhotos?: { name: string; pcode: string }[];
+  teamLogoUrl?: string;
 }
 
 // ─── Workspace Types ────────────────────────────────────────────────────────

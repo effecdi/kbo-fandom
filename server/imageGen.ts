@@ -1201,7 +1201,7 @@ ${teamIdentity}
 BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
 1. The uniform and logo description above is the ONLY correct version. This is the 2025-2026 season branding.
 2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is from before 2025 and is COMPLETELY OUTDATED for most KBO teams.
-3. If you cannot accurately draw the described logo, then DO NOT draw any logo at all. A missing logo is better than a wrong/outdated logo.
+3. A reference image of the CURRENT official team logo/emblem is included above — copy it EXACTLY as shown. Do NOT modify, simplify, or replace it with any memorized version.
 4. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
    - NO old Doosan Bears logo (pre-2025). The current logo is a diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners, Hustle Block font.
    - NO old Hanwha Eagles logo (pre-2024). The current logo uses eagle-beak sharp serif wordmark by Matthew Wolff.

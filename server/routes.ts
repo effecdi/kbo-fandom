@@ -2826,5 +2826,55 @@ export async function registerRoutes(
     }
   });
 
+  // ─── KBO Team Logo Proxy ────────────────────────────────────────────────
+  // Proxies team emblem images from Naver CDN to avoid CORS issues
+  const teamLogoCache = new Map<string, { data: Buffer; timestamp: number }>();
+
+  app.get("/api/kbo/team-logo", async (req, res) => {
+    const logoUrl = req.query.url as string;
+    if (!logoUrl) {
+      return res.status(400).json({ error: "Missing url parameter" });
+    }
+
+    // Security: only allow whitelisted domains
+    try {
+      const parsed = new URL(logoUrl);
+      const allowed = ["6ptotvmi5753.edge.naverncp.com", "sports-phinf.pstatic.net"];
+      if (!allowed.includes(parsed.hostname)) {
+        return res.status(403).json({ error: "Domain not allowed" });
+      }
+    } catch {
+      return res.status(400).json({ error: "Invalid URL" });
+    }
+
+    try {
+      const cached = teamLogoCache.get(logoUrl);
+      if (cached && cached.timestamp > Date.now() - PHOTO_CACHE_TTL) {
+        res.set("Content-Type", "image/png");
+        res.set("Cache-Control", "public, max-age=86400");
+        return res.send(cached.data);
+      }
+
+      const response = await axios.get(logoUrl, {
+        responseType: "arraybuffer",
+        timeout: 8000,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Referer": "https://m.sports.naver.com/",
+        },
+      });
+
+      const buf = Buffer.from(response.data);
+      teamLogoCache.set(logoUrl, { data: buf, timestamp: Date.now() });
+
+      res.set("Content-Type", "image/png");
+      res.set("Cache-Control", "public, max-age=86400");
+      res.send(buf);
+    } catch (error: any) {
+      logger.error("Team logo fetch error", error?.message);
+      res.status(404).json({ error: "Logo not found" });
+    }
+  });
+
   return httpServer;
 }
