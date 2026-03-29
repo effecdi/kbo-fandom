@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import gsap from "gsap";
 import { ChevronLeft, ChevronRight, MapPin, Clock } from "lucide-react";
 import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
@@ -51,9 +51,14 @@ export function LiveGameCarousel({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ startX: 0, isDragging: false });
+  const initializedRef = useRef(false);
 
-  // ── Find initial index based on myTeamId ────────────────────────────────────
+  // Stable game ID list to detect actual game list changes (not just reference changes from polling)
+  const gameIds = useMemo(() => games.map((g) => g.id).join(","), [games]);
+
+  // ── Find initial index based on myTeamId (only on first load or when game list actually changes) ──
   useEffect(() => {
+    if (initializedRef.current) return; // already initialized, keep user selection
     if (myTeamId && games.length > 0) {
       const idx = games.findIndex(
         (g) => g.homeTeamId === myTeamId || g.awayTeamId === myTeamId,
@@ -63,9 +68,10 @@ export function LiveGameCarousel({
         onActiveIndexChange?.(idx);
         animateCards(idx, false);
       }
+      initializedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myTeamId, games]);
+  }, [myTeamId, gameIds]);
 
   // ── GSAP animation ──────────────────────────────────────────────────────────
   const animateCards = useCallback(
