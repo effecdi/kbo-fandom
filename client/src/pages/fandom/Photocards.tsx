@@ -160,19 +160,19 @@ export function FandomPhotocards() {
         </div>
 
         {/* Stats Bar */}
-        <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-xl border border-border">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 p-3 bg-muted/30 rounded-xl border border-border">
           <div className="flex items-center gap-1.5 text-[13px]">
             <Image className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">전체</span>
             <span className="font-bold text-foreground">{stats.total}</span>
           </div>
-          <div className="w-px h-4 bg-border" />
+          <div className="hidden sm:block w-px h-4 bg-border" />
           <div className="flex items-center gap-1.5 text-[13px]">
             <Heart className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">내 카드</span>
             <span className="font-bold text-foreground">{stats.mine}</span>
           </div>
-          <div className="w-px h-4 bg-border" />
+          <div className="hidden sm:block w-px h-4 bg-border" />
           <div className="flex items-center gap-1.5 text-[13px]">
             <ArrowRightLeft className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">거래중</span>
@@ -272,7 +272,7 @@ function PhotocardGrid({ children }: { children: React.ReactNode }) {
   }, [children]);
 
   return (
-    <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
       {children}
     </div>
   );
