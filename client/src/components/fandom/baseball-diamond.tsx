@@ -201,26 +201,24 @@ export function BaseballDiamond({
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-b from-[#2d5a27] via-[#3a7233] to-[#2d5a27]">
-      {/* Inning indicator - top left */}
-      <div className="absolute top-2 left-2 z-30">
+      {/* Inning indicator + Refresh button - top left */}
+      <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5">
         <div className="bg-black/50 px-2 py-1 rounded-lg text-[13px] font-bold text-white">
           {relay.inning}회 {relay.isTopInning ? "초" : "말"}
         </div>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="bg-black/50 hover:bg-black/70 p-1.5 rounded-lg transition-colors"
+            title="새로고침"
+          >
+            <RefreshCw
+              className={`w-4 h-4 text-white/80 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+          </button>
+        )}
       </div>
-
-      {/* Refresh button - top right */}
-      {onRefresh && (
-        <button
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          className="absolute top-2 right-2 z-30 bg-black/50 hover:bg-black/70 p-1.5 rounded-lg transition-colors"
-          title="새로고침"
-        >
-          <RefreshCw
-            className={`w-4 h-4 text-white/80 ${isRefreshing ? "animate-spin" : ""}`}
-          />
-        </button>
-      )}
 
       {/* Diamond field SVG */}
       <div className="relative w-full" style={{ paddingBottom: "100%" }}>
