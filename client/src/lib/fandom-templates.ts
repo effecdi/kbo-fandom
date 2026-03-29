@@ -771,9 +771,9 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
   "SSG 랜더스": {
     nameEn: "SSG Landers",
     primaryHex: "#CE0E2D",
-    secondaryHex: "#1D1D1B",
-    uniformDesc: "White home jersey with bold red 'SSG' text on chest, red piping and trim, red cap with Landers logo. Away jersey: crimson red with white 'LANDERS' text. Colors: crimson red and dark charcoal.",
-    logoDesc: "Red and dark gray emblem with stylized rocket/spaceship motif, 'SSG LANDERS' text, futuristic design",
+    secondaryHex: "#000000",
+    uniformDesc: "Black home jersey with 'LANDERS' wordmark in Empera font (anchor-inspired design), red 'L' cap logo with red UFO orbit ring. Away jersey: crimson red with white 'LANDERS' text. Anchor-motif number font. Colors: black (home), crimson red (away), with yellow accent from parent company.",
+    logoDesc: "Red 'L' letter symbol with red UFO orbit circling it, 'SSG LANDERS' anchor-inspired Empera font wordmark, modern space-themed rebranding by Todd Radom (2024)",
   },
   "NC 다이노스": {
     nameEn: "NC Dinos",
@@ -813,9 +813,9 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
   "한화 이글스": {
     nameEn: "Hanwha Eagles",
     primaryHex: "#FF6600",
-    secondaryHex: "#000000",
-    uniformDesc: "White home jersey with bright orange 'HANWHA' text on chest, orange cap with eagle head logo, orange trim and accents. Away jersey: bright orange with white 'EAGLES' text and black accents. Colors: bright orange and black.",
-    logoDesc: "Orange eagle with spread wings logo, 'HANWHA EAGLES' text, bold orange and black design, soaring eagle motif",
+    secondaryHex: "#1B2A4A",
+    uniformDesc: "White home jersey with eagle beak/talon-inspired sharp serif wordmark (based on 1999 championship logo), clean design without neck/sleeve color lines, orange cap. Away jersey: navy blue (not gray) with uppercase arch-style 'EAGLES' wordmark featuring perched eagle motif. Custom 한화이글스체 font with eagle-beak straight serifs. Colors: orange (home), navy (away), black accent. Slogan: RIDE THE STORM.",
+    logoDesc: "Eagle beak and talon-inspired sharp serif wordmark, hunting eagle motif, lightning/feather/wing design elements throughout branding, modern 40th anniversary rebrand by Matthew Wolff (2025)",
   },
   "키움 히어로즈": {
     nameEn: "Kiwoom Heroes",
