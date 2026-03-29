@@ -108,7 +108,7 @@ export function useKboSchedule(extraMonths?: { year: number; month: number }[]) 
           } catch { /* skip */ }
         }
 
-        if (!cancelled && allGames.length > 0) {
+        if (!cancelled) {
           const seen = new Set<string>();
           const deduped = allGames.filter((g) => {
             if (seen.has(g.id)) return false;
@@ -116,14 +116,21 @@ export function useKboSchedule(extraMonths?: { year: number; month: number }[]) 
             return true;
           });
 
-          setGames(deduped);
+          // Merge: API data (real scores) + generator data (future schedule)
+          // API games override generator games for the same date
+          const generator = getGeneratorFallback();
+          const apiDateSet = new Set(deduped.map((g) => g.date));
+          const generatorFill = generator.filter((g) => !apiDateSet.has(g.date));
+          const merged = [...deduped, ...generatorFill];
+
+          setGames(merged);
           localStorage.setItem(CACHE_KEY, JSON.stringify({
-            games: deduped,
+            games: merged,
             fetchedAt: Date.now(),
             months: fetched,
           } satisfies CachedData));
         }
-        // If API returned empty, keep existing state (generator fallback or stale cache)
+        // If fetch threw, keep existing state (generator fallback or stale cache)
       } catch {
         // API entirely failed — keep generator fallback
       }

@@ -2522,7 +2522,17 @@ export async function registerRoutes(
         }
       }
 
-      const data = { games: allGames, year, month };
+      // Deduplicate by gameId and filter to only games within the requested month
+      const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
+      const seen = new Set<string>();
+      const deduped = allGames.filter((g: any) => {
+        if (!g.gameId || seen.has(g.gameId)) return false;
+        seen.add(g.gameId);
+        // Only include games whose date falls within the requested month
+        return typeof g.date === "string" && g.date.startsWith(monthPrefix);
+      });
+
+      const data = { games: deduped, year, month };
       kboMonthCache[key] = { data, ts: Date.now() };
       res.json(data);
     } catch (error: any) {
