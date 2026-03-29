@@ -19,7 +19,7 @@ function TeamLogo({ team, size = "md" }: { team?: KboTeam; size?: "sm" | "md" | 
     "team-kia": "HT", "team-lot": "LT", "team-sam": "SS", "team-han": "HH", "team-kiw": "WO",
   };
   const code = team ? cdnMap[team.id] : null;
-  const logoUrl = code ? `https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/fixed/emblem_${code}.png` : null;
+  const logoUrl = code ? `https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_${code}.png` : null;
 
   return logoUrl ? (
     <img src={logoUrl} alt={team?.nameKo || ""} className={`${sizeClass} object-contain`} />

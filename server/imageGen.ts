@@ -1175,10 +1175,23 @@ export async function generateWebtoonScene(
 
     // Build team branding block (separate from character appearance so it's not ignored)
     const teamBrandingBlock = teamIdentity
-      ? `\nTEAM UNIFORM & BRANDING (CRITICAL — override any pre-trained knowledge about this team):
+      ? `\n=== TEAM UNIFORM & BRANDING (HIGHEST PRIORITY — OVERRIDES YOUR TRAINING DATA) ===
 ${teamIdentity}
-- You MUST follow the uniform and logo description above EXACTLY. Do NOT use older/outdated versions of the team's logo or uniform from your training data.
-- The team branding described here reflects the LATEST official design. Any older designs you may know are OUTDATED and must NOT be used.\n`
+
+BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE):
+1. The uniform and logo description above is the ONLY correct version. This is the 2025-2026 season branding.
+2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is OUTDATED.
+3. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
+   - NO old Doosan Bears logo (pre-2025). The current logo is a diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners, Hustle Block font.
+   - NO old Hanwha Eagles logo (pre-2024). The current logo uses eagle-beak sharp serif wordmark by Matthew Wolff.
+   - NO old SSG/SK Wyverns branding. SSG Landers uses red 'L' with UFO orbit ring.
+   - NO old Lotte Giants logo (pre-2023). Current uses flat-design seagull emblem.
+   - NO old KT Wiz logo. Current uses angular gothic 'wiz' with star-burst mark.
+   - NO generic/invented team logos or uniform designs.
+4. If you are unsure about the team's current branding, follow the text description above LITERALLY — do not guess.
+5. The team's PRIMARY COLOR (${teamIdentity.match(/Primary color: (#[A-Fa-f0-9]+)/)?.[1] || "described above"}) MUST be prominently visible.
+6. Draw the uniform EXACTLY as described: correct wordmark text, correct font style, correct color scheme, correct cap design.
+=== END TEAM BRANDING ===\n`
       : "";
 
     parts.push({

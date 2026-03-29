@@ -23,6 +23,7 @@ import {
   type KboPlayer,
   type FandomUserProfile,
 } from "@/lib/local-store";
+import { TeamLogo } from "@/components/fandom/team-logo";
 
 const TOTAL_STEPS = 10;
 
@@ -277,11 +278,8 @@ export function FandomOnboarding() {
                         : {}
                     }
                   >
-                    <div
-                      className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-black text-lg"
-                      style={{ background: g.coverColor }}
-                    >
-                      {g.name.charAt(0)}
+                    <div className="mx-auto mb-3">
+                      <TeamLogo team={g} size="lg" />
                     </div>
                     <p className="font-bold text-sm text-foreground">{g.name}</p>
                     <p className="text-[13px] text-muted-foreground">{g.nameKo}</p>

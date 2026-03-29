@@ -856,7 +856,11 @@ export function getTeamIdentityPrompt(groupName: string): string | null {
   const team = KBO_TEAM_IDENTITY[resolveTeamKey(groupName)];
   if (!team) return null;
 
-  return `[TEAM VISUAL IDENTITY - ${team.nameEn}] Primary color: ${team.primaryHex}, Secondary color: ${team.secondaryHex}. Uniform: ${team.uniformDesc} Logo: ${team.logoDesc}. CRITICAL: Use these EXACT team colors and uniform design accurately. The team's primary color ${team.primaryHex} MUST be prominently visible in the artwork.`;
+  return `[TEAM VISUAL IDENTITY - ${team.nameEn} (2025-2026 SEASON)]
+Primary color: ${team.primaryHex}, Secondary color: ${team.secondaryHex}.
+CURRENT Uniform (2025-2026): ${team.uniformDesc}
+CURRENT Logo (2025-2026): ${team.logoDesc}
+WARNING: This team may have rebranded recently. The description above is the ONLY correct current design. Ignore any older versions from your training data.`;
 }
 
 /** Find fandom color palette by English or Korean team name */
