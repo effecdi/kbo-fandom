@@ -92,12 +92,12 @@ export function FandomGoodsTrades() {
         </div>
 
         {/* Stats bar */}
-        <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground bg-muted/30 rounded-xl px-4 py-3 border border-border">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[13px] text-muted-foreground bg-muted/30 rounded-xl px-3 sm:px-4 py-3 border border-border">
           <div className="flex items-center gap-1.5">
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>전체 <span className="text-foreground font-bold">{stats.total}</span>건</span>
           </div>
-          <div className="w-px h-3 bg-border" />
+          <div className="hidden sm:block w-px h-3 bg-border" />
           <div className="flex items-center gap-1.5">
             <Tag className="w-3.5 h-3.5 text-green-400" />
             <span>판매 <span className="text-foreground font-bold">{stats.sells}</span></span>
@@ -158,7 +158,7 @@ export function FandomGoodsTrades() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filtered.map((trade) => (
               <GoodsTradeCard
                 key={trade.id}

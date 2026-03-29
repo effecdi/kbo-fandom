@@ -91,7 +91,7 @@ export function GoodsTradeCard({ trade, teamColor }: GoodsTradeCardProps) {
       </div>
 
       {/* Info */}
-      <div className="p-4 space-y-2.5">
+      <div className="p-3 sm:p-4 space-y-2.5">
         {/* Item name */}
         <h3 className="text-[15px] font-bold text-foreground group-hover:text-[var(--fandom-primary)] transition-colors truncate">
           {trade.itemName}

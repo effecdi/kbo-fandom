@@ -172,12 +172,12 @@ export function PhotocardItemCard({ card, teamColor = "#666", onLike, onSetProfi
 
       {/* Bottom info section */}
       <div
-        className={`p-3 space-y-2 ${
+        className={`p-2 sm:p-3 space-y-1.5 sm:space-y-2 ${
           card.frameType === "polaroid" ? "pb-5 bg-white/5" : ""
         }`}
       >
         {/* Title */}
-        <h3 className="text-[15px] font-bold text-foreground truncate">
+        <h3 className="text-[13px] sm:text-[15px] font-bold text-foreground truncate">
           {card.title}
         </h3>
 

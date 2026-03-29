@@ -218,7 +218,7 @@ export function FandomSchedule() {
         </div>
 
         {/* View Toggle + My Team Toggle */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-3">
           {/* View mode buttons */}
           <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
             {VIEW_TABS.map((vt) => (
@@ -320,7 +320,7 @@ export function FandomSchedule() {
                   </div>
 
                   {/* Game cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                     {dayGames.map((game) => (
                       <GameScheduleCard
                         key={game.id}

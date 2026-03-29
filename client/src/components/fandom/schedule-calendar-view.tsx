@@ -154,13 +154,13 @@ export function ScheduleCalendarView({
                 onClick={() =>
                   setSelectedDate(isSelected ? null : cd.dateStr)
                 }
-                className={`relative min-h-[56px] sm:min-h-[72px] p-1 sm:p-1.5 border-b border-r border-border text-left transition-all hover:bg-muted/50 ${
+                className={`relative min-h-[48px] sm:min-h-[72px] p-0.5 sm:p-1.5 border-b border-r border-border text-left transition-all hover:bg-muted/50 ${
                   !cd.isCurrentMonth ? "opacity-30" : ""
                 } ${isSelected ? "bg-primary/10 ring-1 ring-primary/40" : ""}`}
               >
                 {/* Day number */}
                 <span
-                  className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[13px] sm:text-[13px] font-bold ${
+                  className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[13px] font-bold ${
                     cd.isToday
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground"
@@ -184,7 +184,7 @@ export function ScheduleCalendarView({
 
                 {/* Game count badge */}
                 {cd.games.length > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-muted text-[13px] font-bold text-foreground">
+                  <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 min-w-[16px] h-[16px] sm:min-w-[18px] sm:h-[18px] flex items-center justify-center rounded-full bg-muted text-[13px] font-bold text-foreground">
                     {cd.games.length}
                   </span>
                 )}

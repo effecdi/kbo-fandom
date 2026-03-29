@@ -113,7 +113,7 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
   // ── Default (full) mode ───────────────────────────────────────────────────
   return (
     <div
-      className={`relative bg-card border rounded-2xl p-5 hover:border-foreground/15 transition-all ${myTeamMatch ? "ring-2" : "border-border"}`}
+      className={`relative bg-card border rounded-2xl p-3 sm:p-5 hover:border-foreground/15 transition-all ${myTeamMatch ? "ring-2" : "border-border"}`}
       style={{
         ...cardStyle,
         ...(myTeamMatch ? { "--tw-ring-color": myTeamMatch.coverColor } as React.CSSProperties : {}),
@@ -152,16 +152,16 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
       </div>
 
       {/* Teams */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-2 sm:gap-4">
         {/* Home Team */}
-        <div className="flex-1 text-center">
+        <div className="flex-1 text-center min-w-0">
           <TeamLogo team={homeTeam} teamName={game.homeTeamName} size="lg" className="mx-auto mb-2" />
-          <p className="text-base font-bold text-foreground truncate">{game.homeTeamName}</p>
+          <p className="text-[13px] sm:text-base font-bold text-foreground truncate">{game.homeTeamName}</p>
           <p className="text-[13px] text-muted-foreground">홈</p>
         </div>
 
         {/* Score / VS */}
-        <div className="text-center min-w-[70px]">
+        <div className="text-center min-w-[50px] sm:min-w-[70px]">
           {game.status === "finished" || game.status === "live" ? (
             <div className="flex items-center gap-2">
               <span className="text-2xl font-black text-foreground">{game.homeScore ?? 0}</span>
@@ -174,15 +174,15 @@ export function GameScheduleCard({ game, teams, showAttendButton, isAttending, o
         </div>
 
         {/* Away Team */}
-        <div className="flex-1 text-center">
+        <div className="flex-1 text-center min-w-0">
           <TeamLogo team={awayTeam} teamName={game.awayTeamName} size="lg" className="mx-auto mb-2" />
-          <p className="text-base font-bold text-foreground truncate">{game.awayTeamName}</p>
+          <p className="text-[13px] sm:text-base font-bold text-foreground truncate">{game.awayTeamName}</p>
           <p className="text-[13px] text-muted-foreground">원정</p>
         </div>
       </div>
 
       {/* Stadium */}
-      <div className="flex items-center gap-2 mt-4 text-[13px] text-muted-foreground">
+      <div className="flex items-center gap-2 mt-3 sm:mt-4 text-[13px] text-muted-foreground">
         <MapPin className="w-4 h-4" />
         <span>{game.stadium}</span>
       </div>
