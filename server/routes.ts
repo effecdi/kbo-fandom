@@ -2476,8 +2476,38 @@ export async function registerRoutes(
       const gs = relay.currentGameState || {};
       const isTopInning = relay.homeOrAway === "0"; // 0=초(top), 1=말(bottom)
 
-      // Build comprehensive pcode → player map from all entries
+      // Position name mapping (full + abbreviated variants from Naver API)
+      const POS_MAP: Record<string, string> = {
+        "투수": "pitcher", "포수": "catcher",
+        "1루수": "first", "2루수": "second", "3루수": "third",
+        "유격수": "shortstop",
+        "좌익수": "left", "중견수": "center", "우익수": "right",
+        "지명타자": "dh",
+        "1루": "first", "2루": "second", "3루": "third",
+        "유격": "shortstop",
+        "좌익": "left", "중견": "center", "우익": "right",
+        "좌전": "left", "중전": "center", "우전": "right",
+        "지타": "dh", "DH": "dh",
+      };
+
+      // Build pcode → player map from LINEUP (full 9-man) + ENTRY (substitutions)
       const pcodeMap: Record<string, { name: string; pos: string; style?: string }> = {};
+
+      // 1) Lineup data (full starting lineup - most reliable for positions)
+      for (const b of (relay.homeLineup?.batter || [])) {
+        pcodeMap[b.pcode] = { name: b.name, pos: b.posName || b.pos };
+      }
+      for (const b of (relay.awayLineup?.batter || [])) {
+        pcodeMap[b.pcode] = { name: b.name, pos: b.posName || b.pos };
+      }
+      for (const p of (relay.homeLineup?.pitcher || [])) {
+        pcodeMap[p.pcode] = { name: p.name, pos: "투수", style: p.hitType };
+      }
+      for (const p of (relay.awayLineup?.pitcher || [])) {
+        pcodeMap[p.pcode] = { name: p.name, pos: "투수", style: p.hitType };
+      }
+
+      // 2) Entry data (includes substitutions that may override lineup)
       for (const p of (relay.homeEntry?.pitcher || [])) {
         pcodeMap[p.pcode] = { name: p.name, pos: "투수", style: p.pitchingStyle };
       }
@@ -2491,66 +2521,48 @@ export async function registerRoutes(
         pcodeMap[b.pcode] = { name: b.name, pos: b.pos };
       }
 
-      // Also extract batter/pitcher names from textRelays (catches substituted players)
+      // 3) Extract from textRelays (catches mid-game substitutions)
       const textRelays = relay.textRelays || [];
-      // Track pitcher pcode → name from relay text (e.g., "투수 에르난데스 : 투수 조동욱 (으)로 교체")
       const pitcherPcodeMap: Record<string, string> = {};
       for (const tr of textRelays) {
         const title = tr.title || "";
-        // Extract batter from title pattern "N번타자 이름"
         const batterMatch = title.match(/(\d+)번타자\s+(.+)/);
         for (const opt of (tr.textOptions || [])) {
           const trGs = opt.currentGameState || {};
           const text = opt.text || "";
-
-          // Map batter pcode from title
           if (batterMatch && trGs.batter && !pcodeMap[trGs.batter]) {
             pcodeMap[trGs.batter] = { name: batterMatch[2].trim(), pos: "타자" };
           }
-
-          // Map pitcher from text "투수 XXX : 투수 YYY (으)로 교체"
           const pitcherChangeMatch = text.match(/투수\s+(.+?)\s*:\s*투수\s+(.+?)\s*\(?으?\)?로\s*교체/);
           if (pitcherChangeMatch && trGs.pitcher) {
             pitcherPcodeMap[trGs.pitcher] = pitcherChangeMatch[2].trim();
           }
         }
       }
-
-      // Merge pitcher pcode map into main map
       for (const [pcode, name] of Object.entries(pitcherPcodeMap)) {
-        if (!pcodeMap[pcode]) {
-          pcodeMap[pcode] = { name, pos: "투수", style: "" };
-        }
+        pcodeMap[pcode] = { name, pos: "투수", style: "" };
       }
 
       // Find current pitcher and batter
       const pitcherInfo = pcodeMap[gs.pitcher];
       const batterInfo = pcodeMap[gs.batter];
 
-      // Defensive team lineup (field positions)
+      // Defensive team: use LINEUP (full 9-man) as primary, ENTRY as fallback
+      const defLineup = isTopInning ? relay.homeLineup : relay.awayLineup;
+      const offLineup = isTopInning ? relay.awayLineup : relay.homeLineup;
       const defEntry = isTopInning ? relay.homeEntry : relay.awayEntry;
       const offEntry = isTopInning ? relay.awayEntry : relay.homeEntry;
-      const defBatters = defEntry?.batter || [];
-      const offBatters = offEntry?.batter || [];
 
-      // Map defensive positions: last player assigned to each position wins
-      // Include both full names and abbreviations from Naver API
-      const POS_MAP: Record<string, string> = {
-        "투수": "pitcher", "포수": "catcher",
-        "1루수": "first", "2루수": "second", "3루수": "third",
-        "유격수": "shortstop",
-        "좌익수": "left", "중견수": "center", "우익수": "right",
-        "지명타자": "dh",
-        // Abbreviated variants sometimes returned by Naver
-        "1루": "first", "2루": "second", "3루": "third",
-        "유격": "shortstop",
-        "좌익": "left", "중견": "center", "우익": "right",
-        "좌전": "left", "중전": "center", "우전": "right",
-        "지타": "dh", "DH": "dh",
-      };
-
+      // Build defense from lineup (full 9-man, posName field)
       const defense: Record<string, { name: string; pcode: string }> = {};
-      for (const b of defBatters) {
+      for (const b of (defLineup?.batter || [])) {
+        const posKey = POS_MAP[b.posName] || POS_MAP[b.pos];
+        if (posKey && posKey !== "dh") {
+          defense[posKey] = { name: b.name, pcode: b.pcode };
+        }
+      }
+      // Override with entry data (substitutions update positions)
+      for (const b of (defEntry?.batter || [])) {
         const posKey = POS_MAP[b.pos];
         if (posKey && posKey !== "dh") {
           defense[posKey] = { name: b.name, pcode: b.pcode };
@@ -2561,11 +2573,12 @@ export async function registerRoutes(
         defense["pitcher"] = { name: pitcherInfo.name, pcode: gs.pitcher };
       }
 
-      // Batting order for the offensive team
+      // Batting order: prefer lineup (full 9-man), fallback to entry
+      const offBatters = (offLineup?.batter?.length >= 9) ? offLineup.batter : (offEntry?.batter || []);
       const battingOrder = offBatters.map((b: any, i: number) => ({
-        order: i + 1,
+        order: b.batOrder || (i + 1),
         name: b.name,
-        pos: b.pos,
+        pos: b.posName || b.pos,
         pcode: b.pcode,
       }));
 
