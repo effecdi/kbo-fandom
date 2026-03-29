@@ -10,7 +10,7 @@ import { generateKbo2026Schedule } from "@/lib/kbo-schedule-generator";
  * 3순위: 클라이언트 generator 폴백 (API 실패 시)
  */
 
-const CACHE_KEY = "olli-kbo-schedule-api";
+const CACHE_KEY = "olli-kbo-schedule-v2";
 const CACHE_TTL = 3600_000; // 1 hour
 
 interface CachedData {
@@ -101,9 +101,10 @@ export function useKboSchedule(extraMonths?: { year: number; month: number }[]) 
             const resp = await fetch(`/api/kbo/schedule?year=${year}&month=${month}`);
             if (!resp.ok) continue;
             const data = await resp.json();
+            // Mark month as fetched even if 0 games (to avoid refetching)
+            fetched.push(`${year}-${month}`);
             if (data.games && Array.isArray(data.games) && data.games.length > 0) {
               allGames.push(...data.games);
-              fetched.push(`${year}-${month}`);
             }
           } catch { /* skip */ }
         }
