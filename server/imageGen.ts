@@ -1180,9 +1180,9 @@ export async function generateWebtoonScene(
   if (teamIdentity && teamLogoImage) {
     const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
     if (logoMatch) {
-      teamBrandingParts.push({ text: `\n=== TEAM LOGO REFERENCE IMAGE (THIS IS THE ONLY CORRECT LOGO — 2025-2026 season) ===\nThe image below is the CURRENT, OFFICIAL team logo/emblem from KBO (Korea Baseball Organization).\nYou MUST replicate this logo EXACTLY on the character's CAP, HELMET, and UNIFORM when drawing team branding.\n- CAP/HELMET: The logo or its cap variant MUST appear on the front of the baseball cap/helmet.\n- JERSEY: Use this logo's design language (colors, typography style, shapes) for the uniform wordmark/emblem.\n- Do NOT use ANY other version of this team's logo from your training data — your memorized logos are OUTDATED and WRONG.\n- Study the reference image below carefully: note the exact shapes, colors, typography, and design elements.` });
+      teamBrandingParts.push({ text: `\n======================================================================\nTEAM LOGO REFERENCE IMAGE — 2025-2026 OFFICIAL KBO LOGO\n======================================================================\nThe image below is the CURRENT, OFFICIAL team emblem directly from KBO (Korea Baseball Organization).\nThis is the ONLY correct version. Your training data logos are ALL OUTDATED.\n\nYou MUST:\n1. Copy this EXACT logo onto the CHARACTER'S CAP/HELMET front — same shapes, same colors, same style\n2. Use this logo's typography/design language for the JERSEY wordmark\n3. IGNORE any team logo stored in your memory/weights — it is WRONG\n4. Study the image carefully: exact letter shapes, curves, angles, colors\n\nHere is the official logo:` });
       teamBrandingParts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
-      teamBrandingParts.push({ text: `^^^ THIS IS THE ONLY CORRECT LOGO. Copy it EXACTLY onto the cap and uniform. Any other version you remember is OUTDATED and WRONG. ^^^` });
+      teamBrandingParts.push({ text: `^^^ ABOVE: The ONLY correct logo. COPY IT EXACTLY onto the cap/helmet.\nIf you draw ANY different version of this team's logo, the output is WRONG and UNACCEPTABLE.\nThe cap logo must match THIS image — not your memory. ^^^` });
     }
   }
 
@@ -1211,16 +1211,16 @@ BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
     : "";
 
   if (hasImages) {
-    // Gemini multimodal best practice: 레퍼런스 이미지를 텍스트보다 앞에 배치, 이름 라벨 포함
+    // ── Part 0: 선수 사진 + 얼굴 매칭 지시를 쌍으로 배치 (Gemini가 바로 연결)
     for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
       const src = images[imgIdx];
       const match = src.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
-        if (hasCharNames) {
-          const name = characterNames[imgIdx] || `Character ${imgIdx + 1}`;
-          parts.push({ text: `Reference image #${imgIdx + 1} — this is [${name}]:` });
-        }
+        const name = hasCharNames ? (characterNames[imgIdx] || `Character ${imgIdx + 1}`) : `Player ${imgIdx + 1}`;
+        parts.push({ text: `=== PLAYER REFERENCE PHOTO: [${name}] ===\nThis is a REAL PHOTO of KBO baseball player [${name}]. Study this face VERY carefully before drawing.` });
         parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+        // 사진 직후에 얼굴 매칭 지시 (이미지와 붙여야 Gemini가 더 잘 인식)
+        parts.push({ text: `^^^ ABOVE: Real photo of [${name}]. You MUST draw this EXACT person.\n- Match their EXACT face shape, jaw, cheeks, eye shape/size/spacing, nose, eyebrows, lips, chin, forehead\n- Match their EXACT age appearance — KBO players are young athletes (mostly 20s). If the photo shows a young person, draw a YOUNG person. Do NOT make them look older.\n- Match their EXACT body build, skin tone, and hairstyle\n- A fan MUST be able to identify this player at first glance` });
       }
     }
 
@@ -1229,60 +1229,84 @@ BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
 - If the scene description mentions a character by name, that character MUST match their specific reference image.`
       : "";
 
-    // Part 1: Character face reference instructions
+    // ── Part 1: 팀 로고 레퍼런스 이미지 (선수 사진과 분리하여 별도 섹션)
+    if (teamBrandingParts.length > 0) {
+      parts.push(...teamBrandingParts);
+    }
+
+    // ── Part 2: 메인 지시 프롬프트 (얼굴 + 로고 + 장면)
     parts.push({
       text: `${tpl.role}
 
 ${noTextRule}
 ${charIdentityBlock}
-FACE & BODY REFERENCE (HIGHEST PRIORITY — the photos above are the GROUND TRUTH):
-- The reference photos above show a REAL PERSON (a professional KBO baseball player). You MUST faithfully reproduce their EXACT facial features in illustration style.
-- STEP 1: Study the reference photo carefully. Note EVERY facial detail: face shape, jaw line, cheek structure, eye shape and spacing, nose bridge width and tip shape, eyebrow thickness and arch, lip fullness, forehead proportions, chin shape, ear size.
-- STEP 2: Draw the character's face to be a RECOGNIZABLE LIKENESS of the person in the photo. A fan must be able to identify who this player is at first glance.
-- CRITICAL FACIAL FEATURES TO MATCH EXACTLY: face shape (round/square/oval), face width, jaw line angle, cheek fullness, eye size & shape & spacing, nose shape & width, eyebrow thickness & arch, lip shape & fullness, forehead size, chin shape & prominence.
-- BODY TYPE: Match the person's build (slim/average/stocky/muscular) exactly as shown. Do NOT change their body proportions.
-- AGE APPEARANCE: The illustrated character must look the SAME AGE as the reference. Do NOT age up or down.
-- HAIR: Match the EXACT hairstyle, hair length, parting direction, and hair color from the reference photo. This is one of the most recognizable features.
-- SKIN TONE: Match the person's skin tone from the reference photo exactly.
-- The character must be IMMEDIATELY RECOGNIZABLE as the same person — this is a FAN ART of a SPECIFIC PLAYER. Generic faces are UNACCEPTABLE.
-- Do NOT beautify, slim down, age up, or otherwise alter the person's real appearance. Draw them AS THEY ACTUALLY LOOK.
-- If the art style is cartoon/anime, still maintain the key distinguishing features (face shape, hair, build) that make this person recognizable.${charConsistencyRules}`
-    });
 
-    // Part 2: Team logo reference image (separate from character photos so AI doesn't confuse them)
-    if (teamBrandingParts.length > 0) {
-      parts.push(...teamBrandingParts);
-    }
+======================================================================
+FACE & BODY LIKENESS — #1 HIGHEST PRIORITY (ABOVE ALL OTHER RULES)
+======================================================================
+The reference photos above show REAL professional KBO baseball players.
+Your illustration MUST be a RECOGNIZABLE PORTRAIT of the EXACT person in the photo.
 
-    // Part 3: Team branding rules + remaining instructions
-    parts.push({
-      text: `${teamBrandingBlock}
-EXPRESSION & POSE VARIETY (CRITICAL — apply to EVERY generated image):
-- The character MUST have a BRIGHT, CHEERFUL, LIVELY facial expression — big smile, grinning, laughing, showing excitement, winking, or playful look.
-- Do NOT draw the character with a serious, stern, stoic, or neutral expression. This is fan art, NOT a passport photo.
-- VARY the camera angle and character direction each time. Choose randomly from: three-quarter view, slight head tilt, looking over shoulder, dynamic action angle, low angle looking up, high angle looking down, side profile with head turned toward viewer, or diagonal composition.
-- Do NOT always draw the character facing straight forward with a symmetrical pose. Make each image feel DYNAMIC and UNIQUE.
-- The character's body language should convey energy and positivity — confident stance, fist pump, victory sign, pointing, jumping, or any lively gesture.
+CRITICAL AGE RULE: Most KBO players are young athletes in their 20s.
+- If the reference photo shows a young person (20s), your drawing MUST look like someone in their 20s.
+- Do NOT add wrinkles, age lines, or mature features that are NOT in the photo.
+- Do NOT make the face look older, more angular, or more gaunt than the reference.
+- MATCH the youthfulness: smooth skin, full cheeks, young facial structure.
 
-STORY CONTEXT (EVERY scene must directly illustrate this story — do NOT deviate):
+FACE MATCHING CHECKLIST (verify EACH before finalizing):
+□ Face shape (round/oval/square/heart) — EXACT match to photo
+□ Face width and fullness — if the person has a round/full face, draw it round/full
+□ Jaw line — sharp or soft, match exactly
+□ Cheek fullness — chubby cheeks stay chubby, slim stays slim
+□ Eye shape, size, spacing, and single/double eyelid
+□ Nose shape and width
+□ Eyebrow thickness and arch
+□ Lip shape and fullness
+□ Forehead size and shape
+□ Chin shape and prominence
+□ Skin tone — exact match
+□ Hairstyle, hair color, parting direction — exact match
+□ Body build (slim/average/stocky/muscular) — exact match
+□ Arm and leg proportions — match the actual build
+
+ABSOLUTE BANS:
+- Do NOT draw a generic face. Generic faces = FAILURE.
+- Do NOT age up the player. Adding 10+ years = FAILURE.
+- Do NOT slim down or beautify. Draw them AS THEY ACTUALLY LOOK.
+- Do NOT change body proportions (e.g., making arms/legs longer/shorter).
+- The character must be IMMEDIATELY IDENTIFIABLE as the specific player.${charConsistencyRules}
+
+${teamBrandingBlock}
+
+CAP/HELMET LOGO RULE:
+- If a TEAM LOGO REFERENCE IMAGE was provided above, the logo on the cap/helmet MUST be an EXACT copy of that reference image.
+- Do NOT draw any logo from your training data memory — your memorized KBO logos are ALL OUTDATED.
+- Copy the reference logo image pixel-for-pixel onto the cap front.
+
+EXPRESSION & POSE:
+- BRIGHT, CHEERFUL expression — big smile, grinning, laughing, excited, winking
+- Do NOT draw a serious or stern face. This is fan art, NOT a mugshot.
+- VARY the camera angle: three-quarter view, slight tilt, dynamic angle. Do NOT face straight forward.
+- Energetic body language — confident stance, fist pump, victory sign, or lively gesture.
+
+STORY CONTEXT (EVERY scene must directly illustrate this):
 "${translatedContext}"
 ${scenePositionBlock}
-SCENE TO ILLUSTRATE (draw exactly this action/pose/expression):
+SCENE TO ILLUSTRATE:
 ${translatedScene}
 
-CRITICAL RULES:
-- Draw EXACTLY the scene described above using the EXACT character from the reference photos.
-- The character's FACE must match the reference photo — same face shape, same features, same build. This is NON-NEGOTIABLE.
-- The scene MUST DIRECTLY illustrate the story topic: "${translatedContext}" — every visual element must connect to this topic
+FINAL CHECKLIST:
+1. Does the face match the reference photo? (age, shape, features) — If NO, redraw the face.
+2. Is the cap/helmet logo matching the reference logo image (not your memory)? — If NO, redraw the logo.
+3. Are the uniform colors correct per the branding rules above? — If NO, fix the colors.
 ${tpl.bg}
-- Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, or text containers — speech bubbles are added separately
-- If the scene involves a phone/smartphone, draw the phone screen clearly visible with UI elements
+- Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, or text containers
 - Characters should be drawn large, filling most of the image area
-- ${ratioLabel} aspect ratio — the image must completely fill the canvas in this exact ratio
+- ${ratioLabel} aspect ratio — fill the entire canvas
 ${tpl.style}
 
 ${tpl.outro}
-Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind to the image. Speech bubbles will be overlaid separately.`
+Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind.`
     });
   } else {
     // Even without character photos, inject team logo image if available
