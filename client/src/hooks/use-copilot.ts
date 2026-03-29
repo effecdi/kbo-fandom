@@ -390,10 +390,28 @@ export function useCopilot() {
         }
       }
 
-      // NOTE: Naver CDN emblem images are OUTDATED (old logos) for most teams.
-      // Do NOT send them as reference — rely on text descriptions + BANNED rules only.
-      // TODO: When correct logo images are available, re-enable this.
-      const teamLogoDataUrl: string | undefined = undefined;
+      // 팀 로고 이미지를 KBO 공식 CDN에서 fetch하여 Gemini 레퍼런스로 전달
+      // /regular/2026/ 경로 = 2026 시즌 최신 로고
+      let teamLogoDataUrl: string | undefined = undefined;
+      if (fandomMeta?.groupName) {
+        try {
+          const teams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
+          const myTeam = teams.find(
+            (t) => t.name === fandomMeta.groupName || t.nameKo === fandomMeta.groupName
+          );
+          if (myTeam?.logoUrl) {
+            const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.logoUrl)}`);
+            if (logoResp.ok) {
+              const logoBlob = await logoResp.blob();
+              teamLogoDataUrl = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(logoBlob);
+              });
+            }
+          }
+        } catch { /* 로고 fetch 실패해도 텍스트 설명으로 진행 */ }
+      }
 
       // Prepend style prefix if fandom meta has a style preset
       let styledPrompt = prompt;
@@ -567,6 +585,29 @@ export function useCopilot() {
         const ART_STYLE = "simple line art, thick clean outlines, minimal flat color, webtoon style, consistent character design";
         // Inject team identity for multi-cut (별도 파라미터로 서버 전달)
         const teamIdentityMulti = fandomMeta ? getTeamIdentityPrompt(fandomMeta.groupName) : null;
+
+        // 팀 로고 이미지 fetch (멀티컷에서도 Gemini에 레퍼런스 전달)
+        let teamLogoMulti: string | undefined = undefined;
+        if (fandomMeta?.groupName) {
+          try {
+            const teams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
+            const myTeam = teams.find(
+              (t) => t.name === fandomMeta.groupName || t.nameKo === fandomMeta.groupName
+            );
+            if (myTeam?.logoUrl) {
+              const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.logoUrl)}`);
+              if (logoResp.ok) {
+                const logoBlob = await logoResp.blob();
+                teamLogoMulti = await new Promise<string>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result as string);
+                  reader.readAsDataURL(logoBlob);
+                });
+              }
+            }
+          } catch { /* skip */ }
+        }
+
         const generatedUrls: (string | null)[] = new Array(scenes.length).fill(null);
         let referenceImageUrl: string | null = null;
 
@@ -593,6 +634,7 @@ export function useCopilot() {
                 sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
                 characterNames: charNames.length > 0 ? charNames : undefined,
                 teamIdentity: teamIdentityMulti || undefined,
+                teamLogoImage: teamLogoMulti || undefined,
                 aspectRatio: geminiRatio,
                 sceneIndex: i,
                 totalScenes: scenes.length,

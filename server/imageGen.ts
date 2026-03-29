@@ -1180,9 +1180,9 @@ export async function generateWebtoonScene(
   if (teamIdentity && teamLogoImage) {
     const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
     if (logoMatch) {
-      teamBrandingParts.push({ text: `\n=== TEAM LOGO REFERENCE IMAGE (THIS IS THE ONLY CORRECT LOGO — 2025-2026 season) ===\nThe image below is the CURRENT, OFFICIAL team logo/emblem. You MUST copy this logo EXACTLY when drawing team branding. Do NOT use any other version from your training data.` });
+      teamBrandingParts.push({ text: `\n=== TEAM LOGO REFERENCE IMAGE (THIS IS THE ONLY CORRECT LOGO — 2025-2026 season) ===\nThe image below is the CURRENT, OFFICIAL team logo/emblem from KBO (Korea Baseball Organization).\nYou MUST replicate this logo EXACTLY on the character's CAP, HELMET, and UNIFORM when drawing team branding.\n- CAP/HELMET: The logo or its cap variant MUST appear on the front of the baseball cap/helmet.\n- JERSEY: Use this logo's design language (colors, typography style, shapes) for the uniform wordmark/emblem.\n- Do NOT use ANY other version of this team's logo from your training data — your memorized logos are OUTDATED and WRONG.\n- Study the reference image below carefully: note the exact shapes, colors, typography, and design elements.` });
       teamBrandingParts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
-      teamBrandingParts.push({ text: `^^^ THIS IS THE ONLY CORRECT LOGO. Any other version you remember is OUTDATED and WRONG. ^^^` });
+      teamBrandingParts.push({ text: `^^^ THIS IS THE ONLY CORRECT LOGO. Copy it EXACTLY onto the cap and uniform. Any other version you remember is OUTDATED and WRONG. ^^^` });
     }
   }
 
@@ -1193,7 +1193,7 @@ ${teamIdentity}
 BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
 1. The uniform and logo description above is the ONLY correct version. This is the 2025-2026 season branding.
 2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is from before 2025 and is COMPLETELY OUTDATED for most KBO teams.
-3. Follow the logo and uniform TEXT DESCRIPTION above LITERALLY. Do NOT use any pre-trained/memorized logo — your training data logos are OUTDATED. Draw ONLY what the text describes.
+3. If a TEAM LOGO REFERENCE IMAGE was provided above, that image is the GROUND TRUTH. Copy that logo EXACTLY onto the cap and uniform. If no reference image was provided, follow the text description LITERALLY. Either way, do NOT use any pre-trained/memorized logo — your training data logos are OUTDATED.
 4. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
    - NO old Doosan Bears logo (pre-2025): roaring bear head in circle/shield, block 'B' cap. CURRENT: diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners.
    - NO old Hanwha Eagles logo (pre-2024): angular/blocky/gothic 'E' emblem is BANNED. CURRENT: CURSIVE SCRIPT 'Eagles' in flowing italic handwriting (Matthew Wolff 2024).
