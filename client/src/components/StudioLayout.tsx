@@ -276,7 +276,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 ml-0 md:ml-60 max-w-full">
+      <div className="flex-1 ml-0 md:ml-60 max-w-full overflow-x-hidden">
         {/* Mobile Header */}
         <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-card border-b border-border flex items-center px-4 gap-3">
           <button
@@ -409,7 +409,7 @@ function PageTransition({ children, noPadding }: { children: ReactNode; noPaddin
   return (
     <main
       ref={mainRef}
-      className={`pt-16 md:pt-24 ${noPadding ? "" : "px-3 sm:px-4 md:px-8 pb-8"}`}
+      className={`pt-16 md:pt-24 overflow-x-hidden ${noPadding ? "" : "px-3 sm:px-4 md:px-8 pb-8"}`}
       style={{ opacity: 0 }}
     >
       {children}

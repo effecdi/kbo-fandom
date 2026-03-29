@@ -29,9 +29,9 @@ export function LiveGameSection({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col lg:flex-row lg:items-stretch gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 min-w-0">
         {/* Left: Carousel + Lineup */}
-        <div className="w-full lg:w-[55%] overflow-hidden flex flex-col">
+        <div className="w-full lg:flex-[55] min-w-0 overflow-hidden flex flex-col">
           <LiveGameCarousel
             games={games}
             teams={teams}
@@ -50,7 +50,7 @@ export function LiveGameSection({
         </div>
 
         {/* Right: Detail panel (diamond / score / info) */}
-        <div className="w-full lg:w-[45%] flex flex-col">
+        <div className="w-full lg:flex-[45] min-w-0 flex flex-col">
           <div className="flex-1 flex flex-col">
             <LiveGameDetailPanel
               game={selectedGame}

@@ -463,7 +463,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
               </div>
 
               {/* Section content */}
-              <div className={widget.noPadding ? "" : "pb-2"}>
+              <div className={`overflow-x-hidden ${widget.noPadding ? "" : "pb-2"}`}>
                 {widget.content}
               </div>
             </section>

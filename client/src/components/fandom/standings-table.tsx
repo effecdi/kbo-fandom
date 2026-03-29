@@ -100,7 +100,7 @@ export function StandingsTable({ standings, liveStandings, myTeamId, compact }: 
   }
 
   return (
-    <div className="rounded-xl overflow-hidden border border-border bg-card max-w-full overflow-x-auto">
+    <div className="rounded-xl overflow-hidden border border-border bg-card max-w-full min-w-0 overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-muted/60 text-muted-foreground text-[13px]">

@@ -399,7 +399,7 @@ export function FandomIndex() {
       <div className="max-w-6xl mx-auto">
         {/* Personalized Header */}
         <div ref={headerRef} className="mb-6" style={{ opacity: 0 }}>
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-4 flex-wrap min-w-0 max-w-full">
             <h1 className="text-2xl sm:text-[28px] md:text-[32px] font-black text-foreground">
               {fandomProfile ? (
                 <>
