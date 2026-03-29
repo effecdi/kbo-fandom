@@ -973,8 +973,10 @@ export function seedIfEmpty(): void {
     editorContent.forEach((c) => addItem(STORE_KEYS.EDITOR_CONTENT, c));
   }
 
-  // ── KBO Schedule Seed ──────────────────────────────────────────────────────
-  if (listItems(STORE_KEYS.KBO_SCHEDULE).length === 0) {
+  // ── KBO Schedule Seed (DEPRECATED — now fetched from Naver API via useKboSchedule hook) ──
+  // Schedule is no longer seeded from hardcoded generator.
+  // The useKboSchedule hook fetches real data from /api/kbo/schedule.
+  if (false && listItems(STORE_KEYS.KBO_SCHEDULE).length === 0) {
     const schedule = generateKbo2026Schedule();
     /* === Old hardcoded 45-game schedule (replaced by full-season generator) ===
       // 3/28 개막전 (토) 14:00 - 5경기

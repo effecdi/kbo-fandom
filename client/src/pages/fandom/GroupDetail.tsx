@@ -26,6 +26,7 @@ import {
   type FandomEvent,
 } from "@/lib/local-store";
 import { Calendar } from "lucide-react";
+import { useKboSchedule } from "@/hooks/use-kbo-schedule";
 
 type GroupTab = "fanart" | "members" | "schedule" | "events" | "rankings" | "stadium";
 
@@ -51,6 +52,7 @@ export function FandomGroupDetail() {
   const [cheerSongs, setCheerSongs] = useState<CheerSong[]>([]);
   const [stadiumGuide, setStadiumGuide] = useState<StadiumGuide | null>(null);
   const [allTeams, setAllTeams] = useState<KboTeam[]>([]);
+  const { games: scheduleGames } = useKboSchedule();
 
   useEffect(() => {
     seedIfEmpty();
@@ -69,8 +71,7 @@ export function FandomGroupDetail() {
     const allEvents = listItems<FandomEvent>(STORE_KEYS.FANDOM_EVENTS);
     setEvents(allEvents.filter((e) => e.groupId === id));
 
-    const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
-    setGames(allGames.filter((g) => g.homeTeamId === id || g.awayTeamId === id));
+    // Games will be set from API hook below
 
     // Load cheer songs for this team
     const allSongs = listItems<CheerSong>(STORE_KEYS.CHEER_SONGS);
@@ -82,6 +83,12 @@ export function FandomGroupDetail() {
     const fallbackGuide = id === "team-doo" ? allGuides.find((sg) => sg.teamId === "team-lg") : null;
     setStadiumGuide(teamGuide || fallbackGuide || null);
   }, [id]);
+
+  // Update games from API schedule
+  useEffect(() => {
+    if (!id || scheduleGames.length === 0) return;
+    setGames(scheduleGames.filter((g) => g.homeTeamId === id || g.awayTeamId === id));
+  }, [id, scheduleGames]);
 
   if (!group) {
     return (

@@ -27,6 +27,7 @@ import {
   type KboTeam,
   type KboAttendance,
 } from "@/lib/local-store";
+import { useKboSchedule } from "@/hooks/use-kbo-schedule";
 
 type ViewMode = "week" | "list" | "calendar";
 
@@ -65,7 +66,6 @@ function formatKoreanDate(dateStr: string): string {
 }
 
 export function FandomSchedule() {
-  const [allGames, setAllGames] = useState<KboGameSchedule[]>([]);
   const [teams, setTeams] = useState<KboTeam[]>([]);
   const [attendance, setAttendance] = useState<KboAttendance[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("week");
@@ -78,8 +78,11 @@ export function FandomSchedule() {
   const fandomProfile = getFandomProfile();
   const myTeamId = fandomProfile?.groupId || undefined;
 
+  // Fetch schedule from Naver API (includes extra month for calendar navigation)
+  const extraMonths = useMemo(() => [{ year: calYear, month: calMonth + 1 }], [calYear, calMonth]);
+  const { games: allGames, loading: scheduleLoading } = useKboSchedule(extraMonths);
+
   useEffect(() => {
-    setAllGames(listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE));
     setTeams(listItems<KboTeam>(STORE_KEYS.KBO_TEAMS));
     setAttendance(listItems<KboAttendance>(STORE_KEYS.KBO_ATTENDANCE));
   }, []);

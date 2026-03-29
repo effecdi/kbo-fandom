@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Calendar, MapPin, Clock } from "lucide-react";
-import { listItems, STORE_KEYS, type KboGameSchedule } from "@/lib/local-store";
+import type { KboGameSchedule } from "@/lib/local-store";
+import { useKboSchedule } from "@/hooks/use-kbo-schedule";
 
 interface NextGameCountdownProps {
   teamId: string;
@@ -11,16 +12,17 @@ interface NextGameCountdownProps {
 export function NextGameCountdown({ teamId, teamName, teamColor }: NextGameCountdownProps) {
   const [nextGame, setNextGame] = useState<KboGameSchedule | null>(null);
   const [dDay, setDDay] = useState<string>("");
+  const { games } = useKboSchedule();
 
   useEffect(() => {
-    const games = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
+    if (games.length === 0) return;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const upcoming = games
       .filter(
         (g) =>
-          g.status === "scheduled" &&
+          (g.status === "scheduled" || g.status === "live") &&
           (g.homeTeamId === teamId || g.awayTeamId === teamId)
       )
       .filter((g) => {
@@ -45,7 +47,7 @@ export function NextGameCountdown({ teamId, teamName, teamColor }: NextGameCount
         setDDay(`D-${diffDays}`);
       }
     }
-  }, [teamId]);
+  }, [teamId, games]);
 
   // Determine opponent name
   const opponentName = nextGame

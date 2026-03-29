@@ -2450,6 +2450,87 @@ export async function registerRoutes(
     }
   });
 
+  // ── KBO Monthly Schedule (Naver Sports API — date-by-date fetch) ──────────
+  const kboMonthCache: Record<string, { data: any; ts: number }> = {};
+  const MONTH_CACHE_TTL = 3600_000; // 1 hour
+
+  function mapNaverGameToSchedule(g: any) {
+    const homeCode = g.homeTeamCode;
+    const awayCode = g.awayTeamCode;
+    let status = "scheduled";
+    if (g.cancel) status = "postponed";
+    else if (g.statusCode === "STARTED" || g.statusNum === 2) status = "live";
+    else if (g.statusCode === "RESULT" || g.statusNum === 4) status = "finished";
+
+    return {
+      id: g.gameId || `${g.gameDate}-${homeCode}-${awayCode}`,
+      gameId: g.gameId,
+      homeTeamId: NAVER_TEAM_CODE_MAP[homeCode] || homeCode,
+      awayTeamId: NAVER_TEAM_CODE_MAP[awayCode] || awayCode,
+      homeTeamName: NAVER_TEAM_NAME_MAP[g.homeTeamName] || NAVER_TEAM_NAME_MAP[homeCode] || g.homeTeamName,
+      awayTeamName: NAVER_TEAM_NAME_MAP[g.awayTeamName] || NAVER_TEAM_NAME_MAP[awayCode] || g.awayTeamName,
+      homeScore: g.homeTeamScore ?? null,
+      awayScore: g.awayTeamScore ?? null,
+      status,
+      stadium: STADIUM_NAME_MAP[g.stadium] || g.stadium || "",
+      date: g.gameDate,
+      time: g.gameDateTime ? g.gameDateTime.split("T")[1]?.slice(0, 5) : "14:00",
+    };
+  }
+
+  app.get("/api/kbo/schedule", async (req, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      const month = parseInt(req.query.month as string) || (new Date().getMonth() + 1);
+      const key = `${year}-${String(month).padStart(2, "0")}`;
+
+      // Cache hit
+      if (kboMonthCache[key]?.ts > Date.now() - MONTH_CACHE_TTL) {
+        return res.json(kboMonthCache[key].data);
+      }
+
+      // Build date list for the month
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const dates: string[] = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        dates.push(`${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+      }
+
+      // Fetch in parallel batches of 7
+      const allGames: any[] = [];
+      const NAVER_SCHEDULE_URL = "https://api-gw.sports.naver.com/schedule/games";
+      const NAVER_FIELDS = "fields=basic,superCategoryId,categoryName,stadium,statusNum,gameOnAir";
+
+      for (let i = 0; i < dates.length; i += 7) {
+        const batch = dates.slice(i, i + 7);
+        const results = await Promise.allSettled(
+          batch.map((d) =>
+            axios.get(
+              `${NAVER_SCHEDULE_URL}?${NAVER_FIELDS}&upperCategoryId=kbaseball&category=kbo&date=${d}`,
+              { timeout: 8000, headers: { "User-Agent": "Mozilla/5.0" } },
+            ),
+          ),
+        );
+
+        for (const r of results) {
+          if (r.status === "fulfilled" && r.value.data?.result?.games) {
+            const kboGames = r.value.data.result.games
+              .filter((g: any) => g.categoryId === "kbo")
+              .map(mapNaverGameToSchedule);
+            allGames.push(...kboGames);
+          }
+        }
+      }
+
+      const data = { games: allGames, year, month };
+      kboMonthCache[key] = { data, ts: Date.now() };
+      res.json(data);
+    } catch (error: any) {
+      logger.error("KBO schedule fetch error", error?.message);
+      res.status(500).json({ games: [], error: "일정 조회에 실패했습니다." });
+    }
+  });
+
   // ── KBO Game Relay (real-time lineup & game state) ─────────────────────────
   const kboRelayCache: Record<string, { data: any; timestamp: number }> = {};
   const RELAY_CACHE_TTL = 15000; // 15 seconds

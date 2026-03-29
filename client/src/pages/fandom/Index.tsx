@@ -38,6 +38,7 @@ gsap.registerPlugin(ScrollTrigger);
 const LanyardCard = lazy(() => import("@/components/fandom/lanyard-card"));
 import { useKboLiveScores } from "@/hooks/use-kbo-live-scores";
 import { useKboStandings } from "@/hooks/use-kbo-standings";
+import { useKboSchedule } from "@/hooks/use-kbo-schedule";
 import {
   listItems,
   seedIfEmpty,
@@ -66,6 +67,8 @@ export function FandomIndex() {
   const { liveGames, hasLiveGames, isLoading: scoresLoading } = useKboLiveScores(10000);
   // Real-time KBO standings (polls every 60s)
   const { standings: liveStandings } = useKboStandings(60000);
+  // KBO schedule from Naver API (cached 1 hour)
+  const { games: scheduleGames } = useKboSchedule();
 
   useEffect(() => {
     seedIfEmpty();
@@ -84,21 +87,23 @@ export function FandomIndex() {
     const allStandings = listItems<KboStanding>(STORE_KEYS.KBO_STANDINGS);
     setStandings(allStandings.sort((a, b) => a.rank - b.rank));
 
-    // Upcoming games for my team
-    const allGames = listItems<KboGameSchedule>(STORE_KEYS.KBO_SCHEDULE);
-    if (fandomProfile?.groupId) {
-      setUpcomingGames(
-        allGames
-          .filter((g) => g.homeTeamId === fandomProfile.groupId || g.awayTeamId === fandomProfile.groupId)
-          .slice(0, 4)
-      );
-    }
-
     try {
       const projects = listItems<ProjectRecord>(STORE_KEYS.PROJECTS);
       setRecentProjects(projects.slice(0, 3));
     } catch { /* ignore */ }
   }, []);
+
+  // Update upcoming games when schedule data arrives
+  useEffect(() => {
+    if (!fandomProfile?.groupId || scheduleGames.length === 0) return;
+    const today = new Date().toISOString().split("T")[0];
+    setUpcomingGames(
+      scheduleGames
+        .filter((g) => (g.homeTeamId === fandomProfile.groupId || g.awayTeamId === fandomProfile.groupId) && g.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 4)
+    );
+  }, [scheduleGames, fandomProfile?.groupId]);
 
   const trendingGroups = [...groups].sort((a, b) => b.followers - a.followers).slice(0, 4);
   const activeEvents = events.filter((e) => e.status === "active");
