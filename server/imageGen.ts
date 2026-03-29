@@ -1243,7 +1243,10 @@ The photos above are the ONLY ground truth. Reproduce EXACTLY what you see in th
 
 ${teamBrandingBlock}
 
-CAP/HELMET LOGO: Copy the logo reference image EXACTLY onto the cap. Do NOT use any logo from your memory.
+CAP/HELMET LOGO (CRITICAL — READ THE BRANDING TEXT ABOVE):
+The team branding section above contains a "CAP/HELMET LOGO" field that describes EXACTLY what goes on the cap front.
+Follow that description precisely. Do NOT use any cap logo from your training data — your memorized cap logos are OUTDATED.
+If a logo reference image was provided, use its style language for the cap mark.
 
 EXPRESSION: Bright, cheerful (smiling/laughing). Dynamic angle (not straight-on).
 

@@ -753,6 +753,7 @@ export interface KboTeamIdentity {
   secondaryHex: string;
   uniformDesc: string;
   logoDesc: string;
+  capLogoDesc: string; // 모자/헬멧 전면에 들어가는 로고 (엠블럼과 다를 수 있음)
 }
 
 export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
@@ -760,71 +761,81 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
     nameEn: "LG Twins",
     primaryHex: "#C60C30",
     secondaryHex: "#000000",
-    uniformDesc: "White home jersey with cherry red 'LG' text logo on chest, thin red pinstripes, red baseball cap with white 'L' letter, black belt. Away jersey: gray with red 'TWINS' lettering. Colors: cherry red and black.",
+    uniformDesc: "White home jersey with cherry red 'LG' text logo on chest, thin red pinstripes, black belt. Away jersey: gray with red 'TWINS' lettering. Colors: cherry red and black.",
     logoDesc: "Red circular emblem with interlocking 'LG' letters, twin star symbol, clean red and white design",
+    capLogoDesc: "Red cap with a single white serif letter 'L' on the front. Simple, clean, white on red.",
   },
   "KT 위즈": {
     nameEn: "KT Wiz",
     primaryHex: "#000000",
     secondaryHex: "#ED1C24",
-    uniformDesc: "White home jersey with black angular gothic 'wiz' wordmark, red burst/star-burst mark below wordmark (wizard magic motif), black cap with wiz image symbol. Away jersey: gray/charcoal with similar design. New Balance kit sponsor. 2024 JUMOTUBE collaboration redesign. Colors: black and red. BANNED OLD LOGO: rounder/softer 'wiz' lettering from pre-2024 — the current font is angular and gothic.",
-    logoDesc: "Angular gothic 'KT wiz' wordmark with star-burst/Quasar magic motif, black and red, wizard/magic themed identity with magic circle (마법진) background elements. BANNED: rounder/softer pre-2024 wiz lettering.",
+    uniformDesc: "White home jersey with black angular gothic 'wiz' wordmark, red star-burst mark below. Black cap. Away: gray/charcoal. New Balance sponsor. 2024 redesign. BANNED: rounder/softer pre-2024 'wiz' lettering.",
+    logoDesc: "Angular gothic 'KT wiz' wordmark with star-burst magic motif, black and red. BANNED: rounder/softer pre-2024 wiz lettering.",
+    capLogoDesc: "Black cap with a small angular 'wiz' symbol/icon in white or red — this is the star-burst magic mark, NOT a letter. BANNED: old rounder wiz logo.",
   },
   "SSG 랜더스": {
     nameEn: "SSG Landers",
     primaryHex: "#CE0E2D",
     secondaryHex: "#000000",
-    uniformDesc: "Black home jersey with 'LANDERS' wordmark in Empera font (anchor-inspired design), red angular 'L' cap logo with red UFO orbit ring, Quasar star motif throughout. Away jersey: crimson red with white 'LANDERS' text. Anchor-motif number font. Colors: black (home), crimson red (away), yellow/gold accent. BANNED OLD LOGO: simple red UFO/spaceship silhouette from 2021-2023 — the current logo is the angular 'L' with orbit ring by Todd Radom (2024).",
-    logoDesc: "Angular red 'L' letter with red UFO orbit ring circling it, Quasar star motif, 'SSG LANDERS' in anchor-inspired Empera font. Todd Radom 2024 rebrand. BANNED: pre-2024 simple UFO/spaceship silhouette logo.",
+    uniformDesc: "Black home jersey with 'LANDERS' in Empera font (anchor-inspired). Away: crimson red. 2024 Todd Radom rebrand. BANNED: pre-2024 simple UFO/spaceship silhouette.",
+    logoDesc: "Angular red 'L' with red UFO orbit ring, Quasar star motif. Todd Radom 2024. BANNED: pre-2024 UFO silhouette.",
+    capLogoDesc: "Black cap with an angular red letter 'L' that has a red UFO orbit ring circling around it. This is NOT a simple 'L' — it has the orbit ring detail. BANNED: old simple UFO/spaceship logo on cap.",
   },
   "NC 다이노스": {
     nameEn: "NC Dinos",
     primaryHex: "#315288",
     secondaryHex: "#C0A882",
-    uniformDesc: "White home jersey with navy blue 'NC' script logo, metallic gold accent trim on sleeves and collar, navy cap with gold 'N' letter. Away jersey: navy blue with gold 'DINOS' lettering. Colors: navy blue and metallic gold.",
-    logoDesc: "Navy blue T-rex dinosaur silhouette with 'NC DINOS' text, gold accent details, powerful prehistoric theme",
+    uniformDesc: "White home jersey with navy 'NC' script logo, metallic gold trim. Away: navy with gold 'DINOS'. Colors: navy and metallic gold.",
+    logoDesc: "Navy blue T-rex dinosaur silhouette with 'NC DINOS' text, gold accents",
+    capLogoDesc: "Navy cap with a single metallic gold letter 'N' on the front. Simple gold on navy.",
   },
   "두산 베어스": {
     nameEn: "Doosan Bears",
     primaryHex: "#131230",
     secondaryHex: "#ED1C24",
-    uniformDesc: "White home jersey with dark navy 'BEARS' in custom Hustle Block font (classic utilitarian block lettering with modern script tail motif for energy), Adidas three-stripe side panels, red accent piping. Away jersey: gray with dark navy and red. Dark navy cap with new diamond-shaped emblem. 2025 complete rebrand by RARE Design. Colors: very dark navy (#131230) and red (#ED1C24). BANNED OLD LOGO: roaring bear head inside circle/shield with 'DOOSAN BEARS' text — this is the 2010-2024 logo. Also BANNED: block 'B' cap logo from pre-2025.",
-    logoDesc: "Diamond (baseball infield) shaped emblem with 'DOOSAN' top and 'SEOUL' bottom in red banners wrapping a baseball. Hustle Block custom typeface with script tail motif. Steel bear mascot 'Cheol-woong'. RARE Design 2025 rebrand with Adidas. BANNED: pre-2025 roaring bear head in circle/shield, block 'B' cap logo.",
+    uniformDesc: "White home jersey with dark navy 'BEARS' in Hustle Block font, Adidas side panels, red piping. 2025 RARE Design rebrand. BANNED: pre-2025 roaring bear head, block 'B' cap.",
+    logoDesc: "Diamond-shaped emblem with 'DOOSAN'/'SEOUL' red banners wrapping a baseball. RARE Design 2025. BANNED: pre-2025 bear head in circle/shield.",
+    capLogoDesc: "Dark navy cap with the new diamond-shaped emblem on the front — a baseball diamond (infield) shape containing the team mark. This is NOT the old block 'B'. BANNED: old block letter 'B' on cap.",
   },
   "KIA 타이거즈": {
     nameEn: "KIA Tigers",
     primaryHex: "#EA0029",
     secondaryHex: "#000000",
-    uniformDesc: "White home jersey with 'Tigers Live Red' (#EA0029) 'KIA' text in the new Kia corporate logo style (balanced, rhythmic, ascending lettering), black and red trim on sleeves, red cap with black tiger stripe logo. Away jersey: bright red with white 'TIGERS' and 'Tigers Midnight Black' (#000000) accents. Colors: bold red (Tigers Live Red) and black (Tigers Midnight Black). BANNED OLD LOGO: pre-2021 KIA Motors rounded logo typography — the current Kia logo is angular and modern.",
-    logoDesc: "2021+ Kia corporate-aligned emblem: home-base/V-shape (Victory) motif on midnight black background, 'KIA' in the new balanced ascending Kia typography, red and black. Tiger stripe on cap. BANNED: pre-2021 rounded KIA Motors logo, old literal snarling tiger face emblem.",
+    uniformDesc: "White home jersey with red 'KIA' in new Kia ascending typography, red cap. Away: bright red with white 'TIGERS'. BANNED: pre-2021 rounded KIA Motors logo.",
+    logoDesc: "Home-base/V-shape motif, 'KIA' in new ascending Kia typography, red and black. BANNED: pre-2021 rounded KIA Motors logo.",
+    capLogoDesc: "Red cap with a black tiger stripe design on the front — a stylized abstract tiger stripe/claw mark, NOT a letter. BANNED: old KIA Motors text logo on cap.",
   },
   "롯데 자이언츠": {
     nameEn: "Lotte Giants",
     primaryHex: "#041E42",
     secondaryHex: "#E30613",
-    uniformDesc: "White home jersey with navy 'GIANTS' arched text, flat-design seagull emblem on right sleeve (asymmetric design), navy cap with overlapping 'LG' letters in red. Away jersey: navy blue with white/red 'LOTTE' text. Dream uniform: ivory base with sky blue accents. 2023 CI overhaul (flat/modern/minimal design). Colors: deep navy (#041E42), red (#E30613), sky blue sub-color (added 2023). BANNED OLD LOGO: detailed/ornate non-flat seagull emblems from pre-2023.",
-    logoDesc: "Flat-design modern flying seagull over blue ocean emblem (Busan sea motif), 'GIANTS' returned to top of emblem (after 28 years), navy and red with sky blue accent. 2023 41st anniversary CI rebrand. BANNED: pre-2023 detailed/ornate seagull emblems, non-flat designs.",
+    uniformDesc: "White home jersey with navy 'GIANTS' arched text, flat seagull on sleeve. Navy cap. 2023 CI rebrand. BANNED: pre-2023 ornate seagull.",
+    logoDesc: "Flat-design modern flying seagull, navy and red with sky blue accent. 2023 rebrand. BANNED: pre-2023 ornate seagull.",
+    capLogoDesc: "Navy cap with overlapping 'LG' letters in red on the front. The letters interlock — 'L' and 'G' overlap each other.",
   },
   "삼성 라이온즈": {
     nameEn: "Samsung Lions",
     primaryHex: "#074CA1",
     secondaryHex: "#FFFFFF",
-    uniformDesc: "White home jersey with royal blue 'SAMSUNG' in italic/oblique forward-leaning lettering across chest, blue cap with white 'S' letter, clean blue trim only. Away jersey: blue with white 'LIONS' text. Colors: royal blue (#074CA1) and white ONLY — clean and bold. BANNED: any red accents on Samsung Lions uniforms — red was completely dropped in 2024. The current scheme is blue and white only (dynasty era return).",
-    logoDesc: "Royal blue circular emblem with roaring lion face, 'SAMSUNG LIONS' text, strong blue and white contrast. BANNED: any red accents (red was removed from Samsung Lions branding in 2024, returning to blue-and-white only).",
+    uniformDesc: "White home jersey with royal blue italic 'SAMSUNG' across chest, clean blue trim only. Away: blue with white 'LIONS'. BANNED: any red accents (dropped 2024). Blue and white ONLY.",
+    logoDesc: "Royal blue circular emblem with roaring lion face, blue and white only. BANNED: any red accents.",
+    capLogoDesc: "Blue cap with a single white italic letter 'S' on the front. Clean white on royal blue. NO red anywhere.",
   },
   "한화 이글스": {
     nameEn: "Hanwha Eagles",
     primaryHex: "#FF6600",
     secondaryHex: "#1B2A4A",
-    uniformDesc: "White home jersey with CURSIVE SCRIPT 'Eagles' wordmark in orange (flowing italic handwriting-style lettering with sharp eagle-beak serifs at letter terminals). This is NOT a block/angular font — it is a smooth, connected cursive script. 'Hanwha' in small clean sans-serif above. Navy cap with cursive orange 'E' matching the same script style. Away jersey: navy blue with same cursive 'Eagles' script. Colors: orange (#FF6600) primary, navy (#1B2A4A) secondary. BANNED OLD LOGO: angular/blocky/gothic 'E' or block-letter 'EAGLES' — these are the PRE-2024 logos and MUST NOT appear.",
-    logoDesc: "CURSIVE SCRIPT 'Eagles' wordmark — flowing italic connected handwriting with sharp serif endpoints (eagle-beak/talon tips). The word 'Eagles' is written in a single flowing cursive stroke, orange color. 'Hanwha' appears above in small clean text. This is the 2024-2025 rebrand by Matthew Wolff. BANNED: any angular/blocky/gothic 'E' emblem, any block-letter wordmark, any shield/circle emblem with block 'E' — these are ALL old logos.",
+    uniformDesc: "White home jersey with CURSIVE SCRIPT 'Eagles' wordmark in orange — flowing italic handwriting, NOT block/angular. 'Hanwha' in small sans-serif above. Away: navy with same cursive 'Eagles'. Colors: orange (#FF6600), navy (#1B2A4A). BANNED: angular/blocky 'E' or block-letter 'EAGLES' — these are PRE-2024.",
+    logoDesc: "CURSIVE SCRIPT 'Eagles' wordmark — flowing italic handwriting in orange. 2024 Matthew Wolff rebrand. BANNED: any angular/blocky/gothic 'E', any block-letter wordmark.",
+    capLogoDesc: "Navy cap with a CURSIVE SCRIPT orange letter 'E' on the front — this 'E' is taken from the cursive 'Eagles' wordmark. It is a flowing, italic, handwriting-style 'E' with a decorative swash/tail. It is NOT angular, NOT blocky, NOT gothic. Think of how you write a capital 'E' in cursive handwriting — smooth, rounded, flowing. BANNED: angular/blocky/straight-lined 'E' — that is the OLD logo.",
   },
   "키움 히어로즈": {
     nameEn: "Kiwoom Heroes",
     primaryHex: "#820024",
     secondaryHex: "#000000",
-    uniformDesc: "White home jersey with deep maroon 'HEROES' text across chest, maroon cap with gold 'H' letter, burgundy trim. Away jersey: deep maroon/burgundy with white text. Seoul special uniform: burgundy + Danhong (단홍색, Seoul symbolic color) with Seoul landmarks. 2025 Heroes Green uniform: gold cap + green jersey. Nike partnership. Colors: deep maroon/burgundy and black, with green accent (2025).",
-    logoDesc: "Deep maroon circular emblem with heroic figure silhouette, 'KIWOOM HEROES' text, burgundy and gold accents, Gocheok Sky Dome motif",
+    uniformDesc: "White home jersey with deep maroon 'HEROES' across chest, burgundy trim. Away: deep maroon with white text. Nike partnership. 2025 green accent.",
+    logoDesc: "Deep maroon circular emblem with heroic figure silhouette, burgundy and gold accents",
+    capLogoDesc: "Maroon cap with a gold letter 'H' on the front. Simple gold on deep maroon/burgundy.",
   },
 };
 
@@ -858,9 +869,10 @@ export function getTeamIdentityPrompt(groupName: string): string | null {
 
   return `[TEAM VISUAL IDENTITY - ${team.nameEn} (2025-2026 SEASON)]
 Primary color: ${team.primaryHex}, Secondary color: ${team.secondaryHex}.
-CURRENT Uniform (2025-2026): ${team.uniformDesc}
-CURRENT Logo (2025-2026): ${team.logoDesc}
-WARNING: This team may have rebranded recently. The description above is the ONLY correct current design. Ignore any older versions from your training data.`;
+CURRENT Uniform: ${team.uniformDesc}
+CURRENT Team Logo/Emblem: ${team.logoDesc}
+CURRENT CAP/HELMET LOGO (CRITICAL — this goes on the front of the cap/helmet): ${team.capLogoDesc}
+WARNING: Your training data logos are OUTDATED. Follow ONLY the descriptions above.`;
 }
 
 /** Find fandom color palette by English or Korean team name */
