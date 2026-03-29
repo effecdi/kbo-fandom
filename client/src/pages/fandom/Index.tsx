@@ -118,22 +118,7 @@ export function FandomIndex() {
     const w: DashboardWidget[] = [];
 
     // 1. Live Score → rendered OUTSIDE grid (see JSX below)
-
-    // 2. Next Game Countdown
-    if (fandomProfile && myGroup) {
-      w.push({
-        id: "next-game",
-        title: "다음 경기",
-        icon: Calendar,
-        content: (
-          <NextGameCountdown
-            teamId={myGroup.id}
-            teamName={myGroup.nameKo}
-            teamColor={themeColor}
-          />
-        ),
-      });
-    }
+    // 2. Next Game (삭제됨)
 
     // 3. Quick Actions — compact pill buttons
     w.push({
