@@ -1299,8 +1299,10 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       const mimeType = imagePart.inlineData.mimeType || "image/png";
       let rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
 
-      // ── 확정적 로고 오버레이: sharp으로 팀 로고 배지를 우하단에 합성 ──
-      // Gemini 학습데이터 문제를 우회 — AI에 의존하지 않고 정확한 로고를 항상 표시
+      // 1. 먼저 배경 제거 (흰색/회색 → 투명)
+      rawDataUrl = await removeWhiteBackground(rawDataUrl, 210);
+
+      // 2. 그 다음 로고 오버레이 (배경 제거 후에 해야 로고가 투명화되지 않음)
       if (teamLogoImage) {
         try {
           rawDataUrl = await overlayTeamLogo(rawDataUrl, teamLogoImage);
@@ -1309,8 +1311,7 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
         }
       }
 
-      // 생성된 이미지의 회색/흰색 배경을 투명으로 변환 (threshold 210으로 연한 회색도 제거)
-      return await removeWhiteBackground(rawDataUrl, 210);
+      return rawDataUrl;
     } catch (err: any) {
       lastError = err;
       logger.error(`Webtoon scene generation attempt ${attempt + 1} failed`, err);
@@ -1342,11 +1343,11 @@ export async function overlayTeamLogo(
     const imgWidth = imgMeta.width || 800;
     const imgHeight = imgMeta.height || 1200;
 
-    // 로고를 이미지 너비의 12% 크기로 리사이즈
-    const logoSize = Math.round(imgWidth * 0.12);
+    // 로고를 이미지 너비의 15% 크기로 리사이즈 (최소 80px)
+    const logoSize = Math.max(80, Math.round(imgWidth * 0.15));
 
     const resizedLogo = await sharp(logoBuf)
-      .resize(logoSize, logoSize, { fit: "inside" })
+      .resize(logoSize, logoSize, { fit: "inside", kernel: sharp.kernel.lanczos3 })
       .toBuffer();
 
     // opacity 0.85 적용

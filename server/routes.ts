@@ -2812,17 +2812,40 @@ export async function registerRoutes(
         return res.send(cached.data);
       }
 
-      const url = `https://sports-phinf.pstatic.net/player/kbo/default/${pcode}.png`;
-      const response = await axios.get(url, {
-        responseType: "arraybuffer",
-        timeout: 8000,
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          "Referer": "https://m.sports.naver.com/",
-        },
-      });
+      // 고해상도(500x500) 선수 사진을 Naver search proxy에서 가져옴
+      // 기존 default 이미지는 210x262로 너무 작아서 AI가 얼굴 인식 못함
+      const originalUrl = `https://sports-phinf.pstatic.net/player/kbo/default/${pcode}.png`;
+      const hiResUrl = `https://search.pstatic.net/common?type=f&size=500x500&quality=100&direct=true&src=${encodeURIComponent(originalUrl)}`;
 
-      const buf = Buffer.from(response.data);
+      let buf: Buffer;
+      try {
+        // 먼저 고해상도 시도
+        const hiRes = await axios.get(hiResUrl, {
+          responseType: "arraybuffer",
+          timeout: 8000,
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Referer": "https://m.sports.naver.com/",
+          },
+        });
+        buf = Buffer.from(hiRes.data);
+        // 유효한 이미지인지 확인 (최소 1KB)
+        if (buf.length < 1024) throw new Error("Too small, likely error image");
+        logger.info(`[player-photo] ${pcode}: hi-res 500x500 (${Math.round(buf.length / 1024)}KB)`);
+      } catch {
+        // fallback: 원본 이미지
+        const response = await axios.get(originalUrl, {
+          responseType: "arraybuffer",
+          timeout: 8000,
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Referer": "https://m.sports.naver.com/",
+          },
+        });
+        buf = Buffer.from(response.data);
+        logger.info(`[player-photo] ${pcode}: default size (${Math.round(buf.length / 1024)}KB)`);
+      }
+
       playerPhotoCache.set(pcode, { data: buf, timestamp: Date.now() });
 
       res.set("Content-Type", "image/png");
@@ -2872,7 +2895,24 @@ export async function registerRoutes(
         },
       });
 
-      const buf = Buffer.from(response.data);
+      let buf = Buffer.from(response.data);
+
+      // 로고가 너무 작으면(200px 미만) sharp으로 업스케일
+      // KBO CDN 로고는 64x41px으로 AI가 인식하기에 너무 작음
+      try {
+        const { default: sharpFn } = await import("sharp");
+        const meta = await sharpFn(buf).metadata();
+        if (meta.width && meta.width < 200) {
+          buf = await sharpFn(buf)
+            .resize(300, 300, { fit: "inside", kernel: "lanczos3" as any })
+            .png()
+            .toBuffer();
+          logger.info(`[team-logo] Upscaled ${meta.width}x${meta.height} → 300px`);
+        }
+      } catch (upErr) {
+        logger.warn("[team-logo] Upscale failed, using original", upErr);
+      }
+
       teamLogoCache.set(logoUrl, { data: buf, timestamp: Date.now() });
 
       res.set("Content-Type", "image/png");

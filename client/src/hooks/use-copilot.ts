@@ -440,17 +440,13 @@ export function useCopilot() {
         }
       }
 
-      // Inject team identity (colors, uniforms, logo) for accurate generation
+      // 팀 브랜딩 정보 — 서버에 별도 파라미터로 전달 (프롬프트에 주입하면 사진 매칭을 방해)
       let teamIdentityForServer: string | undefined;
       if (fandomMeta) {
         const teamPrompt = getTeamIdentityPrompt(fandomMeta.groupName);
         if (teamPrompt) {
           teamIdentityForServer = teamPrompt;
-          // Also inject key team branding into styledPrompt for stronger enforcement
-          styledPrompt = `[TEAM: ${fandomMeta.groupName} — use ONLY their current 2025-2026 season branding, uniform colors, and logo. DO NOT use any old/outdated logos or branding. Your training data logos are OUTDATED — follow the text description ONLY.] ${styledPrompt}`;
         }
-        // 밝은 표정 + 다양한 방향 지시 주입
-        styledPrompt = `${styledPrompt}. IMPORTANT: The character must have a bright, cheerful, lively facial expression (smiling, laughing, excited). Do NOT draw a serious or stern face. Use a dynamic camera angle (three-quarter view, slight tilt, or diagonal composition) — do NOT face straight forward.`;
       }
 
       const label = fandomMeta ? TEMPLATE_LABELS[fandomMeta.templateType] : "이미지";
