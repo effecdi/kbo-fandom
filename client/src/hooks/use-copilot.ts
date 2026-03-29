@@ -14,6 +14,7 @@ import {
   BASEBALL_AESTHETIC_FILTERS,
   getTeamIdentityPrompt,
 } from "@/lib/fandom-templates";
+import { listItems, STORE_KEYS, type KboTeam } from "@/lib/local-store";
 
 // ─── Types for API responses ────────────────────────────────────────────────
 
@@ -390,9 +391,16 @@ export function useCopilot() {
       }
 
       // Fetch team logo image as reference for AI generation
-      if (fandomMeta?.teamLogoUrl) {
+      // Fallback: if teamLogoUrl not in meta (old projects), look up from local-store
+      let logoUrl = fandomMeta?.teamLogoUrl;
+      if (!logoUrl && fandomMeta?.groupId) {
+        const teams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
+        const team = teams.find((t) => t.id === fandomMeta.groupId);
+        if (team?.logoUrl) logoUrl = team.logoUrl;
+      }
+      if (logoUrl) {
         try {
-          const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(fandomMeta.teamLogoUrl)}`);
+          const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(logoUrl)}`);
           if (logoResp.ok) {
             const logoBlob = await logoResp.blob();
             const logoDataUrl = await new Promise<string>((resolve) => {
