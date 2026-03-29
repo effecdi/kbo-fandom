@@ -156,6 +156,35 @@ export function EditorAutoStart() {
         } catch { /* ignore */ }
       }
 
+      // Auto-pin player photos as reference characters
+      if (meta.playerPhotos && meta.playerPhotos.length > 0) {
+        (async () => {
+          for (const { name, pcode } of meta.playerPhotos!) {
+            try {
+              const resp = await fetch(`/api/kbo/player-photo/${pcode}`);
+              if (!resp.ok) continue;
+              const blob = await resp.blob();
+              const dataUrl = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+              });
+              dispatch({
+                type: "COPILOT_PIN_CHARACTER",
+                character: {
+                  id: `player-${pcode}`,
+                  name,
+                  imageUrl: `/api/kbo/player-photo/${pcode}`,
+                  imageDataUrl: dataUrl,
+                },
+              });
+            } catch {
+              // Photo fetch failed — skip this player
+            }
+          }
+        })();
+      }
+
       // Auto-send fandom prompt with template context
       const prompt = buildAutoPrompt(meta);
 

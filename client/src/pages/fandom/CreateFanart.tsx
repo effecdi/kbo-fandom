@@ -160,6 +160,11 @@ export function FandomCreateFanart() {
     };
     addItem(STORE_KEYS.PROJECTS, project);
 
+    // Collect player photos for selected members
+    const playerPhotos = members
+      .filter((m) => selectedMembers.includes(m.id) && m.pcode)
+      .map((m) => ({ name: m.name, pcode: m.pcode! }));
+
     const meta: FandomEditorMeta = {
       groupId: selectedGroup.id,
       groupName: selectedGroup.name,
@@ -172,6 +177,7 @@ export function FandomCreateFanart() {
       poseHint: selectedPose || undefined,
       outfitHint: selectedOutfit || undefined,
       moodHint: selectedMood || undefined,
+      playerPhotos: playerPhotos.length > 0 ? playerPhotos : undefined,
     };
     localStorage.setItem(`olli-fandom-editor-${projectId}`, JSON.stringify(meta));
 

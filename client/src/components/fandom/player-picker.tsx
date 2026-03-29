@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Check } from "lucide-react";
-import { listItems, STORE_KEYS, type KboTeam, type KboPlayer } from "@/lib/local-store";
+import { listItems, STORE_KEYS, getPlayerPhotoUrl, type KboTeam, type KboPlayer } from "@/lib/local-store";
 
 const themeColor = "var(--fandom-primary, #7B2FF7)";
 
@@ -74,12 +74,28 @@ export function PlayerPicker({
         }`}
         style={isSelected ? { borderColor: themeColor, background: `color-mix(in srgb, ${themeColor} 10%, transparent)` } : undefined}
       >
-        <div
-          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
-          style={{ backgroundColor: member.color }}
-        >
-          {isSelected ? <Check className="w-3 h-3 text-white" /> : member.jerseyNumber}
-        </div>
+        {member.pcode ? (
+          <div className="relative w-7 h-7 rounded-full overflow-hidden shrink-0 border border-white/20">
+            <img
+              src={getPlayerPhotoUrl(member.pcode)}
+              alt={member.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            {isSelected && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <Check className="w-3.5 h-3.5 text-white" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
+            style={{ backgroundColor: member.color }}
+          >
+            {isSelected ? <Check className="w-3 h-3 text-white" /> : member.jerseyNumber}
+          </div>
+        )}
         <span className="font-medium">{member.name}</span>
         {member.role && (
           <span className={`px-1.5 py-0.5 rounded-md text-[13px] font-bold ${roleColor}`}>

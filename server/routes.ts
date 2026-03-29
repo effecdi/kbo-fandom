@@ -2679,5 +2679,47 @@ export async function registerRoutes(
     }
   });
 
+  // ─── KBO Player Photo Proxy ───────────────────────────────────────────────
+  // Proxies player photos from Naver Sports CDN to avoid CORS issues
+  const playerPhotoCache = new Map<string, { data: Buffer; timestamp: number }>();
+  const PHOTO_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+  app.get("/api/kbo/player-photo/:pcode", async (req, res) => {
+    const { pcode } = req.params;
+    if (!/^\d+$/.test(pcode)) {
+      return res.status(400).json({ error: "Invalid pcode" });
+    }
+
+    try {
+      // Return cached if fresh
+      const cached = playerPhotoCache.get(pcode);
+      if (cached && cached.timestamp > Date.now() - PHOTO_CACHE_TTL) {
+        res.set("Content-Type", "image/png");
+        res.set("Cache-Control", "public, max-age=86400");
+        return res.send(cached.data);
+      }
+
+      const url = `https://sports-phinf.pstatic.net/player/kbo/default/${pcode}.png`;
+      const response = await axios.get(url, {
+        responseType: "arraybuffer",
+        timeout: 8000,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Referer": "https://m.sports.naver.com/",
+        },
+      });
+
+      const buf = Buffer.from(response.data);
+      playerPhotoCache.set(pcode, { data: buf, timestamp: Date.now() });
+
+      res.set("Content-Type", "image/png");
+      res.set("Cache-Control", "public, max-age=86400");
+      res.send(buf);
+    } catch (error: any) {
+      logger.error("Player photo fetch error", error?.message);
+      res.status(404).json({ error: "Photo not found" });
+    }
+  });
+
   return httpServer;
 }
