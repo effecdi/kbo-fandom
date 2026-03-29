@@ -1196,7 +1196,7 @@ BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
 3. The REFERENCE IMAGE of the current team logo is included above — reproduce it EXACTLY as shown. Do NOT modify, simplify, or replace it with any memorized version. If you include any logo in the image, it MUST match the reference image pixel-perfectly.
 4. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
    - NO old Doosan Bears logo (pre-2025). The current logo is a diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners, Hustle Block font.
-   - NO old Hanwha Eagles logo (pre-2024). The current logo uses eagle-beak sharp serif wordmark by Matthew Wolff.
+   - NO old Hanwha Eagles logo (pre-2024). The OLD logo is an angular/blocky/gothic 'E' emblem — this is BANNED. The CURRENT logo is a CURSIVE SCRIPT 'Eagles' in flowing italic handwriting with sharp serifs (Matthew Wolff 2024 rebrand).
    - NO old SSG/SK Wyverns branding. SSG Landers uses red 'L' with UFO orbit ring.
    - NO old Lotte Giants logo (pre-2023). Current uses flat-design seagull emblem.
    - NO old KT Wiz logo. Current uses angular gothic 'wiz' with star-burst mark.

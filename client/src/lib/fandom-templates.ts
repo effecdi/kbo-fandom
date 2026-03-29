@@ -816,8 +816,8 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
     nameEn: "Hanwha Eagles",
     primaryHex: "#FF6600",
     secondaryHex: "#1B2A4A",
-    uniformDesc: "White home jersey with eagle beak/talon-inspired sharp serif wordmark (based on 1999 championship logo), clean design without neck/sleeve color lines, orange cap. Away jersey: navy blue (not gray) with uppercase arch-style 'EAGLES' wordmark featuring perched eagle motif. Custom 한화이글스체 font with eagle-beak straight serifs. Colors: orange (home), navy (away), black accent. Slogan: RIDE THE STORM.",
-    logoDesc: "Eagle beak and talon-inspired sharp serif wordmark, hunting eagle motif, lightning/feather/wing design elements throughout branding, modern 40th anniversary rebrand by Matthew Wolff (2025)",
+    uniformDesc: "White home jersey with CURSIVE SCRIPT 'Eagles' wordmark in orange (flowing italic handwriting-style lettering with sharp eagle-beak serifs at letter terminals). This is NOT a block/angular font — it is a smooth, connected cursive script. 'Hanwha' in small clean sans-serif above. Navy cap with cursive orange 'E' matching the same script style. Away jersey: navy blue with same cursive 'Eagles' script. Colors: orange (#FF6600) primary, navy (#1B2A4A) secondary. BANNED OLD LOGO: angular/blocky/gothic 'E' or block-letter 'EAGLES' — these are the PRE-2024 logos and MUST NOT appear.",
+    logoDesc: "CURSIVE SCRIPT 'Eagles' wordmark — flowing italic connected handwriting with sharp serif endpoints (eagle-beak/talon tips). The word 'Eagles' is written in a single flowing cursive stroke, orange color. 'Hanwha' appears above in small clean text. This is the 2024-2025 rebrand by Matthew Wolff. BANNED: any angular/blocky/gothic 'E' emblem, any block-letter wordmark, any shield/circle emblem with block 'E' — these are ALL old logos.",
   },
   "키움 히어로즈": {
     nameEn: "Kiwoom Heroes",
