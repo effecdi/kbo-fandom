@@ -899,6 +899,12 @@ CRITICAL RULES FOR CHARACTER CONSISTENCY:
 - Keep the overall style simple and cute, matching Korean Instagram webtoon (instatoon) aesthetics
 - The illustration MUST fill the ENTIRE image from edge to edge. There must be NO white borders, margins, or empty padding around the edges.
 
+EXPRESSION & POSE VARIETY:
+- Characters MUST have BRIGHT, CHEERFUL, LIVELY facial expressions — big smile, grinning, laughing, excited, or playful.
+- Do NOT draw characters with serious, stern, or neutral expressions.
+- VARY the camera angle and character direction — three-quarter view, slight tilt, dynamic angles. Do NOT always face straight forward.
+- Characters should show energetic, positive body language.
+
 Background scene: ${translatedBgPrompt}
 ${itemsInstruction}
 
@@ -919,6 +925,8 @@ IMPORTANT RULES:
 - The background should complement the character, not overwhelm it
 - Keep the overall style simple and cute, matching Korean Instagram webtoon (instatoon) aesthetics
 - The illustration MUST fill the ENTIRE image from edge to edge. There must be NO white borders, margins, or empty padding around the edges. The background color/scene must extend all the way to every edge of the image.
+- The character MUST have a BRIGHT, CHEERFUL expression — smiling, laughing, or excited. Do NOT draw a serious or stern face.
+- VARY the camera angle — use three-quarter view, slight tilt, or dynamic angles. Do NOT always face straight forward.
 
 Background scene: ${translatedBgPrompt}
 ${itemsInstruction}
@@ -1092,6 +1100,13 @@ CHARACTER REFERENCE (MOST IMPORTANT — the images above are the GROUND TRUTH):
 - Ignore any text descriptions of character appearance (hair color, clothing, etc.) — use ONLY the reference images for how the character looks.
 - The character must be immediately recognizable as the same person across all scenes.${charConsistencyRules}
 
+EXPRESSION & POSE VARIETY (CRITICAL — apply to EVERY generated image):
+- The character MUST have a BRIGHT, CHEERFUL, LIVELY facial expression — big smile, grinning, laughing, showing excitement, winking, or playful look.
+- Do NOT draw the character with a serious, stern, stoic, or neutral expression. This is fan art, NOT a passport photo.
+- VARY the camera angle and character direction each time. Choose randomly from: three-quarter view, slight head tilt, looking over shoulder, dynamic action angle, low angle looking up, high angle looking down, side profile with head turned toward viewer, or diagonal composition.
+- Do NOT always draw the character facing straight forward with a symmetrical pose. Make each image feel DYNAMIC and UNIQUE.
+- The character's body language should convey energy and positivity — confident stance, fist pump, victory sign, pointing, jumping, or any lively gesture.
+
 STORY CONTEXT (EVERY scene must directly illustrate this story — do NOT deviate):
 "${translatedContext}"
 ${scenePositionBlock}
@@ -1119,6 +1134,12 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any 
 
 ${noTextRule}
 
+EXPRESSION & POSE VARIETY (CRITICAL — apply to EVERY generated image):
+- Characters MUST have BRIGHT, CHEERFUL, LIVELY facial expressions — big smile, grinning, laughing, showing excitement, winking, or playful look.
+- Do NOT draw characters with serious, stern, stoic, or neutral expressions. This is fan art, NOT a passport photo.
+- VARY the camera angle and character direction. Choose randomly from: three-quarter view, slight head tilt, looking over shoulder, dynamic action angle, low angle looking up, high angle looking down, side profile with head turned toward viewer, or diagonal composition.
+- Do NOT always draw characters facing straight forward. Make each image feel DYNAMIC and UNIQUE.
+
 STORY CONTEXT (the entire comic is about this topic — every scene must relate to it):
 "${translatedContext}"
 ${scenePositionBlock}
@@ -1128,7 +1149,7 @@ ${translatedScene}
 CRITICAL RULES:
 - Draw EXACTLY the scene described above. Do NOT deviate from it.
 - The scene MUST DIRECTLY illustrate the story topic: "${translatedContext}" — every visual element must connect to this topic
-- Include character(s) appropriate for the scene with clear poses and expressions
+- Include character(s) appropriate for the scene with clear poses, lively expressions, and dynamic body language
 - Do NOT draw any background, scenery, room, furniture, walls, floors, or environment
 - The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
 - Draw ONLY the characters and essential props/items they are holding or interacting with

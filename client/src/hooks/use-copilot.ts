@@ -396,6 +396,8 @@ export function useCopilot() {
         if (teamPrompt) {
           styledPrompt = `${teamPrompt}. ${styledPrompt}`;
         }
+        // 밝은 표정 + 다양한 방향 지시 주입
+        styledPrompt = `${styledPrompt}. IMPORTANT: The character must have a bright, cheerful, lively facial expression (smiling, laughing, excited). Do NOT draw a serious or stern face. Use a dynamic camera angle (three-quarter view, slight tilt, or diagonal composition) — do NOT face straight forward.`;
       }
 
       const label = fandomMeta ? TEMPLATE_LABELS[fandomMeta.templateType] : "이미지";

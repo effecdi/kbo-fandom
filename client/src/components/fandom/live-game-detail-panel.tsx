@@ -15,8 +15,8 @@ interface LiveGameDetailPanelProps {
 function TeamLogo({ team, size = "md" }: { team?: KboTeam; size?: "sm" | "md" | "lg" }) {
   const sizeClass = size === "lg" ? "w-14 h-14 text-xl" : size === "md" ? "w-10 h-10 text-lg" : "w-8 h-8 text-sm";
   const cdnMap: Record<string, string> = {
-    "team-lg": "LG", "team-kt": "KT", "team-ssg": "SSG", "team-nc": "NC", "team-doo": "OB",
-    "team-kia": "HT", "team-lot": "LT", "team-sam": "SS", "team-han": "SK", "team-kiw": "WO",
+    "team-lg": "LG", "team-kt": "KT", "team-ssg": "SK", "team-nc": "NC", "team-doo": "OB",
+    "team-kia": "HT", "team-lot": "LT", "team-sam": "SS", "team-han": "HH", "team-kiw": "WO",
   };
   const code = team ? cdnMap[team.id] : null;
   const logoUrl = code ? `https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/fixed/emblem_${code}.png` : null;

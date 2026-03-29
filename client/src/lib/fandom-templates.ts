@@ -171,28 +171,34 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
 
   const parts: string[] = [];
 
+  // 표정/방향 랜덤 힌트 (매번 다른 결과를 유도)
+  const expressionHints = ["밝게 웃는", "환하게 미소짓는", "신나는 표정의", "자신감 넘치는", "활기찬", "쾌활한", "익살스러운"];
+  const angleHints = ["3/4 뷰", "살짝 고개 기울인", "역동적인 각도", "어깨너머 돌아보는", "대각선 구도"];
+  const randExpr = expressionHints[Math.floor(Math.random() * expressionHints.length)];
+  const randAngle = angleHints[Math.floor(Math.random() * angleHints.length)];
+
   switch (meta.templateType) {
     case "portrait":
-      parts.push(`${memberPart} 야구선수 포트레이트`);
+      parts.push(`${randExpr} ${memberPart} 야구선수 포트레이트, ${randAngle}`);
       if (meta.poseHint) parts.push(`${meta.poseHint} 포즈`);
       break;
     case "playercard":
-      parts.push(`${memberPart} 선수 카드`);
+      parts.push(`${randExpr} ${memberPart} 선수 카드, ${randAngle}`);
       break;
     case "wallpaper":
-      parts.push(`${memberPart} 폰 배경화면`);
+      parts.push(`${randExpr} ${memberPart} 폰 배경화면, ${randAngle}`);
       break;
     case "sticker":
       parts.push(`${memberPart} 귀여운 스티커 세트, 다양한 표정`);
       break;
     case "matchday":
-      parts.push(`${memberPart} 경기날 컨셉 포토`);
+      parts.push(`${randExpr} ${memberPart} 경기날 컨셉 포토, ${randAngle}`);
       break;
     case "fanart":
-      parts.push(`${memberPart} 팬아트 일러스트`);
+      parts.push(`${randExpr} ${memberPart} 팬아트 일러스트, ${randAngle}`);
       break;
     case "edit":
-      parts.push(`${memberPart} 에디트/콜라주`);
+      parts.push(`${randExpr} ${memberPart} 에디트/콜라주`);
       break;
     case "instatoon":
       parts.push(`${meta.groupName}의 ${memberPart} 4컷 인스타툰을 만들어줘`);
