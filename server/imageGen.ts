@@ -1195,11 +1195,13 @@ BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
 2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is from before 2025 and is COMPLETELY OUTDATED for most KBO teams.
 3. The REFERENCE IMAGE of the current team logo is included above — reproduce it EXACTLY as shown. Do NOT modify, simplify, or replace it with any memorized version. If you include any logo in the image, it MUST match the reference image pixel-perfectly.
 4. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
-   - NO old Doosan Bears logo (pre-2025). The current logo is a diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners, Hustle Block font.
-   - NO old Hanwha Eagles logo (pre-2024). The OLD logo is an angular/blocky/gothic 'E' emblem — this is BANNED. The CURRENT logo is a CURSIVE SCRIPT 'Eagles' in flowing italic handwriting with sharp serifs (Matthew Wolff 2024 rebrand).
-   - NO old SSG/SK Wyverns branding. SSG Landers uses red 'L' with UFO orbit ring.
-   - NO old Lotte Giants logo (pre-2023). Current uses flat-design seagull emblem.
-   - NO old KT Wiz logo. Current uses angular gothic 'wiz' with star-burst mark.
+   - NO old Doosan Bears logo (pre-2025): roaring bear head in circle/shield, block 'B' cap. CURRENT: diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners.
+   - NO old Hanwha Eagles logo (pre-2024): angular/blocky/gothic 'E' emblem is BANNED. CURRENT: CURSIVE SCRIPT 'Eagles' in flowing italic handwriting (Matthew Wolff 2024).
+   - NO old SSG/SK Wyverns branding (pre-2024): simple UFO/spaceship silhouette is BANNED. CURRENT: angular red 'L' with UFO orbit ring (Todd Radom 2024).
+   - NO old Lotte Giants logo (pre-2023): detailed/ornate non-flat seagull is BANNED. CURRENT: flat-design modern seagull emblem.
+   - NO old KT Wiz logo (pre-2024): rounder/softer 'wiz' lettering is BANNED. CURRENT: angular gothic 'wiz' with star-burst mark.
+   - NO old KIA Tigers logo (pre-2021): rounded KIA Motors logo is BANNED. CURRENT: new Kia ascending typography with V/home-base motif.
+   - NO red accents on Samsung Lions (dropped in 2024). CURRENT: blue and white ONLY.
    - NO generic/invented team logos or uniform designs.
 5. If you are unsure about the team's current branding, follow the text description above LITERALLY — do not guess.
 6. The team's PRIMARY COLOR (${teamIdentity.match(/Primary color: (#[A-Fa-f0-9]+)/)?.[1] || "described above"}) MUST be prominently visible.
