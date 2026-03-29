@@ -43,7 +43,6 @@ try {
       ai = new GoogleGenAI({
         apiKey: "dummy-key",
         httpOptions: {
-          apiVersion: "",
           baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "https://dummy.api",
         },
       });
@@ -53,10 +52,9 @@ try {
   } else {
     ai = new GoogleGenAI({
       apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
-      httpOptions: {
-        apiVersion: "",
-        baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
-      },
+      ...(process.env.AI_INTEGRATIONS_GEMINI_BASE_URL ? {
+        httpOptions: { baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL },
+      } : {}),
     });
   }
 } catch (error) {
@@ -65,7 +63,6 @@ try {
     ai = new GoogleGenAI({
       apiKey: "dummy-key",
       httpOptions: {
-        apiVersion: "",
         baseUrl: "https://dummy.api",
       },
     });
