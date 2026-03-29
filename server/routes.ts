@@ -2488,6 +2488,11 @@ export async function registerRoutes(
         "좌익": "left", "중견": "center", "우익": "right",
         "좌전": "left", "중전": "center", "우전": "right",
         "지타": "dh", "DH": "dh",
+        // English abbreviations (Naver entry data sometimes uses these)
+        "P": "pitcher", "C": "catcher",
+        "1B": "first", "2B": "second", "3B": "third",
+        "SS": "shortstop",
+        "LF": "left", "CF": "center", "RF": "right",
       };
 
       // Build pcode → player map from LINEUP (full 9-man) + ENTRY (substitutions)
@@ -2563,7 +2568,7 @@ export async function registerRoutes(
       }
       // Override with entry data (substitutions update positions)
       for (const b of (defEntry?.batter || [])) {
-        const posKey = POS_MAP[b.pos];
+        const posKey = POS_MAP[b.posName] || POS_MAP[b.pos];
         if (posKey && posKey !== "dh") {
           defense[posKey] = { name: b.name, pcode: b.pcode };
         }
@@ -2574,13 +2579,20 @@ export async function registerRoutes(
       }
 
       // Batting order: prefer lineup (full 9-man), fallback to entry
+      // Entry data may contain duplicates (original + substitutes for same batting order),
+      // so deduplicate by batOrder keeping the LAST entry (most recent substitute)
       const offBatters = (offLineup?.batter?.length >= 9) ? offLineup.batter : (offEntry?.batter || []);
-      const battingOrder = offBatters.map((b: any, i: number) => ({
-        order: b.batOrder || (i + 1),
-        name: b.name,
-        pos: b.posName || b.pos,
-        pcode: b.pcode,
-      }));
+      const batOrderMap = new Map<number, { order: number; name: string; pos: string; pcode: string }>();
+      for (const b of offBatters) {
+        const order = parseInt(b.batOrder) || 0;
+        batOrderMap.set(order, {
+          order,
+          name: b.name,
+          pos: b.posName || b.pos,
+          pcode: b.pcode,
+        });
+      }
+      const battingOrder = Array.from(batOrderMap.values()).sort((a, b) => a.order - b.order);
 
       const result = {
         gameId,
