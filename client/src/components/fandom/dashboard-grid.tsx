@@ -387,7 +387,7 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
       )}
 
       {/* Widget Grid — 2-column on md+, generous spacing */}
-      <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10">
+      <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
         {orderedWidgets.map((widget) => {
           const span = getColSpan(widget);
 

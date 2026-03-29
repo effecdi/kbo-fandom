@@ -27,16 +27,17 @@ const STATUS_CONFIG: Record<
  * On smaller screens (< 768px / md breakpoint), offsets are reduced by ~30%.
  */
 function getOffsets(compact = false): { adj: number; far: number; hidden: number } {
-  const isMobile =
-    typeof window !== "undefined" && window.innerWidth < 768;
+  const w = typeof window !== "undefined" ? window.innerWidth : 1024;
+  const isXSmall = w < 400;
+  const isMobile = w < 768;
   if (compact) {
+    if (isXSmall) return { adj: 120, far: 220, hidden: 300 };
     return isMobile
       ? { adj: 150, far: 270, hidden: 360 }
       : { adj: 200, far: 360, hidden: 480 };
   }
-  if (isMobile) {
-    return { adj: 182, far: 322, hidden: 420 };
-  }
+  if (isXSmall) return { adj: 140, far: 260, hidden: 350 };
+  if (isMobile) return { adj: 182, far: 322, hidden: 420 };
   return { adj: 260, far: 460, hidden: 600 };
 }
 
@@ -267,7 +268,7 @@ export function LiveGameCarousel({
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl p-4 md:p-5 cursor-pointer select-none ${compact ? "w-[260px] md:w-[300px]" : "w-[280px] md:w-[320px]"}`}
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl p-3 sm:p-4 md:p-5 cursor-pointer select-none ${compact ? "w-[220px] sm:w-[260px] md:w-[300px]" : "w-[240px] sm:w-[280px] md:w-[320px]"}`}
               style={{
                 ...cardBg,
                 opacity: 0,

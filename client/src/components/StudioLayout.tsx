@@ -409,7 +409,7 @@ function PageTransition({ children, noPadding }: { children: ReactNode; noPaddin
   return (
     <main
       ref={mainRef}
-      className={`pt-20 md:pt-24 ${noPadding ? "" : "px-4 md:px-8 pb-8"}`}
+      className={`pt-16 md:pt-24 ${noPadding ? "" : "px-3 sm:px-4 md:px-8 pb-8"}`}
       style={{ opacity: 0 }}
     >
       {children}

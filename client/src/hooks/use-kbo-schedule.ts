@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { KboGameSchedule } from "@/lib/local-store";
+import { generateKbo2026Schedule } from "@/lib/kbo-schedule-generator";
 
 /**
  * useKboSchedule — 네이버 스포츠 API에서 KBO 월별 일정 가져오기
  *
- * - 서버 `/api/kbo/schedule?year=&month=` → 네이버 API 프록시 (1시간 서버캐시)
- * - 클라이언트 localStorage 캐시 (1시간 TTL, stale-while-revalidate)
- * - 현재월 ± 1개월 자동 fetch
- * - `extraMonths`로 추가 월 요청 가능 (캘린더 탐색 시)
+ * 1순위: localStorage 캐시 (1시간 TTL)
+ * 2순위: 서버 /api/kbo/schedule → 네이버 API 프록시
+ * 3순위: 클라이언트 generator 폴백 (API 실패 시)
  */
 
 const CACHE_KEY = "olli-kbo-schedule-api";
@@ -26,7 +26,6 @@ function getMonthKeys(extraMonths?: { year: number; month: number }[]): { year: 
     { year: now.getFullYear(), month: now.getMonth() + 1 }, // current
     { year: now.getFullYear(), month: now.getMonth() + 2 }, // next
   ].map((m) => {
-    // Handle year overflow
     let y = m.year;
     let mo = m.month;
     if (mo > 12) { y++; mo -= 12; }
@@ -45,10 +44,28 @@ function getMonthKeys(extraMonths?: { year: number; month: number }[]): { year: 
   return base;
 }
 
+/** 폴백: 클라이언트 generator에서 일정 가져오기 */
+let generatorCache: KboGameSchedule[] | null = null;
+function getGeneratorFallback(): KboGameSchedule[] {
+  if (!generatorCache) {
+    generatorCache = generateKbo2026Schedule();
+  }
+  return generatorCache;
+}
+
 export function useKboSchedule(extraMonths?: { year: number; month: number }[]) {
-  const [games, setGames] = useState<KboGameSchedule[]>([]);
+  const [games, setGames] = useState<KboGameSchedule[]>(() => {
+    // Immediate: try cache first, then generator fallback
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const cached: CachedData = JSON.parse(raw);
+        if (cached.games.length > 0) return cached.games;
+      }
+    } catch { /* ignore */ }
+    return getGeneratorFallback();
+  });
   const [loading, setLoading] = useState(true);
-  const fetchedRef = useRef(false);
   const extraKey = extraMonths?.map((m) => `${m.year}-${m.month}`).join(",") || "";
 
   useEffect(() => {
@@ -58,23 +75,18 @@ export function useKboSchedule(extraMonths?: { year: number; month: number }[]) 
       const months = getMonthKeys(extraMonths);
       const monthKeys = months.map((m) => `${m.year}-${m.month}`);
 
-      // 1. Check localStorage cache
+      // 1. Check localStorage cache freshness
       try {
         const raw = localStorage.getItem(CACHE_KEY);
         if (raw) {
           const cached: CachedData = JSON.parse(raw);
           const allMonthsCached = monthKeys.every((k) => cached.months.includes(k));
-          if (allMonthsCached && cached.fetchedAt > Date.now() - CACHE_TTL) {
-            // Fresh cache — use directly
+          if (allMonthsCached && cached.fetchedAt > Date.now() - CACHE_TTL && cached.games.length > 0) {
             if (!cancelled) {
               setGames(cached.games);
               setLoading(false);
             }
             return;
-          }
-          // Stale cache — show while revalidating
-          if (cached.games.length > 0 && !cancelled) {
-            setGames(cached.games);
           }
         }
       } catch { /* corrupted cache */ }
@@ -84,23 +96,19 @@ export function useKboSchedule(extraMonths?: { year: number; month: number }[]) 
         const allGames: KboGameSchedule[] = [];
         const fetched: string[] = [];
 
-        // Fetch each month
         for (const { year, month } of months) {
           try {
             const resp = await fetch(`/api/kbo/schedule?year=${year}&month=${month}`);
             if (!resp.ok) continue;
             const data = await resp.json();
-            if (data.games && Array.isArray(data.games)) {
+            if (data.games && Array.isArray(data.games) && data.games.length > 0) {
               allGames.push(...data.games);
               fetched.push(`${year}-${month}`);
             }
-          } catch {
-            // Individual month fetch failed — skip
-          }
+          } catch { /* skip */ }
         }
 
         if (!cancelled && allGames.length > 0) {
-          // Deduplicate by game id
           const seen = new Set<string>();
           const deduped = allGames.filter((g) => {
             if (seen.has(g.id)) return false;
@@ -109,16 +117,15 @@ export function useKboSchedule(extraMonths?: { year: number; month: number }[]) 
           });
 
           setGames(deduped);
-
-          // Update cache
           localStorage.setItem(CACHE_KEY, JSON.stringify({
             games: deduped,
             fetchedAt: Date.now(),
             months: fetched,
           } satisfies CachedData));
         }
+        // If API returned empty, keep existing state (generator fallback or stale cache)
       } catch {
-        // API entirely failed — keep whatever we have
+        // API entirely failed — keep generator fallback
       }
 
       if (!cancelled) setLoading(false);

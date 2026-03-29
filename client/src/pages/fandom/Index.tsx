@@ -162,7 +162,7 @@ export function FandomIndex() {
       icon: TrendingUp,
       defaultColSpan: 2,
       content: (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
           <Link to="/fandom/groups" className="rounded-2xl p-5 bg-gradient-to-br from-violet-500/10 to-violet-500/5 border border-violet-500/20 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10 transition-all">
             <Users className="w-7 h-7 text-violet-500 mb-3" />
             <CountUp value={groups.length} className="text-2xl font-black text-foreground leading-none" />
