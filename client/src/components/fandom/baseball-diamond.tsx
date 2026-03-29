@@ -201,23 +201,11 @@ export function BaseballDiamond({
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-b from-[#2d5a27] via-[#3a7233] to-[#2d5a27]">
-      {/* Inning indicator + Refresh button - top left */}
-      <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5">
+      {/* Inning indicator - top left */}
+      <div className="absolute top-2 left-2 z-30">
         <div className="bg-black/50 px-2 py-1 rounded-lg text-[13px] font-bold text-white">
           {relay.inning}회 {relay.isTopInning ? "초" : "말"}
         </div>
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="bg-black/50 hover:bg-black/70 p-1.5 rounded-lg transition-colors"
-            title="새로고침"
-          >
-            <RefreshCw
-              className={`w-4 h-4 text-white/80 ${isRefreshing ? "animate-spin" : ""}`}
-            />
-          </button>
-        )}
       </div>
 
       {/* Diamond field SVG */}
@@ -330,7 +318,7 @@ export function BaseballDiamond({
         </div>
       </div>
 
-      {/* Bottom info bar: Matchup + BSO Count (moved from top) */}
+      {/* Bottom info bar: Matchup + BSO Count + Refresh */}
       <div className="px-3 py-2.5 bg-black/40 border-t border-white/10">
         <div className="flex items-center justify-between gap-2">
           {/* Matchup info */}
@@ -346,8 +334,23 @@ export function BaseballDiamond({
             {relay.currentBatter?.name || "-"}
           </div>
 
-          {/* BSO Count */}
-          <CountDisplay count={relay.count} />
+          <div className="flex items-center gap-2">
+            {/* BSO Count */}
+            <CountDisplay count={relay.count} />
+            {/* Refresh button */}
+            {onRefresh && (
+              <button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="bg-white/10 hover:bg-white/20 p-1.5 rounded-lg transition-colors"
+                title="새로고침"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 text-white/70 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
