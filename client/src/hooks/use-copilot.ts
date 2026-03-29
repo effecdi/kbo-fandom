@@ -390,8 +390,9 @@ export function useCopilot() {
         }
       }
 
-      // Fetch team logo image as reference for AI generation
+      // Fetch team logo image as SEPARATE reference for AI generation (not mixed with player photos)
       // Fallback: if teamLogoUrl not in meta (old projects), look up from local-store
+      let teamLogoDataUrl: string | undefined;
       let logoUrl = fandomMeta?.teamLogoUrl;
       if (!logoUrl && fandomMeta?.groupId) {
         const teams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
@@ -403,13 +404,11 @@ export function useCopilot() {
           const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(logoUrl)}`);
           if (logoResp.ok) {
             const logoBlob = await logoResp.blob();
-            const logoDataUrl = await new Promise<string>((resolve) => {
+            teamLogoDataUrl = await new Promise<string>((resolve) => {
               const reader = new FileReader();
               reader.onloadend = () => resolve(reader.result as string);
               reader.readAsDataURL(logoBlob);
             });
-            charImageUrls.push(logoDataUrl);
-            charNames.push(`CURRENT OFFICIAL TEAM LOGO/EMBLEM (2025-2026 season) — copy this EXACTLY`);
           }
         } catch { /* skip logo fetch error */ }
       }
@@ -472,6 +471,7 @@ export function useCopilot() {
             sourceImageDataList: charImageUrls.length > 0 ? charImageUrls : undefined,
             characterNames: charNames.length > 0 ? charNames : undefined,
             teamIdentity: teamIdentityForServer,
+            teamLogoImage: teamLogoDataUrl || undefined,
             templateType: fandomMeta?.templateType,
             aspectRatio: geminiRatio,
             sceneIndex: 0,

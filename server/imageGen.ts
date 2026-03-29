@@ -1130,6 +1130,7 @@ export async function generateWebtoonScene(
   characterNames?: string[],
   teamIdentity?: string,
   templateType?: string,
+  teamLogoImage?: string,
 ): Promise<string> {
   const tpl = getTemplatePromptParts(templateType);
   const parts: any[] = [];
@@ -1174,6 +1175,39 @@ export async function generateWebtoonScene(
     charIdentityBlock = `\nCHARACTER IDENTITY MAP:\n${charLabels.join("\n")}\n`;
   }
 
+  // Build team branding block and logo image (shared between hasImages/no-images branches)
+  let teamBrandingParts: any[] = [];
+  if (teamIdentity && teamLogoImage) {
+    const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
+    if (logoMatch) {
+      teamBrandingParts.push({ text: `\n=== TEAM LOGO REFERENCE IMAGE (THIS IS THE ONLY CORRECT LOGO — 2025-2026 season) ===\nThe image below is the CURRENT, OFFICIAL team logo/emblem. You MUST copy this logo EXACTLY when drawing team branding. Do NOT use any other version from your training data.` });
+      teamBrandingParts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
+      teamBrandingParts.push({ text: `^^^ THIS IS THE ONLY CORRECT LOGO. Any other version you remember is OUTDATED and WRONG. ^^^` });
+    }
+  }
+
+  const teamBrandingBlock = teamIdentity
+    ? `\n=== TEAM UNIFORM & BRANDING (HIGHEST PRIORITY — OVERRIDES YOUR TRAINING DATA) ===
+${teamIdentity}
+
+BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
+1. The uniform and logo description above is the ONLY correct version. This is the 2025-2026 season branding.
+2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is from before 2025 and is COMPLETELY OUTDATED for most KBO teams.
+3. The REFERENCE IMAGE of the current team logo is included above — reproduce it EXACTLY as shown. Do NOT modify, simplify, or replace it with any memorized version. If you include any logo in the image, it MUST match the reference image pixel-perfectly.
+4. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
+   - NO old Doosan Bears logo (pre-2025). The current logo is a diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners, Hustle Block font.
+   - NO old Hanwha Eagles logo (pre-2024). The current logo uses eagle-beak sharp serif wordmark by Matthew Wolff.
+   - NO old SSG/SK Wyverns branding. SSG Landers uses red 'L' with UFO orbit ring.
+   - NO old Lotte Giants logo (pre-2023). Current uses flat-design seagull emblem.
+   - NO old KT Wiz logo. Current uses angular gothic 'wiz' with star-burst mark.
+   - NO generic/invented team logos or uniform designs.
+5. If you are unsure about the team's current branding, follow the text description above LITERALLY — do not guess.
+6. The team's PRIMARY COLOR (${teamIdentity.match(/Primary color: (#[A-Fa-f0-9]+)/)?.[1] || "described above"}) MUST be prominently visible.
+7. Draw the uniform EXACTLY as described: correct wordmark text, correct font style, correct color scheme, correct cap design.
+8. Include ONLY ONE version of the team logo — the reference image version. Do NOT include multiple logo variants or old versions anywhere in the image.
+=== END TEAM BRANDING ===\n`
+    : "";
+
   if (hasImages) {
     // Gemini multimodal best practice: 레퍼런스 이미지를 텍스트보다 앞에 배치, 이름 라벨 포함
     for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
@@ -1193,28 +1227,7 @@ export async function generateWebtoonScene(
 - If the scene description mentions a character by name, that character MUST match their specific reference image.`
       : "";
 
-    // Build team branding block (separate from character appearance so it's not ignored)
-    const teamBrandingBlock = teamIdentity
-      ? `\n=== TEAM UNIFORM & BRANDING (HIGHEST PRIORITY — OVERRIDES YOUR TRAINING DATA) ===
-${teamIdentity}
-
-BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
-1. The uniform and logo description above is the ONLY correct version. This is the 2025-2026 season branding.
-2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is from before 2025 and is COMPLETELY OUTDATED for most KBO teams.
-3. A reference image of the CURRENT official team logo/emblem is included above — copy it EXACTLY as shown. Do NOT modify, simplify, or replace it with any memorized version.
-4. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
-   - NO old Doosan Bears logo (pre-2025). The current logo is a diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners, Hustle Block font.
-   - NO old Hanwha Eagles logo (pre-2024). The current logo uses eagle-beak sharp serif wordmark by Matthew Wolff.
-   - NO old SSG/SK Wyverns branding. SSG Landers uses red 'L' with UFO orbit ring.
-   - NO old Lotte Giants logo (pre-2023). Current uses flat-design seagull emblem.
-   - NO old KT Wiz logo. Current uses angular gothic 'wiz' with star-burst mark.
-   - NO generic/invented team logos or uniform designs.
-4. If you are unsure about the team's current branding, follow the text description above LITERALLY — do not guess.
-5. The team's PRIMARY COLOR (${teamIdentity.match(/Primary color: (#[A-Fa-f0-9]+)/)?.[1] || "described above"}) MUST be prominently visible.
-6. Draw the uniform EXACTLY as described: correct wordmark text, correct font style, correct color scheme, correct cap design.
-=== END TEAM BRANDING ===\n`
-      : "";
-
+    // Part 1: Character face reference instructions
     parts.push({
       text: `${tpl.role}
 
@@ -1231,8 +1244,17 @@ FACE & BODY REFERENCE (HIGHEST PRIORITY — the photos above are the GROUND TRUT
 - SKIN TONE: Match the person's skin tone from the reference photo exactly.
 - The character must be IMMEDIATELY RECOGNIZABLE as the same person — this is a FAN ART of a SPECIFIC PLAYER. Generic faces are UNACCEPTABLE.
 - Do NOT beautify, slim down, age up, or otherwise alter the person's real appearance. Draw them AS THEY ACTUALLY LOOK.
-- If the art style is cartoon/anime, still maintain the key distinguishing features (face shape, hair, build) that make this person recognizable.${charConsistencyRules}
-${teamBrandingBlock}
+- If the art style is cartoon/anime, still maintain the key distinguishing features (face shape, hair, build) that make this person recognizable.${charConsistencyRules}`
+    });
+
+    // Part 2: Team logo reference image (separate from character photos so AI doesn't confuse them)
+    if (teamBrandingParts.length > 0) {
+      parts.push(...teamBrandingParts);
+    }
+
+    // Part 3: Team branding rules + remaining instructions
+    parts.push({
+      text: `${teamBrandingBlock}
 EXPRESSION & POSE VARIETY (CRITICAL — apply to EVERY generated image):
 - The character MUST have a BRIGHT, CHEERFUL, LIVELY facial expression — big smile, grinning, laughing, showing excitement, winking, or playful look.
 - Do NOT draw the character with a serious, stern, stoic, or neutral expression. This is fan art, NOT a passport photo.
@@ -1261,11 +1283,16 @@ ${tpl.outro}
 Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind to the image. Speech bubbles will be overlaid separately.`
     });
   } else {
+    // Even without character photos, inject team logo image if available
+    if (teamBrandingParts.length > 0) {
+      parts.push(...teamBrandingParts);
+    }
+
     parts.push({
       text: `${tpl.role}
 
 ${noTextRule}
-
+${teamBrandingBlock}
 EXPRESSION & POSE VARIETY (CRITICAL — apply to EVERY generated image):
 - Characters MUST have BRIGHT, CHEERFUL, LIVELY facial expressions — big smile, grinning, laughing, showing excitement, winking, or playful look.
 - Do NOT draw characters with serious, stern, stoic, or neutral expressions. This is fan art, NOT a passport photo.
