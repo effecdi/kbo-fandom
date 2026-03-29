@@ -210,8 +210,18 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
   // GSAP scroll reveal for widget sections
   const gridRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!gridRef.current || editMode) return;
+    if (!gridRef.current) return;
+
     const sections = gridRef.current.querySelectorAll("[data-widget]");
+
+    // In edit mode, clear all GSAP inline styles so every widget is visible
+    if (editMode) {
+      sections.forEach((section) => {
+        gsap.set(section, { clearProps: "all" });
+      });
+      return;
+    }
+
     if (sections.length === 0) return;
 
     const tweens: gsap.core.Tween[] = [];
@@ -237,6 +247,13 @@ export function DashboardGrid({ widgets, themeColor }: DashboardGridProps) {
         t.scrollTrigger?.kill();
         t.kill();
       });
+      // Clear GSAP inline styles on cleanup so sections don't get stuck at opacity:0
+      if (gridRef.current) {
+        const secs = gridRef.current.querySelectorAll("[data-widget]");
+        secs.forEach((sec) => {
+          gsap.set(sec, { clearProps: "all" });
+        });
+      }
     };
   }, [orderedWidgets, editMode]);
 
