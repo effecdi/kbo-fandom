@@ -113,7 +113,7 @@ export function CopilotDock() {
 
   const { state, dispatch } = useWorkspace();
   const fandomMeta = state.fandomMeta;
-  const accentColor = "var(--fandom-accent, var(--fandom-primary, #7B2FF7))";
+  const accentColor = fandomMeta?.coverColor || "var(--fandom-accent, var(--fandom-primary, #7B2FF7))";
 
   // Build template-specific quick actions
   const activeQuickActions = (() => {
@@ -438,9 +438,9 @@ export function CopilotDock() {
                     </div>
                     <div className="bg-white/[0.06] rounded-2xl rounded-bl-md px-4 py-3">
                       <div className="flex gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" />
-                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:0.15s]" />
-                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:0.3s]" />
+                        <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: accentColor + "90" }} />
+                        <span className="w-2 h-2 rounded-full animate-bounce [animation-delay:0.15s]" style={{ background: accentColor + "90" }} />
+                        <span className="w-2 h-2 rounded-full animate-bounce [animation-delay:0.3s]" style={{ background: accentColor + "90" }} />
                       </div>
                     </div>
                   </div>
@@ -624,7 +624,8 @@ export function CopilotDock() {
                   <img
                     src={char.imageUrl}
                     alt={char.name}
-                    className="w-8 h-8 rounded-full object-cover border-2 border-primary ring-1 ring-primary/30"
+                    className="w-8 h-8 rounded-full object-cover border-2 ring-1"
+                    style={{ borderColor: accentColor, ["--tw-ring-color" as any]: accentColor + "50" }}
                   />
                   <button
                     onClick={() => unpinCharacter(char.id)}
@@ -676,7 +677,8 @@ export function CopilotDock() {
                   key={chip}
                   onClick={() => sendMessage(chip)}
                   disabled={isGenerating}
-                  className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 transition-all border border-primary/20 hover:border-primary/40"
+                  className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium disabled:opacity-40 transition-all"
+                  style={{ background: accentColor + "15", color: accentColor, borderWidth: 1, borderColor: accentColor + "30" }}
                 >
                   {chip}
                 </button>

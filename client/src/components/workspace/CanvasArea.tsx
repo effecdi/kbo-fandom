@@ -755,27 +755,32 @@ export function CanvasArea() {
         {/* Overlay controls — stay fixed on top */}
         {/* Aspect ratio — top right */}
         <div className="absolute top-3 right-3 z-20 flex items-center bg-[#1a1a1f]/90 backdrop-blur-xl border border-white/[0.06] rounded-xl p-0.5 gap-0.5">
-          {(state.fandomMeta
-            ? TEMPLATE_RATIOS[state.fandomMeta.templateType] || ["3:4", "1:1"]
-            : ["3:4", "1:1"] as CanvasAspectRatio[]
-          ).map((ratio) => {
-            const IconComp = RATIO_ICON[ratio] || Square;
-            const isVertical = ratio === "3:4" || ratio === "2:3" || ratio === "9:16" || ratio === "4:5";
-            return (
-              <button
-                key={ratio}
-                onClick={() => dispatch({ type: "SET_CANVAS_ASPECT_RATIO", ratio })}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-bold transition-all ${
-                  state.canvasAspectRatio === ratio
-                    ? "bg-primary text-primary-foreground shadow-[0_0_12px_rgba(0,229,204,0.3)]"
-                    : "text-white/30 hover:text-white/60 hover:bg-white/[0.06]"
-                }`}
-              >
-                <IconComp className={`w-5 h-5 ${isVertical && ratio !== "9:16" ? "rotate-90" : ""}`} />
-                {ratio}
-              </button>
-            );
-          })}
+          {(() => {
+            const teamColor = state.fandomMeta?.coverColor;
+            return (state.fandomMeta
+              ? TEMPLATE_RATIOS[state.fandomMeta.templateType] || ["3:4", "1:1"]
+              : ["3:4", "1:1"] as CanvasAspectRatio[]
+            ).map((ratio) => {
+              const IconComp = RATIO_ICON[ratio] || Square;
+              const isVertical = ratio === "3:4" || ratio === "2:3" || ratio === "9:16" || ratio === "4:5";
+              const isActive = state.canvasAspectRatio === ratio;
+              return (
+                <button
+                  key={ratio}
+                  onClick={() => dispatch({ type: "SET_CANVAS_ASPECT_RATIO", ratio })}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-bold transition-all ${
+                    isActive
+                      ? teamColor ? "text-white" : "bg-primary text-primary-foreground shadow-[0_0_12px_rgba(0,229,204,0.3)]"
+                      : "text-white/30 hover:text-white/60 hover:bg-white/[0.06]"
+                  }`}
+                  style={isActive && teamColor ? { background: teamColor, boxShadow: `0 0 12px ${teamColor}50` } : undefined}
+                >
+                  <IconComp className={`w-5 h-5 ${isVertical && ratio !== "9:16" ? "rotate-90" : ""}`} />
+                  {ratio}
+                </button>
+              );
+            });
+          })()}
         </div>
 
         {/* Zoom — bottom center */}
@@ -790,7 +795,8 @@ export function CanvasArea() {
           <input
             type="range" min={20} max={300} step={5} value={zoom}
             onChange={(e) => setZoom(+e.target.value)}
-            className="w-24 h-1.5 accent-primary"
+            className="w-24 h-1.5"
+            style={{ accentColor: state.fandomMeta?.coverColor || "var(--primary)" }}
           />
           <button
             onClick={() => setZoom((z) => Math.min(300, z + 10))}

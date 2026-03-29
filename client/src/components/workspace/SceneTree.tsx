@@ -6,6 +6,7 @@ import type { Scene, Cut } from "@/lib/workspace-types";
 export function SceneTree() {
   const { state, dispatch } = useWorkspace();
   const activeScene = useActiveScene();
+  const teamColor = state.fandomMeta?.coverColor;
 
   function addScene() {
     dispatch({ type: "HISTORY_PUSH" });
@@ -59,9 +60,10 @@ export function SceneTree() {
             }}
             className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-[13px] transition-colors ${
               scene.id === state.activeSceneId
-                ? "bg-primary/10 text-primary"
+                ? teamColor ? "font-semibold" : "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
             }`}
+            style={scene.id === state.activeSceneId && teamColor ? { background: teamColor + "15", color: teamColor } : undefined}
           >
             <ChevronRight
               className={`w-5 h-5 transition-transform ${
@@ -91,9 +93,10 @@ export function SceneTree() {
                   }
                   className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[13px] transition-colors ${
                     cut.id === state.activeCutId
-                      ? "bg-primary/5 text-primary"
+                      ? teamColor ? "font-medium" : "bg-primary/5 text-primary"
                       : "text-muted-foreground hover:bg-muted"
                   }`}
+                  style={cut.id === state.activeCutId && teamColor ? { background: teamColor + "10", color: teamColor } : undefined}
                 >
                   <Layers className="w-5 h-5" />
                   <span>컷 {cut.order}</span>

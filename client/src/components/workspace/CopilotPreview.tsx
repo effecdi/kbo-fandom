@@ -9,7 +9,8 @@ interface CopilotPreviewProps {
 }
 
 export function CopilotPreview({ message }: CopilotPreviewProps) {
-  const { dispatch } = useWorkspace();
+  const { state, dispatch } = useWorkspace();
+  const teamColor = state.fandomMeta?.coverColor;
   const [fullPreview, setFullPreview] = useState(false);
 
   if (!message.preview || message.preview.applied) return null;
@@ -37,7 +38,8 @@ export function CopilotPreview({ message }: CopilotPreviewProps) {
           </Button>
           <Button
             size="sm"
-            className="h-7 text-[13px] gap-1 bg-primary hover:bg-primary/90 text-black"
+            className="h-7 text-[13px] gap-1 text-white"
+            style={{ background: teamColor || "var(--primary)" }}
             onClick={() =>
               dispatch({ type: "COPILOT_APPLY_PREVIEW", messageId: message.id })
             }

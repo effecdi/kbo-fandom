@@ -7,6 +7,7 @@ export function StoryboardStrip() {
   const { state, dispatch } = useWorkspace();
   const activeScene = useActiveScene();
   const activeCut = useActiveCut();
+  const teamColor = state.fandomMeta?.coverColor;
 
   if (!activeScene) return null;
 
@@ -73,9 +74,10 @@ export function StoryboardStrip() {
                 onClick={() => dispatch({ type: "SET_ACTIVE_CUT", cutId: cut.id })}
                 className={`w-[60px] h-[80px] rounded-xl border-2 flex flex-col items-center justify-center gap-1 overflow-hidden transition-all ${
                   isActive
-                    ? "border-primary bg-primary/5 shadow-[0_0_16px_rgba(0,229,204,0.15)]"
+                    ? teamColor ? "bg-white/[0.02]" : "border-primary bg-primary/5 shadow-[0_0_16px_rgba(0,229,204,0.15)]"
                     : "border-white/[0.06] bg-white/[0.02] hover:border-white/10"
                 }`}
+                style={isActive && teamColor ? { borderColor: teamColor, boxShadow: `0 0 16px ${teamColor}25` } : undefined}
               >
                 {cut.thumbnailUrl ? (
                   <img
@@ -96,11 +98,14 @@ export function StoryboardStrip() {
               </button>
 
               {/* Order badge */}
-              <div className={`absolute -top-1 -left-1 w-5 h-5 rounded-md flex items-center justify-center text-[13px] font-bold ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-white/[0.06] text-white/30"
-              }`}>
+              <div
+                className={`absolute -top-1 -left-1 w-5 h-5 rounded-md flex items-center justify-center text-[13px] font-bold ${
+                  isActive
+                    ? teamColor ? "text-white" : "bg-primary text-primary-foreground"
+                    : "bg-white/[0.06] text-white/30"
+                }`}
+                style={isActive && teamColor ? { background: teamColor } : undefined}
+              >
                 {idx + 1}
               </div>
 
@@ -130,7 +135,10 @@ export function StoryboardStrip() {
         {/* Add cut button */}
         <button
           onClick={addCut}
-          className="shrink-0 w-[60px] h-[80px] rounded-xl border-2 border-dashed border-white/[0.06] flex flex-col items-center justify-center gap-1 hover:border-primary/30 hover:bg-primary/[0.03] transition-all"
+          className="shrink-0 w-[60px] h-[80px] rounded-xl border-2 border-dashed border-white/[0.06] flex flex-col items-center justify-center gap-1 transition-all"
+          style={{ ["--hover-color" as any]: teamColor || "var(--primary)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = (teamColor || "") + "50"; e.currentTarget.style.background = (teamColor || "") + "08"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.background = ""; }}
         >
           <Plus className="w-5 h-5 text-white/20" />
           <span className="text-[13px] text-white/15">추가</span>
