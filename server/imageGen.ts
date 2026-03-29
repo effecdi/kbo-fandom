@@ -1352,7 +1352,20 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any 
       }
 
       const mimeType = imagePart.inlineData.mimeType || "image/png";
-      const rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+      let rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+
+      // ── 2-pass 로고 보정: 팀 로고 이미지가 있으면 생성된 이미지의 로고를 교정 ──
+      // Gemini 학습데이터에 구로고가 있어서 1차 생성에서 구로고가 나올 확률이 높음
+      // 2차에서 이미지 편집으로 정확한 로고로 교체
+      if (teamLogoImage && hasImages) {
+        try {
+          logger.info("[generate-scene] Starting 2-pass logo correction...");
+          rawDataUrl = await correctLogoInImage(rawDataUrl, teamLogoImage, teamIdentity);
+        } catch (err) {
+          logger.warn("[generate-scene] Logo correction failed, using original", err);
+        }
+      }
+
       // 생성된 이미지의 회색/흰색 배경을 투명으로 변환 (threshold 210으로 연한 회색도 제거)
       return await removeWhiteBackground(rawDataUrl, 210);
     } catch (err: any) {
@@ -1362,6 +1375,78 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any 
     }
   }
   throw lastError || new Error("Failed to generate webtoon scene after retries");
+}
+
+// ─── 2-Pass Logo Correction ─────────────────────────────────────────────────
+/**
+ * 생성된 이미지의 모자/헬멧/유니폼 로고를 정확한 KBO 공식 로고로 교정.
+ * Gemini의 이미지 편집 기능을 사용하여 로고 영역만 수정하고 나머지는 유지.
+ * 1차 생성에서 학습데이터 기반 구로고가 나올 확률이 높아, 2차에서 보정.
+ */
+export async function correctLogoInImage(
+  generatedImageDataUrl: string,
+  correctLogoDataUrl: string,
+  teamBrandingText?: string,
+): Promise<string> {
+  const imgMatch = generatedImageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const logoMatch = correctLogoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !logoMatch) return generatedImageDataUrl;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-image",
+      contents: [{
+        role: "user",
+        parts: [
+          { text: `GENERATED IMAGE (to be corrected):` },
+          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+          { text: `CORRECT 2025-2026 OFFICIAL KBO TEAM LOGO/EMBLEM:` },
+          { inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } },
+          {
+            text: `TASK: You are a logo correction specialist. Fix ONLY the team logos in this baseball character illustration.
+
+WHAT TO CHANGE:
+1. Find the logo/emblem/letter on the character's CAP or HELMET front
+2. Replace it with the CORRECT LOGO shown above — copy its exact shapes, curves, colors
+3. If the jersey/chest wordmark doesn't match the correct branding, fix that too
+
+WHAT TO KEEP UNCHANGED (CRITICAL):
+- The character's face, expression, skin, hair, body shape, pose
+- The background, scenery, composition
+- The art style, line thickness, overall color palette
+- All clothing shapes (just fix the LOGO GRAPHICS on them)
+- Everything that is NOT a team logo/emblem
+
+${teamBrandingText ? `CURRENT TEAM BRANDING:\n${teamBrandingText}\n` : ''}
+RULES:
+- The corrected logos must look EXACTLY like the reference logo image above
+- Maintain proper perspective (the logo should curve/angle naturally on the cap)
+- Keep the same image dimensions and composition
+- This is an EDITING task — change as LITTLE as possible, only the logo areas
+- Do NOT add any text, letters, or writing anywhere in the image
+- Do NOT change the character's appearance in any way`
+          }
+        ]
+      }],
+      config: {
+        responseModalities: [Modality.TEXT, Modality.IMAGE],
+      },
+    });
+
+    const candidate = response.candidates?.[0];
+    const imagePart = candidate?.content?.parts?.find((part: any) => part.inlineData);
+    if (!imagePart?.inlineData?.data) {
+      logger.warn("[logo-correction] No image in response, using original");
+      return generatedImageDataUrl;
+    }
+
+    logger.info("[logo-correction] Successfully corrected logos in generated image");
+    const mimeType = imagePart.inlineData.mimeType || "image/png";
+    return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  } catch (error) {
+    logger.warn("[logo-correction] Failed, using original image", error);
+    return generatedImageDataUrl;
+  }
 }
 
 // ─── Object Segmentation ────────────────────────────────────────────────────
