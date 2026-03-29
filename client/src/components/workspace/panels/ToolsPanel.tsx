@@ -113,7 +113,7 @@ export function ToolsPanel({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+      <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
         <Pen className="w-5 h-5 text-primary" />
         도구
       </h3>
@@ -133,7 +133,7 @@ export function ToolsPanel({
             title={tool.description}
           >
             <tool.icon className="w-5 h-5" />
-            <span className="text-[12px] font-medium">{tool.label}</span>
+            <span className="text-[13px] font-medium">{tool.label}</span>
           </button>
         ))}
       </div>
@@ -142,7 +142,7 @@ export function ToolsPanel({
       {toolMode === "draw" && (
         <div className="space-y-3 pt-1">
           <div>
-            <span className="text-[12px] text-white/30 font-medium block mb-1.5">브러시</span>
+            <span className="text-[13px] text-white/30 font-medium block mb-1.5">브러시</span>
             <div className="flex gap-1.5">
               {DRAW_SUB_TOOLS.map((sub) => (
                 <button
@@ -156,7 +156,7 @@ export function ToolsPanel({
                   )}
                 >
                   <sub.icon className="w-5 h-5" />
-                  <span className="text-[12px]">{sub.label}</span>
+                  <span className="text-[13px]">{sub.label}</span>
                 </button>
               ))}
             </div>
@@ -168,7 +168,7 @@ export function ToolsPanel({
       {toolMode === "line" && (
         <div className="space-y-3 pt-1">
           <div>
-            <span className="text-[12px] text-white/30 font-medium block mb-1.5">선 종류</span>
+            <span className="text-[13px] text-white/30 font-medium block mb-1.5">선 종류</span>
             <div className="flex gap-1.5">
               {LINE_SUB_TOOLS.map((sub) => (
                 <button
@@ -181,7 +181,7 @@ export function ToolsPanel({
                       : "border-white/[0.04] text-white/30 hover:text-white/50"
                   )}
                 >
-                  <span className="text-[12px]">{sub.label}</span>
+                  <span className="text-[13px]">{sub.label}</span>
                 </button>
               ))}
             </div>
@@ -195,7 +195,7 @@ export function ToolsPanel({
           {/* Color */}
           {toolMode !== "eraser" && (
             <div>
-              <span className="text-[12px] text-white/30 font-medium block mb-1.5">색상</span>
+              <span className="text-[13px] text-white/30 font-medium block mb-1.5">색상</span>
               <div className="flex gap-1 flex-wrap">
                 {COLOR_PRESETS.map((c) => (
                   <button
@@ -218,7 +218,7 @@ export function ToolsPanel({
                   onChange={(e) => setColor(e.target.value)}
                   className="w-8 h-6 rounded cursor-pointer border border-white/10"
                 />
-                <span className="text-[12px] text-white/30 font-mono">{color}</span>
+                <span className="text-[13px] text-white/30 font-mono">{color}</span>
               </div>
             </div>
           )}
@@ -226,8 +226,8 @@ export function ToolsPanel({
           {/* Size */}
           <div>
             <div className="flex justify-between mb-1.5">
-              <span className="text-[12px] text-white/30 font-medium">굵기</span>
-              <span className="text-[12px] text-white/20">{size}px</span>
+              <span className="text-[13px] text-white/30 font-medium">굵기</span>
+              <span className="text-[13px] text-white/20">{size}px</span>
             </div>
             <div className="flex gap-1.5 mb-2">
               {SIZE_PRESETS.map((s) => (
@@ -265,8 +265,8 @@ export function ToolsPanel({
           {/* Opacity */}
           <div>
             <div className="flex justify-between mb-1.5">
-              <span className="text-[12px] text-white/30 font-medium">투명도</span>
-              <span className="text-[12px] text-white/20">{Math.round(opacity * 100)}%</span>
+              <span className="text-[13px] text-white/30 font-medium">투명도</span>
+              <span className="text-[13px] text-white/20">{Math.round(opacity * 100)}%</span>
             </div>
             <input
               type="range"
@@ -282,7 +282,7 @@ export function ToolsPanel({
 
       {/* ── Shape grid (accessible from any mode) ─────────── */}
       <div className="pt-1 border-t border-white/[0.04]">
-        <span className="text-[12px] text-white/30 font-medium block mb-1.5">도형 추가</span>
+        <span className="text-[13px] text-white/30 font-medium block mb-1.5">도형 추가</span>
         <div className="grid grid-cols-3 gap-1.5">
           {SHAPE_TOOLS.map((shape) => (
             <button
@@ -291,7 +291,7 @@ export function ToolsPanel({
               title={shape.label}
             >
               <shape.icon className="w-5 h-5" />
-              <span className="text-[12px]">{shape.label}</span>
+              <span className="text-[13px]">{shape.label}</span>
             </button>
           ))}
         </div>

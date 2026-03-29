@@ -88,7 +88,7 @@ export function PrintExportDialog({ open, onClose }: Props) {
             </div>
             <div>
               <h2 className="text-[15px] font-bold text-white">인쇄용 내보내기</h2>
-              <p className="text-[12px] text-white/40">고해상도 인쇄 품질 출력</p>
+              <p className="text-[13px] text-white/40">고해상도 인쇄 품질 출력</p>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.06]">
@@ -101,19 +101,19 @@ export function PrintExportDialog({ open, onClose }: Props) {
           <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-4 space-y-2">
             <div className="flex items-center gap-2 text-white/50">
               <Ruler className="w-4 h-4" />
-              <span className="text-xs font-medium">물리 사이즈</span>
+              <span className="text-[13px] font-medium">물리 사이즈</span>
             </div>
             <p className="text-lg font-bold text-white">
               {physicalW}mm × {physicalH}mm
             </p>
-            <p className="text-[11px] text-white/30">
+            <p className="text-[13px] text-white/30">
               ({(physicalW / 10).toFixed(1)}cm × {(physicalH / 10).toFixed(1)}cm)
             </p>
           </div>
 
           {/* DPI Selection */}
           <div className="space-y-2">
-            <label className="text-[12px] font-semibold text-white/40 uppercase tracking-wider">해상도 (DPI)</label>
+            <label className="text-[13px] font-semibold text-white/40 uppercase tracking-wider">해상도 (DPI)</label>
             <div className="grid grid-cols-3 gap-2">
               {([72, 150, 300] as const).map((d) => (
                 <button
@@ -126,7 +126,7 @@ export function PrintExportDialog({ open, onClose }: Props) {
                   }`}
                 >
                   <p className={`text-sm font-bold ${dpi === d ? "text-primary" : "text-white/70"}`}>{d}</p>
-                  <p className="text-[10px] text-white/30 mt-0.5">
+                  <p className="text-[13px] text-white/30 mt-0.5">
                     {d === 72 ? "화면용" : d === 150 ? "보통 인쇄" : "고품질 인쇄"}
                   </p>
                 </button>
@@ -136,7 +136,7 @@ export function PrintExportDialog({ open, onClose }: Props) {
 
           {/* Format */}
           <div className="space-y-2">
-            <label className="text-[12px] font-semibold text-white/40 uppercase tracking-wider">포맷</label>
+            <label className="text-[13px] font-semibold text-white/40 uppercase tracking-wider">포맷</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setFormat("png")}
@@ -147,7 +147,7 @@ export function PrintExportDialog({ open, onClose }: Props) {
                 }`}
               >
                 <p className={`text-sm font-bold ${format === "png" ? "text-primary" : "text-white/70"}`}>PNG</p>
-                <p className="text-[10px] text-white/30 mt-0.5">무손실, 투명 지원</p>
+                <p className="text-[13px] text-white/30 mt-0.5">무손실, 투명 지원</p>
               </button>
               <button
                 onClick={() => setFormat("jpeg")}
@@ -158,7 +158,7 @@ export function PrintExportDialog({ open, onClose }: Props) {
                 }`}
               >
                 <p className={`text-sm font-bold ${format === "jpeg" ? "text-primary" : "text-white/70"}`}>JPEG</p>
-                <p className="text-[10px] text-white/30 mt-0.5">작은 파일 크기</p>
+                <p className="text-[13px] text-white/30 mt-0.5">작은 파일 크기</p>
               </button>
             </div>
           </div>
@@ -172,16 +172,16 @@ export function PrintExportDialog({ open, onClose }: Props) {
               className="w-3.5 h-3.5 rounded accent-primary"
             />
             <Eye className="w-3.5 h-3.5 text-white/30" />
-            <span className="text-xs text-white/60">블리드 마크 + 트림 라인 포함</span>
+            <span className="text-[13px] text-white/60">블리드 마크 + 트림 라인 포함</span>
           </label>
 
           {/* Export Info */}
           <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-3 space-y-1">
-            <p className="text-[10px] text-white/30">내보내기 결과</p>
-            <p className="text-xs text-white/60 font-mono">
+            <p className="text-[13px] text-white/30">내보내기 결과</p>
+            <p className="text-[13px] text-white/60 font-mono">
               {exportW} × {exportH} px ({format.toUpperCase()})
             </p>
-            <p className="text-[10px] text-white/30">
+            <p className="text-[13px] text-white/30">
               예상 파일 크기: ~{format === "jpeg" ? Math.round(exportW * exportH * 3 / 10 / 1024) : Math.round(exportW * exportH * 4 / 3 / 1024)} KB
             </p>
           </div>

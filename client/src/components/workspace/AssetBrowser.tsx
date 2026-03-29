@@ -133,7 +133,7 @@ export function AssetBrowser() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[13px] font-medium transition-all ${
               activeTab === tab.id
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -148,7 +148,7 @@ export function AssetBrowser() {
       {/* Background tab */}
       {activeTab === "background" && (
         <>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             배경을 생성하거나 업로드하세요
           </p>
           <Button
@@ -207,7 +207,7 @@ export function AssetBrowser() {
       {/* Sticker tab */}
       {activeTab === "sticker" && (
         <>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             스티커를 클릭하면 AI가 캔버스에 추가합니다
           </p>
           <div className="grid grid-cols-4 gap-1.5">
@@ -218,7 +218,7 @@ export function AssetBrowser() {
                 className="aspect-square rounded-lg bg-muted border border-border flex flex-col items-center justify-center gap-0.5 hover:bg-muted/80 hover:border-primary/50 transition-colors cursor-pointer"
               >
                 <span className="text-xl">{sticker.emoji}</span>
-                <span className="text-[12px] text-muted-foreground">{sticker.label}</span>
+                <span className="text-[13px] text-muted-foreground">{sticker.label}</span>
               </button>
             ))}
           </div>
@@ -228,7 +228,7 @@ export function AssetBrowser() {
       {/* Effect tab */}
       {activeTab === "effect" && (
         <>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             효과를 선택하면 현재 컷에 적용됩니다
           </p>
           <div className="space-y-1.5">
@@ -237,7 +237,7 @@ export function AssetBrowser() {
                 key={effect.id}
                 variant="outline"
                 size="sm"
-                className="w-full gap-2 text-xs justify-start"
+                className="w-full gap-2 text-[13px] justify-start"
                 onClick={() => handleEffectAdd(effect.prompt)}
               >
                 <Star className="w-5 h-5 text-primary" />

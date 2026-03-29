@@ -361,15 +361,15 @@ export function LayerListPanel({
                   ) : item.type === "drawing" ? (
                     <DrawingIcon className="h-5 w-5 text-muted-foreground" />
                   ) : item.type === "text" ? (
-                    <span className="text-[12px] font-semibold text-muted-foreground">T</span>
+                    <span className="text-[13px] font-semibold text-muted-foreground">T</span>
                   ) : item.type === "line" ? (
-                    <span className="text-[12px] font-semibold text-muted-foreground">L</span>
+                    <span className="text-[13px] font-semibold text-muted-foreground">L</span>
                   ) : item.type === "shape" ? (
                     <Square className="h-5 w-5 text-muted-foreground" />
                   ) : item.thumb ? (
                     <img src={item.thumb} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-[12px] font-semibold text-muted-foreground">
+                    <span className="text-[13px] font-semibold text-muted-foreground">
                       {item.type === "bubble" ? "B" : "C"}
                     </span>
                   )}

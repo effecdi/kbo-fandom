@@ -1024,8 +1024,18 @@ function getTemplatePromptParts(templateType?: string) {
     };
   }
 
-  // Character art: portrait, playercard, fanart, matchday, edit
-  if (["portrait", "playercard", "fanart", "matchday", "edit"].includes(t)) {
+  // Player card (trading card design)
+  if (t === "playercard") {
+    return {
+      role: "You are designing a BASEBALL TRADING CARD. The output should look like an actual collectible card with a card frame/border, player photo area, name plate, jersey number, team logo space, and stats panel.",
+      style: "- Style: Follow the art style specified in the scene description above. Create a professional trading card layout with card frame, borders, and design elements.",
+      bg: "- Create a trading card layout with card frame/border, name plate area, jersey number display, and team logo space\n- The card should have a designed background within the card frame (team colors, patterns, or gradient)\n- Include card design elements: corners, borders, stat panels, or holographic effects as appropriate",
+      outro: "CRITICAL: The output must look like a PHYSICAL TRADING CARD with card frame, borders, and layout elements — NOT just a portrait illustration.",
+    };
+  }
+
+  // Character art: portrait, fanart, matchday, edit
+  if (["portrait", "fanart", "matchday", "edit"].includes(t)) {
     return {
       role: "You are creating professional baseball fan artwork. This is NOT a webtoon or comic — it is a standalone illustration.",
       style: "- Style: Follow the art style specified in the scene description above (e.g., watercolor, anime, realistic, pop art, sketch, pixel art, etc.). Do NOT default to cartoon/line-art/instatoon style unless that specific style was requested.",
@@ -1047,20 +1057,20 @@ function getTemplatePromptParts(templateType?: string) {
   // Sticker / product cutout
   if (["sticker", "stickersheet", "acrylicstand"].includes(t)) {
     return {
-      role: "You are designing cute character stickers/merchandise artwork.",
+      role: "You are creating die-cut STICKER/MERCHANDISE DESIGNS. Generate the sticker/product designs themselves — NOT a person holding or looking at stickers. Each sticker should be a separate small illustration of the character in different poses/expressions, arranged on the canvas.",
       style: "- Style: Follow the art style specified in the scene description. Keep edges clean and suitable for die-cutting.",
       bg: "- The background MUST be plain white (#FFFFFF) for clean cutout\n- Draw ONLY the character with clean, defined edges\n- No background elements, shadows on ground, or environmental details",
-      outro: "IMPORTANT: Plain white background for sticker/product cutout. Clean edges required.",
+      outro: "CRITICAL: Generate STICKER DESIGNS (multiple small character illustrations arranged on white), NOT a full scene of a person. This is a PRODUCT DESIGN sheet.",
     };
   }
 
   // Banner / slogan
   if (["cheerbanner", "slogan"].includes(t)) {
     return {
-      role: "You are designing a bold baseball stadium cheer banner.",
+      role: "You are designing a PHYSICAL CHEER BANNER/FLAG for a baseball stadium. The output should look like an actual banner/towel design with text areas, team colors, and graphic layout.",
       style: "- Style: Follow the art style specified in the scene description. Create a bold, eye-catching banner design with team colors.",
-      bg: "- Create a vibrant, team-colored background suitable for a cheer banner\n- Use the team's primary colors prominently\n- The design should be bold, graphic, and visible from a distance",
-      outro: "IMPORTANT: This is a CHEER BANNER — use bold team colors and make the design eye-catching and impactful.",
+      bg: "- Create a vibrant, team-colored background suitable for a cheer banner\n- Use the team's primary colors prominently\n- The design should be bold, graphic, and visible from a distance\n- Include designated space for cheer text/slogans and team branding elements",
+      outro: "CRITICAL: Design an actual BANNER/FLAG layout, not just an illustration. Include space for cheer text/slogans and team branding elements.",
     };
   }
 
@@ -1074,12 +1084,22 @@ function getTemplatePromptParts(templateType?: string) {
     };
   }
 
-  // Product / goods
-  if (["phonecase", "stadium-set"].includes(t)) {
+  // Phone case
+  if (t === "phonecase") {
     return {
-      role: "You are designing baseball-themed merchandise.",
+      role: "You are designing a PHONE CASE PRINT. The output should show the design ON a phone case shape, like a product mockup.",
+      style: "- Style: Follow the art style specified in the scene description. Create a clean, production-ready design that fits within a phone case shape.",
+      bg: "- Show the design on/in a PHONE CASE shape — this is a product mockup\n- Use team colors and baseball-themed design elements\n- The design should be clean and suitable for printing on a phone case",
+      outro: "CRITICAL: Show the design on/in a PHONE CASE shape. This is a product mockup, not a standalone illustration.",
+    };
+  }
+
+  // Stadium set / goods package
+  if (t === "stadium-set") {
+    return {
+      role: "You are designing baseball-themed merchandise package.",
       style: "- Style: Follow the art style specified in the scene description. Create a clean, production-ready design.",
-      bg: "- Create an appropriate designed background for the product\n- Use team colors and baseball-themed design elements\n- The design should be clean and suitable for manufacturing",
+      bg: "- Create an appropriate designed background for the product package\n- Use team colors and baseball-themed design elements\n- The design should be clean and suitable for manufacturing",
       outro: "IMPORTANT: This is a PRODUCT DESIGN — make it clean, professional, and suitable for printing.",
     };
   }

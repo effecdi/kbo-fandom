@@ -634,7 +634,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 15; // v15: team logos → 2026 CDN path (두산/KIA 리브랜딩 반영)
+const SEED_VERSION = 16; // v16: real KBO 2026 schedule (3/28-4/30 verified matchups)
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);

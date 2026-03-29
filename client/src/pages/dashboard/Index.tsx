@@ -107,7 +107,7 @@ export function DashboardIndex() {
               <span className="text-2xl font-black text-foreground">{totalFanarts}</span>
             </div>
             <p className="text-sm font-semibold text-muted-foreground">내 팬아트</p>
-            <p className="text-xs mt-1 text-muted-foreground">피드에 공유된 작품</p>
+            <p className="text-[13px] mt-1 text-muted-foreground">피드에 공유된 작품</p>
           </div>
 
           <div className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-shadow">
@@ -118,7 +118,7 @@ export function DashboardIndex() {
               <span className="text-2xl font-black text-foreground">{activeEvents.length}</span>
             </div>
             <p className="text-sm font-semibold text-muted-foreground">참여 이벤트</p>
-            <p className="text-xs mt-1 text-muted-foreground">진행 중 {activeEvents.length}건</p>
+            <p className="text-[13px] mt-1 text-muted-foreground">진행 중 {activeEvents.length}건</p>
           </div>
 
           <div className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-shadow">
@@ -129,7 +129,7 @@ export function DashboardIndex() {
               <span className="text-2xl font-black text-foreground">{totalLikes.toLocaleString()}</span>
             </div>
             <p className="text-sm font-semibold text-muted-foreground">받은 좋아요</p>
-            <p className="text-xs mt-1 text-muted-foreground">전체 팬아트 합산</p>
+            <p className="text-[13px] mt-1 text-muted-foreground">전체 팬아트 합산</p>
           </div>
 
           <div className="rounded-2xl p-6 border bg-card border-border hover:shadow-lg transition-shadow">
@@ -140,7 +140,7 @@ export function DashboardIndex() {
               <span className="text-2xl font-black text-foreground">{totalFollowers.toLocaleString()}</span>
             </div>
             <p className="text-sm font-semibold text-muted-foreground">팔로워</p>
-            <p className="text-xs mt-1 text-muted-foreground">크리에이터 전체</p>
+            <p className="text-[13px] mt-1 text-muted-foreground">크리에이터 전체</p>
           </div>
         </div>
 
@@ -161,7 +161,7 @@ export function DashboardIndex() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-foreground">{action.title}</p>
-                      <p className="text-xs text-muted-foreground">{action.desc}</p>
+                      <p className="text-[13px] text-muted-foreground">{action.desc}</p>
                     </div>
                   </div>
                   <ArrowRight className="w-5 h-5 text-muted-foreground" />
@@ -183,7 +183,7 @@ export function DashboardIndex() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm text-foreground">{fanart.title}</p>
-                      <p className="text-xs text-muted-foreground">{fanart.groupName} · {formatRelativeDate(fanart.createdAt)}</p>
+                      <p className="text-[13px] text-muted-foreground">{fanart.groupName} · {formatRelativeDate(fanart.createdAt)}</p>
                     </div>
                   </div>
                 ))

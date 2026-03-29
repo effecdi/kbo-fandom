@@ -162,9 +162,13 @@ export function EditorAutoStart() {
         } catch { /* ignore */ }
       }
 
-      // Auto-pin player photos as reference characters
-      if (meta.playerPhotos && meta.playerPhotos.length > 0) {
-        (async () => {
+      // Auto-pin player photos, then auto-send prompt AFTER photos are loaded
+      const prompt = buildAutoPrompt(meta);
+      promptedRef.current = true;
+
+      const pinPhotosAndGenerate = async () => {
+        // 1. Load and pin player photos first
+        if (meta.playerPhotos && meta.playerPhotos.length > 0) {
           for (const { name, pcode } of meta.playerPhotos!) {
             try {
               const resp = await fetch(`/api/kbo/player-photo/${pcode}`);
@@ -188,14 +192,29 @@ export function EditorAutoStart() {
               // Photo fetch failed — skip this player
             }
           }
-        })();
-      }
+        }
 
-      // Auto-send fandom prompt with template context
-      const prompt = buildAutoPrompt(meta);
+        // 2. Wait for canvas to be ready (poll until available)
+        let attempts = 0;
+        const waitForCanvas = () => new Promise<void>((resolve) => {
+          const check = () => {
+            attempts++;
+            if (canvasRef.current?.getCanvas() || attempts >= 25) {
+              resolve();
+            } else {
+              setTimeout(check, 200);
+            }
+          };
+          setTimeout(check, 500);
+        });
 
-      promptedRef.current = true;
-      setTimeout(() => sendMessage(prompt), 800);
+        await waitForCanvas();
+
+        // 3. Now send the prompt (photos are pinned, canvas is ready)
+        sendMessage(prompt);
+      };
+
+      pinPhotosAndGenerate();
     } catch {
       // Invalid meta
     }

@@ -1160,11 +1160,11 @@ export function AutoWebtoonPanel({
                     <X className="h-5 w-5 text-destructive" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-[13px]">
                     {idx + 1}
                   </div>
                 )}
-                <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[12px] px-0.5 rounded">
+                <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[13px] px-0.5 rounded">
                   C{canvasIdx + 1}-{cutIdx + 1}
                 </span>
               </button>

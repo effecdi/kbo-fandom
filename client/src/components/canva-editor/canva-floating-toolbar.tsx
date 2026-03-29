@@ -217,7 +217,7 @@ export default function CanvaFloatingToolbar({ x, y }: CanvaFloatingToolbarProps
         {/* Type indicator chip */}
         <div className="flex items-center gap-2 px-3.5 py-2 mr-1 bg-white/[0.04] rounded-2xl">
           <TypeIcon className="w-5 h-5 text-[#00e5cc]" />
-          <span className="text-[12px] text-white/50 font-bold">{typeLabel}</span>
+          <span className="text-[13px] text-white/50 font-bold">{typeLabel}</span>
         </div>
 
         <Divider />
@@ -230,12 +230,12 @@ export default function CanvaFloatingToolbar({ x, y }: CanvaFloatingToolbarProps
               <ToolBtn icon={Type} onClick={() => { setFontOpen(!fontOpen); setColorOpen(false); setAiOpen(false); }} tooltip="폰트" active={fontOpen} size="lg" />
               {fontOpen && (
                 <DropdownPanel className="w-44">
-                  <span className="text-[12px] text-white/30 font-semibold px-1 mb-1 block">폰트 선택</span>
+                  <span className="text-[13px] text-white/30 font-semibold px-1 mb-1 block">폰트 선택</span>
                   {FONT_OPTIONS.map((f) => (
                     <button
                       key={f.family}
                       onClick={() => applyFont(f.family)}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-[12px] text-white/60 hover:bg-white/[0.06] hover:text-white transition-colors"
+                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-[13px] text-white/60 hover:bg-white/[0.06] hover:text-white transition-colors"
                       style={{ fontFamily: f.family }}
                     >
                       {f.label}
@@ -266,7 +266,7 @@ export default function CanvaFloatingToolbar({ x, y }: CanvaFloatingToolbarProps
           />
           {colorOpen && (
             <DropdownPanel className="w-[168px]">
-              <span className="text-[12px] text-white/30 font-semibold px-1 mb-1.5 block">빠른 색상</span>
+              <span className="text-[13px] text-white/30 font-semibold px-1 mb-1.5 block">빠른 색상</span>
               <div className="grid grid-cols-6 gap-1.5">
                 {COLOR_PRESETS.map((c) => (
                   <button
@@ -295,7 +295,7 @@ export default function CanvaFloatingToolbar({ x, y }: CanvaFloatingToolbarProps
           <button
             onClick={() => { setAiOpen(!aiOpen); setColorOpen(false); setFontOpen(false); }}
             className={cn(
-              "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[12px] font-bold transition-all",
+              "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[13px] font-bold transition-all",
               aiOpen
                 ? "bg-gradient-to-r from-[#00e5cc]/20 to-[#8b5cf6]/20 text-[#00e5cc] border border-[#00e5cc]/30"
                 : isGenerating
@@ -313,7 +313,7 @@ export default function CanvaFloatingToolbar({ x, y }: CanvaFloatingToolbarProps
           </button>
           {aiOpen && (
             <DropdownPanel className="w-56 right-0 left-auto">
-              <span className="text-[12px] text-white/30 font-semibold px-1 mb-2 block">AI 도구</span>
+              <span className="text-[13px] text-white/30 font-semibold px-1 mb-2 block">AI 도구</span>
 
               {/* Quick AI actions */}
               <div className="space-y-0.5 mb-2">
@@ -351,19 +351,19 @@ export default function CanvaFloatingToolbar({ x, y }: CanvaFloatingToolbarProps
 
               {/* Custom prompt */}
               <div className="border-t border-white/[0.06] pt-2">
-                <span className="text-[12px] text-white/25 block mb-1.5">프롬프트로 수정</span>
+                <span className="text-[13px] text-white/25 block mb-1.5">프롬프트로 수정</span>
                 <div className="flex gap-1">
                   <input
                     value={regenPrompt}
                     onChange={(e) => setRegenPrompt(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleAIRegenerate(); }}
                     placeholder="예: 웃는 표정으로..."
-                    className="flex-1 px-2.5 py-1.5 text-[12px] bg-white/[0.04] text-white/70 rounded-lg border border-white/[0.08] focus:outline-none focus:border-[#00e5cc]/40 placeholder:text-white/20"
+                    className="flex-1 px-2.5 py-1.5 text-[13px] bg-white/[0.04] text-white/70 rounded-lg border border-white/[0.08] focus:outline-none focus:border-[#00e5cc]/40 placeholder:text-white/20"
                   />
                   <button
                     onClick={handleAIRegenerate}
                     disabled={isGenerating}
-                    className="px-2.5 py-1.5 rounded-lg bg-[#00e5cc] text-black text-[12px] font-bold hover:bg-[#00e5cc]/90 disabled:opacity-30 transition-all"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#00e5cc] text-black text-[13px] font-bold hover:bg-[#00e5cc]/90 disabled:opacity-30 transition-all"
                   >
                     {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : "실행"}
                   </button>
@@ -459,8 +459,8 @@ function AIActionBtn({
         <Icon className="w-5 h-5 text-[#00e5cc]" />
       </div>
       <div>
-        <p className="text-[12px] font-semibold text-white/70 group-hover:text-white/90">{label}</p>
-        <p className="text-[12px] text-white/25">{desc}</p>
+        <p className="text-[13px] font-semibold text-white/70 group-hover:text-white/90">{label}</p>
+        <p className="text-[13px] text-white/25">{desc}</p>
       </div>
     </button>
   );

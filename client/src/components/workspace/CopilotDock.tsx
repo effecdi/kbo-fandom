@@ -27,6 +27,14 @@ import {
   getOnboardingPrompts,
   isSingleImageTemplate,
   TEMPLATE_LABELS,
+  STYLE_PRESETS,
+  POSE_CHIPS,
+  OUTFIT_CHIPS,
+  MOOD_CHIPS,
+  POSE_OUTFIT_TEMPLATES,
+  BASEBALL_AESTHETIC_FILTERS,
+  buildAutoPrompt,
+  type FandomEditorMeta,
 } from "@/lib/fandom-templates";
 
 // ─── Quick Actions (always visible in dock bar) ─────────────────────────────
@@ -103,7 +111,7 @@ export function CopilotDock() {
     setCutsCount,
   } = useCopilot();
 
-  const { state } = useWorkspace();
+  const { state, dispatch } = useWorkspace();
   const fandomMeta = state.fandomMeta;
   const accentColor = "var(--fandom-accent, var(--fandom-primary, #7B2FF7))";
 
@@ -128,6 +136,12 @@ export function CopilotDock() {
   const [showCharPicker, setShowCharPicker] = useState(false);
   const [galleryChars, setGalleryChars] = useState<GalleryCharacter[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(false);
+  const [showRegenPanel, setShowRegenPanel] = useState(false);
+  const [regenStyle, setRegenStyle] = useState<string | null>(fandomMeta?.stylePreset || null);
+  const [regenPose, setRegenPose] = useState<string | null>(fandomMeta?.poseHint || null);
+  const [regenOutfit, setRegenOutfit] = useState<string | null>(fandomMeta?.outfitHint || null);
+  const [regenMood, setRegenMood] = useState<string | null>(fandomMeta?.moodHint || null);
+  const [regenAesthetic, setRegenAesthetic] = useState<string | null>(null);
 
   useEffect(() => {
     if (dockExpanded) {
@@ -193,6 +207,26 @@ export function CopilotDock() {
     setShowSlash(val === "/");
   }
 
+  function handleRegenerate() {
+    if (!fandomMeta) return;
+    const updatedMeta: FandomEditorMeta = {
+      ...fandomMeta,
+      stylePreset: (regenStyle as FandomEditorMeta["stylePreset"]) || undefined,
+      poseHint: regenPose || undefined,
+      outfitHint: regenOutfit || undefined,
+      moodHint: regenMood || undefined,
+    };
+    const prompt = buildAutoPrompt(updatedMeta);
+    // Update fandom meta in workspace state
+    dispatch({ type: "SET_FANDOM_META", meta: updatedMeta });
+    // Also update aesthetic filter if changed
+    if (regenAesthetic) {
+      dispatch({ type: "SET_AESTHETIC_FILTER", filterId: regenAesthetic as any });
+    }
+    sendMessage(prompt);
+    setShowRegenPanel(false);
+  }
+
   function handlePinFromGallery(char: GalleryCharacter) {
     const pinned: PinnedCharacter = {
       id: String(char.id),
@@ -218,7 +252,7 @@ export function CopilotDock() {
         {showCharPicker && (
           <div className="bg-[#0c0c10]/95 backdrop-blur-xl border border-white/[0.06] rounded-2xl shadow-2xl mb-2 mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04]">
-              <span className="text-xs font-bold text-white">내 캐릭터 선택</span>
+              <span className="text-[13px] font-bold text-white">내 캐릭터 선택</span>
               <button
                 onClick={() => setShowCharPicker(false)}
                 className="p-1 rounded-md hover:bg-white/[0.06] transition-colors"
@@ -232,7 +266,7 @@ export function CopilotDock() {
                   <Loader2 className="w-5 h-5 animate-spin text-white/50" />
                 </div>
               ) : galleryChars.length === 0 ? (
-                <p className="text-xs text-white/50 text-center py-4">
+                <p className="text-[13px] text-white/50 text-center py-4">
                   생성된 캐릭터가 없어요. 먼저 캐릭터를 만들어주세요.
                 </p>
               ) : (
@@ -262,12 +296,12 @@ export function CopilotDock() {
                       {isPinned(char.id) && (
                         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
                           <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                            <span className="text-[12px] text-black font-bold">✓</span>
+                            <span className="text-[13px] text-black font-bold">✓</span>
                           </div>
                         </div>
                       )}
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-1 py-0.5">
-                        <p className="text-[12px] text-white truncate">{char.name}</p>
+                        <p className="text-[13px] text-white truncate">{char.name}</p>
                       </div>
                     </button>
                   ))}
@@ -284,9 +318,9 @@ export function CopilotDock() {
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04]">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5" style={{ color: accentColor }} />
-                <span className="text-xs font-bold text-white">AI Copilot</span>
+                <span className="text-[13px] font-bold text-white">AI Copilot</span>
                 {contextLabel && (
-                  <span className="text-[12px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  <span className="text-[13px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                     {contextLabel}
                   </span>
                 )}
@@ -320,7 +354,7 @@ export function CopilotDock() {
                           <p className="text-sm font-bold text-white">
                             {fandomMeta.groupName} {TEMPLATE_LABELS[fandomMeta.templateType]}
                           </p>
-                          <p className="text-[11px] text-white/50 truncate">
+                          <p className="text-[13px] text-white/50 truncate">
                             {fandomMeta.memberTags.length > 0
                               ? `멤버: ${fandomMeta.memberTags.join(", ")}`
                               : "전체 멤버"}
@@ -332,7 +366,7 @@ export function CopilotDock() {
 
                       {/* Template-specific prompt suggestions */}
                       <div className="space-y-1.5">
-                        <p className="text-[11px] text-white/40 font-medium px-1">
+                        <p className="text-[13px] text-white/40 font-medium px-1">
                           {getTemplatePlaceholder(fandomMeta.templateType)}
                         </p>
                         {getOnboardingPrompts(fandomMeta).map((prompt) => (
@@ -340,7 +374,7 @@ export function CopilotDock() {
                             key={prompt}
                             onClick={() => sendMessage(prompt)}
                             disabled={isGenerating}
-                            className="w-full text-left px-3 py-2 rounded-lg text-xs text-white/50 hover:bg-white/[0.06] hover:text-white transition-colors disabled:opacity-40"
+                            className="w-full text-left px-3 py-2 rounded-lg text-[13px] text-white/50 hover:bg-white/[0.06] hover:text-white transition-colors disabled:opacity-40"
                           >
                             "{prompt}"
                           </button>
@@ -353,7 +387,7 @@ export function CopilotDock() {
                       <p className="text-sm text-white/50 font-medium">
                         무엇을 만들어볼까요?
                       </p>
-                      <p className="text-xs text-white/40 mt-1">
+                      <p className="text-[13px] text-white/40 mt-1">
                         자연어로 요청하면 AI가 만들어드려요
                       </p>
                     </div>
@@ -418,20 +452,151 @@ export function CopilotDock() {
           </div>
         )}
 
+        {/* ── Regen Options Panel ───────────────────────────────────── */}
+        {showRegenPanel && fandomMeta && (
+          <div className="bg-[#0c0c10]/95 backdrop-blur-xl border border-white/[0.06] border-b-0 rounded-t-2xl shadow-2xl p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-white">스타일 & 옵션 변경</span>
+              <button onClick={() => setShowRegenPanel(false)} className="p-1 rounded-md hover:bg-white/[0.06]">
+                <X className="w-5 h-5 text-white/50" />
+              </button>
+            </div>
+
+            {/* Art Style */}
+            <div>
+              <p className="text-[13px] font-bold text-white/70 mb-2">아트 스타일</p>
+              <div className="flex flex-wrap gap-1.5">
+                {STYLE_PRESETS.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setRegenStyle(regenStyle === s.id ? null : s.id)}
+                    className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
+                      regenStyle === s.id
+                        ? "text-white border-transparent"
+                        : "text-white/60 border-white/10 hover:border-white/30"
+                    }`}
+                    style={regenStyle === s.id ? { background: accentColor } : undefined}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Pose (only for pose-outfit templates) */}
+            {POSE_OUTFIT_TEMPLATES.includes(fandomMeta.templateType as any) && (
+              <div>
+                <p className="text-[13px] font-bold text-white/70 mb-2">포즈</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {POSE_CHIPS.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setRegenPose(regenPose === p ? null : p)}
+                      className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
+                        regenPose === p
+                          ? "text-white border-transparent"
+                          : "text-white/60 border-white/10 hover:border-white/30"
+                      }`}
+                      style={regenPose === p ? { background: accentColor } : undefined}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Outfit */}
+            {POSE_OUTFIT_TEMPLATES.includes(fandomMeta.templateType as any) && (
+              <div>
+                <p className="text-[13px] font-bold text-white/70 mb-2">의상</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {OUTFIT_CHIPS.map((o) => (
+                    <button
+                      key={o}
+                      onClick={() => setRegenOutfit(regenOutfit === o ? null : o)}
+                      className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
+                        regenOutfit === o
+                          ? "text-white border-transparent"
+                          : "text-white/60 border-white/10 hover:border-white/30"
+                      }`}
+                      style={regenOutfit === o ? { background: accentColor } : undefined}
+                    >
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Mood */}
+            <div>
+              <p className="text-[13px] font-bold text-white/70 mb-2">분위기</p>
+              <div className="flex flex-wrap gap-1.5">
+                {MOOD_CHIPS.map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setRegenMood(regenMood === m ? null : m)}
+                    className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
+                      regenMood === m
+                        ? "text-white border-transparent"
+                        : "text-white/60 border-white/10 hover:border-white/30"
+                    }`}
+                    style={regenMood === m ? { background: accentColor } : undefined}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Aesthetic Filter */}
+            <div>
+              <p className="text-[13px] font-bold text-white/70 mb-2">야구 미학 필터</p>
+              <div className="flex flex-wrap gap-1.5">
+                {BASEBALL_AESTHETIC_FILTERS.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setRegenAesthetic(regenAesthetic === f.id ? null : f.id)}
+                    className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
+                      regenAesthetic === f.id
+                        ? "text-white border-transparent"
+                        : "text-white/60 border-white/10 hover:border-white/30"
+                    }`}
+                    style={regenAesthetic === f.id ? { background: accentColor } : undefined}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Regenerate button */}
+            <button
+              onClick={handleRegenerate}
+              disabled={isGenerating}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
+              style={{ background: accentColor }}
+            >
+              {isGenerating ? "생성 중..." : "이 옵션으로 재생성"}
+            </button>
+          </div>
+        )}
+
         {/* ── Dock bar (always visible) ─────────────────────────────── */}
         <div className="bg-[#0c0c10]/95 backdrop-blur-xl border border-white/[0.06] rounded-t-2xl shadow-2xl">
           {/* Fandom context bar */}
           {fandomMeta && !dockExpanded && (
             <div className="flex items-center gap-2 px-4 pt-3 pb-1">
               <div
-                className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[9px] font-black shrink-0"
+                className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[13px] font-black shrink-0"
                 style={{ backgroundColor: fandomMeta.coverColor }}
               >
                 {fandomMeta.groupName.charAt(0)}
               </div>
-              <span className="text-[11px] font-bold text-white/70">{fandomMeta.groupName}</span>
+              <span className="text-[13px] font-bold text-white/70">{fandomMeta.groupName}</span>
               <span
-                className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
+                className="px-1.5 py-0.5 rounded text-[13px] font-bold text-white"
                 style={{ backgroundColor: fandomMeta.coverColor }}
               >
                 {TEMPLATE_LABELS[fandomMeta.templateType]}
@@ -441,7 +606,7 @@ export function CopilotDock() {
                   key={m}
                   onClick={() => sendMessage(`${m}을(를) 그려줘`)}
                   disabled={isGenerating}
-                  className="px-1.5 py-0.5 rounded-full text-[10px] font-medium shrink-0 transition-colors disabled:opacity-40"
+                  className="px-1.5 py-0.5 rounded-full text-[13px] font-medium shrink-0 transition-colors disabled:opacity-40"
                   style={{ color: fandomMeta.coverColor, background: fandomMeta.coverColor + "15", borderColor: fandomMeta.coverColor + "30", borderWidth: 1 }}
                 >
                   {m}
@@ -453,7 +618,7 @@ export function CopilotDock() {
           {/* Pinned characters bar */}
           {pinnedCharacters.length > 0 && (
             <div className="flex items-center gap-1.5 px-4 pt-3 pb-1">
-              <span className="text-[12px] text-white/50 font-medium shrink-0 mr-1">캐릭터</span>
+              <span className="text-[13px] text-white/50 font-medium shrink-0 mr-1">캐릭터</span>
               {pinnedCharacters.map((char) => (
                 <div key={char.id} className="relative group shrink-0">
                   <img
@@ -481,13 +646,13 @@ export function CopilotDock() {
               {showCutsSelector && (
                 <>
                   <div className="w-px h-6 bg-white/[0.06] mx-1" />
-                  <span className="text-[12px] text-white/50 font-medium shrink-0 mr-1">컷</span>
+                  <span className="text-[13px] text-white/50 font-medium shrink-0 mr-1">컷</span>
                   <div className="flex items-center bg-white/[0.06] rounded-lg p-0.5 gap-0.5">
                     {CUTS_OPTIONS.map((n) => (
                       <button
                         key={n}
                         onClick={() => setCutsCount(n)}
-                        className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
+                        className={`px-2 py-1 rounded-md text-[13px] font-bold transition-all ${
                           cutsCount === n
                             ? "text-white shadow-sm"
                             : "text-white/50 hover:text-white"
@@ -511,7 +676,7 @@ export function CopilotDock() {
                   key={chip}
                   onClick={() => sendMessage(chip)}
                   disabled={isGenerating}
-                  className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 transition-all border border-primary/20 hover:border-primary/40"
+                  className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 transition-all border border-primary/20 hover:border-primary/40"
                 >
                   {chip}
                 </button>
@@ -534,7 +699,7 @@ export function CopilotDock() {
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-white/[0.06] text-left transition-colors"
                   >
-                    <code className="text-primary font-mono text-xs">{cmd}</code>
+                    <code className="text-primary font-mono text-[13px]">{cmd}</code>
                     <span className="text-white/50">{label}</span>
                   </button>
                 ))}
@@ -581,7 +746,7 @@ export function CopilotDock() {
                   title={`${cutsCount}컷 (클릭하여 변경)`}
                 >
                   <Grid2x2 className="w-5 h-5 text-white/50 group-hover:text-white" />
-                  <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full text-[12px] font-bold text-white flex items-center justify-center" style={{ background: accentColor }}>
+                  <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full text-[13px] font-bold text-white flex items-center justify-center" style={{ background: accentColor }}>
                     {cutsCount}
                   </span>
                 </button>
@@ -618,8 +783,16 @@ export function CopilotDock() {
                   {activeQuickActions.map((action) => (
                     <button
                       key={action.id}
-                      onClick={() => sendMessage(action.prompt)}
-                      className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors group"
+                      onClick={() => {
+                        if (action.id === "style" && fandomMeta) {
+                          setShowRegenPanel(!showRegenPanel);
+                        } else {
+                          sendMessage(action.prompt);
+                        }
+                      }}
+                      className={`p-1.5 rounded-lg transition-colors group ${
+                        action.id === "style" && showRegenPanel ? "bg-primary/20" : "hover:bg-white/[0.06]"
+                      }`}
                       title={action.label}
                     >
                       <action.icon className="w-5 h-5 text-white/50 group-hover:text-primary transition-colors" />
@@ -633,7 +806,7 @@ export function CopilotDock() {
                         <button
                           key={member}
                           onClick={() => sendMessage(`${member}을(를) 그려줘`)}
-                          className="px-2 py-1 rounded-full text-[10px] font-bold hover:bg-white/[0.08] transition-colors shrink-0"
+                          className="px-2 py-1 rounded-full text-[13px] font-bold hover:bg-white/[0.08] transition-colors shrink-0"
                           style={{ color: fandomMeta.coverColor, borderColor: fandomMeta.coverColor + "40", borderWidth: 1 }}
                         >
                           {member}

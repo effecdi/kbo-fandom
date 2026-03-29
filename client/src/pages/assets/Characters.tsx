@@ -128,7 +128,7 @@ export function CharactersPage() {
             <p className="text-muted-foreground mt-1">
               생성한 캐릭터를 관리하고 새 캐릭터를 만드세요
               {usingMock && (
-                <span className="ml-2 text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">
+                <span className="ml-2 text-[13px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">
                   데모 데이터
                 </span>
               )}
@@ -224,10 +224,10 @@ export function CharactersPage() {
                         {char.name || `캐릭터 ${char.id}`}
                       </h3>
                       <div className="flex items-center justify-between mt-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeColor}`}>
+                        <span className={`text-[13px] px-2 py-0.5 rounded-full font-medium ${badgeColor}`}>
                           {label}
                         </span>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
                           <Calendar className="w-5 h-5" />
                           {new Date(char.createdAt).toLocaleDateString("ko-KR")}
                         </div>

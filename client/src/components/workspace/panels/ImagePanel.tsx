@@ -167,7 +167,7 @@ export function ImagePanel() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+      <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
         <Image className="w-5 h-5 text-primary" />
         이미지
       </h3>
@@ -178,7 +178,7 @@ export function ImagePanel() {
           <button
             key={t.id}
             onClick={() => setSubTab(t.id)}
-            className={`flex-1 px-2 py-1.5 rounded-md text-[12px] font-medium transition-all ${
+            className={`flex-1 px-2 py-1.5 rounded-md text-[13px] font-medium transition-all ${
               subTab === t.id
                 ? "bg-primary/10 text-primary"
                 : "text-white/40 hover:text-white/60"
@@ -199,7 +199,7 @@ export function ImagePanel() {
           ) : gallery.length === 0 ? (
             <div className="text-center py-8">
               <Image className="w-8 h-8 text-white/10 mx-auto mb-2" />
-              <p className="text-[12px] text-white/30">생성된 이미지가 없습니다</p>
+              <p className="text-[13px] text-white/30">생성된 이미지가 없습니다</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-1.5">
@@ -216,7 +216,7 @@ export function ImagePanel() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-1.5">
-                    <span className="flex items-center gap-1 text-[12px] text-white/70 font-medium">
+                    <span className="flex items-center gap-1 text-[13px] text-white/70 font-medium">
                       <Layers className="w-2.5 h-2.5" />
                       레이어 추가
                     </span>
@@ -233,7 +233,7 @@ export function ImagePanel() {
         <div className="space-y-2">
           {pinnedCharacters.length > 0 && (
             <div className="space-y-1.5">
-              <span className="text-[12px] text-white/30 font-medium">고정된 캐릭터</span>
+              <span className="text-[13px] text-white/30 font-medium">고정된 캐릭터</span>
               <div className="flex gap-1.5 flex-wrap">
                 {pinnedCharacters.map((c) => (
                   <div key={c.id} className="relative group">
@@ -254,7 +254,7 @@ export function ImagePanel() {
             </div>
           )}
 
-          <p className="text-[12px] text-white/30">클릭하여 AI 생성 시 캐릭터 고정</p>
+          <p className="text-[13px] text-white/30">클릭하여 AI 생성 시 캐릭터 고정</p>
 
           {charLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -263,7 +263,7 @@ export function ImagePanel() {
           ) : charGallery.length === 0 ? (
             <div className="text-center py-8">
               <User className="w-8 h-8 text-white/10 mx-auto mb-2" />
-              <p className="text-[12px] text-white/30">캐릭터를 먼저 생성해주세요</p>
+              <p className="text-[13px] text-white/30">캐릭터를 먼저 생성해주세요</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-1.5">
@@ -285,11 +285,11 @@ export function ImagePanel() {
                   />
                   {isPinned(item.id) && (
                     <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                      <span className="text-[12px] text-black font-bold">✓</span>
+                      <span className="text-[13px] text-black font-bold">✓</span>
                     </div>
                   )}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-1.5 py-1">
-                    <span className="text-[12px] text-white truncate block">{item.prompt}</span>
+                    <span className="text-[13px] text-white truncate block">{item.prompt}</span>
                   </div>
                 </button>
               ))}
@@ -306,8 +306,8 @@ export function ImagePanel() {
             className="w-full aspect-video rounded-xl border-2 border-dashed border-white/10 hover:border-primary/30 flex flex-col items-center justify-center gap-2 transition-all hover:bg-primary/[0.03]"
           >
             <Upload className="w-6 h-6 text-white/20" />
-            <span className="text-xs text-white/40">클릭하여 이미지 업로드</span>
-            <span className="text-[12px] text-white/20">PNG, JPG, WebP</span>
+            <span className="text-[13px] text-white/40">클릭하여 이미지 업로드</span>
+            <span className="text-[13px] text-white/20">PNG, JPG, WebP</span>
           </button>
           <input
             ref={fileInputRef}
@@ -319,12 +319,12 @@ export function ImagePanel() {
 
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-primary/10 to-primary/10 border border-primary/20">
             <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-xs font-medium text-primary">AI 탭에서 배경 생성</span>
+            <span className="text-[13px] font-medium text-primary">AI 탭에서 배경 생성</span>
           </div>
 
           {activeCut?.backgroundImageUrl && (
             <div className="space-y-1.5">
-              <span className="text-[12px] text-white/30">현재 배경</span>
+              <span className="text-[13px] text-white/30">현재 배경</span>
               <div className="relative rounded-lg overflow-hidden border border-white/[0.06]">
                 <img
                   src={activeCut.backgroundImageUrl}

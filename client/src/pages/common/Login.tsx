@@ -119,7 +119,7 @@ export function Login() {
               {/* Divider */}
               <div className="relative my-8">
                 <Separator className="bg-muted" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold bg-card text-muted-foreground">
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-[13px] font-semibold bg-card text-muted-foreground">
                   또는
                 </span>
               </div>
@@ -227,7 +227,7 @@ export function Login() {
               </div>
               <div>
                 <p className="text-white font-bold text-sm">아미드로잉</p>
-                <p className="text-white/70 text-xs">BTS ARMY</p>
+                <p className="text-white/70 text-[13px]">BTS ARMY</p>
               </div>
             </div>
           </div>

@@ -51,8 +51,8 @@ export function StoryboardStrip() {
       {/* Scene label */}
       <div className="flex items-center gap-1.5 shrink-0 mr-1">
         <Layers className="w-5 h-5 text-primary/40" />
-        <span className="text-[12px] text-white/30 font-medium">{activeScene.title}</span>
-        <span className="text-[12px] text-white/15">({activeScene.cuts.length}컷)</span>
+        <span className="text-[13px] text-white/30 font-medium">{activeScene.title}</span>
+        <span className="text-[13px] text-white/15">({activeScene.cuts.length}컷)</span>
       </div>
 
       {/* Divider */}
@@ -88,7 +88,7 @@ export function StoryboardStrip() {
                     <div className="w-5 h-5 rounded-md bg-white/[0.04] flex items-center justify-center">
                       <Layers className="w-5 h-5 text-white/15" />
                     </div>
-                    <span className="text-[12px] text-white/20 font-medium">
+                    <span className="text-[13px] text-white/20 font-medium">
                       컷 {cut.order}
                     </span>
                   </>
@@ -96,7 +96,7 @@ export function StoryboardStrip() {
               </button>
 
               {/* Order badge */}
-              <div className={`absolute -top-1 -left-1 w-5 h-5 rounded-md flex items-center justify-center text-[12px] font-bold ${
+              <div className={`absolute -top-1 -left-1 w-5 h-5 rounded-md flex items-center justify-center text-[13px] font-bold ${
                 isActive
                   ? "bg-primary text-primary-foreground"
                   : "bg-white/[0.06] text-white/30"
@@ -133,7 +133,7 @@ export function StoryboardStrip() {
           className="shrink-0 w-[60px] h-[80px] rounded-xl border-2 border-dashed border-white/[0.06] flex flex-col items-center justify-center gap-1 hover:border-primary/30 hover:bg-primary/[0.03] transition-all"
         >
           <Plus className="w-5 h-5 text-white/20" />
-          <span className="text-[12px] text-white/15">추가</span>
+          <span className="text-[13px] text-white/15">추가</span>
         </button>
       </div>
     </div>

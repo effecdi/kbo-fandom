@@ -211,12 +211,12 @@ export function SettingsIndex() {
                       {fandom && (
                         <div className="flex items-center gap-2 mt-1">
                           <span
-                            className="text-[10px] px-2 py-0.5 rounded-full text-white font-semibold"
+                            className="text-[13px] px-2 py-0.5 rounded-full text-white font-semibold"
                             style={{ background: themeColor }}
                           >
                             {fandom.groupName}
                           </span>
-                          <span className="text-xs text-muted-foreground">{fandom.fandomName}</span>
+                          <span className="text-[13px] text-muted-foreground">{fandom.fandomName}</span>
                         </div>
                       )}
                     </div>
@@ -246,7 +246,7 @@ export function SettingsIndex() {
                       ].map((s) => (
                         <div key={s.label} className="text-center p-3 bg-muted rounded-xl">
                           <p className="text-lg font-black text-foreground">{s.value.toLocaleString()}</p>
-                          <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                          <p className="text-[13px] text-muted-foreground">{s.label}</p>
                         </div>
                       ))}
                     </div>
@@ -287,22 +287,22 @@ export function SettingsIndex() {
                   <div className="space-y-4">
                     {/* Group (read-only) */}
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground block mb-1.5">내 그룹</label>
+                      <label className="text-[13px] font-medium text-muted-foreground block mb-1.5">내 그룹</label>
                       <div className="flex items-center gap-2 px-4 py-2.5 bg-muted rounded-lg">
                         <span
-                          className="text-xs px-2 py-0.5 rounded-full text-white font-semibold"
+                          className="text-[13px] px-2 py-0.5 rounded-full text-white font-semibold"
                           style={{ background: themeColor }}
                         >
                           {fandom.groupName}
                         </span>
                         <span className="text-sm text-muted-foreground">({fandom.fandomName})</span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-1">그룹 변경은 "팬덤 재인증"으로 가능합니다</p>
+                      <p className="text-[13px] text-muted-foreground mt-1">그룹 변경은 "팬덤 재인증"으로 가능합니다</p>
                     </div>
 
                     {/* Nickname */}
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground block mb-1.5">닉네임</label>
+                      <label className="text-[13px] font-medium text-muted-foreground block mb-1.5">닉네임</label>
                       <input
                         type="text"
                         value={editNickname}
@@ -314,7 +314,7 @@ export function SettingsIndex() {
 
                     {/* Bias */}
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground block mb-1.5">최애 멤버</label>
+                      <label className="text-[13px] font-medium text-muted-foreground block mb-1.5">최애 멤버</label>
                       <input
                         type="text"
                         value={editBias}
@@ -326,7 +326,7 @@ export function SettingsIndex() {
 
                     {/* Bias Wrecker */}
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground block mb-1.5">차애 멤버</label>
+                      <label className="text-[13px] font-medium text-muted-foreground block mb-1.5">차애 멤버</label>
                       <input
                         type="text"
                         value={editBiasWrecker}
@@ -339,12 +339,12 @@ export function SettingsIndex() {
                     {/* Verified badge */}
                     <div className="flex items-center gap-2 pt-2">
                       {fandom.verified ? (
-                        <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                        <span className="flex items-center gap-1.5 text-[13px] font-semibold text-emerald-400">
                           <Check className="w-4 h-4" />
                           인증완료 ({new Date(fandom.verifiedAt).toLocaleDateString("ko-KR")})
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground">미인증</span>
+                        <span className="text-[13px] text-muted-foreground">미인증</span>
                       )}
                     </div>
                   </div>
@@ -397,7 +397,7 @@ export function SettingsIndex() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">{item.label}</p>
-                          <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                          <p className="text-[13px] text-muted-foreground">{item.desc}</p>
                         </div>
                       </div>
                       <button
@@ -443,7 +443,7 @@ export function SettingsIndex() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">프로필 공개</p>
-                          <p className="text-[11px] text-muted-foreground">다른 팬들이 내 프로필을 볼 수 있습니다</p>
+                          <p className="text-[13px] text-muted-foreground">다른 팬들이 내 프로필을 볼 수 있습니다</p>
                         </div>
                       </div>
                       <button
@@ -463,7 +463,7 @@ export function SettingsIndex() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">팔로워 목록 공개</p>
-                          <p className="text-[11px] text-muted-foreground">팔로워/팔로잉 숫자와 목록을 표시합니다</p>
+                          <p className="text-[13px] text-muted-foreground">팔로워/팔로잉 숫자와 목록을 표시합니다</p>
                         </div>
                       </div>
                       <button
@@ -513,7 +513,7 @@ export function SettingsIndex() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">{opt.label}</p>
-                          <p className="text-[11px] text-muted-foreground">{opt.desc}</p>
+                          <p className="text-[13px] text-muted-foreground">{opt.desc}</p>
                         </div>
                       </button>
                     ))}
@@ -544,7 +544,7 @@ export function SettingsIndex() {
                     {theme === "dark" ? <Moon className="w-5 h-5 text-muted-foreground" /> : <Sun className="w-5 h-5 text-muted-foreground" />}
                     <div>
                       <p className="text-sm font-medium text-foreground">다크 모드</p>
-                      <p className="text-[11px] text-muted-foreground">현재: {theme === "dark" ? "다크" : "라이트"} 모드</p>
+                      <p className="text-[13px] text-muted-foreground">현재: {theme === "dark" ? "다크" : "라이트"} 모드</p>
                     </div>
                   </div>
                   <button
@@ -562,7 +562,7 @@ export function SettingsIndex() {
                     <Globe className="w-5 h-5 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium text-foreground">언어</p>
-                      <p className="text-[11px] text-muted-foreground">앱 표시 언어를 선택합니다</p>
+                      <p className="text-[13px] text-muted-foreground">앱 표시 언어를 선택합니다</p>
                     </div>
                   </div>
                   <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-lg">한국어</span>

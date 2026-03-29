@@ -368,7 +368,7 @@ export function PropertiesPanel() {
         {activeTab === "layers" && (
           <div className="p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[12px] font-semibold text-white/40 uppercase tracking-wider">레이어</span>
+              <span className="text-[13px] font-semibold text-white/40 uppercase tracking-wider">레이어</span>
               <div className="flex items-center gap-1">
                 {selectedLayerIndices.size >= 2 && (
                   <button
@@ -388,16 +388,16 @@ export function PropertiesPanel() {
                     <FolderOpen className="w-4 h-4" />
                   </button>
                 )}
-                <span className="text-[12px] text-white/20 font-mono">{layers.length}</span>
+                <span className="text-[13px] text-white/20 font-mono">{layers.length}</span>
               </div>
             </div>
 
             {selectedLayerIndices.size >= 2 && (
-              <p className="text-[10px] text-white/30 px-1">Shift+클릭으로 다중 선택 중 ({selectedLayerIndices.size}개)</p>
+              <p className="text-[13px] text-white/30 px-1">Shift+클릭으로 다중 선택 중 ({selectedLayerIndices.size}개)</p>
             )}
 
             {/* Background */}
-            <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-xs text-white/25">
+            <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-[13px] text-white/25">
               <Image className="w-5 h-5 shrink-0" />
               <span className="flex-1 truncate">
                 {activeCut?.backgroundImageUrl ? "배경 이미지" : "배경 (없음)"}
@@ -405,7 +405,7 @@ export function PropertiesPanel() {
             </div>
 
             {layers.length === 0 && (
-              <p className="text-center py-8 text-[12px] text-white/15">오브젝트 없음</p>
+              <p className="text-center py-8 text-[13px] text-white/15">오브젝트 없음</p>
             )}
 
             <div className="space-y-0.5">
@@ -427,7 +427,7 @@ export function PropertiesPanel() {
                   >
                     <GripVertical className="w-4 h-4 text-white/10 shrink-0" />
                     <Icon className={`w-5 h-5 shrink-0 ${isSelected ? "text-primary" : isMultiSelected ? "text-blue-400" : "text-white/30"}`} />
-                    <span className="flex-1 truncate text-[12px]">{layer.label}</span>
+                    <span className="flex-1 truncate text-[13px]">{layer.label}</span>
                     {layer.type === "group" && (
                       <FolderClosed className="w-3.5 h-3.5 text-white/20 shrink-0" />
                     )}
@@ -451,7 +451,7 @@ export function PropertiesPanel() {
         {activeTab === "format" && (
           <div className="p-3 space-y-4">
             {!hasSelection ? (
-              <p className="text-center py-12 text-[12px] text-white/15">오브젝트를 선택하세요</p>
+              <p className="text-center py-12 text-[13px] text-white/15">오브젝트를 선택하세요</p>
             ) : (
               <>
                 {/* ── Actions ── */}
@@ -489,7 +489,7 @@ export function PropertiesPanel() {
                     <select
                       value={objFontFamily}
                       onChange={(e) => applyFontFamily(e.target.value)}
-                      className="w-full text-[12px] bg-white/[0.03] text-white/70 rounded-xl border border-white/[0.06] px-2.5 py-2 focus:outline-none focus:border-primary/30 transition-colors"
+                      className="w-full text-[13px] bg-white/[0.03] text-white/70 rounded-xl border border-white/[0.06] px-2.5 py-2 focus:outline-none focus:border-primary/30 transition-colors"
                     >
                       {FONT_OPTIONS.map((f) => (
                         <option key={f.family} value={f.family}>{f.label}</option>
@@ -514,7 +514,7 @@ export function PropertiesPanel() {
                   <ColorGrid value={objFillColor} onChange={applyFillColor} />
                   {!isPathObj && (
                     <>
-                      <span className="text-[12px] text-white/20 font-medium block mt-2">테두리</span>
+                      <span className="text-[13px] text-white/20 font-medium block mt-2">테두리</span>
                       <ColorGrid value={objStrokeColor || "transparent"} onChange={applyStrokeColor} />
                     </>
                   )}
@@ -530,14 +530,14 @@ export function PropertiesPanel() {
         {activeTab === "cutSettings" && (
           <div className="p-3 space-y-4">
             {!activeCut ? (
-              <p className="text-center py-12 text-[12px] text-white/15">컷을 선택하세요</p>
+              <p className="text-center py-12 text-[13px] text-white/15">컷을 선택하세요</p>
             ) : (
               <>
                 {/* ── Cut actions ── */}
                 <div className="flex gap-1.5">
                   <button
                     onClick={handleDuplicateCut}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.04] hover:bg-white/[0.06] hover:border-white/[0.08] text-[12px] text-white/50 hover:text-white/70 transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.04] hover:bg-white/[0.06] hover:border-white/[0.08] text-[13px] text-white/50 hover:text-white/70 transition-all"
                   >
                     <Copy className="w-4 h-4" />
                     복제
@@ -546,7 +546,7 @@ export function PropertiesPanel() {
                     onClick={() => {
                       if (activeCut) { dispatch({ type: "HISTORY_PUSH" }); dispatch({ type: "REMOVE_CUT", cutId: activeCut.id }); }
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/[0.03] border border-red-500/[0.06] hover:bg-red-500/10 hover:border-red-500/15 text-[12px] text-red-400/50 hover:text-red-400 transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/[0.03] border border-red-500/[0.06] hover:bg-red-500/10 hover:border-red-500/15 text-[13px] text-red-400/50 hover:text-red-400 transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
                     삭제
@@ -556,7 +556,7 @@ export function PropertiesPanel() {
                 {/* ── Background preview ── */}
                 {activeCut.backgroundImageUrl && (
                   <div>
-                    <span className="text-[12px] text-white/20 font-medium block mb-1.5">배경</span>
+                    <span className="text-[13px] text-white/20 font-medium block mb-1.5">배경</span>
                     <div className="relative rounded-xl overflow-hidden border border-white/[0.04]">
                       <img src={activeCut.backgroundImageUrl} alt="배경" className="w-full aspect-video object-cover" />
                       <button
@@ -654,20 +654,20 @@ function ScriptEditor({
 
   return (
     <div className="space-y-1.5">
-      <span className="text-[12px] text-white/25 font-medium">{label}</span>
+      <span className="text-[13px] text-white/25 font-medium">{label}</span>
       <textarea
         value={text}
         onChange={(e) => update({ text: e.target.value })}
         placeholder={`${label} 자막...`}
         rows={2}
-        className="w-full px-2.5 py-2 text-[12px] bg-white/[0.03] text-white/70 rounded-xl border border-white/[0.04] focus:outline-none focus:border-primary/25 resize-none placeholder:text-white/15 transition-colors"
+        className="w-full px-2.5 py-2 text-[13px] bg-white/[0.03] text-white/70 rounded-xl border border-white/[0.04] focus:outline-none focus:border-primary/25 resize-none placeholder:text-white/15 transition-colors"
       />
       {text && (
         <div className="space-y-1.5">
           <select
             value={fontFamily}
             onChange={(e) => update({ fontFamily: e.target.value })}
-            className="w-full text-[12px] bg-white/[0.03] text-white/60 rounded-lg border border-white/[0.04] px-2 py-1.5 focus:outline-none focus:border-primary/25 transition-colors"
+            className="w-full text-[13px] bg-white/[0.03] text-white/60 rounded-lg border border-white/[0.04] px-2 py-1.5 focus:outline-none focus:border-primary/25 transition-colors"
           >
             {FONT_OPTIONS.map((f) => (
               <option key={f.family} value={f.family}>{f.label}</option>
@@ -680,11 +680,11 @@ function ScriptEditor({
               onChange={(e) => update({ fontSize: Number(e.target.value) })}
               min={8}
               max={48}
-              className="w-12 text-[12px] bg-white/[0.03] text-white/60 rounded-lg border border-white/[0.04] px-2 py-1.5 text-center focus:outline-none focus:border-primary/25 transition-colors"
+              className="w-12 text-[13px] bg-white/[0.03] text-white/60 rounded-lg border border-white/[0.04] px-2 py-1.5 text-center focus:outline-none focus:border-primary/25 transition-colors"
             />
             <button
               onClick={() => update({ bold: !bold })}
-              className={`px-2 py-1.5 rounded-lg border text-[12px] font-bold transition-all ${
+              className={`px-2 py-1.5 rounded-lg border text-[13px] font-bold transition-all ${
                 bold ? "bg-primary/10 border-primary/20 text-primary" : "border-white/[0.04] text-white/25 hover:text-white/40"
               }`}
             >B</button>
@@ -696,7 +696,7 @@ function ScriptEditor({
               <button
                 key={s.id}
                 onClick={() => update({ style: s.id })}
-                className={`px-2 py-1 rounded-lg text-[12px] font-medium transition-all ${
+                className={`px-2 py-1 rounded-lg text-[13px] font-medium transition-all ${
                   style === s.id
                     ? "bg-primary/10 text-primary border border-primary/15"
                     : "bg-white/[0.02] text-white/25 border border-white/[0.04] hover:text-white/40"
@@ -716,7 +716,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <span className="text-[12px] font-semibold text-white/25 uppercase tracking-wider">{label}</span>
+        <span className="text-[13px] font-semibold text-white/25 uppercase tracking-wider">{label}</span>
         <div className="flex-1 h-px bg-white/[0.03]" />
       </div>
       <div className="space-y-2">{children}</div>
@@ -758,13 +758,13 @@ function Slider({
   return (
     <div className="flex items-center gap-2">
       <Icon className="w-4 h-4 text-white/20 shrink-0" />
-      <span className="text-[12px] text-white/30 w-8 shrink-0">{label}</span>
+      <span className="text-[13px] text-white/30 w-8 shrink-0">{label}</span>
       <input
         type="range" min={min} max={max} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="flex-1 accent-primary h-[3px]"
       />
-      <span className="text-[12px] text-white/40 w-10 text-right font-mono">{value}{unit}</span>
+      <span className="text-[13px] text-white/40 w-10 text-right font-mono">{value}{unit}</span>
     </div>
   );
 }
@@ -793,7 +793,7 @@ function ColorGrid({ value, onChange }: { value: string; onChange: (c: string) =
           onChange={(e) => onChange(e.target.value)}
           className="w-8 h-8 cursor-pointer rounded-lg border border-white/[0.04] bg-transparent"
         />
-        <span className="text-[12px] text-white/20 font-mono">{value}</span>
+        <span className="text-[13px] text-white/20 font-mono">{value}</span>
       </div>
     </div>
   );

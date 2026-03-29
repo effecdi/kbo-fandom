@@ -74,7 +74,7 @@ export function FeedPostCard({ post, onAuthorClick, onPostClick }: FeedPostCardP
           </Avatar>
           <span className="text-[13px] font-medium truncate flex-1">{displayName}</span>
           {post.authorGenre && (
-            <Badge variant="secondary" className="text-[12px] shrink-0">
+            <Badge variant="secondary" className="text-[13px] shrink-0">
               {post.authorGenre === "daily" ? "Daily" : post.authorGenre === "gag" ? "Comedy" : post.authorGenre === "romance" ? "Romance" : post.authorGenre === "fantasy" ? "Fantasy" : post.authorGenre}
             </Badge>
           )}

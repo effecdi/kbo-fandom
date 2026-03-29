@@ -228,7 +228,7 @@ export function CharacterNewPage() {
                     <h3 className={`text-sm font-bold mb-1 ${selectedStyle === style.id ? "text-[#00e5cc]" : "text-foreground"}`}>
                       {style.label}
                     </h3>
-                    <p className="text-xs text-muted-foreground">{style.description}</p>
+                    <p className="text-[13px] text-muted-foreground">{style.description}</p>
                   </button>
                 ))}
               </div>
@@ -280,7 +280,7 @@ export function CharacterNewPage() {
                 <div className="aspect-square bg-muted rounded-xl flex flex-col items-center justify-center animate-pulse">
                   <Loader2 className="w-10 h-10 text-[#00e5cc] animate-spin mb-4" />
                   <p className="text-sm text-muted-foreground">캐릭터를 그리고 있어요...</p>
-                  <p className="text-xs text-muted-foreground mt-1">15~30초 정도 걸려요</p>
+                  <p className="text-[13px] text-muted-foreground mt-1">15~30초 정도 걸려요</p>
                 </div>
               </div>
             )}

@@ -48,13 +48,13 @@ export function PhotocardMakerPanel() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider px-1">
+      <h3 className="text-[13px] font-bold text-white/60 uppercase tracking-wider px-1">
         포토카드 메이커
       </h3>
 
       {/* Size Selection */}
       <div className="space-y-1.5">
-        <p className="text-[11px] text-white/40 px-1">사이즈</p>
+        <p className="text-[13px] text-white/40 px-1">사이즈</p>
         <div className="grid grid-cols-2 gap-1.5">
           {PHOTOCARD_SIZES.map((size) => (
             <button
@@ -66,7 +66,7 @@ export function PhotocardMakerPanel() {
                   : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] text-white/60"
               }`}
             >
-              <p className="text-[11px] font-semibold">{size.label}</p>
+              <p className="text-[13px] font-semibold">{size.label}</p>
             </button>
           ))}
         </div>
@@ -74,7 +74,7 @@ export function PhotocardMakerPanel() {
 
       {/* Frame Selection */}
       <div className="space-y-1.5">
-        <p className="text-[11px] text-white/40 px-1">프레임 템플릿</p>
+        <p className="text-[13px] text-white/40 px-1">프레임 템플릿</p>
         <div className="grid grid-cols-2 gap-1.5">
           {PHOTOCARD_FRAMES.map((frame) => (
             <button
@@ -84,9 +84,9 @@ export function PhotocardMakerPanel() {
             >
               <div className="flex items-center gap-1.5 mb-1">
                 <CreditCard className="w-3 h-3 text-primary/60" />
-                <p className="text-[11px] font-semibold text-white/80">{frame.label}</p>
+                <p className="text-[13px] font-semibold text-white/80">{frame.label}</p>
               </div>
-              <p className="text-[10px] text-white/30">{frame.desc}</p>
+              <p className="text-[13px] text-white/30">{frame.desc}</p>
             </button>
           ))}
         </div>
@@ -94,7 +94,7 @@ export function PhotocardMakerPanel() {
 
       {/* Effects */}
       <div className="space-y-1.5">
-        <p className="text-[11px] text-white/40 px-1">효과</p>
+        <p className="text-[13px] text-white/40 px-1">효과</p>
         <button
           onClick={handleHoloToggle}
           className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all text-left ${
@@ -105,8 +105,8 @@ export function PhotocardMakerPanel() {
         >
           <Sparkles className={`w-4 h-4 ${holoEffect ? "text-primary" : "text-white/30"}`} />
           <div>
-            <p className="text-xs font-semibold text-white/80">홀로그래픽 효과</p>
-            <p className="text-[10px] text-white/30">반짝이는 홀로 그라데이션</p>
+            <p className="text-[13px] font-semibold text-white/80">홀로그래픽 효과</p>
+            <p className="text-[13px] text-white/30">반짝이는 홀로 그라데이션</p>
           </div>
         </button>
 
@@ -118,14 +118,14 @@ export function PhotocardMakerPanel() {
             className="w-3.5 h-3.5 rounded accent-primary"
           />
           <Hash className="w-3.5 h-3.5 text-white/30" />
-          <span className="text-xs text-white/60">시리얼 넘버 표시</span>
+          <span className="text-[13px] text-white/60">시리얼 넘버 표시</span>
         </label>
       </div>
 
       {/* Auto Layout */}
       <button
         onClick={handleAutoLayout}
-        className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all text-primary text-xs font-bold"
+        className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all text-primary text-[13px] font-bold"
       >
         <Camera className="w-4 h-4" />
         트레이딩 카드 자동 레이아웃

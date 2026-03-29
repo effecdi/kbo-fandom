@@ -38,13 +38,13 @@ export function StickerSheetPanel() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider px-1">
+      <h3 className="text-[13px] font-bold text-white/60 uppercase tracking-wider px-1">
         스티커시트 레이아웃
       </h3>
 
       {/* Sheet Size */}
       <div className="space-y-1.5">
-        <p className="text-[11px] text-white/40 px-1">시트 사이즈</p>
+        <p className="text-[13px] text-white/40 px-1">시트 사이즈</p>
         <div className="grid grid-cols-2 gap-1.5">
           {(["A5", "A6"] as SheetSize[]).map((size) => (
             <button
@@ -56,8 +56,8 @@ export function StickerSheetPanel() {
                   : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] text-white/60"
               }`}
             >
-              <p className="text-xs font-semibold">{size}</p>
-              <p className="text-[10px] text-white/30">
+              <p className="text-[13px] font-semibold">{size}</p>
+              <p className="text-[13px] text-white/30">
                 {size === "A5" ? "148×210mm" : "105×148mm"}
               </p>
             </button>
@@ -67,13 +67,13 @@ export function StickerSheetPanel() {
 
       {/* Grid Preset */}
       <div className="space-y-1.5">
-        <p className="text-[11px] text-white/40 px-1">배열 방식</p>
+        <p className="text-[13px] text-white/40 px-1">배열 방식</p>
         <div className="flex flex-wrap gap-1.5">
           {STICKER_GRID_PRESETS.map((g) => (
             <button
               key={g.id}
               onClick={() => setGridPreset(g.id)}
-              className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg border text-[13px] font-medium transition-all ${
                 gridPreset === g.id
                   ? "bg-primary/10 border-primary/30 text-primary"
                   : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] text-white/60"
@@ -87,13 +87,13 @@ export function StickerSheetPanel() {
 
       {/* Sticker Size */}
       <div className="space-y-1.5">
-        <p className="text-[11px] text-white/40 px-1">스티커 크기</p>
+        <p className="text-[13px] text-white/40 px-1">스티커 크기</p>
         <div className="flex gap-1.5">
           {STICKER_SIZE_PRESETS.map((s) => (
             <button
               key={s.id}
               onClick={() => setStickerSize(s.id)}
-              className={`flex-1 px-2 py-1.5 rounded-lg border text-center text-[11px] font-medium transition-all ${
+              className={`flex-1 px-2 py-1.5 rounded-lg border text-center text-[13px] font-medium transition-all ${
                 stickerSize === s.id
                   ? "bg-primary/10 border-primary/30 text-primary"
                   : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] text-white/60"
@@ -107,7 +107,7 @@ export function StickerSheetPanel() {
 
       {/* Shape */}
       <div className="space-y-1.5">
-        <p className="text-[11px] text-white/40 px-1">스티커 모양</p>
+        <p className="text-[13px] text-white/40 px-1">스티커 모양</p>
         <div className="grid grid-cols-2 gap-1.5">
           <button
             onClick={() => setStickerShape("circle")}
@@ -118,7 +118,7 @@ export function StickerSheetPanel() {
             }`}
           >
             <Circle className="w-3.5 h-3.5" />
-            <span className="text-xs">원형</span>
+            <span className="text-[13px]">원형</span>
           </button>
           <button
             onClick={() => setStickerShape("square")}
@@ -129,7 +129,7 @@ export function StickerSheetPanel() {
             }`}
           >
             <Square className="w-3.5 h-3.5" />
-            <span className="text-xs">사각형</span>
+            <span className="text-[13px]">사각형</span>
           </button>
         </div>
       </div>
@@ -138,14 +138,14 @@ export function StickerSheetPanel() {
       <div className="space-y-1.5">
         <button
           onClick={handleGenerate}
-          className="w-full py-2.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all text-primary text-xs font-bold flex items-center justify-center gap-2"
+          className="w-full py-2.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all text-primary text-[13px] font-bold flex items-center justify-center gap-2"
         >
           <Grid3X3 className="w-4 h-4" />
           스티커시트 생성
         </button>
         <button
           onClick={handleFillSheet}
-          className="w-full py-2 rounded-xl border border-white/[0.06] hover:bg-white/[0.04] transition-all text-white/50 text-xs flex items-center justify-center gap-2"
+          className="w-full py-2 rounded-xl border border-white/[0.06] hover:bg-white/[0.04] transition-all text-white/50 text-[13px] flex items-center justify-center gap-2"
         >
           <Copy className="w-3.5 h-3.5" />
           시트 채우기 (복제)

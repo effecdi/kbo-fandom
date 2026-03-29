@@ -91,7 +91,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <p className="text-sm font-semibold text-foreground truncate">
                 {user?.firstName || "사용자"}
               </p>
-              <p className="text-xs text-muted-foreground">팬덤 모드</p>
+              <p className="text-[13px] text-muted-foreground">팬덤 모드</p>
             </div>
           </div>
           <div className="mt-2 space-y-1">
@@ -132,7 +132,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
             {/* Right Actions */}
             <div className="flex items-center gap-3">
-              <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-xs font-semibold">
+              <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[13px] font-semibold">
                 팬덤 모드
               </div>
 

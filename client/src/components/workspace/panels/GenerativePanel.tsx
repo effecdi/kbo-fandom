@@ -78,8 +78,8 @@ export function GenerativePanel() {
           <Wand2 className="w-5 h-5 text-violet-400" />
         </div>
         <div>
-          <h3 className="text-xs font-bold text-white/80">생성 AI</h3>
-          <p className="text-[12px] text-white/25">고급 AI 이미지 편집 도구</p>
+          <h3 className="text-[13px] font-bold text-white/80">생성 AI</h3>
+          <p className="text-[13px] text-white/25">고급 AI 이미지 편집 도구</p>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ export function GenerativePanel() {
               )}
             >
               <tool.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-white/20")} />
-              <span className={cn("text-[12px] font-semibold", isActive ? "text-primary/80" : "text-white/20")}>
+              <span className={cn("text-[13px] font-semibold", isActive ? "text-primary/80" : "text-white/20")}>
                 {tool.label.split(" ")[0]}
               </span>
             </button>
@@ -109,7 +109,7 @@ export function GenerativePanel() {
 
       {/* Active tool description */}
       <div className="px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-        <p className="text-[12px] text-white/40 font-medium">
+        <p className="text-[13px] text-white/40 font-medium">
           {GEN_TOOLS.find((t) => t.id === activeTool)?.desc}
         </p>
       </div>
@@ -119,7 +119,7 @@ export function GenerativePanel() {
         <div className="space-y-3">
           {/* Selection tools */}
           <div>
-            <span className="text-[12px] text-white/25 font-semibold block mb-2">선택 도구</span>
+            <span className="text-[13px] text-white/25 font-semibold block mb-2">선택 도구</span>
             <div className="grid grid-cols-4 gap-1.5">
               {SELECTION_TOOLS.map((t) => (
                 <button
@@ -133,7 +133,7 @@ export function GenerativePanel() {
                   )}
                 >
                   <t.icon className="w-5 h-5" />
-                  <span className="text-[12px] font-medium">{t.label}</span>
+                  <span className="text-[13px] font-medium">{t.label}</span>
                 </button>
               ))}
             </div>
@@ -143,8 +143,8 @@ export function GenerativePanel() {
           {selectionTool === "brush" && (
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-[12px] text-white/25 font-semibold">브러시 크기</span>
-                <span className="text-[12px] text-white/20 font-mono bg-white/[0.04] px-1.5 py-0.5 rounded-md">{brushSize}px</span>
+                <span className="text-[13px] text-white/25 font-semibold">브러시 크기</span>
+                <span className="text-[13px] text-white/20 font-mono bg-white/[0.04] px-1.5 py-0.5 rounded-md">{brushSize}px</span>
               </div>
               <input
                 type="range"
@@ -159,20 +159,20 @@ export function GenerativePanel() {
 
           {/* Prompt */}
           <div>
-            <label className="text-[12px] text-white/25 font-semibold block mb-1.5">채울 내용</label>
+            <label className="text-[13px] text-white/25 font-semibold block mb-1.5">채울 내용</label>
             <textarea
               value={fillPrompt}
               onChange={(e) => setFillPrompt(e.target.value)}
               placeholder="예: 파란 하늘과 흰 구름"
               rows={2}
-              className="w-full px-3.5 py-2.5 text-xs bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/30 resize-none text-white/80 placeholder:text-white/15 transition-all"
+              className="w-full px-3.5 py-2.5 text-[13px] bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/30 resize-none text-white/80 placeholder:text-white/15 transition-all"
             />
           </div>
 
           <button
             onClick={handleGenFill}
             disabled={!fillPrompt.trim() || isGenerating}
-            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-xs font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(139,92,246,0.2)] transition-all"
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-[13px] font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(139,92,246,0.2)] transition-all"
           >
             {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <PaintBucket className="w-5 h-5" />}
             생성 채우기
@@ -185,7 +185,7 @@ export function GenerativePanel() {
         <div className="space-y-3">
           {/* Direction grid */}
           <div>
-            <span className="text-[12px] text-white/25 font-semibold block mb-2">확장 방향</span>
+            <span className="text-[13px] text-white/25 font-semibold block mb-2">확장 방향</span>
             <div className="grid grid-cols-3 gap-1.5 w-32 mx-auto">
               <div />
               <ExpandBtn icon={ChevronUp} label="상" onClick={() => handleExpand("상")} disabled={isGenerating} />
@@ -207,19 +207,19 @@ export function GenerativePanel() {
 
           {/* Optional prompt */}
           <div>
-            <label className="text-[12px] text-white/25 font-semibold block mb-1.5">프롬프트 (선택)</label>
+            <label className="text-[13px] text-white/25 font-semibold block mb-1.5">프롬프트 (선택)</label>
             <input
               value={expandPrompt}
               onChange={(e) => setExpandPrompt(e.target.value)}
               placeholder="예: 자연스러운 풍경으로..."
-              className="w-full px-3.5 py-2.5 text-xs bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/30 text-white/80 placeholder:text-white/15 transition-all"
+              className="w-full px-3.5 py-2.5 text-[13px] bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/30 text-white/80 placeholder:text-white/15 transition-all"
             />
           </div>
 
           <button
             onClick={() => handleExpand()}
             disabled={isGenerating}
-            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(59,130,246,0.2)] transition-all"
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-[13px] font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(59,130,246,0.2)] transition-all"
           >
             {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Expand className="w-5 h-5" />}
             전체 방향 확장
@@ -235,7 +235,7 @@ export function GenerativePanel() {
               <ZoomIn className="w-7 h-7 text-emerald-400/50" />
             </div>
             <p className="text-sm font-bold text-white/60 mb-1">2x 업스케일</p>
-            <p className="text-[12px] text-white/25 leading-relaxed">
+            <p className="text-[13px] text-white/25 leading-relaxed">
               현재 캔버스의 해상도를 2배로<br />
               AI가 선명하게 확대합니다
             </p>
@@ -243,19 +243,19 @@ export function GenerativePanel() {
 
           <div className="grid grid-cols-2 gap-2">
             <div className="px-3 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] text-center">
-              <p className="text-[12px] text-white/20 mb-0.5">입력</p>
-              <p className="text-xs font-bold text-white/40">600×800</p>
+              <p className="text-[13px] text-white/20 mb-0.5">입력</p>
+              <p className="text-[13px] font-bold text-white/40">600×800</p>
             </div>
             <div className="px-3 py-2.5 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/10 text-center">
-              <p className="text-[12px] text-emerald-400/40 mb-0.5">출력</p>
-              <p className="text-xs font-bold text-emerald-400/60">1200×1600</p>
+              <p className="text-[13px] text-emerald-400/40 mb-0.5">출력</p>
+              <p className="text-[13px] font-bold text-emerald-400/60">1200×1600</p>
             </div>
           </div>
 
           <button
             onClick={handleUpscale}
             disabled={isGenerating}
-            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-500 text-white text-xs font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(16,185,129,0.2)] transition-all"
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-500 text-white text-[13px] font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(16,185,129,0.2)] transition-all"
           >
             {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <ZoomIn className="w-5 h-5" />}
             업스케일 실행
@@ -267,7 +267,7 @@ export function GenerativePanel() {
       {activeTool === "object" && (
         <div className="space-y-3">
           <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
-            <p className="text-[12px] text-white/30 leading-relaxed">
+            <p className="text-[13px] text-white/30 leading-relaxed">
               캔버스의 오브젝트를 클릭하면 AI가 자동으로 영역을 감지합니다.
             </p>
           </div>
@@ -281,7 +281,7 @@ export function GenerativePanel() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center group-hover:from-amber-500/20 group-hover:to-orange-500/20 transition-all">
                 <Palette className="w-5 h-5 text-amber-400/60" />
               </div>
-              <span className="text-[12px] text-white/40 font-semibold group-hover:text-white/60">색상 변경</span>
+              <span className="text-[13px] text-white/40 font-semibold group-hover:text-white/60">색상 변경</span>
             </button>
             <button
               onClick={() => handleObjectAction("fill")}
@@ -291,14 +291,14 @@ export function GenerativePanel() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 flex items-center justify-center group-hover:from-violet-500/20 group-hover:to-fuchsia-500/20 transition-all">
                 <Wand2 className="w-5 h-5 text-violet-400/60" />
               </div>
-              <span className="text-[12px] text-white/40 font-semibold group-hover:text-white/60">AI 채우기</span>
+              <span className="text-[13px] text-white/40 font-semibold group-hover:text-white/60">AI 채우기</span>
             </button>
           </div>
 
           <button
             onClick={() => handleObjectAction("fill")}
             disabled={isGenerating}
-            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(245,158,11,0.2)] transition-all"
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[13px] font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(245,158,11,0.2)] transition-all"
           >
             {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <MousePointer className="w-5 h-5" />}
             오브젝트 감지

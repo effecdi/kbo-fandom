@@ -117,12 +117,12 @@ export function GuidePanel() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+      <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
         <BookOpen className="w-5 h-5 text-primary" />
         에디터 가이드
       </h3>
 
-      <p className="text-[12px] text-white/25 leading-relaxed">
+      <p className="text-[13px] text-white/25 leading-relaxed">
         각 기능을 클릭하여 사용법을 확인하세요.
       </p>
 
@@ -144,7 +144,7 @@ export function GuidePanel() {
                   "w-5 h-5 shrink-0",
                   isOpen ? "text-primary" : "text-white/25"
                 )} />
-                <span className="text-[12px] font-medium flex-1">{section.title}</span>
+                <span className="text-[13px] font-medium flex-1">{section.title}</span>
                 {isOpen
                   ? <ChevronDown className="w-5 h-5 text-white/20" />
                   : <ChevronRight className="w-5 h-5 text-white/20" />
@@ -160,8 +160,8 @@ export function GuidePanel() {
                     >
                       <div className="w-1 h-1 rounded-full bg-primary/30 mt-1.5 shrink-0" />
                       <div>
-                        <p className="text-[12px] text-white/50 font-medium">{item.label}</p>
-                        <p className="text-[12px] text-white/20 leading-relaxed">{item.description}</p>
+                        <p className="text-[13px] text-white/50 font-medium">{item.label}</p>
+                        <p className="text-[13px] text-white/20 leading-relaxed">{item.description}</p>
                       </div>
                     </div>
                   ))}

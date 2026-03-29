@@ -246,18 +246,18 @@ export function CharacterDetailPage() {
 
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mt-4 mb-6">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-400">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-cyan-500/20 text-cyan-400">
                 <Tag className="w-5 h-5" />
                 {displayStyle}
               </span>
               {character.gender && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-purple-500/20 text-purple-400">
                   <UserCircle className="w-5 h-5" />
                   {character.gender}
                 </span>
               )}
               {character.mood && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-pink-500/20 text-pink-400">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-pink-500/20 text-pink-400">
                   <Smile className="w-5 h-5" />
                   {character.mood}
                 </span>
@@ -265,7 +265,7 @@ export function CharacterDetailPage() {
             </div>
 
             {/* Dates */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground mb-6">
+            <div className="flex items-center gap-4 text-[13px] text-muted-foreground mb-6">
               {character.createdAt && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-5 h-5" />
@@ -327,16 +327,16 @@ export function CharacterDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">이름</p>
+                  <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">이름</p>
                   <p className="text-sm text-foreground">{character.name || `캐릭터 ${character.id}`}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">스타일</p>
+                  <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">스타일</p>
                   <p className="text-sm text-foreground">{displayStyle}</p>
                 </div>
                 {character.gender && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">성별</p>
+                    <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">성별</p>
                     <p className="text-sm text-foreground">{character.gender}</p>
                   </div>
                 )}
@@ -344,12 +344,12 @@ export function CharacterDetailPage() {
               <div className="space-y-4">
                 {character.mood && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">분위기</p>
+                    <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">분위기</p>
                     <p className="text-sm text-foreground">{character.mood}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">설명</p>
+                  <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">설명</p>
                   <p className="text-sm text-foreground leading-relaxed">
                     {character.description || character.prompt || "설명이 없습니다."}
                   </p>
@@ -434,7 +434,7 @@ export function CharacterDetailPage() {
                   <div className="p-3">
                     <h3 className="text-sm font-semibold text-foreground truncate">{pose.name}</h3>
                     <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${
+                      className={`text-[13px] px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${
                         pose.type === "포즈"
                           ? "bg-cyan-500/20 text-cyan-400"
                           : pose.type === "표정"
@@ -466,13 +466,13 @@ export function CharacterDetailPage() {
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-foreground">{project.title}</h3>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {new Date(project.updatedAt).toLocaleDateString("ko-KR")}
                         </p>
                       </div>
                     </div>
                     <span
-                      className={`text-xs px-3 py-1 rounded-full font-medium ${
+                      className={`text-[13px] px-3 py-1 rounded-full font-medium ${
                         project.status === "published"
                           ? "bg-emerald-500/20 text-emerald-400"
                           : project.status === "review"

@@ -123,7 +123,7 @@ export function TopBar() {
           {/* Fandom group badge */}
           {state.fandomMeta && (
             <span
-              className="px-2 py-0.5 rounded-md text-[11px] font-bold text-white"
+              className="px-2 py-0.5 rounded-md text-[13px] font-bold text-white"
               style={{ backgroundColor: state.fandomMeta.coverColor }}
             >
               {state.fandomMeta.groupName}
@@ -136,7 +136,7 @@ export function TopBar() {
               else if (uiLevel === "intermediate") forceLevel("pro");
               else forceLevel("beginner");
             }}
-            className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/35 transition-colors"
+            className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/35 transition-colors"
             title="클릭하여 UI 모드 전환"
           >
             <ChevronUp className="w-5 h-5" />
@@ -211,7 +211,7 @@ export function TopBar() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 text-xs text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
+                className="h-8 gap-1.5 text-[13px] text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
                 onClick={handleSave}
               >
                 {saved ? <Check className="w-5 h-5 text-emerald-400" /> : <Save className="w-5 h-5" />}
@@ -221,7 +221,7 @@ export function TopBar() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 text-xs text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
+                className="h-8 gap-1.5 text-[13px] text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
                 onClick={handlePreview}
               >
                 <Eye className="w-5 h-5" />
@@ -232,7 +232,7 @@ export function TopBar() {
 
           <button
             onClick={() => setPublishOpen(true)}
-            className="h-8 px-3 ml-1 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-shadow active:scale-95"
+            className="h-8 px-3 ml-1 rounded-lg font-bold text-[13px] flex items-center gap-1.5 transition-shadow active:scale-95"
             style={
               state.fandomMeta
                 ? {

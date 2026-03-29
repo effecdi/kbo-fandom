@@ -144,7 +144,7 @@ export function Pricing() {
                 {/* Popular Badge */}
                 {plan.popular && (
                   <div className="absolute top-0 right-0 -mr-1 -mt-1">
-                    <div className="bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white px-4 py-1.5 rounded-bl-2xl rounded-tr-2xl font-bold text-xs shadow-lg flex items-center gap-1">
+                    <div className="bg-gradient-to-r from-[#00e5cc] to-[#00b3a6] text-white px-4 py-1.5 rounded-bl-2xl rounded-tr-2xl font-bold text-[13px] shadow-lg flex items-center gap-1">
                       <Star className="w-5 h-5" />
                       인기
                     </div>
@@ -184,7 +184,7 @@ export function Pricing() {
 
                 {/* Highlight */}
                 {plan.highlight && (
-                  <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold mb-6 bg-teal-100 text-teal-700 dark:bg-[#00e5cc]/20 dark:text-[#00e5cc]">
+                  <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[13px] font-bold mb-6 bg-teal-100 text-teal-700 dark:bg-[#00e5cc]/20 dark:text-[#00e5cc]">
                     <Sparkles className="w-5 h-5" />
                     {plan.highlight}
                   </div>

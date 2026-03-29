@@ -98,7 +98,7 @@ export function OnboardingOverlay() {
 
         {/* Example prompt bubble */}
         <div className="bg-card border border-border rounded-2xl px-5 py-3 inline-block shadow-lg mb-6">
-          <p className="text-xs text-muted-foreground mb-1">이렇게 말해보세요:</p>
+          <p className="text-[13px] text-muted-foreground mb-1">이렇게 말해보세요:</p>
           <p className="text-sm font-medium transition-all duration-500" style={{ color: fandomMeta?.coverColor || accentColor }}>
             "{prompts[currentPrompt]}"
           </p>
@@ -107,7 +107,7 @@ export function OnboardingOverlay() {
         {/* Arrow pointing to bottom dock */}
         <div className="flex flex-col items-center gap-2 mt-4 animate-bounce">
           <ArrowDown className="w-5 h-5" style={{ color: fandomMeta?.coverColor || accentColor }} />
-          <span className="text-xs text-muted-foreground">아래 입력창을 클릭하세요</span>
+          <span className="text-[13px] text-muted-foreground">아래 입력창을 클릭하세요</span>
         </div>
       </div>
     </div>

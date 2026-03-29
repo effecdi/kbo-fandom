@@ -14,23 +14,23 @@ import {
 type TradeTab = "all" | "sell" | "trade" | "giveaway";
 
 const TRADE_TABS: { id: TradeTab; label: string }[] = [
-  { id: "all", label: "\uC804\uCCB4" },
-  { id: "sell", label: "\uD310\uB9E4" },
-  { id: "trade", label: "\uAD50\uD658" },
-  { id: "giveaway", label: "\uB098\uB214" },
+  { id: "all", label: "전체" },
+  { id: "sell", label: "판매" },
+  { id: "trade", label: "교환" },
+  { id: "giveaway", label: "나눔" },
 ];
 
 // ─── Category filter pills ──────────────────────────────────────────────────
 type CategoryFilter = "all" | GoodsTrade["category"];
 
 const CATEGORY_PILLS: { id: CategoryFilter; label: string }[] = [
-  { id: "all", label: "\uC804\uCCB4" },
-  { id: "uniform", label: "\uC720\uB2C8\uD3FC" },
-  { id: "cap", label: "\uBAA8\uC790" },
-  { id: "towel", label: "\uD0C0\uC62C" },
-  { id: "keyring", label: "\uD0A4\uB9C1" },
-  { id: "photocard", label: "\uD3EC\uD1A0\uCE74\uB4DC" },
-  { id: "other", label: "\uAE30\uD0C0" },
+  { id: "all", label: "전체" },
+  { id: "uniform", label: "유니폼" },
+  { id: "cap", label: "모자" },
+  { id: "towel", label: "타올" },
+  { id: "keyring", label: "키링" },
+  { id: "photocard", label: "포토카드" },
+  { id: "other", label: "기타" },
 ];
 
 export function FandomGoodsTrades() {

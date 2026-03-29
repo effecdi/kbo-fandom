@@ -29,7 +29,7 @@ export function CopilotPreview({ message }: CopilotPreviewProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-[12px] gap-1"
+            className="h-7 text-[13px] gap-1"
             onClick={() => setFullPreview(true)}
           >
             <Eye className="w-5 h-5" />
@@ -37,7 +37,7 @@ export function CopilotPreview({ message }: CopilotPreviewProps) {
           </Button>
           <Button
             size="sm"
-            className="h-7 text-[12px] gap-1 bg-primary hover:bg-primary/90 text-black"
+            className="h-7 text-[13px] gap-1 bg-primary hover:bg-primary/90 text-black"
             onClick={() =>
               dispatch({ type: "COPILOT_APPLY_PREVIEW", messageId: message.id })
             }
@@ -48,7 +48,7 @@ export function CopilotPreview({ message }: CopilotPreviewProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-[12px] gap-1 text-red-400"
+            className="h-7 text-[13px] gap-1 text-red-400"
             onClick={() =>
               dispatch({ type: "COPILOT_APPLY_PREVIEW", messageId: message.id })
             }

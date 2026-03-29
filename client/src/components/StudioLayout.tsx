@@ -73,7 +73,7 @@ export function StudioLayout({ children, noPadding }: StudioLayoutProps) {
     ? listItems<KboTeam>(STORE_KEYS.KBO_TEAMS).find((t) => t.id === fandomProfile.groupId)
     : null;
   const groupDisplayName = myTeam?.nameKo || fandomProfile?.groupName || "";
-  const themeColor = "var(--fandom-primary, #7B2FF7)";
+  const themeColor = myTeam?.coverColor || "var(--fandom-primary, #7B2FF7)";
 
   const toggleSection = (label: string) => {
     setExpandedSections(prev => ({ ...prev, [label]: !prev[label] }));

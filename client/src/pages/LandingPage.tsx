@@ -219,13 +219,13 @@ export function LandingPage() {
                   {group.name.charAt(0)}
                 </div>
                 <h3 className="font-bold text-foreground">{group.name}</h3>
-                <p className="text-xs text-muted-foreground mb-2">{group.nameKo}</p>
-                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground mb-2">{group.nameKo}</p>
+                <div className="flex items-center justify-center gap-1 text-[13px] text-muted-foreground">
                   <Heart className="w-3 h-3" />
                   <span>{group.followers.toLocaleString()} 팬</span>
                 </div>
                 <div
-                  className="mt-3 inline-block px-3 py-1 rounded-full text-xs font-bold text-white"
+                  className="mt-3 inline-block px-3 py-1 rounded-full text-[13px] font-bold text-white"
                   style={{ background: group.coverColor }}
                 >
                   {group.fandomName}

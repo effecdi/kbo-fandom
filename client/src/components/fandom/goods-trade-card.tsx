@@ -3,42 +3,42 @@ import type { GoodsTrade } from "@/lib/local-store";
 
 // ─── Category emoji map ────────────────────────────────────────────────────
 const CATEGORY_EMOJI: Record<GoodsTrade["category"], string> = {
-  uniform: "\uD83D\uDC55",
-  cap: "\uD83E\uDDE2",
-  towel: "\uD83E\uDDE3",
-  keyring: "\uD83D\uDD11",
-  photocard: "\uD83C\uDCCF",
-  other: "\uD83D\uDCE6",
+  uniform: "👕",
+  cap: "🧢",
+  towel: "🧣",
+  keyring: "🔑",
+  photocard: "🃏",
+  other: "📦",
 };
 
 const CATEGORY_LABELS: Record<GoodsTrade["category"], string> = {
-  uniform: "\uC720\uB2C8\uD3FC",
-  cap: "\uBAA8\uC790",
-  towel: "\uD0C0\uC62C",
-  keyring: "\uD0A4\uB9C1",
-  photocard: "\uD3EC\uD1A0\uCE74\uB4DC",
-  other: "\uAE30\uD0C0",
+  uniform: "유니폼",
+  cap: "모자",
+  towel: "타올",
+  keyring: "키링",
+  photocard: "포토카드",
+  other: "기타",
 };
 
 // ─── Condition labels ──────────────────────────────────────────────────────
 const CONDITION_CONFIG: Record<GoodsTrade["condition"], { label: string; color: string }> = {
-  new: { label: "\uC0C8\uC0C1\uD488", color: "bg-emerald-500/15 text-emerald-400" },
-  likeNew: { label: "\uAC70\uC758\uC0C8\uAC83", color: "bg-teal-500/15 text-teal-400" },
-  good: { label: "\uC591\uD638", color: "bg-blue-500/15 text-blue-400" },
-  fair: { label: "\uC0AC\uC6A9\uAC10\uC788\uC74C", color: "bg-amber-500/15 text-amber-400" },
+  new: { label: "새상품", color: "bg-emerald-500/15 text-emerald-400" },
+  likeNew: { label: "거의새것", color: "bg-teal-500/15 text-teal-400" },
+  good: { label: "양호", color: "bg-blue-500/15 text-blue-400" },
+  fair: { label: "사용감있음", color: "bg-amber-500/15 text-amber-400" },
 };
 
 // ─── Trade type config ─────────────────────────────────────────────────────
 const TRADE_TYPE_CONFIG: Record<GoodsTrade["tradeType"], { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  sell: { label: "\uD310\uB9E4", color: "bg-green-500/15 text-green-400", icon: Tag },
-  trade: { label: "\uAD50\uD658", color: "bg-blue-500/15 text-blue-400", icon: ArrowRightLeft },
-  giveaway: { label: "\uB098\uB214", color: "bg-rose-500/15 text-rose-400", icon: Gift },
+  sell: { label: "판매", color: "bg-green-500/15 text-green-400", icon: Tag },
+  trade: { label: "교환", color: "bg-blue-500/15 text-blue-400", icon: ArrowRightLeft },
+  giveaway: { label: "나눔", color: "bg-rose-500/15 text-rose-400", icon: Gift },
 };
 
 // ─── Status config ─────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  reserved: { label: "\uC608\uC57D\uC911", color: "bg-amber-500/15 text-amber-400" },
-  completed: { label: "\uAC70\uB798\uC644\uB8CC", color: "bg-gray-500/15 text-gray-400" },
+  reserved: { label: "예약중", color: "bg-amber-500/15 text-amber-400" },
+  completed: { label: "거래완료", color: "bg-gray-500/15 text-gray-400" },
 };
 
 interface GoodsTradeCardProps {
@@ -101,19 +101,19 @@ export function GoodsTradeCard({ trade, teamColor }: GoodsTradeCardProps) {
         <div className="text-[13px]">
           {trade.tradeType === "sell" && trade.price != null && (
             <span className="text-green-400 font-bold text-sm">
-              {trade.price.toLocaleString()}\uC6D0
+              {trade.price.toLocaleString()}원
             </span>
           )}
           {trade.tradeType === "trade" && trade.wantedItem && (
             <div className="flex items-center gap-1 text-blue-400">
               <ArrowRightLeft className="w-3 h-3" />
-              <span className="font-medium truncate">\uD76C\uB9DD: {trade.wantedItem}</span>
+              <span className="font-medium truncate">희망: {trade.wantedItem}</span>
             </div>
           )}
           {trade.tradeType === "giveaway" && (
             <div className="flex items-center gap-1 text-rose-400">
               <Gift className="w-3 h-3" />
-              <span className="font-medium">\uBB34\uB8CC \uB098\uB214</span>
+              <span className="font-medium">무료 나눔</span>
             </div>
           )}
         </div>

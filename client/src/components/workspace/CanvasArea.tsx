@@ -128,7 +128,7 @@ function CtxMenuItem({ icon, label, shortcut, onClick, danger }: {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] transition-all ${
+      className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-[13px] transition-all ${
         danger
           ? "text-red-400 hover:bg-red-500/10"
           : "text-white/70 hover:bg-white/[0.06] hover:text-white"
@@ -136,7 +136,7 @@ function CtxMenuItem({ icon, label, shortcut, onClick, danger }: {
     >
       <span className="opacity-60">{icon}</span>
       <span className="flex-1 text-left">{label}</span>
-      {shortcut && <span className="text-[12px] text-white/25 font-mono">{shortcut}</span>}
+      {shortcut && <span className="text-[13px] text-white/25 font-mono">{shortcut}</span>}
     </button>
   );
 }

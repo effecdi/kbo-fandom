@@ -434,7 +434,7 @@ export function CharacterPicker({
               >
                 <X className="h-5 w-5" />
               </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[12px] px-0.5 py-0.5 truncate text-center">
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[13px] px-0.5 py-0.5 truncate text-center">
                 {img.name?.slice(0, 8) || "캐릭터"}
               </div>
             </div>

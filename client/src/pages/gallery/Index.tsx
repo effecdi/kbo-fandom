@@ -198,7 +198,7 @@ export function GalleryIndex() {
               <button
                 key={f.id}
                 onClick={() => setTypeFilter(f.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                   typeFilter === f.id
                     ? "bg-[#00e5cc] text-black"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -258,7 +258,7 @@ export function GalleryIndex() {
                     )}
                     {/* Type badge */}
                     <div className="absolute top-2 left-2">
-                      <span className={`px-2 py-1 rounded-full text-[12px] font-bold ${TYPE_COLORS[item.type]}`}>
+                      <span className={`px-2 py-1 rounded-full text-[13px] font-bold ${TYPE_COLORS[item.type]}`}>
                         {TYPE_LABELS[item.type]}
                       </span>
                     </div>
@@ -285,12 +285,12 @@ export function GalleryIndex() {
                     <h3 className="text-sm font-semibold text-foreground truncate">{item.title}</h3>
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#00e5cc] to-[#00b4d8] flex items-center justify-center">
-                        <span className="text-[12px] text-white font-bold">{item.authorAvatar}</span>
+                        <span className="text-[13px] text-white font-bold">{item.authorAvatar}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">{item.author}</span>
-                      <span className="text-[12px] text-muted-foreground/50 ml-auto">{item.createdAt}</span>
+                      <span className="text-[13px] text-muted-foreground">{item.author}</span>
+                      <span className="text-[13px] text-muted-foreground/50 ml-auto">{item.createdAt}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
+                    <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
                       <button
                         onClick={() => toggleLike(item.id)}
                         className={`flex items-center gap-1 transition-colors ${

@@ -378,7 +378,8 @@ export function PublishDialog({ open, onClose }: Props) {
 
       // Lanyard mode: set generated image as lanyard card
       const lanyardProjectId = localStorage.getItem("olli-lanyard-project");
-      if (lanyardProjectId === state.project.id) {
+      const isProfileTemplate = fandomMeta && ["profile-deco", "playercard", "portrait"].includes(fandomMeta.templateType);
+      if (lanyardProjectId === state.project.id || isProfileTemplate) {
         const thumbnail = allCuts[0]?.thumbnailUrl || null;
         if (thumbnail) {
           const profile = getFandomProfile();
@@ -386,7 +387,7 @@ export function PublishDialog({ open, onClose }: Props) {
             setFandomProfile({ ...profile, lanyardCardUrl: thumbnail });
           }
         }
-        localStorage.removeItem("olli-lanyard-project");
+        if (lanyardProjectId) localStorage.removeItem("olli-lanyard-project");
         setIsLanyardPublish(true);
       }
     }
@@ -448,7 +449,7 @@ export function PublishDialog({ open, onClose }: Props) {
             </div>
             <div>
               <h2 className="text-[15px] font-bold text-white tracking-tight">발행 센터</h2>
-              <p className="text-[12px] text-white/40 mt-0.5 flex items-center gap-1.5">
+              <p className="text-[13px] text-white/40 mt-0.5 flex items-center gap-1.5">
                 <Layers className="w-5 h-5" />
                 {allCuts.length}컷 · {state.project.title}
               </p>
@@ -544,7 +545,7 @@ export function PublishDialog({ open, onClose }: Props) {
                 <div className="space-y-5">
                   {/* Cut preview strip */}
                   <div>
-                    <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-2.5 block">
+                    <label className="text-[13px] font-semibold text-white/30 uppercase tracking-widest mb-2.5 block">
                       컷 미리보기
                     </label>
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -561,7 +562,7 @@ export function PublishDialog({ open, onClose }: Props) {
                             </div>
                           )}
                           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
-                            <span className="text-[12px] font-bold text-white/80">{i + 1}컷</span>
+                            <span className="text-[13px] font-bold text-white/80">{i + 1}컷</span>
                           </div>
                         </div>
                       ))}
@@ -571,7 +572,7 @@ export function PublishDialog({ open, onClose }: Props) {
                   {/* Form fields */}
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
+                      <label className="text-[13px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
                         제목
                       </label>
                       <input
@@ -583,7 +584,7 @@ export function PublishDialog({ open, onClose }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
+                      <label className="text-[13px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
                         설명 <span className="text-white/15 normal-case tracking-normal">(선택)</span>
                       </label>
                       <textarea
@@ -595,7 +596,7 @@ export function PublishDialog({ open, onClose }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
+                      <label className="text-[13px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
                         태그 <span className="text-white/15 normal-case tracking-normal">(콤마 구분)</span>
                       </label>
                       <input
@@ -608,7 +609,7 @@ export function PublishDialog({ open, onClose }: Props) {
                       {tags && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {tags.split(",").filter((t) => t.trim()).map((t, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded-md text-[12px] font-medium bg-primary/10 text-primary border border-primary/10">
+                            <span key={i} className="px-2 py-0.5 rounded-md text-[13px] font-medium bg-primary/10 text-primary border border-primary/10">
                               #{t.trim()}
                             </span>
                           ))}
@@ -619,7 +620,7 @@ export function PublishDialog({ open, onClose }: Props) {
                     {/* Fandom event selector */}
                     {fandomMeta && activeEvents.length > 0 && (
                       <div>
-                        <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
+                        <label className="text-[13px] font-semibold text-white/30 uppercase tracking-widest mb-1.5 block">
                           이벤트 참여 <span className="text-white/15 normal-case tracking-normal">(선택)</span>
                         </label>
                         <select
@@ -696,7 +697,7 @@ export function PublishDialog({ open, onClose }: Props) {
                       <Download className="w-5 h-5 text-white/20 group-hover:text-primary transition-colors" />
                     </div>
                     <h4 className="text-sm font-bold text-white">현재 컷 다운로드</h4>
-                    <p className="text-[12px] text-white/35 mt-1 leading-relaxed">
+                    <p className="text-[13px] text-white/35 mt-1 leading-relaxed">
                       컷 {activeCut?.order || 1} · PNG 2x 고화질
                     </p>
                   </button>
@@ -722,7 +723,7 @@ export function PublishDialog({ open, onClose }: Props) {
                     <h4 className="text-sm font-bold text-white">
                       {dlAll ? `다운로드 중 ${dlProgress}%` : "전체 다운로드"}
                     </h4>
-                    <p className="text-[12px] text-white/35 mt-1 leading-relaxed">
+                    <p className="text-[13px] text-white/35 mt-1 leading-relaxed">
                       {allCuts.length}장 일괄 · PNG 2x 고화질
                     </p>
                     {/* Progress bar */}
@@ -739,7 +740,7 @@ export function PublishDialog({ open, onClose }: Props) {
 
                 {/* Individual cut grid */}
                 <div>
-                  <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-3 block">
+                  <label className="text-[13px] font-semibold text-white/30 uppercase tracking-widest mb-3 block">
                     개별 컷 선택 다운로드
                   </label>
                   <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
@@ -808,7 +809,7 @@ export function PublishDialog({ open, onClose }: Props) {
                           </div>
                         )}
                         {/* Order badge */}
-                        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-[12px] font-bold text-white/80">
+                        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-[13px] font-bold text-white/80">
                           {i + 1}
                         </div>
                         {/* Hover overlay */}
@@ -833,7 +834,7 @@ export function PublishDialog({ open, onClose }: Props) {
                     </div>
                     <div>
                       <h3 className="text-[15px] font-bold text-white">인쇄용 고해상도 내보내기</h3>
-                      <p className="text-[12px] text-white/35 mt-1">
+                      <p className="text-[13px] text-white/35 mt-1">
                         {state.printSettings.physicalWidthMm}×{state.printSettings.physicalHeightMm}mm · {state.printSettings.dpi} DPI
                       </p>
                     </div>
@@ -893,7 +894,7 @@ export function PublishDialog({ open, onClose }: Props) {
 
                     <div>
                       <h3 className="text-[15px] font-bold text-white">{state.project.title}</h3>
-                      <p className="text-[12px] text-white/35 mt-1 flex items-center justify-center gap-1.5">
+                      <p className="text-[13px] text-white/35 mt-1 flex items-center justify-center gap-1.5">
                         <Layers className="w-5 h-5" />
                         {allCuts.length}컷 · 브라우저 로컬 저장
                       </p>
@@ -918,7 +919,7 @@ export function PublishDialog({ open, onClose }: Props) {
                 {/* Recent saves */}
                 {projects.length > 0 && (
                   <div>
-                    <label className="text-[12px] font-semibold text-white/30 uppercase tracking-widest mb-3 block">
+                    <label className="text-[13px] font-semibold text-white/30 uppercase tracking-widest mb-3 block">
                       최근 저장 기록
                     </label>
                     <div className="space-y-1.5">
@@ -938,7 +939,7 @@ export function PublishDialog({ open, onClose }: Props) {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-medium text-white/80 truncate">{p.title}</p>
-                            <p className="text-[12px] text-white/25 mt-0.5 flex items-center gap-1.5">
+                            <p className="text-[13px] text-white/25 mt-0.5 flex items-center gap-1.5">
                               <Layers className="w-2.5 h-2.5" />
                               {p.cutCount}컷
                               <span className="mx-0.5">·</span>
@@ -947,7 +948,7 @@ export function PublishDialog({ open, onClose }: Props) {
                             </p>
                           </div>
                           {p.id === state.project.id && (
-                            <span className="px-1.5 py-0.5 rounded-md text-[12px] font-bold bg-primary/15 text-primary border border-primary/10">
+                            <span className="px-1.5 py-0.5 rounded-md text-[13px] font-bold bg-primary/15 text-primary border border-primary/10">
                               현재
                             </span>
                           )}
@@ -968,14 +969,14 @@ export function PublishDialog({ open, onClose }: Props) {
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-white/70">저장된 작업이 없습니다</h3>
-                    <p className="text-xs text-white/30 mt-1">
+                    <p className="text-[13px] text-white/30 mt-1">
                       작업을 저장하면 언제든 이어서 작업할 수 있습니다
                     </p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-[12px] text-white/25">
+                  <p className="text-[13px] text-white/25">
                     저장된 인스타툰 {projects.length}개
                   </p>
 
@@ -1009,12 +1010,12 @@ export function PublishDialog({ open, onClose }: Props) {
                             <div className="flex items-center gap-2">
                               <p className="text-[13px] font-semibold text-white/90 truncate">{p.title}</p>
                               {isCurrent && (
-                                <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[12px] font-bold bg-primary/15 text-primary border border-primary/10">
+                                <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[13px] font-bold bg-primary/15 text-primary border border-primary/10">
                                   현재
                                 </span>
                               )}
                             </div>
-                            <p className="text-[12px] text-white/30 mt-1 flex items-center gap-1.5">
+                            <p className="text-[13px] text-white/30 mt-1 flex items-center gap-1.5">
                               <Layers className="w-5 h-5" />
                               {p.cutCount}컷
                               <span className="mx-0.5">·</span>
@@ -1029,13 +1030,13 @@ export function PublishDialog({ open, onClose }: Props) {
                               <div className="flex items-center gap-1 animate-in fade-in duration-150">
                                 <button
                                   onClick={() => handleDelete(p.id)}
-                                  className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                                  className="px-2.5 py-1.5 rounded-lg text-[13px] font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors"
                                 >
                                   삭제
                                 </button>
                                 <button
                                   onClick={() => setConfirmDelete(null)}
-                                  className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold text-white/40 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
+                                  className="px-2.5 py-1.5 rounded-lg text-[13px] font-semibold text-white/40 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
                                 >
                                   취소
                                 </button>
@@ -1051,7 +1052,7 @@ export function PublishDialog({ open, onClose }: Props) {
                                 {!isCurrent && (
                                   <button
                                     onClick={() => handleLoad(p.id)}
-                                    className="h-8 px-3.5 rounded-lg text-[12px] font-bold flex items-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors active:scale-95"
+                                    className="h-8 px-3.5 rounded-lg text-[13px] font-bold flex items-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors active:scale-95"
                                   >
                                     <RotateCcw className="w-5 h-5" />
                                     불러오기

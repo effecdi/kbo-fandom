@@ -158,7 +158,7 @@ export function MyGalleryPage() {
               }`}
             >
               <p className="text-2xl font-black text-foreground">{typeCounts[stat.type] || 0}</p>
-              <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+              <p className="text-[13px] text-muted-foreground mt-1">{stat.label}</p>
             </button>
           ))}
         </div>
@@ -184,11 +184,11 @@ export function MyGalleryPage() {
             >
               {tab.label}
               {tab.id !== "all" && typeCounts[tab.id] ? (
-                <span className="ml-1.5 text-xs bg-muted px-1.5 py-0.5 rounded-full">
+                <span className="ml-1.5 text-[13px] bg-muted px-1.5 py-0.5 rounded-full">
                   {typeCounts[tab.id]}
                 </span>
               ) : tab.id === "all" && items.length > 0 ? (
-                <span className="ml-1.5 text-xs bg-muted px-1.5 py-0.5 rounded-full">
+                <span className="ml-1.5 text-[13px] bg-muted px-1.5 py-0.5 rounded-full">
                   {items.length}
                 </span>
               ) : null}
@@ -223,7 +223,7 @@ export function MyGalleryPage() {
                   )}
                   {/* Type badge */}
                   <div className="absolute top-2 left-2">
-                    <span className={`px-2 py-1 rounded-full text-[12px] font-bold border ${TYPE_COLORS[item.type] || "bg-muted text-muted-foreground border-border"}`}>
+                    <span className={`px-2 py-1 rounded-full text-[13px] font-bold border ${TYPE_COLORS[item.type] || "bg-muted text-muted-foreground border-border"}`}>
                       {TYPE_LABELS[item.type] || item.type}
                     </span>
                   </div>
@@ -249,7 +249,7 @@ export function MyGalleryPage() {
                   <h3 className="text-sm font-semibold text-foreground truncate">
                     {item.prompt.replace("[LOGO] ", "")}
                   </h3>
-                  <p className="text-[12px] text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     {formatDate(item.createdAt)}
                   </p>
                 </div>

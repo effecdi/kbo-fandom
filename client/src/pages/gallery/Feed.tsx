@@ -279,7 +279,7 @@ export function FeedPage() {
             <p className="text-sm text-muted-foreground mt-1">
               크리에이터들의 최신 소식
               {dataSource === "api" && (
-                <span className="ml-2 text-[#00e5cc] text-xs">(내 갤러리)</span>
+                <span className="ml-2 text-[#00e5cc] text-[13px]">(내 갤러리)</span>
               )}
             </p>
           </div>
@@ -325,18 +325,18 @@ export function FeedPage() {
                 {/* Author header */}
                 <div className="flex items-center gap-3 p-4 pb-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00e5cc] to-[#00b4d8] flex items-center justify-center shrink-0">
-                    <span className="text-xs text-white font-bold">{post.authorAvatar}</span>
+                    <span className="text-[13px] text-white font-bold">{post.authorAvatar}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-foreground">{post.author}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[12px] font-medium bg-[#00e5cc]/10 text-[#00e5cc]">
+                      <span className="px-2 py-0.5 rounded-full text-[13px] font-medium bg-[#00e5cc]/10 text-[#00e5cc]">
                         {TYPE_LABELS[post.type]}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{post.authorBio}</p>
+                    <p className="text-[13px] text-muted-foreground truncate">{post.authorBio}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0">{post.createdAt}</span>
+                  <span className="text-[13px] text-muted-foreground shrink-0">{post.createdAt}</span>
                   <button className="p-1 rounded-lg hover:bg-muted transition-colors shrink-0">
                     <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
                   </button>
@@ -357,7 +357,7 @@ export function FeedPage() {
                     </div>
                   )}
                   {post.panels > 1 && (
-                    <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[12px] text-white font-bold">
+                    <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[13px] text-white font-bold">
                       {post.panels}컷
                     </div>
                   )}

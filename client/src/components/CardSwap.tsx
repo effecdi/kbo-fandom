@@ -198,7 +198,7 @@ export function CardSwap() {
 
                 {/* Stats */}
                 <div className="p-4 rounded-xl backdrop-blur-xl border bg-muted/50 border-border/50">
-                  <div className="text-xs font-semibold mb-1 text-muted-foreground">
+                  <div className="text-[13px] font-semibold mb-1 text-muted-foreground">
                     {currentCard.stats.label}
                   </div>
                   <div className={`text-3xl font-black bg-gradient-to-r ${currentCard.gradient} bg-clip-text text-transparent`}>
@@ -309,7 +309,7 @@ export function CardSwap() {
                       <div className="text-base font-bold mb-1 text-foreground">
                         {card.title}
                       </div>
-                      <div className={`text-xs font-semibold ${
+                      <div className={`text-[13px] font-semibold ${
                         isActive
                           ? `bg-gradient-to-r ${card.gradient} bg-clip-text text-transparent`
                           : "text-muted-foreground"
@@ -358,7 +358,7 @@ export function CardSwap() {
                   whileHover={{ y: -5, scale: 1.05 }}
                 >
                   <ItemIcon className="w-6 h-6 mb-3 text-[#00e5cc]" />
-                  <div className="text-xs font-semibold mb-1 text-muted-foreground">
+                  <div className="text-[13px] font-semibold mb-1 text-muted-foreground">
                     {item.label}
                   </div>
                   <div className="text-lg font-black text-foreground">

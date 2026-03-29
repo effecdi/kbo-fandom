@@ -78,7 +78,7 @@ export function AssetsIndex() {
             <h3 className="text-sm font-bold text-foreground group-hover:text-[#00e5cc] transition-colors">
               새 캐릭터 생성
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">AI로 캐릭터를 만들어보세요</p>
+            <p className="text-[13px] text-muted-foreground mt-1">AI로 캐릭터를 만들어보세요</p>
           </Link>
 
           <Link
@@ -94,7 +94,7 @@ export function AssetsIndex() {
             <h3 className="text-sm font-bold text-foreground group-hover:text-[#00e5cc] transition-colors">
               내 캐릭터
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">생성한 캐릭터 관리</p>
+            <p className="text-[13px] text-muted-foreground mt-1">생성한 캐릭터 관리</p>
           </Link>
         </div>
 
@@ -113,7 +113,7 @@ export function AssetsIndex() {
               <tab.icon className="w-5 h-5" />
               {tab.label}
               {tab.count > 0 && (
-                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{tab.count}</span>
+                <span className="text-[13px] bg-muted px-2 py-0.5 rounded-full">{tab.count}</span>
               )}
             </button>
           ))}
@@ -146,7 +146,7 @@ export function AssetsIndex() {
                       <h3 className="text-sm font-semibold text-foreground group-hover:text-[#00e5cc] truncate">
                         {char.prompt || `캐릭터 ${char.id}`}
                       </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-[13px] text-muted-foreground mt-1">
                         {char.style || "AI 생성"}
                         {char.createdAt && ` | ${new Date(char.createdAt).toLocaleDateString("ko-KR")}`}
                       </p>

@@ -57,7 +57,7 @@ export function SceneTree() {
                 dispatch({ type: "SET_ACTIVE_CUT", cutId: scene.cuts[0].id });
               }
             }}
-            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-[13px] transition-colors ${
               scene.id === state.activeSceneId
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
@@ -89,7 +89,7 @@ export function SceneTree() {
                   onClick={() =>
                     dispatch({ type: "SET_ACTIVE_CUT", cutId: cut.id })
                   }
-                  className={`w-full flex items-center gap-2 px-2 py-1 rounded text-xs transition-colors ${
+                  className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[13px] transition-colors ${
                     cut.id === state.activeCutId
                       ? "bg-primary/5 text-primary"
                       : "text-muted-foreground hover:bg-muted"
@@ -111,7 +111,7 @@ export function SceneTree() {
               ))}
               <button
                 onClick={() => addCut(scene.id)}
-                className="w-full flex items-center gap-2 px-2 py-1 rounded text-xs text-muted-foreground hover:bg-muted transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1 rounded text-[13px] text-muted-foreground hover:bg-muted transition-colors"
               >
                 <Plus className="w-5 h-5" />
                 <span>컷 추가</span>
@@ -123,7 +123,7 @@ export function SceneTree() {
 
       <button
         onClick={addScene}
-        className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-muted-foreground hover:bg-muted transition-colors mt-2"
+        className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-[13px] text-muted-foreground hover:bg-muted transition-colors mt-2"
       >
         <Plus className="w-5 h-5" />
         <span>씬 추가</span>

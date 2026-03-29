@@ -260,7 +260,7 @@ export function FandomIndex() {
             >
               <span className="text-[13px] font-black text-muted-foreground w-5 text-center">{i + 1}</span>
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0"
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-[13px] shrink-0"
                 style={{ backgroundColor: group.coverColor }}
               >
                 {group.name.slice(0, 2)}

@@ -52,7 +52,7 @@ export function EditorUI() {
                         <p className="font-semibold text-sm text-foreground">
                           Character {char}
                         </p>
-                        <p className="text-xs text-muted-foreground">AI Generated</p>
+                        <p className="text-[13px] text-muted-foreground">AI Generated</p>
                       </div>
                     </div>
                   </div>
@@ -185,7 +185,7 @@ export function EditorUI() {
                       className={`bg-gradient-to-br ${panel.bg} rounded-2xl p-8 h-80 flex flex-col items-center justify-center border-4 border-violet-200 hover:border-violet-400 transition-all shadow-lg hover:shadow-xl`}
                     >
                       {/* Panel Number */}
-                      <div className="absolute top-3 left-3 bg-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-violet-600 shadow">
+                      <div className="absolute top-3 left-3 bg-white rounded-full w-8 h-8 flex items-center justify-center text-[13px] font-bold text-violet-600 shadow">
                         {idx + 1}
                       </div>
 

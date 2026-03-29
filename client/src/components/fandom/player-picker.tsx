@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Check } from "lucide-react";
+import { TeamLogo } from "@/components/fandom/team-logo";
 import { listItems, STORE_KEYS, getPlayerPhotoUrl, type KboTeam, type KboPlayer } from "@/lib/local-store";
 
 const themeColor = "var(--fandom-primary, #7B2FF7)";
@@ -123,11 +124,8 @@ export function PlayerPicker({
               }`}
               style={selectedGroupId === group.id ? { borderColor: themeColor, background: `color-mix(in srgb, ${themeColor} 10%, transparent)` } : undefined}
             >
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[13px] font-bold mb-2"
-                style={{ backgroundColor: group.coverColor }}
-              >
-                {group.name.slice(0, 2)}
+              <div className="mb-2">
+                <TeamLogo team={group} size="sm" />
               </div>
               <p className="text-sm font-semibold text-foreground">{group.name}</p>
               <p className="text-[13px] text-muted-foreground">{group.fandomName}</p>

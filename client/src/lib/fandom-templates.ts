@@ -183,14 +183,14 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
       if (meta.poseHint) parts.push(`${meta.poseHint} 포즈`);
       break;
     case "playercard":
-      parts.push(`${randExpr} ${memberPart} 선수 카드, ${randAngle}`);
+      parts.push(`${memberPart} 야구 트레이딩 카드 디자인 — 카드 프레임, 선수명, 등번호, 팀로고 레이아웃 포함, ${randAngle}`);
       if (meta.poseHint) parts.push(`${meta.poseHint} 포즈`);
       break;
     case "wallpaper":
-      parts.push(`${randExpr} ${memberPart} 폰 배경화면, ${randAngle}`);
+      parts.push(`${randExpr} ${memberPart} 폰 배경화면 디자인 — 세로 구도, 화려하고 깊이감 있는 배경 위에 선수 일러스트, ${randAngle}`);
       break;
     case "sticker":
-      parts.push(`${memberPart} 귀여운 스티커 세트, 다양한 표정`);
+      parts.push(`${memberPart} 캐릭터 다이컷 스티커 6종 디자인 시트 — 각각 다른 표정과 포즈의 개별 스티커들을 흰 배경 위에 배치`);
       break;
     case "matchday":
       parts.push(`${randExpr} ${memberPart} 경기날 컨셉 포토, ${randAngle}`);
@@ -209,40 +209,40 @@ export function buildAutoPrompt(meta: FandomEditorMeta): string {
       parts.push(`${memberPart} 2컷 밈 코믹, 재미있는 상황, 위아래 2패널 레이아웃`);
       break;
     case "cheerbanner":
-      parts.push(`${memberPart} 야구장 응원 배너 디자인`);
+      parts.push(`${memberPart} 야구장 응원 현수막 디자인 — 가로 배너 레이아웃, 팀컬러 배경, 선수 일러스트와 응원문구 텍스트 공간 포함`);
       break;
     case "slogan":
-      parts.push(`${memberPart} 야구장 응원 슬로건 배너`);
+      parts.push(`${memberPart} 응원 슬로건 타올/배너 디자인 — 세로 레이아웃, 팀컬러 그라데이션 배경, 대형 응원 텍스트 공간`);
       break;
     case "stickersheet":
-      parts.push(`${memberPart} 귀여운 스티커 시트, 다양한 포즈와 표정`);
+      parts.push(`${memberPart} 스티커 시트 디자인 — 12종 이상의 미니 캐릭터 스티커를 격자 배열로, 컷라인 포함, 흰 배경`);
       break;
     case "stadium-set":
-      parts.push(`${memberPart} 경기장 관람 패키지 디자인`);
+      parts.push(`${memberPart} 경기장 관람 굿즈 패키지 디자인 — 응원봉+타올+티켓+스티커 세트를 하나의 구성으로 배치`);
       break;
     case "acrylicstand":
-      parts.push(`${memberPart} 아크릴 스탠드 디자인`);
+      parts.push(`${memberPart} 아크릴 스탠드 디자인 — 전신 캐릭터 + 하단 받침대, 다이컷 외곽선, 흰 배경`);
       break;
     case "phonecase":
-      parts.push(`${memberPart} 폰케이스 디자인`);
+      parts.push(`${memberPart} 폰케이스 프린트 디자인 — 스마트폰 케이스 형태 안에 그래픽 배치, 팀컬러 활용`);
       break;
     case "deco-playercard":
-      parts.push(`${memberPart} 꾸미기 선수카드, 스티커와 장식`);
+      parts.push(`${memberPart} 데코 선수카드 디자인 — 카드 프레임 위에 스티커/리본/별 장식 요소가 꾸며진 선수 카드 레이아웃`);
       break;
     case "retro-magazine":
-      parts.push(`${memberPart} 레트로 야구 매거진 커버`);
+      parts.push(`${memberPart} 레트로 야구 매거진 표지 디자인 — 잡지 레이아웃(제호, 헤드라인, 바코드), 빈티지 색감`);
       break;
     case "scorebook-page":
-      parts.push(`${memberPart} 스코어북 다이어리 꾸미기 페이지`);
+      parts.push(`${memberPart} 스코어북 다이어리 페이지 디자인 — 노트 레이아웃 위에 선수 일러스트, 스티커, 메모 장식`);
       break;
     case "kitsch-collage":
-      parts.push(`${memberPart} 네온 크롬 맥시멀리스트 키치 콜라주`);
+      parts.push(`${memberPart} 키치 콜라주 디자인 — 네온 컬러, 크롬 텍스처, 맥시멀리스트 레이어드 그래픽, 빈티지 사진 오려붙이기 스타일`);
       break;
     case "ticket-bookmark":
-      parts.push(`${memberPart} 레트로 관람 티켓 & 북마크`);
+      parts.push(`${memberPart} 레트로 야구 관람 티켓 디자인 — 티켓 형태(절취선, 좌석번호 공간, 팀로고), 빈티지 종이 질감`);
       break;
     case "profile-deco":
-      parts.push(`${memberPart} SNS 프로필 데코 세트`);
+      parts.push(`${memberPart} SNS 프로필 이미지 디자인 — 원형 크롭에 최적화된 정면/3/4 구도, 장식 프레임 포함`);
       break;
   }
 

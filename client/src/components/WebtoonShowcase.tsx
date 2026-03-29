@@ -66,7 +66,7 @@ export function WebtoonShowcase() {
                 <div className="text-sm font-bold text-foreground">
                   {current.author}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-[13px] text-muted-foreground">
                   {current.style}
                 </div>
               </div>
@@ -122,7 +122,7 @@ export function WebtoonShowcase() {
               {/* AI Badge */}
               <div className="absolute top-4 right-4">
                 <motion.div
-                  className="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#00e5cc] to-cyan-400 text-white text-xs font-black shadow-lg flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#00e5cc] to-cyan-400 text-white text-[13px] font-black shadow-lg flex items-center gap-1"
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >

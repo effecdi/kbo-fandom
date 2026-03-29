@@ -98,7 +98,7 @@ export function AnalyticsPage() {
             <div key={i} className="rounded-2xl p-6 border bg-card border-border">
               <div className="flex items-center justify-between mb-3">
                 <metric.icon className="w-5 h-5 text-muted-foreground" />
-                <div className="flex items-center gap-1 text-xs font-medium text-green-500">
+                <div className="flex items-center gap-1 text-[13px] font-medium text-green-500">
                   <ArrowUp className="w-5 h-5" />
                   {metric.change}
                 </div>
@@ -154,7 +154,7 @@ export function AnalyticsPage() {
                       <span className="text-lg font-black text-muted-foreground w-6">{i + 1}</span>
                       <div>
                         <span className="text-sm font-medium text-foreground">{fanart.title}</span>
-                        <p className="text-xs text-muted-foreground">{fanart.groupName} · {fanart.authorName}</p>
+                        <p className="text-[13px] text-muted-foreground">{fanart.groupName} · {fanart.authorName}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-sm text-pink-500">
@@ -180,9 +180,9 @@ export function AnalyticsPage() {
                     <div key={project.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted transition-colors">
                       <div>
                         <span className="text-sm font-medium text-foreground">{project.title}</span>
-                        <p className="text-xs text-muted-foreground">{project.panels}컷 · {project.updatedAt}</p>
+                        <p className="text-[13px] text-muted-foreground">{project.panels}컷 · {project.updatedAt}</p>
                       </div>
-                      <span className={`text-xs font-medium ${statusColor}`}>{statusText}</span>
+                      <span className={`text-[13px] font-medium ${statusColor}`}>{statusText}</span>
                     </div>
                   );
                 })

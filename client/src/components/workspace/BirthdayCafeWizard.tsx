@@ -116,7 +116,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
             </div>
             <div>
               <h2 className="text-[15px] font-bold text-white">생일카페 패키지 위자드</h2>
-              <p className="text-[12px] text-white/40">일관된 테마로 굿즈 세트를 한번에 생성</p>
+              <p className="text-[13px] text-white/40">일관된 테마로 굿즈 세트를 한번에 생성</p>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/[0.06]">
@@ -129,14 +129,14 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
           {steps.map((s, i) => (
             <div key={s.id} className="flex items-center gap-1.5">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[13px] font-bold ${
                   i <= currentIdx ? "text-white" : "bg-white/[0.06] text-white/30"
                 }`}
                 style={i <= currentIdx ? { background: groupColor } : {}}
               >
                 {i < currentIdx ? <Check className="w-3 h-3" /> : s.num}
               </div>
-              <span className={`text-[11px] ${i <= currentIdx ? "text-white/80" : "text-white/30"}`}>{s.label}</span>
+              <span className={`text-[13px] ${i <= currentIdx ? "text-white/80" : "text-white/30"}`}>{s.label}</span>
               {i < steps.length - 1 && <div className="w-6 h-0.5 rounded" style={{ background: i < currentIdx ? groupColor : "rgba(255,255,255,0.06)" }} />}
             </div>
           ))}
@@ -148,7 +148,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
           {step === "member" && (
             <>
               <div>
-                <label className="text-[12px] font-semibold text-white/40 uppercase tracking-wider mb-1.5 block">멤버 이름</label>
+                <label className="text-[13px] font-semibold text-white/40 uppercase tracking-wider mb-1.5 block">멤버 이름</label>
                 <input
                   type="text"
                   value={memberName}
@@ -158,7 +158,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-white/40 uppercase tracking-wider mb-1.5 block">생일 날짜</label>
+                <label className="text-[13px] font-semibold text-white/40 uppercase tracking-wider mb-1.5 block">생일 날짜</label>
                 <input
                   type="date"
                   value={birthdayDate}
@@ -167,7 +167,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-white/40 uppercase tracking-wider mb-1.5 block">카페명 (선택)</label>
+                <label className="text-[13px] font-semibold text-white/40 uppercase tracking-wider mb-1.5 block">카페명 (선택)</label>
                 <input
                   type="text"
                   value={cafeName}
@@ -182,7 +182,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
           {/* Step 2: Goods Selection */}
           {step === "goods" && (
             <>
-              <p className="text-[12px] text-white/40">포함할 굿즈를 선택하세요 (각각 별도 컷으로 생성)</p>
+              <p className="text-[13px] text-white/40">포함할 굿즈를 선택하세요 (각각 별도 컷으로 생성)</p>
               <div className="grid grid-cols-2 gap-2">
                 {BIRTHDAY_GOODS_OPTIONS.map((g) => {
                   const isSelected = selectedGoods.includes(g.id);
@@ -196,7 +196,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
                           : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06]"
                       }`}
                     >
-                      <p className={`text-xs font-semibold ${isSelected ? "text-primary" : "text-white/70"}`}>{g.label}</p>
+                      <p className={`text-[13px] font-semibold ${isSelected ? "text-primary" : "text-white/70"}`}>{g.label}</p>
                     </button>
                   );
                 })}
@@ -208,7 +208,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
           {step === "theme" && (
             <>
               <div>
-                <p className="text-[12px] text-white/40 mb-2">추천 컬러 (멤버/그룹 기반)</p>
+                <p className="text-[13px] text-white/40 mb-2">추천 컬러 (멤버/그룹 기반)</p>
                 <div className="flex gap-2 flex-wrap">
                   {suggestedColors.map((c) => (
                     <button
@@ -234,13 +234,13 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
                 </div>
               </div>
               <div>
-                <p className="text-[12px] text-white/40 mb-2">비주얼 스타일</p>
+                <p className="text-[13px] text-white/40 mb-2">비주얼 스타일</p>
                 <div className="flex flex-wrap gap-2">
                   {["dreamy", "cute", "elegant", "minimal", "retro"].map((style) => (
                     <button
                       key={style}
                       onClick={() => setCoordinatedStyle(style)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all ${
                         coordinatedStyle === style
                           ? "text-white border-transparent"
                           : "border-white/[0.06] text-white/50 hover:text-white/70"
@@ -259,7 +259,7 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
           {step === "generate" && (
             <div className="space-y-4">
               <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-4 space-y-2">
-                <p className="text-xs font-semibold text-white/40 uppercase">요약</p>
+                <p className="text-[13px] font-semibold text-white/40 uppercase">요약</p>
                 <p className="text-sm text-white/80">멤버: <span className="font-bold">{memberName}</span></p>
                 {birthdayDate && <p className="text-sm text-white/80">날짜: {birthdayDate}</p>}
                 {cafeName && <p className="text-sm text-white/80">카페명: {cafeName}</p>}
@@ -295,14 +295,14 @@ export function BirthdayCafeWizard({ open, onClose }: Props) {
           <button
             onClick={() => setStep(steps[Math.max(0, currentIdx - 1)].id)}
             disabled={currentIdx === 0}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs text-white/50 hover:text-white/80 disabled:opacity-30 transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] text-white/50 hover:text-white/80 disabled:opacity-30 transition-all"
           >
             <ArrowLeft className="w-4 h-4" /> 이전
           </button>
           {currentIdx < steps.length - 1 && (
             <button
               onClick={() => setStep(steps[currentIdx + 1].id)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-bold text-white transition-all"
               style={{ background: groupColor }}
             >
               다음 <ArrowRight className="w-4 h-4" />

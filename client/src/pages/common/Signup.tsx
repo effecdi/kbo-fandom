@@ -171,7 +171,7 @@ export function Signup() {
               {/* Divider */}
               <div className="relative my-6">
                 <Separator className="bg-muted" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-xs font-semibold bg-card text-muted-foreground">
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-3 text-[13px] font-semibold bg-card text-muted-foreground">
                   또는
                 </span>
               </div>

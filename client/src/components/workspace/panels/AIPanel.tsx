@@ -93,8 +93,8 @@ export function AIPanel() {
           <Sparkles className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h3 className="text-xs font-bold text-white/80">AI 생성</h3>
-          <p className="text-[12px] text-white/25">AI로 콘텐츠를 자동 생성</p>
+          <h3 className="text-[13px] font-bold text-white/80">AI 생성</h3>
+          <p className="text-[13px] text-white/25">AI로 콘텐츠를 자동 생성</p>
         </div>
       </div>
 
@@ -119,10 +119,10 @@ export function AIPanel() {
               }`}>
                 <mode.icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-white/25"}`} />
               </div>
-              <p className={`text-[12px] font-bold ${isActive ? "text-white/90" : "text-white/50"}`}>
+              <p className={`text-[13px] font-bold ${isActive ? "text-white/90" : "text-white/50"}`}>
                 {mode.label}
               </p>
-              <p className={`text-[12px] mt-0.5 ${isActive ? "text-white/40" : "text-white/20"}`}>
+              <p className={`text-[13px] mt-0.5 ${isActive ? "text-white/40" : "text-white/20"}`}>
                 {mode.desc}
               </p>
               {isActive && (
@@ -147,7 +147,7 @@ export function AIPanel() {
           <button
             onClick={handleTopicSuggest}
             disabled={isGenerating}
-            className="flex items-center gap-1.5 text-[12px] text-primary/50 hover:text-primary transition-colors disabled:opacity-30"
+            className="flex items-center gap-1.5 text-[13px] text-primary/50 hover:text-primary transition-colors disabled:opacity-30"
           >
             <RefreshCw className={`w-5 h-5 ${isGenerating ? "animate-spin" : ""}`} />
             AI 주제 추천
@@ -172,8 +172,8 @@ export function AIPanel() {
           {pinnedCharacters.length === 0 ? (
             <div className="px-4 py-5 rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.01] text-center">
               <Users className="w-6 h-6 text-white/10 mx-auto mb-2" />
-              <p className="text-[12px] text-white/30 font-medium">캐릭터를 먼저 고정하세요</p>
-              <p className="text-[12px] text-white/15 mt-0.5">이미지 탭 → 캐릭터에서 선택</p>
+              <p className="text-[13px] text-white/30 font-medium">캐릭터를 먼저 고정하세요</p>
+              <p className="text-[13px] text-white/15 mt-0.5">이미지 탭 → 캐릭터에서 선택</p>
             </div>
           ) : (
             <div className="flex gap-2.5 px-1">
@@ -186,10 +186,10 @@ export function AIPanel() {
                       className="w-14 h-14 rounded-2xl object-cover border-2 border-primary/30 shadow-[0_0_16px_rgba(0,229,204,0.1)]"
                     />
                     <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                      <span className="text-[12px] text-black font-bold">✓</span>
+                      <span className="text-[13px] text-black font-bold">✓</span>
                     </div>
                   </div>
-                  <span className="text-[12px] text-white/35 truncate max-w-14 font-medium">{c.name}</span>
+                  <span className="text-[13px] text-white/35 truncate max-w-14 font-medium">{c.name}</span>
                 </div>
               ))}
             </div>
@@ -233,7 +233,7 @@ export function AIPanel() {
           <ScopeSelector scope={scope} onChange={setScope} />
 
           <div className="px-3 py-2 rounded-xl bg-gradient-to-r from-blue-500/5 to-cyan-500/5 border border-blue-500/10">
-            <p className="text-[12px] text-white/30 leading-relaxed">
+            <p className="text-[13px] text-white/30 leading-relaxed">
               생성된 이미지는 <strong className="text-primary">레이어</strong>로 추가됩니다.
               크기/위치를 자유롭게 조절하세요.
             </p>
@@ -255,7 +255,7 @@ export function AIPanel() {
         <div className="space-y-3">
           {/* Info banner */}
           <div className="px-3 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border border-emerald-500/10">
-            <p className="text-[12px] text-white/40 leading-relaxed">
+            <p className="text-[13px] text-white/40 leading-relaxed">
               <strong className="text-primary">하나의 캔버스</strong>에 여러 컷을 배치합니다.
               스토리를 입력하면 AI가 자동으로 장면을 나누고 이미지를 생성해요.
             </p>
@@ -272,7 +272,7 @@ export function AIPanel() {
 
           {/* Cut count with layout preview */}
           <div>
-            <label className="text-[12px] text-white/30 font-semibold block mb-2">컷 수 & 레이아웃</label>
+            <label className="text-[13px] text-white/30 font-semibold block mb-2">컷 수 & 레이아웃</label>
             <div className="flex gap-2">
               {([2, 3, 4] as const).map((n) => (
                 <button
@@ -288,7 +288,7 @@ export function AIPanel() {
                   }`}
                 >
                   <LayoutPreviewSVG cuts={n} layoutType={n === cutsCount ? layoutType : "default"} active={cutsCount === n} />
-                  <span className={`text-[12px] font-bold ${cutsCount === n ? "text-primary" : "text-white/25"}`}>
+                  <span className={`text-[13px] font-bold ${cutsCount === n ? "text-primary" : "text-white/25"}`}>
                     {n}컷
                   </span>
                 </button>
@@ -299,7 +299,7 @@ export function AIPanel() {
           {/* Layout type (only for 4 cuts) */}
           {cutsCount === 4 && (
             <div>
-              <label className="text-[12px] text-white/30 font-semibold block mb-1.5">레이아웃 형태</label>
+              <label className="text-[13px] text-white/30 font-semibold block mb-1.5">레이아웃 형태</label>
               <div className="flex gap-1.5">
                 {([
                   { id: "default" as MultiCutLayoutType, label: "기본", icon: LayoutGrid },
@@ -315,7 +315,7 @@ export function AIPanel() {
                     }`}
                   >
                     <lt.icon className={`w-5 h-5 ${layoutType === lt.id ? "text-primary" : "text-white/20"}`} />
-                    <span className={`text-[12px] font-medium ${layoutType === lt.id ? "text-primary" : "text-white/30"}`}>
+                    <span className={`text-[13px] font-medium ${layoutType === lt.id ? "text-primary" : "text-white/30"}`}>
                       {lt.label}
                     </span>
                   </button>
@@ -326,7 +326,7 @@ export function AIPanel() {
 
           {/* Border style */}
           <div>
-            <label className="text-[12px] text-white/30 font-semibold block mb-1.5">보더 스타일</label>
+            <label className="text-[13px] text-white/30 font-semibold block mb-1.5">보더 스타일</label>
             <div className="flex gap-1.5">
               {([
                 { id: "wobbly" as MultiCutBorderStyle, label: "손그림", svg: "M2,6 C4,3 6,9 8,6 C10,3 12,9 14,6 C16,3 18,9 20,6" },
@@ -348,7 +348,7 @@ export function AIPanel() {
                       <rect x="2" y="2" width="20" height="8" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
                     )}
                   </svg>
-                  <span className={`text-[12px] font-medium ${borderStyle === bs.id ? "text-primary" : "text-white/30"}`}>
+                  <span className={`text-[13px] font-medium ${borderStyle === bs.id ? "text-primary" : "text-white/30"}`}>
                     {bs.label}
                   </span>
                 </button>
@@ -358,7 +358,7 @@ export function AIPanel() {
 
           {/* Art style */}
           <div>
-            <label className="text-[12px] text-white/30 font-semibold block mb-1.5">아트 스타일</label>
+            <label className="text-[13px] text-white/30 font-semibold block mb-1.5">아트 스타일</label>
             <div className="grid grid-cols-3 gap-1.5">
               {ART_STYLES.map((s) => (
                 <button
@@ -371,7 +371,7 @@ export function AIPanel() {
                   }`}
                 >
                   <span className="text-sm">{s.emoji}</span>
-                  <span className={`text-[12px] font-medium ${artStyle === s.id ? "text-primary" : "text-white/30"}`}>
+                  <span className={`text-[13px] font-medium ${artStyle === s.id ? "text-primary" : "text-white/30"}`}>
                     {s.label}
                   </span>
                 </button>
@@ -410,11 +410,11 @@ function InputField({
   multiline?: boolean;
   rows?: number;
 }) {
-  const className = "w-full px-3.5 py-2.5 text-xs bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/30 focus:bg-white/[0.04] text-white/80 placeholder:text-white/15 transition-all";
+  const className = "w-full px-3.5 py-2.5 text-[13px] bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/30 focus:bg-white/[0.04] text-white/80 placeholder:text-white/15 transition-all";
 
   return (
     <div>
-      <label className="text-[12px] text-white/30 font-semibold block mb-1.5">{label}</label>
+      <label className="text-[13px] text-white/30 font-semibold block mb-1.5">{label}</label>
       {multiline ? (
         <textarea
           value={value}
@@ -448,7 +448,7 @@ function ScopeSelector({
         <button
           key={s}
           onClick={() => onChange(s)}
-          className={`flex-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${
+          className={`flex-1 px-2.5 py-1.5 rounded-lg text-[13px] font-semibold transition-all ${
             scope === s
               ? "bg-primary/10 text-primary shadow-[0_0_8px_rgba(0,229,204,0.08)]"
               : "text-white/25 hover:text-white/40"
@@ -531,7 +531,7 @@ function GenerateButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r ${gradient} text-white text-xs font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(0,229,204,0.15)] hover:scale-[1.01] active:scale-[0.99] transition-all`}
+      className={`w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r ${gradient} text-white text-[13px] font-bold disabled:opacity-20 hover:shadow-[0_0_24px_rgba(0,229,204,0.15)] hover:scale-[1.01] active:scale-[0.99] transition-all`}
     >
       {loading ? (
         <Loader2 className="w-5 h-5 animate-spin" />

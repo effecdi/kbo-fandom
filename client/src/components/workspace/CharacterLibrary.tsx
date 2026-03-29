@@ -77,7 +77,7 @@ export function CharacterLibrary() {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
+      <p className="text-[13px] text-muted-foreground">
         캐릭터를 선택하면 AI 생성 시 적용됩니다
       </p>
       <div className="grid grid-cols-2 gap-2">
@@ -95,7 +95,7 @@ export function CharacterLibrary() {
                 <User className="w-8 h-8 text-muted-foreground/20" />
               </div>
             ))}
-            <p className="col-span-2 text-[12px] text-muted-foreground/50 text-center">
+            <p className="col-span-2 text-[13px] text-muted-foreground/50 text-center">
               생성된 캐릭터가 없습니다
             </p>
           </>
@@ -118,11 +118,11 @@ export function CharacterLibrary() {
               />
               {isPinned(char.id) && (
                 <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-[12px] text-black font-bold">✓</span>
+                  <span className="text-[13px] text-black font-bold">✓</span>
                 </div>
               )}
               <div className="absolute inset-x-0 bottom-0 bg-black/50 px-1.5 py-1">
-                <span className="text-[12px] text-white truncate block">
+                <span className="text-[13px] text-white truncate block">
                   {char.name}
                 </span>
               </div>

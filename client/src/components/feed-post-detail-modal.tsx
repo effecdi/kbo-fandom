@@ -110,7 +110,7 @@ export function FeedPostDetailModal({ post, onClose, onAuthorClick }: FeedPostDe
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate">{displayName}</p>
                   {post.authorGenre && (
-                    <Badge variant="secondary" className="text-[12px] mt-0.5">
+                    <Badge variant="secondary" className="text-[13px] mt-0.5">
                       {GENRE_LABELS[post.authorGenre] || post.authorGenre}
                     </Badge>
                   )}

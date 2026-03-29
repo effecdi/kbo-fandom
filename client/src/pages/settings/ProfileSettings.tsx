@@ -194,7 +194,7 @@ export function ProfileSettings() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">프로필 사진</p>
-                <p className="text-xs text-muted-foreground">JPG, PNG. 최대 2MB</p>
+                <p className="text-[13px] text-muted-foreground">JPG, PNG. 최대 2MB</p>
               </div>
             </div>
           </div>
@@ -236,7 +236,7 @@ export function ProfileSettings() {
                   rows={3}
                   className="w-full px-4 py-2.5 rounded-lg border bg-muted border-border text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[#00e5cc] placeholder-muted-foreground"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[13px] text-muted-foreground mt-1">
                   {bio.length}/200자
                 </p>
               </div>
@@ -249,7 +249,7 @@ export function ProfileSettings() {
               <Tag className="w-5 h-5 text-[#00e5cc]" />
               <h2 className="text-lg font-bold text-foreground">전문 분야</h2>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">
+            <p className="text-[13px] text-muted-foreground mb-4">
               해당하는 분야를 선택하세요 (복수 선택 가능)
             </p>
             <div className="flex flex-wrap gap-2">
@@ -271,7 +271,7 @@ export function ProfileSettings() {
               ))}
             </div>
             {genres.length > 0 && (
-              <p className="text-xs text-[#00e5cc] mt-3">
+              <p className="text-[13px] text-[#00e5cc] mt-3">
                 {genres.length}개 선택됨
               </p>
             )}
@@ -288,7 +288,7 @@ export function ProfileSettings() {
                 variant="outline"
                 size="sm"
                 onClick={addSocialLink}
-                className="gap-1.5 text-xs"
+                className="gap-1.5 text-[13px]"
               >
                 <Plus className="w-5 h-5" />
                 추가

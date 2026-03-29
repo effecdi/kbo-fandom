@@ -856,7 +856,7 @@ export default function AutoWebtoonPage() {
                     {idx + 1}
                   </div>
                 )}
-                <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[12px] px-1 rounded">
+                <span className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[13px] px-1 rounded">
                   C{canvasIdx + 1}-{cutIdx + 1}
                 </span>
               </div>

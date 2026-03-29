@@ -146,7 +146,7 @@ export function DashboardLayout({ children, noPadding }: DashboardLayoutProps) {
                       <item.icon className="w-5 h-5" />
                       <span className="text-sm flex-1 text-left">{item.label}</span>
                       {item.badge && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold">
+                        <span className="text-[13px] px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold">
                           {item.badge}
                         </span>
                       )}

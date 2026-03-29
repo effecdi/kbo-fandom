@@ -25,7 +25,7 @@ export function CopilotPanel() {
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.04]">
         <Sparkles className="w-5 h-5 text-primary" />
-        <span className="text-xs font-bold text-white">AI Copilot</span>
+        <span className="text-[13px] font-bold text-white">AI Copilot</span>
       </div>
 
       {/* Messages */}
@@ -34,10 +34,10 @@ export function CopilotPanel() {
           {messages.length === 0 && (
             <div className="text-center py-8">
               <Bot className="w-8 h-8 text-white/20 mx-auto mb-2" />
-              <p className="text-xs text-white/50">
+              <p className="text-[13px] text-white/50">
                 AI에게 요청하세요
               </p>
-              <p className="text-[12px] text-white/40 mt-1">
+              <p className="text-[13px] text-white/40 mt-1">
                 "배경 생성해줘", "말풍선 추가" 등
               </p>
             </div>
@@ -56,7 +56,7 @@ export function CopilotPanel() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
+                  className={`max-w-[85%] rounded-lg px-3 py-2 text-[13px] ${
                     msg.role === "user"
                       ? "bg-primary text-white"
                       : "bg-white/[0.06] text-white"

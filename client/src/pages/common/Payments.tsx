@@ -84,14 +84,14 @@ export function Payments() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00e5cc] to-[#00b3a6] flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xs font-bold text-muted-foreground">
+                <span className="text-[13px] font-bold text-muted-foreground">
                   월 결제 금액
                 </span>
               </div>
               <p className="text-2xl font-black text-foreground">
                 ₩19,900
               </p>
-              <p className="text-xs mt-1 text-muted-foreground">
+              <p className="text-[13px] mt-1 text-muted-foreground">
                 매월 자동 결제
               </p>
             </div>
@@ -101,14 +101,14 @@ export function Payments() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xs font-bold text-muted-foreground">
+                <span className="text-[13px] font-bold text-muted-foreground">
                   다음 결제일
                 </span>
               </div>
               <p className="text-2xl font-black text-foreground">
                 2024-04-01
               </p>
-              <p className="text-xs mt-1 text-muted-foreground">
+              <p className="text-[13px] mt-1 text-muted-foreground">
                 7일 후
               </p>
             </div>
@@ -118,14 +118,14 @@ export function Payments() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
                   <CreditCard className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xs font-bold text-muted-foreground">
+                <span className="text-[13px] font-bold text-muted-foreground">
                   결제 수단
                 </span>
               </div>
               <p className="text-2xl font-black text-foreground">
                 ****1234
               </p>
-              <p className="text-xs mt-1 text-muted-foreground">
+              <p className="text-[13px] mt-1 text-muted-foreground">
                 Visa 신용카드
               </p>
             </div>

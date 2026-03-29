@@ -52,7 +52,7 @@ export function StickerPanel() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider px-1">스티커</h3>
+      <h3 className="text-[13px] font-bold text-white/60 uppercase tracking-wider px-1">스티커</h3>
 
       {/* Category tabs */}
       <div className="flex flex-wrap gap-1">
@@ -63,7 +63,7 @@ export function StickerPanel() {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+              className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                 isActive
                   ? "bg-primary/20 text-primary"
                   : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
@@ -86,7 +86,7 @@ export function StickerPanel() {
             title={sticker.label}
           >
             <span className="text-2xl">{sticker.imageUrl}</span>
-            <span className="text-[9px] text-white/30 group-hover:text-white/60 truncate w-full text-center px-1">
+            <span className="text-[13px] text-white/30 group-hover:text-white/60 truncate w-full text-center px-1">
               {sticker.label}
             </span>
           </button>
@@ -94,7 +94,7 @@ export function StickerPanel() {
       </div>
 
       {stickers.length === 0 && (
-        <p className="text-[11px] text-white/20 text-center py-4">
+        <p className="text-[13px] text-white/20 text-center py-4">
           이 카테고리에 스티커가 없습니다
         </p>
       )}

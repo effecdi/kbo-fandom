@@ -236,7 +236,7 @@ export function StudioNew() {
                 <h3 className="font-semibold text-sm text-foreground">
                   {tool.title}
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[13px] text-muted-foreground mt-1">
                   {tool.description}
                 </p>
               </button>

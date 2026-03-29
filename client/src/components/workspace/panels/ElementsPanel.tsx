@@ -179,7 +179,7 @@ export function ElementsPanel() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+      <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
         <MessageSquare className="w-5 h-5 text-primary" />
         요소
       </h3>
@@ -194,7 +194,7 @@ export function ElementsPanel() {
           <button
             key={t.id}
             onClick={() => setSubTab(t.id)}
-            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[12px] font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[13px] font-medium transition-all ${
               subTab === t.id
                 ? "bg-primary/10 text-primary"
                 : "text-white/40 hover:text-white/60"
@@ -215,7 +215,7 @@ export function ElementsPanel() {
               <button
                 key={cat.id}
                 onClick={() => setBubbleCategory(cat.id)}
-                className={`px-2 py-1 rounded-lg text-[12px] font-medium transition-all ${
+                className={`px-2 py-1 rounded-lg text-[13px] font-medium transition-all ${
                   bubbleCategory === cat.id
                     ? "bg-primary/10 text-primary border border-primary/20"
                     : "text-white/30 hover:text-white/50 border border-transparent"
@@ -244,7 +244,7 @@ export function ElementsPanel() {
                 <div className="w-full aspect-[5/4]">
                   <BubblePreview style={s.id} selected={selectedBubbleStyle === s.id} />
                 </div>
-                <span className={`text-[12px] ${selectedBubbleStyle === s.id ? "text-primary" : "text-white/30"}`}>
+                <span className={`text-[13px] ${selectedBubbleStyle === s.id ? "text-primary" : "text-white/30"}`}>
                   {s.label}
                 </span>
               </button>
@@ -253,7 +253,7 @@ export function ElementsPanel() {
 
           {/* Color presets */}
           <div>
-            <span className="text-[12px] text-white/30 font-medium block mb-1.5">색상</span>
+            <span className="text-[13px] text-white/30 font-medium block mb-1.5">색상</span>
             <div className="flex gap-1.5 flex-wrap">
               {BUBBLE_COLOR_PRESETS.map((preset, i) => (
                 <button
@@ -285,13 +285,13 @@ export function ElementsPanel() {
         <div className="space-y-3">
           {/* Script style */}
           <div>
-            <span className="text-[12px] text-white/30 font-medium block mb-1.5">스타일</span>
+            <span className="text-[13px] text-white/30 font-medium block mb-1.5">스타일</span>
             <div className="flex gap-1 flex-wrap">
               {SCRIPT_STYLES.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => setScriptStyle(s.id)}
-                  className={`px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all border ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-all border ${
                     scriptStyle === s.id
                       ? "bg-primary/10 text-primary border-primary/20"
                       : "text-white/30 border-white/[0.06] hover:border-white/10"
@@ -305,13 +305,13 @@ export function ElementsPanel() {
 
           {/* Script color */}
           <div>
-            <span className="text-[12px] text-white/30 font-medium block mb-1.5">색상</span>
+            <span className="text-[13px] text-white/30 font-medium block mb-1.5">색상</span>
             <div className="flex gap-1.5 flex-wrap">
               {SCRIPT_COLOR_PRESETS.map((preset, i) => (
                 <button
                   key={i}
                   onClick={() => setScriptColorIdx(i)}
-                  className={`px-2 py-1 rounded-lg text-[12px] transition-all border ${
+                  className={`px-2 py-1 rounded-lg text-[13px] transition-all border ${
                     scriptColorIdx === i
                       ? "border-primary/40"
                       : "border-white/[0.06] hover:border-white/10"
@@ -326,25 +326,25 @@ export function ElementsPanel() {
 
           {/* Top script */}
           <div>
-            <label className="text-[12px] text-white/40 font-medium block mb-1">상단 자막</label>
+            <label className="text-[13px] text-white/40 font-medium block mb-1">상단 자막</label>
             <textarea
               value={activeCut?.scriptTop?.text || ""}
               onChange={(e) => updateScript("top", e.target.value)}
               placeholder="상단 자막 텍스트..."
               rows={2}
-              className="w-full px-3 py-2 text-xs bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/40 resize-none text-white/80 placeholder:text-white/20"
+              className="w-full px-3 py-2 text-[13px] bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/40 resize-none text-white/80 placeholder:text-white/20"
             />
           </div>
 
           {/* Bottom script */}
           <div>
-            <label className="text-[12px] text-white/40 font-medium block mb-1">하단 자막</label>
+            <label className="text-[13px] text-white/40 font-medium block mb-1">하단 자막</label>
             <textarea
               value={activeCut?.scriptBottom?.text || ""}
               onChange={(e) => updateScript("bottom", e.target.value)}
               placeholder="하단 자막 텍스트..."
               rows={2}
-              className="w-full px-3 py-2 text-xs bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/40 resize-none text-white/80 placeholder:text-white/20"
+              className="w-full px-3 py-2 text-[13px] bg-white/[0.03] rounded-xl border border-white/[0.06] focus:outline-none focus:border-primary/40 resize-none text-white/80 placeholder:text-white/20"
             />
           </div>
         </div>
@@ -353,7 +353,7 @@ export function ElementsPanel() {
       {/* ── Template Tab ──────────────────────────────────── */}
       {subTab === "template" && (
         <div className="space-y-2">
-          <p className="text-[12px] text-white/30">클릭하면 말풍선 세트가 캔버스에 추가됩니다</p>
+          <p className="text-[13px] text-white/30">클릭하면 말풍선 세트가 캔버스에 추가됩니다</p>
           {BUBBLE_TEMPLATES.map((tmpl) => (
             <button
               key={tmpl.id}
@@ -364,10 +364,10 @@ export function ElementsPanel() {
                 <MessageSquare className="w-5 h-5 text-white/20 group-hover:text-primary/60 transition-colors" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-white/70 group-hover:text-white/90 transition-colors">
+                <p className="text-[13px] font-medium text-white/70 group-hover:text-white/90 transition-colors">
                   {tmpl.label}
                 </p>
-                <p className="text-[12px] text-white/30">
+                <p className="text-[13px] text-white/30">
                   {tmpl.category} · {tmpl.bubbles.length}개 말풍선
                 </p>
               </div>

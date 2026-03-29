@@ -94,11 +94,11 @@ export function KitchToolsPanel() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider px-1">키치 도구</h3>
+      <h3 className="text-[13px] font-bold text-white/60 uppercase tracking-wider px-1">키치 도구</h3>
 
       {/* Kitsch aesthetic filter shortcuts */}
       <div className="space-y-1.5">
-        <p className="text-[11px] text-white/40 px-1">키치 필터</p>
+        <p className="text-[13px] text-white/40 px-1">키치 필터</p>
         <div className="grid grid-cols-2 gap-1.5">
           {kitschFilters.map((filter) => {
             const isActive = state.activeAestheticFilter === filter.id;
@@ -117,7 +117,7 @@ export function KitchToolsPanel() {
                     className="w-3.5 h-3.5 rounded-full shrink-0"
                     style={{ background: filter.color }}
                   />
-                  <p className={`text-[11px] font-semibold ${isActive ? "text-primary" : "text-white/70"}`}>
+                  <p className={`text-[13px] font-semibold ${isActive ? "text-primary" : "text-white/70"}`}>
                     {filter.label}
                   </p>
                 </div>
@@ -133,7 +133,7 @@ export function KitchToolsPanel() {
           <button
             key={sec.id}
             onClick={() => setActiveSection(sec.id)}
-            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
               activeSection === sec.id
                 ? "bg-primary/20 text-primary"
                 : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
@@ -148,7 +148,7 @@ export function KitchToolsPanel() {
       {/* Y2K Frames */}
       {activeSection === "frames" && (
         <div className="space-y-1.5">
-          <p className="text-[11px] text-white/40 px-1">Y2K 스타일 프레임</p>
+          <p className="text-[13px] text-white/40 px-1">Y2K 스타일 프레임</p>
           <div className="grid grid-cols-2 gap-1.5">
             {KITSCH_FRAMES.map((frame) => (
               <button
@@ -156,7 +156,7 @@ export function KitchToolsPanel() {
                 onClick={() => handleApply(frame.prompt)}
                 className="p-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left"
               >
-                <p className="text-[11px] font-semibold text-white/80">{frame.label}</p>
+                <p className="text-[13px] font-semibold text-white/80">{frame.label}</p>
               </button>
             ))}
           </div>
@@ -166,13 +166,13 @@ export function KitchToolsPanel() {
       {/* Kitsch Stickers */}
       {activeSection === "stickers" && (
         <div className="space-y-1.5">
-          <p className="text-[11px] text-white/40 px-1">키치 데코 스티커</p>
+          <p className="text-[13px] text-white/40 px-1">키치 데코 스티커</p>
           <div className="flex flex-wrap gap-1.5">
             {KITSCH_STICKERS.map((sticker) => (
               <button
                 key={sticker.id}
                 onClick={() => handleApply(sticker.prompt)}
-                className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[11px] text-white/60"
+                className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[13px] text-white/60"
               >
                 {sticker.label}
               </button>
@@ -185,7 +185,7 @@ export function KitchToolsPanel() {
       {activeSection === "chrome-neon" && (
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <p className="text-[11px] text-white/40 px-1">크롬 & 네온 텍스트 효과</p>
+            <p className="text-[13px] text-white/40 px-1">크롬 & 네온 텍스트 효과</p>
             {CHROME_NEON_EFFECTS.map((effect) => (
               <button
                 key={effect.id}
@@ -193,19 +193,19 @@ export function KitchToolsPanel() {
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left"
               >
                 <Type className="w-3.5 h-3.5 text-primary/60 shrink-0" />
-                <span className="text-[11px] font-medium text-white/70">{effect.label}</span>
+                <span className="text-[13px] font-medium text-white/70">{effect.label}</span>
               </button>
             ))}
           </div>
           {/* Kitsch text presets */}
           <div className="space-y-1.5">
-            <p className="text-[11px] text-white/40 px-1">키치 텍스트 프리셋</p>
+            <p className="text-[13px] text-white/40 px-1">키치 텍스트 프리셋</p>
             <div className="flex flex-wrap gap-1.5">
               {kitschTextPresets.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => sendMessage(`"${t.text}" 텍스트를 추가해줘`)}
-                  className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[11px] text-white/60"
+                  className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[13px] text-white/60"
                 >
                   {t.text}
                 </button>
@@ -218,13 +218,13 @@ export function KitchToolsPanel() {
       {/* Deco Elements */}
       {activeSection === "deco" && (
         <div className="space-y-1.5">
-          <p className="text-[11px] text-white/40 px-1">키치 데코 요소</p>
+          <p className="text-[13px] text-white/40 px-1">키치 데코 요소</p>
           <div className="flex flex-wrap gap-1.5">
             {kitschDesignElements.map((el) => (
               <button
                 key={el.id}
                 onClick={() => handleApply(el.prompt)}
-                className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[11px] text-white/60"
+                className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[13px] text-white/60"
               >
                 {el.label}
               </button>
@@ -236,7 +236,7 @@ export function KitchToolsPanel() {
       {/* Patterns */}
       {activeSection === "patterns" && (
         <div className="space-y-1.5">
-          <p className="text-[11px] text-white/40 px-1">키치 패턴 오버레이</p>
+          <p className="text-[13px] text-white/40 px-1">키치 패턴 오버레이</p>
           {KITSCH_PATTERNS.map((pattern) => (
             <button
               key={pattern.id}
@@ -244,7 +244,7 @@ export function KitchToolsPanel() {
               className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left"
             >
               <Grid3X3 className="w-3.5 h-3.5 text-primary/60 shrink-0" />
-              <span className="text-[11px] text-white/70">{pattern.label}</span>
+              <span className="text-[13px] text-white/70">{pattern.label}</span>
             </button>
           ))}
         </div>

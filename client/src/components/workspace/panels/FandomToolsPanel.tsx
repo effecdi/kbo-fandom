@@ -98,7 +98,7 @@ export function FandomToolsPanel() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider px-1">팬덤 도구</h3>
+      <h3 className="text-[13px] font-bold text-white/60 uppercase tracking-wider px-1">팬덤 도구</h3>
 
       {/* Section tabs */}
       <div className="flex flex-wrap gap-1">
@@ -106,7 +106,7 @@ export function FandomToolsPanel() {
           <button
             key={sec.id}
             onClick={() => setActiveSection(sec.id)}
-            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
               activeSection === sec.id
                 ? "bg-primary/20 text-primary"
                 : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
@@ -121,7 +121,7 @@ export function FandomToolsPanel() {
       {/* ── Photocard Maker ── */}
       {activeSection === "photocard" && (
         <div className="space-y-2">
-          <p className="text-[11px] text-white/40 px-1">프레임을 선택하면 2:3 비율이 자동 설정됩니다</p>
+          <p className="text-[13px] text-white/40 px-1">프레임을 선택하면 2:3 비율이 자동 설정됩니다</p>
           <div className="grid grid-cols-2 gap-1.5">
             {PHOTOCARD_FRAMES.map((frame) => (
               <button
@@ -129,8 +129,8 @@ export function FandomToolsPanel() {
                 onClick={() => handleFrameSelect(frame.id)}
                 className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left"
               >
-                <p className="text-xs font-semibold text-white/80">{frame.label}</p>
-                <p className="text-[10px] text-white/30 mt-0.5">{frame.desc}</p>
+                <p className="text-[13px] font-semibold text-white/80">{frame.label}</p>
+                <p className="text-[13px] text-white/30 mt-0.5">{frame.desc}</p>
               </button>
             ))}
           </div>
@@ -142,7 +142,7 @@ export function FandomToolsPanel() {
         <div className="space-y-2">
           {fandomMeta && (
             <div className="space-y-1.5">
-              <p className="text-[11px] text-white/40 px-1">{fandomMeta.groupName} 컬러</p>
+              <p className="text-[13px] text-white/40 px-1">{fandomMeta.groupName} 컬러</p>
               <div className="flex gap-1.5">
                 <button
                   onClick={() => handleColorApply(fandomMeta.coverColor)}
@@ -153,7 +153,7 @@ export function FandomToolsPanel() {
               </div>
             </div>
           )}
-          <p className="text-[11px] text-white/40 px-1">응원봉 컬러</p>
+          <p className="text-[13px] text-white/40 px-1">응원봉 컬러</p>
           <div className="flex flex-wrap gap-1.5">
             {LIGHTSTICK_COLORS.map((lc) => (
               <button
@@ -163,7 +163,7 @@ export function FandomToolsPanel() {
                 title={lc.groupName}
               >
                 <div className="w-4 h-4 rounded-full" style={{ background: lc.color }} />
-                <span className="text-[10px] text-white/50">{lc.groupName}</span>
+                <span className="text-[13px] text-white/50">{lc.groupName}</span>
               </button>
             ))}
           </div>
@@ -181,8 +181,8 @@ export function FandomToolsPanel() {
             >
               <Zap className="w-4 h-4 text-primary shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-white/80">{effect.label}</p>
-                <p className="text-[10px] text-white/30">{effect.desc}</p>
+                <p className="text-[13px] font-semibold text-white/80">{effect.label}</p>
+                <p className="text-[13px] text-white/30">{effect.desc}</p>
               </div>
             </button>
           ))}
@@ -199,7 +199,7 @@ export function FandomToolsPanel() {
               className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left"
             >
               <Wand2 className="w-4 h-4 text-primary shrink-0" />
-              <span className="text-xs font-medium text-white/70">{preset.label}</span>
+              <span className="text-[13px] font-medium text-white/70">{preset.label}</span>
             </button>
           ))}
         </div>
@@ -208,7 +208,7 @@ export function FandomToolsPanel() {
       {/* ── Baseball Aesthetic Filters ── */}
       {activeSection === "aesthetics" && (
         <div className="space-y-2">
-          <p className="text-[11px] text-white/40 px-1">AI 생성 시 스타일이 적용됩니다</p>
+          <p className="text-[13px] text-white/40 px-1">AI 생성 시 스타일이 적용됩니다</p>
           <div className="grid grid-cols-2 gap-1.5">
             {BASEBALL_AESTHETIC_FILTERS.map((filter) => {
               const isActive = state.activeAestheticFilter === filter.id;
@@ -227,7 +227,7 @@ export function FandomToolsPanel() {
                       className="w-4 h-4 rounded-full shrink-0"
                       style={{ background: filter.color }}
                     />
-                    <p className={`text-xs font-semibold ${isActive ? "text-primary" : "text-white/70"}`}>
+                    <p className={`text-[13px] font-semibold ${isActive ? "text-primary" : "text-white/70"}`}>
                       {filter.label}
                     </p>
                   </div>
@@ -238,7 +238,7 @@ export function FandomToolsPanel() {
           {/* Wallpaper layouts (only for wallpaper template) */}
           {isWallpaper && (
             <div className="mt-3 space-y-1.5">
-              <p className="text-[11px] text-white/40 px-1">배경화면 위젯 레이아웃</p>
+              <p className="text-[13px] text-white/40 px-1">배경화면 위젯 레이아웃</p>
               {WALLPAPER_LAYOUTS.map((layout) => (
                 <button
                   key={layout.id}
@@ -246,9 +246,9 @@ export function FandomToolsPanel() {
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left"
                 >
                   <Smartphone className="w-3.5 h-3.5 text-white/40" />
-                  <span className="text-xs text-white/60">{layout.label}</span>
+                  <span className="text-[13px] text-white/60">{layout.label}</span>
                   {layout.safeZones.length === 0 && (
-                    <span className="text-[10px] text-white/20 ml-auto">가이드 없음</span>
+                    <span className="text-[13px] text-white/20 ml-auto">가이드 없음</span>
                   )}
                 </button>
               ))}
@@ -265,13 +265,13 @@ export function FandomToolsPanel() {
             const catLabel = cat === "texture" ? "텍스처" : cat === "overlay" ? "오버레이" : "데코";
             return (
               <div key={cat} className="space-y-1.5">
-                <p className="text-[11px] text-white/40 px-1">{catLabel}</p>
+                <p className="text-[13px] text-white/40 px-1">{catLabel}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {items.map((el) => (
                     <button
                       key={el.id}
                       onClick={() => handleDesignElement(el.prompt)}
-                      className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[11px] text-white/60"
+                      className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[13px] text-white/60"
                     >
                       {el.label}
                     </button>
@@ -286,7 +286,7 @@ export function FandomToolsPanel() {
       {/* ── Patterns ── */}
       {activeSection === "patterns" && (
         <div className="space-y-2">
-          <p className="text-[11px] text-white/40 px-1">캔버스 배경 또는 오버레이로 적용</p>
+          <p className="text-[13px] text-white/40 px-1">캔버스 배경 또는 오버레이로 적용</p>
           {FANDOM_DESIGN_ELEMENTS.filter(e => e.category === "pattern").map((el) => (
             <button
               key={el.id}
@@ -294,7 +294,7 @@ export function FandomToolsPanel() {
               className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left"
             >
               <Grid3X3 className="w-4 h-4 text-primary/60 shrink-0" />
-              <span className="text-xs text-white/70">{el.label}</span>
+              <span className="text-[13px] text-white/70">{el.label}</span>
             </button>
           ))}
         </div>
@@ -308,13 +308,13 @@ export function FandomToolsPanel() {
             const catLabel = cat === "cheer" ? "응원" : cat === "birthday" ? "생일" : cat === "love" ? "사랑" : "일반";
             return (
               <div key={cat} className="space-y-1.5">
-                <p className="text-[11px] text-white/40 px-1">{catLabel}</p>
+                <p className="text-[13px] text-white/40 px-1">{catLabel}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {items.map((t) => (
                     <button
                       key={t.id}
                       onClick={() => handleTextPreset(t.text)}
-                      className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[11px] text-white/60"
+                      className="px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-[13px] text-white/60"
                     >
                       {t.text}
                     </button>

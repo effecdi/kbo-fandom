@@ -65,7 +65,7 @@ export function CopilotInput({ onSend, onSlashCommand, disabled }: CopilotInputP
                 setValue("");
                 setShowSlash(false);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-xs hover:bg-white/[0.06] text-left transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 text-[13px] hover:bg-white/[0.06] text-left transition-colors"
             >
               <code className="text-primary font-mono">{cmd}</code>
               <span className="text-white/50">{label}</span>
@@ -83,7 +83,7 @@ export function CopilotInput({ onSend, onSlashCommand, disabled }: CopilotInputP
           placeholder="AI에게 요청하세요... (/ 로 명령어)"
           disabled={disabled}
           rows={1}
-          className="flex-1 resize-none bg-white/[0.06] rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 max-h-20"
+          className="flex-1 resize-none bg-white/[0.06] rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 max-h-20"
         />
         <button
           onClick={handleSend}

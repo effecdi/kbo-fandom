@@ -68,7 +68,7 @@ export function HeroSection() {
                         alt={panel.expression}
                         className="w-16 h-16 mb-1"
                       />
-                      <p className="text-xs font-medium text-purple-700">
+                      <p className="text-[13px] font-medium text-purple-700">
                         {panel.expression}
                       </p>
                     </div>
