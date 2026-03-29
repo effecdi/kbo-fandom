@@ -390,28 +390,10 @@ export function useCopilot() {
         }
       }
 
-      // Fetch team logo image as SEPARATE reference for AI generation (not mixed with player photos)
-      // Fallback: if teamLogoUrl not in meta (old projects), look up from local-store
-      let teamLogoDataUrl: string | undefined;
-      let logoUrl = fandomMeta?.teamLogoUrl;
-      if (!logoUrl && fandomMeta?.groupId) {
-        const teams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
-        const team = teams.find((t) => t.id === fandomMeta.groupId);
-        if (team?.logoUrl) logoUrl = team.logoUrl;
-      }
-      if (logoUrl) {
-        try {
-          const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(logoUrl)}`);
-          if (logoResp.ok) {
-            const logoBlob = await logoResp.blob();
-            teamLogoDataUrl = await new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.readAsDataURL(logoBlob);
-            });
-          }
-        } catch { /* skip logo fetch error */ }
-      }
+      // NOTE: Naver CDN emblem images are OUTDATED (old logos) for most teams.
+      // Do NOT send them as reference — rely on text descriptions + BANNED rules only.
+      // TODO: When correct logo images are available, re-enable this.
+      const teamLogoDataUrl: string | undefined = undefined;
 
       // Prepend style prefix if fandom meta has a style preset
       let styledPrompt = prompt;
