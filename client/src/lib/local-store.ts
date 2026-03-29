@@ -2,6 +2,7 @@
 // Used for features without backend APIs (fandom feed, events, creators, etc.)
 
 import type { FandomTemplateType } from "./workspace-types";
+import { generateKbo2026Schedule } from "./kbo-schedule-generator";
 
 function getStore<T>(key: string): T[] {
   try {
@@ -633,7 +634,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 13;
+const SEED_VERSION = 14; // v14: full 2026 season schedule (720+ games)
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);
@@ -974,7 +975,8 @@ export function seedIfEmpty(): void {
 
   // ── KBO Schedule Seed ──────────────────────────────────────────────────────
   if (listItems(STORE_KEYS.KBO_SCHEDULE).length === 0) {
-    const schedule: KboGameSchedule[] = [
+    const schedule = generateKbo2026Schedule();
+    /* === Old hardcoded 45-game schedule (replaced by full-season generator) ===
       // 3/28 개막전 (토) 14:00 - 5경기
       { id: "game-1", homeTeamId: "team-lg", awayTeamId: "team-kt", homeTeamName: "LG 트윈스", awayTeamName: "KT 위즈", date: "2026-03-28", time: "14:00", stadium: "잠실야구장", status: "scheduled", homeScore: null, awayScore: null },
       { id: "game-2", homeTeamId: "team-ssg", awayTeamId: "team-kia", homeTeamName: "SSG 랜더스", awayTeamName: "KIA 타이거즈", date: "2026-03-28", time: "14:00", stadium: "인천 SSG랜더스필드", status: "scheduled", homeScore: null, awayScore: null },
@@ -1029,7 +1031,7 @@ export function seedIfEmpty(): void {
       { id: "game-43", homeTeamId: "team-han", awayTeamId: "team-nc", homeTeamName: "한화 이글스", awayTeamName: "NC 다이노스", date: "2026-04-06", time: "14:00", stadium: "대전 한화생명이글스파크", status: "scheduled", homeScore: null, awayScore: null },
       { id: "game-44", homeTeamId: "team-sam", awayTeamId: "team-kiw", homeTeamName: "삼성 라이온즈", awayTeamName: "키움 히어로즈", date: "2026-04-06", time: "14:00", stadium: "대구 삼성라이온즈파크", status: "scheduled", homeScore: null, awayScore: null },
       { id: "game-45", homeTeamId: "team-lot", awayTeamId: "team-kt", homeTeamName: "롯데 자이언츠", awayTeamName: "KT 위즈", date: "2026-04-06", time: "14:00", stadium: "사직야구장", status: "scheduled", homeScore: null, awayScore: null },
-    ];
+    ]; === */
     schedule.forEach((g) => addItem(STORE_KEYS.KBO_SCHEDULE, g));
   }
 

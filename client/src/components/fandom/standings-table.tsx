@@ -109,21 +109,21 @@ export function StandingsTable({ standings, liveStandings, myTeamId, compact }: 
             <th className="px-3 py-3 text-center font-semibold">승</th>
             <th className="px-3 py-3 text-center font-semibold">패</th>
             {!compact && (
-              <th className="px-3 py-3 text-center font-semibold">무</th>
+              <th className="hidden sm:table-cell px-3 py-3 text-center font-semibold">무</th>
             )}
             <th className="px-3 py-3 text-center font-semibold">승률</th>
             {!compact && (
               <>
-                <th className="px-3 py-3 text-center font-semibold">게임차</th>
-                <th className="px-3 py-3 text-center font-semibold">연속</th>
+                <th className="hidden sm:table-cell px-3 py-3 text-center font-semibold">게임차</th>
+                <th className="hidden md:table-cell px-3 py-3 text-center font-semibold">연속</th>
                 {hasLiveData ? (
                   <>
-                    <th className="px-3 py-3 text-center font-semibold">최근5</th>
-                    <th className="px-3 py-3 text-center font-semibold">타율</th>
-                    <th className="px-3 py-3 text-center font-semibold">ERA</th>
+                    <th className="hidden lg:table-cell px-3 py-3 text-center font-semibold">최근5</th>
+                    <th className="hidden lg:table-cell px-3 py-3 text-center font-semibold">타율</th>
+                    <th className="hidden lg:table-cell px-3 py-3 text-center font-semibold">ERA</th>
                   </>
                 ) : (
-                  <th className="px-3 py-3 text-center font-semibold">최근10</th>
+                  <th className="hidden lg:table-cell px-3 py-3 text-center font-semibold">최근10</th>
                 )}
               </>
             )}
@@ -173,24 +173,24 @@ export function StandingsTable({ standings, liveStandings, myTeamId, compact }: 
                 <td className="px-3 py-3 text-center text-foreground">{row.wins}</td>
                 <td className="px-3 py-3 text-center text-foreground">{row.losses}</td>
 
-                {!compact && <td className="px-3 py-3 text-center text-foreground">{row.draws}</td>}
+                {!compact && <td className="hidden sm:table-cell px-3 py-3 text-center text-foreground">{row.draws}</td>}
 
                 <td className="px-3 py-3 text-center text-foreground font-medium">{row.winRate}</td>
 
                 {!compact && (
                   <>
-                    <td className="px-3 py-3 text-center text-muted-foreground">{row.gamesBack}</td>
-                    <td className="px-3 py-3 text-center text-muted-foreground">{row.streak}</td>
+                    <td className="hidden sm:table-cell px-3 py-3 text-center text-muted-foreground">{row.gamesBack}</td>
+                    <td className="hidden md:table-cell px-3 py-3 text-center text-muted-foreground">{row.streak}</td>
                     {hasLiveData ? (
                       <>
-                        <td className="px-3 py-3 text-center text-muted-foreground font-mono text-[13px]">
+                        <td className="hidden lg:table-cell px-3 py-3 text-center text-muted-foreground font-mono text-[13px]">
                           {row.last5 || "-"}
                         </td>
-                        <td className="px-3 py-3 text-center text-muted-foreground">{row.battingAvg || "-"}</td>
-                        <td className="px-3 py-3 text-center text-muted-foreground">{row.era || "-"}</td>
+                        <td className="hidden lg:table-cell px-3 py-3 text-center text-muted-foreground">{row.battingAvg || "-"}</td>
+                        <td className="hidden lg:table-cell px-3 py-3 text-center text-muted-foreground">{row.era || "-"}</td>
                       </>
                     ) : (
-                      <td className="px-3 py-3 text-center text-muted-foreground">{row.last10 || "-"}</td>
+                      <td className="hidden lg:table-cell px-3 py-3 text-center text-muted-foreground">{row.last10 || "-"}</td>
                     )}
                   </>
                 )}

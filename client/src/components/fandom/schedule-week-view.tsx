@@ -68,7 +68,7 @@ export function ScheduleWeekView({
   return (
     <>
       {/* ── Mobile: Day tabs + single day view ─────────────────────── */}
-      <div className="lg:hidden">
+      <div className="md:hidden">
         {/* Day tab bar */}
         <div className="flex items-center gap-1 mb-4">
           {columns.map((col, idx) => {
@@ -122,7 +122,7 @@ export function ScheduleWeekView({
       </div>
 
       {/* ── Desktop: 7-column grid ─────────────────────────────────── */}
-      <div className="hidden lg:grid grid-cols-7 gap-1">
+      <div className="hidden md:grid grid-cols-7 gap-1">
         {columns.map((col) => {
           const isToday = col.dateStr === today;
           return (
