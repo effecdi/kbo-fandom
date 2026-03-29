@@ -391,15 +391,18 @@ export function useCopilot() {
         charNames = pinnedChars.map((c) => c.name).filter(Boolean);
       }
 
-      // 팀 로고 이미지를 KBO 공식 CDN에서 fetch하여 Gemini 레퍼런스로 전달
-      // /regular/2026/ 경로 = 2026 시즌 최신 로고
+      // 팀 로고 이미지 2종 fetch:
+      // 1. logoUrl (Naver Sports CDN, 184x184 정사각) → Gemini 레퍼런스용
+      // 2. capLogoUrl (KBO CDN 엠블럼, 64x41 가로형) → sharp 오버레이용 (모자/헬멧 로고)
       let teamLogoDataUrl: string | undefined = undefined;
+      let capLogoDataUrl: string | undefined = undefined;
       if (fandomMeta?.groupName) {
         try {
           const teams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
           const myTeam = teams.find(
             (t) => t.name === fandomMeta.groupName || t.nameKo === fandomMeta.groupName
           );
+          // 구단 엠블럼 (Gemini 레퍼런스)
           if (myTeam?.logoUrl) {
             const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.logoUrl)}`);
             if (logoResp.ok) {
@@ -408,6 +411,18 @@ export function useCopilot() {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result as string);
                 reader.readAsDataURL(logoBlob);
+              });
+            }
+          }
+          // 모자/헬멧 로고 (KBO CDN 엠블럼 → sharp 오버레이)
+          if (myTeam?.capLogoUrl) {
+            const capResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.capLogoUrl)}`);
+            if (capResp.ok) {
+              const capBlob = await capResp.blob();
+              capLogoDataUrl = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(capBlob);
               });
             }
           }
@@ -475,6 +490,7 @@ export function useCopilot() {
             characterNames: charNames.length > 0 ? charNames : undefined,
             teamIdentity: teamIdentityForServer,
             teamLogoImage: teamLogoDataUrl || undefined,
+            capLogoImage: capLogoDataUrl || undefined,
             templateType: fandomMeta?.templateType,
             aspectRatio: geminiRatio,
             sceneIndex: 0,
@@ -591,6 +607,7 @@ export function useCopilot() {
 
         // 팀 로고 이미지 fetch (멀티컷에서도 Gemini에 레퍼런스 전달)
         let teamLogoMulti: string | undefined = undefined;
+        let capLogoMulti: string | undefined = undefined;
         if (fandomMeta?.groupName) {
           try {
             const teams = listItems<KboTeam>(STORE_KEYS.KBO_TEAMS);
@@ -605,6 +622,18 @@ export function useCopilot() {
                   const reader = new FileReader();
                   reader.onloadend = () => resolve(reader.result as string);
                   reader.readAsDataURL(logoBlob);
+                });
+              }
+            }
+            // capLogoUrl = KBO CDN 헬멧/모자 로고
+            if (myTeam?.capLogoUrl) {
+              const capResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.capLogoUrl)}`);
+              if (capResp.ok) {
+                const capBlob = await capResp.blob();
+                capLogoMulti = await new Promise<string>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result as string);
+                  reader.readAsDataURL(capBlob);
                 });
               }
             }
@@ -638,6 +667,7 @@ export function useCopilot() {
                 characterNames: charNames.length > 0 ? charNames : undefined,
                 teamIdentity: teamIdentityMulti || undefined,
                 teamLogoImage: teamLogoMulti || undefined,
+                capLogoImage: capLogoMulti || undefined,
                 aspectRatio: geminiRatio,
                 sceneIndex: i,
                 totalScenes: scenes.length,

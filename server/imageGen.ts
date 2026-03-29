@@ -1131,6 +1131,7 @@ export async function generateWebtoonScene(
   teamIdentity?: string,
   templateType?: string,
   teamLogoImage?: string,
+  capLogoImage?: string,
 ): Promise<string> {
   const tpl = getTemplatePromptParts(templateType);
   const parts: any[] = [];
@@ -1302,10 +1303,12 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       // 1. 먼저 배경 제거 (흰색/회색 → 투명)
       rawDataUrl = await removeWhiteBackground(rawDataUrl, 210);
 
-      // 2. 그 다음 로고 오버레이 (배경 제거 후에 해야 로고가 투명화되지 않음)
-      if (teamLogoImage) {
+      // 2. 그 다음 모자/헬멧 로고 오버레이 (배경 제거 후에 해야 로고가 투명화되지 않음)
+      // capLogoImage = KBO CDN 엠블럼 (실제 모자/헬멧 로고), teamLogoImage = 구단 엠블럼 (fallback)
+      const logoForOverlay = capLogoImage || teamLogoImage;
+      if (logoForOverlay) {
         try {
-          rawDataUrl = await overlayTeamLogo(rawDataUrl, teamLogoImage);
+          rawDataUrl = await overlayTeamLogo(rawDataUrl, logoForOverlay);
         } catch (err) {
           logger.warn("[generate-scene] Logo overlay failed, continuing", err);
         }
