@@ -38,6 +38,13 @@ export function EditorAutoStart() {
   const promptedRef = useRef(false);
   const fandomRef = useRef(false);
 
+  // Keep a ref to the latest sendMessage to avoid stale closure issues.
+  // When dispatches (SET_FANDOM_META etc.) trigger re-renders, useCopilot returns
+  // a new sendMessage with updated state. The ref ensures our async code calls
+  // the latest version that has fandomMeta set.
+  const sendMessageRef = useRef(sendMessage);
+  useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
+
   // ── Load saved project ────────────────────────────────────────────────
   useEffect(() => {
     if (loadedRef.current || !projectId || projectId === "new") return;
@@ -212,14 +219,16 @@ export function EditorAutoStart() {
         await waitForCanvas();
 
         // 3. Now send the prompt (photos are pinned, canvas is ready)
-        sendMessage(prompt);
+        // Use ref to get the latest sendMessage with updated fandomMeta state
+        sendMessageRef.current(prompt);
       };
 
       pinPhotosAndGenerate();
     } catch {
       // Invalid meta
     }
-  }, [searchParams, projectId, dispatch, sendMessage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, projectId, dispatch]);
 
   // ── Birthday cafe mode ──────────────────────────────────────────────────
   useEffect(() => {
