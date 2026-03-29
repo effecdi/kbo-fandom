@@ -425,17 +425,18 @@ export function PublishDialog({ open, onClose }: Props) {
       });
 
       // Lanyard mode: set generated image as lanyard card
-      const lanyardProjectId = localStorage.getItem("olli-lanyard-project");
-      const isProfileTemplate = fandomMeta && ["profile-deco", "playercard", "portrait"].includes(fandomMeta.templateType);
-      if (lanyardProjectId === state.project.id || isProfileTemplate) {
-        const thumbnail = allCuts[0]?.thumbnailUrl || null;
-        if (thumbnail) {
+      const isLanyardMode = localStorage.getItem("olli-lanyard-mode") === "true";
+      const isProfileTemplate = ["profile-deco", "playercard", "portrait"].includes(fandomMeta.templateType);
+      if (isLanyardMode || isProfileTemplate) {
+        const lanyardThumb = allCuts[0]?.thumbnailUrl || null;
+        if (lanyardThumb) {
           const profile = getFandomProfile();
           if (profile) {
-            setFandomProfile({ ...profile, lanyardCardUrl: thumbnail });
+            setFandomProfile({ ...profile, lanyardCardUrl: lanyardThumb });
           }
         }
-        if (lanyardProjectId) localStorage.removeItem("olli-lanyard-project");
+        localStorage.removeItem("olli-lanyard-mode");
+        localStorage.removeItem("olli-lanyard-project");
         setIsLanyardPublish(true);
       }
     }

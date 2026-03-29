@@ -358,11 +358,36 @@ export function useCopilot() {
       const ac = new AbortController();
       abortRef.current = ac;
 
-      const pinnedChars = state.copilot.pinnedCharacters;
-      const charImageUrls = pinnedChars
+      let pinnedChars = state.copilot.pinnedCharacters;
+      let charImageUrls = pinnedChars
         .map((c) => c.imageDataUrl || c.imageUrl)
         .filter(Boolean);
-      const charNames = pinnedChars.map((c) => c.name).filter(Boolean);
+      let charNames = pinnedChars.map((c) => c.name).filter(Boolean);
+
+      // Fallback: if pinnedCharacters is empty (stale closure) but fandomMeta has playerPhotos,
+      // fetch photos directly to ensure player face matching
+      if (charImageUrls.length === 0 && fandomMeta?.playerPhotos && fandomMeta.playerPhotos.length > 0) {
+        const fetchedUrls: string[] = [];
+        const fetchedNames: string[] = [];
+        for (const { name, pcode } of fandomMeta.playerPhotos) {
+          try {
+            const resp = await fetch(`/api/kbo/player-photo/${pcode}`);
+            if (!resp.ok) continue;
+            const blob = await resp.blob();
+            const dataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            fetchedUrls.push(dataUrl);
+            fetchedNames.push(name);
+          } catch { /* skip */ }
+        }
+        if (fetchedUrls.length > 0) {
+          charImageUrls = fetchedUrls;
+          charNames = fetchedNames;
+        }
+      }
 
       // Prepend style prefix if fandom meta has a style preset
       let styledPrompt = prompt;
@@ -391,12 +416,13 @@ export function useCopilot() {
       }
 
       // Inject team identity (colors, uniforms, logo) for accurate generation
-      // teamIdentity는 서버에 별도 파라미터로 전달 (프롬프트 충돌 방지)
       let teamIdentityForServer: string | undefined;
       if (fandomMeta) {
         const teamPrompt = getTeamIdentityPrompt(fandomMeta.groupName);
         if (teamPrompt) {
           teamIdentityForServer = teamPrompt;
+          // Also inject key team branding into styledPrompt for stronger enforcement
+          styledPrompt = `[TEAM: ${fandomMeta.groupName} — use ONLY their current 2024-2025 branding, uniform colors, and logo. DO NOT use any old/outdated logos or branding.] ${styledPrompt}`;
         }
         // 밝은 표정 + 다양한 방향 지시 주입
         styledPrompt = `${styledPrompt}. IMPORTANT: The character must have a bright, cheerful, lively facial expression (smiling, laughing, excited). Do NOT draw a serious or stern face. Use a dynamic camera angle (three-quarter view, slight tilt, or diagonal composition) — do NOT face straight forward.`;

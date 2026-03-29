@@ -88,9 +88,10 @@ export function EditorAutoStart() {
 
     const pid = projectId || "new";
 
-    // Save lanyard mode flag for PublishDialog
+    // Save lanyard mode flag for PublishDialog (boolean, not ID-based)
     if (searchParams.get("for") === "lanyard") {
       localStorage.setItem("olli-lanyard-project", pid);
+      localStorage.setItem("olli-lanyard-mode", "true");
     }
 
     const key = `olli-fandom-editor-${pid}`;
