@@ -391,10 +391,12 @@ export function useCopilot() {
       }
 
       // Inject team identity (colors, uniforms, logo) for accurate generation
+      // teamIdentity는 서버에 별도 파라미터로 전달 (프롬프트 충돌 방지)
+      let teamIdentityForServer: string | undefined;
       if (fandomMeta) {
         const teamPrompt = getTeamIdentityPrompt(fandomMeta.groupName);
         if (teamPrompt) {
-          styledPrompt = `${teamPrompt}. ${styledPrompt}`;
+          teamIdentityForServer = teamPrompt;
         }
         // 밝은 표정 + 다양한 방향 지시 주입
         styledPrompt = `${styledPrompt}. IMPORTANT: The character must have a bright, cheerful, lively facial expression (smiling, laughing, excited). Do NOT draw a serious or stern face. Use a dynamic camera angle (three-quarter view, slight tilt, or diagonal composition) — do NOT face straight forward.`;
@@ -418,6 +420,7 @@ export function useCopilot() {
             storyContext: prompt,
             sourceImageDataList: charImageUrls.length > 0 ? charImageUrls : undefined,
             characterNames: charNames.length > 0 ? charNames : undefined,
+            teamIdentity: teamIdentityForServer,
             aspectRatio: geminiRatio,
             sceneIndex: 0,
             totalScenes: 1,
@@ -528,8 +531,8 @@ export function useCopilot() {
         const regions = getCutRegions(cutsCount, layoutType, canvasW, canvasH);
 
         const ART_STYLE = "simple line art, thick clean outlines, minimal flat color, webtoon style, consistent character design";
-        // Inject team identity for multi-cut
-        const teamIdentity = fandomMeta ? getTeamIdentityPrompt(fandomMeta.groupName) : null;
+        // Inject team identity for multi-cut (별도 파라미터로 서버 전달)
+        const teamIdentityMulti = fandomMeta ? getTeamIdentityPrompt(fandomMeta.groupName) : null;
         const generatedUrls: (string | null)[] = new Array(scenes.length).fill(null);
         let referenceImageUrl: string | null = null;
 
@@ -543,9 +546,7 @@ export function useCopilot() {
           addAssistantMsg(`컷 ${i + 1}/${scenes.length} 생성 중...`);
 
           try {
-            const styledDescription = teamIdentity
-              ? `${teamIdentity}. ${ART_STYLE}, ${scene.sceneDescription}`
-              : `${ART_STYLE}, ${scene.sceneDescription}`;
+            const styledDescription = `${ART_STYLE}, ${scene.sceneDescription}`;
             const sourceImages: string[] = [...charImageUrls];
             if (referenceImageUrl) sourceImages.push(referenceImageUrl);
 
@@ -557,6 +558,7 @@ export function useCopilot() {
                 storyContext: prompt,
                 sourceImageDataList: sourceImages.length > 0 ? sourceImages : undefined,
                 characterNames: charNames.length > 0 ? charNames : undefined,
+                teamIdentity: teamIdentityMulti || undefined,
                 aspectRatio: geminiRatio,
                 sceneIndex: i,
                 totalScenes: scenes.length,

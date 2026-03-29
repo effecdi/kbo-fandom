@@ -1026,6 +1026,7 @@ export async function generateWebtoonScene(
   totalScenes?: number,
   previousSceneDescription?: string,
   characterNames?: string[],
+  teamIdentity?: string,
 ): Promise<string> {
   const parts: any[] = [];
   const images = sourceImageDataList ?? [];
@@ -1088,18 +1089,28 @@ export async function generateWebtoonScene(
 - If the scene description mentions a character by name, that character MUST match their specific reference image.`
       : "";
 
+    // Build team branding block (separate from character appearance so it's not ignored)
+    const teamBrandingBlock = teamIdentity
+      ? `\nTEAM UNIFORM & BRANDING (CRITICAL — override any pre-trained knowledge about this team):
+${teamIdentity}
+- You MUST follow the uniform and logo description above EXACTLY. Do NOT use older/outdated versions of the team's logo or uniform from your training data.
+- The team branding described here reflects the LATEST official design. Any older designs you may know are OUTDATED and must NOT be used.\n`
+      : "";
+
     parts.push({
       text: `You are illustrating a scene for a Korean Instagram webtoon (instatoon) comic strip.
 
 ${noTextRule}
 ${charIdentityBlock}
-CHARACTER REFERENCE (MOST IMPORTANT — the images above are the GROUND TRUTH):
-- The reference images above show the EXACT character(s) you MUST draw.
-- COPY the EXACT same character: same face shape, same hairstyle, same hair color, same outfit, same proportions, same accessories.
-- Do NOT invent new character designs. ONLY draw the character(s) from the reference images.
-- Ignore any text descriptions of character appearance (hair color, clothing, etc.) — use ONLY the reference images for how the character looks.
-- The character must be immediately recognizable as the same person across all scenes.${charConsistencyRules}
-
+FACE & BODY REFERENCE (HIGHEST PRIORITY — the photos above are the GROUND TRUTH):
+- The reference photos above show a REAL PERSON. You MUST faithfully reproduce their EXACT facial features in illustration style.
+- CRITICAL FACIAL FEATURES TO MATCH: face shape (round/square/oval), face width, jaw line, cheek fullness, eye size & shape, nose shape & size, eyebrow thickness, lip shape, forehead size, chin shape.
+- BODY TYPE: Match the person's build (slim/average/stocky/muscular) exactly as shown in the reference photo. Do NOT change their body proportions.
+- AGE APPEARANCE: The illustrated character must look the SAME AGE as the person in the reference photo. Do NOT make them look older or younger.
+- HAIR: Match the exact hairstyle, hair length, and hair color from the reference photo.
+- The character must be IMMEDIATELY RECOGNIZABLE as the same person from the reference photo — if a fan of this player saw the illustration, they should instantly know who it is.
+- Do NOT beautify, slim down, age up, or otherwise alter the person's real appearance. Draw them AS THEY ACTUALLY LOOK.${charConsistencyRules}
+${teamBrandingBlock}
 EXPRESSION & POSE VARIETY (CRITICAL — apply to EVERY generated image):
 - The character MUST have a BRIGHT, CHEERFUL, LIVELY facial expression — big smile, grinning, laughing, showing excitement, winking, or playful look.
 - Do NOT draw the character with a serious, stern, stoic, or neutral expression. This is fan art, NOT a passport photo.
@@ -1114,7 +1125,8 @@ SCENE TO ILLUSTRATE (draw exactly this action/pose/expression):
 ${translatedScene}
 
 CRITICAL RULES:
-- Draw EXACTLY the scene described above using the EXACT character from the reference images.
+- Draw EXACTLY the scene described above using the EXACT character from the reference photos.
+- The character's FACE must match the reference photo — same face shape, same features, same build. This is NON-NEGOTIABLE.
 - The scene MUST DIRECTLY illustrate the story topic: "${translatedContext}" — every visual element must connect to this topic
 - Do NOT draw any background, scenery, room, furniture, walls, floors, or environment
 - The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else

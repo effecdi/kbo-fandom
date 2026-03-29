@@ -1554,7 +1554,7 @@ export async function registerRoutes(
     }
     try {
       const userId = req.userId!;
-      const { sceneDescription, storyContext, sourceImageDataList, aspectRatio, sceneIndex, totalScenes, previousSceneDescription, characterNames } = req.body;
+      const { sceneDescription, storyContext, sourceImageDataList, aspectRatio, sceneIndex, totalScenes, previousSceneDescription, characterNames, teamIdentity } = req.body;
 
       if (!sceneDescription || typeof sceneDescription !== "string") {
         return res.status(400).json({ message: "장면 설명이 필요합니다." });
@@ -1575,6 +1575,7 @@ export async function registerRoutes(
         totalScenes,
         previousSceneDescription,
         characterNames,
+        teamIdentity,
       );
 
       // story에서 생성된 이미지는 갤러리에 저장하지 않음
