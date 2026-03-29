@@ -29,13 +29,13 @@ type StatusKey = ProjectRecord["status"];
 type SortKey = "updatedAt" | "createdAt" | "title";
 
 const statusLabel: Record<StatusKey, { text: string; color: string }> = {
-  draft: { text: "초안", color: "bg-yellow-500/20 text-yellow-500" },
+  draft: { text: "작업중", color: "bg-yellow-500/20 text-yellow-500" },
   published: { text: "발행됨", color: "bg-green-500/20 text-green-500" },
-  review: { text: "검토중", color: "bg-blue-500/20 text-blue-500" },
+  review: { text: "임시저장", color: "bg-blue-500/20 text-blue-500" },
 };
 
 const STATUS_FLOW: Record<StatusKey, StatusKey> = {
-  draft: "review",
+  draft: "published",
   review: "published",
   published: "draft",
 };
@@ -202,8 +202,7 @@ export function StudioProjects() {
             {(
               [
                 { id: "all" as const, label: "전체" },
-                { id: "draft" as const, label: "초안" },
-                { id: "review" as const, label: "검토중" },
+                { id: "draft" as const, label: "작업중" },
                 { id: "published" as const, label: "발행됨" },
               ] as const
             ).map((f) => (

@@ -12,6 +12,7 @@ import type {
 } from "@/components/canva-editor/types";
 import { FONT_OPTIONS } from "@/components/canva-editor/types";
 import { useWorkspace, useActiveCut, useCanvasRef } from "@/hooks/use-workspace";
+import { useCopilot } from "@/hooks/use-copilot";
 import { useProgressiveUI } from "@/hooks/use-progressive-ui";
 import type { CutBubble, CutScript, CanvasLayer, CanvasAspectRatio } from "@/lib/workspace-types";
 import { TEMPLATE_RATIOS } from "@/lib/fandom-templates";
@@ -146,6 +147,7 @@ function CtxMenuItem({ icon, label, shortcut, onClick, danger }: {
 export function CanvasArea() {
   const canvasRef = useCanvasRef();
   const { state, dispatch } = useWorkspace();
+  const { isGenerating } = useCopilot();
   const activeCut = useActiveCut();
   const prevCutIdRef = useRef<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -751,6 +753,41 @@ export function CanvasArea() {
             </div>
           </div>
         </div>
+
+        {/* Generating overlay — shown on canvas while AI creates content */}
+        {isGenerating && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-4 px-8 py-6 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto">
+              {/* Animated spinner */}
+              <div className="relative w-14 h-14">
+                <div
+                  className="absolute inset-0 rounded-full border-[3px] border-transparent animate-spin"
+                  style={{
+                    borderTopColor: state.fandomMeta?.coverColor || "var(--primary)",
+                    borderRightColor: `${state.fandomMeta?.coverColor || "var(--primary)"}60`,
+                    animationDuration: "1s",
+                  }}
+                />
+                <div
+                  className="absolute inset-2 rounded-full border-[2px] border-transparent animate-spin"
+                  style={{
+                    borderBottomColor: state.fandomMeta?.coverColor || "var(--primary)",
+                    animationDuration: "1.5s",
+                    animationDirection: "reverse",
+                  }}
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-[15px] font-bold text-white">
+                  이미지 생성중...
+                </p>
+                <p className="text-[13px] text-white/50 mt-1">
+                  AI가 작품을 만들고 있어요
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Overlay controls — stay fixed on top */}
         {/* Aspect ratio — top right */}
