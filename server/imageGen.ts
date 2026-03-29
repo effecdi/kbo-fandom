@@ -1211,13 +1211,13 @@ BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
     : "";
 
   if (hasImages) {
-    // ── Part 0: 선수 사진 + 간결한 지시 (사진이 ground truth — 텍스트는 최소화)
+    // ── Part 0: 선수 사진 (얼굴 + 유니폼/로고 전부 복사 대상)
     for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
       const src = images[imgIdx];
       const match = src.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
         const name = hasCharNames ? (characterNames[imgIdx] || `Character ${imgIdx + 1}`) : `Player ${imgIdx + 1}`;
-        parts.push({ text: `[${name}] — REAL PHOTO. Draw this EXACT face.` });
+        parts.push({ text: `[${name}] — REAL PHOTO. Copy EVERYTHING: face, uniform, logos, cap.` });
         parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
       }
     }
@@ -1226,27 +1226,39 @@ BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
       ? `\nCharacter consistency: ${characterNames.map((n, i) => `"${n}" = reference #${i + 1}`).join(", ")}. Do NOT mix them.`
       : "";
 
-    // ── Part 1: 팀 로고 레퍼런스
+    // ── Part 1: 팀 로고 레퍼런스 (2번 전달 — 가중치 강화)
     if (teamBrandingParts.length > 0) {
       parts.push(...teamBrandingParts);
+      // 로고 이미지를 한 번 더 전달하여 Gemini가 학습 데이터보다 이 이미지를 우선하도록
+      const logoImagePart = teamBrandingParts.find((p: any) => p.inlineData);
+      if (logoImagePart) {
+        parts.push({ text: `REMINDER — here is the correct logo again. Use THIS, not your memory:` });
+        parts.push(logoImagePart);
+      }
     }
 
-    // ── Part 2: 메인 프롬프트 — 간결하게
+    // ── Part 2: 메인 프롬프트
     parts.push({
       text: `${tpl.role}
 
 ${noTextRule}
 ${charIdentityBlock}
 
-FACE RULE (HIGHEST PRIORITY):
-The photos above are the ONLY ground truth. Reproduce EXACTLY what you see in the photo — every facial feature, skin tone, body build, hair. Do NOT interpret, guess, or generalize. Just copy the face from the photo into the illustration style. If the photo shows a round face, draw round. If slim, draw slim. If they look 22, draw 22. If they look 35, draw 35. Add NOTHING that isn't in the photo. Change NOTHING from the photo. The result must be immediately recognizable as the same person.${charConsistencyRules}
+COPY THE REFERENCE PHOTO (HIGHEST PRIORITY):
+The player photo above is the ONLY ground truth. Copy EVERYTHING you see:
+1. FACE: exact facial features, skin tone, body build, hair, age appearance
+2. UNIFORM: the EXACT jersey design, colors, and logos shown in the photo
+3. CAP/HELMET: the EXACT logo on the cap/helmet shown in the photo
+Do NOT replace any part with logos/uniforms from your memory. The photo shows the CURRENT 2025-2026 season uniform — your training data is outdated.${charConsistencyRules}
 
 ${teamBrandingBlock}
 
-CAP/HELMET LOGO (CRITICAL — READ THE BRANDING TEXT ABOVE):
-The team branding section above contains a "CAP/HELMET LOGO" field that describes EXACTLY what goes on the cap front.
-Follow that description precisely. Do NOT use any cap logo from your training data — your memorized cap logos are OUTDATED.
-If a logo reference image was provided, use its style language for the cap mark.
+LOGO RULES (ZERO TOLERANCE — if wrong, the entire output is rejected):
+- The player's reference photo already shows the CURRENT team uniform and logos. COPY THEM.
+- If a separate logo reference image was provided above, that is the definitive version.
+- The branding text above has a "CAP/HELMET LOGO" field — follow it EXACTLY.
+- Do NOT draw ANY logo from your training data memory. Your memorized logos are ALL WRONG.
+- If you are unsure, look at the reference images again and copy what you see.
 
 EXPRESSION: Bright, cheerful (smiling/laughing). Dynamic angle (not straight-on).
 
