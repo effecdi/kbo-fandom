@@ -12,6 +12,7 @@ import {
   getTemplateChips,
   TEMPLATE_LABELS,
   BASEBALL_AESTHETIC_FILTERS,
+  getTeamIdentityPrompt,
 } from "@/lib/fandom-templates";
 
 // ─── Types for API responses ────────────────────────────────────────────────
@@ -389,6 +390,14 @@ export function useCopilot() {
         }
       }
 
+      // Inject team identity (colors, uniforms, logo) for accurate generation
+      if (fandomMeta) {
+        const teamPrompt = getTeamIdentityPrompt(fandomMeta.groupName);
+        if (teamPrompt) {
+          styledPrompt = `${teamPrompt}. ${styledPrompt}`;
+        }
+      }
+
       const label = fandomMeta ? TEMPLATE_LABELS[fandomMeta.templateType] : "이미지";
 
       try {
@@ -517,6 +526,8 @@ export function useCopilot() {
         const regions = getCutRegions(cutsCount, layoutType, canvasW, canvasH);
 
         const ART_STYLE = "simple line art, thick clean outlines, minimal flat color, webtoon style, consistent character design";
+        // Inject team identity for multi-cut
+        const teamIdentity = fandomMeta ? getTeamIdentityPrompt(fandomMeta.groupName) : null;
         const generatedUrls: (string | null)[] = new Array(scenes.length).fill(null);
         let referenceImageUrl: string | null = null;
 
@@ -530,7 +541,9 @@ export function useCopilot() {
           addAssistantMsg(`컷 ${i + 1}/${scenes.length} 생성 중...`);
 
           try {
-            const styledDescription = `${ART_STYLE}, ${scene.sceneDescription}`;
+            const styledDescription = teamIdentity
+              ? `${teamIdentity}. ${ART_STYLE}, ${scene.sceneDescription}`
+              : `${ART_STYLE}, ${scene.sceneDescription}`;
             const sourceImages: string[] = [...charImageUrls];
             if (referenceImageUrl) sourceImages.push(referenceImageUrl);
 
@@ -612,7 +625,7 @@ export function useCopilot() {
         }
       }
     },
-    [dispatch, state.copilot.cutsCount, state.copilot.layoutType, state.copilot.borderStyle, state.copilot.pinnedCharacters, addAssistantMsg, canvasRef, activeCut, getGeminiAspectRatio, compositeMultiCutOnCanvas]
+    [dispatch, state.copilot.cutsCount, state.copilot.layoutType, state.copilot.borderStyle, state.copilot.pinnedCharacters, fandomMeta, addAssistantMsg, canvasRef, activeCut, getGeminiAspectRatio, compositeMultiCutOnCanvas]
   );
 
   // ── Generate single cut background ────────────────────────────────────────

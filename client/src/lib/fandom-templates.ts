@@ -737,6 +737,100 @@ export const BASEBALL_AESTHETIC_FILTERS: BaseballAestheticFilter[] = [
 ];
 
 
+// ─── KBO Team Identity for AI Image Generation ─────────────────────────────
+
+export interface KboTeamIdentity {
+  nameEn: string;
+  primaryHex: string;
+  secondaryHex: string;
+  uniformDesc: string;
+  logoDesc: string;
+}
+
+export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
+  "LG 트윈스": {
+    nameEn: "LG Twins",
+    primaryHex: "#C60C30",
+    secondaryHex: "#000000",
+    uniformDesc: "White home jersey with cherry red 'LG' text logo on chest, thin red pinstripes, red baseball cap with white 'L' letter, black belt. Away jersey: gray with red 'TWINS' lettering. Colors: cherry red and black.",
+    logoDesc: "Red circular emblem with interlocking 'LG' letters, twin star symbol, clean red and white design",
+  },
+  "KT 위즈": {
+    nameEn: "KT Wiz",
+    primaryHex: "#000000",
+    secondaryHex: "#ED1C24",
+    uniformDesc: "Black home jersey with red 'wiz' script logo across chest, red accent stripes on sleeves, black cap with red 'KT' text. Away jersey: white with black and red trim. Colors: black and red.",
+    logoDesc: "Black shield emblem with red 'KT wiz' text, red diamond accent, black and red color scheme",
+  },
+  "SSG 랜더스": {
+    nameEn: "SSG Landers",
+    primaryHex: "#CE0E2D",
+    secondaryHex: "#1D1D1B",
+    uniformDesc: "White home jersey with bold red 'SSG' text on chest, red piping and trim, red cap with Landers logo. Away jersey: crimson red with white 'LANDERS' text. Colors: crimson red and dark charcoal.",
+    logoDesc: "Red and dark gray emblem with stylized rocket/spaceship motif, 'SSG LANDERS' text, futuristic design",
+  },
+  "NC 다이노스": {
+    nameEn: "NC Dinos",
+    primaryHex: "#315288",
+    secondaryHex: "#C0A882",
+    uniformDesc: "White home jersey with navy blue 'NC' script logo, metallic gold accent trim on sleeves and collar, navy cap with gold 'N' letter. Away jersey: navy blue with gold 'DINOS' lettering. Colors: navy blue and metallic gold.",
+    logoDesc: "Navy blue T-rex dinosaur silhouette with 'NC DINOS' text, gold accent details, powerful prehistoric theme",
+  },
+  "두산 베어스": {
+    nameEn: "Doosan Bears",
+    primaryHex: "#131230",
+    secondaryHex: "#ED1C24",
+    uniformDesc: "White home jersey with dark navy 'BEARS' text across chest, red accent piping, dark navy cap with interlocking 'OB' logo in white. Away jersey: gray with dark navy and red design. Colors: very dark navy (almost black) and red.",
+    logoDesc: "Dark navy circular emblem with bear face mascot, 'BEARS' text, red accent elements, classic baseball emblem style",
+  },
+  "KIA 타이거즈": {
+    nameEn: "KIA Tigers",
+    primaryHex: "#EA0029",
+    secondaryHex: "#000000",
+    uniformDesc: "White home jersey with red 'KIA' text on chest, black and red trim on sleeves, red cap with black tiger stripe logo. Away jersey: bright red with white 'TIGERS' text and black accents. Colors: bold red and black.",
+    logoDesc: "Fierce red and black tiger face logo with snarling expression, 'KIA TIGERS' text, tiger stripe pattern elements",
+  },
+  "롯데 자이언츠": {
+    nameEn: "Lotte Giants",
+    primaryHex: "#041E42",
+    secondaryHex: "#E30613",
+    uniformDesc: "White home jersey with navy blue 'GIANTS' arched text, red and navy pinstripes, navy cap with red 'L' letter. Away jersey: navy blue with white and red 'LOTTE' text. Colors: deep navy blue and red, classic baseball look.",
+    logoDesc: "Navy blue and red traditional baseball emblem with 'LOTTE GIANTS' text, classic diamond shape, vintage baseball styling",
+  },
+  "삼성 라이온즈": {
+    nameEn: "Samsung Lions",
+    primaryHex: "#074CA1",
+    secondaryHex: "#FFFFFF",
+    uniformDesc: "White home jersey with royal blue 'SAMSUNG' text across chest, blue cap with white 'S' letter, clean blue trim. Away jersey: blue with white 'LIONS' text. Colors: royal blue and white, clean and bold.",
+    logoDesc: "Royal blue circular emblem with roaring lion face, 'SAMSUNG LIONS' text, strong blue and white contrast",
+  },
+  "한화 이글스": {
+    nameEn: "Hanwha Eagles",
+    primaryHex: "#FF6600",
+    secondaryHex: "#000000",
+    uniformDesc: "White home jersey with bright orange 'HANWHA' text on chest, orange cap with eagle head logo, orange trim and accents. Away jersey: bright orange with white 'EAGLES' text and black accents. Colors: bright orange and black.",
+    logoDesc: "Orange eagle with spread wings logo, 'HANWHA EAGLES' text, bold orange and black design, soaring eagle motif",
+  },
+  "키움 히어로즈": {
+    nameEn: "Kiwoom Heroes",
+    primaryHex: "#820024",
+    secondaryHex: "#000000",
+    uniformDesc: "White home jersey with deep maroon 'HEROES' text across chest, maroon cap with gold 'H' letter, burgundy trim. Away jersey: deep maroon/burgundy with white text. Colors: deep maroon/burgundy and black.",
+    logoDesc: "Deep maroon circular emblem with heroic figure silhouette, 'KIWOOM HEROES' text, burgundy and gold accents",
+  },
+};
+
+/**
+ * Returns an English prompt segment describing the team's visual identity
+ * for accurate AI image generation (colors, uniforms, logos).
+ */
+export function getTeamIdentityPrompt(groupName: string): string | null {
+  const team = KBO_TEAM_IDENTITY[groupName];
+  if (!team) return null;
+
+  return `[TEAM VISUAL IDENTITY - ${team.nameEn}] Primary color: ${team.primaryHex}, Secondary color: ${team.secondaryHex}. Uniform: ${team.uniformDesc} Logo: ${team.logoDesc}. CRITICAL: Use these EXACT team colors and uniform design accurately. The team's primary color ${team.primaryHex} MUST be prominently visible in the artwork.`;
+}
+
 // ─── Fandom Color Palettes (expanded from LIGHTSTICK_COLORS) ────────────────
 
 export interface FandomColorPalette {
