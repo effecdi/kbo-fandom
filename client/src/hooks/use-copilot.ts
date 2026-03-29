@@ -869,15 +869,20 @@ export function useCopilot() {
       try {
         // ── Fandom mode: route based on template type ──
         if (meta && isSingleImageTemplate(meta.templateType)) {
+          // Check if any cut already has a generated image (= not first generation)
+          const activeScene = state.scenes.find((s) => s.id === state.activeSceneId);
+          const hasExistingContent = activeScene?.cuts.some((c) => c.backgroundImageUrl) ?? false;
+
           // Single image templates: skip breakdown, go straight to generate
-          if (lower.includes("스타일")) {
+          if (hasExistingContent && lower.includes("스타일")) {
+            // "스타일 변경" only works when content already exists
             await changeStyle(content);
           } else if (
             lower.includes("다시") ||
             lower.includes("재생성")
           ) {
             await generateSingleImage(content);
-          } else if (lower.includes("배경")) {
+          } else if (hasExistingContent && lower.includes("배경")) {
             await generateBackground(content);
           } else if (lower.includes("효과")) {
             dispatch({ type: "SET_ACTIVE_MODULE", module: "effects" });
