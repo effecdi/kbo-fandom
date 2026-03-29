@@ -1211,98 +1211,49 @@ BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
     : "";
 
   if (hasImages) {
-    // ── Part 0: 선수 사진 + 얼굴 매칭 지시를 쌍으로 배치 (Gemini가 바로 연결)
+    // ── Part 0: 선수 사진 + 간결한 지시 (사진이 ground truth — 텍스트는 최소화)
     for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
       const src = images[imgIdx];
       const match = src.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
         const name = hasCharNames ? (characterNames[imgIdx] || `Character ${imgIdx + 1}`) : `Player ${imgIdx + 1}`;
-        parts.push({ text: `=== PLAYER REFERENCE PHOTO: [${name}] ===\nThis is a REAL PHOTO of KBO baseball player [${name}]. Study this face VERY carefully before drawing.` });
+        parts.push({ text: `[${name}] — REAL PHOTO. Draw this EXACT face.` });
         parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
-        // 사진 직후에 얼굴 매칭 지시 (이미지와 붙여야 Gemini가 더 잘 인식)
-        parts.push({ text: `^^^ ABOVE: Real photo of [${name}]. You MUST draw this EXACT person.\n- Match their EXACT face shape, jaw, cheeks, eye shape/size/spacing, nose, eyebrows, lips, chin, forehead\n- Match their EXACT age appearance — KBO players are young athletes (mostly 20s). If the photo shows a young person, draw a YOUNG person. Do NOT make them look older.\n- Match their EXACT body build, skin tone, and hairstyle\n- A fan MUST be able to identify this player at first glance` });
       }
     }
 
     const charConsistencyRules = hasCharNames && images.length > 1
-      ? `\n- Do NOT swap or mix character appearances. ${characterNames.map((n, i) => `"${n}" must look like reference image #${i + 1}`).join(", ")}.
-- If the scene description mentions a character by name, that character MUST match their specific reference image.`
+      ? `\nCharacter consistency: ${characterNames.map((n, i) => `"${n}" = reference #${i + 1}`).join(", ")}. Do NOT mix them.`
       : "";
 
-    // ── Part 1: 팀 로고 레퍼런스 이미지 (선수 사진과 분리하여 별도 섹션)
+    // ── Part 1: 팀 로고 레퍼런스
     if (teamBrandingParts.length > 0) {
       parts.push(...teamBrandingParts);
     }
 
-    // ── Part 2: 메인 지시 프롬프트 (얼굴 + 로고 + 장면)
+    // ── Part 2: 메인 프롬프트 — 간결하게
     parts.push({
       text: `${tpl.role}
 
 ${noTextRule}
 ${charIdentityBlock}
 
-======================================================================
-FACE & BODY LIKENESS — #1 HIGHEST PRIORITY (ABOVE ALL OTHER RULES)
-======================================================================
-The reference photos above show REAL professional KBO baseball players.
-Your illustration MUST be a RECOGNIZABLE PORTRAIT of the EXACT person in the photo.
-
-CRITICAL AGE RULE: Most KBO players are young athletes in their 20s.
-- If the reference photo shows a young person (20s), your drawing MUST look like someone in their 20s.
-- Do NOT add wrinkles, age lines, or mature features that are NOT in the photo.
-- Do NOT make the face look older, more angular, or more gaunt than the reference.
-- MATCH the youthfulness: smooth skin, full cheeks, young facial structure.
-
-FACE MATCHING CHECKLIST (verify EACH before finalizing):
-□ Face shape (round/oval/square/heart) — EXACT match to photo
-□ Face width and fullness — if the person has a round/full face, draw it round/full
-□ Jaw line — sharp or soft, match exactly
-□ Cheek fullness — chubby cheeks stay chubby, slim stays slim
-□ Eye shape, size, spacing, and single/double eyelid
-□ Nose shape and width
-□ Eyebrow thickness and arch
-□ Lip shape and fullness
-□ Forehead size and shape
-□ Chin shape and prominence
-□ Skin tone — exact match
-□ Hairstyle, hair color, parting direction — exact match
-□ Body build (slim/average/stocky/muscular) — exact match
-□ Arm and leg proportions — match the actual build
-
-ABSOLUTE BANS:
-- Do NOT draw a generic face. Generic faces = FAILURE.
-- Do NOT age up the player. Adding 10+ years = FAILURE.
-- Do NOT slim down or beautify. Draw them AS THEY ACTUALLY LOOK.
-- Do NOT change body proportions (e.g., making arms/legs longer/shorter).
-- The character must be IMMEDIATELY IDENTIFIABLE as the specific player.${charConsistencyRules}
+FACE RULE (HIGHEST PRIORITY):
+The photos above are the ONLY ground truth. Reproduce EXACTLY what you see in the photo — every facial feature, skin tone, body build, hair. Do NOT interpret, guess, or generalize. Just copy the face from the photo into the illustration style. If the photo shows a round face, draw round. If slim, draw slim. If they look 22, draw 22. If they look 35, draw 35. Add NOTHING that isn't in the photo. Change NOTHING from the photo. The result must be immediately recognizable as the same person.${charConsistencyRules}
 
 ${teamBrandingBlock}
 
-CAP/HELMET LOGO RULE:
-- If a TEAM LOGO REFERENCE IMAGE was provided above, the logo on the cap/helmet MUST be an EXACT copy of that reference image.
-- Do NOT draw any logo from your training data memory — your memorized KBO logos are ALL OUTDATED.
-- Copy the reference logo image pixel-for-pixel onto the cap front.
+CAP/HELMET LOGO: Copy the logo reference image EXACTLY onto the cap. Do NOT use any logo from your memory.
 
-EXPRESSION & POSE:
-- BRIGHT, CHEERFUL expression — big smile, grinning, laughing, excited, winking
-- Do NOT draw a serious or stern face. This is fan art, NOT a mugshot.
-- VARY the camera angle: three-quarter view, slight tilt, dynamic angle. Do NOT face straight forward.
-- Energetic body language — confident stance, fist pump, victory sign, or lively gesture.
+EXPRESSION: Bright, cheerful (smiling/laughing). Dynamic angle (not straight-on).
 
-STORY CONTEXT (EVERY scene must directly illustrate this):
-"${translatedContext}"
-${scenePositionBlock}
-SCENE TO ILLUSTRATE:
-${translatedScene}
+SCENE: "${translatedContext}"
+${scenePositionBlock}${translatedScene}
 
-FINAL CHECKLIST:
-1. Does the face match the reference photo? (age, shape, features) — If NO, redraw the face.
-2. Is the cap/helmet logo matching the reference logo image (not your memory)? — If NO, redraw the logo.
-3. Are the uniform colors correct per the branding rules above? — If NO, fix the colors.
 ${tpl.bg}
-- Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, or text containers
-- Characters should be drawn large, filling most of the image area
-- ${ratioLabel} aspect ratio — fill the entire canvas
+- No speech bubbles, no text
+- Character fills most of the image
+- ${ratioLabel} aspect ratio
 ${tpl.style}
 
 ${tpl.outro}
