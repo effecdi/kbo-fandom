@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { RefreshCw } from "lucide-react";
 import type { GameRelayData } from "@/hooks/use-kbo-game-relay";
 
 interface BaseballDiamondProps {
   relay: GameRelayData;
   homeColor?: string;
   awayColor?: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 // Diamond field positions (percentage-based coordinates)
@@ -22,6 +25,19 @@ const FIELD_POSITIONS: Record<string, { x: number; y: number }> = {
   right:     { x: 85, y: 18 },
 };
 
+// Korean position abbreviation labels
+const POSITION_LABELS: Record<string, string> = {
+  pitcher:   "투",
+  catcher:   "포",
+  first:     "1루",
+  second:    "2루",
+  third:     "3루",
+  shortstop: "유격",
+  left:      "좌익",
+  center:    "중견",
+  right:     "우익",
+};
+
 // Base positions
 const BASE_POSITIONS = {
   first:  { x: 72, y: 56 },
@@ -31,6 +47,7 @@ const BASE_POSITIONS = {
 
 function PlayerNode({
   name,
+  posLabel,
   x,
   y,
   isPitcher,
@@ -38,6 +55,7 @@ function PlayerNode({
   color,
 }: {
   name: string;
+  posLabel?: string;
   x: number;
   y: number;
   isPitcher?: boolean;
@@ -62,6 +80,12 @@ function PlayerNode({
       className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 z-10"
       style={{ left: `${x}%`, top: `${y}%` }}
     >
+      {/* Position label above circle */}
+      {posLabel && !isPitcher && !isBatter && (
+        <span className="text-[13px] font-bold text-white/50 leading-none">
+          {posLabel}
+        </span>
+      )}
       <div
         className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white text-[13px] md:text-[13px] font-bold border-2 shadow-md ${
           isPitcher
@@ -170,30 +194,33 @@ export function BaseballDiamond({
   relay,
   homeColor = "#374151",
   awayColor = "#374151",
+  onRefresh,
+  isRefreshing,
 }: BaseballDiamondProps) {
   const defColor = relay.isTopInning ? homeColor : awayColor;
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-b from-[#2d5a27] via-[#3a7233] to-[#2d5a27]">
-      {/* BSO Count - top right */}
-      <div className="absolute top-2 right-2 z-30">
-        <CountDisplay count={relay.count} />
-      </div>
-
-      {/* Matchup info - top left */}
+      {/* Inning indicator - top left */}
       <div className="absolute top-2 left-2 z-30">
-        <div className="text-[13px] md:text-[13px] text-white/70">
-          <span className="bg-red-500/80 text-white px-1.5 py-0.5 rounded font-bold mr-1">
-            투
-          </span>
-          {relay.currentPitcher?.name || "-"}
-          <span className="mx-1.5 text-white/40">vs</span>
-          <span className="bg-blue-500/80 text-white px-1.5 py-0.5 rounded font-bold mr-1">
-            타
-          </span>
-          {relay.currentBatter?.name || "-"}
+        <div className="bg-black/50 px-2 py-1 rounded-lg text-[13px] font-bold text-white">
+          {relay.inning}회 {relay.isTopInning ? "초" : "말"}
         </div>
       </div>
+
+      {/* Refresh button - top right */}
+      {onRefresh && (
+        <button
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          className="absolute top-2 right-2 z-30 bg-black/50 hover:bg-black/70 p-1.5 rounded-lg transition-colors"
+          title="새로고침"
+        >
+          <RefreshCw
+            className={`w-4 h-4 text-white/80 ${isRefreshing ? "animate-spin" : ""}`}
+          />
+        </button>
+      )}
 
       {/* Diamond field SVG */}
       <div className="relative w-full" style={{ paddingBottom: "100%" }}>
@@ -273,6 +300,7 @@ export function BaseballDiamond({
               <PlayerNode
                 key={`${pos}-${player.name}`}
                 name={player.name}
+                posLabel={POSITION_LABELS[pos]}
                 x={coords.x}
                 y={coords.y}
                 isPitcher={pos === "pitcher"}
@@ -301,6 +329,27 @@ export function BaseballDiamond({
           {relay.bases.third && (
             <BaseRunner x={BASE_POSITIONS.third.x - 3} y={BASE_POSITIONS.third.y - 4} />
           )}
+        </div>
+      </div>
+
+      {/* Bottom info bar: Matchup + BSO Count (moved from top) */}
+      <div className="px-3 py-2.5 bg-black/40 border-t border-white/10">
+        <div className="flex items-center justify-between gap-2">
+          {/* Matchup info */}
+          <div className="text-[13px] md:text-[13px] text-white/70">
+            <span className="bg-red-500/80 text-white px-1.5 py-0.5 rounded font-bold mr-1">
+              투
+            </span>
+            {relay.currentPitcher?.name || "-"}
+            <span className="mx-1.5 text-white/40">vs</span>
+            <span className="bg-blue-500/80 text-white px-1.5 py-0.5 rounded font-bold mr-1">
+              타
+            </span>
+            {relay.currentBatter?.name || "-"}
+          </div>
+
+          {/* BSO Count */}
+          <CountDisplay count={relay.count} />
         </div>
       </div>
 

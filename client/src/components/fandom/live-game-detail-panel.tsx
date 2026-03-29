@@ -9,6 +9,7 @@ interface LiveGameDetailPanelProps {
   teams: KboTeam[];
   relay: GameRelayData | null;
   relayLoading?: boolean;
+  onRefresh?: () => void;
 }
 
 function TeamLogo({ team, size = "md" }: { team?: KboTeam; size?: "sm" | "md" | "lg" }) {
@@ -37,6 +38,7 @@ export function LiveGameDetailPanel({
   teams,
   relay,
   relayLoading,
+  onRefresh,
 }: LiveGameDetailPanelProps) {
   if (!game) {
     return (
@@ -57,6 +59,8 @@ export function LiveGameDetailPanel({
           relay={relay}
           homeColor={homeTeam?.coverColor}
           awayColor={awayTeam?.coverColor}
+          onRefresh={onRefresh}
+          isRefreshing={relayLoading}
         />
       </div>
     );

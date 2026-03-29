@@ -21,6 +21,7 @@ export function useKboGameRelay(gameId: string | null, intervalMs = 10000) {
   const [relay, setRelay] = useState<GameRelayData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchRelay = useCallback(async () => {
@@ -33,6 +34,7 @@ export function useKboGameRelay(gameId: string | null, intervalMs = 10000) {
       if (data.gameId) {
         setRelay(data);
         setError(null);
+        setLastUpdated(Date.now());
       }
     } catch (err: any) {
       setError(err.message);
@@ -44,6 +46,7 @@ export function useKboGameRelay(gameId: string | null, intervalMs = 10000) {
   useEffect(() => {
     if (!gameId) {
       setRelay(null);
+      setLastUpdated(null);
       return;
     }
 
@@ -55,5 +58,5 @@ export function useKboGameRelay(gameId: string | null, intervalMs = 10000) {
     };
   }, [fetchRelay, intervalMs, gameId]);
 
-  return { relay, isLoading, error };
+  return { relay, isLoading, error, lastUpdated, refetch: fetchRelay };
 }
