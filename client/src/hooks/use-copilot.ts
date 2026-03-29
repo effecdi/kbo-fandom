@@ -421,6 +421,7 @@ export function useCopilot() {
             sourceImageDataList: charImageUrls.length > 0 ? charImageUrls : undefined,
             characterNames: charNames.length > 0 ? charNames : undefined,
             teamIdentity: teamIdentityForServer,
+            templateType: fandomMeta?.templateType,
             aspectRatio: geminiRatio,
             sceneIndex: 0,
             totalScenes: 1,

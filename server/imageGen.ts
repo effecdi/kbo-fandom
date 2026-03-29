@@ -1010,12 +1010,94 @@ Make the background and items in the same simple, cute drawing style as the char
   throw lastError || new Error("Failed to generate background after retries");
 }
 
+// ── Template-aware prompt config for fandom creation ────────────────────────
+function getTemplatePromptParts(templateType?: string) {
+  const t = templateType || "instatoon";
+
+  // Instatoon / comic
+  if (t === "instatoon" || t === "meme") {
+    return {
+      role: "You are illustrating a scene for a Korean Instagram webtoon (instatoon) comic strip.",
+      style: "- Style: simple line art, thick outlines, flat colors, cute Korean instatoon style",
+      bg: "- Do NOT draw any background, scenery, room, furniture, walls, floors, or environment\n- The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else\n- Draw ONLY the characters and essential props/items they are holding or interacting with",
+      outro: "IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.",
+    };
+  }
+
+  // Character art: portrait, playercard, fanart, matchday, edit
+  if (["portrait", "playercard", "fanart", "matchday", "edit"].includes(t)) {
+    return {
+      role: "You are creating professional baseball fan artwork. This is NOT a webtoon or comic — it is a standalone illustration.",
+      style: "- Style: Follow the art style specified in the scene description above (e.g., watercolor, anime, realistic, pop art, sketch, pixel art, etc.). Do NOT default to cartoon/line-art/instatoon style unless that specific style was requested.",
+      bg: "- Create an appropriate artistic background that complements the character, mood, and selected aesthetic\n- For action/matchday scenes, a baseball stadium or field background is appropriate\n- The background should enhance the composition without overwhelming the character",
+      outro: "IMPORTANT: The art style MUST match what is specified in the scene description. Do NOT default to simple line art or cartoon style. This is a standalone artwork, NOT an instatoon comic.",
+    };
+  }
+
+  // Wallpaper
+  if (t === "wallpaper") {
+    return {
+      role: "You are creating a stunning phone wallpaper featuring a baseball player.",
+      style: "- Style: Follow the art style specified in the scene description. Create a high-quality, visually rich wallpaper.",
+      bg: "- Create a beautiful, detailed background perfect for a phone wallpaper\n- Use rich colors, atmospheric lighting, and depth\n- The character should be prominently featured with the background enhancing the overall composition",
+      outro: "IMPORTANT: This is a WALLPAPER — it MUST have a beautiful, detailed background. Do NOT use a plain white background.",
+    };
+  }
+
+  // Sticker / product cutout
+  if (["sticker", "stickersheet", "acrylicstand"].includes(t)) {
+    return {
+      role: "You are designing cute character stickers/merchandise artwork.",
+      style: "- Style: Follow the art style specified in the scene description. Keep edges clean and suitable for die-cutting.",
+      bg: "- The background MUST be plain white (#FFFFFF) for clean cutout\n- Draw ONLY the character with clean, defined edges\n- No background elements, shadows on ground, or environmental details",
+      outro: "IMPORTANT: Plain white background for sticker/product cutout. Clean edges required.",
+    };
+  }
+
+  // Banner / slogan
+  if (["cheerbanner", "slogan"].includes(t)) {
+    return {
+      role: "You are designing a bold baseball stadium cheer banner.",
+      style: "- Style: Follow the art style specified in the scene description. Create a bold, eye-catching banner design with team colors.",
+      bg: "- Create a vibrant, team-colored background suitable for a cheer banner\n- Use the team's primary colors prominently\n- The design should be bold, graphic, and visible from a distance",
+      outro: "IMPORTANT: This is a CHEER BANNER — use bold team colors and make the design eye-catching and impactful.",
+    };
+  }
+
+  // Magazine / collage / decorative
+  if (["retro-magazine", "kitsch-collage", "scorebook-page", "deco-playercard", "ticket-bookmark", "profile-deco"].includes(t)) {
+    return {
+      role: "You are designing a creative baseball-themed graphic design piece.",
+      style: "- Style: Follow the art style specified in the scene description. Include rich design elements, patterns, and decorative details.",
+      bg: "- Create a richly designed background with layout elements (frames, patterns, stickers, decorative elements)\n- The design should feel crafted and intentional, like a magazine page or scrapbook\n- Include baseball-themed decorative elements appropriate to the template type",
+      outro: "IMPORTANT: This is a DESIGNED piece — include rich visual design elements, not just a character on white.",
+    };
+  }
+
+  // Product / goods
+  if (["phonecase", "stadium-set"].includes(t)) {
+    return {
+      role: "You are designing baseball-themed merchandise.",
+      style: "- Style: Follow the art style specified in the scene description. Create a clean, production-ready design.",
+      bg: "- Create an appropriate designed background for the product\n- Use team colors and baseball-themed design elements\n- The design should be clean and suitable for manufacturing",
+      outro: "IMPORTANT: This is a PRODUCT DESIGN — make it clean, professional, and suitable for printing.",
+    };
+  }
+
+  // Default fallback
+  return {
+    role: "You are creating artwork based on the description provided.",
+    style: "- Style: Follow the art style described in the scene description above.",
+    bg: "- Create an appropriate background for the scene as described",
+    outro: "IMPORTANT: Follow the scene description closely.",
+  };
+}
+
 /**
- * 자동 웹툰 전용 장면 이미지 생성.
- * 기존 generateWithBackground와 달리:
- * 1) sceneDescription을 장면 묘사의 핵심으로 강조
- * 2) 스토리 주제(storyContext)를 전달하여 주제 일관성 유지
- * 3) 캐릭터 이미지가 있어도 "장면" 중심 생성
+ * 팬덤 아트워크 & 웹툰 장면 이미지 생성.
+ * templateType에 따라 프롬프트가 달라짐:
+ * - instatoon/meme: 인스타툰 스타일, 흰 배경
+ * - portrait/fanart/etc: 사용자 선택 스타일, 적절한 배경
  */
 export async function generateWebtoonScene(
   sceneDescription: string,
@@ -1027,7 +1109,9 @@ export async function generateWebtoonScene(
   previousSceneDescription?: string,
   characterNames?: string[],
   teamIdentity?: string,
+  templateType?: string,
 ): Promise<string> {
+  const tpl = getTemplatePromptParts(templateType);
   const parts: any[] = [];
   const images = sourceImageDataList ?? [];
   const hasImages = images.length > 0;
@@ -1098,7 +1182,7 @@ ${teamIdentity}
       : "";
 
     parts.push({
-      text: `You are illustrating a scene for a Korean Instagram webtoon (instatoon) comic strip.
+      text: `${tpl.role}
 
 ${noTextRule}
 ${charIdentityBlock}
@@ -1128,21 +1212,19 @@ CRITICAL RULES:
 - Draw EXACTLY the scene described above using the EXACT character from the reference photos.
 - The character's FACE must match the reference photo — same face shape, same features, same build. This is NON-NEGOTIABLE.
 - The scene MUST DIRECTLY illustrate the story topic: "${translatedContext}" — every visual element must connect to this topic
-- Do NOT draw any background, scenery, room, furniture, walls, floors, or environment
-- The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
-- Draw ONLY the characters and essential props/items they are holding or interacting with
+${tpl.bg}
 - Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, or text containers — speech bubbles are added separately
 - If the scene involves a phone/smartphone, draw the phone screen clearly visible with UI elements
 - Characters should be drawn large, filling most of the image area
 - ${ratioLabel} aspect ratio — the image must completely fill the canvas in this exact ratio
-- Style: simple line art, thick outlines, flat colors, cute Korean instatoon style
+${tpl.style}
 
-IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
+${tpl.outro}
 Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind to the image. Speech bubbles will be overlaid separately.`
     });
   } else {
     parts.push({
-      text: `You are illustrating a scene for a Korean Instagram webtoon (instatoon) comic strip.
+      text: `${tpl.role}
 
 ${noTextRule}
 
@@ -1162,16 +1244,14 @@ CRITICAL RULES:
 - Draw EXACTLY the scene described above. Do NOT deviate from it.
 - The scene MUST DIRECTLY illustrate the story topic: "${translatedContext}" — every visual element must connect to this topic
 - Include character(s) appropriate for the scene with clear poses, lively expressions, and dynamic body language
-- Do NOT draw any background, scenery, room, furniture, walls, floors, or environment
-- The background MUST be a plain solid white color (#FFFFFF) — absolutely nothing else
-- Draw ONLY the characters and essential props/items they are holding or interacting with
+${tpl.bg}
 - Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, or text containers — speech bubbles are added separately
 - If the scene involves a phone/smartphone, draw the phone screen clearly visible with UI elements
 - Characters should be drawn large, filling most of the image area
 - ${ratioLabel} aspect ratio — the image must completely fill the canvas in this exact ratio
-- Style: simple line art, thick outlines, flat colors, cute Korean instatoon style
+${tpl.style}
 
-IMPORTANT: Plain white background ONLY. NO rooms, NO walls, NO floors, NO furniture, NO scenery, NO gradients, NO patterns.
+${tpl.outro}
 Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind to the image. Speech bubbles will be overlaid separately.`
     });
   }
