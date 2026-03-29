@@ -1198,10 +1198,11 @@ export async function generateWebtoonScene(
       ? `\n=== TEAM UNIFORM & BRANDING (HIGHEST PRIORITY — OVERRIDES YOUR TRAINING DATA) ===
 ${teamIdentity}
 
-BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE):
+BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
 1. The uniform and logo description above is the ONLY correct version. This is the 2025-2026 season branding.
-2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is OUTDATED.
-3. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
+2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is from before 2025 and is COMPLETELY OUTDATED for most KBO teams.
+3. If you cannot accurately draw the described logo, then DO NOT draw any logo at all. A missing logo is better than a wrong/outdated logo.
+4. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
    - NO old Doosan Bears logo (pre-2025). The current logo is a diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners, Hustle Block font.
    - NO old Hanwha Eagles logo (pre-2024). The current logo uses eagle-beak sharp serif wordmark by Matthew Wolff.
    - NO old SSG/SK Wyverns branding. SSG Landers uses red 'L' with UFO orbit ring.
@@ -1220,13 +1221,17 @@ BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE):
 ${noTextRule}
 ${charIdentityBlock}
 FACE & BODY REFERENCE (HIGHEST PRIORITY — the photos above are the GROUND TRUTH):
-- The reference photos above show a REAL PERSON. You MUST faithfully reproduce their EXACT facial features in illustration style.
-- CRITICAL FACIAL FEATURES TO MATCH: face shape (round/square/oval), face width, jaw line, cheek fullness, eye size & shape, nose shape & size, eyebrow thickness, lip shape, forehead size, chin shape.
-- BODY TYPE: Match the person's build (slim/average/stocky/muscular) exactly as shown in the reference photo. Do NOT change their body proportions.
-- AGE APPEARANCE: The illustrated character must look the SAME AGE as the person in the reference photo. Do NOT make them look older or younger.
-- HAIR: Match the exact hairstyle, hair length, and hair color from the reference photo.
-- The character must be IMMEDIATELY RECOGNIZABLE as the same person from the reference photo — if a fan of this player saw the illustration, they should instantly know who it is.
-- Do NOT beautify, slim down, age up, or otherwise alter the person's real appearance. Draw them AS THEY ACTUALLY LOOK.${charConsistencyRules}
+- The reference photos above show a REAL PERSON (a professional KBO baseball player). You MUST faithfully reproduce their EXACT facial features in illustration style.
+- STEP 1: Study the reference photo carefully. Note EVERY facial detail: face shape, jaw line, cheek structure, eye shape and spacing, nose bridge width and tip shape, eyebrow thickness and arch, lip fullness, forehead proportions, chin shape, ear size.
+- STEP 2: Draw the character's face to be a RECOGNIZABLE LIKENESS of the person in the photo. A fan must be able to identify who this player is at first glance.
+- CRITICAL FACIAL FEATURES TO MATCH EXACTLY: face shape (round/square/oval), face width, jaw line angle, cheek fullness, eye size & shape & spacing, nose shape & width, eyebrow thickness & arch, lip shape & fullness, forehead size, chin shape & prominence.
+- BODY TYPE: Match the person's build (slim/average/stocky/muscular) exactly as shown. Do NOT change their body proportions.
+- AGE APPEARANCE: The illustrated character must look the SAME AGE as the reference. Do NOT age up or down.
+- HAIR: Match the EXACT hairstyle, hair length, parting direction, and hair color from the reference photo. This is one of the most recognizable features.
+- SKIN TONE: Match the person's skin tone from the reference photo exactly.
+- The character must be IMMEDIATELY RECOGNIZABLE as the same person — this is a FAN ART of a SPECIFIC PLAYER. Generic faces are UNACCEPTABLE.
+- Do NOT beautify, slim down, age up, or otherwise alter the person's real appearance. Draw them AS THEY ACTUALLY LOOK.
+- If the art style is cartoon/anime, still maintain the key distinguishing features (face shape, hair, build) that make this person recognizable.${charConsistencyRules}
 ${teamBrandingBlock}
 EXPRESSION & POSE VARIETY (CRITICAL — apply to EVERY generated image):
 - The character MUST have a BRIGHT, CHEERFUL, LIVELY facial expression — big smile, grinning, laughing, showing excitement, winking, or playful look.

@@ -422,7 +422,7 @@ export function useCopilot() {
         if (teamPrompt) {
           teamIdentityForServer = teamPrompt;
           // Also inject key team branding into styledPrompt for stronger enforcement
-          styledPrompt = `[TEAM: ${fandomMeta.groupName} — use ONLY their current 2024-2025 branding, uniform colors, and logo. DO NOT use any old/outdated logos or branding.] ${styledPrompt}`;
+          styledPrompt = `[TEAM: ${fandomMeta.groupName} — use ONLY their current 2025-2026 season branding, uniform colors, and logo. DO NOT use any old/outdated logos or branding. Your training data logos are OUTDATED — follow the text description ONLY.] ${styledPrompt}`;
         }
         // 밝은 표정 + 다양한 방향 지시 주입
         styledPrompt = `${styledPrompt}. IMPORTANT: The character must have a bright, cheerful, lively facial expression (smiling, laughing, excited). Do NOT draw a serious or stern face. Use a dynamic camera angle (three-quarter view, slight tilt, or diagonal composition) — do NOT face straight forward.`;
