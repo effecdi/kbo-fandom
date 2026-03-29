@@ -1175,145 +1175,90 @@ export async function generateWebtoonScene(
     charIdentityBlock = `\nCHARACTER IDENTITY MAP:\n${charLabels.join("\n")}\n`;
   }
 
-  // Build team branding block and logo image (shared between hasImages/no-images branches)
-  let teamBrandingParts: any[] = [];
-  if (teamIdentity && teamLogoImage) {
-    const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
-    if (logoMatch) {
-      teamBrandingParts.push({ text: `\n======================================================================\nTEAM LOGO REFERENCE IMAGE — 2025-2026 OFFICIAL KBO LOGO\n======================================================================\nThe image below is the CURRENT, OFFICIAL team emblem directly from KBO (Korea Baseball Organization).\nThis is the ONLY correct version. Your training data logos are ALL OUTDATED.\n\nYou MUST:\n1. Copy this EXACT logo onto the CHARACTER'S CAP/HELMET front — same shapes, same colors, same style\n2. Use this logo's typography/design language for the JERSEY wordmark\n3. IGNORE any team logo stored in your memory/weights — it is WRONG\n4. Study the image carefully: exact letter shapes, curves, angles, colors\n\nHere is the official logo:` });
-      teamBrandingParts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
-      teamBrandingParts.push({ text: `^^^ ABOVE: The ONLY correct logo. COPY IT EXACTLY onto the cap/helmet.\nIf you draw ANY different version of this team's logo, the output is WRONG and UNACCEPTABLE.\nThe cap logo must match THIS image — not your memory. ^^^` });
-    }
-  }
-
-  const teamBrandingBlock = teamIdentity
-    ? `\n=== TEAM UNIFORM & BRANDING (HIGHEST PRIORITY — OVERRIDES YOUR TRAINING DATA) ===
-${teamIdentity}
-
-BRANDING ENFORCEMENT RULES (NON-NEGOTIABLE — ZERO TOLERANCE FOR WRONG LOGOS):
-1. The uniform and logo description above is the ONLY correct version. This is the 2025-2026 season branding.
-2. DO NOT use ANY pre-trained/memorized team logos or uniforms — your training data is from before 2025 and is COMPLETELY OUTDATED for most KBO teams.
-3. If a TEAM LOGO REFERENCE IMAGE was provided above, that image is the GROUND TRUTH. Copy that logo EXACTLY onto the cap and uniform. If no reference image was provided, follow the text description LITERALLY. Either way, do NOT use any pre-trained/memorized logo — your training data logos are OUTDATED.
-4. SPECIFIC BANS — these are ALL outdated and MUST NOT appear:
-   - NO old Doosan Bears logo (pre-2025): roaring bear head in circle/shield, block 'B' cap. CURRENT: diamond-shaped emblem with 'DOOSAN'/'SEOUL' banners.
-   - NO old Hanwha Eagles logo (pre-2024): angular/blocky/gothic 'E' emblem is BANNED. CURRENT: CURSIVE SCRIPT 'Eagles' in flowing italic handwriting (Matthew Wolff 2024).
-   - NO old SSG/SK Wyverns branding (pre-2024): simple UFO/spaceship silhouette is BANNED. CURRENT: angular red 'L' with UFO orbit ring (Todd Radom 2024).
-   - NO old Lotte Giants logo (pre-2023): detailed/ornate non-flat seagull is BANNED. CURRENT: flat-design modern seagull emblem.
-   - NO old KT Wiz logo (pre-2024): rounder/softer 'wiz' lettering is BANNED. CURRENT: angular gothic 'wiz' with star-burst mark.
-   - NO old KIA Tigers logo (pre-2021): rounded KIA Motors logo is BANNED. CURRENT: new Kia ascending typography with V/home-base motif.
-   - NO red accents on Samsung Lions (dropped in 2024). CURRENT: blue and white ONLY.
-   - NO generic/invented team logos or uniform designs.
-5. If you are unsure about the team's current branding, follow the text description above LITERALLY — do not guess.
-6. The team's PRIMARY COLOR (${teamIdentity.match(/Primary color: (#[A-Fa-f0-9]+)/)?.[1] || "described above"}) MUST be prominently visible.
-7. Draw the uniform EXACTLY as described: correct wordmark text, correct font style, correct color scheme, correct cap design.
-8. Include ONLY ONE version of the team logo — the reference image version. Do NOT include multiple logo variants or old versions anywhere in the image.
-=== END TEAM BRANDING ===\n`
+  // ── 팀 브랜딩: 최소한의 텍스트만 (프롬프트 길이를 줄여 이미지 레퍼런스에 집중)
+  const teamColorHint = teamIdentity
+    ? teamIdentity.match(/Primary color: (#[A-Fa-f0-9]+)/)?.[1] || ""
     : "";
 
   if (hasImages) {
-    // ── Part 0: 선수 사진 (얼굴 + 유니폼/로고 전부 복사 대상)
-    for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
-      const src = images[imgIdx];
-      const match = src.match(/^data:([^;]+);base64,(.+)$/);
-      if (match) {
-        const name = hasCharNames ? (characterNames[imgIdx] || `Character ${imgIdx + 1}`) : `Player ${imgIdx + 1}`;
-        parts.push({ text: `[${name}] — REAL PHOTO. Copy EVERYTHING: face, uniform, logos, cap.` });
-        parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
-      }
-    }
+    // ─────────────────────────────────────────────────────────
+    // 핵심 전략: 텍스트를 최소화하고, 이미지를 마지막에 배치
+    // → Gemini는 프롬프트 끝의 이미지에 더 집중함
+    // ─────────────────────────────────────────────────────────
 
     const charConsistencyRules = hasCharNames && images.length > 1
-      ? `\nCharacter consistency: ${characterNames.map((n, i) => `"${n}" = reference #${i + 1}`).join(", ")}. Do NOT mix them.`
+      ? `\nKeep each character distinct: ${characterNames.map((n, i) => `"${n}" = photo #${i + 1}`).join(", ")}.`
       : "";
 
-    // ── Part 1: 팀 로고 레퍼런스 (2번 전달 — 가중치 강화)
-    if (teamBrandingParts.length > 0) {
-      parts.push(...teamBrandingParts);
-      // 로고 이미지를 한 번 더 전달하여 Gemini가 학습 데이터보다 이 이미지를 우선하도록
-      const logoImagePart = teamBrandingParts.find((p: any) => p.inlineData);
-      if (logoImagePart) {
-        parts.push({ text: `REMINDER — here is the correct logo again. Use THIS, not your memory:` });
-        parts.push(logoImagePart);
-      }
-    }
-
-    // ── Part 2: 메인 프롬프트
+    // ── Part 1: 텍스트 프롬프트 (간결하게)
     parts.push({
       text: `${tpl.role}
 
 ${noTextRule}
-${charIdentityBlock}
-
-COPY THE REFERENCE PHOTO (HIGHEST PRIORITY):
-The player photo above is the ONLY ground truth. Copy EVERYTHING you see:
-1. FACE: exact facial features, skin tone, body build, hair, age appearance
-2. UNIFORM: the EXACT jersey design, colors, and logos shown in the photo
-3. CAP/HELMET: the EXACT logo on the cap/helmet shown in the photo
-Do NOT replace any part with logos/uniforms from your memory. The photo shows the CURRENT 2025-2026 season uniform — your training data is outdated.${charConsistencyRules}
-
-${teamBrandingBlock}
-
-LOGO RULES (ZERO TOLERANCE — if wrong, the entire output is rejected):
-- The player's reference photo already shows the CURRENT team uniform and logos. COPY THEM.
-- If a separate logo reference image was provided above, that is the definitive version.
-- The branding text above has a "CAP/HELMET LOGO" field — follow it EXACTLY.
-- Do NOT draw ANY logo from your training data memory. Your memorized logos are ALL WRONG.
-- If you are unsure, look at the reference images again and copy what you see.
-
-EXPRESSION: Bright, cheerful (smiling/laughing). Dynamic angle (not straight-on).
 
 SCENE: "${translatedContext}"
 ${scenePositionBlock}${translatedScene}
 
 ${tpl.bg}
-- No speech bubbles, no text
-- Character fills most of the image
-- ${ratioLabel} aspect ratio
 ${tpl.style}
+- ${ratioLabel} aspect ratio
+- Cheerful expression, dynamic angle
+- Character fills most of the image
+- No speech bubbles${charConsistencyRules}
+${teamIdentity ? `\nTeam: ${teamIdentity.match(/\[TEAM VISUAL IDENTITY - ([^\]]+)\]/)?.[1] || ""}. Primary color: ${teamColorHint}.` : ""}
 
-${tpl.outro}
-Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind.`
+REFERENCE PHOTOS BELOW — reproduce the player's appearance EXACTLY as shown:
+- Same face, same skin tone, same body build, same hair
+- Same uniform design and colors as in the photo
+- The photo is the ONLY ground truth — do NOT use your memorized knowledge for this player's appearance
+
+${tpl.outro}`
     });
+
+    // ── Part 2: 이미지를 마지막에 배치 (Gemini가 더 주목)
+    for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
+      const src = images[imgIdx];
+      const imgMatch = src.match(/^data:([^;]+);base64,(.+)$/);
+      if (imgMatch) {
+        const name = hasCharNames ? (characterNames[imgIdx] || `Player ${imgIdx + 1}`) : `Player ${imgIdx + 1}`;
+        parts.push({ text: `[${name}] reference photo:` });
+        parts.push({ inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } });
+      }
+    }
   } else {
-    // Even without character photos, inject team logo image if available
-    if (teamBrandingParts.length > 0) {
-      parts.push(...teamBrandingParts);
+    // ── 캐릭터 사진 없는 경우 (기존 로직 유지, 브랜딩 텍스트는 간소화)
+    // Team logo image if available
+    if (teamIdentity && teamLogoImage) {
+      const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
+      if (logoMatch) {
+        parts.push({ text: `Team logo reference:` });
+        parts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
+      }
     }
 
     parts.push({
       text: `${tpl.role}
 
 ${noTextRule}
-${teamBrandingBlock}
-EXPRESSION & POSE VARIETY (CRITICAL — apply to EVERY generated image):
-- Characters MUST have BRIGHT, CHEERFUL, LIVELY facial expressions — big smile, grinning, laughing, showing excitement, winking, or playful look.
-- Do NOT draw characters with serious, stern, stoic, or neutral expressions. This is fan art, NOT a passport photo.
-- VARY the camera angle and character direction. Choose randomly from: three-quarter view, slight head tilt, looking over shoulder, dynamic action angle, low angle looking up, high angle looking down, side profile with head turned toward viewer, or diagonal composition.
-- Do NOT always draw characters facing straight forward. Make each image feel DYNAMIC and UNIQUE.
+${teamIdentity ? `\nTeam branding: ${teamIdentity}\n` : ""}
+- Characters MUST have bright, cheerful expressions (smiling, laughing, excited).
+- Vary camera angle — three-quarter view, slight tilt, dynamic angles. NOT straight-on.
 
-STORY CONTEXT (the entire comic is about this topic — every scene must relate to it):
-"${translatedContext}"
+STORY CONTEXT: "${translatedContext}"
 ${scenePositionBlock}
-SCENE TO ILLUSTRATE (this is the MOST important part — draw exactly this):
-${translatedScene}
+SCENE: ${translatedScene}
 
-CRITICAL RULES:
-- Draw EXACTLY the scene described above. Do NOT deviate from it.
-- The scene MUST DIRECTLY illustrate the story topic: "${translatedContext}" — every visual element must connect to this topic
-- Include character(s) appropriate for the scene with clear poses, lively expressions, and dynamic body language
 ${tpl.bg}
-- Do NOT draw any speech bubbles, thought bubbles, dialogue boxes, or text containers — speech bubbles are added separately
-- If the scene involves a phone/smartphone, draw the phone screen clearly visible with UI elements
 - Characters should be drawn large, filling most of the image area
-- ${ratioLabel} aspect ratio — the image must completely fill the canvas in this exact ratio
+- ${ratioLabel} aspect ratio
 ${tpl.style}
 
 ${tpl.outro}
-Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any kind to the image. Speech bubbles will be overlaid separately.`
+Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
     });
   }
 
-  // hasImages일 때는 이미 위에서 이미지를 텍스트 앞에 추가했으므로 스킵
+  // !hasImages 경우에만 추가 이미지 삽입 (hasImages는 위에서 이미 처리)
   if (!hasImages) {
     for (const src of images) {
       const match = src.match(/^data:([^;]+);base64,(.+)$/);
@@ -1354,15 +1299,13 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any 
       const mimeType = imagePart.inlineData.mimeType || "image/png";
       let rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
 
-      // ── 2-pass 로고 보정: 팀 로고 이미지가 있으면 생성된 이미지의 로고를 교정 ──
-      // Gemini 학습데이터에 구로고가 있어서 1차 생성에서 구로고가 나올 확률이 높음
-      // 2차에서 이미지 편집으로 정확한 로고로 교체
-      if (teamLogoImage && hasImages) {
+      // ── 확정적 로고 오버레이: sharp으로 팀 로고 배지를 우하단에 합성 ──
+      // Gemini 학습데이터 문제를 우회 — AI에 의존하지 않고 정확한 로고를 항상 표시
+      if (teamLogoImage) {
         try {
-          logger.info("[generate-scene] Starting 2-pass logo correction...");
-          rawDataUrl = await correctLogoInImage(rawDataUrl, teamLogoImage, teamIdentity);
+          rawDataUrl = await overlayTeamLogo(rawDataUrl, teamLogoImage);
         } catch (err) {
-          logger.warn("[generate-scene] Logo correction failed, using original", err);
+          logger.warn("[generate-scene] Logo overlay failed, continuing", err);
         }
       }
 
@@ -1377,75 +1320,67 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes of any 
   throw lastError || new Error("Failed to generate webtoon scene after retries");
 }
 
-// ─── 2-Pass Logo Correction ─────────────────────────────────────────────────
+// ─── Deterministic Logo Overlay (sharp) ─────────────────────────────────────
 /**
- * 생성된 이미지의 모자/헬멧/유니폼 로고를 정확한 KBO 공식 로고로 교정.
- * Gemini의 이미지 편집 기능을 사용하여 로고 영역만 수정하고 나머지는 유지.
- * 1차 생성에서 학습데이터 기반 구로고가 나올 확률이 높아, 2차에서 보정.
+ * 생성된 이미지의 우하단에 팀 로고 배지를 확정적으로 합성.
+ * Gemini에 의존하지 않고 sharp으로 처리하므로 100% 정확한 로고 표시.
+ * 이미지 너비의 12%로 로고를 리사이즈, opacity 0.85, 우하단 배치.
  */
-export async function correctLogoInImage(
-  generatedImageDataUrl: string,
-  correctLogoDataUrl: string,
-  teamBrandingText?: string,
+export async function overlayTeamLogo(
+  imageDataUrl: string,
+  logoDataUrl: string,
 ): Promise<string> {
-  const imgMatch = generatedImageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
-  const logoMatch = correctLogoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
-  if (!imgMatch || !logoMatch) return generatedImageDataUrl;
+  const imgMatch = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const logoMatch = logoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !logoMatch) return imageDataUrl;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image",
-      contents: [{
-        role: "user",
-        parts: [
-          { text: `GENERATED IMAGE (to be corrected):` },
-          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
-          { text: `CORRECT 2025-2026 OFFICIAL KBO TEAM LOGO/EMBLEM:` },
-          { inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } },
-          {
-            text: `TASK: You are a logo correction specialist. Fix ONLY the team logos in this baseball character illustration.
+    const imgBuf = Buffer.from(imgMatch[2], "base64");
+    const logoBuf = Buffer.from(logoMatch[2], "base64");
 
-WHAT TO CHANGE:
-1. Find the logo/emblem/letter on the character's CAP or HELMET front
-2. Replace it with the CORRECT LOGO shown above — copy its exact shapes, curves, colors
-3. If the jersey/chest wordmark doesn't match the correct branding, fix that too
+    const imgMeta = await sharp(imgBuf).metadata();
+    const imgWidth = imgMeta.width || 800;
+    const imgHeight = imgMeta.height || 1200;
 
-WHAT TO KEEP UNCHANGED (CRITICAL):
-- The character's face, expression, skin, hair, body shape, pose
-- The background, scenery, composition
-- The art style, line thickness, overall color palette
-- All clothing shapes (just fix the LOGO GRAPHICS on them)
-- Everything that is NOT a team logo/emblem
+    // 로고를 이미지 너비의 12% 크기로 리사이즈
+    const logoSize = Math.round(imgWidth * 0.12);
 
-${teamBrandingText ? `CURRENT TEAM BRANDING:\n${teamBrandingText}\n` : ''}
-RULES:
-- The corrected logos must look EXACTLY like the reference logo image above
-- Maintain proper perspective (the logo should curve/angle naturally on the cap)
-- Keep the same image dimensions and composition
-- This is an EDITING task — change as LITTLE as possible, only the logo areas
-- Do NOT add any text, letters, or writing anywhere in the image
-- Do NOT change the character's appearance in any way`
-          }
-        ]
-      }],
-      config: {
-        responseModalities: [Modality.TEXT, Modality.IMAGE],
-      },
-    });
+    const resizedLogo = await sharp(logoBuf)
+      .resize(logoSize, logoSize, { fit: "inside" })
+      .toBuffer();
 
-    const candidate = response.candidates?.[0];
-    const imagePart = candidate?.content?.parts?.find((part: any) => part.inlineData);
-    if (!imagePart?.inlineData?.data) {
-      logger.warn("[logo-correction] No image in response, using original");
-      return generatedImageDataUrl;
+    // opacity 0.85 적용
+    const { data: logoRaw, info: logoInfo } = await sharp(resizedLogo)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const logoPixels = Buffer.from(logoRaw);
+    for (let i = 3; i < logoPixels.length; i += 4) {
+      logoPixels[i] = Math.round(logoPixels[i] * 0.85);
     }
 
-    logger.info("[logo-correction] Successfully corrected logos in generated image");
-    const mimeType = imagePart.inlineData.mimeType || "image/png";
-    return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+    const opaqueLogoBuf = await sharp(logoPixels, {
+      raw: { width: logoInfo.width, height: logoInfo.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
+
+    // 우하단 배치 (하단/우측에서 4% 여백)
+    const margin = Math.round(imgWidth * 0.04);
+    const left = imgWidth - logoInfo.width - margin;
+    const top = imgHeight - logoInfo.height - margin;
+
+    const result = await sharp(imgBuf)
+      .composite([{ input: opaqueLogoBuf, left: Math.max(0, left), top: Math.max(0, top) }])
+      .png()
+      .toBuffer();
+
+    logger.info(`[logo-overlay] Team logo badge overlaid (${logoSize}px, bottom-right)`);
+    return `data:image/png;base64,${result.toString("base64")}`;
   } catch (error) {
-    logger.warn("[logo-correction] Failed, using original image", error);
-    return generatedImageDataUrl;
+    logger.warn("[logo-overlay] Failed, returning original", error);
+    return imageDataUrl;
   }
 }
 
