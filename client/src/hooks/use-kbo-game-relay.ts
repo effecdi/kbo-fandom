@@ -4,8 +4,8 @@ export interface GameRelayData {
   gameId: string;
   inning: number;
   isTopInning: boolean;
-  currentPitcher: { name: string; style: string } | null;
-  currentBatter: { name: string; pos: string; hittype: string } | null;
+  currentPitcher: { name: string; pcode: string; style: string } | null;
+  currentBatter: { name: string; pcode: string; pos: string; hittype: string } | null;
   count: { ball: number; strike: number; out: number };
   bases: { first: boolean; second: boolean; third: boolean };
   defense: Record<string, { name: string; pcode: string }>;

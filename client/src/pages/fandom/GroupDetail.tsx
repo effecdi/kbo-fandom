@@ -24,6 +24,7 @@ import {
   type StadiumGuide,
   type FandomFeedPost,
   type FandomEvent,
+  getPlayerPhotoUrl,
 } from "@/lib/local-store";
 import { Calendar } from "lucide-react";
 import { useKboSchedule } from "@/hooks/use-kbo-schedule";
@@ -169,12 +170,35 @@ export function FandomGroupDetail() {
                 key={member.id}
                 className="bg-card border border-border rounded-2xl p-4 text-center hover:border-foreground/20 transition-all"
               >
-                <div
-                  className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-white font-bold text-lg mb-3"
-                  style={{ backgroundColor: member.color }}
-                >
-                  {member.name.slice(0, 1)}
-                </div>
+                {member.pcode ? (
+                  <div className="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden border-2 border-border">
+                    <img
+                      src={getPlayerPhotoUrl(member.pcode)}
+                      alt={member.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = "none";
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = "flex";
+                      }}
+                    />
+                    <div
+                      className="w-full h-full items-center justify-center text-white font-bold text-lg hidden"
+                      style={{ backgroundColor: member.color }}
+                    >
+                      {member.name.slice(0, 1)}
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-white font-bold text-lg mb-3"
+                    style={{ backgroundColor: member.color }}
+                  >
+                    {member.name.slice(0, 1)}
+                  </div>
+                )}
                 <p className="text-sm font-bold text-foreground">{member.name}</p>
                 <p className="text-[13px] text-muted-foreground">{member.nameKo}</p>
                 <p className="text-[13px] text-muted-foreground mt-1">{member.position}</p>

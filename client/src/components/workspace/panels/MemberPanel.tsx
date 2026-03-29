@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Heart, Star, ChevronDown, ChevronRight, Palette } from "lucide-react";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useCopilot } from "@/hooks/use-copilot";
-import { listItems, STORE_KEYS, type KboPlayer } from "@/lib/local-store";
+import { listItems, STORE_KEYS, getPlayerPhotoUrl, type KboPlayer } from "@/lib/local-store";
 import {
   STYLE_PRESETS,
   POSE_CHIPS,
@@ -90,11 +90,32 @@ export function MemberPanel() {
                 onClick={() => toggleMember(member.id)}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.06] transition-all group text-left"
               >
-                {/* Color dot */}
-                <div
-                  className="w-3 h-3 rounded-full shrink-0 ring-1 ring-white/10"
-                  style={{ backgroundColor: member.color }}
-                />
+                {/* Player photo avatar */}
+                {member.pcode ? (
+                  <div className="w-5 h-5 rounded-full shrink-0 overflow-hidden ring-1 ring-white/10">
+                    <img
+                      src={getPlayerPhotoUrl(member.pcode)}
+                      alt={member.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = "none";
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = "block";
+                      }}
+                    />
+                    <div
+                      className="w-full h-full rounded-full hidden"
+                      style={{ backgroundColor: member.color }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="w-3 h-3 rounded-full shrink-0 ring-1 ring-white/10"
+                    style={{ backgroundColor: member.color }}
+                  />
+                )}
 
                 {/* Name */}
                 <div className="flex-1 min-w-0">

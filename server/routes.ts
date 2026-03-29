@@ -2691,8 +2691,8 @@ export async function registerRoutes(
         gameId,
         inning: relay.inn,
         isTopInning,
-        currentPitcher: pitcherInfo ? { name: pitcherInfo.name, style: pitcherInfo.style || "" } : null,
-        currentBatter: batterInfo ? { name: batterInfo.name, pos: batterInfo.pos, hittype: "" } : null,
+        currentPitcher: pitcherInfo ? { name: pitcherInfo.name, pcode: gs.pitcher, style: pitcherInfo.style || "" } : null,
+        currentBatter: batterInfo ? { name: batterInfo.name, pcode: gs.batter, pos: batterInfo.pos, hittype: "" } : null,
         count: {
           ball: parseInt(gs.ball) || 0,
           strike: parseInt(gs.strike) || 0,

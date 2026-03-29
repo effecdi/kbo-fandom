@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { RefreshCw } from "lucide-react";
+import { getPlayerPhotoUrl } from "@/lib/local-store";
 import type { GameRelayData } from "@/hooks/use-kbo-game-relay";
 
 interface BaseballDiamondProps {
@@ -47,6 +48,7 @@ const BASE_POSITIONS = {
 
 function PlayerNode({
   name,
+  pcode,
   posLabel,
   x,
   y,
@@ -55,6 +57,7 @@ function PlayerNode({
   color,
 }: {
   name: string;
+  pcode?: string;
   posLabel?: string;
   x: number;
   y: number;
@@ -63,6 +66,7 @@ function PlayerNode({
   color?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     if (ref.current) {
@@ -73,6 +77,11 @@ function PlayerNode({
       );
     }
   }, [name]);
+
+  // Reset error state when pcode changes
+  useEffect(() => { setImgError(false); }, [pcode]);
+
+  const showPhoto = pcode && !imgError;
 
   return (
     <div
@@ -86,17 +95,39 @@ function PlayerNode({
           {posLabel}
         </span>
       )}
-      <div
-        className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white text-[13px] md:text-[13px] font-bold border-2 shadow-md ${
-          isPitcher
-            ? "border-red-400"
-            : isBatter
-              ? "border-yellow-400"
-              : "border-white/40"
-        }`}
-        style={{ backgroundColor: color || "#374151" }}
-      >
-        {isPitcher ? "P" : isBatter ? "B" : name.slice(0, 1)}
+      <div className="relative">
+        <div
+          className={`w-7 h-7 md:w-8 md:h-8 rounded-full overflow-hidden flex items-center justify-center text-white text-[13px] md:text-[13px] font-bold border-2 shadow-md ${
+            isPitcher
+              ? "border-red-400"
+              : isBatter
+                ? "border-yellow-400"
+                : "border-white/40"
+          }`}
+          style={{ backgroundColor: color || "#374151" }}
+        >
+          {showPhoto ? (
+            <img
+              src={getPlayerPhotoUrl(pcode)}
+              alt={name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            isPitcher ? "P" : isBatter ? "B" : name.slice(0, 1)
+          )}
+        </div>
+        {/* P/B badge on photo */}
+        {showPhoto && (isPitcher || isBatter) && (
+          <span
+            className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black border border-white/60 ${
+              isPitcher ? "bg-red-500 text-white" : "bg-yellow-500 text-black"
+            }`}
+          >
+            {isPitcher ? "P" : "B"}
+          </span>
+        )}
       </div>
       <span
         className={`text-[13px] md:text-[13px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${
@@ -286,6 +317,7 @@ export function BaseballDiamond({
               <PlayerNode
                 key={`${pos}-${player.name}`}
                 name={player.name}
+                pcode={player.pcode}
                 posLabel={POSITION_LABELS[pos]}
                 x={coords.x}
                 y={coords.y}
@@ -299,6 +331,7 @@ export function BaseballDiamond({
           {relay.currentBatter && (
             <PlayerNode
               name={relay.currentBatter.name}
+              pcode={relay.currentBatter.pcode}
               x={42}
               y={86}
               isBatter
@@ -366,12 +399,21 @@ export function BaseballDiamond({
               return (
                 <div
                   key={b.order}
-                  className={`px-1.5 py-0.5 rounded text-[13px] md:text-[13px] ${
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[13px] md:text-[13px] ${
                     isCurrentBatter
                       ? "bg-yellow-500/90 text-black font-bold"
                       : "bg-white/10 text-white/70"
                   }`}
                 >
+                  {b.pcode && (
+                    <img
+                      src={getPlayerPhotoUrl(b.pcode)}
+                      alt={b.name}
+                      className="w-3.5 h-3.5 rounded-full object-cover shrink-0"
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  )}
                   {b.order}.{b.name}
                 </div>
               );

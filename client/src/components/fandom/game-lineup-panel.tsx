@@ -1,4 +1,5 @@
 import type { KboGameSchedule, KboTeam } from "@/lib/local-store";
+import { getPlayerPhotoUrl } from "@/lib/local-store";
 import type { GameRelayData } from "@/hooks/use-kbo-game-relay";
 
 interface GameLineupPanelProps {
@@ -42,6 +43,7 @@ export function GameLineupPanel({
   const defenseList = Object.entries(relay.defense).map(([pos, player]) => ({
     pos,
     name: player.name,
+    pcode: player.pcode,
   }));
 
   // Position order for defense display
@@ -80,6 +82,15 @@ export function GameLineupPanel({
                   <span className="text-muted-foreground w-3 text-right shrink-0">
                     {b.order}
                   </span>
+                  {b.pcode && (
+                    <img
+                      src={getPlayerPhotoUrl(b.pcode)}
+                      alt={b.name}
+                      className="w-4 h-4 rounded-full object-cover shrink-0"
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  )}
                   <span className={`truncate ${isActive ? "text-foreground" : "text-foreground/80"}`}>
                     {b.name}
                   </span>
@@ -117,6 +128,15 @@ export function GameLineupPanel({
                   <span className="text-muted-foreground w-4 text-right shrink-0 text-[13px]">
                     {posLabel[d.pos] || d.pos}
                   </span>
+                  {d.pcode && (
+                    <img
+                      src={getPlayerPhotoUrl(d.pcode)}
+                      alt={d.name}
+                      className="w-4 h-4 rounded-full object-cover shrink-0"
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  )}
                   <span className={`truncate ${isActive ? "text-foreground" : "text-foreground/80"}`}>
                     {d.name}
                   </span>
