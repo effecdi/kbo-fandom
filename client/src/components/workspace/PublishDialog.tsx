@@ -32,6 +32,8 @@ import {
   addItem,
   generateId,
   listItems,
+  getFandomProfile,
+  setFandomProfile,
   STORE_KEYS,
   type FandomFeedPost,
   type FandomEvent,
@@ -110,6 +112,7 @@ export function PublishDialog({ open, onClose }: Props) {
   const [tags, setTags] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
+  const [isLanyardPublish, setIsLanyardPublish] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [activeEvents, setActiveEvents] = useState<{ id: string; title: string }[]>([]);
@@ -372,6 +375,20 @@ export function PublishDialog({ open, onClose }: Props) {
         createdAt: new Date().toISOString().slice(0, 10),
       };
       addItem(STORE_KEYS.FANDOM_FEED, post);
+
+      // Lanyard mode: set generated image as lanyard card
+      const lanyardProjectId = localStorage.getItem("olli-lanyard-project");
+      if (lanyardProjectId === state.project.id) {
+        const thumbnail = allCuts[0]?.thumbnailUrl || null;
+        if (thumbnail) {
+          const profile = getFandomProfile();
+          if (profile) {
+            setFandomProfile({ ...profile, lanyardCardUrl: thumbnail });
+          }
+        }
+        localStorage.removeItem("olli-lanyard-project");
+        setIsLanyardPublish(true);
+      }
     }
 
     setPublishing(false);
@@ -479,9 +496,15 @@ export function PublishDialog({ open, onClose }: Props) {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">게시 완료!</h3>
+                    <h3 className="text-xl font-bold text-white">
+                      {isLanyardPublish ? "목걸이 카드 설정 완료!" : "게시 완료!"}
+                    </h3>
                     <p className="text-sm text-white/50 mt-1.5">
-                      <span className="text-primary font-semibold">{title}</span>이(가) 피드에 게시되었습니다
+                      {isLanyardPublish ? (
+                        <span>대시보드 목걸이 카드에 적용되었습니다</span>
+                      ) : (
+                        <><span className="text-primary font-semibold">{title}</span>이(가) 피드에 게시되었습니다</>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center justify-center gap-2.5">
@@ -505,14 +528,14 @@ export function PublishDialog({ open, onClose }: Props) {
                       onClick={() => {
                         if (fandomMeta) {
                           onClose();
-                          navigate("/fandom/feed");
+                          navigate(isLanyardPublish ? "/fandom" : "/fandom/feed");
                         } else {
                           window.open("/gallery/feed", "_blank");
                         }
                       }}
                     >
                       <ExternalLink className="w-5 h-5" />
-                      {fandomMeta ? "팬덤 피드에서 보기" : "피드에서 보기"}
+                      {isLanyardPublish ? "대시보드에서 보기" : fandomMeta ? "팬덤 피드에서 보기" : "피드에서 보기"}
                     </Button>
                   </div>
                 </div>

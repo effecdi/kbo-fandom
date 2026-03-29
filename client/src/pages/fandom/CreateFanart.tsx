@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { StudioLayout } from "@/components/StudioLayout";
 import { PlayerPicker } from "@/components/fandom/player-picker";
 import { Button } from "@/components/ui/button";
@@ -90,6 +90,8 @@ const TEMPLATE_ICONS: Record<string, typeof ImageIcon> = {
 
 export function FandomCreateFanart() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isLanyardMode = searchParams.get("for") === "lanyard";
   const [step, setStep] = useState<Step>("group");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
@@ -113,6 +115,10 @@ export function FandomCreateFanart() {
     const profile = getFandomProfile();
     if (profile?.groupId) {
       setSelectedGroupId(profile.groupId);
+    }
+    // Lanyard mode: auto-select playercard template
+    if (isLanyardMode) {
+      setSelectedTemplate("playercard");
     }
   }, []);
 
@@ -191,7 +197,7 @@ export function FandomCreateFanart() {
       localStorage.setItem(`olli-fandom-editor-ext-${projectId}`, JSON.stringify(extSettings));
     }
 
-    navigate(`/editor/${projectId}?mode=fandom`);
+    navigate(`/editor/${projectId}?mode=fandom${isLanyardMode ? "&for=lanyard" : ""}`);
   }
 
   const currentStepIdx = STEPS.findIndex((s) => s.id === step);

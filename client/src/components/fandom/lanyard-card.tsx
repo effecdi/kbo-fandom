@@ -115,26 +115,30 @@ export default function LanyardCard({
                 <span className="text-[13px] font-bold tracking-wider">KBO FANDOM</span>
               </div>
 
-              {/* Team circle */}
-              <div
-                className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-2.5"
-              >
-                <span className="text-[28px] font-black">{teamName.slice(0, 2)}</span>
+              {/* Plus icon */}
+              <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center mb-3">
+                <svg className="w-6 h-6 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
               </div>
 
-              {/* Team name */}
-              <p className="text-[19px] font-black tracking-tight">{teamName}</p>
-
-              {/* Divider */}
-              <div className="w-10 h-[1px] bg-white/25 my-2" />
-
-              {/* Player name */}
-              {playerName && (
-                <p className="text-[13px] font-bold opacity-85">{playerName}</p>
-              )}
+              {/* CTA text */}
+              <p className="text-[13px] font-bold text-white/80 text-center leading-snug">
+                카드를 생성해서<br />넣어주세요
+              </p>
 
               {/* Bottom */}
               <p className="absolute bottom-3.5 text-[13px] opacity-30 tracking-widest">2026</p>
+            </div>
+          )}
+
+          {/* 변경 badge when image exists */}
+          {cardImageUrl && (
+            <div className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
+              <svg className="w-3 h-3 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Z" />
+              </svg>
+              <span className="text-[13px] font-bold text-white/80">변경</span>
             </div>
           )}
 

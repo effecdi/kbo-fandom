@@ -375,7 +375,7 @@ export function FandomIndex() {
       {/* 포토카드 — 헤더 border에 붙어서 매달림 (데스크톱만), 클릭 시 에디터 */}
       <Link
         ref={lanyardRef}
-        to="/fandom/create"
+        to="/fandom/create?for=lanyard"
         className="fixed top-16 right-4 lg:right-8 z-20 hidden md:block"
         title="포토카드 디자인하기"
         style={{ opacity: 0 }}
