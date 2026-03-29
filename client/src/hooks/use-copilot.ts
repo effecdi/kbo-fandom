@@ -359,17 +359,13 @@ export function useCopilot() {
       const ac = new AbortController();
       abortRef.current = ac;
 
-      let pinnedChars = state.copilot.pinnedCharacters;
-      let charImageUrls = pinnedChars
-        .map((c) => c.imageDataUrl || c.imageUrl)
-        .filter(Boolean);
-      let charNames = pinnedChars.map((c) => c.name).filter(Boolean);
+      // 선수 사진을 항상 fandomMeta.playerPhotos에서 직접 fetch (stale closure 방지)
+      // pinnedCharacters는 React 상태 타이밍 문제로 비어있을 수 있음
+      let charImageUrls: string[] = [];
+      let charNames: string[] = [];
 
-      // Fallback: if pinnedCharacters is empty (stale closure) but fandomMeta has playerPhotos,
-      // fetch photos directly to ensure player face matching
-      if (charImageUrls.length === 0 && fandomMeta?.playerPhotos && fandomMeta.playerPhotos.length > 0) {
-        const fetchedUrls: string[] = [];
-        const fetchedNames: string[] = [];
+      if (fandomMeta?.playerPhotos && fandomMeta.playerPhotos.length > 0) {
+        // 항상 직접 fetch — 가장 확실한 방법
         for (const { name, pcode } of fandomMeta.playerPhotos) {
           try {
             const resp = await fetch(`/api/kbo/player-photo/${pcode}`);
@@ -380,14 +376,19 @@ export function useCopilot() {
               reader.onloadend = () => resolve(reader.result as string);
               reader.readAsDataURL(blob);
             });
-            fetchedUrls.push(dataUrl);
-            fetchedNames.push(name);
+            charImageUrls.push(dataUrl);
+            charNames.push(name);
           } catch { /* skip */ }
         }
-        if (fetchedUrls.length > 0) {
-          charImageUrls = fetchedUrls;
-          charNames = fetchedNames;
-        }
+      }
+
+      // fallback: pinnedCharacters에서 base64 data URL만 사용 (상대 URL은 Gemini가 못 읽음)
+      if (charImageUrls.length === 0) {
+        const pinnedChars = state.copilot.pinnedCharacters;
+        charImageUrls = pinnedChars
+          .map((c) => c.imageDataUrl)
+          .filter((url): url is string => !!url && url.startsWith("data:"));
+        charNames = pinnedChars.map((c) => c.name).filter(Boolean);
       }
 
       // 팀 로고 이미지를 KBO 공식 CDN에서 fetch하여 Gemini 레퍼런스로 전달
@@ -455,7 +456,13 @@ export function useCopilot() {
       const label = fandomMeta ? TEMPLATE_LABELS[fandomMeta.templateType] : "이미지";
 
       try {
-        addAssistantMsg(`"${prompt}" ${label}를 생성하고 있어요...`);
+        // 디버그: 실제 전달되는 데이터 확인
+        console.log(`[copilot] 선수사진 ${charImageUrls.length}장, 로고 ${teamLogoDataUrl ? 'OK' : 'NONE'}, 캐릭터명 ${charNames.join(',') || 'NONE'}`);
+        if (charImageUrls.length > 0) {
+          charImageUrls.forEach((url, i) => console.log(`[copilot] 사진#${i + 1}: ${url.substring(0, 30)}... (${Math.round(url.length / 1024)}KB)`));
+        }
+
+        addAssistantMsg(`"${prompt}" ${label}를 생성하고 있어요... (선수사진 ${charImageUrls.length}장${teamLogoDataUrl ? ', 로고 포함' : ''})`);
 
         const fc = canvasRef.current?.getCanvas();
         const canvasW = fc?.width || 600;

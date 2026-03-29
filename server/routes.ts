@@ -1560,6 +1560,13 @@ export async function registerRoutes(
         return res.status(400).json({ message: "장면 설명이 필요합니다." });
       }
 
+      // ── 디버그 로그: 실제로 선수 사진/로고가 전달되는지 확인
+      const imgCount = Array.isArray(sourceImageDataList) ? sourceImageDataList.length : 0;
+      const imgSizes = Array.isArray(sourceImageDataList)
+        ? sourceImageDataList.map((d: string, i: number) => `#${i + 1}: ${d ? `${Math.round(d.length / 1024)}KB` : 'null'}`)
+        : [];
+      logger.info(`[generate-scene] 선수사진=${imgCount}장 [${imgSizes.join(', ')}], 로고=${teamLogoImage ? `${Math.round(teamLogoImage.length / 1024)}KB` : 'NONE'}, 팀=${teamIdentity ? 'YES' : 'NONE'}, 캐릭터=${characterNames || 'NONE'}, 템플릿=${templateType || 'default'}`);
+
       const credits = await storage.getUserCredits(userId);
       const canGenerate = await storage.deductCredit(userId, 5);
       if (!canGenerate) {
