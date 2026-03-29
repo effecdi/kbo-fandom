@@ -765,8 +765,8 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
     nameEn: "KT Wiz",
     primaryHex: "#000000",
     secondaryHex: "#ED1C24",
-    uniformDesc: "Black home jersey with red 'wiz' script logo across chest, red accent stripes on sleeves, black cap with red 'KT' text. Away jersey: white with black and red trim. Colors: black and red.",
-    logoDesc: "Black shield emblem with red 'KT wiz' text, red diamond accent, black and red color scheme",
+    uniformDesc: "White home jersey with black angular gothic 'wiz' wordmark, red burst/star-burst mark below wordmark (wizard magic motif), black cap with image symbol. Away jersey: gray/charcoal with similar design. Adidas-like side panels. 2024 JUMOTUBE collaboration redesign. Colors: black and red.",
+    logoDesc: "Angular gothic 'KT wiz' wordmark with star-burst magic motif, black and red, wizard/magic themed identity",
   },
   "SSG 랜더스": {
     nameEn: "SSG Landers",
@@ -786,8 +786,8 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
     nameEn: "Doosan Bears",
     primaryHex: "#131230",
     secondaryHex: "#ED1C24",
-    uniformDesc: "White home jersey with dark navy 'BEARS' text across chest, red accent piping, dark navy cap with interlocking 'OB' logo in white. Away jersey: gray with dark navy and red design. Colors: very dark navy (almost black) and red.",
-    logoDesc: "Dark navy circular emblem with bear face mascot, 'BEARS' text, red accent elements, classic baseball emblem style",
+    uniformDesc: "White home jersey with dark navy 'BEARS' in custom Hustle Block font (classic utilitarian baseball with modern touch), Adidas three-stripe side panels, red accent piping. Away jersey: gray with dark navy and red. Dark navy cap with new diamond-shaped emblem. 2025 complete rebrand by RARE Design (US agency). Colors: very dark navy and red.",
+    logoDesc: "Diamond (infield) shaped emblem with 'DOOSAN' top and 'SEOUL' bottom in red banners wrapping a baseball, Hustle Block custom typeface, steel bear mascot 'Cheol-woong', 2025 15-year rebrand by RARE Design with Adidas partnership",
   },
   "KIA 타이거즈": {
     nameEn: "KIA Tigers",
@@ -800,8 +800,8 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
     nameEn: "Lotte Giants",
     primaryHex: "#041E42",
     secondaryHex: "#E30613",
-    uniformDesc: "White home jersey with navy blue 'GIANTS' arched text, red and navy pinstripes, navy cap with red 'L' letter. Away jersey: navy blue with white and red 'LOTTE' text. Colors: deep navy blue and red, classic baseball look.",
-    logoDesc: "Navy blue and red traditional baseball emblem with 'LOTTE GIANTS' text, classic diamond shape, vintage baseball styling",
+    uniformDesc: "White home jersey with navy 'GIANTS' arched text, seagull emblem on right sleeve (asymmetric design), navy cap with overlapping 'LG' letters in red. Away jersey: navy blue with white/red 'LOTTE' text. Dream uniform: ivory base with sky blue accents. 2023 CI overhaul (flat/modern design). Colors: deep navy, red, orange accent.",
+    logoDesc: "Flat-design seagull flying over blue ocean emblem (Busan sea motif), 'GIANTS' text in black with deep orange accent, modern minimal style, 2023 41st anniversary CI rebrand",
   },
   "삼성 라이온즈": {
     nameEn: "Samsung Lions",
@@ -821,8 +821,8 @@ export const KBO_TEAM_IDENTITY: Record<string, KboTeamIdentity> = {
     nameEn: "Kiwoom Heroes",
     primaryHex: "#820024",
     secondaryHex: "#000000",
-    uniformDesc: "White home jersey with deep maroon 'HEROES' text across chest, maroon cap with gold 'H' letter, burgundy trim. Away jersey: deep maroon/burgundy with white text. Colors: deep maroon/burgundy and black.",
-    logoDesc: "Deep maroon circular emblem with heroic figure silhouette, 'KIWOOM HEROES' text, burgundy and gold accents",
+    uniformDesc: "White home jersey with deep maroon 'HEROES' text across chest, maroon cap with gold 'H' letter, burgundy trim. Away jersey: deep maroon/burgundy with white text. Seoul special uniform: burgundy + Danhong (단홍색, Seoul symbolic color) with Seoul landmarks. 2025 Heroes Green uniform: gold cap + green jersey. Nike partnership. Colors: deep maroon/burgundy and black, with green accent (2025).",
+    logoDesc: "Deep maroon circular emblem with heroic figure silhouette, 'KIWOOM HEROES' text, burgundy and gold accents, Gocheok Sky Dome motif",
   },
 };
 
