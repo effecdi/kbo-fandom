@@ -334,6 +334,13 @@ export function FandomIndex() {
     recentProjects,
   ]);
 
+  // Today's games: prefer live scores from Naver, fallback to schedule data (generator)
+  const todaysGames = useMemo(() => {
+    if (liveGames.length > 0) return liveGames;
+    const today = new Date().toISOString().split("T")[0];
+    return scheduleGames.filter((g) => g.date === today);
+  }, [liveGames, scheduleGames]);
+
   // Find my team's finished game today → victory placard
   const myTeamWin = useMemo(() => {
     if (!fandomProfile?.groupId) return null;
@@ -440,8 +447,8 @@ export function FandomIndex() {
           </div>
         </div>
 
-        {/* Live Score — independent from dashboard grid, polls every 10s */}
-        {liveGames.length > 0 && (
+        {/* Live Score / Today's Games — live scores first, schedule fallback */}
+        {todaysGames.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-3 pt-2 pb-3">
               <Flame className="w-5 h-5 shrink-0" style={{ color: themeColor }} />
@@ -450,7 +457,7 @@ export function FandomIndex() {
               </span>
             </div>
             <LiveGameSection
-              games={liveGames}
+              games={todaysGames}
               teams={groups}
               myTeamId={fandomProfile?.groupId}
             />
