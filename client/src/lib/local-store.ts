@@ -647,7 +647,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 18; // v18: triple-logo system (wordmark/logo/emblem) + KIA 2026 entry roster (30명)
+const SEED_VERSION = 19; // v19: Samsung Lions triple-logo + 2026 개막 엔트리 30명 (투수13+포수2+내야8+외야7)
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);
@@ -827,22 +827,41 @@ export function seedIfEmpty(): void {
       { id: "plr-lot-13", groupId: "team-lot", name: "노진혁", nameKo: "노진혁", position: "내야수", jerseyNumber: 3, color: "#041E42", role: "주전", pcode: "62931" },
       { id: "plr-lot-14", groupId: "team-lot", name: "신윤후", nameKo: "신윤후", position: "외야수", jerseyNumber: 55, color: "#041E42", role: "핵심", pcode: "69508" },
       { id: "plr-lot-15", groupId: "team-lot", name: "김민성", nameKo: "김민성", position: "내야수", jerseyNumber: 7, color: "#041E42", role: "주전", pcode: "77564" },
-      // ── Samsung Lions ──
-      { id: "plr-sam-1", groupId: "team-sam", name: "구자욱", nameKo: "구자욱", position: "외야수", jerseyNumber: 51, color: "#074CA1", role: "핵심", pcode: "62404" },
-      { id: "plr-sam-2", groupId: "team-sam", name: "후라도", nameKo: "후라도", position: "투수", jerseyNumber: 43, color: "#074CA1", role: "에이스", pcode: "53375" },
-      { id: "plr-sam-3", groupId: "team-sam", name: "최원태", nameKo: "최원태", position: "투수", jerseyNumber: 11, color: "#074CA1", role: "마감", pcode: "65320" },
-      { id: "plr-sam-4", groupId: "team-sam", name: "김영웅", nameKo: "김영웅", position: "내야수", jerseyNumber: 38, color: "#074CA1", role: "4번타자", pcode: "52430" },
-      { id: "plr-sam-5", groupId: "team-sam", name: "최형우", nameKo: "최형우", position: "외야수", jerseyNumber: 34, color: "#074CA1", role: "핵심", pcode: "72443" },
-      { id: "plr-sam-6", groupId: "team-sam", name: "디아즈", nameKo: "르윈 디아즈", position: "내야수", jerseyNumber: 3, color: "#074CA1", role: "3번타자", pcode: "54400" },
-      { id: "plr-sam-7", groupId: "team-sam", name: "강민호", nameKo: "강민호", position: "포수", jerseyNumber: 15, color: "#074CA1", role: "주전", pcode: "74540" },
-      { id: "plr-sam-8", groupId: "team-sam", name: "미야지", nameKo: "미야지", position: "투수", jerseyNumber: 47, color: "#074CA1", role: "선발", pcode: "56415" },
-      { id: "plr-sam-9", groupId: "team-sam", name: "오러클린", nameKo: "오러클린", position: "투수", jerseyNumber: 55, color: "#074CA1", role: "선발", pcode: "56464" },
-      { id: "plr-sam-10", groupId: "team-sam", name: "이승현", nameKo: "이승현", position: "투수", jerseyNumber: 18, color: "#074CA1", role: "선발", pcode: "51454" },
-      { id: "plr-sam-11", groupId: "team-sam", name: "배찬승", nameKo: "배찬승", position: "투수", jerseyNumber: 28, color: "#074CA1", role: "셋업", pcode: "55455" },
-      { id: "plr-sam-12", groupId: "team-sam", name: "김지찬", nameKo: "김지찬", position: "외야수", jerseyNumber: 1, color: "#074CA1", role: "리드오프", pcode: "50458" },
-      { id: "plr-sam-13", groupId: "team-sam", name: "김헌곤", nameKo: "김헌곤", position: "외야수", jerseyNumber: 23, color: "#074CA1", role: "주전", pcode: "61404" },
-      { id: "plr-sam-14", groupId: "team-sam", name: "류지혁", nameKo: "류지혁", position: "내야수", jerseyNumber: 7, color: "#074CA1", role: "주전", pcode: "62234" },
-      { id: "plr-sam-15", groupId: "team-sam", name: "이재현", nameKo: "이재현", position: "내야수", jerseyNumber: 46, color: "#074CA1", role: "주전", pcode: "52415" },
+      // ── Samsung Lions (2026 개막 엔트리 30명) ──
+      // 투수 (13명)
+      { id: "plr-sam-1", groupId: "team-sam", name: "후라도", nameKo: "후라도", position: "투수", jerseyNumber: 75, color: "#074CA1", role: "에이스", pcode: "53375" },
+      { id: "plr-sam-2", groupId: "team-sam", name: "원태인", nameKo: "원태인", position: "투수", jerseyNumber: 18, color: "#074CA1", role: "선발", pcode: "69446" },
+      { id: "plr-sam-3", groupId: "team-sam", name: "최원태", nameKo: "최원태", position: "투수", jerseyNumber: 20, color: "#074CA1", role: "선발", pcode: "65320" },
+      { id: "plr-sam-4", groupId: "team-sam", name: "미야지", nameKo: "미야지", position: "투수", jerseyNumber: 15, color: "#074CA1", role: "선발", pcode: "56415" },
+      { id: "plr-sam-5", groupId: "team-sam", name: "배찬승", nameKo: "배찬승", position: "투수", jerseyNumber: 55, color: "#074CA1", role: "선발", pcode: "55455" },
+      { id: "plr-sam-6", groupId: "team-sam", name: "오러클린", nameKo: "오러클린", position: "투수", jerseyNumber: 64, color: "#074CA1", role: "중계", pcode: "56464" },
+      { id: "plr-sam-7", groupId: "team-sam", name: "이승현", nameKo: "이승현", position: "투수", jerseyNumber: 26, color: "#074CA1", role: "셋업", pcode: "51454" },
+      { id: "plr-sam-8", groupId: "team-sam", name: "이승민", nameKo: "이승민", position: "투수", jerseyNumber: 28, color: "#074CA1", role: "중계", pcode: "50464" },
+      { id: "plr-sam-9", groupId: "team-sam", name: "육선엽", nameKo: "육선엽", position: "투수", jerseyNumber: 4, color: "#074CA1", role: "중계", pcode: "54404" },
+      { id: "plr-sam-10", groupId: "team-sam", name: "최지광", nameKo: "최지광", position: "투수", jerseyNumber: 11, color: "#074CA1", role: "마감", pcode: "67421" },
+      { id: "plr-sam-11", groupId: "team-sam", name: "김재윤", nameKo: "김재윤", position: "투수", jerseyNumber: 62, color: "#074CA1", role: "셋업", pcode: "65062" },
+      { id: "plr-sam-12", groupId: "team-sam", name: "장찬희", nameKo: "장찬희", position: "투수", jerseyNumber: 60, color: "#074CA1", role: "중계", pcode: "56460" },
+      { id: "plr-sam-13", groupId: "team-sam", name: "백정현", nameKo: "백정현", position: "투수", jerseyNumber: 29, color: "#074CA1", role: "중계", pcode: "77446" },
+      // 포수 (2명)
+      { id: "plr-sam-14", groupId: "team-sam", name: "강민호", nameKo: "강민호", position: "포수", jerseyNumber: 47, color: "#074CA1", role: "주전", pcode: "74540" },
+      { id: "plr-sam-15", groupId: "team-sam", name: "박세혁", nameKo: "박세혁", position: "포수", jerseyNumber: 52, color: "#074CA1", role: "주전", pcode: "62244" },
+      // 내야수 (8명)
+      { id: "plr-sam-16", groupId: "team-sam", name: "디아즈", nameKo: "르윈 디아즈", position: "내야수", jerseyNumber: 0, color: "#074CA1", role: "4번타자", pcode: "54400" },
+      { id: "plr-sam-17", groupId: "team-sam", name: "김영웅", nameKo: "김영웅", position: "내야수", jerseyNumber: 30, color: "#074CA1", role: "주전", pcode: "52430" },
+      { id: "plr-sam-18", groupId: "team-sam", name: "류지혁", nameKo: "류지혁", position: "내야수", jerseyNumber: 16, color: "#074CA1", role: "주전", pcode: "62234" },
+      { id: "plr-sam-19", groupId: "team-sam", name: "이재현", nameKo: "이재현", position: "내야수", jerseyNumber: 7, color: "#074CA1", role: "주전", pcode: "52415" },
+      { id: "plr-sam-20", groupId: "team-sam", name: "전병우", nameKo: "전병우", position: "내야수", jerseyNumber: 61, color: "#074CA1", role: "주전", pcode: "65586" },
+      { id: "plr-sam-21", groupId: "team-sam", name: "이해승", nameKo: "이해승", position: "내야수", jerseyNumber: 3, color: "#074CA1", role: "주전", pcode: "69416" },
+      { id: "plr-sam-22", groupId: "team-sam", name: "심재훈", nameKo: "심재훈", position: "내야수", jerseyNumber: 6, color: "#074CA1", role: "주전", pcode: "55438" },
+      { id: "plr-sam-23", groupId: "team-sam", name: "김재상", nameKo: "김재상", position: "내야수", jerseyNumber: 14, color: "#074CA1", role: "주전", pcode: "53400" },
+      // 외야수 (7명)
+      { id: "plr-sam-24", groupId: "team-sam", name: "구자욱", nameKo: "구자욱", position: "외야수", jerseyNumber: 5, color: "#074CA1", role: "핵심", pcode: "62404" },
+      { id: "plr-sam-25", groupId: "team-sam", name: "최형우", nameKo: "최형우", position: "외야수", jerseyNumber: 34, color: "#074CA1", role: "핵심", pcode: "72443" },
+      { id: "plr-sam-26", groupId: "team-sam", name: "김헌곤", nameKo: "김헌곤", position: "외야수", jerseyNumber: 32, color: "#074CA1", role: "주전", pcode: "61404" },
+      { id: "plr-sam-27", groupId: "team-sam", name: "김지찬", nameKo: "김지찬", position: "외야수", jerseyNumber: 58, color: "#074CA1", role: "핵심", pcode: "50458" },
+      { id: "plr-sam-28", groupId: "team-sam", name: "김성윤", nameKo: "김성윤", position: "외야수", jerseyNumber: 39, color: "#074CA1", role: "주전", pcode: "67449" },
+      { id: "plr-sam-29", groupId: "team-sam", name: "홍현빈", nameKo: "홍현빈", position: "외야수", jerseyNumber: 51, color: "#074CA1", role: "주전", pcode: "67005" },
+      { id: "plr-sam-30", groupId: "team-sam", name: "박승규", nameKo: "박승규", position: "외야수", jerseyNumber: 66, color: "#074CA1", role: "리드오프", pcode: "69418" },
       // ── Hanwha Eagles ──
       { id: "plr-han-1", groupId: "team-han", name: "강백호", nameKo: "강백호", position: "내야수", jerseyNumber: 50, color: "#FF6600", role: "4번타자", pcode: "68050" },
       { id: "plr-han-2", groupId: "team-han", name: "노시환", nameKo: "노시환", position: "내야수", jerseyNumber: 8, color: "#FF6600", role: "3번타자", pcode: "69737" },
