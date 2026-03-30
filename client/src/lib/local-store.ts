@@ -336,6 +336,9 @@ export interface KboTeam {
 
 export type PlayerRole = "에이스" | "선발" | "마감" | "셋업" | "중계" | "4번타자" | "3번타자" | "리드오프" | "주전" | "핵심" | "유망주";
 
+export type ThrowingHand = "우" | "좌";
+export type BattingHand = "우" | "좌" | "양";
+
 export interface KboPlayer {
   id: string;
   groupId: string;
@@ -346,6 +349,8 @@ export interface KboPlayer {
   color: string;
   role?: PlayerRole;
   pcode?: string;
+  throws?: ThrowingHand;   // 투구 손 (우투/좌투)
+  bats?: BattingHand;      // 타격 손 (우타/좌타/양타)
 }
 
 // ─── Player Photo URL Helper ────────────────────────────────────────────────

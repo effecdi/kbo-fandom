@@ -198,11 +198,15 @@ export async function registerRoutes(
       if (!process.env.REPLICATE_API_TOKEN) {
         return res.status(503).json({ message: "REPLICATE_API_TOKEN이 설정되지 않았습니다." });
       }
-      const { faceImageData, prompt } = req.body as { faceImageData?: string; prompt?: string };
+      const { faceImageData, prompt, playerInfo } = req.body as {
+        faceImageData?: string;
+        prompt?: string;
+        playerInfo?: { name?: string; position?: string; throws?: string; bats?: string; role?: string };
+      };
       if (!faceImageData?.startsWith("data:")) {
         return res.status(400).json({ message: "faceImageData(base64 data URL)가 필요합니다." });
       }
-      const imageUrl = await generateWithInstantID(faceImageData, prompt || "");
+      const imageUrl = await generateWithInstantID(faceImageData, prompt || "", playerInfo);
       res.json({ imageUrl });
     } catch (error: any) {
       logger.error("InstantID generation error", error);

@@ -1682,12 +1682,91 @@ export async function generativeUpscaleImage(
 }
 
 // ─── InstantID (Replicate) ───────────────────────────────────────────────────
-export async function generateWithInstantID(faceImageData: string, prompt: string): Promise<string> {
+
+interface PlayerInfo {
+  name?: string;
+  position?: string;
+  throws?: string;   // 우/좌
+  bats?: string;     // 우/좌/양
+  role?: string;
+}
+
+async function analyzePlayerFace(faceImageData: string): Promise<string> {
+  try {
+    const match = faceImageData.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) return "";
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{
+        role: "user",
+        parts: [
+          {
+            inlineData: { mimeType: match[1], data: match[2] }
+          },
+          {
+            text: `Look at this person's face carefully. In ONE short English sentence (max 20 words), describe only the 2-3 most DISTINCTIVE and UNIQUE facial features that make this person visually different from others. Focus on what stands out most: face shape, eye shape/size, nose, jaw, expression, or any unusually distinctive feature. Be specific and concrete. Do NOT describe generic features everyone has.`
+          }
+        ]
+      }]
+    });
+    const text = response.candidates?.[0]?.content?.parts?.find((p: any) => p.text)?.text?.trim();
+    return text || "";
+  } catch (e) {
+    logger.warn("Face analysis failed", e);
+    return "";
+  }
+}
+
+function buildHandednessPrompt(player: PlayerInfo): string {
+  const parts: string[] = [];
+  const pos = player.position || "";
+
+  if (pos.includes("투수")) {
+    if (player.throws === "좌") {
+      parts.push("left-handed pitcher in a left-handed pitching wind-up pose");
+    } else {
+      parts.push("right-handed pitcher in a right-handed pitching wind-up pose");
+    }
+  } else if (pos.includes("포수")) {
+    parts.push("catcher in full catcher gear, crouching stance");
+  } else {
+    // 타자 (내야수/외야수)
+    if (player.bats === "좌") {
+      parts.push("left-handed batter in a left-handed batting stance");
+    } else if (player.bats === "양") {
+      parts.push("switch hitter in a dynamic batting stance");
+    } else {
+      parts.push("right-handed batter in a right-handed batting stance");
+    }
+  }
+
+  return parts.join(", ");
+}
+
+export async function generateWithInstantID(faceImageData: string, prompt: string, playerInfo?: PlayerInfo): Promise<string> {
   if (!process.env.REPLICATE_API_TOKEN) {
     throw new Error("REPLICATE_API_TOKEN not set");
   }
 
   const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+
+  // 1. Gemini Vision으로 얼굴 특징 분석
+  const faceFeatures = await analyzePlayerFace(faceImageData);
+  logger.info("Face analysis result", { faceFeatures });
+
+  // 2. 투타 정보 → 포즈 프롬프트
+  const handednessPrompt = playerInfo ? buildHandednessPrompt(playerInfo) : "full body pose";
+
+  // 3. 최종 프롬프트 조합
+  const baseStyle = prompt?.trim() || "anime style character illustration, white background, cute, clean lines";
+  const finalPrompt = [
+    baseStyle,
+    handednessPrompt,
+    faceFeatures ? `The character MUST have these distinctive facial features: ${faceFeatures}` : "",
+    "full body view, single character, pure white background"
+  ].filter(Boolean).join(". ");
+
+  logger.info("InstantID final prompt", { finalPrompt });
 
   // base64 data URL → Blob
   const match = faceImageData.match(/^data:([^;]+);base64,(.+)$/);
@@ -1696,16 +1775,13 @@ export async function generateWithInstantID(faceImageData: string, prompt: strin
   const buffer = Buffer.from(match[2], "base64");
   const blob = new Blob([buffer], { type: imgMimeType });
 
-  const finalPrompt = prompt?.trim()
-    || "anime style character illustration, full body, white background, cute, clean lines";
-
   const output = await replicate.run(
     "grandlineai/instant-id-photorealistic",
     {
       input: {
         face_image: blob,
         prompt: finalPrompt,
-        negative_prompt: "ugly, deformed, noisy, blurry, bad anatomy, extra limbs, watermark, text",
+        negative_prompt: "ugly, deformed, noisy, blurry, bad anatomy, extra limbs, watermark, text, wrong pose, wrong hand",
         style_strength_ratio: 20,
         num_inference_steps: 30,
         guidance_scale: 5,

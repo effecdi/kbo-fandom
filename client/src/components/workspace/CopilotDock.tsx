@@ -235,12 +235,23 @@ export function CopilotDock() {
       alert("핀된 선수 사진이 없습니다.");
       return;
     }
+    // fandomMeta.playerPhotos에서 해당 선수의 투타 정보 찾기
+    const playerData = fandomMeta?.playerPhotos?.find((p) => p.name === firstChar.name);
+    const playerInfo = playerData ? {
+      name: playerData.name,
+      position: playerData.position,
+      throws: playerData.throws,
+      bats: playerData.bats,
+      role: playerData.role,
+    } : undefined;
+
     setInstantIdLoading(true);
     setInstantIdResult(null);
     try {
       const res = await apiRequest("POST", "/api/test-instantid", {
         faceImageData: firstChar.imageDataUrl,
         prompt: "anime style character illustration, full body, white background, cute, clean lines",
+        playerInfo,
       });
       const data = await res.json();
       if (data.imageUrl) setInstantIdResult(data.imageUrl);
