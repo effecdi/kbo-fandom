@@ -25,17 +25,30 @@ interface KboScoresResponse {
 }
 
 /**
- * Hook that polls the server for live KBO scores every `intervalMs` milliseconds.
- * Returns an array of KboGameSchedule-compatible objects with real scores.
+ * Hook that polls the server for live KBO scores.
+ * Polling interval is auto-managed based on game state:
+ *   - Live game in progress → every 10s
+ *   - Scheduled games today (not yet started) → every 60s
+ *   - No games today or all finished → no polling (stop)
+ *
+ * @param slowIntervalMs interval used when games are scheduled but not live (default 60s)
  */
-export function useKboLiveScores(intervalMs = 10000) {
+export function useKboLiveScores(slowIntervalMs = 60000) {
   const [liveGames, setLiveGames] = useState<KboGameSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasLiveGames, setHasLiveGames] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slowIntervalRef = useRef(slowIntervalMs);
+  slowIntervalRef.current = slowIntervalMs;
 
   const fetchScores = useCallback(async () => {
+    // Clear any pending timer before fetching
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
     try {
       const today = new Date().toISOString().split("T")[0];
       const res = await fetch(`/api/kbo/scores?date=${today}`);
@@ -58,27 +71,35 @@ export function useKboLiveScores(intervalMs = 10000) {
       }));
 
       setLiveGames(mapped);
-      setHasLiveGames(mapped.some((g) => g.status === "live"));
+      const hasLive = mapped.some((g) => g.status === "live");
+      setHasLiveGames(hasLive);
       setError(null);
+
+      // Schedule next poll based on game state
+      const hasScheduled = mapped.some((g) => g.status === "scheduled");
+      if (hasLive) {
+        // 경기 진행 중 → 10초마다 갱신
+        timerRef.current = setTimeout(fetchScores, 10000);
+      } else if (hasScheduled) {
+        // 예정 경기 있음 → slowInterval(기본 60초)마다 확인 (경기 시작 감지)
+        timerRef.current = setTimeout(fetchScores, slowIntervalRef.current);
+      }
+      // 오늘 경기 없음 or 전부 종료 → 폴링 중단
     } catch (err: any) {
       setError(err.message);
-      // Don't clear existing data on error – keep stale data visible
+      // 에러 시 slowInterval 후 재시도
+      timerRef.current = setTimeout(fetchScores, slowIntervalRef.current);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // stable — uses refs for interval values
 
   useEffect(() => {
-    // Initial fetch
     fetchScores();
-
-    // Poll interval
-    timerRef.current = setInterval(fetchScores, intervalMs);
-
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [fetchScores, intervalMs]);
+  }, [fetchScores]);
 
   return { liveGames, isLoading, error, hasLiveGames };
 }

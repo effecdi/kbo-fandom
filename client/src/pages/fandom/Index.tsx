@@ -334,12 +334,31 @@ export function FandomIndex() {
     recentProjects,
   ]);
 
-  // Today's games: prefer live scores from Naver, fallback to schedule data (generator)
+  // Today's games: prefer live scores from Naver, fallback to schedule only while loading
   const todaysGames = useMemo(() => {
     if (liveGames.length > 0) return liveGames;
+    // Naver API 로드 완료 후에는 API 결과만 신뢰 (오늘 경기 없음)
+    if (!scoresLoading) return [];
+    // 아직 로딩 중: 스케줄 데이터로 임시 표시
     const today = new Date().toISOString().split("T")[0];
     return scheduleGames.filter((g) => g.date === today);
-  }, [liveGames, scheduleGames]);
+  }, [liveGames, scheduleGames, scoresLoading]);
+
+  // 오늘 경기 없을 때: 다음 경기 날짜의 게임들
+  const { nextGames, nextGameDate } = useMemo(() => {
+    if (scoresLoading || todaysGames.length > 0) return { nextGames: [], nextGameDate: "" };
+    const today = new Date().toISOString().split("T")[0];
+    const future = scheduleGames.filter((g) => g.date > today).sort((a, b) => a.date.localeCompare(b.date));
+    if (future.length === 0) return { nextGames: [], nextGameDate: "" };
+    const nextDate = future[0].date;
+    const [y, m, d] = nextDate.split("-").map(Number);
+    const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+    const dow = new Date(y, m - 1, d).getDay();
+    return {
+      nextGames: scheduleGames.filter((g) => g.date === nextDate),
+      nextGameDate: `${m}월 ${d}일 (${dayNames[dow]})`,
+    };
+  }, [scoresLoading, todaysGames.length, scheduleGames]);
 
   // Find my team's finished game today → victory placard
   const myTeamWin = useMemo(() => {
@@ -448,21 +467,38 @@ export function FandomIndex() {
         </div>
 
         {/* Live Score / Today's Games — live scores first, schedule fallback */}
-        {todaysGames.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center gap-3 pt-2 pb-3">
-              <Flame className="w-5 h-5 shrink-0" style={{ color: themeColor }} />
-              <span className="text-2xl font-black text-foreground">
-                {hasLiveGames ? "LIVE 경기" : "오늘의 경기"}
-              </span>
+        <div className="mb-8">
+          <div className="flex items-center gap-3 pt-2 pb-3">
+            <Flame className="w-5 h-5 shrink-0" style={{ color: themeColor }} />
+            <span className="text-2xl font-black text-foreground">
+              {hasLiveGames ? "LIVE 경기" : todaysGames.length > 0 ? "오늘의 경기" : nextGames.length > 0 ? "다음 경기" : "경기 일정"}
+            </span>
+            {!scoresLoading && todaysGames.length === 0 && nextGameDate && (
+              <span className="text-[13px] font-bold text-muted-foreground">{nextGameDate}</span>
+            )}
+          </div>
+          {scoresLoading ? (
+            <div className="flex items-center justify-center h-[220px] md:h-[260px]">
+              <p className="text-[13px] text-muted-foreground">경기 정보를 불러오는 중...</p>
             </div>
+          ) : todaysGames.length > 0 ? (
             <LiveGameSection
               games={todaysGames}
               teams={groups}
               myTeamId={fandomProfile?.groupId}
             />
-          </div>
-        )}
+          ) : nextGames.length > 0 ? (
+            <LiveGameSection
+              games={nextGames}
+              teams={groups}
+              myTeamId={fandomProfile?.groupId}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[220px] md:h-[260px] rounded-2xl border border-border bg-muted/20">
+              <p className="text-base text-muted-foreground">경기 일정을 불러올 수 없습니다</p>
+            </div>
+          )}
+        </div>
 
         {/* Dashboard Grid (draggable widgets — no 10s polling) */}
         <DashboardGrid widgets={widgets} themeColor={themeColor} />
