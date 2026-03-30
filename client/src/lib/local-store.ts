@@ -652,7 +652,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 24; // v24: 6개 팀 로고 URL 구 CDN→2026 엠블럼 CDN으로 통일 (LG/KT/SSG/Doosan/Lotte/Kiwoom)
+const SEED_VERSION = 25; // v25: 6팀 2026 개막 엔트리 등번호 수정 + 신규 선수 추가 (LG/KT/SSG/두산/롯데/키움)
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);
@@ -703,27 +703,28 @@ export function seedIfEmpty(): void {
     const players: KboPlayer[] = [
       // ── LG Twins (2025 통합 우승) ──
       { id: "plr-lg-1", groupId: "team-lg", name: "홍창기", nameKo: "홍창기", position: "외야수", jerseyNumber: 51, color: "#C60C30", role: "리드오프", pcode: "66108", throws: "우", bats: "좌" },
-      { id: "plr-lg-2", groupId: "team-lg", name: "박해민", nameKo: "박해민", position: "외야수", jerseyNumber: 7, color: "#C60C30", role: "주전", pcode: "62415", throws: "우", bats: "좌" },
+      { id: "plr-lg-2", groupId: "team-lg", name: "박해민", nameKo: "박해민", position: "외야수", jerseyNumber: 17, color: "#C60C30", role: "주전", pcode: "62415", throws: "우", bats: "좌" },
       { id: "plr-lg-3", groupId: "team-lg", name: "오지환", nameKo: "오지환", position: "내야수", jerseyNumber: 10, color: "#C60C30", role: "주전", pcode: "79109", throws: "우", bats: "좌" },
       { id: "plr-lg-4", groupId: "team-lg", name: "임찬규", nameKo: "임찬규", position: "투수", jerseyNumber: 1, color: "#C60C30", role: "에이스", pcode: "61101", throws: "우", bats: "좌" },
       { id: "plr-lg-5", groupId: "team-lg", name: "문보경", nameKo: "문보경", position: "내야수", jerseyNumber: 2, color: "#C60C30", role: "4번타자", pcode: "69102", throws: "우", bats: "좌" },
       { id: "plr-lg-6", groupId: "team-lg", name: "박동원", nameKo: "박동원", position: "포수", jerseyNumber: 27, color: "#C60C30", role: "주전", pcode: "79365", throws: "우", bats: "우" },
-      { id: "plr-lg-7", groupId: "team-lg", name: "오스틴", nameKo: "오스틴", position: "내야수", jerseyNumber: 30, color: "#C60C30", role: "3번타자", pcode: "53123", throws: "우", bats: "좌" },
+      { id: "plr-lg-7", groupId: "team-lg", name: "오스틴", nameKo: "오스틴", position: "내야수", jerseyNumber: 23, color: "#C60C30", role: "3번타자", pcode: "53123", throws: "우", bats: "좌" },
       { id: "plr-lg-8", groupId: "team-lg", name: "치리노스", nameKo: "치리노스", position: "투수", jerseyNumber: 46, color: "#C60C30", role: "선발", pcode: "55146", throws: "우", bats: "우" },
       { id: "plr-lg-9", groupId: "team-lg", name: "톨허스트", nameKo: "톨허스트", position: "투수", jerseyNumber: 35, color: "#C60C30", role: "선발", pcode: "55130", throws: "우", bats: "우" },
-      { id: "plr-lg-10", groupId: "team-lg", name: "이우찬", nameKo: "이우찬", position: "투수", jerseyNumber: 19, color: "#C60C30", role: "마감", pcode: "61145", throws: "좌", bats: "좌" },
+      { id: "plr-lg-10", groupId: "team-lg", name: "이우찬", nameKo: "이우찬", position: "투수", jerseyNumber: 21, color: "#C60C30", role: "마감", pcode: "61145", throws: "좌", bats: "좌" },
       { id: "plr-lg-11", groupId: "team-lg", name: "유영찬", nameKo: "유영찬", position: "투수", jerseyNumber: 33, color: "#C60C30", role: "선발", pcode: "50106", throws: "우", bats: "우" },
       { id: "plr-lg-12", groupId: "team-lg", name: "구본혁", nameKo: "구본혁", position: "내야수", jerseyNumber: 6, color: "#C60C30", role: "유망주", pcode: "69100", throws: "우", bats: "우" },
-      { id: "plr-lg-13", groupId: "team-lg", name: "문성주", nameKo: "문성주", position: "외야수", jerseyNumber: 25, color: "#C60C30", role: "주전", pcode: "68119", throws: "좌", bats: "좌" },
+      { id: "plr-lg-13", groupId: "team-lg", name: "문성주", nameKo: "문성주", position: "외야수", jerseyNumber: 8, color: "#C60C30", role: "주전", pcode: "68119", throws: "좌", bats: "좌" },
       { id: "plr-lg-14", groupId: "team-lg", name: "배재준", nameKo: "배재준", position: "투수", jerseyNumber: 41, color: "#C60C30", role: "셋업", pcode: "63145", throws: "좌", bats: "좌" },
       { id: "plr-lg-15", groupId: "team-lg", name: "최원영", nameKo: "최원영", position: "외야수", jerseyNumber: 55, color: "#C60C30", role: "핵심", pcode: "52103", throws: "우", bats: "우" },
+      { id: "plr-lg-16", groupId: "team-lg", name: "신민재", nameKo: "신민재", position: "내야수", jerseyNumber: 4, color: "#C60C30", role: "주전", pcode: "", throws: "우", bats: "우" },
       // ── KT Wiz ──
-      { id: "plr-kt-1", groupId: "team-kt", name: "소형준", nameKo: "소형준", position: "투수", jerseyNumber: 17, color: "#ED1C24", role: "에이스", pcode: "50030", throws: "우", bats: "우" },
-      { id: "plr-kt-2", groupId: "team-kt", name: "박영현", nameKo: "박영현", position: "투수", jerseyNumber: 22, color: "#ED1C24", role: "마감", pcode: "52060", throws: "우", bats: "우" },
+      { id: "plr-kt-1", groupId: "team-kt", name: "소형준", nameKo: "소형준", position: "투수", jerseyNumber: 30, color: "#ED1C24", role: "에이스", pcode: "50030", throws: "우", bats: "우" },
+      { id: "plr-kt-2", groupId: "team-kt", name: "박영현", nameKo: "박영현", position: "투수", jerseyNumber: 60, color: "#ED1C24", role: "마감", pcode: "52060", throws: "우", bats: "우" },
       { id: "plr-kt-3", groupId: "team-kt", name: "김현수", nameKo: "김현수", position: "외야수", jerseyNumber: 23, color: "#ED1C24", role: "핵심", pcode: "76290", throws: "우", bats: "좌" },
       { id: "plr-kt-4", groupId: "team-kt", name: "배정대", nameKo: "배정대", position: "외야수", jerseyNumber: 27, color: "#ED1C24", role: "리드오프", pcode: "64166", throws: "우", bats: "우" },
       { id: "plr-kt-5", groupId: "team-kt", name: "최원준", nameKo: "최원준", position: "외야수", jerseyNumber: 53, color: "#ED1C24", role: "주전", pcode: "66606", throws: "우", bats: "좌" },
-      { id: "plr-kt-6", groupId: "team-kt", name: "힐리어드", nameKo: "힐리어드", position: "내야수", jerseyNumber: 50, color: "#ED1C24", role: "3번타자", pcode: "56034", throws: "우", bats: "우" },
+      { id: "plr-kt-6", groupId: "team-kt", name: "힐리어드", nameKo: "힐리어드", position: "내야수", jerseyNumber: 34, color: "#ED1C24", role: "3번타자", pcode: "56034", throws: "우", bats: "우" },
       { id: "plr-kt-7", groupId: "team-kt", name: "사우어", nameKo: "사우어", position: "투수", jerseyNumber: 45, color: "#ED1C24", role: "선발", pcode: "56032", throws: "우", bats: "우" },
       { id: "plr-kt-8", groupId: "team-kt", name: "보쉬릴리", nameKo: "보쉬릴리", position: "투수", jerseyNumber: 31, color: "#ED1C24", role: "선발", pcode: "56036", throws: "우", bats: "우" },
       { id: "plr-kt-9", groupId: "team-kt", name: "허경민", nameKo: "허경민", position: "내야수", jerseyNumber: 13, color: "#ED1C24", role: "핵심", pcode: "79240", throws: "우", bats: "우" },
@@ -733,15 +734,16 @@ export function seedIfEmpty(): void {
       { id: "plr-kt-13", groupId: "team-kt", name: "한승혁", nameKo: "한승혁", position: "투수", jerseyNumber: 18, color: "#ED1C24", role: "선발", pcode: "61666", throws: "우", bats: "우" },
       { id: "plr-kt-14", groupId: "team-kt", name: "우규민", nameKo: "우규민", position: "투수", jerseyNumber: 11, color: "#ED1C24", role: "셋업", pcode: "73117", throws: "우", bats: "좌" },
       { id: "plr-kt-15", groupId: "team-kt", name: "스기모토", nameKo: "스기모토", position: "투수", jerseyNumber: 48, color: "#ED1C24", role: "선발", pcode: "56011", throws: "우", bats: "우" },
+      { id: "plr-kt-16", groupId: "team-kt", name: "고영표", nameKo: "고영표", position: "투수", jerseyNumber: 15, color: "#ED1C24", role: "선발", pcode: "", throws: "우", bats: "우" },
       // ── SSG Landers ──
       { id: "plr-ssg-1", groupId: "team-ssg", name: "화이트", nameKo: "미치 화이트", position: "투수", jerseyNumber: 47, color: "#CE0E2D", role: "에이스", pcode: "55855", throws: "우", bats: "우" },
-      { id: "plr-ssg-2", groupId: "team-ssg", name: "최정", nameKo: "최정", position: "내야수", jerseyNumber: 3, color: "#CE0E2D", role: "4번타자", pcode: "75847", throws: "우", bats: "우" },
+      { id: "plr-ssg-2", groupId: "team-ssg", name: "최정", nameKo: "최정", position: "내야수", jerseyNumber: 14, color: "#CE0E2D", role: "4번타자", pcode: "75847", throws: "우", bats: "우" },
       { id: "plr-ssg-3", groupId: "team-ssg", name: "김재환", nameKo: "김재환", position: "외야수", jerseyNumber: 4, color: "#CE0E2D", role: "3번타자", pcode: "78224", throws: "우", bats: "좌" },
-      { id: "plr-ssg-4", groupId: "team-ssg", name: "에레디아", nameKo: "에레디아", position: "외야수", jerseyNumber: 6, color: "#CE0E2D", role: "핵심", pcode: "53827", throws: "우", bats: "우" },
+      { id: "plr-ssg-4", groupId: "team-ssg", name: "에레디아", nameKo: "에레디아", position: "외야수", jerseyNumber: 27, color: "#CE0E2D", role: "핵심", pcode: "53827", throws: "우", bats: "우" },
       { id: "plr-ssg-5", groupId: "team-ssg", name: "최지훈", nameKo: "최지훈", position: "외야수", jerseyNumber: 2, color: "#CE0E2D", role: "리드오프", pcode: "50854", throws: "우", bats: "좌" },
-      { id: "plr-ssg-6", groupId: "team-ssg", name: "조병현", nameKo: "조병현", position: "투수", jerseyNumber: 17, color: "#CE0E2D", role: "선발", pcode: "51897", throws: "우", bats: "우" },
+      { id: "plr-ssg-6", groupId: "team-ssg", name: "조병현", nameKo: "조병현", position: "투수", jerseyNumber: 19, color: "#CE0E2D", role: "마감", pcode: "51897", throws: "우", bats: "우" },
       { id: "plr-ssg-7", groupId: "team-ssg", name: "베니지아노", nameKo: "베니지아노", position: "투수", jerseyNumber: 40, color: "#CE0E2D", role: "선발", pcode: "56841", throws: "우", bats: "우" },
-      { id: "plr-ssg-8", groupId: "team-ssg", name: "문승원", nameKo: "문승원", position: "투수", jerseyNumber: 11, color: "#CE0E2D", role: "마감", pcode: "62869", throws: "우", bats: "우" },
+      { id: "plr-ssg-8", groupId: "team-ssg", name: "문승원", nameKo: "문승원", position: "투수", jerseyNumber: 42, color: "#CE0E2D", role: "마감", pcode: "62869", throws: "우", bats: "우" },
       { id: "plr-ssg-9", groupId: "team-ssg", name: "조형우", nameKo: "조형우", position: "포수", jerseyNumber: 22, color: "#CE0E2D", role: "주전", pcode: "51865", throws: "우", bats: "우" },
       { id: "plr-ssg-10", groupId: "team-ssg", name: "이지영", nameKo: "이지영", position: "포수", jerseyNumber: 10, color: "#CE0E2D", role: "주전", pcode: "79456", throws: "우", bats: "우" },
       { id: "plr-ssg-11", groupId: "team-ssg", name: "박성한", nameKo: "박성한", position: "내야수", jerseyNumber: 7, color: "#CE0E2D", role: "주전", pcode: "67893", throws: "우", bats: "우" },
@@ -749,6 +751,7 @@ export function seedIfEmpty(): void {
       { id: "plr-ssg-13", groupId: "team-ssg", name: "노경은", nameKo: "노경은", position: "투수", jerseyNumber: 28, color: "#CE0E2D", role: "선발", pcode: "73211", throws: "우", bats: "우" },
       { id: "plr-ssg-14", groupId: "team-ssg", name: "김민", nameKo: "김민", position: "투수", jerseyNumber: 15, color: "#CE0E2D", role: "셋업", pcode: "68043", throws: "우", bats: "우" },
       { id: "plr-ssg-15", groupId: "team-ssg", name: "채현우", nameKo: "채현우", position: "외야수", jerseyNumber: 51, color: "#CE0E2D", role: "주전", pcode: "69804", throws: "우", bats: "우" },
+      { id: "plr-ssg-16", groupId: "team-ssg", name: "한유섬", nameKo: "한유섬", position: "외야수", jerseyNumber: 17, color: "#CE0E2D", role: "주전", pcode: "", throws: "우", bats: "좌" },
       // ── NC Dinos (2026 개막 엔트리 29명) ──
       // 투수 (12명)
       { id: "plr-nc-1", groupId: "team-nc", name: "구창모", nameKo: "구창모", position: "투수", jerseyNumber: 59, color: "#315288", role: "에이스", pcode: "65933", throws: "좌", bats: "좌" },
@@ -787,18 +790,20 @@ export function seedIfEmpty(): void {
       { id: "plr-doo-1", groupId: "team-doo", name: "양의지", nameKo: "양의지", position: "포수", jerseyNumber: 25, color: "#131230", role: "핵심", pcode: "76232", throws: "우", bats: "우" },
       { id: "plr-doo-2", groupId: "team-doo", name: "박찬호", nameKo: "박찬호", position: "내야수", jerseyNumber: 61, color: "#131230", role: "주전", pcode: "64646", throws: "우", bats: "우" },
       { id: "plr-doo-3", groupId: "team-doo", name: "정수빈", nameKo: "정수빈", position: "외야수", jerseyNumber: 15, color: "#131230", role: "리드오프", pcode: "79231", throws: "좌", bats: "좌" },
-      { id: "plr-doo-4", groupId: "team-doo", name: "곽빈", nameKo: "곽빈", position: "투수", jerseyNumber: 22, color: "#131230", role: "에이스", pcode: "68220", throws: "우", bats: "우" },
-      { id: "plr-doo-5", groupId: "team-doo", name: "플렉센", nameKo: "크리스 플렉센", position: "투수", jerseyNumber: 45, color: "#131230", role: "선발", pcode: "50234", throws: "우", bats: "우" },
+      { id: "plr-doo-4", groupId: "team-doo", name: "곽빈", nameKo: "곽빈", position: "투수", jerseyNumber: 47, color: "#131230", role: "에이스", pcode: "68220", throws: "우", bats: "우" },
+      { id: "plr-doo-5", groupId: "team-doo", name: "플렉센", nameKo: "크리스 플렉센", position: "투수", jerseyNumber: 77, color: "#131230", role: "선발", pcode: "50234", throws: "우", bats: "우" },
       { id: "plr-doo-6", groupId: "team-doo", name: "카메론", nameKo: "다즈 카메론", position: "외야수", jerseyNumber: 50, color: "#131230", role: "4번타자", pcode: "56251", throws: "우", bats: "우" },
       { id: "plr-doo-7", groupId: "team-doo", name: "김택연", nameKo: "김택연", position: "투수", jerseyNumber: 36, color: "#131230", role: "선발", pcode: "54263", throws: "우", bats: "우" },
       { id: "plr-doo-8", groupId: "team-doo", name: "잭로그", nameKo: "잭로그", position: "투수", jerseyNumber: 31, color: "#131230", role: "선발", pcode: "55239", throws: "우", bats: "우" },
-      { id: "plr-doo-9", groupId: "team-doo", name: "이용찬", nameKo: "이용찬", position: "투수", jerseyNumber: 28, color: "#131230", role: "마감", pcode: "77211", throws: "우", bats: "우" },
+      { id: "plr-doo-9", groupId: "team-doo", name: "이용찬", nameKo: "이용찬", position: "투수", jerseyNumber: 45, color: "#131230", role: "마감", pcode: "77211", throws: "우", bats: "우" },
       { id: "plr-doo-10", groupId: "team-doo", name: "이병헌", nameKo: "이병헌", position: "투수", jerseyNumber: 17, color: "#131230", role: "셋업", pcode: "52204", throws: "좌", bats: "좌" },
-      { id: "plr-doo-11", groupId: "team-doo", name: "양석환", nameKo: "양석환", position: "내야수", jerseyNumber: 3, color: "#131230", role: "4번타자", pcode: "64153", throws: "우", bats: "우" },
+      { id: "plr-doo-11", groupId: "team-doo", name: "양석환", nameKo: "양석환", position: "내야수", jerseyNumber: 53, color: "#131230", role: "4번타자", pcode: "64153", throws: "우", bats: "우" },
       { id: "plr-doo-12", groupId: "team-doo", name: "이유찬", nameKo: "이유찬", position: "내야수", jerseyNumber: 7, color: "#131230", role: "3번타자", pcode: "67207", throws: "우", bats: "우" },
       { id: "plr-doo-13", groupId: "team-doo", name: "조수행", nameKo: "조수행", position: "외야수", jerseyNumber: 24, color: "#131230", role: "유망주", pcode: "66209", throws: "우", bats: "좌" },
       { id: "plr-doo-14", groupId: "team-doo", name: "오명진", nameKo: "오명진", position: "내야수", jerseyNumber: 13, color: "#131230", role: "주전", pcode: "50208", throws: "우", bats: "좌" },
       { id: "plr-doo-15", groupId: "team-doo", name: "김인태", nameKo: "김인태", position: "외야수", jerseyNumber: 55, color: "#131230", role: "주전", pcode: "63257", throws: "좌", bats: "좌" },
+      { id: "plr-doo-16", groupId: "team-doo", name: "타무라 이치로", nameKo: "타무라 이치로", position: "내야수", jerseyNumber: 0, color: "#131230", role: "주전", pcode: "", throws: "우", bats: "우" },
+      { id: "plr-doo-17", groupId: "team-doo", name: "정철원", nameKo: "정철원", position: "투수", jerseyNumber: 57, color: "#131230", role: "셋업", pcode: "68242", throws: "우", bats: "우" },
       // ── KIA Tigers (2024 한국시리즈 우승) — 2026 개막 엔트리 30명 ──
       // 투수 (14명)
       { id: "plr-kia-1", groupId: "team-kia", name: "양현종", nameKo: "양현종", position: "투수", jerseyNumber: 54, color: "#EA0029", role: "에이스", pcode: "77637", throws: "좌", bats: "좌" },
@@ -837,19 +842,19 @@ export function seedIfEmpty(): void {
       // ── Lotte Giants ──
       { id: "plr-lot-1", groupId: "team-lot", name: "전준우", nameKo: "전준우", position: "외야수", jerseyNumber: 8, color: "#041E42", role: "4번타자", pcode: "78513", throws: "우", bats: "우" },
       { id: "plr-lot-2", groupId: "team-lot", name: "한태양", nameKo: "한태양", position: "내야수", jerseyNumber: 6, color: "#041E42", role: "주전", pcode: "52568", throws: "우", bats: "우" },
-      { id: "plr-lot-3", groupId: "team-lot", name: "박세웅", nameKo: "박세웅", position: "투수", jerseyNumber: 11, color: "#041E42", role: "에이스", pcode: "64021", throws: "우", bats: "우" },
+      { id: "plr-lot-3", groupId: "team-lot", name: "박세웅", nameKo: "박세웅", position: "투수", jerseyNumber: 21, color: "#041E42", role: "에이스", pcode: "64021", throws: "우", bats: "우" },
       { id: "plr-lot-4", groupId: "team-lot", name: "레이예스", nameKo: "빅터 레이예스", position: "외야수", jerseyNumber: 29, color: "#041E42", role: "3번타자", pcode: "54529", throws: "우", bats: "우" },
       { id: "plr-lot-5", groupId: "team-lot", name: "로드리게스", nameKo: "엘빈 로드리게스", position: "투수", jerseyNumber: 40, color: "#041E42", role: "선발", pcode: "56531", throws: "우", bats: "우" },
       { id: "plr-lot-6", groupId: "team-lot", name: "비슬리", nameKo: "제레미 비슬리", position: "투수", jerseyNumber: 45, color: "#041E42", role: "선발", pcode: "56523", throws: "우", bats: "우" },
       { id: "plr-lot-7", groupId: "team-lot", name: "김원중", nameKo: "김원중", position: "투수", jerseyNumber: 50, color: "#041E42", role: "마감", pcode: "62528", throws: "우", bats: "좌" },
       { id: "plr-lot-8", groupId: "team-lot", name: "쿄야마", nameKo: "쿄야마", position: "투수", jerseyNumber: 46, color: "#041E42", role: "선발", pcode: "56548", throws: "우", bats: "우" },
-      { id: "plr-lot-9", groupId: "team-lot", name: "정철원", nameKo: "정철원", position: "투수", jerseyNumber: 57, color: "#041E42", role: "셋업", pcode: "68242", throws: "우", bats: "우" },
-      { id: "plr-lot-10", groupId: "team-lot", name: "유강남", nameKo: "유강남", position: "포수", jerseyNumber: 22, color: "#041E42", role: "주전", pcode: "61102", throws: "우", bats: "우" },
-      { id: "plr-lot-11", groupId: "team-lot", name: "윤동희", nameKo: "윤동희", position: "외야수", jerseyNumber: 1, color: "#041E42", role: "리드오프", pcode: "52591", throws: "우", bats: "우" },
+      { id: "plr-lot-10", groupId: "team-lot", name: "유강남", nameKo: "유강남", position: "포수", jerseyNumber: 27, color: "#041E42", role: "주전", pcode: "61102", throws: "우", bats: "우" },
+      { id: "plr-lot-11", groupId: "team-lot", name: "윤동희", nameKo: "윤동희", position: "외야수", jerseyNumber: 90, color: "#041E42", role: "리드오프", pcode: "52591", throws: "우", bats: "우" },
       { id: "plr-lot-12", groupId: "team-lot", name: "황성빈", nameKo: "황성빈", position: "외야수", jerseyNumber: 2, color: "#041E42", role: "유망주", pcode: "50500", throws: "우", bats: "좌" },
       { id: "plr-lot-13", groupId: "team-lot", name: "노진혁", nameKo: "노진혁", position: "내야수", jerseyNumber: 3, color: "#041E42", role: "주전", pcode: "62931", throws: "우", bats: "좌" },
       { id: "plr-lot-14", groupId: "team-lot", name: "신윤후", nameKo: "신윤후", position: "외야수", jerseyNumber: 55, color: "#041E42", role: "핵심", pcode: "69508", throws: "우", bats: "우" },
       { id: "plr-lot-15", groupId: "team-lot", name: "김민성", nameKo: "김민성", position: "내야수", jerseyNumber: 7, color: "#041E42", role: "주전", pcode: "77564", throws: "우", bats: "우" },
+      { id: "plr-lot-16", groupId: "team-lot", name: "나승엽", nameKo: "나승엽", position: "내야수", jerseyNumber: 22, color: "#041E42", role: "주전", pcode: "", throws: "우", bats: "우" },
       // ── Samsung Lions (2026 개막 엔트리 30명) ──
       // 투수 (13명)
       { id: "plr-sam-1", groupId: "team-sam", name: "후라도", nameKo: "후라도", position: "투수", jerseyNumber: 75, color: "#074CA1", role: "에이스", pcode: "53375", throws: "우", bats: "우" },
@@ -916,13 +921,13 @@ export function seedIfEmpty(): void {
       { id: "plr-han-28", groupId: "team-han", name: "유로결", nameKo: "유로결", position: "외야수", jerseyNumber: 33, color: "#FF6600", role: "주전", pcode: "69766", throws: "우", bats: "우" },
       // ── Kiwoom Heroes ──
       { id: "plr-kiw-1", groupId: "team-kiw", name: "이주형", nameKo: "이주형", position: "외야수", jerseyNumber: 51, color: "#820024", role: "리드오프", pcode: "50167", throws: "우", bats: "좌" },
-      { id: "plr-kiw-2", groupId: "team-kiw", name: "알칸타라", nameKo: "알칸타라", position: "투수", jerseyNumber: 43, color: "#820024", role: "에이스", pcode: "69045", throws: "우", bats: "우" },
+      { id: "plr-kiw-2", groupId: "team-kiw", name: "알칸타라", nameKo: "알칸타라", position: "투수", jerseyNumber: 54, color: "#820024", role: "에이스", pcode: "69045", throws: "우", bats: "우" },
       { id: "plr-kiw-3", groupId: "team-kiw", name: "와일스", nameKo: "와일스", position: "투수", jerseyNumber: 49, color: "#820024", role: "선발", pcode: "56334", throws: "우", bats: "우" },
       { id: "plr-kiw-4", groupId: "team-kiw", name: "하영민", nameKo: "하영민", position: "투수", jerseyNumber: 19, color: "#820024", role: "선발", pcode: "64350", throws: "우", bats: "우" },
-      { id: "plr-kiw-5", groupId: "team-kiw", name: "브룩스", nameKo: "트렌턴 브룩스", position: "외야수", jerseyNumber: 50, color: "#820024", role: "3번타자", pcode: "56322", throws: "우", bats: "우" },
+      { id: "plr-kiw-5", groupId: "team-kiw", name: "브룩스", nameKo: "트렌턴 브룩스", position: "외야수", jerseyNumber: 22, color: "#820024", role: "3번타자", pcode: "56322", throws: "우", bats: "우" },
       { id: "plr-kiw-6", groupId: "team-kiw", name: "김재웅", nameKo: "김재웅", position: "투수", jerseyNumber: 28, color: "#820024", role: "마감", pcode: "67391", throws: "좌", bats: "좌" },
-      { id: "plr-kiw-7", groupId: "team-kiw", name: "윤석원", nameKo: "윤석원", position: "투수", jerseyNumber: 22, color: "#820024", role: "셋업", pcode: "52395", throws: "좌", bats: "좌" },
-      { id: "plr-kiw-8", groupId: "team-kiw", name: "안치홍", nameKo: "안치홍", position: "내야수", jerseyNumber: 13, color: "#820024", role: "핵심", pcode: "79608", throws: "우", bats: "우" },
+      { id: "plr-kiw-7", groupId: "team-kiw", name: "윤석원", nameKo: "윤석원", position: "투수", jerseyNumber: 95, color: "#820024", role: "셋업", pcode: "52395", throws: "좌", bats: "좌" },
+      { id: "plr-kiw-8", groupId: "team-kiw", name: "안치홍", nameKo: "안치홍", position: "내야수", jerseyNumber: 9, color: "#820024", role: "핵심", pcode: "79608", throws: "우", bats: "우" },
       { id: "plr-kiw-9", groupId: "team-kiw", name: "최주환", nameKo: "최주환", position: "내야수", jerseyNumber: 7, color: "#820024", role: "4번타자", pcode: "76267", throws: "우", bats: "좌" },
       { id: "plr-kiw-10", groupId: "team-kiw", name: "김건희", nameKo: "김건희", position: "포수", jerseyNumber: 10, color: "#820024", role: "주전", pcode: "53312", throws: "우", bats: "우" },
       { id: "plr-kiw-11", groupId: "team-kiw", name: "추재현", nameKo: "추재현", position: "외야수", jerseyNumber: 25, color: "#820024", role: "주전", pcode: "68362", throws: "우", bats: "우" },
@@ -930,6 +935,7 @@ export function seedIfEmpty(): void {
       { id: "plr-kiw-13", groupId: "team-kiw", name: "오석주", nameKo: "오석주", position: "투수", jerseyNumber: 17, color: "#820024", role: "선발", pcode: "67116", throws: "좌", bats: "좌" },
       { id: "plr-kiw-14", groupId: "team-kiw", name: "이형종", nameKo: "이형종", position: "외야수", jerseyNumber: 55, color: "#820024", role: "주전", pcode: "78135", throws: "우", bats: "좌" },
       { id: "plr-kiw-15", groupId: "team-kiw", name: "오선진", nameKo: "오선진", position: "내야수", jerseyNumber: 6, color: "#820024", role: "유망주", pcode: "78756", throws: "우", bats: "우" },
+      { id: "plr-kiw-16", groupId: "team-kiw", name: "카나쿠보 유토", nameKo: "카나쿠보 유토", position: "투수", jerseyNumber: 11, color: "#820024", role: "선발", pcode: "", throws: "좌", bats: "좌" },
     ];
     players.forEach((p) => addItem(STORE_KEYS.KBO_PLAYERS, p));
   }
