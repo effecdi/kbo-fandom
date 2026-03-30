@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, type AuthRequest } from "./authMiddleware";
 import { supabase } from "./supabaseClient";
-import { generateCharacterImage, generateLogoImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, removeBackgroundAI, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint } from "./imageGen";
+import { generateCharacterImage, generateLogoImage, generatePoseImage, generateWithBackground, generateWebtoonScene, removeWhiteBackground, removeBackgroundAI, generateThumbnail, applyWatermark, generativeFillImage, generativeExpandImage, generativeUpscaleImage, segmentObjects, selectObjectAtPoint, generateWithInstantID } from "./imageGen";
 import { generateAIPrompt, enhanceBio, generateStoryScripts, suggestStoryTopics, generateWebtoonSceneBreakdown, analyzeCharacterImage } from "./aiText";
 import { generateCharacterSchema, generatePoseSchema, generateBackgroundSchema, removeBackgroundSchema, creatorProfileSchema, storyScriptSchema, topicSuggestSchema, updateBubbleProjectSchema, updateProjectFolderSchema, instagramPublishSchema, publishToFeedSchema } from "@shared/schema";
 import axios from "axios";
@@ -189,6 +189,24 @@ export async function registerRoutes(
     } catch (error: any) {
       logger.error("Character generation error", error);
       res.status(500).json({ message: "캐릭터 생성에 실패했습니다." });
+    }
+  });
+
+  // ─── InstantID Test (Replicate) ───────────────────────────────────────────
+  app.post("/api/test-instantid", isAuthenticated, async (req: AuthRequest, res) => {
+    try {
+      if (!process.env.REPLICATE_API_TOKEN) {
+        return res.status(503).json({ message: "REPLICATE_API_TOKEN이 설정되지 않았습니다." });
+      }
+      const { faceImageData, prompt } = req.body as { faceImageData?: string; prompt?: string };
+      if (!faceImageData?.startsWith("data:")) {
+        return res.status(400).json({ message: "faceImageData(base64 data URL)가 필요합니다." });
+      }
+      const imageUrl = await generateWithInstantID(faceImageData, prompt || "");
+      res.json({ imageUrl });
+    } catch (error: any) {
+      logger.error("InstantID generation error", error);
+      res.status(500).json({ message: error.message || "InstantID 생성 실패" });
     }
   });
 

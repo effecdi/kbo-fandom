@@ -1,4 +1,5 @@
 import { GoogleGenAI, Modality } from "@google/genai";
+import Replicate from "replicate";
 import sharp from "sharp";
 import path from "path";
 import type { Character } from "@shared/schema";
@@ -1678,4 +1679,46 @@ export async function generativeUpscaleImage(
 
   const mimeType = imagePart.inlineData.mimeType || "image/png";
   return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+}
+
+// ─── InstantID (Replicate) ───────────────────────────────────────────────────
+export async function generateWithInstantID(faceImageData: string, prompt: string): Promise<string> {
+  if (!process.env.REPLICATE_API_TOKEN) {
+    throw new Error("REPLICATE_API_TOKEN not set");
+  }
+
+  const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+
+  // base64 data URL → Blob
+  const match = faceImageData.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("Invalid image data format");
+  const imgMimeType = match[1];
+  const buffer = Buffer.from(match[2], "base64");
+  const blob = new Blob([buffer], { type: imgMimeType });
+
+  const finalPrompt = prompt?.trim()
+    || "anime style character illustration, full body, white background, cute, clean lines";
+
+  const output = await replicate.run(
+    "grandlineai/instant-id-photorealistic",
+    {
+      input: {
+        face_image: blob,
+        prompt: finalPrompt,
+        negative_prompt: "ugly, deformed, noisy, blurry, bad anatomy, extra limbs, watermark, text",
+        style_strength_ratio: 20,
+        num_inference_steps: 30,
+        guidance_scale: 5,
+      }
+    }
+  ) as any;
+
+  // output은 URL 문자열 또는 URL 배열
+  const imageUrl: string = Array.isArray(output) ? output[0] : output;
+
+  // URL → base64 data URL
+  const resp = await fetch(imageUrl);
+  const imgBuffer = Buffer.from(await resp.arrayBuffer());
+  const contentType = resp.headers.get("content-type") || "image/webp";
+  return `data:${contentType};base64,${imgBuffer.toString("base64")}`;
 }
