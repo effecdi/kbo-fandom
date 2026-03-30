@@ -1208,28 +1208,26 @@ export async function generateWebtoonScene(
       .filter(Boolean)
       .join("\n");
 
-    // ── Part 1: 텍스트 프롬프트 (간결하게)
+    // ── Part 1: 텍스트 프롬프트 — 얼굴 특징을 최우선으로 배치
     parts.push({
       text: `${tpl.role}
 
 ${noTextRule}
-
+${faceFeaturesBlock ? `\n⚠️ CRITICAL — PLAYER IDENTITY (highest priority, NEVER override with style):\nNo matter what art style, these distinctive physical features of each player MUST be visually preserved and recognizable:\n${faceFeaturesBlock}\nThese are the features that make each player unique. Even in anime, chibi, watercolor, or any other style, these characteristics must remain clearly identifiable.\n` : ""}
 SCENE: "${translatedContext}"
 ${scenePositionBlock}${translatedScene}
 
 ${tpl.bg}
 ${tpl.style}
 - ${ratioLabel} aspect ratio
-- Cheerful expression, dynamic angle
 - Character fills most of the image
 - No speech bubbles${charConsistencyRules}
 ${teamIdentity ? `\nTeam: ${teamIdentity.match(/\[TEAM VISUAL IDENTITY - ([^\]]+)\]/)?.[1] || ""}. Primary color: ${teamColorHint}.` : ""}
 
-REFERENCE PHOTOS BELOW — reproduce the player's appearance EXACTLY as shown:
-- Same face, same skin tone, same body build, same hair
-- Same uniform design and colors as in the photo
-- The photo is the ONLY ground truth — do NOT use your memorized knowledge for this player's appearance
-${faceFeaturesBlock ? `\nDISTINCTIVE FACIAL FEATURES (MUST be preserved in the illustration):\n${faceFeaturesBlock}` : ""}
+REFERENCE PHOTOS — reproduce the player's appearance as shown. The photo is the ONLY ground truth:
+- Same face structure, skin tone, body build, hair
+- Same uniform design and colors
+- Apply the art style WHILE preserving the player's identity${faceFeaturesBlock ? `\n- The distinctive facial features listed above MUST be visible even after stylization` : ""}
 
 ${tpl.outro}`
     });
