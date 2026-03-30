@@ -1188,9 +1188,25 @@ export async function generateWebtoonScene(
     // → Gemini는 프롬프트 끝의 이미지에 더 집중함
     // ─────────────────────────────────────────────────────────
 
+    // ── 각 선수 사진의 얼굴 특징을 Gemini Vision으로 분석 (병렬)
+    const faceFeaturesList = await Promise.all(
+      images.map((img) => analyzePlayerFace(img))
+    );
+    logger.info("[generateWebtoonScene] face features", { faceFeaturesList });
+
     const charConsistencyRules = hasCharNames && images.length > 1
       ? `\nKeep each character distinct: ${characterNames.map((n, i) => `"${n}" = photo #${i + 1}`).join(", ")}.`
       : "";
+
+    // 얼굴 특징 블록: 특징이 있는 선수만 포함
+    const faceFeaturesBlock = faceFeaturesList
+      .map((feat, i) => {
+        if (!feat) return null;
+        const name = hasCharNames ? (characterNames[i] || `Player ${i + 1}`) : `Player ${i + 1}`;
+        return `- [${name}]: ${feat}`;
+      })
+      .filter(Boolean)
+      .join("\n");
 
     // ── Part 1: 텍스트 프롬프트 (간결하게)
     parts.push({
@@ -1213,6 +1229,7 @@ REFERENCE PHOTOS BELOW — reproduce the player's appearance EXACTLY as shown:
 - Same face, same skin tone, same body build, same hair
 - Same uniform design and colors as in the photo
 - The photo is the ONLY ground truth — do NOT use your memorized knowledge for this player's appearance
+${faceFeaturesBlock ? `\nDISTINCTIVE FACIAL FEATURES (MUST be preserved in the illustration):\n${faceFeaturesBlock}` : ""}
 
 ${tpl.outro}`
     });

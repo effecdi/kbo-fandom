@@ -86,9 +86,13 @@ export function WorkspaceShell() {
             </ResizablePanel>
           </ResizablePanelGroup>
         ) : (
-          /* Beginner mode: full-screen canvas, no storyboard, no side panels */
-          <div className="flex-1">
-            <CanvasArea />
+          /* Single image / beginner mode: canvas with optional side panels */
+          <div className="flex-1 flex">
+            {showSidePanels && <ContextPanel />}
+            <div className="flex-1 min-w-0">
+              <CanvasArea />
+            </div>
+            {showSidePanels && <PropertiesPanel />}
           </div>
         )}
       </div>
