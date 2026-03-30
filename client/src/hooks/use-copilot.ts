@@ -392,8 +392,8 @@ export function useCopilot() {
       }
 
       // 팀 로고 이미지 2종 fetch:
-      // 1. logoUrl (Naver Sports CDN, 184x184 정사각) → Gemini 레퍼런스용
-      // 2. capLogoUrl (KBO CDN 엠블럼, 64x41 가로형) → sharp 오버레이용 (모자/헬멧 로고)
+      // 1. emblemUrl (구단 엠블럼) → Gemini 레퍼런스용
+      // 2. logoUrl (헬멧 심볼) → sharp 오버레이용
       let teamLogoDataUrl: string | undefined = undefined;
       let capLogoDataUrl: string | undefined = undefined;
       if (fandomMeta?.groupName) {
@@ -403,8 +403,10 @@ export function useCopilot() {
             (t) => t.name === fandomMeta.groupName || t.nameKo === fandomMeta.groupName
           );
           // 구단 엠블럼 (Gemini 레퍼런스)
-          if (myTeam?.logoUrl) {
-            const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.logoUrl)}`);
+          const emblemSrc = myTeam?.emblemUrl;
+          if (emblemSrc) {
+            const fetchUrl = emblemSrc.startsWith("/") ? emblemSrc : `/api/kbo/team-logo?url=${encodeURIComponent(emblemSrc)}`;
+            const logoResp = await fetch(fetchUrl);
             if (logoResp.ok) {
               const logoBlob = await logoResp.blob();
               teamLogoDataUrl = await new Promise<string>((resolve) => {
@@ -414,9 +416,11 @@ export function useCopilot() {
               });
             }
           }
-          // 모자/헬멧 로고 (KBO CDN 엠블럼 → sharp 오버레이)
-          if (myTeam?.capLogoUrl) {
-            const capResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.capLogoUrl)}`);
+          // 헬멧 심볼 로고 (sharp 오버레이)
+          const logoSrc = myTeam?.logoUrl;
+          if (logoSrc) {
+            const fetchUrl = logoSrc.startsWith("/") ? logoSrc : `/api/kbo/team-logo?url=${encodeURIComponent(logoSrc)}`;
+            const capResp = await fetch(fetchUrl);
             if (capResp.ok) {
               const capBlob = await capResp.blob();
               capLogoDataUrl = await new Promise<string>((resolve) => {
@@ -614,8 +618,11 @@ export function useCopilot() {
             const myTeam = teams.find(
               (t) => t.name === fandomMeta.groupName || t.nameKo === fandomMeta.groupName
             );
-            if (myTeam?.logoUrl) {
-              const logoResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.logoUrl)}`);
+            // 구단 엠블럼 (Gemini 레퍼런스)
+            const emblemSrc = myTeam?.emblemUrl;
+            if (emblemSrc) {
+              const fetchUrl = emblemSrc.startsWith("/") ? emblemSrc : `/api/kbo/team-logo?url=${encodeURIComponent(emblemSrc)}`;
+              const logoResp = await fetch(fetchUrl);
               if (logoResp.ok) {
                 const logoBlob = await logoResp.blob();
                 teamLogoMulti = await new Promise<string>((resolve) => {
@@ -625,9 +632,11 @@ export function useCopilot() {
                 });
               }
             }
-            // capLogoUrl = KBO CDN 헬멧/모자 로고
-            if (myTeam?.capLogoUrl) {
-              const capResp = await fetch(`/api/kbo/team-logo?url=${encodeURIComponent(myTeam.capLogoUrl)}`);
+            // 헬멧 심볼 로고 (sharp 오버레이)
+            const logoSrc = myTeam?.logoUrl;
+            if (logoSrc) {
+              const fetchUrl = logoSrc.startsWith("/") ? logoSrc : `/api/kbo/team-logo?url=${encodeURIComponent(logoSrc)}`;
+              const capResp = await fetch(fetchUrl);
               if (capResp.ok) {
                 const capBlob = await capResp.blob();
                 capLogoMulti = await new Promise<string>((resolve) => {

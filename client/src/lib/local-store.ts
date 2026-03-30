@@ -326,9 +326,12 @@ export interface KboTeam {
   secondaryColor: string;
   description: string;
   mascot: string;
+  /** 유니폼 워드마크 (텍스트형 로고, 예: "KIA TIGERS") */
+  wordmarkUrl?: string;
+  /** 헬멧 로고 심볼 (아이콘형, 예: "T" 마크) */
   logoUrl?: string;
-  /** KBO CDN 엠블럼 — 모자/헬멧 전면에 들어가는 로고 (64x41, 가로형) */
-  capLogoUrl?: string;
+  /** 구단 엠블럼 (풀 뱃지/방패형 로고) */
+  emblemUrl?: string;
 }
 
 export type PlayerRole = "에이스" | "선발" | "마감" | "셋업" | "중계" | "4번타자" | "3번타자" | "리드오프" | "주전" | "핵심" | "유망주";
@@ -644,7 +647,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 17; // v17: team logo URL → Naver Sports CDN 184x184 (was 64x41 KBO CDN)
+const SEED_VERSION = 18; // v18: triple-logo system (wordmark/logo/emblem) + KIA 2026 entry roster (30명)
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);
@@ -676,16 +679,16 @@ export function seedIfEmpty(): void {
   // KBO Teams (10개 구단)
   if (listItems(STORE_KEYS.KBO_TEAMS).length === 0) {
     const teams: KboTeam[] = [
-      { id: "team-lg", name: "LG Twins", nameKo: "LG 트윈스", city: "서울", stadium: "잠실야구장", fandomName: "트윈스 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#C60C30", secondaryColor: "#000000", description: "서울을 대표하는 전통 구단, 2025년 한국시리즈 우승", mascot: "Luckii", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LG.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_LG.png" },
-      { id: "team-kt", name: "KT Wiz", nameKo: "KT 위즈", city: "수원", stadium: "수원KT위즈파크", fandomName: "위즈 팬", foundedYear: 2015, followers: 0, fanartCount: 0, coverColor: "#000000", secondaryColor: "#ED1C24", description: "수원의 젊은 구단, 2021년 한국시리즈 우승", mascot: "Vic", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/KT.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_KT.png" },
-      { id: "team-ssg", name: "SSG Landers", nameKo: "SSG 랜더스", city: "인천", stadium: "인천SSG랜더스필드", fandomName: "랜더스 팬", foundedYear: 2000, followers: 0, fanartCount: 0, coverColor: "#CE0E2D", secondaryColor: "#000000", description: "인천의 자존심, 2024 리브랜딩 (Todd Radom)", mascot: "Landro", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/SK.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_SK.png" },
-      { id: "team-nc", name: "NC Dinos", nameKo: "NC 다이노스", city: "창원", stadium: "창원NC파크", fandomName: "다이노스 팬", foundedYear: 2013, followers: 0, fanartCount: 0, coverColor: "#315288", secondaryColor: "#C0A882", description: "창원의 공룡 군단, 2020년 한국시리즈 우승", mascot: "Dandi", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/NC.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_NC.png" },
-      { id: "team-doo", name: "Doosan Bears", nameKo: "두산 베어스", city: "서울", stadium: "잠실야구장", fandomName: "베어스 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#131230", secondaryColor: "#ED1C24", description: "잠실의 전통 강호, 2025 RARE Design 리브랜딩", mascot: "Cheol-woong", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/OB.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_OB.png" },
-      { id: "team-kia", name: "KIA Tigers", nameKo: "KIA 타이거즈", city: "광주", stadium: "광주-기아챔피언스필드", fandomName: "타이거즈 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#EA0029", secondaryColor: "#000000", description: "호남의 왕, KBO 최다 통합 우승 구단", mascot: "Hogini", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/HT.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_HT.png" },
-      { id: "team-lot", name: "Lotte Giants", nameKo: "롯데 자이언츠", city: "부산", stadium: "사직야구장", fandomName: "자이언츠 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#041E42", secondaryColor: "#E30613", description: "부산의 영웅, 2023 갈매기 CI 리뉴얼", mascot: "Giant", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LT.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_LT.png" },
-      { id: "team-sam", name: "Samsung Lions", nameKo: "삼성 라이온즈", city: "대구", stadium: "대구삼성라이온즈파크", fandomName: "라이온즈 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#074CA1", secondaryColor: "#FFFFFF", description: "대구의 사자, 4연패 신화의 주인공", mascot: "Blazey", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/SS.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_SS.png" },
-      { id: "team-han", name: "Hanwha Eagles", nameKo: "한화 이글스", city: "대전", stadium: "한화생명볼파크", fandomName: "이글스 팬", foundedYear: 1986, followers: 0, fanartCount: 0, coverColor: "#FF6600", secondaryColor: "#1B2A4A", description: "대전의 독수리, 2025 새 BI 'RIDE THE STORM'", mascot: "Suri", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/HH.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_HH.png" },
-      { id: "team-kiw", name: "Kiwoom Heroes", nameKo: "키움 히어로즈", city: "서울", stadium: "고척스카이돔", fandomName: "히어로즈 팬", foundedYear: 2008, followers: 0, fanartCount: 0, coverColor: "#820024", secondaryColor: "#000000", description: "고척의 영웅들, 국내 유일 돔구장 구단", mascot: "Tuki", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/WO.png", capLogoUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_WO.png" },
+      { id: "team-lg", name: "LG Twins", nameKo: "LG 트윈스", city: "서울", stadium: "잠실야구장", fandomName: "트윈스 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#C60C30", secondaryColor: "#000000", description: "서울을 대표하는 전통 구단, 2025년 한국시리즈 우승", mascot: "Luckii", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LG.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LG.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_LG.png" },
+      { id: "team-kt", name: "KT Wiz", nameKo: "KT 위즈", city: "수원", stadium: "수원KT위즈파크", fandomName: "위즈 팬", foundedYear: 2015, followers: 0, fanartCount: 0, coverColor: "#000000", secondaryColor: "#ED1C24", description: "수원의 젊은 구단, 2021년 한국시리즈 우승", mascot: "Vic", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/KT.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/KT.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_KT.png" },
+      { id: "team-ssg", name: "SSG Landers", nameKo: "SSG 랜더스", city: "인천", stadium: "인천SSG랜더스필드", fandomName: "랜더스 팬", foundedYear: 2000, followers: 0, fanartCount: 0, coverColor: "#CE0E2D", secondaryColor: "#000000", description: "인천의 자존심, 2024 리브랜딩 (Todd Radom)", mascot: "Landro", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/SK.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/SK.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_SK.png" },
+      { id: "team-nc", name: "NC Dinos", nameKo: "NC 다이노스", city: "창원", stadium: "창원NC파크", fandomName: "다이노스 팬", foundedYear: 2013, followers: 0, fanartCount: 0, coverColor: "#315288", secondaryColor: "#C0A882", description: "창원의 공룡 군단, 2020년 한국시리즈 우승", mascot: "Dandi", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/NC.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/NC.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_NC.png" },
+      { id: "team-doo", name: "Doosan Bears", nameKo: "두산 베어스", city: "서울", stadium: "잠실야구장", fandomName: "베어스 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#131230", secondaryColor: "#ED1C24", description: "잠실의 전통 강호, 2025 RARE Design 리브랜딩", mascot: "Cheol-woong", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/OB.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/OB.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_OB.png" },
+      { id: "team-kia", name: "KIA Tigers", nameKo: "KIA 타이거즈", city: "광주", stadium: "광주-기아챔피언스필드", fandomName: "타이거즈 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#EA0029", secondaryColor: "#000000", description: "호남의 왕, KBO 최다 통합 우승 구단", mascot: "Hogini", wordmarkUrl: "/logos/kia/wordmark.jpg", logoUrl: "/logos/kia/logo.jpg", emblemUrl: "/logos/kia/emblem.jpg" },
+      { id: "team-lot", name: "Lotte Giants", nameKo: "롯데 자이언츠", city: "부산", stadium: "사직야구장", fandomName: "자이언츠 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#041E42", secondaryColor: "#E30613", description: "부산의 영웅, 2023 갈매기 CI 리뉴얼", mascot: "Giant", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LT.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LT.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_LT.png" },
+      { id: "team-sam", name: "Samsung Lions", nameKo: "삼성 라이온즈", city: "대구", stadium: "대구삼성라이온즈파크", fandomName: "라이온즈 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#074CA1", secondaryColor: "#FFFFFF", description: "대구의 사자, 4연패 신화의 주인공", mascot: "Blazey", wordmarkUrl: "/logos/samsung/wordmark.png", logoUrl: "/logos/samsung/logo.png", emblemUrl: "/logos/samsung/emblem.png" },
+      { id: "team-han", name: "Hanwha Eagles", nameKo: "한화 이글스", city: "대전", stadium: "한화생명볼파크", fandomName: "이글스 팬", foundedYear: 1986, followers: 0, fanartCount: 0, coverColor: "#FF6600", secondaryColor: "#1B2A4A", description: "대전의 독수리, 2025 새 BI 'RIDE THE STORM'", mascot: "Suri", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/HH.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/HH.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_HH.png" },
+      { id: "team-kiw", name: "Kiwoom Heroes", nameKo: "키움 히어로즈", city: "서울", stadium: "고척스카이돔", fandomName: "히어로즈 팬", foundedYear: 2008, followers: 0, fanartCount: 0, coverColor: "#820024", secondaryColor: "#000000", description: "고척의 영웅들, 국내 유일 돔구장 구단", mascot: "Tuki", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/WO.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/WO.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_WO.png" },
     ];
     teams.forEach((t) => addItem(STORE_KEYS.KBO_TEAMS, t));
   }
@@ -773,22 +776,41 @@ export function seedIfEmpty(): void {
       { id: "plr-doo-13", groupId: "team-doo", name: "조수행", nameKo: "조수행", position: "외야수", jerseyNumber: 24, color: "#131230", role: "유망주", pcode: "66209" },
       { id: "plr-doo-14", groupId: "team-doo", name: "오명진", nameKo: "오명진", position: "내야수", jerseyNumber: 13, color: "#131230", role: "주전", pcode: "50208" },
       { id: "plr-doo-15", groupId: "team-doo", name: "김인태", nameKo: "김인태", position: "외야수", jerseyNumber: 55, color: "#131230", role: "주전", pcode: "63257" },
-      // ── KIA Tigers (2024 한국시리즈 우승) ──
-      { id: "plr-kia-1", groupId: "team-kia", name: "네일", nameKo: "제임스 네일", position: "투수", jerseyNumber: 40, color: "#EA0029", role: "에이스", pcode: "54640" },
-      { id: "plr-kia-2", groupId: "team-kia", name: "김도영", nameKo: "김도영", position: "내야수", jerseyNumber: 5, color: "#EA0029", role: "3번타자", pcode: "52605" },
-      { id: "plr-kia-3", groupId: "team-kia", name: "나성범", nameKo: "나성범", position: "외야수", jerseyNumber: 47, color: "#EA0029", role: "4번타자", pcode: "62947" },
-      { id: "plr-kia-4", groupId: "team-kia", name: "조상우", nameKo: "조상우", position: "투수", jerseyNumber: 11, color: "#EA0029", role: "마감", pcode: "63342" },
-      { id: "plr-kia-5", groupId: "team-kia", name: "한준수", nameKo: "한준수", position: "포수", jerseyNumber: 25, color: "#EA0029", role: "주전", pcode: "68646" },
-      { id: "plr-kia-6", groupId: "team-kia", name: "김선빈", nameKo: "김선빈", position: "내야수", jerseyNumber: 3, color: "#EA0029", role: "주전", pcode: "78603" },
-      { id: "plr-kia-7", groupId: "team-kia", name: "이의리", nameKo: "이의리", position: "투수", jerseyNumber: 17, color: "#EA0029", role: "선발", pcode: "51648" },
-      { id: "plr-kia-8", groupId: "team-kia", name: "올러", nameKo: "올러", position: "투수", jerseyNumber: 43, color: "#EA0029", role: "선발", pcode: "55633" },
-      { id: "plr-kia-9", groupId: "team-kia", name: "정해영", nameKo: "정해영", position: "투수", jerseyNumber: 22, color: "#EA0029", role: "셋업", pcode: "50662" },
-      { id: "plr-kia-10", groupId: "team-kia", name: "김태군", nameKo: "김태군", position: "포수", jerseyNumber: 10, color: "#EA0029", role: "주전", pcode: "78122" },
-      { id: "plr-kia-11", groupId: "team-kia", name: "데일", nameKo: "데일", position: "내야수", jerseyNumber: 44, color: "#EA0029", role: "핵심", pcode: "56632" },
-      { id: "plr-kia-12", groupId: "team-kia", name: "카스트로", nameKo: "카스트로", position: "외야수", jerseyNumber: 30, color: "#EA0029", role: "핵심", pcode: "56626" },
-      { id: "plr-kia-13", groupId: "team-kia", name: "변우혁", nameKo: "변우혁", position: "내야수", jerseyNumber: 6, color: "#EA0029", role: "유망주", pcode: "69727" },
-      { id: "plr-kia-14", groupId: "team-kia", name: "이창진", nameKo: "이창진", position: "외야수", jerseyNumber: 15, color: "#EA0029", role: "주전", pcode: "64560" },
-      { id: "plr-kia-15", groupId: "team-kia", name: "김호령", nameKo: "김호령", position: "외야수", jerseyNumber: 55, color: "#EA0029", role: "주전", pcode: "65653" },
+      // ── KIA Tigers (2024 한국시리즈 우승) — 2026 개막 엔트리 30명 ──
+      // 투수 (14명)
+      { id: "plr-kia-1", groupId: "team-kia", name: "양현종", nameKo: "양현종", position: "투수", jerseyNumber: 54, color: "#EA0029", role: "에이스", pcode: "77637" },
+      { id: "plr-kia-2", groupId: "team-kia", name: "조상우", nameKo: "조상우", position: "투수", jerseyNumber: 11, color: "#EA0029", role: "마감", pcode: "63342" },
+      { id: "plr-kia-3", groupId: "team-kia", name: "올러", nameKo: "아담 올러", position: "투수", jerseyNumber: 33, color: "#EA0029", role: "선발", pcode: "55633" },
+      { id: "plr-kia-4", groupId: "team-kia", name: "네일", nameKo: "제임스 네일", position: "투수", jerseyNumber: 40, color: "#EA0029", role: "선발", pcode: "54640" },
+      { id: "plr-kia-5", groupId: "team-kia", name: "이의리", nameKo: "이의리", position: "투수", jerseyNumber: 48, color: "#EA0029", role: "선발", pcode: "51648" },
+      { id: "plr-kia-6", groupId: "team-kia", name: "정해영", nameKo: "정해영", position: "투수", jerseyNumber: 62, color: "#EA0029", role: "셋업", pcode: "50662" },
+      { id: "plr-kia-7", groupId: "team-kia", name: "황동하", nameKo: "황동하", position: "투수", jerseyNumber: 41, color: "#EA0029", role: "선발", pcode: "52641" },
+      { id: "plr-kia-8", groupId: "team-kia", name: "최지민", nameKo: "최지민", position: "투수", jerseyNumber: 39, color: "#EA0029", role: "중계", pcode: "52639" },
+      { id: "plr-kia-9", groupId: "team-kia", name: "김범수", nameKo: "김범수", position: "투수", jerseyNumber: 49, color: "#EA0029", role: "중계", pcode: "65769" },
+      { id: "plr-kia-10", groupId: "team-kia", name: "전상현", nameKo: "전상현", position: "투수", jerseyNumber: 51, color: "#EA0029", role: "중계", pcode: "66609" },
+      { id: "plr-kia-11", groupId: "team-kia", name: "김기훈", nameKo: "김기훈", position: "투수", jerseyNumber: 53, color: "#EA0029", role: "중계", pcode: "69620" },
+      { id: "plr-kia-12", groupId: "team-kia", name: "김시훈", nameKo: "김시훈", position: "투수", jerseyNumber: 61, color: "#EA0029", role: "중계", pcode: "68928" },
+      { id: "plr-kia-13", groupId: "team-kia", name: "성영탁", nameKo: "성영탁", position: "투수", jerseyNumber: 65, color: "#EA0029", role: "중계", pcode: "54610" },
+      { id: "plr-kia-14", groupId: "team-kia", name: "홍민규", nameKo: "홍민규", position: "투수", jerseyNumber: 67, color: "#EA0029", role: "중계", pcode: "55267" },
+      // 포수 (2명)
+      { id: "plr-kia-15", groupId: "team-kia", name: "한준수", nameKo: "한준수", position: "포수", jerseyNumber: 25, color: "#EA0029", role: "주전", pcode: "68646" },
+      { id: "plr-kia-16", groupId: "team-kia", name: "김태군", nameKo: "김태군", position: "포수", jerseyNumber: 42, color: "#EA0029", role: "주전", pcode: "78122" },
+      // 내야수 (8명)
+      { id: "plr-kia-17", groupId: "team-kia", name: "김도영", nameKo: "김도영", position: "내야수", jerseyNumber: 5, color: "#EA0029", role: "3번타자", pcode: "52605" },
+      { id: "plr-kia-18", groupId: "team-kia", name: "김선빈", nameKo: "김선빈", position: "내야수", jerseyNumber: 3, color: "#EA0029", role: "주전", pcode: "78603" },
+      { id: "plr-kia-19", groupId: "team-kia", name: "데일", nameKo: "제로드 데일", position: "내야수", jerseyNumber: 32, color: "#EA0029", role: "핵심", pcode: "56632" },
+      { id: "plr-kia-20", groupId: "team-kia", name: "박민", nameKo: "박민", position: "내야수", jerseyNumber: 2, color: "#EA0029", role: "주전", pcode: "50657" },
+      { id: "plr-kia-21", groupId: "team-kia", name: "정현창", nameKo: "정현창", position: "내야수", jerseyNumber: 12, color: "#EA0029", role: "주전", pcode: "55926" },
+      { id: "plr-kia-22", groupId: "team-kia", name: "김규성", nameKo: "김규성", position: "내야수", jerseyNumber: 14, color: "#EA0029", role: "주전", pcode: "66614" },
+      { id: "plr-kia-23", groupId: "team-kia", name: "윤도현", nameKo: "윤도현", position: "내야수", jerseyNumber: 16, color: "#EA0029", role: "주전", pcode: "52667" },
+      { id: "plr-kia-24", groupId: "team-kia", name: "오선우", nameKo: "오선우", position: "내야수", jerseyNumber: 56, color: "#EA0029", role: "주전", pcode: "69636" },
+      // 외야수 (6명)
+      { id: "plr-kia-25", groupId: "team-kia", name: "나성범", nameKo: "나성범", position: "외야수", jerseyNumber: 47, color: "#EA0029", role: "4번타자", pcode: "62947" },
+      { id: "plr-kia-26", groupId: "team-kia", name: "카스트로", nameKo: "해롤드 카스트로", position: "외야수", jerseyNumber: 26, color: "#EA0029", role: "핵심", pcode: "56626" },
+      { id: "plr-kia-27", groupId: "team-kia", name: "이창진", nameKo: "이창진", position: "외야수", jerseyNumber: 8, color: "#EA0029", role: "주전", pcode: "64560" },
+      { id: "plr-kia-28", groupId: "team-kia", name: "김호령", nameKo: "김호령", position: "외야수", jerseyNumber: 27, color: "#EA0029", role: "주전", pcode: "65653" },
+      { id: "plr-kia-29", groupId: "team-kia", name: "박정우", nameKo: "박정우", position: "외야수", jerseyNumber: 1, color: "#EA0029", role: "주전", pcode: "67609" },
+      { id: "plr-kia-30", groupId: "team-kia", name: "박재현", nameKo: "박재현", position: "외야수", jerseyNumber: 15, color: "#EA0029", role: "주전", pcode: "55636" },
       // ── Lotte Giants ──
       { id: "plr-lot-1", groupId: "team-lot", name: "전준우", nameKo: "전준우", position: "외야수", jerseyNumber: 8, color: "#041E42", role: "4번타자", pcode: "78513" },
       { id: "plr-lot-2", groupId: "team-lot", name: "한태양", nameKo: "한태양", position: "내야수", jerseyNumber: 6, color: "#041E42", role: "주전", pcode: "52568" },
