@@ -647,7 +647,7 @@ export type EditorContent = EditorTeamProfile | EditorFanArt | EditorFanFic | Ed
 
 // ─── Seed Data (runs once) ───────────────────────────────────────────────────
 
-const SEED_VERSION = 19; // v19: Samsung Lions triple-logo + 2026 개막 엔트리 30명 (투수13+포수2+내야8+외야7)
+const SEED_VERSION = 20; // v20: NC Dinos triple-logo + 2026 개막 엔트리 29명 (투수12+포수2+내야10+외야5)
 
 export function seedIfEmpty(): void {
   const storedVersion = localStorage.getItem(STORE_KEYS.SEED_VERSION);
@@ -682,7 +682,7 @@ export function seedIfEmpty(): void {
       { id: "team-lg", name: "LG Twins", nameKo: "LG 트윈스", city: "서울", stadium: "잠실야구장", fandomName: "트윈스 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#C60C30", secondaryColor: "#000000", description: "서울을 대표하는 전통 구단, 2025년 한국시리즈 우승", mascot: "Luckii", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LG.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LG.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_LG.png" },
       { id: "team-kt", name: "KT Wiz", nameKo: "KT 위즈", city: "수원", stadium: "수원KT위즈파크", fandomName: "위즈 팬", foundedYear: 2015, followers: 0, fanartCount: 0, coverColor: "#000000", secondaryColor: "#ED1C24", description: "수원의 젊은 구단, 2021년 한국시리즈 우승", mascot: "Vic", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/KT.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/KT.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_KT.png" },
       { id: "team-ssg", name: "SSG Landers", nameKo: "SSG 랜더스", city: "인천", stadium: "인천SSG랜더스필드", fandomName: "랜더스 팬", foundedYear: 2000, followers: 0, fanartCount: 0, coverColor: "#CE0E2D", secondaryColor: "#000000", description: "인천의 자존심, 2024 리브랜딩 (Todd Radom)", mascot: "Landro", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/SK.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/SK.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_SK.png" },
-      { id: "team-nc", name: "NC Dinos", nameKo: "NC 다이노스", city: "창원", stadium: "창원NC파크", fandomName: "다이노스 팬", foundedYear: 2013, followers: 0, fanartCount: 0, coverColor: "#315288", secondaryColor: "#C0A882", description: "창원의 공룡 군단, 2020년 한국시리즈 우승", mascot: "Dandi", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/NC.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/NC.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_NC.png" },
+      { id: "team-nc", name: "NC Dinos", nameKo: "NC 다이노스", city: "창원", stadium: "창원NC파크", fandomName: "다이노스 팬", foundedYear: 2013, followers: 0, fanartCount: 0, coverColor: "#315288", secondaryColor: "#C0A882", description: "창원의 공룡 군단, 2020년 한국시리즈 우승", mascot: "Dandi", wordmarkUrl: "/logos/nc/wordmark.png", logoUrl: "/logos/nc/logo.png", emblemUrl: "/logos/nc/emblem.png" },
       { id: "team-doo", name: "Doosan Bears", nameKo: "두산 베어스", city: "서울", stadium: "잠실야구장", fandomName: "베어스 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#131230", secondaryColor: "#ED1C24", description: "잠실의 전통 강호, 2025 RARE Design 리브랜딩", mascot: "Cheol-woong", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/OB.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/OB.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_OB.png" },
       { id: "team-kia", name: "KIA Tigers", nameKo: "KIA 타이거즈", city: "광주", stadium: "광주-기아챔피언스필드", fandomName: "타이거즈 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#EA0029", secondaryColor: "#000000", description: "호남의 왕, KBO 최다 통합 우승 구단", mascot: "Hogini", wordmarkUrl: "/logos/kia/wordmark.jpg", logoUrl: "/logos/kia/logo.jpg", emblemUrl: "/logos/kia/emblem.jpg" },
       { id: "team-lot", name: "Lotte Giants", nameKo: "롯데 자이언츠", city: "부산", stadium: "사직야구장", fandomName: "자이언츠 팬", foundedYear: 1982, followers: 0, fanartCount: 0, coverColor: "#041E42", secondaryColor: "#E30613", description: "부산의 영웅, 2023 갈매기 CI 리뉴얼", mascot: "Giant", wordmarkUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LT.png", logoUrl: "https://sports-phinf.pstatic.net/team/kbo/default/LT.png", emblemUrl: "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_LT.png" },
@@ -744,22 +744,40 @@ export function seedIfEmpty(): void {
       { id: "plr-ssg-13", groupId: "team-ssg", name: "노경은", nameKo: "노경은", position: "투수", jerseyNumber: 28, color: "#CE0E2D", role: "선발", pcode: "73211" },
       { id: "plr-ssg-14", groupId: "team-ssg", name: "김민", nameKo: "김민", position: "투수", jerseyNumber: 15, color: "#CE0E2D", role: "셋업", pcode: "68043" },
       { id: "plr-ssg-15", groupId: "team-ssg", name: "채현우", nameKo: "채현우", position: "외야수", jerseyNumber: 51, color: "#CE0E2D", role: "주전", pcode: "69804" },
-      // ── NC Dinos ──
-      { id: "plr-nc-1", groupId: "team-nc", name: "구창모", nameKo: "구창모", position: "투수", jerseyNumber: 19, color: "#315288", role: "에이스", pcode: "65933" },
-      { id: "plr-nc-2", groupId: "team-nc", name: "박건우", nameKo: "박건우", position: "외야수", jerseyNumber: 37, color: "#315288", role: "4번타자", pcode: "79215" },
-      { id: "plr-nc-3", groupId: "team-nc", name: "서호철", nameKo: "서호철", position: "내야수", jerseyNumber: 5, color: "#315288", role: "핵심", pcode: "69995" },
-      { id: "plr-nc-4", groupId: "team-nc", name: "권희동", nameKo: "권희동", position: "외야수", jerseyNumber: 52, color: "#315288", role: "리드오프", pcode: "63963" },
-      { id: "plr-nc-5", groupId: "team-nc", name: "테일러", nameKo: "커티스 테일러", position: "투수", jerseyNumber: 43, color: "#315288", role: "선발", pcode: "56966" },
-      { id: "plr-nc-6", groupId: "team-nc", name: "데이비슨", nameKo: "맷 데이비슨", position: "내야수", jerseyNumber: 40, color: "#315288", role: "3번타자", pcode: "54944" },
-      { id: "plr-nc-7", groupId: "team-nc", name: "토다", nameKo: "토다", position: "투수", jerseyNumber: 50, color: "#315288", role: "선발", pcode: "56911" },
-      { id: "plr-nc-8", groupId: "team-nc", name: "박민우", nameKo: "박민우", position: "내야수", jerseyNumber: 1, color: "#315288", role: "주전", pcode: "62907" },
-      { id: "plr-nc-9", groupId: "team-nc", name: "김주원", nameKo: "김주원", position: "내야수", jerseyNumber: 6, color: "#315288", role: "주전", pcode: "51907" },
-      { id: "plr-nc-10", groupId: "team-nc", name: "김형준", nameKo: "김형준", position: "포수", jerseyNumber: 15, color: "#315288", role: "주전", pcode: "68912" },
-      { id: "plr-nc-11", groupId: "team-nc", name: "류진욱", nameKo: "류진욱", position: "투수", jerseyNumber: 33, color: "#315288", role: "선발", pcode: "65949" },
-      { id: "plr-nc-12", groupId: "team-nc", name: "임정호", nameKo: "임정호", position: "투수", jerseyNumber: 46, color: "#315288", role: "셋업", pcode: "63959" },
-      { id: "plr-nc-13", groupId: "team-nc", name: "천재환", nameKo: "천재환", position: "외야수", jerseyNumber: 9, color: "#315288", role: "주전", pcode: "67905" },
-      { id: "plr-nc-14", groupId: "team-nc", name: "신재인", nameKo: "신재인", position: "내야수", jerseyNumber: 2, color: "#315288", role: "유망주", pcode: "56909" },
-      { id: "plr-nc-15", groupId: "team-nc", name: "한석현", nameKo: "한석현", position: "외야수", jerseyNumber: 25, color: "#315288", role: "주전", pcode: "64101" },
+      // ── NC Dinos (2026 개막 엔트리 29명) ──
+      // 투수 (12명)
+      { id: "plr-nc-1", groupId: "team-nc", name: "구창모", nameKo: "구창모", position: "투수", jerseyNumber: 59, color: "#315288", role: "에이스", pcode: "65933" },
+      { id: "plr-nc-2", groupId: "team-nc", name: "토다", nameKo: "토다 나츠키", position: "투수", jerseyNumber: 11, color: "#315288", role: "선발", pcode: "56911" },
+      { id: "plr-nc-3", groupId: "team-nc", name: "테일러", nameKo: "커티스 테일러", position: "투수", jerseyNumber: 66, color: "#315288", role: "선발", pcode: "56966" },
+      { id: "plr-nc-4", groupId: "team-nc", name: "김영규", nameKo: "김영규", position: "투수", jerseyNumber: 17, color: "#315288", role: "선발", pcode: "68900" },
+      { id: "plr-nc-5", groupId: "team-nc", name: "류진욱", nameKo: "류진욱", position: "투수", jerseyNumber: 41, color: "#315288", role: "선발", pcode: "65949" },
+      { id: "plr-nc-6", groupId: "team-nc", name: "임지민", nameKo: "임지민", position: "투수", jerseyNumber: 19, color: "#315288", role: "중계", pcode: "53909" },
+      { id: "plr-nc-7", groupId: "team-nc", name: "임정호", nameKo: "임정호", position: "투수", jerseyNumber: 30, color: "#315288", role: "셋업", pcode: "63959" },
+      { id: "plr-nc-8", groupId: "team-nc", name: "이준혁", nameKo: "이준혁", position: "투수", jerseyNumber: 40, color: "#315288", role: "중계", pcode: "52992" },
+      { id: "plr-nc-9", groupId: "team-nc", name: "손주환", nameKo: "손주환", position: "투수", jerseyNumber: 46, color: "#315288", role: "중계", pcode: "54904" },
+      { id: "plr-nc-10", groupId: "team-nc", name: "김진호", nameKo: "김진호", position: "투수", jerseyNumber: 54, color: "#315288", role: "마감", pcode: "67954" },
+      { id: "plr-nc-11", groupId: "team-nc", name: "배재환", nameKo: "배재환", position: "투수", jerseyNumber: 61, color: "#315288", role: "중계", pcode: "64995" },
+      { id: "plr-nc-12", groupId: "team-nc", name: "원종해", nameKo: "원종해", position: "투수", jerseyNumber: 63, color: "#315288", role: "중계", pcode: "54906" },
+      // 포수 (2명)
+      { id: "plr-nc-13", groupId: "team-nc", name: "김형준", nameKo: "김형준", position: "포수", jerseyNumber: 25, color: "#315288", role: "주전", pcode: "68912" },
+      { id: "plr-nc-14", groupId: "team-nc", name: "김정호", nameKo: "김정호", position: "포수", jerseyNumber: 42, color: "#315288", role: "주전", pcode: "51903" },
+      // 내야수 (10명)
+      { id: "plr-nc-15", groupId: "team-nc", name: "데이비슨", nameKo: "맷 데이비슨", position: "내야수", jerseyNumber: 24, color: "#315288", role: "4번타자", pcode: "54944" },
+      { id: "plr-nc-16", groupId: "team-nc", name: "박민우", nameKo: "박민우", position: "내야수", jerseyNumber: 2, color: "#315288", role: "핵심", pcode: "62907" },
+      { id: "plr-nc-17", groupId: "team-nc", name: "서호철", nameKo: "서호철", position: "내야수", jerseyNumber: 5, color: "#315288", role: "핵심", pcode: "69995" },
+      { id: "plr-nc-18", groupId: "team-nc", name: "김주원", nameKo: "김주원", position: "내야수", jerseyNumber: 7, color: "#315288", role: "주전", pcode: "51907" },
+      { id: "plr-nc-19", groupId: "team-nc", name: "허윤", nameKo: "허윤", position: "내야수", jerseyNumber: 4, color: "#315288", role: "주전", pcode: "" },
+      { id: "plr-nc-20", groupId: "team-nc", name: "신재인", nameKo: "신재인", position: "내야수", jerseyNumber: 9, color: "#315288", role: "주전", pcode: "56909" },
+      { id: "plr-nc-21", groupId: "team-nc", name: "김한별", nameKo: "김한별", position: "내야수", jerseyNumber: 13, color: "#315288", role: "주전", pcode: "50902" },
+      { id: "plr-nc-22", groupId: "team-nc", name: "최정원", nameKo: "최정원", position: "내야수", jerseyNumber: 14, color: "#315288", role: "주전", pcode: "69992" },
+      { id: "plr-nc-23", groupId: "team-nc", name: "오영수", nameKo: "오영수", position: "내야수", jerseyNumber: 34, color: "#315288", role: "주전", pcode: "68904" },
+      { id: "plr-nc-24", groupId: "team-nc", name: "김휘집", nameKo: "김휘집", position: "내야수", jerseyNumber: 44, color: "#315288", role: "주전", pcode: "51344" },
+      // 외야수 (5명)
+      { id: "plr-nc-25", groupId: "team-nc", name: "박건우", nameKo: "박건우", position: "외야수", jerseyNumber: 37, color: "#315288", role: "핵심", pcode: "79215" },
+      { id: "plr-nc-26", groupId: "team-nc", name: "천재환", nameKo: "천재환", position: "외야수", jerseyNumber: 23, color: "#315288", role: "주전", pcode: "67905" },
+      { id: "plr-nc-27", groupId: "team-nc", name: "한석현", nameKo: "한석현", position: "외야수", jerseyNumber: 33, color: "#315288", role: "주전", pcode: "64101" },
+      { id: "plr-nc-28", groupId: "team-nc", name: "권희동", nameKo: "권희동", position: "외야수", jerseyNumber: 36, color: "#315288", role: "리드오프", pcode: "63963" },
+      { id: "plr-nc-29", groupId: "team-nc", name: "고준휘", nameKo: "고준휘", position: "외야수", jerseyNumber: 49, color: "#315288", role: "주전", pcode: "62934" },
       // ── Doosan Bears ──
       { id: "plr-doo-1", groupId: "team-doo", name: "양의지", nameKo: "양의지", position: "포수", jerseyNumber: 25, color: "#131230", role: "핵심", pcode: "76232" },
       { id: "plr-doo-2", groupId: "team-doo", name: "박찬호", nameKo: "박찬호", position: "내야수", jerseyNumber: 61, color: "#131230", role: "주전", pcode: "64646" },
