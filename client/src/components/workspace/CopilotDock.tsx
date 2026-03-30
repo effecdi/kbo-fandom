@@ -137,6 +137,8 @@ export function CopilotDock() {
   const [galleryChars, setGalleryChars] = useState<GalleryCharacter[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(false);
   const [showRegenPanel, setShowRegenPanel] = useState(false);
+  const [instantIdLoading, setInstantIdLoading] = useState(false);
+  const [instantIdResult, setInstantIdResult] = useState<string | null>(null);
   const [regenStyle, setRegenStyle] = useState<string | null>(fandomMeta?.stylePreset || null);
   const [regenPose, setRegenPose] = useState<string | null>(fandomMeta?.poseHint || null);
   const [regenOutfit, setRegenOutfit] = useState<string | null>(fandomMeta?.outfitHint || null);
@@ -225,6 +227,29 @@ export function CopilotDock() {
     }
     sendMessage(prompt);
     setShowRegenPanel(false);
+  }
+
+  async function handleInstantIDTest() {
+    const firstChar = pinnedCharacters.find((c) => c.imageDataUrl?.startsWith("data:"));
+    if (!firstChar?.imageDataUrl) {
+      alert("핀된 선수 사진이 없습니다.");
+      return;
+    }
+    setInstantIdLoading(true);
+    setInstantIdResult(null);
+    try {
+      const res = await apiRequest("POST", "/api/test-instantid", {
+        faceImageData: firstChar.imageDataUrl,
+        prompt: "anime style character illustration, full body, white background, cute, clean lines",
+      });
+      const data = await res.json();
+      if (data.imageUrl) setInstantIdResult(data.imageUrl);
+      else alert(data.message || "InstantID 실패");
+    } catch (e: any) {
+      alert(e.message || "InstantID 오류");
+    } finally {
+      setInstantIdLoading(false);
+    }
   }
 
   function handlePinFromGallery(char: GalleryCharacter) {
@@ -643,6 +668,17 @@ export function CopilotDock() {
                 <Plus className="w-5 h-5 text-white/50" />
               </button>
 
+              {/* InstantID 테스트 버튼 */}
+              <div className="w-px h-6 bg-white/[0.06] mx-1" />
+              <button
+                onClick={handleInstantIDTest}
+                disabled={instantIdLoading}
+                className="px-2.5 py-1 rounded-lg text-[13px] font-bold border border-yellow-400/40 text-yellow-400 hover:bg-yellow-400/10 transition-colors disabled:opacity-50 shrink-0"
+                title="InstantID로 선수 사진 → 캐릭터 테스트"
+              >
+                {instantIdLoading ? "생성중..." : "InstantID"}
+              </button>
+
               {/* Cuts count selector (only for multi-cut templates) */}
               {showCutsSelector && (
                 <>
@@ -666,6 +702,17 @@ export function CopilotDock() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* InstantID 결과 미리보기 */}
+          {instantIdResult && (
+            <div className="mx-4 mt-2 mb-1 rounded-xl overflow-hidden border border-yellow-400/30 bg-black/40">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-yellow-400/20">
+                <span className="text-[13px] font-bold text-yellow-400">InstantID 결과</span>
+                <button onClick={() => setInstantIdResult(null)} className="text-white/40 hover:text-white/70 text-[13px]">✕</button>
+              </div>
+              <img src={instantIdResult} alt="InstantID result" className="w-full object-contain max-h-64" />
             </div>
           )}
 
