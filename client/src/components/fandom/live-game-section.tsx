@@ -12,14 +12,21 @@ interface LiveGameSectionProps {
   games: KboGameSchedule[];
   teams: KboTeam[];
   myTeamId?: string;
+  onActiveIndexChange?: (index: number) => void;
 }
 
 export function LiveGameSection({
   games,
   teams,
   myTeamId,
+  onActiveIndexChange,
 }: LiveGameSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleActiveIndexChange = (index: number) => {
+    setActiveIndex(index);
+    onActiveIndexChange?.(index);
+  };
 
   const selectedGame = games[activeIndex] || null;
   // Only fetch relay data for live games
@@ -36,7 +43,7 @@ export function LiveGameSection({
             games={games}
             teams={teams}
             myTeamId={myTeamId}
-            onActiveIndexChange={setActiveIndex}
+            onActiveIndexChange={handleActiveIndexChange}
             compact
           />
           {/* Lineup below carousel */}

@@ -61,6 +61,7 @@ export function FandomIndex() {
   const [myGroupPosts, setMyGroupPosts] = useState<FandomFeedPost[]>([]);
   const [recentProjects, setRecentProjects] = useState<ProjectRecord[]>([]);
   const [upcomingGames, setUpcomingGames] = useState<KboGameSchedule[]>([]);
+  const [activeGameIndex, setActiveGameIndex] = useState(0);
 
   const fandomProfile = getFandomProfile();
 
@@ -478,8 +479,12 @@ export function FandomIndex() {
               <span className="text-[13px] font-bold text-muted-foreground">{nextGameDate}</span>
             )}
           </div>
-          {/* 날씨 배너 — 오늘 경기 구장 도시 기준 현재 날씨 */}
-          <WeatherBanner stadiumName={(todaysGames[0] || nextGames[0])?.stadium || ""} />
+          {/* 날씨 배너 — 캐러셀에서 선택된 경기의 홈구장 기준 현재 날씨 */}
+          <WeatherBanner
+            stadiumName={
+              (todaysGames.length > 0 ? todaysGames : nextGames)[activeGameIndex]?.stadium || ""
+            }
+          />
 
           {scoresLoading ? (
             <div className="flex items-center justify-center h-[220px] md:h-[260px]">
@@ -490,12 +495,14 @@ export function FandomIndex() {
               games={todaysGames}
               teams={groups}
               myTeamId={fandomProfile?.groupId}
+              onActiveIndexChange={setActiveGameIndex}
             />
           ) : nextGames.length > 0 ? (
             <LiveGameSection
               games={nextGames}
               teams={groups}
               myTeamId={fandomProfile?.groupId}
+              onActiveIndexChange={setActiveGameIndex}
             />
           ) : (
             <div className="flex items-center justify-center h-[220px] md:h-[260px] rounded-2xl border border-border bg-muted/20">
