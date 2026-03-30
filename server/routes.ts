@@ -2925,5 +2925,56 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Weather API (Open-Meteo — free, no key, KMA data source) ─────────────
+  const weatherCache = new Map<string, { data: any; ts: number }>();
+  const WEATHER_CACHE_TTL = 10 * 60 * 1000; // 10분
+
+  function getKoreanWeather(code: number): { condition: string; icon: string } {
+    if (code === 0) return { condition: "맑음", icon: "☀️" };
+    if (code === 1) return { condition: "대체로 맑음", icon: "🌤️" };
+    if (code === 2) return { condition: "구름 조금", icon: "⛅" };
+    if (code === 3) return { condition: "흐림", icon: "☁️" };
+    if (code <= 48) return { condition: "안개", icon: "🌫️" };
+    if (code <= 55) return { condition: "이슬비", icon: "🌦️" };
+    if (code <= 67) return { condition: "비", icon: "🌧️" };
+    if (code <= 77) return { condition: "눈", icon: "❄️" };
+    if (code <= 82) return { condition: "소나기", icon: "🌦️" };
+    if (code <= 86) return { condition: "눈소나기", icon: "🌨️" };
+    return { condition: "뇌우", icon: "⛈️" };
+  }
+
+  app.get("/api/weather", async (req, res) => {
+    const lat = parseFloat(req.query.lat as string) || 37.5665;
+    const lon = parseFloat(req.query.lon as string) || 126.978;
+    const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+
+    const cached = weatherCache.get(cacheKey);
+    if (cached && cached.ts > Date.now() - WEATHER_CACHE_TTL) {
+      return res.json(cached.data);
+    }
+
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Asia%2FSeoul&forecast_days=1`;
+      const response = await axios.get(url, { timeout: 8000 });
+      const c = response.data.current;
+      const { condition, icon } = getKoreanWeather(c.weather_code);
+
+      const result = {
+        temp: Math.round(c.temperature_2m),
+        feelsLike: Math.round(c.apparent_temperature),
+        humidity: c.relative_humidity_2m,
+        windSpeed: Math.round(c.wind_speed_10m * 10) / 10,
+        condition,
+        icon,
+      };
+
+      weatherCache.set(cacheKey, { data: result, ts: Date.now() });
+      res.json(result);
+    } catch (error: any) {
+      logger.error("Weather fetch error", error?.message);
+      res.status(500).json({ error: "날씨 정보를 가져올 수 없습니다" });
+    }
+  });
+
   return httpServer;
 }

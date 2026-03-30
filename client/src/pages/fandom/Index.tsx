@@ -28,6 +28,7 @@ import { FandomEventCard } from "@/components/fandom/fandom-event-card";
 import { FandomFeedPostCard } from "@/components/fandom/fandom-feed-post-card";
 import { GameScheduleCard } from "@/components/fandom/game-schedule-card";
 import { LiveGameSection } from "@/components/fandom/live-game-section";
+import { WeatherBanner } from "@/components/fandom/weather-banner";
 import { NextGameCountdown } from "@/components/fandom/next-game-countdown";
 import { StandingsTable } from "@/components/fandom/standings-table";
 import { DashboardGrid, type DashboardWidget } from "@/components/fandom/dashboard-grid";
@@ -477,6 +478,9 @@ export function FandomIndex() {
               <span className="text-[13px] font-bold text-muted-foreground">{nextGameDate}</span>
             )}
           </div>
+          {/* 날씨 배너 — 오늘 경기 구장 도시 기준 현재 날씨 */}
+          <WeatherBanner stadiumName={(todaysGames[0] || nextGames[0])?.stadium || ""} />
+
           {scoresLoading ? (
             <div className="flex items-center justify-center h-[220px] md:h-[260px]">
               <p className="text-[13px] text-muted-foreground">경기 정보를 불러오는 중...</p>
