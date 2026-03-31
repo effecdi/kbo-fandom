@@ -1350,11 +1350,11 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
 
       const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
-        // 2. 모자/헬멧 영역에 신로고 오버레이 (고정 위치 — Gemini Vision 탐지 대신 결정론적 배치)
+        // 2. 헬멧/유니폼 구 로고를 Vision으로 탐지해 신로고로 교체
         try {
-          rawDataUrl = await overlayCapLogo(rawDataUrl, logoForOverlay);
+          rawDataUrl = await replaceAllLogos(rawDataUrl, logoForOverlay);
         } catch (err) {
-          logger.warn("[generate-scene] Cap logo overlay failed, continuing", err);
+          logger.warn("[generate-scene] Logo replace failed, continuing", err);
         }
         // 3. 우하단 팀 로고 배지 오버레이
         try {
@@ -1445,12 +1445,13 @@ async function replaceCapLogo(
   }
 }
 
-// ─── Cap Logo Overlay (fixed position) ───────────────────────────────────────
+// ─── Replace All Team Logos (Vision 탐지 + sharp 교체) ──────────────────────
 /**
- * 모자/헬멧 위치(이미지 상단 ~20% 높이, 가로 중앙)에 팀 로고를 고정 위치 오버레이.
- * Gemini Vision 탐지 없이 결정론적으로 처리 (이전 replaceCapLogo 대체).
+ * Gemini Vision으로 헬멧/모자 + 유니폼 가슴의 구 로고 위치를 탐지하고
+ * sharp으로 신로고를 정확히 덮어씌운다.
+ * 이미지 실제 px 크기를 프롬프트에 포함해 좌표 정밀도를 높임.
  */
-async function overlayCapLogo(
+async function replaceAllLogos(
   imageDataUrl: string,
   logoDataUrl: string,
 ): Promise<string> {
@@ -1463,46 +1464,90 @@ async function overlayCapLogo(
     const logoBuf = Buffer.from(logoMatch[2], "base64");
 
     const imgMeta = await sharp(imgBuf).metadata();
-    const imgWidth = imgMeta.width || 600;
-    const imgHeight = imgMeta.height || 800;
+    const imgW = imgMeta.width || 600;
+    const imgH = imgMeta.height || 800;
 
-    // 모자 로고 크기: 이미지 너비의 9% (최소 45px, 최대 80px)
-    const logoSize = Math.min(80, Math.max(45, Math.round(imgWidth * 0.09)));
+    // Step 1: Gemini Vision으로 로고 위치 탐지 (헬멧 + 유니폼 가슴)
+    const detectResponse = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+          {
+            text: `This is a baseball player illustration. The image is ${imgW}x${imgH} pixels (width x height).
 
-    const resizedLogo = await sharp(logoBuf)
-      .resize(logoSize, logoSize, { fit: "inside", kernel: sharp.kernel.lanczos3 })
-      .toBuffer();
+Find ALL team logo/emblem instances drawn in the image — look for:
+1. The logo badge on the front panel of the cap or helmet
+2. The team logo/patch on the uniform chest area
 
-    const { data: logoRaw, info: logoInfo } = await sharp(resizedLogo)
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
+For EACH logo found, return its bounding box as PIXEL coordinates (not percentages).
+x = left edge in pixels from left
+y = top edge in pixels from top
+width = logo width in pixels
+height = logo height in pixels
 
-    const logoPixels = Buffer.from(logoRaw);
-    // opacity 0.92
-    for (let i = 3; i < logoPixels.length; i += 4) {
-      logoPixels[i] = Math.round(logoPixels[i] * 0.92);
+Return ONLY a raw JSON array, no markdown:
+[{"label":"cap","x":150,"y":80,"width":55,"height":50},{"label":"chest","x":200,"y":260,"width":70,"height":65}]
+
+If no logos are visible, return: []`
+          }
+        ]
+      }],
+    });
+
+    const textPart = detectResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.text);
+    if (!textPart?.text) {
+      logger.info("[replaceAllLogos] No response from Vision, skipping");
+      return imageDataUrl;
     }
 
-    const opaqueLogoBuf = await sharp(logoPixels, {
-      raw: { width: logoInfo.width, height: logoInfo.height, channels: 4 },
-    })
-      .png()
-      .toBuffer();
+    const jsonMatch = textPart.text.match(/\[[\s\S]*?\]/);
+    if (!jsonMatch) {
+      logger.info("[replaceAllLogos] No JSON found in Vision response");
+      return imageDataUrl;
+    }
 
-    // 모자 위치: 상단 20%, 가로 중앙 (선수 초상화 기준 모자 로고 위치)
-    const left = Math.max(0, Math.round(imgWidth * 0.5 - logoInfo.width * 0.5));
-    const top = Math.max(0, Math.round(imgHeight * 0.20));
+    const boxes: Array<{ label: string; x: number; y: number; width: number; height: number }> = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(boxes) || boxes.length === 0) {
+      logger.info("[replaceAllLogos] No logos detected");
+      return imageDataUrl;
+    }
 
-    const result = await sharp(imgBuf)
-      .composite([{ input: opaqueLogoBuf, left, top }])
-      .png()
-      .toBuffer();
+    logger.info("[replaceAllLogos] Logos detected", boxes);
 
-    logger.info(`[cap-logo] Cap logo overlaid at (${left}, ${top}), size ${logoSize}px`);
-    return `data:image/png;base64,${result.toString("base64")}`;
+    // Step 2: 각 로고 위치에 신로고를 sharp으로 덮어씌우기
+    let resultBuf = imgBuf;
+    for (const box of boxes) {
+      if (typeof box.x !== "number" || typeof box.y !== "number" || !box.width || !box.height) continue;
+
+      // 탐지된 박스보다 20% 크게 잘라야 구 로고를 완전히 가릴 수 있음
+      const targetW = Math.round(box.width * 1.2);
+      const targetH = Math.round(box.height * 1.2);
+
+      const resizedLogo = await sharp(logoBuf)
+        .resize(targetW, targetH, {
+          fit: "contain",
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
+        .png()
+        .toBuffer();
+
+      // 중앙 기준으로 배치
+      const left = Math.max(0, Math.round(box.x + box.width / 2 - targetW / 2));
+      const top = Math.max(0, Math.round(box.y + box.height / 2 - targetH / 2));
+
+      resultBuf = await sharp(resultBuf)
+        .composite([{ input: resizedLogo, left, top, blend: "over" }])
+        .png()
+        .toBuffer();
+
+      logger.info(`[replaceAllLogos] Replaced ${box.label} logo at (${left},${top}) size ${targetW}x${targetH}`);
+    }
+
+    return `data:image/png;base64,${resultBuf.toString("base64")}`;
   } catch (error) {
-    logger.warn("[cap-logo] Failed, returning original", error);
+    logger.warn("[replaceAllLogos] Failed, returning original", error);
     return imageDataUrl;
   }
 }
