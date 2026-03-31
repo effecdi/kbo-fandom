@@ -118,18 +118,17 @@ export function MemberPanel() {
                 )}
 
                 {/* Name */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-semibold text-white/80 group-hover:text-white transition-colors truncate">
-                      {member.name}
-                    </span>
-                    {tagged && (
-                      <Star className="w-3 h-3 shrink-0" style={{ color: meta.coverColor, fill: meta.coverColor }} />
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <span className="text-[13px] font-semibold text-white/80 group-hover:text-white transition-colors truncate">
+                    {member.name}
+                    {member.nameKo && member.nameKo !== member.name && (
+                      <span className="text-white/30 font-normal ml-1">({member.nameKo})</span>
                     )}
-                  </div>
-                  <span className="text-[13px] text-white/30 block truncate">
-                    {member.nameKo} · {member.position}
                   </span>
+                  <span className="text-[13px] text-white/30 shrink-0">· {member.position}</span>
+                  {tagged && (
+                    <Star className="w-3 h-3 shrink-0" style={{ color: meta.coverColor, fill: meta.coverColor }} />
+                  )}
                 </div>
 
                 {/* Expand indicator */}
