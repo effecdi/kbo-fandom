@@ -2884,6 +2884,63 @@ export async function registerRoutes(
   // Proxies team emblem images from Naver CDN to avoid CORS issues
   const teamLogoCache = new Map<string, { data: Buffer; timestamp: number }>();
 
+  // ─── KBO Team Emblem by Code ─────────────────────────────────────────────
+  // /api/kbo/team-emblem/:code  (e.g., LG, KT, SK, HT, OB, NC, LT, SS, HH, WO)
+  // Naver uses these internal codes for KBO teams.
+  const NAVER_EMBLEM_CODE_MAP: Record<string, string> = {
+    LG: "LG", KT: "KT", SK: "SK", SSG: "SK",
+    HT: "HT", KIA: "HT",
+    OB: "OB", DOO: "OB",
+    NC: "NC",
+    LT: "LT",
+    SS: "SS", SAM: "SS",
+    HH: "HH", HAN: "HH",
+    WO: "WO", KIW: "WO",
+  };
+
+  app.get("/api/kbo/team-emblem/:code", async (req, res) => {
+    const rawCode = req.params.code?.toUpperCase();
+    const naverCode = NAVER_EMBLEM_CODE_MAP[rawCode] || rawCode;
+    if (!naverCode) return res.status(400).json({ error: "Unknown team code" });
+
+    const cacheKey = `emblem:${naverCode}`;
+    const cached = teamLogoCache.get(cacheKey);
+    if (cached && cached.timestamp > Date.now() - 24 * 60 * 60 * 1000) {
+      res.set("Content-Type", "image/png");
+      res.set("Cache-Control", "public, max-age=86400");
+      return res.send(cached.data);
+    }
+
+    const cdnUrl = `https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/emblem/regular/2026/emblem_${naverCode}.png`;
+    try {
+      const response = await axios.get(cdnUrl, {
+        responseType: "arraybuffer",
+        timeout: 8000,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Referer": "https://m.sports.naver.com/",
+        },
+      });
+      const { default: sharpFn } = await import("sharp");
+      let buf = Buffer.from(response.data);
+      const meta = await sharpFn(buf).metadata();
+      // KBO CDN emblems are often 64px wide — upscale for quality
+      if (meta.width && meta.width < 200) {
+        buf = await sharpFn(buf)
+          .resize(300, 300, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 0 }, kernel: "lanczos3" as any })
+          .png()
+          .toBuffer();
+      }
+      teamLogoCache.set(cacheKey, { data: buf, timestamp: Date.now() });
+      res.set("Content-Type", "image/png");
+      res.set("Cache-Control", "public, max-age=86400");
+      return res.send(buf);
+    } catch (err: any) {
+      logger.warn(`[team-emblem] Failed to fetch ${cdnUrl}:`, err?.message);
+      return res.status(404).json({ error: "Emblem not found" });
+    }
+  });
+
   app.get("/api/kbo/team-logo", async (req, res) => {
     const logoUrl = req.query.url as string;
     if (!logoUrl) {
