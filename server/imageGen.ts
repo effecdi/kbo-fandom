@@ -1232,13 +1232,11 @@ export async function generateWebtoonScene(
       .join("\n");
 
     // ── Part 0: 로고 레퍼런스를 텍스트보다 먼저 배치 (Gemini가 최우선 인식)
-    if (teamLogoImage) {
+    // playercard는 얼굴 매칭이 최우선 → 로고는 Part 2에 1번만, Part 0 스킵
+    if (teamLogoImage && templateType !== "playercard") {
       const logoMatchEarly = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
       if (logoMatchEarly) {
-        const earlyLogoText = templateType === "playercard"
-          ? `⚠️ 2026 OFFICIAL TEAM LOGO — study this design carefully. You MUST draw this logo NATURALLY on the uniform chest and helmet, as if printed/embroidered on the fabric:`
-          : `⚠️ 2026 OFFICIAL TEAM LOGO — memorize this design. This is the ONLY logo allowed on the helmet and uniform:`;
-        parts.push({ text: earlyLogoText });
+        parts.push({ text: `⚠️ 2026 OFFICIAL TEAM LOGO — memorize this design. This is the ONLY logo allowed on the helmet and uniform:` });
         parts.push({ inlineData: { mimeType: logoMatchEarly[1], data: logoMatchEarly[2] } });
       }
     }
@@ -1286,6 +1284,7 @@ ${tpl.outro}`
     }
 
     // ── Part 3: 캐릭터 참조 사진 (마지막에 배치 — Gemini가 더 주목)
+    // playercard: 얼굴 매칭 최우선 → 사진 2번 전송으로 어텐션 강화
     for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
       const src = images[imgIdx];
       const imgMatch = src.match(/^data:([^;]+);base64,(.+)$/);
@@ -1293,6 +1292,11 @@ ${tpl.outro}`
         const name = hasCharNames ? (characterNames[imgIdx] || `Player ${imgIdx + 1}`) : `Player ${imgIdx + 1}`;
         parts.push({ text: `⬇️ FACE REFERENCE for [${name}] — reproduce this exact face in the illustration:` });
         parts.push({ inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } });
+        // playercard: 얼굴 사진 한 번 더 (어텐션 2배)
+        if (templateType === "playercard") {
+          parts.push({ text: `⬇️ SAME PLAYER [${name}] — CRITICAL: The face in the illustration MUST match THIS reference photo. Same eyes, nose, jawline, skin tone, hair:` });
+          parts.push({ inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } });
+        }
       }
     }
 
