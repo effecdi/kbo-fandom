@@ -368,7 +368,7 @@ export function useCopilot() {
         // 항상 직접 fetch — 가장 확실한 방법
         // 등번호 fallback: playerPhotos에 number 없으면 KBO_PLAYERS에서 조회
         const allKboPlayers = listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS);
-        for (const { name, pcode, number } of fandomMeta.playerPhotos) {
+        for (const { name, pcode, number, position, throws: throwsHand, bats } of fandomMeta.playerPhotos) {
           try {
             const resp = await fetch(`/api/kbo/player-photo/${pcode}`);
             if (!resp.ok) continue;
@@ -380,9 +380,23 @@ export function useCopilot() {
             });
             charImageUrls.push(dataUrl);
             // 등번호: playerPhotos.number → KBO_PLAYERS 조회 fallback → 없으면 이름만
-            const jerseyNum = number
-              ?? allKboPlayers.find((p) => p.name === name || p.pcode === pcode)?.jerseyNumber?.toString();
-            charNames.push(jerseyNum ? `${name} #${jerseyNum}` : name);
+            const kboPlayer = allKboPlayers.find((p) => p.name === name || p.pcode === pcode);
+            const jerseyNum = number ?? kboPlayer?.jerseyNumber?.toString();
+            const pos = position ?? kboPlayer?.position;
+            const thr = throwsHand ?? kboPlayer?.throws;
+            const bat = bats ?? kboPlayer?.bats;
+            // 포지션 영문 변환 (Gemini가 포즈 결정에 활용)
+            let posLabel = "";
+            if (pos?.includes("투수")) {
+              posLabel = thr === "좌" ? "left-handed pitcher" : "right-handed pitcher";
+            } else if (pos?.includes("포수")) {
+              posLabel = "catcher";
+            } else if (pos) {
+              posLabel = bat === "좌" ? "left-handed batter" : bat === "양" ? "switch hitter" : "right-handed batter";
+            }
+            const charLabel = [name, jerseyNum ? `#${jerseyNum}` : null, posLabel ? `(${posLabel})` : null]
+              .filter(Boolean).join(" ");
+            charNames.push(charLabel);
           } catch { /* skip */ }
         }
       }

@@ -1205,12 +1205,17 @@ export async function generateWebtoonScene(
       ? `\nKeep each character distinct: ${characterNames.map((n, i) => `"${n}" = photo #${i + 1}`).join(", ")}.`
       : "";
 
-    // 등번호 블록: characterNames에서 "#숫자" 패턴 추출
+    // 등번호 + 포지션 블록: characterNames에서 "#숫자" + "(position)" 패턴 추출
     const jerseyBlock = hasCharNames
       ? characterNames
           .map((n) => {
-            const m = n.match(/#(\d+)/);
-            return m ? `- "${n.replace(/\s*#\d+/, "").trim()}": jersey number is #${m[1]} — this EXACT number must appear on the uniform` : null;
+            const numMatch = n.match(/#(\d+)/);
+            const posMatch = n.match(/\(([^)]+)\)/);
+            const cleanName = n.replace(/\s*#\d+/, "").replace(/\s*\([^)]+\)/, "").trim();
+            const lines: string[] = [];
+            if (numMatch) lines.push(`- "${cleanName}": jersey number is #${numMatch[1]} — this EXACT number must appear on the uniform`);
+            if (posMatch) lines.push(`- "${cleanName}": position is ${posMatch[1]} — draw in the appropriate athletic pose for this position`);
+            return lines.length > 0 ? lines.join("\n") : null;
           })
           .filter(Boolean)
           .join("\n")
@@ -1366,13 +1371,7 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
 
       const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
-        // 2. sharp으로 헬멧/유니폼 위에 신로고 합성 (AI 편집 대신 결정론적 방식)
-        try {
-          rawDataUrl = await replaceHelmetLogoSharp(rawDataUrl, logoForOverlay);
-        } catch (err) {
-          logger.warn("[generate-scene] Helmet logo sharp replace failed, continuing", err);
-        }
-        // 3. 우하단 팀 로고 배지 오버레이
+        // 2. 우하단 팀 로고 배지 오버레이 (결정론적 sharp 합성)
         try {
           rawDataUrl = await overlayTeamLogo(rawDataUrl, logoForOverlay);
         } catch (err) {
