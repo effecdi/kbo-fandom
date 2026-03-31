@@ -297,10 +297,17 @@ export async function removeWhiteBackground(dataUrl: string, bgThreshold = 235):
   }
 
   // Mark background pixels transparent
+  let removedCount = 0;
   for (let i = 0; i < visited.length; i++) {
     if (visited[i]) {
       pixels[i * 4 + 3] = 0;
+      removedCount++;
     }
+  }
+
+  // 90% 이상 픽셀이 제거됐다면 원본 반환 (이미지 전체가 날아가는 것 방지)
+  if (removedCount / visited.length > 0.9) {
+    return dataUrl;
   }
 
   const pngBuf = await sharp(pixels, {
@@ -1316,8 +1323,8 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       const mimeType = imagePart.inlineData.mimeType || "image/png";
       let rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
 
-      // 1. 먼저 배경 제거 (흰색/회색 → 투명)
-      rawDataUrl = await removeWhiteBackground(rawDataUrl, 210);
+      // 1. 먼저 배경 제거 (거의 순백색만 → 투명, 90%이상 제거 시 원본 반환)
+      rawDataUrl = await removeWhiteBackground(rawDataUrl, 240);
 
       // 2. 그 다음 모자/헬멧 로고 오버레이 (배경 제거 후에 해야 로고가 투명화되지 않음)
       // capLogoImage = KBO CDN 엠블럼 (실제 모자/헬멧 로고), teamLogoImage = 구단 엠블럼 (fallback)
