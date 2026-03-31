@@ -1361,20 +1361,17 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       const mimeType = imagePart.inlineData.mimeType || "image/png";
       let rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
 
-      const logoForOverlay = capLogoImage || teamLogoImage;
-      if (logoForOverlay) {
-        // 1. 배경 제거 전, 원본 품질 상태에서 Gemini 로고 편집 (더 선명한 입력)
-        try {
-          rawDataUrl = await editLogoWithGemini(rawDataUrl, logoForOverlay);
-        } catch (err) {
-          logger.warn("[generate-scene] Gemini logo edit failed, continuing", err);
-        }
-      }
-
-      // 2. 배경 제거 (거의 순백색만 → 투명, 90%이상 제거 시 원본 반환)
+      // 1. 배경 제거 (거의 순백색만 → 투명)
       rawDataUrl = await removeWhiteBackground(rawDataUrl, 240);
 
+      const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
+        // 2. sharp으로 헬멧/유니폼 위에 신로고 합성 (AI 편집 대신 결정론적 방식)
+        try {
+          rawDataUrl = await replaceHelmetLogoSharp(rawDataUrl, logoForOverlay);
+        } catch (err) {
+          logger.warn("[generate-scene] Helmet logo sharp replace failed, continuing", err);
+        }
         // 3. 우하단 팀 로고 배지 오버레이
         try {
           rawDataUrl = await overlayTeamLogo(rawDataUrl, logoForOverlay);
@@ -1518,6 +1515,118 @@ CONSTRAINTS:
     return `data:${mimeType};base64,${imagePart.inlineData.data}`;
   } catch (error) {
     logger.warn("[editLogoWithGemini] Failed, returning original", error);
+    return imageDataUrl;
+  }
+}
+
+// ─── Helmet Logo Sharp Replace ───────────────────────────────────────────────
+/**
+ * Gemini Vision으로 헬멧 전체 영역을 감지 → 배지 위치 계산 → sharp으로 신로고 합성.
+ * editLogoWithGemini(AI 편집) 대신 결정론적 sharp 방식을 사용.
+ * 로고 흰 배경을 제거 후 합성하여 스티커처럼 보이는 문제를 방지.
+ */
+async function replaceHelmetLogoSharp(
+  imageDataUrl: string,
+  logoDataUrl: string,
+): Promise<string> {
+  const imgMatch = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const logoMatch = logoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !logoMatch) return imageDataUrl;
+
+  try {
+    const imgBuf = Buffer.from(imgMatch[2], "base64");
+    const logoBuf = Buffer.from(logoMatch[2], "base64");
+
+    const imgMeta = await sharp(imgBuf).metadata();
+    const imgW = imgMeta.width || 600;
+    const imgH = imgMeta.height || 800;
+
+    // Step 1: Vision으로 헬멧 전체 영역 감지 (배지보다 훨씬 찾기 쉬움)
+    const detectResponse = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+          {
+            text: `This is a baseball player illustration. Find the baseball helmet or cap the player is wearing.
+Return ONLY a JSON object with 0-1000 normalized coordinates (0=top-left, 1000=bottom-right):
+{"found": true, "ymin": number, "xmin": number, "ymax": number, "xmax": number}
+If no helmet/cap is visible, return: {"found": false}
+Return ONLY raw JSON, no markdown, no explanation.`
+          }
+        ]
+      }],
+    });
+
+    const textPart = detectResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.text);
+    let helmetBox: { found: boolean; ymin?: number; xmin?: number; ymax?: number; xmax?: number } = { found: false };
+    try {
+      const cleaned = textPart?.text?.replace(/```json\n?|```\n?/g, "").trim() || "{}";
+      helmetBox = JSON.parse(cleaned);
+    } catch { /* fallback 사용 */ }
+
+    logger.info("[replaceHelmetLogoSharp] Vision helmet result:", helmetBox);
+
+    // 헬멧 영역 → 배지 위치 계산 (헬멧 전면 패널: 상단 40-65%, 가로 중앙 35-65%)
+    let badgeCX: number, badgeCY: number, badgeSize: number;
+    if (helmetBox.found && helmetBox.xmin !== undefined) {
+      // 0-1000 → 픽셀 변환
+      const hx1 = Math.round((helmetBox.xmin / 1000) * imgW);
+      const hy1 = Math.round((helmetBox.ymin! / 1000) * imgH);
+      const hx2 = Math.round((helmetBox.xmax! / 1000) * imgW);
+      const hy2 = Math.round((helmetBox.ymax! / 1000) * imgH);
+      const hW = hx2 - hx1;
+      const hH = hy2 - hy1;
+
+      // 배지는 헬멧 전면 패널 중앙부 (세로 40-60%, 가로 40-60% 기준)
+      badgeCX = Math.round(hx1 + hW * 0.50);
+      badgeCY = Math.round(hy1 + hH * 0.48);
+      badgeSize = Math.max(24, Math.round(hW * 0.32));
+      logger.info(`[replaceHelmetLogoSharp] Helmet detected, badge center=(${badgeCX},${badgeCY}) size=${badgeSize}`);
+    } else {
+      // Fallback: 이미지 상단 20-40% 중앙 영역 (통계 기반)
+      badgeCX = Math.round(imgW * 0.50);
+      badgeCY = Math.round(imgH * 0.22);
+      badgeSize = Math.round(imgW * 0.09);
+      logger.info(`[replaceHelmetLogoSharp] Helmet not found, using fallback center=(${badgeCX},${badgeCY}) size=${badgeSize}`);
+    }
+
+    // Step 2: 로고 흰 배경 제거 (스티커 방지)
+    const logoDataUrlClean = await removeWhiteBackground(
+      `data:${logoMatch[1]};base64,${logoMatch[2]}`,
+      230
+    );
+    const logoCleanMatch = logoDataUrlClean.match(/^data:[^;]+;base64,(.+)$/);
+    const logoCleanBuf = Buffer.from(logoCleanMatch?.[2] ?? logoMatch[2], "base64");
+
+    // Step 3: 배지 크기로 리사이즈
+    const resizedLogo = await sharp(logoCleanBuf)
+      .resize(badgeSize, badgeSize, {
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .ensureAlpha()
+      .png()
+      .toBuffer();
+
+    const resizedMeta = await sharp(resizedLogo).metadata();
+    const rW = resizedMeta.width ?? badgeSize;
+    const rH = resizedMeta.height ?? badgeSize;
+
+    const left = Math.max(0, Math.min(imgW - rW, badgeCX - Math.round(rW / 2)));
+    const top  = Math.max(0, Math.min(imgH - rH, badgeCY - Math.round(rH / 2)));
+
+    // Step 4: sharp 합성 (over blend — alpha 채널 존재 시 자연스럽게 합성)
+    const resultBuf = await sharp(imgBuf)
+      .composite([{ input: resizedLogo, left, top, blend: "over" }])
+      .png()
+      .toBuffer();
+
+    logger.info(`[replaceHelmetLogoSharp] Done — badge at (${left},${top}) ${rW}x${rH}`);
+    return `data:image/png;base64,${resultBuf.toString("base64")}`;
+  } catch (error) {
+    logger.warn("[replaceHelmetLogoSharp] Failed, returning original", error);
     return imageDataUrl;
   }
 }
