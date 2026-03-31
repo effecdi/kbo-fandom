@@ -1350,11 +1350,11 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
 
       const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
-        // 2. 헬멧/유니폼 구 로고를 Vision으로 탐지해 신로고로 교체
+        // 2. Gemini 이미지 편집으로 로고 교체 (일러스트 스타일 유지, PNG 스티커 방식 대신)
         try {
-          rawDataUrl = await replaceAllLogos(rawDataUrl, logoForOverlay);
+          rawDataUrl = await editLogoWithGemini(rawDataUrl, logoForOverlay);
         } catch (err) {
-          logger.warn("[generate-scene] Logo replace failed, continuing", err);
+          logger.warn("[generate-scene] Gemini logo edit failed, continuing", err);
         }
         // 3. 우하단 팀 로고 배지 오버레이
         try {
@@ -1441,6 +1441,54 @@ async function replaceCapLogo(
     return `data:image/png;base64,${result.toString("base64")}`;
   } catch (error) {
     logger.warn("[replaceCapLogo] Failed, returning original", error);
+    return imageDataUrl;
+  }
+}
+
+// ─── Gemini 이미지 편집으로 로고 교체 ────────────────────────────────────────
+/**
+ * 생성된 이미지를 Gemini에게 다시 넘겨 헬멧/유니폼 로고를 신로고로 교체.
+ * sharp PNG 스티커 방식 대신 일러스트 스타일에 맞게 자연스럽게 편집.
+ */
+async function editLogoWithGemini(
+  imageDataUrl: string,
+  newLogoDataUrl: string,
+): Promise<string> {
+  const imgMatch = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const logoMatch = newLogoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !logoMatch) return imageDataUrl;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{
+        role: "user",
+        parts: [
+          { text: "This is the original baseball player illustration:" },
+          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+          { text: "This is the NEW official team logo that must appear on the helmet and uniform:" },
+          { inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } },
+          { text: `Edit the illustration: replace the team logo on the baseball helmet/cap front panel AND the uniform chest with the exact logo design shown above.
+- Draw the new logo in the SAME art style as the rest of the illustration (same line weight, shading, colors)
+- Keep EVERYTHING ELSE completely identical: player face, body, pose, background, card frame, jersey number
+- The new logo must look like it was originally part of the illustration, not pasted on
+- Output the complete edited illustration only` },
+        ],
+      }],
+      config: { responseModalities: [Modality.IMAGE] },
+    });
+
+    const imagePart = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+    if (!imagePart?.inlineData?.data) {
+      logger.info("[editLogoWithGemini] No image returned, keeping original");
+      return imageDataUrl;
+    }
+
+    const mimeType = imagePart.inlineData.mimeType || "image/png";
+    logger.info("[editLogoWithGemini] Logo edited successfully");
+    return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  } catch (error) {
+    logger.warn("[editLogoWithGemini] Failed, returning original", error);
     return imageDataUrl;
   }
 }
