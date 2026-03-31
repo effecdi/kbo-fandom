@@ -21,6 +21,12 @@ const TEXT_CLASSES = {
   lg: "text-sm",
 };
 
+function getLogoSrc(url: string): string {
+  if (!url) return url;
+  if (url.startsWith("/")) return url; // 로컬 파일 직접 사용
+  return `/api/kbo/team-logo?url=${encodeURIComponent(url)}`; // CDN → 서버 프록시
+}
+
 export function TeamLogo({ team, teamName, size = "md", className = "" }: TeamLogoProps) {
   const sizeClass = SIZE_CLASSES[size];
   const textClass = TEXT_CLASSES[size];
@@ -33,7 +39,7 @@ export function TeamLogo({ team, teamName, size = "md", className = "" }: TeamLo
         className={`${sizeClass} rounded-full overflow-hidden flex items-center justify-center bg-white ${className}`}
       >
         <img
-          src={team.logoUrl}
+          src={getLogoSrc(team.logoUrl)}
           alt={name}
           className="w-full h-full object-contain"
           loading="lazy"
