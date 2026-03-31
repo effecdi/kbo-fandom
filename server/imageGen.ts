@@ -1226,6 +1226,15 @@ export async function generateWebtoonScene(
       .filter(Boolean)
       .join("\n");
 
+    // ── Part 0: 로고 레퍼런스를 텍스트보다 먼저 배치 (Gemini가 최우선 인식)
+    if (teamLogoImage) {
+      const logoMatchEarly = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
+      if (logoMatchEarly) {
+        parts.push({ text: `⚠️ 2026 OFFICIAL TEAM LOGO — memorize this design. This is the ONLY logo allowed on the helmet and uniform:` });
+        parts.push({ inlineData: { mimeType: logoMatchEarly[1], data: logoMatchEarly[2] } });
+      }
+    }
+
     // ── Part 1: 텍스트 프롬프트 — 얼굴 특징을 최우선으로 배치
     parts.push({
       text: `${tpl.role}
@@ -1246,7 +1255,7 @@ REFERENCE PHOTOS — reproduce the player's appearance as shown. The photo is th
 - Same face structure, skin tone, body build, hair
 - Same uniform design and colors — use ONLY the provided team logo reference image for any logo on uniform/helmet/cap
 - Apply the art style WHILE preserving the player's identity${faceFeaturesBlock ? `\n- The distinctive facial features listed above MUST be visible even after stylization` : ""}
-- ⚠️ DO NOT draw ANY logo, emblem, or badge on the cap/helmet front panel — leave it COMPLETELY PLAIN (solid color only). Do NOT draw any logo on the uniform chest either. Logos will be added in post-processing.
+- ⚠️ For the cap/helmet badge and uniform chest logo: use ONLY the logo shown at the TOP of this prompt. Do NOT draw any other logo from memory.
 ${jerseyBlock ? `\n⚠️ JERSEY NUMBER (CRITICAL — DO NOT HALLUCINATE):\n${jerseyBlock}\nDo NOT use any jersey number from memory. Use ONLY the number specified above.` : ""}
 
 ${tpl.outro}`
@@ -1460,19 +1469,20 @@ async function editLogoWithGemini(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash-image",
       contents: [{
         role: "user",
         parts: [
-          { text: "This is the original baseball player illustration:" },
-          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
-          { text: "This is the NEW official team logo that must appear on the helmet and uniform:" },
+          { text: "⚠️ NEW LOGO TO USE (2026 official design) — study this carefully:" },
           { inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } },
-          { text: `Edit the illustration: replace the team logo on the baseball helmet/cap front panel AND the uniform chest with the exact logo design shown above.
-- Draw the new logo in the SAME art style as the rest of the illustration (same line weight, shading, colors)
-- Keep EVERYTHING ELSE completely identical: player face, body, pose, background, card frame, jersey number
-- The new logo must look like it was originally part of the illustration, not pasted on
-- Output the complete edited illustration only` },
+          { text: "Original baseball player illustration to edit:" },
+          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+          { text: `Task: Edit the illustration above.
+1. Find the team logo on the baseball helmet/cap front panel → replace it with the NEW LOGO shown first
+2. Find the team logo/patch on the uniform chest → replace it with the NEW LOGO shown first
+3. Draw the replacements in the SAME illustration art style (same line weight, shading, texture)
+4. Keep EVERYTHING ELSE pixel-perfect identical: player face, body pose, background, card borders, jersey number
+Output ONLY the complete edited illustration.` },
         ],
       }],
       config: { responseModalities: [Modality.IMAGE] },
