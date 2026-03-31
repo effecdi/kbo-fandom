@@ -1235,12 +1235,12 @@ export async function generateWebtoonScene(
       }
     }
 
-    // ── Part 1: 텍스트 프롬프트 — 얼굴 특징을 최우선으로 배치
+    // ── Part 1: 텍스트 프롬프트
     parts.push({
       text: `${tpl.role}
 
 ${noTextRule}
-${faceFeaturesBlock ? `\n⚠️ CRITICAL — PLAYER IDENTITY (highest priority, NEVER override with style):\nNo matter what art style, these distinctive physical features of each player MUST be visually preserved and recognizable:\n${faceFeaturesBlock}\nThese are the features that make each player unique. Even in anime, chibi, watercolor, or any other style, these characteristics must remain clearly identifiable.\n` : ""}
+
 SCENE: "${translatedContext}"
 ${scenePositionBlock}${translatedScene}
 
@@ -1251,12 +1251,12 @@ ${tpl.style}
 - No speech bubbles${charConsistencyRules}
 ${teamIdentity ? `\nTeam: ${teamIdentity.match(/\[TEAM VISUAL IDENTITY - ([^\]]+)\]/)?.[1] || ""}. Primary color: ${teamColorHint}.` : ""}
 
-REFERENCE PHOTOS — reproduce the player's appearance as shown. The photo is the ONLY ground truth:
-- Same face structure, skin tone, body build, hair
-- Same uniform design and colors — use ONLY the provided team logo reference image for any logo on uniform/helmet/cap
-- Apply the art style WHILE preserving the player's identity${faceFeaturesBlock ? `\n- The distinctive facial features listed above MUST be visible even after stylization` : ""}
-- ⚠️ For the cap/helmet badge and uniform chest logo: use ONLY the logo shown at the TOP of this prompt. Do NOT draw any other logo from memory.
-${jerseyBlock ? `\n⚠️ JERSEY NUMBER (CRITICAL — DO NOT HALLUCINATE):\n${jerseyBlock}\nDo NOT use any jersey number from memory. Use ONLY the number specified above.` : ""}
+REFERENCE PHOTO INSTRUCTIONS — The player reference photo(s) below are the ONLY ground truth for appearance:
+- Reproduce the EXACT face: same face shape, eye shape, nose, jaw, skin tone, hair
+- Same body build
+- Apply the art style WHILE keeping the face recognizable as the specific player
+- ⚠️ For the cap/helmet badge and uniform logo: use ONLY the team logo reference shown above. Do NOT use any logo from memory.
+${jerseyBlock ? `\n⚠️ JERSEY NUMBER (CRITICAL):\n${jerseyBlock}` : ""}
 
 ${tpl.outro}`
     });
@@ -1270,15 +1270,22 @@ ${tpl.outro}`
       }
     }
 
-    // ── Part 3: 이미지를 마지막에 배치 (Gemini가 더 주목)
+    // ── Part 3: 캐릭터 참조 사진 (마지막에 배치 — Gemini가 더 주목)
     for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
       const src = images[imgIdx];
       const imgMatch = src.match(/^data:([^;]+);base64,(.+)$/);
       if (imgMatch) {
         const name = hasCharNames ? (characterNames[imgIdx] || `Player ${imgIdx + 1}`) : `Player ${imgIdx + 1}`;
-        parts.push({ text: `[${name}] reference photo:` });
+        parts.push({ text: `⬇️ FACE REFERENCE for [${name}] — reproduce this exact face in the illustration:` });
         parts.push({ inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } });
       }
+    }
+
+    // ── Part 4: 얼굴 특징 마지막 강조 (사진 바로 뒤에 특징 재확인)
+    if (faceFeaturesBlock) {
+      parts.push({
+        text: `⚠️ FACE IDENTITY CONFIRMATION — after studying the reference photo(s) above, confirm these specific facial features MUST appear in the illustration:\n${faceFeaturesBlock}\nThese features define this player's unique identity. Preserve them even after applying the illustration art style.`
+      });
     }
   } else {
     // ── 캐릭터 사진 없는 경우 (기존 로직 유지, 브랜딩 텍스트는 간소화)
@@ -1473,16 +1480,28 @@ async function editLogoWithGemini(
       contents: [{
         role: "user",
         parts: [
-          { text: "⚠️ NEW LOGO TO USE (2026 official design) — study this carefully:" },
+          { text: "⚠️ THIS IS THE NEW 2026 OFFICIAL TEAM LOGO — memorize every detail:" },
           { inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } },
-          { text: "Original baseball player illustration to edit:" },
+          { text: "Baseball player illustration to edit:" },
           { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
-          { text: `Task: Edit the illustration above.
-1. Find the team logo on the baseball helmet/cap front panel → replace it with the NEW LOGO shown first
-2. Find the team logo/patch on the uniform chest → replace it with the NEW LOGO shown first
-3. Draw the replacements in the SAME illustration art style (same line weight, shading, texture)
-4. Keep EVERYTHING ELSE pixel-perfect identical: player face, body pose, background, card borders, jersey number
-Output ONLY the complete edited illustration.` },
+          { text: `CRITICAL EDITING TASK — you MUST change EVERY team logo in this illustration:
+
+TARGET #1 — HELMET FRONT PANEL (highest priority):
+• The baseball helmet the player is wearing has a small logo badge on its front
+• That badge currently shows the OLD team logo (likely a letter or old emblem)
+• You MUST repaint it with the NEW 2026 LOGO shown above
+• The helmet logo is small and on a curved 3D surface — paint it carefully following the helmet's curve
+
+TARGET #2 — SLEEVE/ARM PATCH:
+• The uniform sleeve may have a logo patch → replace with NEW LOGO
+
+TARGET #3 — UNIFORM CHEST:
+• If there is any logo on the chest → replace with NEW LOGO
+
+RULES:
+- Match the illustration's art style (same line weight, shading, ink texture)
+- Do NOT change: player face, body pose, jersey number, background, card frame
+- Output ONLY the complete edited illustration, no text` },
         ],
       }],
       config: { responseModalities: [Modality.IMAGE] },
@@ -1989,7 +2008,7 @@ async function analyzePlayerFace(faceImageData: string): Promise<string> {
     const match = faceImageData.match(/^data:([^;]+);base64,(.+)$/);
     if (!match) return "";
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       contents: [{
         role: "user",
         parts: [
@@ -1997,7 +2016,7 @@ async function analyzePlayerFace(faceImageData: string): Promise<string> {
             inlineData: { mimeType: match[1], data: match[2] }
           },
           {
-            text: `Look at this person's face carefully. In ONE short English sentence (max 20 words), describe only the 2-3 most DISTINCTIVE and UNIQUE facial features that make this person visually different from others. Focus on what stands out most: face shape, eye shape/size, nose, jaw, expression, or any unusually distinctive feature. Be specific and concrete. Do NOT describe generic features everyone has.`
+            text: `Analyze this person's face for use as a character illustration reference. List 5-7 SPECIFIC and DISTINCTIVE facial features that must be reproduced in an illustration. Format as a comma-separated list in English. Cover: (1) face shape (oval/round/square/heart/etc), (2) eye shape and size (monolid/double eyelid, narrow/wide, upturned/downturned corners), (3) nose bridge and tip shape, (4) jaw and chin shape, (5) eyebrow thickness/shape/arch, (6) lip thickness/shape, (7) any unique features (strong cheekbones, dimples, deep-set eyes, prominent ears, etc). Be SPECIFIC and CONCRETE — avoid generic descriptions. These will be used to make an illustrated character recognizable as this specific person.`
           }
         ]
       }]
