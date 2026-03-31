@@ -1445,11 +1445,10 @@ async function replaceCapLogo(
   }
 }
 
-// ─── Replace All Team Logos (Vision 탐지 + sharp 교체) ──────────────────────
+// ─── Replace All Team Logos (Gemini 네이티브 0-1000 좌표 → sharp 교체) ────────
 /**
- * Gemini Vision으로 헬멧/모자 + 유니폼 가슴의 구 로고 위치를 탐지하고
- * sharp으로 신로고를 정확히 덮어씌운다.
- * 이미지 실제 px 크기를 프롬프트에 포함해 좌표 정밀도를 높임.
+ * Gemini Vision의 네이티브 0-1000 bounding box 좌표로 헬멧/유니폼 구 로고 탐지,
+ * 실제 픽셀로 변환 후 sharp으로 신로고를 덮어씌운다.
  */
 async function replaceAllLogos(
   imageDataUrl: string,
@@ -1467,7 +1466,8 @@ async function replaceAllLogos(
     const imgW = imgMeta.width || 600;
     const imgH = imgMeta.height || 800;
 
-    // Step 1: Gemini Vision으로 로고 위치 탐지 (헬멧 + 유니폼 가슴)
+    // Step 1: Gemini Vision으로 로고 위치 탐지
+    // Gemini 네이티브 bounding box 포맷: ymin/xmin/ymax/xmax (0-1000 스케일)
     const detectResponse = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{
@@ -1475,22 +1475,14 @@ async function replaceAllLogos(
         parts: [
           { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
           {
-            text: `This is a baseball player illustration. The image is ${imgW}x${imgH} pixels (width x height).
+            text: `Analyze this baseball player illustration and find ALL team logo/emblem instances:
+1. The logo badge on the cap or helmet front panel
+2. The team logo/patch on the uniform chest
 
-Find ALL team logo/emblem instances drawn in the image — look for:
-1. The logo badge on the front panel of the cap or helmet
-2. The team logo/patch on the uniform chest area
-
-For EACH logo found, return its bounding box as PIXEL coordinates (not percentages).
-x = left edge in pixels from left
-y = top edge in pixels from top
-width = logo width in pixels
-height = logo height in pixels
-
-Return ONLY a raw JSON array, no markdown:
-[{"label":"cap","x":150,"y":80,"width":55,"height":50},{"label":"chest","x":200,"y":260,"width":70,"height":65}]
-
-If no logos are visible, return: []`
+Return bounding boxes using 0-1000 normalized scale (0=top/left edge, 1000=bottom/right edge of image).
+Format: [{"label":"cap","ymin":80,"xmin":230,"ymax":160,"xmax":300},{"label":"chest","ymin":280,"xmin":160,"ymax":380,"xmax":260}]
+If none found return: []
+Return ONLY raw JSON, no markdown.`
           }
         ]
       }],
@@ -1498,32 +1490,38 @@ If no logos are visible, return: []`
 
     const textPart = detectResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.text);
     if (!textPart?.text) {
-      logger.info("[replaceAllLogos] No response from Vision, skipping");
+      logger.info("[replaceAllLogos] No Vision response");
       return imageDataUrl;
     }
 
     const jsonMatch = textPart.text.match(/\[[\s\S]*?\]/);
     if (!jsonMatch) {
-      logger.info("[replaceAllLogos] No JSON found in Vision response");
+      logger.info("[replaceAllLogos] No JSON in Vision response:", textPart.text.slice(0, 200));
       return imageDataUrl;
     }
 
-    const boxes: Array<{ label: string; x: number; y: number; width: number; height: number }> = JSON.parse(jsonMatch[0]);
+    const boxes: Array<{ label: string; ymin: number; xmin: number; ymax: number; xmax: number }> = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(boxes) || boxes.length === 0) {
       logger.info("[replaceAllLogos] No logos detected");
       return imageDataUrl;
     }
 
-    logger.info("[replaceAllLogos] Logos detected", boxes);
+    logger.info("[replaceAllLogos] Logos detected (0-1000 scale)", boxes);
 
-    // Step 2: 각 로고 위치에 신로고를 sharp으로 덮어씌우기
+    // Step 2: 0-1000 → 실제 픽셀 변환 후 신로고 오버레이
     let resultBuf = imgBuf;
     for (const box of boxes) {
-      if (typeof box.x !== "number" || typeof box.y !== "number" || !box.width || !box.height) continue;
+      if (typeof box.xmin !== "number") continue;
 
-      // 탐지된 박스보다 20% 크게 잘라야 구 로고를 완전히 가릴 수 있음
-      const targetW = Math.round(box.width * 1.2);
-      const targetH = Math.round(box.height * 1.2);
+      // 0-1000 스케일 → 픽셀
+      const bx = Math.round((box.xmin / 1000) * imgW);
+      const by = Math.round((box.ymin / 1000) * imgH);
+      const bw = Math.round(((box.xmax - box.xmin) / 1000) * imgW);
+      const bh = Math.round(((box.ymax - box.ymin) / 1000) * imgH);
+
+      // 탐지된 박스보다 25% 크게 오버레이 (구로고 완전 커버)
+      const targetW = Math.max(30, Math.round(bw * 1.25));
+      const targetH = Math.max(30, Math.round(bh * 1.25));
 
       const resizedLogo = await sharp(logoBuf)
         .resize(targetW, targetH, {
@@ -1533,16 +1531,16 @@ If no logos are visible, return: []`
         .png()
         .toBuffer();
 
-      // 중앙 기준으로 배치
-      const left = Math.max(0, Math.round(box.x + box.width / 2 - targetW / 2));
-      const top = Math.max(0, Math.round(box.y + box.height / 2 - targetH / 2));
+      // 중앙 기준 배치
+      const left = Math.max(0, Math.round(bx + bw / 2 - targetW / 2));
+      const top = Math.max(0, Math.round(by + bh / 2 - targetH / 2));
 
       resultBuf = await sharp(resultBuf)
         .composite([{ input: resizedLogo, left, top, blend: "over" }])
         .png()
         .toBuffer();
 
-      logger.info(`[replaceAllLogos] Replaced ${box.label} logo at (${left},${top}) size ${targetW}x${targetH}`);
+      logger.info(`[replaceAllLogos] Replaced ${box.label} at pixel (${left},${top}) size ${targetW}x${targetH}`);
     }
 
     return `data:image/png;base64,${resultBuf.toString("base64")}`;
