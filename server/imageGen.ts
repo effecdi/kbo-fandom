@@ -2472,21 +2472,32 @@ export async function generateWithInstantID(faceImageData: string, prompt: strin
 
   const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
-  // 1. Gemini Vision으로 얼굴 특징 분석
+  // 1. Gemini Vision으로 신체+얼굴 전체 특징 분석
   const faceFeatures = await analyzePlayerFace(faceImageData);
   logger.info("Face analysis result", { faceFeatures });
 
   // 2. 투타 정보 → 포즈 프롬프트
   const handednessPrompt = playerInfo ? buildHandednessPrompt(playerInfo) : "full body pose";
 
-  // 3. 최종 프롬프트 조합
+  // 3. 신체 특징에서 체형 키워드 추출 (프롬프트 앞에 배치해 가중치 높임)
+  // analyzePlayerFace가 BODY TYPE / BODY BUILD 등을 반환하므로 해당 문장 추출
+  let bodyDesc = "";
+  if (faceFeatures) {
+    const bodyMatch = faceFeatures.match(/(?:body[^.]*(?:chubby|fat|slim|thin|stocky|muscular|heavy|overweight|lean|lanky|athletic)[^.]*\.)/i)
+      || faceFeatures.match(/(?:chubby|fat|slim|thin|stocky|muscular|heavy|overweight|lean|stocky|round)[^.]*body[^.]*/i)
+      || faceFeatures.match(/(?:BODY TYPE|OVERALL BUILD|BUILD)[^\n]*\n?([^\n]+)/i);
+    if (bodyMatch) bodyDesc = bodyMatch[0].replace(/^\d+\.\s*(?:BODY TYPE|OVERALL BUILD|BUILD):?\s*/i, "").trim();
+  }
+
+  // 4. 최종 프롬프트 조합 — 체형을 앞에, 얼굴+신체 특징을 뒤에
   const baseStyle = prompt?.trim() || "anime style character illustration, white background, cute, clean lines";
   const finalPrompt = [
+    bodyDesc ? `${bodyDesc},` : "",  // 체형 최우선
     baseStyle,
     handednessPrompt,
-    faceFeatures ? `The character MUST have these distinctive facial features: ${faceFeatures}` : "",
-    "full body view, single character, pure white background"
-  ].filter(Boolean).join(". ");
+    faceFeatures ? `MUST match ALL of these physical characteristics exactly: ${faceFeatures}` : "",
+    "full body view showing complete physique, single character"
+  ].filter(Boolean).join(" ");
 
   logger.info("InstantID final prompt", { finalPrompt });
 
