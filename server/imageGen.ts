@@ -1338,6 +1338,17 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
 
       // 2. 그 다음 모자/헬멧 로고 오버레이 (배경 제거 후에 해야 로고가 투명화되지 않음)
       // capLogoImage = KBO CDN 엠블럼 (실제 모자/헬멧 로고), teamLogoImage = 구단 엠블럼 (fallback)
+      // 2. 모자/헬멧 로고 위치를 Gemini Vision으로 탐지 후 정확한 로고로 교체
+      const logoForCap = capLogoImage || teamLogoImage;
+      if (logoForCap) {
+        try {
+          rawDataUrl = await replaceCapLogo(rawDataUrl, logoForCap);
+        } catch (err) {
+          logger.warn("[generate-scene] Cap logo replace failed, continuing", err);
+        }
+      }
+
+      // 3. 우하단 팀 로고 배지 오버레이 (항상 정확한 로고 표시)
       const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
         try {
@@ -1355,6 +1366,77 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
     }
   }
   throw lastError || new Error("Failed to generate webtoon scene after retries");
+}
+
+// ─── Cap Logo Replacement (Gemini Vision + sharp) ────────────────────────────
+/**
+ * Gemini Vision으로 생성된 이미지에서 모자/헬멧 로고 위치를 탐지하고
+ * sharp으로 실제 팀 로고 이미지를 정확히 교체.
+ */
+async function replaceCapLogo(
+  imageDataUrl: string,
+  logoDataUrl: string,
+): Promise<string> {
+  const imgMatch = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const logoMatch = logoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !logoMatch) return imageDataUrl;
+
+  try {
+    // Step 1: Gemini Vision으로 모자/헬멧 위의 로고 위치 탐지
+    const detectResponse = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
+          {
+            text: `This is a sports character illustration. Find the team logo on the baseball cap or helmet worn by the character. Return ONLY a JSON object with pixel coordinates of the logo on the cap/helmet: {"found": true, "x": number, "y": number, "width": number, "height": number}. x,y = top-left corner of the logo. If no cap/helmet logo is visible, return {"found": false}. Return ONLY raw JSON, no markdown, no explanation.`
+          }
+        ]
+      }],
+    });
+
+    const textPart = detectResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.text);
+    if (!textPart?.text) return imageDataUrl;
+
+    const jsonMatch = textPart.text.match(/\{[\s\S]*?\}/);
+    if (!jsonMatch) return imageDataUrl;
+
+    const coords = JSON.parse(jsonMatch[0]);
+    if (!coords.found || typeof coords.x !== "number" || typeof coords.y !== "number" || !coords.width || !coords.height) {
+      logger.info("[replaceCapLogo] No cap logo detected, skipping");
+      return imageDataUrl;
+    }
+
+    logger.info("[replaceCapLogo] Cap logo detected", coords);
+
+    // Step 2: 탐지된 위치에 정확한 로고를 sharp으로 오버레이
+    const imgBuf = Buffer.from(imgMatch[2], "base64");
+    const logoBuf = Buffer.from(logoMatch[2], "base64");
+
+    const resizedLogo = await sharp(logoBuf)
+      .resize(Math.round(coords.width), Math.round(coords.height), {
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png()
+      .toBuffer();
+
+    const result = await sharp(imgBuf)
+      .composite([{
+        input: resizedLogo,
+        left: Math.round(coords.x),
+        top: Math.round(coords.y),
+        blend: "over",
+      }])
+      .png()
+      .toBuffer();
+
+    return `data:image/png;base64,${result.toString("base64")}`;
+  } catch (error) {
+    logger.warn("[replaceCapLogo] Failed, returning original", error);
+    return imageDataUrl;
+  }
 }
 
 // ─── Deterministic Logo Overlay (sharp) ─────────────────────────────────────
