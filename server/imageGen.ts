@@ -1246,7 +1246,7 @@ REFERENCE PHOTOS — reproduce the player's appearance as shown. The photo is th
 - Same face structure, skin tone, body build, hair
 - Same uniform design and colors — use ONLY the provided team logo reference image for any logo on uniform/helmet/cap
 - Apply the art style WHILE preserving the player's identity${faceFeaturesBlock ? `\n- The distinctive facial features listed above MUST be visible even after stylization` : ""}
-- Use ONLY the provided logo reference image for the cap/helmet badge — draw THIS exact logo design, not any logo from memory
+- ⚠️ DO NOT draw ANY logo, emblem, or badge on the cap/helmet front panel — leave it COMPLETELY PLAIN (solid color only). Do NOT draw any logo on the uniform chest either. Logos will be added in post-processing.
 ${jerseyBlock ? `\n⚠️ JERSEY NUMBER (CRITICAL — DO NOT HALLUCINATE):\n${jerseyBlock}\nDo NOT use any jersey number from memory. Use ONLY the number specified above.` : ""}
 
 ${tpl.outro}`
@@ -1500,13 +1500,25 @@ Return ONLY raw JSON, no markdown.`
       return imageDataUrl;
     }
 
-    const boxes: Array<{ label: string; ymin: number; xmin: number; ymax: number; xmax: number }> = JSON.parse(jsonMatch[0]);
-    if (!Array.isArray(boxes) || boxes.length === 0) {
-      logger.info("[replaceAllLogos] No logos detected");
-      return imageDataUrl;
-    }
+    let boxes: Array<{ label: string; ymin: number; xmin: number; ymax: number; xmax: number }> = [];
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      boxes = Array.isArray(parsed) ? parsed : [];
+    } catch { boxes = []; }
 
-    logger.info("[replaceAllLogos] Logos detected (0-1000 scale)", boxes);
+    logger.info("[replaceAllLogos] Vision result (0-1000 scale)", boxes);
+
+    // Vision이 못 찾은 위치는 통계 기반 fallback (헬멧: 상단 14-23% 중앙 40-57%, 가슴: 37-50% 34-56%)
+    const hasCapBox  = boxes.some((b) => b.label === "cap");
+    const hasChestBox = boxes.some((b) => b.label === "chest");
+    if (!hasCapBox) {
+      boxes.push({ label: "cap_fallback",   ymin: 140, xmin: 400, ymax: 230, xmax: 570 });
+      logger.info("[replaceAllLogos] cap not detected → fallback");
+    }
+    if (!hasChestBox) {
+      boxes.push({ label: "chest_fallback", ymin: 370, xmin: 340, ymax: 500, xmax: 560 });
+      logger.info("[replaceAllLogos] chest not detected → fallback");
+    }
 
     // Step 2: 0-1000 → 실제 픽셀 변환 후 신로고 오버레이
     let resultBuf = imgBuf;
@@ -1519,9 +1531,8 @@ Return ONLY raw JSON, no markdown.`
       const bw = Math.round(((box.xmax - box.xmin) / 1000) * imgW);
       const bh = Math.round(((box.ymax - box.ymin) / 1000) * imgH);
 
-      // 탐지된 박스보다 25% 크게 오버레이 (구로고 완전 커버)
-      const targetW = Math.max(30, Math.round(bw * 1.25));
-      const targetH = Math.max(30, Math.round(bh * 1.25));
+      const targetW = Math.max(30, bw);
+      const targetH = Math.max(30, bh);
 
       const resizedLogo = await sharp(logoBuf)
         .resize(targetW, targetH, {
@@ -1531,16 +1542,15 @@ Return ONLY raw JSON, no markdown.`
         .png()
         .toBuffer();
 
-      // 중앙 기준 배치
       const left = Math.max(0, Math.round(bx + bw / 2 - targetW / 2));
-      const top = Math.max(0, Math.round(by + bh / 2 - targetH / 2));
+      const top  = Math.max(0, Math.round(by + bh / 2 - targetH / 2));
 
       resultBuf = await sharp(resultBuf)
         .composite([{ input: resizedLogo, left, top, blend: "over" }])
         .png()
         .toBuffer();
 
-      logger.info(`[replaceAllLogos] Replaced ${box.label} at pixel (${left},${top}) size ${targetW}x${targetH}`);
+      logger.info(`[replaceAllLogos] ${box.label} → pixel (${left},${top}) ${targetW}x${targetH}`);
     }
 
     return `data:image/png;base64,${resultBuf.toString("base64")}`;
