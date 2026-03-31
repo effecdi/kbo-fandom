@@ -1303,7 +1303,7 @@ ${tpl.outro}`
     // ── Part 4: 얼굴 특징 마지막 강조 (사진 바로 뒤에 특징 재확인)
     if (faceFeaturesBlock) {
       parts.push({
-        text: `⚠️ FACE IDENTITY CONFIRMATION — after studying the reference photo(s) above, confirm these specific facial features MUST appear in the illustration:\n${faceFeaturesBlock}\nThese features define this player's unique identity. Preserve them even after applying the illustration art style.`
+        text: `⚠️ FACE IDENTITY CONFIRMATION — these features MUST appear in the final illustration:\n${faceFeaturesBlock}\n\nIF GLASSES ARE MENTIONED ABOVE: The character MUST wear glasses in the illustration — same frame shape, thickness, and color as described. Do NOT remove glasses. Glasses are part of this person's identity.\n\nThese features define this player's unique appearance. Apply the art style but keep the face recognizable.`
       });
     }
   } else {
@@ -2350,7 +2350,7 @@ async function analyzePlayerFace(faceImageData: string): Promise<string> {
             inlineData: { mimeType: match[1], data: match[2] }
           },
           {
-            text: `Analyze this person's face for use as a character illustration reference. List 5-7 SPECIFIC and DISTINCTIVE facial features that must be reproduced in an illustration. Format as a comma-separated list in English. Cover: (1) face shape (oval/round/square/heart/etc), (2) eye shape and size (monolid/double eyelid, narrow/wide, upturned/downturned corners), (3) nose bridge and tip shape, (4) jaw and chin shape, (5) eyebrow thickness/shape/arch, (6) lip thickness/shape, (7) any unique features (strong cheekbones, dimples, deep-set eyes, prominent ears, etc). Be SPECIFIC and CONCRETE — avoid generic descriptions. These will be used to make an illustrated character recognizable as this specific person.`
+            text: `Analyze this person's face for use as a character illustration reference. List SPECIFIC and DISTINCTIVE features that MUST be reproduced. Format as a comma-separated list in English. CRITICALLY IMPORTANT — always check and include: (0) GLASSES: does the person wear glasses? If yes, describe frame shape (round/rectangular/square), frame thickness (thin wire/thick), frame color (black/brown/gold/etc) — this is the MOST important feature. (1) face shape (oval/round/square/chubby/slim/etc), (2) eye shape (monolid/double eyelid, narrow/wide/large), (3) nose (broad/narrow/flat/high bridge), (4) jaw (strong/soft/round/square), (5) eyebrow style, (6) any unique features (chubby cheeks, dimples, strong cheekbones, etc). Be SPECIFIC. Start with glasses if present.`
           }
         ]
       }]
