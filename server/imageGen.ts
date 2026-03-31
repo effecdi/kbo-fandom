@@ -1361,17 +1361,20 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       const mimeType = imagePart.inlineData.mimeType || "image/png";
       let rawDataUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
 
-      // 1. 먼저 배경 제거 (거의 순백색만 → 투명, 90%이상 제거 시 원본 반환)
-      rawDataUrl = await removeWhiteBackground(rawDataUrl, 240);
-
       const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
-        // 2. Gemini 이미지 편집으로 로고 교체 (일러스트 스타일 유지, PNG 스티커 방식 대신)
+        // 1. 배경 제거 전, 원본 품질 상태에서 Gemini 로고 편집 (더 선명한 입력)
         try {
           rawDataUrl = await editLogoWithGemini(rawDataUrl, logoForOverlay);
         } catch (err) {
           logger.warn("[generate-scene] Gemini logo edit failed, continuing", err);
         }
+      }
+
+      // 2. 배경 제거 (거의 순백색만 → 투명, 90%이상 제거 시 원본 반환)
+      rawDataUrl = await removeWhiteBackground(rawDataUrl, 240);
+
+      if (logoForOverlay) {
         // 3. 우하단 팀 로고 배지 오버레이
         try {
           rawDataUrl = await overlayTeamLogo(rawDataUrl, logoForOverlay);
@@ -1480,28 +1483,25 @@ async function editLogoWithGemini(
       contents: [{
         role: "user",
         parts: [
-          { text: "⚠️ THIS IS THE NEW 2026 OFFICIAL TEAM LOGO — memorize every detail:" },
+          { text: "CORRECT LOGO (2026 official design) — this is what MUST appear on the helmet and uniform:" },
           { inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } },
-          { text: "Baseball player illustration to edit:" },
+          { text: "Illustration with a LOGO ERROR that needs to be fixed:" },
           { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
-          { text: `CRITICAL EDITING TASK — you MUST change EVERY team logo in this illustration:
+          { text: `BUG FIX REQUEST: This illustration contains an outdated/wrong team logo on the baseball helmet. Your job is to fix this bug.
 
-TARGET #1 — HELMET FRONT PANEL (highest priority):
-• The baseball helmet the player is wearing has a small logo badge on its front
-• That badge currently shows the OLD team logo (likely a letter or old emblem)
-• You MUST repaint it with the NEW 2026 LOGO shown above
-• The helmet logo is small and on a curved 3D surface — paint it carefully following the helmet's curve
+STEP 1 — Find the helmet logo error:
+Look at the front panel of the baseball helmet/cap the player is wearing. It currently shows an INCORRECT, OUTDATED logo badge. This is the bug you need to fix.
 
-TARGET #2 — SLEEVE/ARM PATCH:
-• The uniform sleeve may have a logo patch → replace with NEW LOGO
+STEP 2 — Fix the helmet logo:
+Paint over the incorrect badge on the helmet front panel with the CORRECT logo shown in image #1 above. The logo should follow the helmet's curved surface naturally, drawn in the same illustration style.
 
-TARGET #3 — UNIFORM CHEST:
-• If there is any logo on the chest → replace with NEW LOGO
+STEP 3 — Fix any other outdated logos:
+If the uniform sleeve or chest also shows an outdated logo badge, replace those too with the correct logo from image #1.
 
-RULES:
-- Match the illustration's art style (same line weight, shading, ink texture)
-- Do NOT change: player face, body pose, jersey number, background, card frame
-- Output ONLY the complete edited illustration, no text` },
+CONSTRAINTS:
+- Keep every other part of the illustration exactly the same: face, pose, body, jersey number, background, card borders
+- Match the existing illustration's line art style and shading
+- Output ONLY the corrected illustration image` },
         ],
       }],
       config: { responseModalities: [Modality.IMAGE] },
