@@ -2350,7 +2350,20 @@ async function analyzePlayerFace(faceImageData: string): Promise<string> {
             inlineData: { mimeType: match[1], data: match[2] }
           },
           {
-            text: `Analyze this person's face for use as a character illustration reference. List SPECIFIC and DISTINCTIVE features that MUST be reproduced. Format as a comma-separated list in English. CRITICALLY IMPORTANT — always check and include: (0) GLASSES: does the person wear glasses? If yes, describe frame shape (round/rectangular/square), frame thickness (thin wire/thick), frame color (black/brown/gold/etc) — this is the MOST important feature. (1) face shape (oval/round/square/chubby/slim/etc), (2) eye shape (monolid/double eyelid, narrow/wide/large), (3) nose (broad/narrow/flat/high bridge), (4) jaw (strong/soft/round/square), (5) eyebrow style, (6) any unique features (chubby cheeks, dimples, strong cheekbones, etc). Be SPECIFIC. Start with glasses if present.`
+            text: `Analyze this baseball player photo and extract their physical features for illustration. Be brutally honest and very specific. Describe ALL of the following:
+
+1. GLASSES: YES or NO. If YES — frame shape (round/rectangular/square/oval), thickness (thin wire/thick), color (black/brown/gold/silver). MOST CRITICAL feature.
+2. BODY TYPE: chubby/fat, slim/thin, muscular, or average? Be direct.
+3. FACE SHAPE: round, chubby/puffy, V-line (sharp chin), square jaw, wide/flat, oval, or heart-shaped?
+4. EYES: small or large? narrow or wide? almond, round, or hooded? close-set or wide-set? single or double eyelid? upturned or downturned?
+5. NOSE: bridge height (high/flat/medium), nostril width (wide/narrow), nose length (long/short), tip shape (bulbous/pointed/round)?
+6. MOUTH & LIPS: thin or thick? wide or small? upper lip thicker or lower?
+7. CHEEKBONES & CHEEKS: prominent cheekbones, chubby cheeks, flat cheeks, or hollow cheeks?
+8. EYEBROWS: thick or thin? straight, arched, or angled? sparse or dense?
+9. JAW & CHIN: strong square jaw, soft round jaw, pointed chin, double chin?
+10. OTHER DISTINCTIVE FEATURES: any unique marks, dimples, prominent ears, etc.
+
+Write the result as a clear English description paragraph. Be specific — never say "normal" or "average".`
           }
         ]
       }]
