@@ -14,7 +14,7 @@ import {
   BASEBALL_AESTHETIC_FILTERS,
   getTeamIdentityPrompt,
 } from "@/lib/fandom-templates";
-import { listItems, STORE_KEYS, type KboTeam } from "@/lib/local-store";
+import { listItems, STORE_KEYS, type KboTeam, type KboPlayer } from "@/lib/local-store";
 
 // ─── Types for API responses ────────────────────────────────────────────────
 
@@ -366,6 +366,8 @@ export function useCopilot() {
 
       if (fandomMeta?.playerPhotos && fandomMeta.playerPhotos.length > 0) {
         // 항상 직접 fetch — 가장 확실한 방법
+        // 등번호 fallback: playerPhotos에 number 없으면 KBO_PLAYERS에서 조회
+        const allKboPlayers = listItems<KboPlayer>(STORE_KEYS.KBO_PLAYERS);
         for (const { name, pcode, number } of fandomMeta.playerPhotos) {
           try {
             const resp = await fetch(`/api/kbo/player-photo/${pcode}`);
@@ -377,8 +379,10 @@ export function useCopilot() {
               reader.readAsDataURL(blob);
             });
             charImageUrls.push(dataUrl);
-            // 등번호를 이름에 포함해 Gemini가 정확한 번호를 유니폼에 그리도록 함
-            charNames.push(number ? `${name} #${number}` : name);
+            // 등번호: playerPhotos.number → KBO_PLAYERS 조회 fallback → 없으면 이름만
+            const jerseyNum = number
+              ?? allKboPlayers.find((p) => p.name === name || p.pcode === pcode)?.jerseyNumber?.toString();
+            charNames.push(jerseyNum ? `${name} #${jerseyNum}` : name);
           } catch { /* skip */ }
         }
       }

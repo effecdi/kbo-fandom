@@ -1246,8 +1246,7 @@ REFERENCE PHOTOS — reproduce the player's appearance as shown. The photo is th
 - Same face structure, skin tone, body build, hair
 - Same uniform design and colors — use ONLY the provided team logo reference image for any logo on uniform/helmet/cap
 - Apply the art style WHILE preserving the player's identity${faceFeaturesBlock ? `\n- The distinctive facial features listed above MUST be visible even after stylization` : ""}
-- NEVER draw logos from memory — always replicate the provided logo reference exactly
-- Do NOT draw team logos on the cap or helmet — leave the cap/helmet plain (logo will be added later)
+- Use ONLY the provided logo reference image for the cap/helmet badge — draw THIS exact logo design, not any logo from memory
 ${jerseyBlock ? `\n⚠️ JERSEY NUMBER (CRITICAL — DO NOT HALLUCINATE):\n${jerseyBlock}\nDo NOT use any jersey number from memory. Use ONLY the number specified above.` : ""}
 
 ${tpl.outro}`
@@ -1349,10 +1348,15 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       // 1. 먼저 배경 제거 (거의 순백색만 → 투명, 90%이상 제거 시 원본 반환)
       rawDataUrl = await removeWhiteBackground(rawDataUrl, 240);
 
-      // 2. 우하단 팀 로고 배지 오버레이 (항상 정확한 로고 표시)
-      // replaceCapLogo 제거: Gemini Vision 탐지 오류로 구로고+신로고 동시 표시 문제 발생
       const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
+        // 2. 모자/헬멧 영역에 신로고 오버레이 (고정 위치 — Gemini Vision 탐지 대신 결정론적 배치)
+        try {
+          rawDataUrl = await overlayCapLogo(rawDataUrl, logoForOverlay);
+        } catch (err) {
+          logger.warn("[generate-scene] Cap logo overlay failed, continuing", err);
+        }
+        // 3. 우하단 팀 로고 배지 오버레이
         try {
           rawDataUrl = await overlayTeamLogo(rawDataUrl, logoForOverlay);
         } catch (err) {
@@ -1437,6 +1441,68 @@ async function replaceCapLogo(
     return `data:image/png;base64,${result.toString("base64")}`;
   } catch (error) {
     logger.warn("[replaceCapLogo] Failed, returning original", error);
+    return imageDataUrl;
+  }
+}
+
+// ─── Cap Logo Overlay (fixed position) ───────────────────────────────────────
+/**
+ * 모자/헬멧 위치(이미지 상단 ~20% 높이, 가로 중앙)에 팀 로고를 고정 위치 오버레이.
+ * Gemini Vision 탐지 없이 결정론적으로 처리 (이전 replaceCapLogo 대체).
+ */
+async function overlayCapLogo(
+  imageDataUrl: string,
+  logoDataUrl: string,
+): Promise<string> {
+  const imgMatch = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const logoMatch = logoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !logoMatch) return imageDataUrl;
+
+  try {
+    const imgBuf = Buffer.from(imgMatch[2], "base64");
+    const logoBuf = Buffer.from(logoMatch[2], "base64");
+
+    const imgMeta = await sharp(imgBuf).metadata();
+    const imgWidth = imgMeta.width || 600;
+    const imgHeight = imgMeta.height || 800;
+
+    // 모자 로고 크기: 이미지 너비의 9% (최소 45px, 최대 80px)
+    const logoSize = Math.min(80, Math.max(45, Math.round(imgWidth * 0.09)));
+
+    const resizedLogo = await sharp(logoBuf)
+      .resize(logoSize, logoSize, { fit: "inside", kernel: sharp.kernel.lanczos3 })
+      .toBuffer();
+
+    const { data: logoRaw, info: logoInfo } = await sharp(resizedLogo)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const logoPixels = Buffer.from(logoRaw);
+    // opacity 0.92
+    for (let i = 3; i < logoPixels.length; i += 4) {
+      logoPixels[i] = Math.round(logoPixels[i] * 0.92);
+    }
+
+    const opaqueLogoBuf = await sharp(logoPixels, {
+      raw: { width: logoInfo.width, height: logoInfo.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
+
+    // 모자 위치: 상단 20%, 가로 중앙 (선수 초상화 기준 모자 로고 위치)
+    const left = Math.max(0, Math.round(imgWidth * 0.5 - logoInfo.width * 0.5));
+    const top = Math.max(0, Math.round(imgHeight * 0.20));
+
+    const result = await sharp(imgBuf)
+      .composite([{ input: opaqueLogoBuf, left, top }])
+      .png()
+      .toBuffer();
+
+    logger.info(`[cap-logo] Cap logo overlaid at (${left}, ${top}), size ${logoSize}px`);
+    return `data:image/png;base64,${result.toString("base64")}`;
+  } catch (error) {
+    logger.warn("[cap-logo] Failed, returning original", error);
     return imageDataUrl;
   }
 }

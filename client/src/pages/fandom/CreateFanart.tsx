@@ -177,7 +177,7 @@ export function FandomCreateFanart() {
     // Collect player photos for selected members
     const playerPhotos = members
       .filter((m) => selectedMembers.includes(m.id) && m.pcode)
-      .map((m) => ({ name: m.name, pcode: m.pcode!, number: m.number, position: m.position, throws: m.throws, bats: m.bats, role: m.role }));
+      .map((m) => ({ name: m.name, pcode: m.pcode!, number: m.jerseyNumber?.toString(), position: m.position, throws: m.throws, bats: m.bats, role: m.role }));
 
     const meta: FandomEditorMeta = {
       groupId: selectedGroup.id,
