@@ -1224,48 +1224,57 @@ export async function generateWebtoonScene(
         "stadium crowd background, professional quality, detailed illustration",
       ].filter(Boolean).join(", ");
 
-      // ── Stage 1: InstantID → 얼굴/체형 포토리얼 생성
-      const instantIdPrompt = [
-        "KBO baseball player full body photo",
-        `${teamName} team`,
-        jerseyNum ? `jersey number ${jerseyNum}` : "",
-        translatedScene || "baseball player in batting stance",
-        teamColorHint ? `team color ${teamColorHint}` : "",
-        "full body, baseball uniform, stadium background",
-      ].filter(Boolean).join(", ");
+      // ── Stage 1: InstantID → 얼굴만 추출 (헤드샷)
+      logger.info("[playercard] Stage1: InstantID 얼굴 추출 시작", { charName });
+      const instantIdDataUrl = await generateWithInstantID(
+        faceImage,
+        "clean headshot portrait, face only, neutral background, high detail face",
+        undefined
+      );
+      logger.info("[playercard] Stage1: 완료 → Stage2: Gemini 카드 생성 시작");
 
-      logger.info("[playercard] Stage1: InstantID 생성 시작", { charName });
-      const instantIdDataUrl = await generateWithInstantID(faceImage, instantIdPrompt, playerInfo);
-      logger.info("[playercard] Stage1: InstantID 완료 → Stage2: Gemini 스타일 변환 시작");
+      // ── Stage 2: Gemini → InstantID 얼굴 + 원본 사진 체형 분석 → 카드 일러스트 생성
+      const physicalFeatures = await analyzePlayerFace(faceImage);
+      logger.info("[playercard] 신체 특징 분석", { physicalFeatures });
 
-      // ── Stage 2: Gemini → InstantID 결과를 트레이딩 카드 일러스트로 변환
       const cardStyleParts: any[] = [];
 
+      // 팀 로고 레퍼런스
       if (teamLogoImage) {
         const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
         if (logoMatch) {
-          cardStyleParts.push({ text: `Team logo reference (draw naturally on uniform and helmet):` });
+          cardStyleParts.push({ text: `Team logo — draw naturally integrated on uniform chest and helmet:` });
           cardStyleParts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
         }
       }
 
-      cardStyleParts.push({ text: `⬇️ SOURCE PHOTO — convert this into a trading card illustration. Keep the EXACT same face, glasses, body type, and proportions:` });
+      // InstantID 얼굴 레퍼런스 (2번 전송으로 어텐션 강화)
       const instantMatch = instantIdDataUrl.match(/^data:([^;]+);base64,(.+)$/);
       if (instantMatch) {
+        cardStyleParts.push({ text: `⬇️ FACE REFERENCE — reproduce this EXACT face in the illustration:` });
+        cardStyleParts.push({ inlineData: { mimeType: instantMatch[1], data: instantMatch[2] } });
+        cardStyleParts.push({ text: `⬇️ SAME FACE again — CRITICAL: glasses, eye shape, face shape, skin tone must match exactly:` });
         cardStyleParts.push({ inlineData: { mimeType: instantMatch[1], data: instantMatch[2] } });
       }
 
       cardStyleParts.push({
         text: `${noTextRule}
 
-Convert the photo above into a KBO BASEBALL TRADING CARD ILLUSTRATION:
-- Art style: professional trading card illustration (not photorealistic)
-- Card frame: decorative border, name plate at bottom, team logo space
-- CRITICAL: Keep the exact same face shape, glasses (if wearing glasses, KEEP THEM), body type, and proportions from the source photo
-- Background: stadium crowd, dramatic lighting
-- Team: ${teamName}, jersey number: ${jerseyNum || "same as photo"}
-- Team primary color: ${teamColorHint || "from uniform in photo"}
-- The result must look like a PHYSICAL TRADING CARD with illustrated artwork, card frame, and borders`
+Draw a KBO BASEBALL TRADING CARD ILLUSTRATION:
+
+FACE (from reference photos above): Same face exactly — glasses, eye shape, nose, jaw, skin tone. Do NOT change anything about the face.
+
+BODY & PHYSIQUE — draw the body to match these characteristics EXACTLY:
+${physicalFeatures || "baseball player build"}
+
+CARD:
+- Art style: professional trading card illustration
+- Card frame with team color borders, name plate at bottom
+- Team: ${teamName}, jersey number: ${jerseyNum || ""}
+- Team primary color: ${teamColorHint || ""}
+- Pose: ${posStr || "batting stance"}
+- Background: baseball stadium with crowd
+- Must look like a physical TRADING CARD with illustrated artwork and decorative borders`
       });
 
       const cardResponse = await ai.models.generateContent({
