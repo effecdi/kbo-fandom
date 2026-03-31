@@ -1253,7 +1253,7 @@ export async function generateWebtoonScene(
       if (instantMatch) {
         cardStyleParts.push({ text: `⬇️ FACE REFERENCE — reproduce this EXACT face in the illustration:` });
         cardStyleParts.push({ inlineData: { mimeType: instantMatch[1], data: instantMatch[2] } });
-        cardStyleParts.push({ text: `⬇️ SAME FACE again — CRITICAL: glasses, eye shape, face shape, skin tone must match exactly:` });
+        cardStyleParts.push({ text: `⬇️ SAME FACE again — CRITICAL: eye shape, face shape, skin tone, ALL facial features must match exactly:` });
         cardStyleParts.push({ inlineData: { mimeType: instantMatch[1], data: instantMatch[2] } });
       }
 
@@ -1262,7 +1262,7 @@ export async function generateWebtoonScene(
 
 Draw a KBO BASEBALL TRADING CARD ILLUSTRATION:
 
-FACE (from reference photos above): Same face exactly — glasses, eye shape, nose, jaw, skin tone. Do NOT change anything about the face.
+FACE (from reference photos above): Reproduce EXACTLY — eye shape, nose, jaw, skin tone, face shape, ALL features from the reference. Do NOT add or remove glasses unless they appear in the reference photo.
 
 BODY & PHYSIQUE — draw the body to match these characteristics EXACTLY:
 ${physicalFeatures || "baseball player build"}
