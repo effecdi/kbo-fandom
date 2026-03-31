@@ -1260,7 +1260,8 @@ REFERENCE PHOTO INSTRUCTIONS — The player reference photo(s) below are the ONL
 - Reproduce the EXACT face: same face shape, eye shape, nose, jaw, skin tone, hair
 - Same body build
 - Apply the art style WHILE keeping the face recognizable as the specific player
-- ⚠️ HELMET/CAP: Draw the helmet/cap front panel as COMPLETELY BLANK AND PLAIN — NO badge, NO logo, NO emblem, NO letter on the front. The front panel must be a clean, empty surface with just the helmet color. (The logo will be added separately in post-processing.)
+- ⚠️ HELMET/CAP FRONT: Draw the helmet/cap front panel as COMPLETELY BLANK — NO badge, NO logo, NO emblem, NO letter. Clean empty surface with just the helmet color only.
+- ⚠️ UNIFORM CHEST: Draw the uniform chest area as COMPLETELY BLANK — NO team logo patch, NO emblem, NO badge. Just the plain uniform fabric color. (All logos will be added in post-processing.)
 ${jerseyBlock ? `\n⚠️ JERSEY NUMBER (CRITICAL):\n${jerseyBlock}` : ""}
 
 ${tpl.outro}`
@@ -1374,15 +1375,16 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       const capLogo = capLogoImage || teamLogoImage;
       const badgeLogo = teamLogoImage || capLogoImage;
       if (capLogo) {
-        // 2. 빈 헬멧 위에 신로고 sharp 합성 (생성 시 헬멧을 blank로 지시했으므로 스티커 없음)
+        // 2. 빈 헬멧 + 빈 가슴 위에 신로고 sharp 합성
+        //    capLogo → 헬멧 배지, badgeLogo → 유니폼 가슴 패치
         try {
-          rawDataUrl = await placeLogoOnHelmet(rawDataUrl, capLogo);
+          rawDataUrl = await placeLogoOnHelmet(rawDataUrl, capLogo, badgeLogo || undefined);
         } catch (err) {
-          logger.warn("[generate-scene] Helmet logo placement failed, continuing", err);
+          logger.warn("[generate-scene] Helmet+chest logo placement failed, continuing", err);
         }
       }
       if (badgeLogo) {
-        // 3. 우하단 팀 로고 배지 오버레이
+        // 3. 우하단 팀 로고 배지 오버레이 (코너 워터마크)
         try {
           rawDataUrl = await overlayTeamLogo(rawDataUrl, badgeLogo);
         } catch (err) {
@@ -1471,82 +1473,136 @@ async function replaceCapLogo(
   }
 }
 
-// ─── 헬멧 위 로고 배치 (sharp — 빈 헬멧 전제) ───────────────────────────────
+// ─── 헬멧 + 유니폼 가슴 로고 배치 (sharp — 빈 헬멧/가슴 전제) ──────────────
 /**
- * 생성 시 헬멧 전면을 blank로 그리도록 지시한 뒤,
- * Vision으로 헬멧 위치 감지 → 로고 배경 제거 → sharp으로 정확히 합성.
+ * 생성 시 헬멧 전면과 유니폼 가슴을 blank로 그리도록 지시한 뒤,
+ * Vision으로 헬멧·가슴 위치 감지 → 로고 배경 제거 → sharp으로 정확히 합성.
+ * capLogoDataUrl: 헬멧 심볼 로고 (작은 배지)
+ * chestLogoDataUrl: 유니폼 가슴 패치 로고 (엠블럼, optional — 없으면 capLogo 사용)
  */
 async function placeLogoOnHelmet(
   imageDataUrl: string,
-  logoDataUrl: string,
+  capLogoDataUrl: string,
+  chestLogoDataUrl?: string,
 ): Promise<string> {
   const imgMatch = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
-  const logoMatch = logoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
-  if (!imgMatch || !logoMatch) return imageDataUrl;
+  const capLogoMatch = capLogoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !capLogoMatch) return imageDataUrl;
 
   try {
     const imgBuf = Buffer.from(imgMatch[2], "base64");
-    const logoBuf = Buffer.from(logoMatch[2], "base64");
     const imgMeta = await sharp(imgBuf).metadata();
     const imgW = imgMeta.width || 600;
     const imgH = imgMeta.height || 800;
 
-    // Vision: 헬멧 전체 영역 감지
+    // Vision: 헬멧 + 유니폼 가슴 영역 한 번에 감지
     const detectRes = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{
         role: "user",
         parts: [
           { inlineData: { mimeType: imgMatch[1], data: imgMatch[2] } },
-          { text: `Find the baseball helmet or cap worn by the player. Return ONLY JSON: {"found":true,"ymin":N,"xmin":N,"ymax":N,"xmax":N} with 0-1000 normalized coords (0=top-left). If not visible: {"found":false}` }
+          { text: `Analyze this baseball player illustration. Find:
+1. The baseball helmet or cap (the hard hat on the player's head)
+2. The uniform chest patch area (the logo/emblem area on the front of the jersey, typically center-chest)
+
+Return ONLY valid JSON (no markdown):
+{
+  "helmet": {"found": true/false, "ymin": N, "xmin": N, "ymax": N, "xmax": N},
+  "chest": {"found": true/false, "ymin": N, "xmin": N, "ymax": N, "xmax": N}
+}
+All coordinates are 0-1000 normalized (0=top-left corner). If not visible, set found:false.` }
         ]
       }]
     });
     const txt = detectRes.candidates?.[0]?.content?.parts?.find((p: any) => p.text)?.text || "";
-    let box: any = { found: false };
-    try { box = JSON.parse(txt.replace(/```json?\n?|```\n?/g, "").trim()); } catch { /* fallback */ }
+    let boxes: any = { helmet: { found: false }, chest: { found: false } };
+    try { boxes = JSON.parse(txt.replace(/```json?\n?|```\n?/g, "").trim()); } catch { /* fallback */ }
 
-    // 헬멧 전면 패널 중앙 = 배지 위치
-    let cx: number, cy: number, size: number;
-    if (box.found && box.xmin !== undefined) {
-      const hx1 = (box.xmin / 1000) * imgW, hx2 = (box.xmax / 1000) * imgW;
-      const hy1 = (box.ymin / 1000) * imgH, hy2 = (box.ymax / 1000) * imgH;
-      const hW = hx2 - hx1, hH = hy2 - hy1;
-      cx = Math.round(hx1 + hW * 0.50);
-      cy = Math.round(hy1 + hH * 0.44);        // 헬멧 높이 44% 지점 = 전면 중앙
-      size = Math.max(20, Math.round(hW * 0.28)); // 헬멧 너비의 28%
-      logger.info(`[placeLogoOnHelmet] helmet (${Math.round(hx1)},${Math.round(hy1)})-(${Math.round(hx2)},${Math.round(hy2)}) badge center=(${cx},${cy}) size=${size}`);
+    // 로고 흰 배경 제거 (cap logo)
+    const capCleanUrl = await removeWhiteBackground(`data:${capLogoMatch[1]};base64,${capLogoMatch[2]}`, 228);
+    const capCleanMatch = capCleanUrl.match(/^data:[^;]+;base64,(.+)$/);
+    const capCleanBuf = Buffer.from(capCleanMatch?.[2] ?? capLogoMatch[2], "base64");
+
+    // chest logo (없으면 cap logo 재사용)
+    const chestLogoMatch = chestLogoDataUrl?.match(/^data:([^;]+);base64,(.+)$/);
+    let chestCleanBuf: Buffer;
+    if (chestLogoMatch) {
+      const chestCleanUrl = await removeWhiteBackground(`data:${chestLogoMatch[1]};base64,${chestLogoMatch[2]}`, 228);
+      const chestCleanMatch = chestCleanUrl.match(/^data:[^;]+;base64,(.+)$/);
+      chestCleanBuf = Buffer.from(chestCleanMatch?.[2] ?? chestLogoMatch[2], "base64");
     } else {
-      // fallback: 이미지 상단 22% 중앙
-      cx = Math.round(imgW * 0.50);
-      cy = Math.round(imgH * 0.20);
-      size = Math.round(imgW * 0.09);
-      logger.info(`[placeLogoOnHelmet] fallback center=(${cx},${cy}) size=${size}`);
+      chestCleanBuf = capCleanBuf;
     }
 
-    // 로고 흰 배경 제거
-    const logoCleanUrl = await removeWhiteBackground(`data:${logoMatch[1]};base64,${logoMatch[2]}`, 228);
-    const logoCleanMatch = logoCleanUrl.match(/^data:[^;]+;base64,(.+)$/);
-    const logoCleanBuf = Buffer.from(logoCleanMatch?.[2] ?? logoMatch[2], "base64");
+    const composites: sharp.OverlayOptions[] = [];
 
-    // 크기 조정 + alpha 보존
-    const resized = await sharp(logoCleanBuf)
-      .resize(size, size, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      .ensureAlpha()
-      .png()
-      .toBuffer();
-    const rMeta = await sharp(resized).metadata();
-    const rW = rMeta.width ?? size, rH = rMeta.height ?? size;
+    // ── 헬멧 로고 ──────────────────────────────────────────────────────────────
+    const hBox = boxes.helmet;
+    let hcx: number, hcy: number, hsize: number;
+    if (hBox?.found && hBox.xmin !== undefined) {
+      const hx1 = (hBox.xmin / 1000) * imgW, hx2 = (hBox.xmax / 1000) * imgW;
+      const hy1 = (hBox.ymin / 1000) * imgH, hy2 = (hBox.ymax / 1000) * imgH;
+      const hW = hx2 - hx1, hH = hy2 - hy1;
+      hcx = Math.round(hx1 + hW * 0.50);
+      hcy = Math.round(hy1 + hH * 0.44);         // 헬멧 높이 44% = 전면 중앙
+      hsize = Math.max(20, Math.round(hW * 0.28));
+      logger.info(`[placeLogos] helmet box → center=(${hcx},${hcy}) size=${hsize}`);
+    } else {
+      hcx = Math.round(imgW * 0.50);
+      hcy = Math.round(imgH * 0.15);
+      hsize = Math.round(imgW * 0.09);
+      logger.info(`[placeLogos] helmet fallback center=(${hcx},${hcy}) size=${hsize}`);
+    }
+    const capResized = await sharp(capCleanBuf)
+      .resize(hsize, hsize, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .ensureAlpha().png().toBuffer();
+    const crMeta = await sharp(capResized).metadata();
+    const crW = crMeta.width ?? hsize, crH = crMeta.height ?? hsize;
+    composites.push({
+      input: capResized,
+      left: Math.max(0, Math.min(imgW - crW, hcx - Math.round(crW / 2))),
+      top:  Math.max(0, Math.min(imgH - crH, hcy - Math.round(crH / 2))),
+      blend: "over",
+    });
 
-    const left = Math.max(0, Math.min(imgW - rW, cx - Math.round(rW / 2)));
-    const top  = Math.max(0, Math.min(imgH - rH, cy - Math.round(rH / 2)));
+    // ── 가슴 로고 ──────────────────────────────────────────────────────────────
+    const cBox = boxes.chest;
+    let ccx: number, ccy: number, csize: number;
+    if (cBox?.found && cBox.xmin !== undefined) {
+      const cx1 = (cBox.xmin / 1000) * imgW, cx2 = (cBox.xmax / 1000) * imgW;
+      const cy1 = (cBox.ymin / 1000) * imgH, cy2 = (cBox.ymax / 1000) * imgH;
+      const cW = cx2 - cx1, cH = cy2 - cy1;
+      ccx = Math.round(cx1 + cW * 0.50);
+      ccy = Math.round(cy1 + cH * 0.50);          // 가슴 패치 중앙
+      csize = Math.max(30, Math.round(Math.min(cW, cH) * 0.70));
+      logger.info(`[placeLogos] chest box → center=(${ccx},${ccy}) size=${csize}`);
+    } else {
+      // fallback: 이미지 중앙 상단 40% 지점
+      ccx = Math.round(imgW * 0.50);
+      ccy = Math.round(imgH * 0.42);
+      csize = Math.round(imgW * 0.14);
+      logger.info(`[placeLogos] chest fallback center=(${ccx},${ccy}) size=${csize}`);
+    }
+    const chestResized = await sharp(chestCleanBuf)
+      .resize(csize, csize, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .ensureAlpha().png().toBuffer();
+    const chMeta = await sharp(chestResized).metadata();
+    const chW = chMeta.width ?? csize, chH = chMeta.height ?? csize;
+    composites.push({
+      input: chestResized,
+      left: Math.max(0, Math.min(imgW - chW, ccx - Math.round(chW / 2))),
+      top:  Math.max(0, Math.min(imgH - chH, ccy - Math.round(chH / 2))),
+      blend: "over",
+    });
 
+    // ── 한 번에 합성 ───────────────────────────────────────────────────────────
     const result = await sharp(imgBuf)
-      .composite([{ input: resized, left, top, blend: "over" }])
+      .composite(composites)
       .png()
       .toBuffer();
 
-    logger.info(`[placeLogoOnHelmet] logo placed at (${left},${top}) ${rW}x${rH}`);
+    logger.info(`[placeLogos] placed ${composites.length} logos on helmet+chest`);
     return `data:image/png;base64,${result.toString("base64")}`;
   } catch (err) {
     logger.warn("[placeLogoOnHelmet] failed, returning original", err);
