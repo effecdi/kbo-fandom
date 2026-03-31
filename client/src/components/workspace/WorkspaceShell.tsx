@@ -87,9 +87,9 @@ export function WorkspaceShell() {
           </ResizablePanelGroup>
         ) : (
           /* Single image / beginner mode: canvas with optional side panels */
-          <div className="flex-1 flex">
+          <div className="flex-1 flex min-h-0 overflow-hidden">
             {showSidePanels && <ContextPanel />}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 h-full">
               <CanvasArea />
             </div>
             {showSidePanels && <PropertiesPanel />}
