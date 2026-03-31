@@ -1224,8 +1224,68 @@ export async function generateWebtoonScene(
         "stadium crowd background, professional quality, detailed illustration",
       ].filter(Boolean).join(", ");
 
-      logger.info("[playercard] InstantID 생성 시작", { charName, cardPrompt });
-      let rawDataUrl = await generateWithInstantID(faceImage, cardPrompt, playerInfo);
+      // ── Stage 1: InstantID → 얼굴/체형 포토리얼 생성
+      const instantIdPrompt = [
+        "KBO baseball player full body photo",
+        `${teamName} team`,
+        jerseyNum ? `jersey number ${jerseyNum}` : "",
+        translatedScene || "baseball player in batting stance",
+        teamColorHint ? `team color ${teamColorHint}` : "",
+        "full body, baseball uniform, stadium background",
+      ].filter(Boolean).join(", ");
+
+      logger.info("[playercard] Stage1: InstantID 생성 시작", { charName });
+      const instantIdDataUrl = await generateWithInstantID(faceImage, instantIdPrompt, playerInfo);
+      logger.info("[playercard] Stage1: InstantID 완료 → Stage2: Gemini 스타일 변환 시작");
+
+      // ── Stage 2: Gemini → InstantID 결과를 트레이딩 카드 일러스트로 변환
+      const cardStyleParts: any[] = [];
+
+      if (teamLogoImage) {
+        const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
+        if (logoMatch) {
+          cardStyleParts.push({ text: `Team logo reference (draw naturally on uniform and helmet):` });
+          cardStyleParts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
+        }
+      }
+
+      cardStyleParts.push({ text: `⬇️ SOURCE PHOTO — convert this into a trading card illustration. Keep the EXACT same face, glasses, body type, and proportions:` });
+      const instantMatch = instantIdDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (instantMatch) {
+        cardStyleParts.push({ inlineData: { mimeType: instantMatch[1], data: instantMatch[2] } });
+      }
+
+      cardStyleParts.push({
+        text: `${noTextRule}
+
+Convert the photo above into a KBO BASEBALL TRADING CARD ILLUSTRATION:
+- Art style: professional trading card illustration (not photorealistic)
+- Card frame: decorative border, name plate at bottom, team logo space
+- CRITICAL: Keep the exact same face shape, glasses (if wearing glasses, KEEP THEM), body type, and proportions from the source photo
+- Background: stadium crowd, dramatic lighting
+- Team: ${teamName}, jersey number: ${jerseyNum || "same as photo"}
+- Team primary color: ${teamColorHint || "from uniform in photo"}
+- The result must look like a PHYSICAL TRADING CARD with illustrated artwork, card frame, and borders`
+      });
+
+      const cardResponse = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: cardStyleParts,
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+          imageConfig: { aspectRatio: geminiAspectRatio as any },
+        },
+      });
+
+      const cardCandidate = cardResponse.candidates?.[0];
+      const cardImagePart = cardCandidate?.content?.parts?.find((p: any) => p.inlineData);
+      if (!cardImagePart?.inlineData?.data) {
+        throw new Error("Gemini 스타일 변환 실패");
+      }
+
+      const cardMimeType = cardImagePart.inlineData.mimeType || "image/png";
+      let rawDataUrl = `data:${cardMimeType};base64,${cardImagePart.inlineData.data}`;
+      logger.info("[playercard] Stage2: Gemini 스타일 변환 완료");
 
       // 우하단 팀 로고 배지 오버레이
       const badgeLogo = teamLogoImage || capLogoImage;
