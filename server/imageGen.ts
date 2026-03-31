@@ -1233,13 +1233,23 @@ ${teamIdentity ? `\nTeam: ${teamIdentity.match(/\[TEAM VISUAL IDENTITY - ([^\]]+
 
 REFERENCE PHOTOS — reproduce the player's appearance as shown. The photo is the ONLY ground truth:
 - Same face structure, skin tone, body build, hair
-- Same uniform design and colors
+- Same uniform design and colors — use ONLY the provided team logo reference image for any logo on uniform/helmet/cap
 - Apply the art style WHILE preserving the player's identity${faceFeaturesBlock ? `\n- The distinctive facial features listed above MUST be visible even after stylization` : ""}
+- NEVER draw logos from memory — always replicate the provided logo reference exactly
 
 ${tpl.outro}`
     });
 
-    // ── Part 2: 이미지를 마지막에 배치 (Gemini가 더 주목)
+    // ── Part 2: 팀 로고 레퍼런스 (hasImages일 때도 전달 — 구 로고 방지)
+    if (teamLogoImage) {
+      const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
+      if (logoMatch) {
+        parts.push({ text: `⚠️ TEAM LOGO (2026 official design): Use THIS exact logo design on uniforms/helmets. Do NOT draw logos from memory — only use this provided reference:` });
+        parts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
+      }
+    }
+
+    // ── Part 3: 이미지를 마지막에 배치 (Gemini가 더 주목)
     for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
       const src = images[imgIdx];
       const imgMatch = src.match(/^data:([^;]+);base64,(.+)$/);
