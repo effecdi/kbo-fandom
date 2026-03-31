@@ -1189,6 +1189,61 @@ export async function generateWebtoonScene(
     ? teamIdentity.match(/Primary color: (#[A-Fa-f0-9]+)/)?.[1] || ""
     : "";
 
+  // ── PLAYERCARD: InstantID (Replicate) — 얼굴 동일성 보존 전용 파이프라인
+  if (templateType === "playercard" && hasImages && process.env.REPLICATE_API_TOKEN) {
+    try {
+      const faceImage = images[0];
+
+      // characterNames[0] 예: "채은성 #22 (right-handed batter)"
+      const charName = characterNames?.[0] || "";
+      const posMatch = charName.match(/\(([^)]+)\)/);
+      const posStr = posMatch?.[1] || "";
+      let position = "타자";
+      let throwsHand = "우";
+      let batsHand = "우";
+      if (posStr.includes("pitcher")) {
+        position = "투수";
+        throwsHand = posStr.includes("left") ? "좌" : "우";
+      } else if (posStr.includes("catcher")) {
+        position = "포수";
+      } else {
+        batsHand = posStr.includes("left") ? "좌" : posStr.includes("switch") ? "양" : "우";
+      }
+      const playerInfo: PlayerInfo = { position, throws: throwsHand, bats: batsHand };
+
+      const teamName = teamIdentity?.match(/\[TEAM VISUAL IDENTITY - ([^\]]+)\]/)?.[1] || "KBO";
+      const jerseyNum = charName.match(/#(\d+)/)?.[1] || "";
+
+      const cardPrompt = [
+        "KBO baseball trading card illustration",
+        `${teamName} baseball player`,
+        jerseyNum ? `wearing jersey number ${jerseyNum}` : "",
+        translatedScene || translatedContext || "baseball player in action pose",
+        "trading card style with decorative card frame and borders",
+        teamColorHint ? `team primary color ${teamColorHint}` : "",
+        "stadium crowd background, professional quality, detailed illustration",
+      ].filter(Boolean).join(", ");
+
+      logger.info("[playercard] InstantID 생성 시작", { charName, cardPrompt });
+      let rawDataUrl = await generateWithInstantID(faceImage, cardPrompt, playerInfo);
+
+      // 우하단 팀 로고 배지 오버레이
+      const badgeLogo = teamLogoImage || capLogoImage;
+      if (badgeLogo) {
+        try {
+          rawDataUrl = await overlayTeamLogo(rawDataUrl, badgeLogo);
+        } catch (err) {
+          logger.warn("[playercard] Logo overlay failed", err);
+        }
+      }
+
+      return rawDataUrl;
+    } catch (err: any) {
+      logger.warn("[playercard] InstantID 실패, Gemini fallback", err?.message);
+      // Gemini 경로로 fallback
+    }
+  }
+
   if (hasImages) {
     // ─────────────────────────────────────────────────────────
     // 핵심 전략: 텍스트를 최소화하고, 이미지를 마지막에 배치
