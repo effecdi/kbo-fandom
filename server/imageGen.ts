@@ -1235,7 +1235,10 @@ export async function generateWebtoonScene(
     if (teamLogoImage) {
       const logoMatchEarly = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
       if (logoMatchEarly) {
-        parts.push({ text: `⚠️ 2026 OFFICIAL TEAM LOGO — memorize this design. This is the ONLY logo allowed on the helmet and uniform:` });
+        const earlyLogoText = templateType === "playercard"
+          ? `⚠️ 2026 OFFICIAL TEAM LOGO — study this design carefully. You MUST draw this logo NATURALLY on the uniform chest and helmet, as if printed/embroidered on the fabric:`
+          : `⚠️ 2026 OFFICIAL TEAM LOGO — memorize this design. This is the ONLY logo allowed on the helmet and uniform:`;
+        parts.push({ text: earlyLogoText });
         parts.push({ inlineData: { mimeType: logoMatchEarly[1], data: logoMatchEarly[2] } });
       }
     }
@@ -1260,8 +1263,11 @@ REFERENCE PHOTO INSTRUCTIONS — The player reference photo(s) below are the ONL
 - Reproduce the EXACT face: same face shape, eye shape, nose, jaw, skin tone, hair
 - Same body build
 - Apply the art style WHILE keeping the face recognizable as the specific player
-- ⚠️ HELMET/CAP FRONT: Draw the helmet/cap front panel as COMPLETELY BLANK — NO badge, NO logo, NO emblem, NO letter. Clean empty surface with just the helmet color only.
-- ⚠️ UNIFORM CHEST: Draw the uniform chest area as COMPLETELY BLANK — NO team logo patch, NO emblem, NO badge. Just the plain uniform fabric color. (All logos will be added in post-processing.)
+${templateType === "playercard"
+  ? `- ⚠️ TEAM LOGO ON UNIFORM: Draw the team logo/emblem NATURALLY integrated into the uniform chest area — as if it is printed or embroidered onto the fabric. Use the exact logo provided in the reference image above. Make it look like part of the uniform design, NOT a separate sticker or patch pasted on top.
+- ⚠️ HELMET BADGE: Draw the team logo/symbol NATURALLY on the helmet front panel — integrated into the helmet design, matching the provided reference.`
+  : `- ⚠️ HELMET/CAP FRONT: Draw the helmet/cap front panel as COMPLETELY BLANK — NO badge, NO logo, NO emblem, NO letter. Clean empty surface with just the helmet color only.
+- ⚠️ UNIFORM CHEST: Draw the uniform chest area as COMPLETELY BLANK — NO team logo patch, NO emblem, NO badge. Just the plain uniform fabric color. (All logos will be added in post-processing.)`}
 ${jerseyBlock ? `\n⚠️ JERSEY NUMBER (CRITICAL):\n${jerseyBlock}` : ""}
 
 ${tpl.outro}`
@@ -1271,7 +1277,10 @@ ${tpl.outro}`
     if (teamLogoImage) {
       const logoMatch = teamLogoImage.match(/^data:([^;]+);base64,(.+)$/);
       if (logoMatch) {
-        parts.push({ text: `⚠️ TEAM LOGO (2026 official design): Use THIS exact logo design on uniforms/helmets. Do NOT draw logos from memory — only use this provided reference:` });
+        const logoInstruction = templateType === "playercard"
+          ? `⚠️ TEAM LOGO (2026 official design) — DRAW THIS NATURALLY INTO THE UNIFORM: Reproduce this exact logo design on the chest and helmet. Integrate it as if embroidered/printed on the fabric — NOT as a separate layer or sticker. Match the logo shape, colors, and style precisely:`
+          : `⚠️ TEAM LOGO (2026 official design): Use THIS exact logo design on uniforms/helmets. Do NOT draw logos from memory — only use this provided reference:`;
+        parts.push({ text: logoInstruction });
         parts.push({ inlineData: { mimeType: logoMatch[1], data: logoMatch[2] } });
       }
     }
@@ -1374,7 +1383,8 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       // 헬멧 배지엔 심볼 로고만, 우하단 배지엔 엠블럼 사용
       const capLogo = capLogoImage || teamLogoImage;
       const badgeLogo = teamLogoImage || capLogoImage;
-      if (capLogo) {
+      // playercard: Gemini가 로고를 직접 자연스럽게 그리므로 sharp 스티커 합성 스킵
+      if (capLogo && templateType !== "playercard") {
         // 2. 빈 헬멧 + 빈 가슴 위에 신로고 sharp 합성
         //    capLogo → 헬멧 배지, badgeLogo → 유니폼 가슴 패치
         try {
