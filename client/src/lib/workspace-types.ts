@@ -88,7 +88,7 @@ export interface FandomEditorMeta {
   poseHint?: string;
   outfitHint?: string;
   moodHint?: string;
-  playerPhotos?: { name: string; pcode: string; position?: string; throws?: string; bats?: string; role?: string }[];
+  playerPhotos?: { name: string; pcode: string; number?: string; position?: string; throws?: string; bats?: string; role?: string }[];
   teamLogoUrl?: string;
 }
 

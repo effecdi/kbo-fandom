@@ -366,7 +366,7 @@ export function useCopilot() {
 
       if (fandomMeta?.playerPhotos && fandomMeta.playerPhotos.length > 0) {
         // 항상 직접 fetch — 가장 확실한 방법
-        for (const { name, pcode } of fandomMeta.playerPhotos) {
+        for (const { name, pcode, number } of fandomMeta.playerPhotos) {
           try {
             const resp = await fetch(`/api/kbo/player-photo/${pcode}`);
             if (!resp.ok) continue;
@@ -377,7 +377,8 @@ export function useCopilot() {
               reader.readAsDataURL(blob);
             });
             charImageUrls.push(dataUrl);
-            charNames.push(name);
+            // 등번호를 이름에 포함해 Gemini가 정확한 번호를 유니폼에 그리도록 함
+            charNames.push(number ? `${name} #${number}` : name);
           } catch { /* skip */ }
         }
       }

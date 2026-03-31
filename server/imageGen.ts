@@ -1205,6 +1205,17 @@ export async function generateWebtoonScene(
       ? `\nKeep each character distinct: ${characterNames.map((n, i) => `"${n}" = photo #${i + 1}`).join(", ")}.`
       : "";
 
+    // 등번호 블록: characterNames에서 "#숫자" 패턴 추출
+    const jerseyBlock = hasCharNames
+      ? characterNames
+          .map((n) => {
+            const m = n.match(/#(\d+)/);
+            return m ? `- "${n.replace(/\s*#\d+/, "").trim()}": jersey number is #${m[1]} — this EXACT number must appear on the uniform` : null;
+          })
+          .filter(Boolean)
+          .join("\n")
+      : "";
+
     // 얼굴 특징 블록: 특징이 있는 선수만 포함
     const faceFeaturesBlock = faceFeaturesList
       .map((feat, i) => {
@@ -1236,6 +1247,8 @@ REFERENCE PHOTOS — reproduce the player's appearance as shown. The photo is th
 - Same uniform design and colors — use ONLY the provided team logo reference image for any logo on uniform/helmet/cap
 - Apply the art style WHILE preserving the player's identity${faceFeaturesBlock ? `\n- The distinctive facial features listed above MUST be visible even after stylization` : ""}
 - NEVER draw logos from memory — always replicate the provided logo reference exactly
+- Do NOT draw team logos on the cap or helmet — leave the cap/helmet plain (logo will be added later)
+${jerseyBlock ? `\n⚠️ JERSEY NUMBER (CRITICAL — DO NOT HALLUCINATE):\n${jerseyBlock}\nDo NOT use any jersey number from memory. Use ONLY the number specified above.` : ""}
 
 ${tpl.outro}`
     });
@@ -1336,19 +1349,8 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
       // 1. 먼저 배경 제거 (거의 순백색만 → 투명, 90%이상 제거 시 원본 반환)
       rawDataUrl = await removeWhiteBackground(rawDataUrl, 240);
 
-      // 2. 그 다음 모자/헬멧 로고 오버레이 (배경 제거 후에 해야 로고가 투명화되지 않음)
-      // capLogoImage = KBO CDN 엠블럼 (실제 모자/헬멧 로고), teamLogoImage = 구단 엠블럼 (fallback)
-      // 2. 모자/헬멧 로고 위치를 Gemini Vision으로 탐지 후 정확한 로고로 교체
-      const logoForCap = capLogoImage || teamLogoImage;
-      if (logoForCap) {
-        try {
-          rawDataUrl = await replaceCapLogo(rawDataUrl, logoForCap);
-        } catch (err) {
-          logger.warn("[generate-scene] Cap logo replace failed, continuing", err);
-        }
-      }
-
-      // 3. 우하단 팀 로고 배지 오버레이 (항상 정확한 로고 표시)
+      // 2. 우하단 팀 로고 배지 오버레이 (항상 정확한 로고 표시)
+      // replaceCapLogo 제거: Gemini Vision 탐지 오류로 구로고+신로고 동시 표시 문제 발생
       const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
         try {
