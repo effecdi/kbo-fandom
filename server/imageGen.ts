@@ -1371,7 +1371,13 @@ Do NOT add any text, letters, writing, speech bubbles, or dialogue boxes.`
 
       const logoForOverlay = capLogoImage || teamLogoImage;
       if (logoForOverlay) {
-        // 2. 우하단 팀 로고 배지 오버레이 (결정론적 sharp 합성)
+        // 2. FLUX Kontext로 헬멧 로고 교체 (Replicate — 이미지 편집 전문)
+        try {
+          rawDataUrl = await editLogoWithFluxKontext(rawDataUrl, logoForOverlay);
+        } catch (err) {
+          logger.warn("[generate-scene] FLUX Kontext logo edit failed, continuing", err);
+        }
+        // 3. 우하단 팀 로고 배지 오버레이 (결정론적 sharp 합성)
         try {
           rawDataUrl = await overlayTeamLogo(rawDataUrl, logoForOverlay);
         } catch (err) {
@@ -1456,6 +1462,68 @@ async function replaceCapLogo(
     return `data:image/png;base64,${result.toString("base64")}`;
   } catch (error) {
     logger.warn("[replaceCapLogo] Failed, returning original", error);
+    return imageDataUrl;
+  }
+}
+
+// ─── FLUX Kontext로 로고 교체 (Replicate) ────────────────────────────────────
+/**
+ * FLUX.1 Kontext Pro (Replicate)로 헬멧/유니폼 로고를 신로고로 교체.
+ * 레퍼런스 이미지를 직접 받아서 편집하는 전문 모델.
+ * Gemini 훈련데이터 편향 문제 없이 이미지 내 로고를 교체.
+ */
+async function editLogoWithFluxKontext(
+  imageDataUrl: string,
+  newLogoDataUrl: string,
+): Promise<string> {
+  if (!process.env.REPLICATE_API_TOKEN) {
+    logger.warn("[FLUX Kontext] REPLICATE_API_TOKEN not set, skipping");
+    return imageDataUrl;
+  }
+
+  const imgMatch = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const logoMatch = newLogoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!imgMatch || !logoMatch) return imageDataUrl;
+
+  try {
+    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+
+    // base64 → Blob (Replicate는 URL or Blob 입력 가능)
+    const imgBuffer = Buffer.from(imgMatch[2], "base64");
+    const logoBuffer = Buffer.from(logoMatch[2], "base64");
+    const imgBlob = new Blob([imgBuffer], { type: imgMatch[1] });
+    const logoBlob = new Blob([logoBuffer], { type: logoMatch[1] });
+
+    // FLUX Kontext Max: input_image + reference image (logo) + prompt
+    const output = await (replicate as any).run(
+      "black-forest-labs/flux-kontext-max",
+      {
+        input: {
+          input_image: imgBlob,
+          // FLUX Kontext는 두 번째 이미지를 reference로 사용
+          reference_image: logoBlob,
+          prompt: "Replace the team logo badge on the front of the baseball helmet/cap with the exact logo shown in the reference image. Also replace any logo patch on the uniform sleeve with the reference image logo. Keep the player's face, pose, body, jersey number, and all other details completely unchanged. Draw the replacement logos in the same illustration art style.",
+          output_format: "png",
+          safety_tolerance: 6,
+        }
+      }
+    ) as any;
+
+    const outputUrl: string = Array.isArray(output) ? output[0] : output;
+    if (!outputUrl) {
+      logger.warn("[FLUX Kontext] No output URL returned");
+      return imageDataUrl;
+    }
+
+    // URL → base64 dataUrl
+    const resp = await fetch(outputUrl);
+    if (!resp.ok) throw new Error(`FLUX output fetch failed: ${resp.status}`);
+    const buf = await resp.arrayBuffer();
+    const b64 = Buffer.from(buf).toString("base64");
+    logger.info("[FLUX Kontext] Logo edited successfully");
+    return `data:image/png;base64,${b64}`;
+  } catch (error) {
+    logger.warn("[FLUX Kontext] Failed, returning original", error);
     return imageDataUrl;
   }
 }
