@@ -2598,7 +2598,27 @@ export async function registerRoutes(
       }
 
       const gs = relay.currentGameState || {};
-      const isTopInning = relay.homeOrAway === "0"; // 0=초(top), 1=말(bottom)
+
+      // 현재 투수가 홈/원정 어느 팀 소속인지로 초/말 판단
+      // 홈팀 투수가 마운드에 있으면 초(top) — 원정팀 타석
+      // 원정팀 투수가 마운드에 있으면 말(bottom) — 홈팀 타석
+      const homePitcherPcodes = new Set<string>([
+        ...(relay.homeLineup?.pitcher || []).map((p: any) => p.pcode),
+        ...(relay.homeEntry?.pitcher || []).map((p: any) => p.pcode),
+      ]);
+      const awayPitcherPcodes = new Set<string>([
+        ...(relay.awayLineup?.pitcher || []).map((p: any) => p.pcode),
+        ...(relay.awayEntry?.pitcher || []).map((p: any) => p.pcode),
+      ]);
+      let isTopInning: boolean;
+      if (gs.pitcher && homePitcherPcodes.has(gs.pitcher)) {
+        isTopInning = true;  // 홈팀 투수 = 초
+      } else if (gs.pitcher && awayPitcherPcodes.has(gs.pitcher)) {
+        isTopInning = false; // 원정팀 투수 = 말
+      } else {
+        isTopInning = relay.homeOrAway === "0"; // fallback
+      }
+      logger.info(`[relay] gameId=${gameId} pitcher=${gs.pitcher} isTopInning=${isTopInning} homeOrAway=${relay.homeOrAway}`);
 
       // Position name mapping (full + abbreviated variants from Naver API)
       const POS_MAP: Record<string, string> = {
