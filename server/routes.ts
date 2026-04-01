@@ -2709,22 +2709,36 @@ export async function registerRoutes(
       logger.info(`[relay] defEntry sample: ${JSON.stringify(sampleEntryBatter)}`);
       logger.info(`[relay] defLineup batter count=${defLineup?.batter?.length}, defEntry batter count=${defEntry?.batter?.length}`);
 
-      // Build defense from lineup (full 9-man, posName field)
-      const defense: Record<string, { name: string; pcode: string }> = {};
+      // ── 수비 포지션 빌드 전략 ──────────────────────────────────────────
+      // 핵심 원칙: 포지션(posKey)은 lineup에서만 읽고, 선수는 entry로 교체
+      // → entry의 posName/pos가 없거나 틀려도 포지션 매핑은 항상 정확함
+
+      // Step 1: lineup에서 batOrder → posKey 매핑 고정
+      const lineupSlots = new Map<number, { posKey: string; name: string; pcode: string }>();
       for (const b of (defLineup?.batter || [])) {
+        const order = parseInt(b.batOrder) || 0;
         const posKey = POS_MAP[b.posName] || POS_MAP[b.pos];
-        if (posKey && posKey !== "dh") {
-          defense[posKey] = { name: b.name, pcode: b.pcode };
+        if (posKey && posKey !== "dh" && order > 0) {
+          lineupSlots.set(order, { posKey, name: b.name, pcode: b.pcode });
         }
       }
-      // Override with entry data (substitutions update positions)
+
+      // Step 2: entry에서 batOrder별 최신 선수 추출 (배열 순서 = 시간순, 마지막이 현재선수)
+      const entryBySlot = new Map<number, { name: string; pcode: string }>();
       for (const b of (defEntry?.batter || [])) {
-        const posKey = POS_MAP[b.posName] || POS_MAP[b.pos];
-        if (posKey && posKey !== "dh") {
-          defense[posKey] = { name: b.name, pcode: b.pcode };
+        const order = parseInt(b.batOrder) || 0;
+        if (order > 0) {
+          entryBySlot.set(order, { name: b.name, pcode: b.pcode });
         }
       }
-      // Current pitcher overrides
+
+      // Step 3: lineup 포지션 유지 + entry 선수로 교체 (교체 없으면 lineup 선수 유지)
+      const defense: Record<string, { name: string; pcode: string }> = {};
+      for (const [order, slot] of lineupSlots) {
+        const current = entryBySlot.get(order) || slot;
+        defense[slot.posKey] = { name: current.name, pcode: current.pcode };
+      }
+      // 현재 투수 최우선 반영 (교체투수 처리)
       if (pitcherInfo) {
         defense["pitcher"] = { name: pitcherInfo.name, pcode: gs.pitcher };
       }
