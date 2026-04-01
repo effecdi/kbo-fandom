@@ -2702,6 +2702,13 @@ export async function registerRoutes(
       const defEntry = isTopInning ? relay.homeEntry : relay.awayEntry;
       const offEntry = isTopInning ? relay.awayEntry : relay.homeEntry;
 
+      // 디버그: lineup/entry 첫 선수 필드 확인
+      const sampleLineupBatter = defLineup?.batter?.[0];
+      const sampleEntryBatter = defEntry?.batter?.[0];
+      logger.info(`[relay] defLineup sample: ${JSON.stringify(sampleLineupBatter)}`);
+      logger.info(`[relay] defEntry sample: ${JSON.stringify(sampleEntryBatter)}`);
+      logger.info(`[relay] defLineup batter count=${defLineup?.batter?.length}, defEntry batter count=${defEntry?.batter?.length}`);
+
       // Build defense from lineup (full 9-man, posName field)
       const defense: Record<string, { name: string; pcode: string }> = {};
       for (const b of (defLineup?.batter || [])) {
@@ -2721,6 +2728,7 @@ export async function registerRoutes(
       if (pitcherInfo) {
         defense["pitcher"] = { name: pitcherInfo.name, pcode: gs.pitcher };
       }
+      logger.info(`[relay] defense built: ${JSON.stringify(defense)}`);
 
       // Batting order: prefer lineup (full 9-man), fallback to entry
       // Entry data may contain duplicates (original + substitutes for same batting order),
